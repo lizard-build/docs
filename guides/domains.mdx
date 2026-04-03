@@ -1,0 +1,63 @@
+# Custom Domains
+
+Connect your own domain to a Lizard deployment.
+
+## Adding a Domain
+
+```bash
+lizard domains add myapp.com
+```
+
+Lizard will provide DNS records to configure:
+
+```
+Type    Name    Value
+CNAME   @       cname.lizard.build
+CNAME   www     cname.lizard.build
+```
+
+## SSL Certificates
+
+SSL certificates are provisioned automatically via Let's Encrypt. No configuration needed — certificates are issued within seconds of DNS verification.
+
+## Wildcard Domains
+
+```bash
+lizard domains add "*.myapp.com"
+```
+
+Wildcard domains require DNS verification via a TXT record.
+
+## Domain Verification
+
+Check the status of your domain:
+
+```bash
+lizard domains verify myapp.com
+```
+
+Output:
+
+```
+Domain:   myapp.com
+Status:   ✓ verified
+SSL:      ✓ active (expires 2027-03-15)
+DNS:      ✓ CNAME pointing to cname.lizard.build
+```
+
+## Redirects
+
+Set up domain redirects:
+
+```typescript
+// lizard.config.ts
+export default defineConfig({
+  domains: {
+    primary: 'myapp.com',
+    redirects: {
+      'www.myapp.com': 'myapp.com',
+      'old-domain.com': 'myapp.com',
+    },
+  },
+});
+```

@@ -1,0 +1,52 @@
+# Configuration
+
+Learn how to configure your Lizard project.
+
+## Config File
+
+Lizard uses a `lizard.config.ts` file at the root of your project:
+
+```typescript
+import { defineConfig } from 'lizard';
+
+export default defineConfig({
+  name: 'my-project',
+  region: 'us-east-1',
+  runtime: 'node20',
+  build: {
+    command: 'npm run build',
+    output: 'dist',
+  },
+});
+```
+
+## Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `name` | `string` | — | Project name (must be unique) |
+| `region` | `string` | `us-east-1` | Primary deployment region |
+| `runtime` | `string` | `node20` | Runtime environment |
+| `build.command` | `string` | `npm run build` | Build command |
+| `build.output` | `string` | `dist` | Build output directory |
+
+## Regions
+
+Lizard supports the following regions:
+
+- `us-east-1` — US East (Virginia)
+- `us-west-2` — US West (Oregon)
+- `eu-west-1` — Europe (Ireland)
+- `ap-southeast-1` — Asia Pacific (Singapore)
+
+## Multi-Region
+
+Deploy to multiple regions for lower latency:
+
+```typescript
+export default defineConfig({
+  name: 'my-project',
+  regions: ['us-east-1', 'eu-west-1', 'ap-southeast-1'],
+  routing: 'latency-based',
+});
+```

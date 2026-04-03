@@ -1,0 +1,79 @@
+# Deployment
+
+Deploy your Lizard project to production.
+
+## Deploy Command
+
+```bash
+lizard deploy
+```
+
+This builds your project, uploads the artifacts, and deploys to your configured region. Each deploy creates an immutable snapshot with a unique URL.
+
+## Deploy Preview
+
+Every push to a branch creates a preview deployment:
+
+```bash
+lizard deploy --preview
+```
+
+Preview URLs follow the pattern: `https://<branch>-<project>.lizard.build`
+
+## Production Deployments
+
+Promote a preview to production:
+
+```bash
+lizard deploy --prod
+```
+
+Or deploy directly to production:
+
+```bash
+lizard deploy --prod --skip-preview
+```
+
+## Deployment Lifecycle
+
+1. **Build** — runs your build command
+2. **Upload** — pushes artifacts to Lizard's edge network
+3. **Health check** — verifies the deployment is healthy
+4. **Route** — shifts traffic to the new deployment
+5. **Cleanup** — previous deployment stays available for instant rollback
+
+## Rollbacks
+
+Instantly roll back to a previous deployment:
+
+```bash
+lizard rollback
+```
+
+Or roll back to a specific deployment:
+
+```bash
+lizard rollback --to lzd_deploy_abc123
+```
+
+Rollbacks are instant because previous deployments are never deleted.
+
+## CI/CD Integration
+
+Add Lizard to your GitHub Actions workflow:
+
+```yaml
+name: Deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lizard-build/deploy-action@v1
+        with:
+          token: ${{ secrets.LIZARD_TOKEN }}
+```
