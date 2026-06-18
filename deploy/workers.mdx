@@ -1,0 +1,52 @@
+# Background Workers
+
+Not every service serves HTTP. Queue consumers, reconcilers, cron-style polling loops, and other background workloads don't listen on a port — run them in **worker mode** by setting the container port to `0`.
+
+## What worker mode changes
+
+When `containerPort=0`, the platform:
+
+- **Skips `PORT` injection** — the worker doesn't bind anywhere.
+- **Skips the port reachability check** — no `app port X unreachable` log spam and no false-positive "unhealthy" status.
+- **Skips `EXPOSE`** in the synthesized Dockerfile.
+- **Skips load-balancer route registration** — nothing is served. (A generated `*.onlizard.com` domain may still appear on the service, but it won't respond.)
+
+## Enable worker mode
+
+Three equivalent ways:
+
+```bash
+# New upload-source worker
+lizard up --port 0
+
+# Flip an existing service
+lizard port 0 --service worker
+
+# Via the config:apply path
+lizard service set worker --set containerPort=0
+```
+
+Worker mode is a hard switch — a redeploy is needed for the port change to take effect.
+
+## Check the current port
+
+```bash
+lizard port --service worker
+```
+
+Prints the current container port, or `worker mode` when it's `0`.
+
+## When *not* to use worker mode
+
+Don't use worker mode for a regular HTTP service that's just slow to start. Worker mode disables the reachability check entirely, so it will **hide** "the listener never came up" bugs. If your service is meant to serve traffic, keep a real port and fix the startup instead.
+
+## Example: a queue consumer
+
+```bash
+lizard add -r your-org/worker -n emailer
+lizard service set emailer --set containerPort=0
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service emailer
+lizard redeploy --service emailer
+```
+
+The worker boots, connects to Redis via the [reference](/concepts/architecture#cross-resource-references), and runs without any inbound routing.

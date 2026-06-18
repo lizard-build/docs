@@ -1,65 +1,110 @@
-# Getting Started
+# Quickstart
 
-Get up and running with Lizard in minutes.
+Ship your first app to Lizard in a few minutes. You'll install the CLI, log in, and deploy — either straight from a GitHub repo or from a local directory.
 
 ## Prerequisites
 
-- Node.js version 20.0 or above
-- npm or yarn
-- A Lizard account — [sign up at lizard.build](https://lizard.build)
+- **Node.js 18+** and npm
+- A **Lizard account** — created automatically the first time you `lizard login`
 
-## Installation
+## 1. Install the CLI
 
-Install the Lizard CLI globally:
-
-```bash
-npm install -g lizard
-```
-
-Or add it as a dev dependency:
+Install the `lizard` binary globally from npm:
 
 ```bash
-npm install --save-dev lizard
+npm install -g @lizard-build/cli
 ```
 
-## Authentication
+Verify it's on your `PATH`:
 
-Log in to your Lizard account:
+```bash
+lizard --version
+```
+
+> **Don't use `npx`.** Always use the globally installed `lizard` binary. Running `npx @lizard-build/cli` pulls a throwaway copy whose version may drift from the platform. Upgrade in place later with `lizard upgrade`.
+
+> **Permission errors (EACCES)?** Don't use `sudo`. Point npm at a user-owned prefix instead:
+> ```bash
+> mkdir -p ~/.npm-global
+> npm config set prefix ~/.npm-global
+> echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.zshrc && source ~/.zshrc
+> npm install -g @lizard-build/cli
+> ```
+
+## 2. Log in
 
 ```bash
 lizard login
 ```
 
-This opens your browser for OAuth authentication. Once complete, your CLI is linked to your account.
-
-## Quick Start
-
-Create a new project and start developing:
+This opens your browser to authenticate, then drops back to your terminal once you confirm. In CI or other non-interactive environments, authenticate with a token instead:
 
 ```bash
-npx lizard init my-project
-cd my-project
-npm run dev
+export LIZARD_TOKEN=lzd_xxx
+# or
+lizard login --token lzd_xxx
 ```
 
-Your app is now running at `http://localhost:3000` with hot reload enabled.
+Check who you are at any time:
 
-## Project Structure
-
-After `lizard init`, your project looks like this:
-
-```
-my-project/
-├── lizard.config.ts    # Lizard configuration
-├── src/
-│   ├── index.ts        # Entry point
-│   └── routes/         # API routes
-├── package.json
-└── .env.local          # Local environment variables
+```bash
+lizard whoami
 ```
 
-## Next Steps
+## 3. Deploy
 
-- [Configuration](/guides/configuration) — customize your project settings
-- [Deployment](/guides/deployment) — ship to production
-- [Environment Variables](/guides/environment-variables) — manage secrets and config
+Pick the path that matches where your code lives.
+
+### Option A — Deploy a GitHub repo (recommended)
+
+If your code is on GitHub, create a service straight from the repo. Lizard clones it, auto-detects the stack, builds it, and returns a live URL:
+
+```bash
+lizard add -r your-org/your-app
+```
+
+Pushes to the tracked branch will auto-redeploy from then on. For private repos, connect the GitHub App first:
+
+```bash
+lizard git connect
+```
+
+### Option B — Deploy local code
+
+From inside your project directory, upload and deploy the current folder (respects `.gitignore`):
+
+```bash
+lizard up
+```
+
+If the directory isn't linked to a project yet, `up` will create or select one interactively. In CI, link explicitly first with `lizard init --name my-project`.
+
+Either way, when the build finishes you'll get a generated URL like `https://your-app-production.onlizard.com`.
+
+## 4. Watch it build and run
+
+```bash
+lizard ps          # services in the project, with status + URL
+lizard logs        # last runtime log lines
+lizard logs --build  # the most recent build's logs
+lizard open        # open the project in the dashboard
+```
+
+## 5. Add a database (optional)
+
+Provision a managed Postgres and reference it from your service:
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service your-app
+lizard redeploy --service your-app
+```
+
+The `${{postgres.DATABASE_URL}}` reference is resolved at deploy time and rotates automatically with the addon. See [Managed Addons](/addons).
+
+## What's next
+
+- **[Core Concepts](/concepts/architecture)** — understand projects, services, and the build pipeline.
+- **[Deploying from GitHub](/deploy/github)** — branches, monorepos, and auto-redeploys.
+- **[Environment Variables & Secrets](/guides/environment-variables)** — scoping and precedence.
+- **[Custom Domains](/guides/domains)** — attach your own hostname with automatic TLS.

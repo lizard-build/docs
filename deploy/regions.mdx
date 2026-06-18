@@ -1,0 +1,28 @@
+# Regions
+
+Services and addons are provisioned in a region. List the regions available to your account and pick one at create time.
+
+## List regions
+
+```bash
+lizard regions
+lizard regions --json
+```
+
+## Choose a region
+
+Pass `--region <code>` when creating a service or addon:
+
+```bash
+lizard add -r your-org/your-app --region <code>
+lizard add postgres --region <code>
+lizard up --region <code>
+```
+
+If you don't specify a region, the platform uses the project's default.
+
+> **Co-locate stateful resources.** Put a service and the addons it talks to (Postgres, Redis, S3) in the **same region** to keep latency low and avoid cross-region data charges.
+
+## Generated domains
+
+Each service gets a generated domain on `*.onlizard.com` with automatic TLS, regardless of region. Object storage served from an [S3 addon](/addons/storage) uses a region-scoped gateway host (`s3-<region>.onlizard.com`). To attach your own hostname, see [Custom Domains](/guides/domains).

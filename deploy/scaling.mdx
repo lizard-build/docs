@@ -1,0 +1,56 @@
+# Scaling
+
+Scale a service horizontally (more replicas) or vertically (more CPU/memory) with `lizard scale`. Addon storage is grown the same way.
+
+## Scale a service
+
+```bash
+lizard scale --service api --replicas 3
+lizard scale --service api --cpu 2 --memory 2048
+```
+
+| Flag | Applies to | Allowed values |
+|------|-----------|----------------|
+| `--replicas <n>` | apps | `1`–`10` |
+| `--cpu <cores>` | apps | whole cores: `1`, `2`, `3`, `4` |
+| `--memory <mb>` | apps | `128`–`8192` MB (1 MB steps) |
+| `--storage <mb>` | **addons only**, grow-only | `512`, `1024`, `2048`, `4096`, `8192`, `16384` |
+
+You can combine flags in a single command. Replica changes roll out without a rebuild.
+
+## Horizontal scaling
+
+Run multiple replicas of an app behind the load balancer:
+
+```bash
+lizard scale --service api --replicas 5
+```
+
+Each replica is its own Firecracker micro-VM. Make sure your app is stateless (store state in [Postgres](/addons/postgres), [Redis](/addons/redis), or [S3](/addons/storage)) so replicas are interchangeable.
+
+## Vertical scaling
+
+Give a single replica more resources:
+
+```bash
+lizard scale --service api --cpu 4 --memory 8192
+```
+
+## Growing addon storage
+
+Addon data volumes are **grow-only** — you can increase storage but not shrink it:
+
+```bash
+lizard scale --service postgres --storage 8192
+```
+
+## Verifying
+
+```bash
+lizard ps                 # replica status + URL
+lizard events             # per-replica deploy/scale history
+lizard metrics            # live CPU / memory / network / disk
+lizard metrics --cost     # include cost
+```
+
+See [Observability → Metrics](/observability/metrics) for resource and cost monitoring.

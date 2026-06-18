@@ -1,0 +1,59 @@
+# AI Agents & MCP
+
+Lizard is designed to be driven by AI coding agents as easily as by humans. The CLI ships an **embedded skill** that teaches an agent the whole platform, and every command is **self-describing** via `--json` so agents never have to guess.
+
+## The embedded skill
+
+The authoritative usage guide lives inside the CLI and is versioned with it, so it always matches the installed version. An agent reads it with:
+
+```bash
+lizard skills get core --json
+```
+
+This returns `{ name, frontmatter, content, … }` — `content` is the complete guide (build pipeline, env precedence, addons, discovery, exit codes). Related subcommands:
+
+```bash
+lizard skills list        # available embedded skills
+lizard skills get core    # the core guide
+lizard skills path        # where skills are stored
+```
+
+Because the guide is bundled with the binary, `lizard upgrade` updates the agent's instructions too.
+
+## Self-describing commands
+
+Agents discover exact flag shapes at runtime instead of relying on memorized syntax:
+
+```bash
+lizard --help --json                # full command tree + exit codes
+lizard <cmd> --help --json          # a specific command's schema
+```
+
+See [JSON & Automation](/cli/json).
+
+## Bootstrapping in an agent
+
+A typical agent flow:
+
+1. **Load the guide:** `lizard skills get core --json` → read `content`.
+2. **Check auth optimistically:** run the user's task; on exit code `2`, run `lizard login`, hand the printed URL to the user, then retry.
+3. **Resolve context before mutating:** `lizard status` (cwd link) and `lizard ps --json` (services).
+4. **Act** using the guide — `add`, `up`, `secrets`, `domain`, etc., always with `--json`.
+
+If the `lizard` binary isn't present, install it first:
+
+```bash
+npm install -g @lizard-build/cli
+```
+
+## Conventions agents should follow
+
+- **Always pass `--json`** on non-interactive calls.
+- **Confirm destructive actions** (delete service, drop addon, overwrite a project-wide secret, prod restart) with the user — the CLI's own prompts only fire on a TTY.
+- **Scope secrets to the consuming service** by default; reserve `--global` for provably-public values. See [Variables & Secrets](/guides/environment-variables#scoping).
+- **Don't write Dockerfiles unsolicited** — lizardpack auto-detects most stacks. Try a deploy first. See [Build Pipeline](/concepts/build-pipeline).
+- **Don't use `lizard up` to switch a git-backed service to upload** — use `service set` + `redeploy`.
+
+## Editor & MCP integrations
+
+The skill is distributed as a public bootstrap so agents in editors and assistants can install and load it on demand, then drive the same CLI described throughout these docs. The CLI is the single source of truth — there's no separate agent API to learn.

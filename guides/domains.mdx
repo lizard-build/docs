@@ -1,63 +1,55 @@
 # Custom Domains
 
-Connect your own domain to a Lizard deployment.
+Every service gets a generated `*.onlizard.com` domain with automatic TLS. Attach your own hostname when you're ready to go live.
 
-## Adding a Domain
+## Generated domains
 
-```bash
-lizard domains add myapp.com
-```
-
-Lizard will provide DNS records to configure:
-
-```
-Type    Name    Value
-CNAME   @       cname.lizard.build
-CNAME   www     cname.lizard.build
-```
-
-## SSL Certificates
-
-SSL certificates are provisioned automatically via Let's Encrypt. No configuration needed — certificates are issued within seconds of DNS verification.
-
-## Wildcard Domains
+A service's default domain is created for you. Show it (or generate a fresh one):
 
 ```bash
-lizard domains add "*.myapp.com"
+lizard domain                    # show the service's current domain
+lizard domain generate           # generate a new *.onlizard.com subdomain
 ```
 
-Wildcard domains require DNS verification via a TXT record.
+## Attach a custom domain
 
-## Domain Verification
-
-Check the status of your domain:
+The hostname is a **positional argument** — there is no `add` subcommand:
 
 ```bash
-lizard domains verify myapp.com
+lizard domain app.example.com --service web
 ```
 
-Output:
+Lizard returns the DNS records to create (a `CNAME` for the hostname and a `TXT` record for verification). Add them at your DNS provider.
 
+## Verify
+
+Once DNS has propagated, activate the domain:
+
+```bash
+lizard domain verify app.example.com
 ```
-Domain:   myapp.com
-Status:   ✓ verified
-SSL:      ✓ active (expires 2027-03-15)
-DNS:      ✓ CNAME pointing to cname.lizard.build
+
+This checks the `TXT` record and activates the domain. TLS is provisioned automatically.
+
+## Remove a domain
+
+```bash
+lizard domain delete app.example.com
+lizard domain rm app.example.com --yes   # alias, skip confirmation
 ```
 
-## Redirects
+## Exposing a specific port
 
-Set up domain redirects:
+If your service serves on a non-default port, attach the domain to that port:
 
-```typescript
-// lizard.config.ts
-export default defineConfig({
-  domains: {
-    primary: 'myapp.com',
-    redirects: {
-      'www.myapp.com': 'myapp.com',
-      'old-domain.com': 'myapp.com',
-    },
-  },
-});
+```bash
+lizard domain app.example.com --service web --port 8080
 ```
+
+## Worker services
+
+A [worker-mode service](/deploy/workers) (`containerPort=0`) may still show a generated domain, but it serves nothing — there's no listener and no load-balancer route. Don't attach a custom domain to a worker.
+
+## Manage in the dashboard
+
+The **Domains** view in the dashboard (`lizard open`) shows each domain's verification and TLS status and lets you add or remove hostnames visually.

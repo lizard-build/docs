@@ -1,0 +1,58 @@
+# Managed Addons
+
+Lizard provisions managed **Postgres**, **Redis**, and **S3-compatible object storage** with a single command. Each addon lives in your project, exposes a fixed set of environment variables, and is consumed by your services through [references](/concepts/architecture#cross-resource-references).
+
+## Provision an addon
+
+```bash
+lizard add postgres            # one addon
+lizard add postgres redis s3   # several at once
+lizard add --list              # show available types
+```
+
+## Naming
+
+The **first** addon of a given type gets the bare type as its name — so `${{postgres.DATABASE_URL}}` works out of the box. Additional addons of the same type get a generated name like `postgres-autumn-bear`.
+
+There's no type-alias fallback: a reference must use the addon's **actual** name. Because references are stored by ID, you can rename an addon later without breaking existing consumers:
+
+```bash
+lizard service rename --service postgres   # addons rename through the same command
+```
+
+## Consuming an addon
+
+Reference an addon's variables from any service. The reference resolves at deploy time and rotates automatically when the addon's credentials change:
+
+```bash
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+lizard redeploy --service api
+```
+
+Scope the reference to the services that actually use it (see [Secret scoping](/guides/environment-variables#scoping)).
+
+## Variables by type
+
+| Addon | Variables |
+|-------|-----------|
+| **postgres** | `DATABASE_URL`, `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `POSTGRES_USER`, `POSTGRES_DB`, `POSTGRES_PASSWORD` |
+| **redis** | `REDIS_URL` |
+| **s3** | `S3_ENDPOINT`, `S3_DEFAULT_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION` |
+
+## Dashboard browsers
+
+The [dashboard](/dashboard) ships a data browser for each addon — a SQL/table editor for Postgres, a key browser for Redis, and a bucket/object browser for S3 — so you can inspect and edit data without leaving Lizard.
+
+## Storage
+
+Addon data volumes are **grow-only**. Increase capacity with:
+
+```bash
+lizard scale --service postgres --storage 8192
+```
+
+## Per-type guides
+
+- [Postgres](/addons/postgres)
+- [Redis](/addons/redis)
+- [Object Storage (S3)](/addons/storage)

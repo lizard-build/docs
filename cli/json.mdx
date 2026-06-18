@@ -1,0 +1,69 @@
+# JSON & Automation
+
+The CLI is built to be scripted. Pass `--json` for machine-readable output, drive it from CI with a token, and discover any command's schema at runtime.
+
+## `--json` everywhere
+
+Add `--json` to any command for structured output. The CLI also switches to JSON automatically when stdout isn't a TTY.
+
+```bash
+lizard ps --json
+lizard secrets list --json
+lizard metrics --json
+```
+
+### Streaming commands
+
+For streaming commands (`lizard up` without `--detach`), `--json` emits **one JSON object per line**:
+
+```json
+{ "event": "log", "line": "Step 1/8 : FROM node:20" }
+{ "event": "log", "line": "..." }
+{ "event": "deployed", "status": "running", "url": "https://app.onlizard.com" }
+```
+
+The stream terminates with `done`, or `error` / `failed`. `lizard up` additionally emits a final `deployed` / `failed` / `deploying` event with `status` and `url` (which may be `null`).
+
+### `logs --json` is a snapshot, not a stream
+
+`lizard logs --json` returns the **last 200 lines** (override with `--tail N`, max 1000) and exits. Don't wait on it expecting more output. For a specific incident, use `--restart latest` or `--restart <id>`.
+
+## Schema discovery
+
+Dump any command's exact arguments, options, and exit codes:
+
+```bash
+lizard --help --json                 # whole tree + global flags + exit codes
+lizard service set --help --json     # one command
+```
+
+The response shape is `{ cli, version, command: { arguments, options, subcommands }, globalOptions, exitCodes }`. Because it's generated from your installed binary, it always matches your version — prefer it over hard-coding flags.
+
+## CI / headless usage
+
+Authenticate with a token and link the project explicitly (headless `up` won't auto-create a project):
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+lizard init --name my-project
+lizard up --ci --service api --detach
+```
+
+Check exit codes to branch your pipeline:
+
+| Code | Meaning |
+|------|---------|
+| `0` | success |
+| `1` | generic error |
+| `2` | auth — token missing/expired |
+| `3` | not found |
+| `4` | timeout |
+| `5` | cancelled |
+
+```bash
+if ! lizard redeploy --service api --json; then
+  echo "deploy failed with code $?"
+  lizard logs --build --json
+  exit 1
+fi
+```

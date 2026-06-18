@@ -1,0 +1,36 @@
+# Metrics & Cost
+
+Track CPU, memory, network, and disk for a service — and see what it's costing — from the CLI or the dashboard.
+
+## View metrics
+
+```bash
+lizard metrics                    # CPU / memory / network / disk
+lizard metrics --service api      # a specific service
+lizard metrics --range <range>    # time window
+lizard metrics --watch            # live-updating view
+```
+
+## Include cost
+
+```bash
+lizard metrics --cost
+```
+
+Adds cost figures alongside resource usage so you can see the price of current scale.
+
+## Dashboard
+
+The dashboard (`lizard open`) renders these as charts in the **Metrics / Observability** view, and the **Usage** view breaks down consumption and billing across the project. Open it with:
+
+```bash
+lizard open
+```
+
+## Acting on what you see
+
+- High CPU/memory → scale up: `lizard scale --service api --cpu 2 --memory 2048`.
+- Sustained load → add replicas: `lizard scale --service api --replicas 3`.
+- Disk pressure on an addon → grow storage: `lizard scale --service postgres --storage 8192`.
+
+See [Scaling](/deploy/scaling).

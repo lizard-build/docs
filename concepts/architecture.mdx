@@ -1,0 +1,106 @@
+# Architecture
+
+Lizard organizes everything you deploy into a three-level hierarchy, plus managed addons that attach to a project.
+
+```
+workspace
+└── project
+    ├── service (app)          ← built from GitHub or an upload
+    ├── service (worker)       ← background job, no HTTP port
+    └── addons
+        ├── postgres
+        ├── redis
+        └── s3
+```
+
+## Workspace
+
+A **workspace** is the account or organization level. You belong to at least one, and billing, members, and projects live under it. List the ones you can access:
+
+```bash
+lizard workspace list
+lizard whoami        # shows your active workspace
+```
+
+Many commands accept `-w, --workspace <ws>` to disambiguate when the same project name exists in more than one workspace.
+
+## Project
+
+A **project** groups related services and addons inside a workspace. Your working directory gets *linked* to a project, and that link (stored in `~/.lizard/config.json`) is how the CLI knows what you're targeting.
+
+```bash
+lizard init --name my-project   # create or select a project, link the cwd
+lizard link --project my-project  # link to an existing project
+lizard status                   # show the current directory's link
+lizard unlink                   # remove the link
+lizard project list             # all projects in the workspace
+```
+
+> **Tip:** Use the repo or directory name for the project, and app-style names (`api`, `worker`, `web`) for services.
+
+## Service
+
+A **service** is a single deployable unit. Its source is one of:
+
+- **`github`** — a connected GitHub repo. Pushes to the tracked branch auto-redeploy.
+- **`upload`** — a tarball uploaded with `lizard up`.
+
+Each running service gets its own isolated **Firecracker micro-VM**, a generated `*.onlizard.com` domain, and automatic TLS. Inspect and manage services with:
+
+```bash
+lizard ps                       # list services with status + URL
+lizard service show             # full config as JSON
+lizard service set <svc> --set <field>=<value>
+lizard service rename --service <svc>
+lizard service delete --service <svc>
+```
+
+Service configuration fields are **flat** and map 1:1 to the wire schema (e.g. `repoUrl`, `branch`, `buildCommand`, `startCommand`, `containerPort`, `rootDirectory`). There is no `build.*` / `deploy.*` nesting. See the [CLI Reference → `service set`](/cli/commands#service) for the full list.
+
+### App vs. worker services
+
+By default a service is an **HTTP app** that listens on a port (default `3000`) and is served at its domain. A service that doesn't listen on a port — a queue consumer, reconciler, or polling loop — should run in [**worker mode**](/deploy/workers) by setting `containerPort=0`. Workers skip port injection, the reachability health check, and load-balancer registration.
+
+## Managed addons
+
+**Addons** are managed Postgres, Redis, and S3-compatible storage that you provision per project:
+
+```bash
+lizard add postgres redis s3
+```
+
+Each addon exposes a fixed set of environment variables that your services consume by **reference** (`${{<addon-name>.KEY}}`). See [Managed Addons](/addons).
+
+## Cross-resource references
+
+Any service or addon value can be referenced from another resource's environment using:
+
+```
+${{<name>.<KEY>}}
+```
+
+References resolve at **deploy time** against the target's merged environment. They're stored by ID, so renaming the target later doesn't break the reference. A reference to a missing target or key resolves to an empty string (it does **not** fail the deploy); only circular references throw.
+
+```bash
+# Wire a service to the project's Postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+```
+
+Verify the consumer actually received the value:
+
+```bash
+lizard ssh --service api -- env | grep DATABASE_URL
+```
+
+## Platform-injected variables
+
+Every service automatically receives these variables (they cannot be overridden):
+
+| Variable | Description |
+|----------|-------------|
+| `PORT` | Port your app should listen on (omitted in worker mode) |
+| `LIZARD_SERVICE_NAME` | The service's name |
+| `LIZARD_PROJECT_ID` | The project ID |
+| `LIZARD_PUBLIC_DOMAIN` | The service's public domain |
+
+See [Environment Variables & Secrets](/guides/environment-variables) for how these interact with your own variables and the full precedence order.

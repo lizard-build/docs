@@ -1,0 +1,77 @@
+# Deploy from GitHub
+
+Connecting a GitHub repo is the recommended way to run an app on Lizard: every push to the tracked branch auto-builds and redeploys.
+
+## Create a service from a repo
+
+```bash
+lizard add -r your-org/your-app
+```
+
+This creates a `github`-source service, clones the repo, auto-detects the stack ([lizardpack](/concepts/build-pipeline)), builds it, and returns a live URL. Useful flags:
+
+| Flag | Purpose |
+|------|---------|
+| `-r, --repo <owner/repo>` | Source repository |
+| `-n, --name <name>` | Service name (used in `${{name.KEY}}` refs and the dashboard) |
+| `-v, --variables <K=V>` | Seed an env var; repeatable |
+| `--region <code>` | Region to deploy in |
+| `--no-deploy` | Attach the repo but skip the first build |
+
+## Private repositories
+
+Connect the Lizard GitHub App once per account to grant access to private repos:
+
+```bash
+lizard git connect
+lizard git status        # show connection + repo status
+```
+
+## Point an existing service at a repo
+
+To switch a service to a git source (or change the repo/branch):
+
+```bash
+lizard service set api \
+  --set sourceType=github \
+  --set repoUrl=https://github.com/your-org/your-app \
+  --set branch=main
+```
+
+Changing a build field auto-rebuilds — **don't** chain a `redeploy` after it.
+
+> **Note:** `lizard up` always forces `sourceType=upload`. Don't use it to update a git-backed service — push to the remote or use `lizard redeploy` instead.
+
+## Auto-redeploy on push
+
+Once `repoUrl` is set, pushes to the matching `branch` redeploy automatically via the GitHub webhook. To scope which pushes trigger a redeploy:
+
+- **`rootDirectory`** — only build a subdirectory (monorepos).
+- **`watchPatterns`** — only redeploy when matching paths change.
+
+```bash
+lizard service set api --set watchPatterns='apps/api/**,packages/**'
+```
+
+## Switch branches
+
+```bash
+lizard git checkout api staging      # move the `api` service to the `staging` branch and redeploy
+```
+
+## Monorepos
+
+For a repo that holds several apps, create one service per app and set its `rootDirectory` to the subpath:
+
+```bash
+lizard add -r your-org/monorepo -n api
+lizard service set api --set rootDirectory=apps/api
+```
+
+If your current directory is a sub-app inside a repo whose parent is already linked, add the service in the parent's project and set `rootDirectory` to the cwd subpath.
+
+## See also
+
+- [Build Pipeline](/concepts/build-pipeline) — how your stack is detected and built.
+- [Deploy from Local Code](/deploy/upload) — when you don't have a remote.
+- [GitHub Integration](/guides/github-integration) — connection management.

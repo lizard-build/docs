@@ -1,0 +1,47 @@
+# Logs
+
+Lizard captures **runtime** logs, **build** logs, and the log tail around **restarts**. Stream them live in your terminal or browse them in the dashboard.
+
+## Runtime logs
+
+```bash
+lizard logs                       # last 200 runtime lines, then live tail
+lizard logs --service api         # a specific service
+lizard logs --tail 1000           # more history (max 1000)
+lizard logs --level error         # filter by level
+```
+
+### Behavior with `--json`
+
+`lizard logs --json` is **not** a stream — it returns the last 200 lines (override with `--tail N`, max 1000) and exits. Use it for snapshots and scripting. Stream live only without `--json` when you want an interactive tail.
+
+## Build logs
+
+```bash
+lizard logs --build               # the most recent build's logs
+```
+
+This is the first thing to check when a deploy fails — read it, fix the cause, then `lizard redeploy`. See [Build Pipeline](/concepts/build-pipeline).
+
+## Restart / crash logs
+
+When a replica crashes or restarts, grab the surrounding log tail:
+
+```bash
+lizard logs --restart latest      # the most recent restart
+lizard logs --restart <id>        # a specific restart
+lizard logs --restarts            # list recent restarts
+```
+
+## Paging through history
+
+`lizard service logs` supports paging older windows:
+
+```bash
+lizard service logs --service api --tail all     # full history (no follow)
+lizard service logs --service api --page 2       # older window (implies --tail 200)
+```
+
+## Dashboard
+
+The dashboard (`lizard open`) streams runtime and build logs with search and level filters, and shows per-deployment build output in the **Deployments** view.

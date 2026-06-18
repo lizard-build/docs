@@ -1,0 +1,32 @@
+# Events & History
+
+`lizard events` shows a service's deploy history and the live status of its replicas — the timeline of what shipped and what's running right now.
+
+## View events
+
+```bash
+lizard events                     # deploy history + replica status
+lizard events --service api       # a specific service
+lizard events --limit 25          # show more entries (default 10)
+```
+
+Each entry covers a deploy or scaling action and the resulting replica state, so you can answer "what changed, and is it healthy?" at a glance.
+
+## Quick status
+
+For a fast snapshot of all services in the project — status and URL — use:
+
+```bash
+lizard ps
+lizard status        # the current directory's workspace/project/service link
+```
+
+## Dashboard
+
+The **Deployments** view in the dashboard (`lizard open`) renders the same history as a timeline, with a detail drawer per deploy (build logs, commit, status) and per-replica health.
+
+## Related
+
+- [Deployments](/concepts/deployments) — the deploy lifecycle.
+- [Logs](/observability/logs) — runtime, build, and restart logs.
+- [Metrics & Cost](/observability/metrics) — resource usage and billing.

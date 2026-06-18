@@ -1,0 +1,312 @@
+# Command Reference
+
+Every `lizard` command, grouped by what it does. Flags shown are the common ones — run `lizard <cmd> --help --json` for the complete, version-matched schema.
+
+Most commands accept `-p, --project <id>`, `-s, --service <name>`, and `-w, --workspace <ws>` to override the linked resource.
+
+---
+
+## Auth & account
+
+### `lizard login`
+Log in to Lizard.
+
+| Flag | Description |
+|------|-------------|
+| `--token <token>` | Authenticate with an API token |
+
+### `lizard logout`
+Log out.
+
+### `lizard whoami`
+Show the current user, active workspace, and linked project.
+
+### `lizard workspace list`
+List the workspaces you can access.
+
+---
+
+## Projects & linking
+
+### `lizard init`
+Create or select a project and link it to the current directory.
+
+| Flag | Description |
+|------|-------------|
+| `-n, --name <name>` | Project name (create if missing) |
+| `-w, --workspace <ws>` | Workspace id, slug, or name |
+| `--force` | Relink even if already linked |
+
+### `lizard link [service]`
+Associate the current directory with an existing project (and optionally a service).
+
+| Flag | Description |
+|------|-------------|
+| `-p, --project <id>` | Project name, slug, or ID |
+| `-s, --service <name>` | Service to link |
+| `-w, --workspace <ws>` | Workspace |
+
+### `lizard unlink`
+Disassociate the current directory from any project.
+
+### `lizard status`
+Show the linked workspace, project, and service for the current directory (no auth required).
+
+### `lizard project list`
+List all projects in the workspace.
+
+### `lizard project create`
+Create a new project.
+
+### `lizard config apply`
+Apply a `lizard-config.json` file to the project.
+
+| Flag | Description |
+|------|-------------|
+| `-f, --file <path>` | Config file (default `lizard-config.json`) |
+| `--dry-run` | Show what would change without applying |
+
+---
+
+## Creating services & addons
+
+### `lizard add [types...]`
+Add a database, service, or repo to the project.
+
+| Flag | Description |
+|------|-------------|
+| `-r, --repo <owner/repo>` | Create a service from a GitHub repo |
+| `-s, --service <name>` | Create an empty service |
+| `-a, --addon <type...>` | Add managed addons (`postgres` / `redis` / `s3`) |
+| `-n, --name <name>` | Name used in `${{name.KEY}}` refs |
+| `-v, --variables <K=V>` | Seed an env var (repeatable) |
+| `--region <code>` | Region to provision in |
+| `--no-deploy` | Attach repo but skip the first build |
+| `--list` | Show available database types |
+
+```bash
+lizard add -r your-org/app          # service from a repo
+lizard add postgres redis s3        # several addons at once
+lizard add -s worker                # empty service
+```
+
+---
+
+## Deploying
+
+### `lizard up`
+Upload the current directory and deploy it (forces `sourceType=upload`).
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | Target/create a service |
+| `--build-command <cmd>` | Override build command |
+| `--start-command <cmd>` | Override start command |
+| `--pre-deploy-command <cmd>` | Run once before each deploy |
+| `--port <number>` | Container port (`0` = worker mode) |
+| `--region <code>` | Region |
+| `-d, --detach` | Start and exit without streaming logs |
+| `-c, --ci` | CI-friendly output |
+| `--no-gitignore` | Upload everything, ignore `.gitignore` |
+
+`lizard up status` reports the status of an in-progress upload deploy.
+
+### `lizard redeploy`
+Trigger a fresh build (latest commit / last upload) with current variables.
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | Service |
+| `--detach` | Don't stream logs |
+
+### `lizard restart`
+Rolling restart of the current build (no rebuild).
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | Service |
+| `--detach` | Don't stream logs |
+
+---
+
+## Service configuration
+
+### `lizard service set`
+Apply build/start/source/variables/rename changes to a service.
+
+| Flag | Description |
+|------|-------------|
+| `--set <path>=<value>` | Set a field (repeatable) |
+| `-f, --file <path>` | JSON config file to apply |
+| `--force` | Overwrite even if changed remotely |
+
+Common fields (flat, 1:1 with the wire schema): `sourceType`, `repoUrl`, `branch`, `rootDirectory`, `dockerfilePath`, `buildCommand`, `startCommand`, `preDeployCommand`, `watchPatterns`, `containerPort`, `name`.
+
+```bash
+lizard service set api --set branch=main --set buildCommand="npm run build"
+```
+
+> Uses optimistic concurrency via `configRevision`. On a `409`, re-read with `lizard service show`, reconcile, and retry (or pass `--force`).
+
+### `lizard service show`
+Show the current service configuration as JSON. Use `-s` to limit to one service.
+
+### `lizard service rename`
+Rename a service or addon (refs stay stable).
+
+### `lizard service delete`
+Delete a service. `-y, --yes` skips confirmation.
+
+### `lizard service logs`
+Stream a service's logs (see also `lizard logs`).
+
+### `lizard service link`
+Link a service to the current directory.
+
+### `lizard port [value]`
+Show or change the container port for a service. No argument prints the current port (`worker mode` when `0`).
+
+```bash
+lizard port               # show
+lizard port 0 -s worker   # set worker mode
+```
+
+### `lizard scale`
+Scale a service (replicas / CPU / memory / storage).
+
+| Flag | Description |
+|------|-------------|
+| `--replicas <n>` | Replicas `1`–`10` (apps) |
+| `--cpu <cores>` | `1`, `2`, `3`, or `4` |
+| `--memory <mb>` | `128`–`8192` MB |
+| `--storage <mb>` | Addon volume size, grow-only |
+
+---
+
+## Secrets
+
+### `lizard secrets set <K=V>...`
+Set one or more secrets (variadic). Default scope is the service; `--global` targets the project.
+
+| Flag | Description |
+|------|-------------|
+| `--global` | Project scope |
+| `-s, --service <name>` | Service scope |
+
+### `lizard secrets list`
+List secrets in scope. `--show` reveals values; `--ref` shows references.
+
+### `lizard secrets delete <K>...`
+Delete one or more secrets (variadic).
+
+### `lizard secrets import`
+Import dotenv from stdin: `cat .env | lizard secrets import`.
+
+---
+
+## Domains
+
+### `lizard domain [hostname]`
+Show the current domain, or attach a custom one (positional hostname).
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | Service |
+| `--port <n>` | Port to expose |
+
+### `lizard domain generate`
+Generate a fresh `*.onlizard.com` subdomain.
+
+### `lizard domain verify <hostname>`
+Check the TXT record and activate the domain.
+
+### `lizard domain delete <hostname>`
+Remove a domain (alias `rm`). `-y, --yes` skips confirmation.
+
+---
+
+## Logs, metrics & events
+
+### `lizard logs`
+Stream runtime logs (last 200 lines, then live tail).
+
+| Flag | Description |
+|------|-------------|
+| `--build` | Show build logs instead |
+| `--tail <n>` | Last N lines (max 1000) |
+| `-l, --level <level>` | Filter by level |
+| `--restarts [n]` | List recent restarts |
+| `--restart <id>` | Logs around a specific restart (`latest` for the most recent) |
+| `-s, --service <id>` | Service |
+
+### `lizard metrics`
+Show CPU / memory / network / disk and cost.
+
+| Flag | Description |
+|------|-------------|
+| `-r, --range <range>` | Time window |
+| `-w, --watch` | Live-updating |
+| `--cost` | Include cost |
+
+### `lizard events`
+Show deploy history and replica status. `-n, --limit <n>` (default 10).
+
+### `lizard ps`
+List all services in the project with status + URL.
+
+---
+
+## Running commands
+
+### `lizard run`
+Run a command **locally** with project + service secrets injected.
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | Service whose env to inject |
+| `--no-service` | Don't inject service env |
+
+```bash
+lizard run --service api -- node scripts/migrate.js
+```
+
+### `lizard ssh`
+Execute a command **inside** a running service VM (streams output, returns remote exit code).
+
+```bash
+lizard ssh --service api -- env
+```
+
+See [Run & SSH](/guides/run-and-ssh) for the difference.
+
+---
+
+## GitHub
+
+### `lizard git connect`
+Connect the GitHub App to access private repositories.
+
+### `lizard git status`
+Show GitHub connection and repository status.
+
+### `lizard git checkout <service> <branch>`
+Switch a service to a different branch and redeploy. `--detach` to skip log streaming.
+
+---
+
+## Misc
+
+### `lizard regions`
+List available regions.
+
+### `lizard open`
+Open the project in the browser.
+
+### `lizard docs`
+Open the documentation in the browser.
+
+### `lizard upgrade`
+Upgrade the CLI. `--check` checks without installing.
+
+### `lizard skills`
+Read the embedded agent skills shipped with this CLI version (`list`, `get`, `path`). See [AI Agents & MCP](/agents).

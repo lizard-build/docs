@@ -1,0 +1,66 @@
+# Dashboard
+
+The Lizard dashboard is the visual companion to the CLI. Everything you do with `lizard …` is reflected here, plus things that are easier with a UI — streaming logs, charts, the data browsers, and team/billing management.
+
+Open it from the CLI:
+
+```bash
+lizard open          # open the current project
+lizard docs          # open this documentation
+```
+
+## What's in the dashboard
+
+### Services
+
+The project's home view lists every service with its status badge, generated domain, and a quick path to logs, metrics, secrets, and settings. Create new services (from a GitHub repo or empty) right from here.
+
+### Deployments
+
+A timeline of every deploy, with per-deploy build logs and a detail drawer (commit, status, replicas). This is the visual equivalent of `lizard events` + `lizard logs --build`.
+
+### Logs
+
+Live runtime and build log streaming with search and level filters — the UI counterpart to [`lizard logs`](/observability/logs).
+
+### Metrics & Usage
+
+CPU, memory, network, and disk charts per service, plus a **Usage** view that breaks down consumption and cost across the project. Mirrors [`lizard metrics --cost`](/observability/metrics).
+
+### Variables & Secrets
+
+Manage service- and project-scoped secrets, with masked values and reference (`${{…}}`) support. See [Variables & Secrets](/guides/environment-variables).
+
+### Domains
+
+Add custom domains, view DNS records, and track verification and TLS status. See [Custom Domains](/guides/domains).
+
+### Managed addon browsers
+
+Each addon ships a data browser:
+
+- **Postgres** — a SQL/table editor to query and edit data.
+- **Redis** — a key/value browser.
+- **S3** — a bucket and object browser with upload/download.
+
+### GitHub integration
+
+Connect the GitHub App, pick repositories, and manage which repos Lizard can build. See [GitHub Integration](/guides/github-integration).
+
+### Settings, team & billing
+
+Project and workspace settings, member invites and roles, plan/pricing, and usage-based billing.
+
+## CLI ↔ Dashboard
+
+| Task | CLI | Dashboard view |
+|------|-----|----------------|
+| Deploy history | `lizard events` | Deployments |
+| Stream logs | `lizard logs` | Logs |
+| Resource charts | `lizard metrics` | Metrics / Usage |
+| Manage secrets | `lizard secrets` | Variables |
+| Custom domains | `lizard domain` | Domains |
+| Browse Postgres/Redis/S3 | `lizard run` / `lizard ssh` | Addon browsers |
+| Invite teammates | — | Team / Settings |
+
+Use whichever fits the moment — they operate on the same projects and services.

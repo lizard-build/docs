@@ -1,0 +1,78 @@
+# Postgres
+
+A managed PostgreSQL database, provisioned in one command and wired into your services by reference.
+
+## Provision
+
+```bash
+lizard add postgres
+```
+
+The first Postgres addon is named `postgres`, so `${{postgres.DATABASE_URL}}` works immediately.
+
+## Environment variables
+
+The addon exposes a standard set of connection variables:
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | Full connection string (`postgres://…`) |
+| `PGHOST` | Host |
+| `PGPORT` | Port |
+| `PGUSER` | User |
+| `PGPASSWORD` | Password |
+| `PGDATABASE` | Database name |
+| `POSTGRES_USER` | Alias for the user |
+| `POSTGRES_DB` | Alias for the database |
+| `POSTGRES_PASSWORD` | Alias for the password |
+
+## Connect a service
+
+Reference the connection string from the consumer service and redeploy:
+
+```bash
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+lizard redeploy --service api
+```
+
+The reference resolves at deploy time and rotates automatically if the addon's credentials change — every consumer picks up the new value on its next deploy.
+
+Verify the value landed:
+
+```bash
+lizard ssh --service api -- env | grep DATABASE_URL
+```
+
+## Run migrations on deploy
+
+Use a pre-deploy command so migrations run once per deploy before new replicas start serving:
+
+```bash
+lizard service set api --set preDeployCommand="npm run migrate"
+lizard redeploy --service api
+```
+
+## Browse and query data
+
+Open the **Postgres editor** in the dashboard (`lizard open`) to run SQL and browse tables directly. For ad-hoc local work, run a command with the service's injected environment:
+
+```bash
+lizard run --service api -- psql "$DATABASE_URL"
+```
+
+## Grow storage
+
+Data volumes are grow-only:
+
+```bash
+lizard scale --service postgres --storage 8192
+```
+
+## Multiple databases
+
+Adding a second Postgres gives it a generated name (e.g. `postgres-autumn-bear`). Reference it explicitly:
+
+```bash
+lizard add postgres
+lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_URL}}' --service api
+```

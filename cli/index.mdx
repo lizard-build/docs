@@ -1,0 +1,70 @@
+# CLI Reference
+
+The `lizard` CLI is the primary interface to the platform. This page covers installation, global flags, exit codes, and runtime discovery. For every command's flags, see the [Command Reference](/cli/commands).
+
+> Reference generated against CLI **v0.3.62**. Run `lizard <cmd> --help --json` for the exact, version-matched schema of any command.
+
+## Install & upgrade
+
+```bash
+npm install -g @lizard-build/cli
+lizard --version
+lizard upgrade            # update to the latest version
+lizard upgrade --check    # check without installing
+```
+
+Always use the globally installed `lizard` binary — **not** `npx`. See [Quickstart](/getting-started#1-install-the-cli) for permission-error fixes.
+
+## Authentication
+
+```bash
+lizard login                  # browser OAuth
+lizard login --token lzd_xxx  # token auth
+lizard logout
+lizard whoami                 # current user, workspace, linked project
+```
+
+In CI, set `LIZARD_TOKEN` in the environment instead of running `login`.
+
+## Global flags
+
+| Flag | Description |
+|------|-------------|
+| `-V, --version` | Print the CLI version |
+| `--json` | Machine-readable output. Combine with `--help` to dump a command's schema |
+
+Most commands also accept `-p, --project`, `-s, --service`, and `-w, --workspace` to target a specific resource instead of the linked one.
+
+## Exit codes
+
+| Code | Meaning | What to do |
+|------|---------|------------|
+| `0` | success | continue |
+| `1` | generic error | read the message |
+| `2` | auth (401/403) | run `lizard login` |
+| `3` | not found (404) | check the name with `lizard ps` / `lizard project list` |
+| `4` | timeout (408/504) | retry |
+| `5` | cancelled by user | stop |
+
+## Runtime discovery
+
+The CLI is self-documenting. To see the full command tree, global flags, and exit codes:
+
+```bash
+lizard --help --json
+```
+
+For any command or subcommand's exact arguments and options:
+
+```bash
+lizard <cmd> --help --json
+lizard <cmd> <sub> --help --json     # e.g. lizard service set --help --json
+```
+
+This always reflects your installed version — prefer it over guessing flag shapes.
+
+## Configuration & state
+
+- The CLI stores auth and the current directory's project link in `~/.lizard/config.json`.
+- `lizard status` shows the cwd's workspace/project/service link (no auth required).
+- `lizard config apply` applies a `lizard-config.json` file to a project (use `--dry-run` to preview).

@@ -1,0 +1,69 @@
+# Deployments
+
+A **deployment** is one build-and-release of a service. Every deploy produces a build, starts new replicas in fresh micro-VMs, and shifts traffic once they're healthy.
+
+## How a deploy happens
+
+A deployment is triggered by any of:
+
+- A **`git push`** to the tracked branch (for `github`-source services).
+- **`lizard redeploy`** — rebuild from the latest commit (git) or last upload, with current variables.
+- **`lizard up`** — upload the current directory and deploy it.
+- A **`service set`** that changes a build-affecting field.
+
+```bash
+lizard redeploy --service api      # rebuild + redeploy from current source
+lizard up                          # upload cwd and deploy
+```
+
+## Lifecycle
+
+1. **Build** — the platform runs your build (see [Build Pipeline](/concepts/build-pipeline)).
+2. **Pre-deploy** — if `preDeployCommand` is set, it runs once (e.g. migrations).
+3. **Start** — new replicas boot in fresh Firecracker VMs.
+4. **Health check** — the platform verifies the app's port is reachable (skipped for [workers](/deploy/workers)).
+5. **Route** — traffic shifts to the new replicas.
+
+## Streaming output
+
+When you run a non-detached `lizard up` (or `redeploy`), build logs stream live. With `--json`, you get one JSON event per line:
+
+```json
+{ "event": "log", "line": "..." }
+{ "event": "deployed", "status": "...", "url": "https://..." }
+```
+
+terminating in `deployed`, `failed`, or `deploying`. Use `--detach` to start the deploy and return immediately without streaming.
+
+## Inspecting history
+
+```bash
+lizard events                  # deploy history + per-replica status
+lizard events --limit 25       # show more
+lizard ps                      # current services, status, and URLs
+```
+
+In the [dashboard](/dashboard), the **Deployments** view shows the full timeline, per-deploy build logs, and a detail drawer for each release.
+
+## Restarts vs. redeploys
+
+| Command | What it does |
+|---------|--------------|
+| `lizard restart --service <svc>` | Rolling restart of the **current** build — no rebuild |
+| `lizard redeploy --service <svc>` | Fresh **build** from latest commit/upload, then release |
+
+Use `restart` to recycle replicas (e.g. to pick up a runtime secret that didn't hot-reload); use `redeploy` when you need a new build.
+
+## Recovering from a crash
+
+Inspect the most recent crash or restart's logs:
+
+```bash
+lizard logs --restart latest       # log tail around the latest restart
+lizard logs --restart <id>         # a specific restart
+lizard events                      # see replica status
+```
+
+## Live config changes (no rebuild)
+
+Most environment variable and secret changes are pushed **live** to the running VM (via `SIGUSR1`) without a rebuild. Build-time values (`VITE_*`, `NEXT_PUBLIC_*`) and build-field changes do force a rebuild — see the [rebuild triggers table](/concepts/build-pipeline#what-triggers-a-rebuild).

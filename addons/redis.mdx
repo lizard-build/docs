@@ -1,0 +1,54 @@
+# Redis
+
+A managed Redis instance for caching, queues, rate limiting, and pub/sub.
+
+## Provision
+
+```bash
+lizard add redis
+```
+
+The first Redis addon is named `redis`, so `${{redis.REDIS_URL}}` works immediately.
+
+## Environment variables
+
+| Variable | Description |
+|----------|-------------|
+| `REDIS_URL` | Full connection string (`redis://…`) |
+
+## Connect a service
+
+```bash
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service api
+lizard redeploy --service api
+```
+
+The reference resolves at deploy time and rotates with the addon's credentials.
+
+## Common uses
+
+- **Cache** — store computed results keyed by request.
+- **Queue / worker** — pair Redis with a [worker-mode service](/deploy/workers) that consumes jobs.
+- **Rate limiting / sessions** — fast shared state across [replicas](/deploy/scaling).
+
+```bash
+# A worker that drains a Redis queue
+lizard add -r your-org/worker -n jobs
+lizard service set jobs --set containerPort=0
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service jobs
+lizard redeploy --service jobs
+```
+
+## Browse keys
+
+Open the **Redis browser** in the dashboard (`lizard open`) to inspect keys and values. For local access:
+
+```bash
+lizard run --service api -- redis-cli -u "$REDIS_URL"
+```
+
+## Grow storage
+
+```bash
+lizard scale --service redis --storage 4096
+```

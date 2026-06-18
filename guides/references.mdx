@@ -1,0 +1,55 @@
+# Cross-Service References
+
+References let one service or addon read another's values without copy-pasting credentials. They keep secrets in one place and rotate automatically.
+
+## Syntax
+
+```
+${{<name>.<KEY>}}
+```
+
+- `<name>` — the target service or addon name (the one shown in the dashboard and used in `lizard add -n`).
+- `<KEY>` — a key in the target's merged environment.
+
+Use them anywhere a value is accepted — most commonly in a secret:
+
+```bash
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+```
+
+## How they resolve
+
+- References resolve at **deploy time** against the target's merged environment.
+- They're stored by **ID**, so renaming the target later doesn't break the reference.
+- A reference to a **missing** target or key resolves to an **empty string** — it does *not* fail the deploy.
+- Only **circular** references throw an error.
+
+> Because a missing key silently becomes empty, always verify the consumer actually received the value after wiring a reference:
+> ```bash
+> lizard ssh --service api -- env | grep DATABASE_URL
+> ```
+
+## Common patterns
+
+**Wire an addon to several services** — bind on each consumer so rotation propagates everywhere:
+
+```bash
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service api
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service worker
+```
+
+**Reference another service's value** — e.g. share a computed URL or token:
+
+```bash
+lizard secrets set UPSTREAM_URL='${{api.LIZARD_PUBLIC_DOMAIN}}' --service web
+```
+
+**Reference a second addon of the same type** — use its generated name:
+
+```bash
+lizard secrets set CACHE_URL='${{redis-winter-otter.REDIS_URL}}' --service api
+```
+
+## Why not just use `--global`?
+
+Putting a shared DSN in project (`--global`) scope exposes it to *every* service, including ones that don't need it. References give you the same single-source-of-truth rotation while keeping each secret scoped to the services that actually consume it. See [Secret scoping](/guides/environment-variables#scoping).

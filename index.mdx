@@ -1,20 +1,54 @@
 # Introduction
 
-Welcome to the **Lizard** documentation.
+**Lizard** is a unified cloud for apps, services, agents, and managed databases. You point it at a repo or a local directory, and Lizard builds it, runs it on isolated micro-VMs, gives it a URL, and keeps it running — no Dockerfile, no YAML, and no local Docker required.
 
-## What is Lizard?
+Everything the platform can do is exposed through the **`lizard` CLI** (npm package [`@lizard-build/cli`](https://www.npmjs.com/package/@lizard-build/cli)) and the **dashboard**. This documentation covers both.
 
-Lizard is a developer platform for building, deploying, and scaling modern applications. It provides a unified CLI, infrastructure orchestration, and real-time observability — so your team ships faster with fewer moving parts.
+```bash
+npm install -g @lizard-build/cli
+lizard login
+lizard add -r your-org/your-app   # deploy a GitHub repo
+```
 
-## Why Lizard?
+## Why Lizard
 
-- **Zero-config deployments** — push code, Lizard handles the rest
-- **Edge-first** — your app runs close to your users by default
-- **Built-in observability** — logs, metrics, and traces out of the box
-- **Framework agnostic** — works with Next.js, Remix, Astro, or any Node.js app
+- **Deploy anything** — Go, Node, Python, Rust, Ruby, PHP, Java, or static sites are auto-detected and built. No buildpack config required.
+- **No Dockerfile needed** — the platform's builder ([lizardpack](/concepts/build-pipeline)) generates an optimized multi-stage image for you. Bring your own Dockerfile when you want full control.
+- **Managed addons in one command** — `lizard add postgres redis s3` provisions Postgres, Redis, and S3-compatible object storage, wired into your services by reference.
+- **Git-native** — connect a GitHub repo and every push to your branch auto-builds and redeploys.
+- **Isolated by default** — each service runs in its own Firecracker micro-VM with a generated `*.onlizard.com` domain and automatic TLS.
+- **Built for both humans and agents** — the same capabilities are available to AI coding agents through an embedded [skill and MCP surface](/agents).
 
-## Quick Links
+## How it fits together
 
-- [Getting Started](/getting-started) — set up Lizard in minutes
-- [Guides](/guides) — learn the core concepts
-- [API Reference](/api) — full CLI and SDK reference
+Lizard organizes everything into a simple hierarchy:
+
+```
+workspace  →  project  →  service  (+ managed addons)
+```
+
+- A **workspace** is your account or organization.
+- A **project** groups related services (your app, a worker, a database).
+- A **service** is a single deployable unit — built from a GitHub repo or an uploaded tarball.
+- **Managed addons** (Postgres, Redis, S3) attach to a project and are referenced by your services.
+
+Read more in [Core Concepts → Architecture](/concepts/architecture).
+
+## Two ways to drive Lizard
+
+| Surface | Best for |
+|---------|----------|
+| **CLI** (`lizard …`) | Day-to-day deploys, CI, scripting, and AI agents. See the [CLI Reference](/cli). |
+| **Dashboard** (`lizard open`) | Visual deploy history, log streaming, metrics, the database/Redis/S3 browsers, secrets, domains, billing, and team management. See [Dashboard](/dashboard). |
+
+## Next steps
+
+<div className="doc-cards">
+
+- **[Quickstart](/getting-started)** — install the CLI and ship your first app.
+- **[Core Concepts](/concepts/architecture)** — the workspace → project → service model and the build pipeline.
+- **[Deploying](/deploy/github)** — from GitHub, from local code, workers, and scaling.
+- **[Managed Addons](/addons)** — Postgres, Redis, and object storage.
+- **[CLI Reference](/cli)** — every command, flag, and exit code.
+
+</div>

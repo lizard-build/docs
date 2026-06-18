@@ -1,0 +1,59 @@
+# Deploy from Local Code
+
+When your code isn't on GitHub — or you just want to iterate quickly — upload the current directory directly with `lizard up`. It packages your working tree as a tarball, sends it to the build nodes, and deploys.
+
+## Deploy the current directory
+
+```bash
+lizard up
+```
+
+- Uploads the current directory as a tarball, respecting `.gitignore` (disable with `--no-gitignore`).
+- Forces `sourceType=upload`.
+- Streams build logs over SSE and prints the live URL when finished.
+
+If the directory isn't linked to a project yet, `up` runs `init` first. On a TTY that's interactive; in a non-TTY (CI) it will **not** silently create a project — it errors and asks you to run `lizard init --name <project>` (or pass `--name`). This guards against a typo spawning an empty project.
+
+## Common flags
+
+| Flag | Purpose |
+|------|---------|
+| `-s, --service <name>` | Target/create a specific service |
+| `--build-command <cmd>` | Override the build command |
+| `--start-command <cmd>` | Override the start command |
+| `--pre-deploy-command <cmd>` | Run once before each deploy (e.g. migrations) |
+| `--port <number>` | Container port (`0` = [worker mode](/deploy/workers)) |
+| `--region <code>` | Region to deploy in |
+| `-d, --detach` | Start the deploy and exit without streaming logs |
+| `-c, --ci` | CI-friendly output |
+| `--no-gitignore` | Upload everything, ignoring `.gitignore` |
+
+```bash
+lizard up --service api --start-command "node server.js" --port 8080
+```
+
+## Setting build/start commands
+
+Passing `--build-command` or `--start-command` switches the service to the **synthesized Dockerfile** path. On that path, `Procfile` and `package.json` `scripts.start` are **not** read — set the start command explicitly (or include a `CMD` in your own Dockerfile). See [Build Pipeline](/concepts/build-pipeline).
+
+## Re-deploying an upload service
+
+`lizard up` re-uploads and rebuilds. To rebuild the **last** upload with current variables without re-uploading:
+
+```bash
+lizard redeploy --service api
+```
+
+## Headless / CI
+
+For non-interactive flows, link the project explicitly before deploying:
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+lizard init --name my-project
+lizard up --ci --service api
+```
+
+## When to prefer GitHub instead
+
+Upload is great for quick iteration and no-remote situations. For anything long-lived, prefer a [GitHub source](/deploy/github) so pushes auto-redeploy and you get a clean deploy history.

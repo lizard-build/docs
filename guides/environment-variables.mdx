@@ -1,61 +1,81 @@
-# Environment Variables
+# Variables & Secrets
 
-Manage secrets and configuration across environments.
+Lizard stores configuration as **secrets**. They come in two scopes — **service** (the default) and **project** (`--global`) — and merge into your app's environment in a defined precedence order. There is no workspace-level global scope.
 
-## Local Development
+## Setting variables
 
-Create a `.env.local` file in your project root:
-
-```bash
-LIZARD_API_KEY=lzd_dev_abc123
-DATABASE_URL=postgresql://localhost:5432/mydb
-REDIS_URL=redis://localhost:6379
-```
-
-This file is automatically added to `.gitignore` by `lizard init`.
-
-## Setting Variables
-
-Use the CLI to set environment variables for your deployed app:
+`lizard secrets set` is variadic — set one or many at once. By default it writes to the **linked service**:
 
 ```bash
-lizard env set DATABASE_URL="postgresql://prod-host:5432/mydb"
-lizard env set REDIS_URL="redis://prod-cache:6379"
+lizard secrets set DATABASE_URL=postgres://… LOG_LEVEL=info
+lizard secrets set API_KEY=sk_live_… --service api
 ```
 
-## Listing Variables
+Add `--global` to write to **project** scope (every service in the project sees it):
 
 ```bash
-lizard env list
+lizard secrets set NODE_ENV=production --global
 ```
 
-Output:
-
-```
-┌─────────────────┬────────────────┬─────────────┐
-│ Name            │ Value          │ Environment │
-├─────────────────┼────────────────┼─────────────┤
-│ DATABASE_URL    │ ••••••••••     │ production  │
-│ REDIS_URL       │ ••••••••••     │ production  │
-│ LIZARD_API_KEY  │ ••••••••••     │ all         │
-└─────────────────┴────────────────┴─────────────┘
-```
-
-## Per-Environment Variables
-
-Set different values for different environments:
+## Listing, deleting, importing
 
 ```bash
-lizard env set DATABASE_URL="postgresql://staging:5432/mydb" --env staging
-lizard env set DATABASE_URL="postgresql://prod:5432/mydb" --env production
+lizard secrets list                       # current scope
+lizard secrets list --show                # reveal values
+lizard secrets delete OLD_KEY ANOTHER_KEY # variadic
+cat .env | lizard secrets import          # import dotenv from stdin
 ```
 
-## Secrets
+## Scoping
 
-For sensitive values, use `lizard secret`:
+| Scope | Command | Stored as | Visible to |
+|-------|---------|-----------|------------|
+| **Service** (default) | `lizard secrets set K=v --service <svc>` | `secrets.services[<svc>]` | that service only |
+| **Project** (global) | `lizard secrets set K=v --global` | `secrets.shared` | every service in the project |
+
+**Default to service scope.** A compromised service can read its own environment — broader scope means more credentials exposed for no reason. Reserve `--global` for non-secret, provably-public values like `LOG_LEVEL`, `NODE_ENV`, feature flags, or a frontend `SENTRY_DSN`. If you're unsure whether a value is a secret, treat it as one and scope it to the service.
+
+For shared resources like a database, **don't** put the DSN in `--global` — bind it per consumer with a [reference](/guides/references):
 
 ```bash
-lizard secret set STRIPE_KEY="sk_live_..."
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service worker
 ```
 
-Secrets are encrypted at rest and only decrypted at runtime.
+Rotation still happens once on the addon; every reference updates.
+
+## Precedence
+
+When the same key is defined in multiple places, the **last writer wins**:
+
+```
+addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets  <  platform vars
+```
+
+So **app secrets override project secrets**, and **platform variables** (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`) are applied last and cannot be shadowed.
+
+## Build-time vs. runtime
+
+Most variable changes are pushed **live** to the running VM with no rebuild. The exceptions are build-time values baked into the image:
+
+- `VITE_*` and `NEXT_PUBLIC_*` changes **force a rebuild** on the next deploy.
+
+See [Build Pipeline → rebuild triggers](/concepts/build-pipeline#what-triggers-a-rebuild).
+
+## Verifying
+
+Confirm what a running service actually sees:
+
+```bash
+lizard ssh --service api -- env
+```
+
+## Local development
+
+Run a command **locally** with the service's project + service secrets injected (handy for scripts and migrations):
+
+```bash
+lizard run --service api -- node scripts/seed.js
+```
+
+See [Run & SSH](/guides/run-and-ssh).

@@ -1,7 +1,7 @@
 export default {
-  configuration: 'Configuration',
-  'environment-variables': 'Environment Variables',
-  deployment: 'Deployment',
+  'environment-variables': 'Variables & Secrets',
+  references: 'Cross-Service References',
   domains: 'Custom Domains',
-  monitoring: 'Monitoring',
+  'github-integration': 'GitHub Integration',
+  'run-and-ssh': 'Run & SSH',
 };

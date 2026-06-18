@@ -1,0 +1,41 @@
+# Run & SSH
+
+Two commands let you execute commands with a service's context. They look similar but run in **different places** — know which one you want.
+
+| Command | Runs where | Use for |
+|---------|-----------|---------|
+| `lizard run` | **Locally**, with the service's project + service secrets injected | Migrations, seed scripts, local tooling that needs prod config |
+| `lizard ssh` | **Inside the running service VM** | Inspecting the live container, one-off remote commands, debugging |
+
+## `lizard run` — locally with injected env
+
+Runs a command on **your machine** with the service's environment variables and secrets injected:
+
+```bash
+lizard run --service api -- node scripts/migrate.js
+lizard run --service api -- printenv DATABASE_URL
+```
+
+Skip env injection for a specific service with `--no-service`. This is the right tool when the command needs to reach the same resources your app does but should run from your environment (e.g. a migration tool installed locally).
+
+## `lizard ssh` — inside the live VM
+
+Executes a command **inside the running service's micro-VM**, streams its output, and returns the remote exit code:
+
+```bash
+lizard ssh --service api -- env            # what the running app sees
+lizard ssh --service api -- ls -la /app
+lizard ssh --service api -- cat /etc/os-release
+```
+
+Use this to confirm references resolved, check files in the deployed image, or debug a live process.
+
+## Which one for "did my secret land"?
+
+To check what the **running app** sees, use `ssh`:
+
+```bash
+lizard ssh --service api -- env | grep DATABASE_URL
+```
+
+`lizard run` would show your **local** injected copy, which is usually the same — but `ssh` is authoritative for the live container.

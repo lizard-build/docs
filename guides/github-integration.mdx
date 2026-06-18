@@ -1,0 +1,50 @@
+# GitHub Integration
+
+Connect GitHub once and Lizard can build from your private repos and auto-redeploy on every push.
+
+## Connect the GitHub App
+
+```bash
+lizard git connect
+```
+
+This links the Lizard GitHub App to your account so the platform can clone private repositories and receive push webhooks. Check the connection and which repos are accessible:
+
+```bash
+lizard git status
+```
+
+You can also connect and manage repository access from the **GitHub integration** page in the dashboard (`lizard open`).
+
+## Deploy from a repo
+
+Once connected, create a service from any accessible repo:
+
+```bash
+lizard add -r your-org/your-app
+```
+
+See [Deploy from GitHub](/deploy/github) for branches, monorepos, and watch patterns.
+
+## Auto-redeploy
+
+With `repoUrl` set on a service, a push to the tracked `branch` triggers a build and redeploy via webhook. Narrow which pushes count with `rootDirectory` (monorepo subpath) or `watchPatterns`.
+
+## Switch branches
+
+Move a service to a different branch and redeploy in one step:
+
+```bash
+lizard git checkout api staging
+lizard git checkout api staging --detach   # don't stream logs
+```
+
+## Change the repo or branch later
+
+```bash
+lizard service set api \
+  --set repoUrl=https://github.com/your-org/your-app \
+  --set branch=main
+```
+
+Changing a build field auto-rebuilds — don't chain a `redeploy`.
