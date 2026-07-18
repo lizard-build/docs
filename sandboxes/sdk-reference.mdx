@@ -1,0 +1,103 @@
+# SDK Reference
+
+The `@lizard-build/sdk` (JS/TS) and `lizard-sdk` (Python) packages are what most agents, apps, and scripts use to drive sandboxes. This page catalogs every class and method; see the [Quickstart](/sandboxes/quickstart) for a walkthrough and the [REST API](/sandboxes/api-reference) if you're not using the SDK.
+
+## Install & authenticate
+
+```bash
+npm install @lizard-build/sdk    # JavaScript / TypeScript
+pip install lizard-sdk           # Python
+```
+
+The SDK reads `LIZARD_API_KEY` (and optionally `LIZARD_API_URL`, default `https://api.lizard.run`) from the environment, or accepts an explicit `apiKey` option on `Sandbox.create` / `Sandbox.connect`. See [Quickstart → Authenticate](/sandboxes/quickstart#authenticate) for how to create a key.
+
+> Python method names with a trailing underscore (`exec_`) avoid shadowing reserved words, and properties are snake_case (`sandbox_id`) instead of camelCase (`sandboxId`). Everything else mirrors the JS/TS API 1:1.
+
+## `Sandbox`
+
+| Member | Description |
+|---|---|
+| `Sandbox.create(template?, options?)` | Boot a sandbox. `template` defaults to `'base'`. |
+| `Sandbox.connect(sandboxId)` | Attach to a sandbox by ID, auto-resuming it if paused. |
+| `Sandbox.list()` | List every running sandbox for the account. |
+| `sandbox.sandboxId` | The sandbox's ID (`sandbox_id` in Python). |
+| `sandbox.process.exec(cmd)` | Run a command and wait for it to finish (`process.exec_` in Python). Returns `{ stdout, stderr, exitCode }`. |
+| `sandbox.fs.write(path, data)` | Write a file — string or bytes; creates parent directories. |
+| `sandbox.fs.read(path)` | Read a file as a UTF-8 string. |
+| `sandbox.fs.list(path)` | List directory entries → `[{ name, path, type, size }]`. |
+| `sandbox.fs.makeDir(path)` | Create a directory and any missing parents. |
+| `sandbox.fs.remove(path)` | Delete a file or directory. |
+| `sandbox.getHost(port)` | Register a route to `port` and return its public, TLS-terminated hostname. |
+| `sandbox.pause()` | Snapshot the sandbox; expiration countdown freezes and on-demand compute drops to zero. |
+| `sandbox.resume()` | Resume a paused sandbox in place. |
+| `sandbox.setTimeout(ms)` | Set or extend the sandbox's lifetime, from now. |
+| `sandbox.getInfo()` | Fetch metadata → `{ sandboxId, template, startedAt, endAt, … }`. |
+| `sandbox.kill()` | Terminate the sandbox immediately and free its resources. |
+
+### `Sandbox.create(template?, options?)`
+
+| Option | Type | Default | Notes |
+|---|---|---|---|
+| `template` | string | `'base'` | `'base'` or `'code-interpreter-v1'` (or a [custom template](/sandboxes#templates)) |
+| `cpus` | int | `1` | 1–8 |
+| `memoryMb` | int | `2048` | 128–8192 |
+| `timeoutMs` | int | SDK default 5 min | Lifetime in ms |
+| `region` | string | auto | Pin to a region |
+| `volumeId` | string | — | Attach a [volume](/sandboxes/volumes) at `/data` |
+| `apiKey` | string | `LIZARD_API_KEY` env var | Explicit API key, overrides the environment |
+
+```ts
+const sandbox = await Sandbox.create('base', { cpus: 2, memoryMb: 4096, timeoutMs: 10 * 60 * 1000 });
+```
+
+## `CodeSandbox`
+
+Extends `Sandbox` with a stateful kernel. See [Code Interpreter](/sandboxes/code-interpreter) for the full walkthrough.
+
+| Member | Description |
+|---|---|
+| `CodeSandbox.create()` | Boot a code interpreter (defaults to the `code-interpreter-v1` template). |
+| `CodeSandbox.connect(sandboxId)` | Attach to (and auto-resume) an existing code interpreter sandbox. |
+| `sandbox.runCode(code, opts?)` | Execute code in the kernel. Returns an `Execution`. |
+| `sandbox.createContext(opts)` | Create an isolated namespace — `{ language }`. |
+| `sandbox.listContexts()` | List the sandbox's contexts. |
+| `sandbox.restartContext(context)` | Clear all variables/state in a context. |
+| `sandbox.deleteContext(context)` | Free a context's resources. |
+
+### `runCode(code, opts?)`
+
+| Option | Description |
+|---|---|
+| `language` | Runtime for a one-off call — `'python'` (default), `'javascript'`, or `'bash'`. Mutually exclusive with `context`. |
+| `context` | Run inside a specific isolated context instead of the default one. Mutually exclusive with `language`. |
+| `onStdout` / `onStderr` | Stream output line-by-line as it's produced. |
+| `onResult` | Called for each rich result (values, generated images/charts). |
+| `onError` | Called with an `ExecutionError` if the code throws. |
+
+Returns an `Execution`:
+
+| Field | Description |
+|---|---|
+| `stdout` / `stderr` | Captured output streams |
+| `results` | Rich results (values, and any generated images / charts) |
+| `error` | An `ExecutionError` (`name`, `message`, `traceback`) if the code threw |
+| `executionCount` | Monotonic counter for the kernel |
+
+## `Volume`
+
+See [Persistent Volumes](/sandboxes/volumes) for the full walkthrough.
+
+| Member | Description |
+|---|---|
+| `Volume.create(projectId, name, options)` | Create a volume. `options.sizeGb` defaults to `5`. |
+| `Volume.list(projectId)` | List volumes in a project → `[{ id, name, sizeGb, status, attachedTo, … }]`. |
+| `Volume.get(projectId, volumeId)` | Get a handle to an existing volume. |
+| `volume.getInfo(projectId)` | Fetch metadata and attachment status. |
+| `volume.delete(projectId)` | Delete a volume — it must be detached first. |
+
+## See also
+
+- [Quickstart](/sandboxes/quickstart) — install, authenticate, and a full walkthrough.
+- [Code Interpreter](/sandboxes/code-interpreter) — the `CodeSandbox` guide.
+- [Persistent Volumes](/sandboxes/volumes) — the `Volume` guide.
+- [REST API](/sandboxes/api-reference) — the same operations over HTTP.
