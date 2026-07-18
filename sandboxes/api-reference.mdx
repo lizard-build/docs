@@ -1,0 +1,153 @@
+# REST API
+
+The sandbox HTTP API is what the [SDK](/sandboxes/quickstart) calls under the hood. Use it directly from any language.
+
+## Base URL & auth
+
+```
+https://api.lizard.run
+```
+
+Authenticate every request with your API key in the `X-API-Key` header:
+
+```bash
+curl https://api.lizard.run/api/sandboxes \
+  -H "X-API-Key: $LIZARD_API_KEY"
+```
+
+Create a key in the dashboard (**Sandboxes → Get started**). It's shown once.
+
+## Endpoints
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/api/sandboxes` | Create a sandbox |
+| `GET` | `/api/sandboxes` | List your sandboxes |
+| `GET` | `/api/sandboxes/:id` | Get a sandbox |
+| `DELETE` | `/api/sandboxes/:id` | Terminate a sandbox |
+| `POST` | `/api/sandboxes/:id/pause` | Snapshot and pause |
+| `POST` | `/api/sandboxes/:id/resume` | Resume from snapshot |
+| `POST` | `/api/sandboxes/:id/timeout` | Change the timeout |
+| `POST` | `/api/sandboxes/:id/exec` | Run a command |
+| `POST` | `/api/sandboxes/:id/files` | Write a file |
+| `GET` | `/api/sandboxes/:id/files?path=` | Read a file |
+| `GET` | `/api/sandboxes/:id/files/list?path=` | List a directory |
+| `DELETE` | `/api/sandboxes/:id/files` | Delete a file or directory |
+| `POST` | `/api/sandboxes/:id/expose/:port` | Publish a port |
+| `DELETE` | `/api/sandboxes/:id/expose/:port` | Unpublish a port |
+| `GET` | `/api/sandboxes/:id/logs?tail=` | Stream VM logs (SSE) |
+
+## Create a sandbox
+
+`POST /api/sandboxes`
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `template` | string | `base` | `base` or `code-interpreter-v1` |
+| `cpus` | int | `1` | 1–8 |
+| `memoryMb` | int | `2048` | 128–8192 |
+| `timeoutMs` | int | `0` | Lifetime in ms; `0` = no expiration |
+| `region` | string | auto | Pin to a region |
+| `volumeId` | string | — | Attach a [volume](/sandboxes/volumes) at `/data` |
+
+```bash
+curl -X POST https://api.lizard.run/api/sandboxes \
+  -H "X-API-Key: $LIZARD_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "template": "base", "cpus": 2, "memoryMb": 4096, "timeoutMs": 600000 }'
+```
+
+```json
+{
+  "sandboxId": "swift-lion-a1b2c3",
+  "id": "swift-lion-a1b2c3",
+  "status": "running",
+  "template": "base",
+  "region": "us-east-1",
+  "cpus": 2,
+  "memoryMb": 4096,
+  "startedAt": "2026-07-17T12:00:00.000Z",
+  "expiresAt": "2026-07-17T12:10:00.000Z"
+}
+```
+
+## Run a command
+
+`POST /api/sandboxes/:id/exec` — `cmd` may be a string (run via `/bin/sh -c`) or an argv array. Returns JSON by default; send `Accept: text/event-stream` to stream output line by line.
+
+```bash
+curl -X POST https://api.lizard.run/api/sandboxes/$ID/exec \
+  -H "X-API-Key: $LIZARD_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "cmd": "node -e \"console.log(2**10)\"" }'
+```
+
+```json
+{ "stdout": "1024", "stderr": "", "exitCode": 0 }
+```
+
+## Files
+
+```bash
+# Write
+curl -X POST https://api.lizard.run/api/sandboxes/$ID/files \
+  -H "X-API-Key: $LIZARD_API_KEY" -H "Content-Type: application/json" \
+  -d '{ "path": "/app/main.py", "content": "print(\"hi\")" }'
+
+# Read (returns text/plain)
+curl "https://api.lizard.run/api/sandboxes/$ID/files?path=/app/main.py" \
+  -H "X-API-Key: $LIZARD_API_KEY"
+
+# List a directory → [{ type, name, path, size }]
+curl "https://api.lizard.run/api/sandboxes/$ID/files/list?path=/app" \
+  -H "X-API-Key: $LIZARD_API_KEY"
+
+# Delete
+curl -X DELETE https://api.lizard.run/api/sandboxes/$ID/files \
+  -H "X-API-Key: $LIZARD_API_KEY" -H "Content-Type: application/json" \
+  -d '{ "path": "/app/main.py" }'
+```
+
+## Expose a port
+
+`POST /api/sandboxes/:id/expose/:port` returns a public, TLS-terminated hostname.
+
+```bash
+curl -X POST https://api.lizard.run/api/sandboxes/$ID/expose/3000 \
+  -H "X-API-Key: $LIZARD_API_KEY"
+```
+
+```json
+{
+  "hostname": "swift-lion-a1b2c3-3000.sandbox.us-east-1.onlizard.com",
+  "url": "https://swift-lion-a1b2c3-3000.sandbox.us-east-1.onlizard.com",
+  "port": 3000
+}
+```
+
+`DELETE /api/sandboxes/:id/expose/:port` removes the route.
+
+## Lifecycle
+
+```bash
+# Pause (snapshot) and resume
+curl -X POST https://api.lizard.run/api/sandboxes/$ID/pause  -H "X-API-Key: $LIZARD_API_KEY"
+curl -X POST https://api.lizard.run/api/sandboxes/$ID/resume -H "X-API-Key: $LIZARD_API_KEY"
+
+# Change the timeout (ms from now)
+curl -X POST https://api.lizard.run/api/sandboxes/$ID/timeout \
+  -H "X-API-Key: $LIZARD_API_KEY" -H "Content-Type: application/json" \
+  -d '{ "timeoutMs": 1800000 }'
+
+# Terminate
+curl -X DELETE https://api.lizard.run/api/sandboxes/$ID -H "X-API-Key: $LIZARD_API_KEY"
+```
+
+## Stream logs
+
+`GET /api/sandboxes/:id/logs?tail=200` is a Server-Sent Events stream of the sandbox's VM-agent logs.
+
+```bash
+curl -N "https://api.lizard.run/api/sandboxes/$ID/logs?tail=200" \
+  -H "X-API-Key: $LIZARD_API_KEY"
+```

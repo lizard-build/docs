@@ -1,0 +1,77 @@
+# lizard service
+
+Manage an individual service's configuration, source, and lifecycle.
+
+## Usage
+
+```bash
+lizard service set [flags]
+lizard service show [flags]
+lizard service rename
+lizard service delete [flags]
+lizard service logs
+lizard service link
+```
+
+## Subcommands
+
+### `lizard service set`
+
+Apply build/start/source/variables/rename changes to a service.
+
+| Flag | Description |
+|------|-------------|
+| `--set <path>=<value>` | Set a field (repeatable) |
+| `-f, --file <path>` | JSON config file to apply |
+| `--force` | Overwrite even if changed remotely |
+
+Common fields are flat and map 1:1 to the wire schema: `sourceType`, `repoUrl`, `branch`, `rootDirectory`, `dockerfilePath`, `buildCommand`, `startCommand`, `preDeployCommand`, `watchPatterns`, `containerPort`, `name`.
+
+`service set` uses optimistic concurrency via `configRevision`. On a `409`, re-read the config with `lizard service show`, reconcile, and retry — or pass `--force`.
+
+### `lizard service show`
+
+Show the current service configuration as JSON. Use `-s` to limit to one service.
+
+### `lizard service rename`
+
+Rename a service or addon. References to it (`${{name.KEY}}`) stay stable.
+
+### `lizard service delete`
+
+Delete a service. `-y, --yes` skips confirmation.
+
+### `lizard service logs`
+
+Stream a service's logs (see also [lizard logs](/cli/logs)).
+
+### `lizard service link`
+
+Link a service to the current directory.
+
+## Examples
+
+### Update a service's build and start commands
+
+```bash
+lizard service set api --set branch=main --set buildCommand="npm run build"
+```
+
+### Inspect a service's full configuration
+
+```bash
+lizard service show -s api
+```
+
+### Delete a service without a confirmation prompt
+
+```bash
+lizard service delete -y
+```
+
+## See also
+
+- [lizard port](/cli/port) — show or change a service's container port
+- [lizard scale](/cli/scale) — scale a service's replicas, CPU, memory, or storage
+- [Architecture](/concepts/architecture) — how services relate to projects and addons
+- [Build pipeline](/concepts/build-pipeline) — how `buildCommand`, `startCommand`, and source settings are used at build time

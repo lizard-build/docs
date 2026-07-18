@@ -1,0 +1,44 @@
+# lizard link
+
+Associate the current directory with an existing project (and optionally a service).
+
+## Usage
+
+```bash
+lizard link [service] [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-p, --project <id>` | Project name, slug, or ID |
+| `-s, --service <name>` | Service to link |
+| `-w, --workspace <ws>` | Workspace |
+
+## Examples
+
+### Link to an existing project
+
+```bash
+lizard link --project my-project
+```
+
+### Link to a project and a specific service
+
+```bash
+lizard link my-service --project my-project
+```
+
+### Link within a specific workspace
+
+```bash
+lizard link --project my-project --workspace my-workspace
+```
+
+## See also
+
+- [lizard init](/cli/init) — create or select a project and link it in one step
+- [lizard unlink](/cli/unlink) — remove the link from the current directory
+- [lizard status](/cli/status) — show the linked workspace, project, and service
+- [Architecture: Project](/concepts/architecture) — how the directory-to-project link works

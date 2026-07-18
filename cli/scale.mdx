@@ -1,0 +1,49 @@
+# lizard scale
+
+Scale a service (replicas / CPU / memory / storage).
+
+## Usage
+
+```bash
+lizard scale [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `--replicas <n>` | Replicas `1`–`10` (apps) |
+| `--cpu <cores>` | `1`, `2`, `3`, or `4` |
+| `--memory <mb>` | `128`–`8192` MB |
+| `--storage <mb>` | Addon volume size, grow-only |
+
+## Examples
+
+### Scale replicas horizontally
+
+```bash
+lizard scale --service api --replicas 5
+```
+
+Each replica is its own Firecracker micro-VM behind the load balancer. Make sure your app is stateless so replicas are interchangeable.
+
+### Scale CPU and memory vertically
+
+```bash
+lizard scale --service api --cpu 4 --memory 8192
+```
+
+### Grow addon storage
+
+```bash
+lizard scale --service postgres --storage 8192
+```
+
+Addon data volumes are grow-only — you can increase storage but not shrink it.
+
+## See also
+
+- [Scaling](/deploy/scaling) — horizontal vs. vertical scaling and growing addon storage
+- [lizard metrics](/cli/metrics) — check CPU / memory / network / disk before and after scaling
+- [lizard ps](/cli/ps) — check replica status after a scale change
+- [Observability → Metrics](/observability/metrics) — resource and cost monitoring

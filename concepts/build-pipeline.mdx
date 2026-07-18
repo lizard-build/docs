@@ -56,8 +56,8 @@ If a build fails, read `lizard logs --build`, fix the cause (in your repo, or by
 
 ## Build configuration reference
 
-| Field | Effect |
-|-------|--------|
+| Field | Description |
+|-------|-------------|
 | `buildCommand` | Command to build your app → forces the **synthesized Dockerfile** path |
 | `startCommand` | Command to start your app at runtime |
 | `preDeployCommand` | Runs once before each deploy (e.g. DB migrations) |
@@ -66,4 +66,4 @@ If a build fails, read `lizard logs --build`, fix the cause (in your repo, or by
 | `watchPatterns` | Only redeploy when matching paths change |
 | `containerPort` | TCP port your app listens on (default `3000`; `0` = [worker](/deploy/workers)) |
 
-Set any of these with `lizard service set <svc> --set <field>=<value>`. See the [CLI Reference](/cli/commands#service).
+Set any of these with `lizard service set <svc> --set <field>=<value>`. See [`lizard service`](/cli/service).

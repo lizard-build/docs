@@ -1,0 +1,45 @@
+# lizard login
+
+Log in to Lizard.
+
+## Usage
+
+```bash
+lizard login [flags]
+```
+
+By default this opens your browser to authenticate via OAuth, then drops back to your terminal once you confirm.
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `--token <token>` | Authenticate with an API token |
+
+## Examples
+
+### Log in via browser
+
+```bash
+lizard login
+```
+
+### Log in with a token
+
+```bash
+lizard login --token lzd_xxx
+```
+
+### Log in non-interactively in CI
+
+In CI or other non-interactive environments, set `LIZARD_TOKEN` in the environment instead of running `login`:
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+```
+
+## See also
+
+- [lizard logout](/cli/logout) — log out
+- [lizard whoami](/cli/whoami) — show the current user, active workspace, and linked project
+- [CLI reference](/cli) — global flags, exit codes, and authentication overview

@@ -1,0 +1,62 @@
+# lizard up
+
+Upload the current directory and deploy it.
+
+## Usage
+
+```bash
+lizard up [flags]
+```
+
+`up` packages your working tree as a tarball, sends it to the build nodes, and deploys it. It forces `sourceType=upload` on the target service, streams build logs over SSE, and prints the live URL when finished.
+
+If the current directory isn't linked to a project yet, `up` runs `init` first. On a TTY that's interactive; in a non-TTY (CI) environment it will **not** silently create a project — it errors and asks you to run `lizard init --name <project>` (or pass `--name`), to guard against a typo spawning an empty project.
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | Target/create a specific service |
+| `--build-command <cmd>` | Override the build command |
+| `--start-command <cmd>` | Override the start command |
+| `--pre-deploy-command <cmd>` | Run once before each deploy |
+| `--port <number>` | Container port (`0` = worker mode) |
+| `--region <code>` | Region to deploy in |
+| `-d, --detach` | Start the deploy and exit without streaming logs |
+| `-c, --ci` | CI-friendly output |
+| `--no-gitignore` | Upload everything, ignoring `.gitignore` |
+
+## Subcommands
+
+### `lizard up status`
+
+Report the status of an in-progress upload deploy.
+
+## Examples
+
+### Deploy the current directory
+
+```bash
+lizard up
+```
+
+### Deploy to a specific service with a custom start command and port
+
+```bash
+lizard up --service api --start-command "node server.js" --port 8080
+```
+
+### Deploy headlessly in CI
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+lizard init --name my-project
+lizard up --ci --service api
+```
+
+## See also
+
+- [Deploy from local code](/deploy/upload) — full walkthrough of upload-based deploys
+- [lizard redeploy](/cli/redeploy) — rebuild the last upload without re-uploading
+- [lizard init](/cli/init) — create or link a project explicitly before deploying
+- [Worker services](/deploy/workers) — what `--port 0` means

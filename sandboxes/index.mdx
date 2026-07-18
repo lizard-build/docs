@@ -1,0 +1,77 @@
+# Sandboxes
+
+A **sandbox** is an isolated Firecracker micro-VM you spin up on demand, run code inside, and tear down when you're done. Each one is a full Linux environment with its own filesystem, network, and process namespace — booted in milliseconds, not minutes.
+
+Sandboxes are the compute primitive behind AI agents, code interpreters, evals, and CI-style jobs on Lizard. Where a [service](/concepts/architecture) is a long-lived deployment tied to a repo, a sandbox is **ephemeral, programmatic, and disposable** — create thousands, run them concurrently, and pay only for the time they're alive.
+
+```ts
+import { Sandbox } from '@lizard-build/sdk';
+
+const sandbox = await Sandbox.create('base');
+const { stdout } = await sandbox.process.exec('echo "hello from Lizard"');
+console.log(stdout);            // hello from Lizard
+await sandbox.kill();
+```
+
+## When to use a sandbox
+
+| Use a **sandbox** when… | Use a **service** when… |
+|---|---|
+| An agent needs to run untrusted or generated code | You're deploying an app that stays up |
+| You want a fresh, throwaway Linux box per task | You want a stable `*.onlizard.com` URL and TLS |
+| You need to fan out many isolated jobs at once | You have a single always-on process |
+| The workload is short-lived or checkpointed | The workload is git-backed and auto-redeploys |
+
+Once an agent has produced a working app inside a sandbox, you can promote it to a persistent service with [`lizard up`](/deploy/upload) — no Dockerfile required.
+
+## What makes them fast
+
+- **Firecracker micro-VMs** — the same isolation model as every Lizard [service](/concepts/architecture), sized down to a single task. Hardware-virtualized, so generated code can't reach your infrastructure.
+- **Snapshot-first** — pause a sandbox and its entire state (memory, filesystem, running processes) is snapshotted. Resume instantly, exactly where it left off — no re-installing packages or re-warming caches. This is what makes long-running agent sessions survive across separate invocations. See [pause & resume](/sandboxes/quickstart#pause-and-resume).
+- **Boot from a template** — every node pre-builds a golden snapshot per template, so `create` is a restore, not a cold boot.
+
+## Templates
+
+A sandbox boots from a **template** (also called a *snapshot* in the dashboard). Two are built in:
+
+| Template | Contents | Best for |
+|---|---|---|
+| `base` | Debian Linux, Node.js 20, and the Lizard CLI | General-purpose shell and build environments |
+| `code-interpreter-v1` | Python 3.11 + Node.js 20, with a code-execution HTTP API on port 8080 | AI code interpreters — drive it with [`CodeSandbox`](/sandboxes/code-interpreter) |
+
+`base` is the default. Custom templates can be built and pushed with `lizard push`, then passed by name to `Sandbox.create()`.
+
+## Lifecycle
+
+A sandbox moves between three states:
+
+```
+create ──▶ running ⇄ paused ──▶ stopped
+                              (killed or expired)
+```
+
+- **running** — vCPUs are live and billable. Exec commands, read/write files, expose ports.
+- **paused** — snapshotted to disk; the expiration countdown is frozen and on-demand compute drops to zero. `resume` (or `connect`) brings it back.
+- **stopped** — terminated. Reached by `kill()`, or automatically when the sandbox's timeout expires.
+
+Every sandbox has a **timeout**. The SDK applies a 5-minute default; extend or shorten it any time with [`setTimeout`](/sandboxes/quickstart#timeouts). Expired sandboxes are reaped within ~60s, so a leaked sandbox can't run forever. Dashboard-created sandboxes have no timeout and run until you pause or kill them.
+
+## Resources & limits
+
+Set per sandbox at creation:
+
+| Setting | Range | Default |
+|---|---|---|
+| vCPUs (`cpus`) | 1–8 | 1 |
+| Memory (`memoryMb`) | 128–8192 MB | 2048 MB |
+
+Region is chosen automatically from available capacity; in the dashboard you can pin one. Sandboxes also count against your workspace's overall vCPU / RAM / disk quota, shared with your services and addons.
+
+## Ways to drive sandboxes
+
+| Surface | Best for | Start here |
+|---|---|---|
+| **SDK** (JS / Python) | Agents, apps, and scripts | [Quickstart](/sandboxes/quickstart) |
+| **Code Interpreter** | Stateful multi-language code execution | [Code Interpreter](/sandboxes/code-interpreter) |
+| **Dashboard** | Manual create, terminal, SSH, monitoring | [Dashboard](/sandboxes/dashboard) |
+| **REST API** | Any language, no SDK | [REST API](/sandboxes/api-reference) |

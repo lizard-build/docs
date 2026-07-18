@@ -1,0 +1,44 @@
+# lizard skills
+
+Read the embedded agent skills shipped with this CLI version.
+
+## Usage
+
+```bash
+lizard skills list
+lizard skills get core
+lizard skills path
+```
+
+## Subcommands
+
+### `lizard skills list`
+
+List the available embedded skills.
+
+### `lizard skills get core`
+
+Read the core guide — the authoritative usage guide for the platform, versioned with the CLI. It returns `{ name, frontmatter, content, … }`, where `content` is the complete guide (build pipeline, env precedence, addons, discovery, exit codes).
+
+### `lizard skills path`
+
+Show where skills are stored on disk.
+
+## Examples
+
+### Load the core guide as an agent
+
+```bash
+lizard skills get core --json
+```
+
+### List available embedded skills
+
+```bash
+lizard skills list
+```
+
+## See also
+
+- [AI agents & MCP](/agents) — how agents bootstrap with the embedded skill and self-describing commands
+- [JSON & automation](/cli/json) — the `--json` output format used by `lizard skills get core --json`

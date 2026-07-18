@@ -1,0 +1,87 @@
+# Code Interpreter
+
+`CodeSandbox` extends a regular [sandbox](/sandboxes) with a **stateful kernel** — variables, imports, and function definitions persist between calls, just like a Jupyter notebook. It's the right tool when an AI agent generates and runs code incrementally.
+
+It boots from the `code-interpreter-v1` template (Python 3.11 + Node.js 20, with a code-execution API on port 8080) and supports **Python, JavaScript, and Bash** out of the box.
+
+## Run code
+
+```ts
+import { CodeSandbox } from '@lizard-build/sdk';
+
+const sandbox = await CodeSandbox.create();   // defaults to 'code-interpreter-v1'
+
+await sandbox.runCode('x = 42');
+const result = await sandbox.runCode('print(x * 2)');
+console.log(result.stdout);        // "84\n"  — x survived from the previous call
+
+await sandbox.kill();
+```
+
+`runCode(code, opts?)` returns an `Execution`:
+
+| Field | Description |
+|---|---|
+| `stdout` / `stderr` | Captured output streams |
+| `results` | Rich results (values, and any generated images / charts) |
+| `error` | An `ExecutionError` (`name`, `message`, `traceback`) if the code threw |
+| `executionCount` | Monotonic counter for the kernel |
+
+## Choose a language
+
+Default is Python. Pass `language` for a one-off in another runtime:
+
+```ts
+const js = await sandbox.runCode('1 + 1', { language: 'javascript' });
+console.log(js.results[0].data);   // "2"
+
+await sandbox.runCode('echo "$(uname -s)"', { language: 'bash' });
+```
+
+## Streaming output
+
+For long-running cells, stream stdout/stderr as it's produced instead of waiting for the result:
+
+```ts
+await sandbox.runCode('for i in range(5): print(i)', {
+  onStdout: (line) => process.stdout.write(line),
+  onStderr: (line) => process.stderr.write(line),
+  onResult: (r)    => console.log('result:', r),
+  onError:  (e)    => console.error('error:', e.name, e.message),
+});
+```
+
+## Isolated contexts
+
+A **context** is an independent namespace inside the same sandbox — use one per agent session or per user, so their variables never collide.
+
+```ts
+const a = await sandbox.createContext({ language: 'python' });
+const b = await sandbox.createContext({ language: 'python' });
+
+await sandbox.runCode('secret = 1', { context: a });
+await sandbox.runCode('print(secret)', { context: b });   // NameError — b never saw it
+
+await sandbox.listContexts();
+await sandbox.restartContext(a);    // clear all variables/state
+await sandbox.deleteContext(b);     // free its resources
+```
+
+Pass **either** `context` **or** `language` to `runCode`, not both — a context already has a language bound to it.
+
+## Checkpointing a session
+
+Because `CodeSandbox` is a sandbox, [pause and resume](/sandboxes/quickstart#pause-and-resume) work the same. Install a heavy dependency stack once, pause, and resume later with the kernel state intact:
+
+```ts
+const sandbox = await CodeSandbox.create();
+await sandbox.runCode('import subprocess; subprocess.run(["pip", "install", "scikit-learn"])');
+const id = sandbox.sandboxId;
+await sandbox.pause();
+
+// Later — resume with packages and kernel variables already in place
+const resumed = await CodeSandbox.connect(id);
+const out = await resumed.runCode('import sklearn; print(sklearn.__version__)');
+console.log(out.stdout);
+await resumed.kill();
+```

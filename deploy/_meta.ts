@@ -5,4 +5,5 @@ export default {
   workers: 'Background Workers',
   scaling: 'Scaling',
   regions: 'Regions',
+  troubleshooting: 'Troubleshooting',
 };

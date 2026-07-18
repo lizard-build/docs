@@ -1,0 +1,36 @@
+# lizard restart
+
+Rolling restart of the current build — no rebuild.
+
+## Usage
+
+```bash
+lizard restart [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|--------------|
+| `-s, --service <name>` | Service |
+| `--detach` | Don't stream logs |
+
+## Examples
+
+### Restart a service
+
+```bash
+lizard restart --service api
+```
+
+### Restart without streaming logs
+
+```bash
+lizard restart --service api --detach
+```
+
+## See also
+
+- [lizard redeploy](/cli/redeploy) — trigger a fresh build instead of recycling the current one
+- [lizard logs](/cli/logs) — inspect logs around a restart with `--restart latest` or `--restart <id>`
+- [Deployments](/concepts/deployments) — restarts vs. redeploys, and recovering from a crash

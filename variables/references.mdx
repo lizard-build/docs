@@ -29,6 +29,8 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 > lizard ssh --service api -- env | grep DATABASE_URL
 > ```
 
+If a reference isn't showing up the way you expect, see [Troubleshooting → a secret or reference isn't showing up](/variables/troubleshooting/reference-not-applied).
+
 ## Common patterns
 
 **Wire an addon to several services** — bind on each consumer so rotation propagates everywhere:
@@ -52,4 +54,9 @@ lizard secrets set CACHE_URL='${{redis-winter-otter.REDIS_URL}}' --service api
 
 ## Why not just use `--global`?
 
-Putting a shared DSN in project (`--global`) scope exposes it to *every* service, including ones that don't need it. References give you the same single-source-of-truth rotation while keeping each secret scoped to the services that actually consume it. See [Secret scoping](/guides/environment-variables#scoping).
+Putting a shared DSN in project (`--global`) scope exposes it to *every* service, including ones that don't need it. References give you the same single-source-of-truth rotation while keeping each secret scoped to the services that actually consume it. See [Secret scoping](/variables#scoping).
+
+## See also
+
+- [Variables & Secrets](/variables) — scopes and precedence.
+- [`lizard secrets`](/cli/secrets) — the full command reference.

@@ -1,0 +1,41 @@
+# My service deploys but never becomes healthy
+
+The build succeeds, replicas start, but the deploy stays pending, is marked unhealthy, or never receives traffic.
+
+## What this means
+
+The platform's health check — which verifies your app's port is reachable — never passes, so traffic never shifts to the new replicas.
+
+## Why this can happen
+
+- **Your app isn't listening on the expected port.** Lizard injects a `PORT` environment variable (default container port `3000`) and checks that your app is reachable there. If your app is hardcoded to a different port, or never binds one, the health check fails indefinitely.
+- **The service is accidentally in worker mode.** Setting `containerPort=0` puts a service into [worker mode](/deploy/workers), which **skips the health check and load-balancer registration entirely**. A service that's supposed to serve HTTP but got flipped to `containerPort=0` will deploy "successfully" and just never serve anything — worker mode hides the underlying startup problem instead of surfacing it.
+
+## Possible solutions
+
+### Check the current port
+
+```bash
+lizard port --service api
+```
+
+If this prints `worker mode`, the service has `containerPort=0`. Set it back to a real port if this service is meant to serve HTTP:
+
+```bash
+lizard port 3000 --service api
+lizard redeploy --service api
+```
+
+### Confirm your app is listening where Lizard expects
+
+Read the runtime logs for startup errors, and verify the port the app actually bound against what Lizard injected:
+
+```bash
+lizard logs --service api
+lizard ssh --service api -- env | grep PORT
+```
+
+## See also
+
+- [Background Workers](/deploy/workers) — when `containerPort=0` is (and isn't) the right call.
+- [Deployments → lifecycle](/concepts/deployments#lifecycle) — where the health check sits in a deploy.

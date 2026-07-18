@@ -1,0 +1,46 @@
+# lizard run
+
+Run a command locally with project and service secrets injected.
+
+## run vs. ssh
+
+Two commands let you execute commands with a service's context. They run in different places — know which one you want.
+
+| Command | Runs where | Use for |
+|---------|-----------|---------|
+| `lizard run` | Locally, with the service's project + service secrets injected | Migrations, seed scripts, local tooling that needs prod config |
+| `lizard ssh` | Inside the running service VM | Inspecting the live container, one-off remote commands, debugging |
+
+`lizard run` shows your local injected copy of the environment, which is usually the same as what the running app sees — but `lizard ssh` is authoritative for the live container. To check what the running app actually sees, use `lizard ssh` instead.
+
+## Usage
+
+```bash
+lizard run [flags] -- <command>
+```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | Service whose env to inject |
+| `--no-service` | Don't inject service env |
+
+## Examples
+
+### Run a migration with service secrets injected
+
+```bash
+lizard run --service api -- node scripts/migrate.js
+```
+
+### Print an injected environment variable
+
+```bash
+lizard run --service api -- printenv DATABASE_URL
+```
+
+## See also
+
+- [lizard ssh](/cli/ssh) — execute a command inside the running service VM instead of locally
+- [Variables](/variables) — how project and service variables are defined and referenced

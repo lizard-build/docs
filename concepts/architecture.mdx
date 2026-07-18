@@ -55,7 +55,7 @@ lizard service rename --service <svc>
 lizard service delete --service <svc>
 ```
 
-Service configuration fields are **flat** and map 1:1 to the wire schema (e.g. `repoUrl`, `branch`, `buildCommand`, `startCommand`, `containerPort`, `rootDirectory`). There is no `build.*` / `deploy.*` nesting. See the [CLI Reference → `service set`](/cli/commands#service) for the full list.
+Service configuration fields are **flat** and map 1:1 to the wire schema (e.g. `repoUrl`, `branch`, `buildCommand`, `startCommand`, `containerPort`, `rootDirectory`). There is no `build.*` / `deploy.*` nesting. See [`lizard service`](/cli/service) for the full list.
 
 ### App vs. worker services
 
@@ -103,4 +103,4 @@ Every service automatically receives these variables (they cannot be overridden)
 | `LIZARD_PROJECT_ID` | The project ID |
 | `LIZARD_PUBLIC_DOMAIN` | The service's public domain |
 
-See [Environment Variables & Secrets](/guides/environment-variables) for how these interact with your own variables and the full precedence order.
+See [Variables & Secrets](/variables) for how these interact with your own variables and the full precedence order.

@@ -1,0 +1,48 @@
+# lizard metrics
+
+Show CPU / memory / network / disk and cost.
+
+## Usage
+
+```bash
+lizard metrics [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-r, --range <range>` | Time window |
+| `-w, --watch` | Live-updating |
+| `--cost` | Include cost |
+
+## Examples
+
+### View metrics for the current service
+
+```bash
+lizard metrics
+```
+
+### View metrics for a specific service
+
+```bash
+lizard metrics --service api
+```
+
+### Watch metrics live
+
+```bash
+lizard metrics --watch
+```
+
+### Include cost
+
+```bash
+lizard metrics --cost
+```
+
+## See also
+
+- [Metrics & cost](/observability/metrics) — dashboard views and acting on usage
+- [Scaling](/deploy/scaling) — resize or add replicas in response to metrics

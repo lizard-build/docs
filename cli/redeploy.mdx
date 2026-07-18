@@ -1,0 +1,36 @@
+# lizard redeploy
+
+Trigger a fresh build (latest commit / last upload) with current variables.
+
+## Usage
+
+```bash
+lizard redeploy [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|--------------|
+| `-s, --service <name>` | Service |
+| `--detach` | Don't stream logs |
+
+## Examples
+
+### Rebuild and redeploy a service
+
+```bash
+lizard redeploy --service api
+```
+
+### Redeploy without streaming logs
+
+```bash
+lizard redeploy --service api --detach
+```
+
+## See also
+
+- [lizard restart](/cli/restart) — rolling restart of the current build, no rebuild
+- [lizard up](/cli/up) — upload the current directory and deploy it
+- [Deployments](/concepts/deployments) — how deploys, restarts, and rebuilds work

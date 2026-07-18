@@ -1,0 +1,42 @@
+# lizard events
+
+Show deploy history and replica status.
+
+## Usage
+
+```bash
+lizard events [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --limit <n>` | Number of entries to show (default 10) |
+| `-s, --service <name>` | Show events for a specific service |
+
+## Examples
+
+### Show deploy history and replica status
+
+```bash
+lizard events
+```
+
+### Show events for a specific service
+
+```bash
+lizard events --service api
+```
+
+### Show more entries
+
+```bash
+lizard events --limit 25
+```
+
+## See also
+
+- [Events & History](/observability/events) — what each entry covers and how it maps to the dashboard's Deployments view
+- [lizard ps](/cli/ps) — a fast snapshot of all services' status and URL
+- [Deployments](/concepts/deployments) — the deploy lifecycle

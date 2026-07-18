@@ -1,0 +1,58 @@
+# lizard add
+
+Add a database, service, or repo to the project.
+
+## Usage
+
+```bash
+lizard add [types...] [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-r, --repo <owner/repo>` | Create a service from a GitHub repo |
+| `-s, --service <name>` | Create an empty service |
+| `-a, --addon <type...>` | Add managed addons (`postgres` / `redis` / `s3`) |
+| `-n, --name <name>` | Name used in `${{name.KEY}}` refs |
+| `-v, --variables <K=V>` | Seed an env var (repeatable) |
+| `--region <code>` | Region to provision in |
+| `--no-deploy` | Attach repo but skip the first build |
+| `--list` | Show available database types |
+
+## Examples
+
+### Create a service from a GitHub repo
+
+```bash
+lizard add -r your-org/your-app
+```
+
+This creates a `github`-source service, clones the repo, auto-detects the stack, builds it, and returns a live URL.
+
+### Provision addons
+
+```bash
+lizard add postgres            # one addon
+lizard add postgres redis s3   # several at once
+lizard add --list              # show available types
+```
+
+### Create an empty service
+
+```bash
+lizard add -s worker
+```
+
+### Name a service and seed variables
+
+```bash
+lizard add -r your-org/monorepo -n api
+```
+
+## See also
+
+- [Deploy from GitHub](/deploy/github) — connecting repos, private access, and auto-redeploy on push
+- [Managed Addons](/addons) — provisioning, naming, and consuming postgres/redis/s3
+- [lizard up](/cli/up) — upload and deploy the current directory instead of linking a repo

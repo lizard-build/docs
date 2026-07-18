@@ -1,6 +1,6 @@
-# Custom Domains
+# Networking
 
-Every service gets a generated `*.onlizard.com` domain with automatic TLS. Attach your own hostname when you're ready to go live.
+Every service gets a generated `*.onlizard.com` domain with automatic TLS the moment it deploys, regardless of region. Attach your own hostname when you're ready to go live.
 
 ## Generated domains
 
@@ -10,6 +10,8 @@ A service's default domain is created for you. Show it (or generate a fresh one)
 lizard domain                    # show the service's current domain
 lizard domain generate           # generate a new *.onlizard.com subdomain
 ```
+
+Object storage served from an [S3 addon](/addons/storage) uses a region-scoped gateway host (`s3-<region>.onlizard.com`) instead.
 
 ## Attach a custom domain
 
@@ -53,3 +55,8 @@ A [worker-mode service](/deploy/workers) (`containerPort=0`) may still show a ge
 ## Manage in the dashboard
 
 The **Domains** view in the dashboard (`lizard open`) shows each domain's verification and TLS status and lets you add or remove hostnames visually.
+
+## See also
+
+- [`lizard domain`](/cli/domain) — the full command reference.
+- [Regions](/deploy/regions) — co-locating services and addons for latency.

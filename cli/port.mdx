@@ -1,0 +1,40 @@
+# lizard port
+
+Show or change the container port for a service. No argument prints the current port (`worker mode` when it's `0`).
+
+## Usage
+
+```bash
+lizard port [value] [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | Service to target |
+
+## Examples
+
+### Show the current port
+
+```bash
+lizard port
+```
+
+### Set the port for a specific service
+
+```bash
+lizard port 0 -s worker
+```
+
+### Check the port on a worker service
+
+```bash
+lizard port --service worker
+```
+
+## See also
+
+- [Background workers](/deploy/workers) — set the port to `0` to run a service without inbound routing
+- [lizard service](/cli/service) — manage the rest of a service's configuration
