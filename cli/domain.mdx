@@ -1,0 +1,80 @@
+# lizard domain
+
+Show the current domain, or attach a custom one.
+
+## Usage
+
+```bash
+lizard domain [hostname] [flags]
+```
+
+The hostname is a positional argument — there is no `add` subcommand. Running `lizard domain` with no arguments shows the service's current domain.
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | Service |
+| `--port <n>` | Port to expose |
+
+## Subcommands
+
+### `lizard domain generate`
+
+Generate a fresh `*.onlizard.com` subdomain.
+
+### `lizard domain verify <hostname>`
+
+Check the TXT record and activate the domain. TLS is provisioned automatically.
+
+### `lizard domain delete <hostname>`
+
+Remove a domain (alias `rm`).
+
+| Flag | Description |
+|------|-------------|
+| `-y, --yes` | Skip confirmation |
+
+## Examples
+
+### Show the current domain
+
+```bash
+lizard domain
+```
+
+### Generate a subdomain
+
+```bash
+lizard domain generate
+```
+
+### Attach a custom domain
+
+```bash
+lizard domain app.example.com --service web
+```
+
+Lizard returns the DNS records to create (a `CNAME` for the hostname and a `TXT` record for verification). Add them at your DNS provider, then verify:
+
+```bash
+lizard domain verify app.example.com
+```
+
+### Attach a domain to a specific port
+
+```bash
+lizard domain app.example.com --service web --port 8080
+```
+
+### Remove a domain
+
+```bash
+lizard domain delete app.example.com
+lizard domain rm app.example.com --yes
+```
+
+## See also
+
+- [Networking](/networking) — generated domains, TLS, and worker services
+- [Deploy to regions](/deploy/regions) — region selection for services

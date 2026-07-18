@@ -1,0 +1,51 @@
+# A secret or reference isn't showing up in my service
+
+You set a secret or a `${{name.KEY}}` reference, redeployed, and the running service still doesn't see the value you expect.
+
+## What this means
+
+The value you set never made it into the service's merged environment — or something else in the merge overwrote it before the app started.
+
+## Why this can happen
+
+- **The reference target or key doesn't exist.** A reference to a missing service/addon name, or a key that addon doesn't expose, resolves to an **empty string** instead of failing the deploy. There's no error to alert you — the service just boots with an empty value.
+- **Something with higher precedence overrode it.** Values merge in a fixed order — `addon-issued env < project secrets < project env < app env < app secrets < platform vars` — so a project-scoped (`--global`) secret can be silently shadowed by a service-scoped one with the same key, and platform variables (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`) always win and can't be overridden at all.
+- **You changed a build-time value but didn't rebuild.** Most variable changes are pushed live to the running VM with no rebuild. `VITE_*` and `NEXT_PUBLIC_*` values are the exception — they're baked into the built assets, so a plain restart won't pick up a new value; the service needs a fresh build.
+
+## Possible solutions
+
+### Confirm what the running service actually sees
+
+This is authoritative — it shows the live container's environment, not what you think you set:
+
+```bash
+lizard ssh --service api -- env | grep DATABASE_URL
+```
+
+If the key is missing or empty, the reference target/key is wrong, or nothing is set for that scope. Double-check the addon or service name with `lizard ps`, and the key against the addon's [documented variables](/addons).
+
+### Check for a scope collision
+
+List secrets in both scopes and compare:
+
+```bash
+lizard secrets list --service api --show
+lizard secrets list --global --show
+```
+
+Remember **app secrets override project secrets** — if a service-scoped value exists for the same key, it wins over anything set with `--global`.
+
+### Rebuild after a build-time change
+
+If the changed key is `VITE_*` or `NEXT_PUBLIC_*`, trigger a real rebuild rather than a restart:
+
+```bash
+lizard redeploy --service api
+```
+
+See [Build-time vs. runtime](/variables#build-time-vs-runtime) and [Build Pipeline → what triggers a rebuild](/concepts/build-pipeline#what-triggers-a-rebuild).
+
+## See also
+
+- [Variables & Secrets](/variables) — scoping and precedence.
+- [Cross-Service References](/variables/references) — reference syntax and resolution.

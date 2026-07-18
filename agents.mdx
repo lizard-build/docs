@@ -50,10 +50,16 @@ npm install -g @lizard-build/cli
 
 - **Always pass `--json`** on non-interactive calls.
 - **Confirm destructive actions** (delete service, drop addon, overwrite a project-wide secret, prod restart) with the user — the CLI's own prompts only fire on a TTY.
-- **Scope secrets to the consuming service** by default; reserve `--global` for provably-public values. See [Variables & Secrets](/guides/environment-variables#scoping).
+- **Scope secrets to the consuming service** by default; reserve `--global` for provably-public values. See [Variables & Secrets](/variables#scoping).
 - **Don't write Dockerfiles unsolicited** — lizardpack auto-detects most stacks. Try a deploy first. See [Build Pipeline](/concepts/build-pipeline).
 - **Don't use `lizard up` to switch a git-backed service to upload** — use `service set` + `redeploy`.
 
 ## Editor & MCP integrations
 
 The skill is distributed as a public bootstrap so agents in editors and assistants can install and load it on demand, then drive the same CLI described throughout these docs. The CLI is the single source of truth — there's no separate agent API to learn.
+
+## See also
+
+- [`lizard skills`](/cli/skills) — the full command reference.
+- [JSON & Automation](/cli/json) — `--json` output and schema discovery.
+- [Variables & Secrets](/variables#scoping) — secret-scoping conventions agents should follow.

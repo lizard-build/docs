@@ -1,0 +1,45 @@
+# Dashboard
+
+Every project has a **Sandboxes** page for creating and inspecting sandboxes by hand — useful for debugging an agent's environment, grabbing an interactive shell, or spot-checking what code produced. Open a project and select **Sandboxes** in the sidebar (`/<workspace>/<project>/sandboxes`).
+
+The page has three tabs: **Sandboxes**, **Volumes**, and **Snapshots**.
+
+## Getting an API key
+
+If you haven't used sandboxes yet, the empty state walks you through creating an **API key** for the SDK and REST API. The key is shown **once** — copy it immediately; it can't be retrieved later. Store it as `LIZARD_API_KEY` (see the [Quickstart](/sandboxes/quickstart#authenticate)).
+
+## Create a sandbox
+
+Click **New Sandbox** and set:
+
+- **Snapshot** — the [template](/sandboxes#templates) to boot from (`base` or `code-interpreter-v1`).
+- **Location** — the region to run in (defaults to the nearest available).
+- **Resources** — vCPUs (1 / 2 / 4 / 8) and memory.
+
+Sandboxes created here have no timeout — they run until you kill them.
+
+## Inspect a running sandbox
+
+Selecting a sandbox opens a detail drawer with two tabs.
+
+**Overview** shows its ID, template, status, region, and CPU/memory, plus:
+
+- **Exposed ports** — every port opened with [`getHost`](/sandboxes/quickstart#exposing-a-port) or the REST API, each with a copyable public `https://…onlizard.com` URL you can open directly.
+- **SSH access** — when available, a ready-to-paste `ssh root@<node-ip> -p <port>` command and the generated password.
+
+**Terminal** gives you an in-browser shell straight into the micro-VM (backed by SSH), so you can poke around without leaving the dashboard.
+
+Live sandboxes report real-time CPU and memory usage in the list; paused and stopped ones report zero.
+
+## Lifecycle
+
+- **Kill Sandbox** (in the detail drawer) terminates it immediately and frees its resources — including detaching any [volume](/sandboxes/volumes).
+- **Pause / resume** are driven from the [SDK](/sandboxes/quickstart#pause-and-resume) or [REST API](/sandboxes/api-reference); a paused sandbox shows as **Paused** here and consumes no on-demand compute.
+
+## Snapshots
+
+The **Snapshots** tab lists the templates a sandbox can boot from — the built-in `base` and `code-interpreter-v1`, plus any custom templates pushed with `lizard push`. Each entry shows its default vCPU/memory and description.
+
+## Volumes
+
+The **Volumes** tab manages [persistent storage](/sandboxes/volumes): create a volume with a name and size, and see which sandbox each one is attached to.

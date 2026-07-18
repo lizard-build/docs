@@ -1,0 +1,60 @@
+# lizard git
+
+Manage the GitHub connection for the linked project and its services.
+
+## Usage
+
+```bash
+lizard git connect
+lizard git status
+lizard git checkout <service> <branch> [flags]
+```
+
+## Subcommands
+
+### `lizard git connect`
+
+Connect the GitHub App to access private repositories.
+
+### `lizard git status`
+
+Show GitHub connection and repository status.
+
+### `lizard git checkout <service> <branch>`
+
+Switch a service to a different branch and redeploy.
+
+| Flag | Description |
+|------|-------------|
+| `--detach` | Skip log streaming |
+
+## Examples
+
+### Connect the GitHub App
+
+```bash
+lizard git connect
+```
+
+### Check connection and repository status
+
+```bash
+lizard git status
+```
+
+### Switch a service to a different branch
+
+```bash
+lizard git checkout api staging
+```
+
+### Switch branches without streaming logs
+
+```bash
+lizard git checkout api staging --detach
+```
+
+## See also
+
+- [Deploy from GitHub](/deploy/github) — connecting a repo, auto-redeploy on push, and monorepo setup
+- [lizard add](/cli/add) — create a service from a GitHub repo

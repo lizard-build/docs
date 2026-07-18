@@ -1,0 +1,36 @@
+# My Dockerfile changes don't seem to apply
+
+You have a `Dockerfile` in your repo, you edited it, but the build Lizard runs doesn't match what you wrote.
+
+## What this means
+
+The platform decided your repo's Dockerfile was **incomplete** and regenerated one for you with [lizardpack](/concepts/build-pipeline) instead of using yours verbatim.
+
+## Why this can happen
+
+Lizard only uses a repo Dockerfile **verbatim** on the lizardpack auto-detect path if it has a real build step — a `RUN <package-manager>` line. A Dockerfile that only copies pre-built artifacts (`COPY dist/`, `build/`, `out/`, `.next/`, `public/`) with no `RUN` step is treated as incomplete, on the assumption those artifacts were built outside the image. In that case lizardpack generates a replacement Dockerfile that includes the missing build step.
+
+This only applies on the lizardpack auto-detect path. If `buildCommand` or `startCommand` is set on the service, Lizard synthesizes a Dockerfile from those commands instead and never looks at your repo's Dockerfile at all.
+
+## Possible solutions
+
+### Add a real build step
+
+If you want your Dockerfile used as-is, give it an actual build step instead of copying pre-built output:
+
+```dockerfile
+RUN npm ci && npm run build
+```
+
+### Or force verbatim use
+
+Set `dockerfilePath` explicitly — this tells the platform to use that file unchanged, regardless of whether it has a build step:
+
+```bash
+lizard service set api --set dockerfilePath=Dockerfile
+```
+
+## See also
+
+- [Build Pipeline](/concepts/build-pipeline) — the full build decision order.
+- [Build configuration reference](/concepts/build-pipeline#build-configuration-reference)

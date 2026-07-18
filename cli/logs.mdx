@@ -1,0 +1,68 @@
+# lizard logs
+
+Stream a service's runtime logs, the last 200 lines followed by a live tail.
+
+## Usage
+
+```bash
+lizard logs [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `--build` | Show build logs instead |
+| `--tail <n>` | Last N lines (max 1000) |
+| `-l, --level <level>` | Filter by level |
+| `--restarts [n]` | List recent restarts |
+| `--restart <id>` | Logs around a specific restart (`latest` for the most recent) |
+| `-s, --service <id>` | Service |
+
+With `--json`, `lizard logs` is not a stream — it returns the last 200 lines (override with `--tail N`, max 1000) and exits. Use it for snapshots and scripting; stream live only without `--json`.
+
+## Examples
+
+### Tail runtime logs
+
+```bash
+lizard logs
+```
+
+### Tail logs for a specific service
+
+```bash
+lizard logs --service api
+```
+
+### Get more history
+
+```bash
+lizard logs --tail 1000
+```
+
+### Filter by log level
+
+```bash
+lizard logs --level error
+```
+
+### Check the most recent build
+
+```bash
+lizard logs --build
+```
+
+### Inspect a crash or restart
+
+```bash
+lizard logs --restarts
+lizard logs --restart latest
+lizard logs --restart <id>
+```
+
+## See also
+
+- [Logs](/observability/logs) — runtime, build, and restart log behavior, plus paging through history with `lizard service logs`
+- [Incomplete Dockerfile](/deploy/troubleshooting/incomplete-dockerfile) — diagnosing a failed build from `lizard logs --build`
+- [lizard events](/cli/events) — deploy history and replica status

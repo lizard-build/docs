@@ -26,6 +26,8 @@ lizard secrets delete OLD_KEY ANOTHER_KEY # variadic
 cat .env | lizard secrets import          # import dotenv from stdin
 ```
 
+See the [`lizard secrets` command reference](/cli/secrets) for every flag.
+
 ## Scoping
 
 | Scope | Command | Stored as | Visible to |
@@ -35,7 +37,7 @@ cat .env | lizard secrets import          # import dotenv from stdin
 
 **Default to service scope.** A compromised service can read its own environment — broader scope means more credentials exposed for no reason. Reserve `--global` for non-secret, provably-public values like `LOG_LEVEL`, `NODE_ENV`, feature flags, or a frontend `SENTRY_DSN`. If you're unsure whether a value is a secret, treat it as one and scope it to the service.
 
-For shared resources like a database, **don't** put the DSN in `--global` — bind it per consumer with a [reference](/guides/references):
+For shared resources like a database, **don't** put the DSN in `--global` — bind it per consumer with a [reference](/variables/references):
 
 ```bash
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
@@ -70,6 +72,8 @@ Confirm what a running service actually sees:
 lizard ssh --service api -- env
 ```
 
+If a value you expected isn't there, see [Troubleshooting → a secret or reference isn't showing up](/variables/troubleshooting/reference-not-applied).
+
 ## Local development
 
 Run a command **locally** with the service's project + service secrets injected (handy for scripts and migrations):
@@ -78,4 +82,9 @@ Run a command **locally** with the service's project + service secrets injected 
 lizard run --service api -- node scripts/seed.js
 ```
 
-See [Run & SSH](/guides/run-and-ssh).
+See [`lizard run` vs. `lizard ssh`](/cli/run#run-vs-ssh).
+
+## See also
+
+- [Cross-Service References](/variables/references) — read one service's values from another without copy-pasting credentials.
+- [`lizard secrets`](/cli/secrets) — the full command reference.

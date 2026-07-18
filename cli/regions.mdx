@@ -1,0 +1,46 @@
+# lizard regions
+
+List available regions.
+
+## Usage
+
+```bash
+lizard regions [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `--json` | Output as JSON |
+
+## Examples
+
+### List available regions
+
+```bash
+lizard regions
+```
+
+### List regions as JSON
+
+```bash
+lizard regions --json
+```
+
+### Choose a region when creating a service or addon
+
+Pass `--region <code>` to `lizard add` or `lizard up`:
+
+```bash
+lizard add -r your-org/your-app --region <code>
+lizard add postgres --region <code>
+lizard up --region <code>
+```
+
+If you don't specify a region, the platform uses the project's default.
+
+## See also
+
+- [Regions](/deploy/regions) — region selection, co-location, and generated domains
+- [`lizard add`](/cli/add) — add a service, repo, or addon with `--region`

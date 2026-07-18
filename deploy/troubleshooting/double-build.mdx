@@ -1,0 +1,35 @@
+# My change queued two builds back to back
+
+You ran `lizard service set` to change a field, then `lizard redeploy`, and ended up with two builds instead of one.
+
+## What this means
+
+The `service set` call already triggered a rebuild on its own. The follow-up `redeploy` queued a second, redundant one.
+
+## Why this can happen
+
+Changing a **build-affecting** field on a service — `repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath`, or `rootDirectory` — auto-rebuilds immediately. Changing a **runtime-only** field — `startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns` — does **not** auto-rebuild; it takes effect only on the next deploy.
+
+It's easy to reflexively chain a `redeploy` after every `service set`, but that only makes sense for the runtime-only fields.
+
+## Possible solutions
+
+### Check which kind of field you changed
+
+See the [rebuild triggers table](/concepts/build-pipeline#what-triggers-a-rebuild). If it's a build field, the rebuild is already queued — do nothing further.
+
+```bash
+lizard events   # confirm only one build is in flight
+```
+
+### Only redeploy after runtime-only changes
+
+```bash
+lizard service set api --set startCommand="node server.js"
+lizard redeploy --service api   # needed here — startCommand doesn't auto-rebuild
+```
+
+## See also
+
+- [Build Pipeline → what triggers a rebuild](/concepts/build-pipeline#what-triggers-a-rebuild)
+- [`lizard service`](/cli/service) — the full command reference.

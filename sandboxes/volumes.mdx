@@ -1,0 +1,53 @@
+# Persistent Volumes
+
+Sandboxes are ephemeral — when one is killed or expires, its filesystem is gone. A **volume** is persistent block storage that outlives any single sandbox. Attach one to keep data (checkpoints, model weights, a working directory) across sandbox restarts.
+
+A volume attaches to **one sandbox at a time** and is mounted at **`/data`** inside the micro-VM. Because a volume is pinned to the node it lives on, a sandbox that attaches it is scheduled onto that same node.
+
+## Create and attach
+
+Attach a volume by passing its ID to `Sandbox.create`. Anything written under `/data` survives after the sandbox is gone.
+
+```ts
+import { Sandbox, Volume } from '@lizard-build/sdk';
+
+// Create a 10 GB volume in a project (default size: 5 GB)
+const volume = await Volume.create('proj_123', 'agent-workdir', { sizeGb: 10 });
+
+// Attach it to a sandbox — mounted at /data
+const sandbox = await Sandbox.create('base', { volumeId: volume.volumeId });
+await sandbox.fs.write('/data/state.json', JSON.stringify({ step: 1 }));
+await sandbox.kill();            // the volume persists
+
+// A later sandbox re-attaches and sees the data
+const next = await Sandbox.create('base', { volumeId: volume.volumeId });
+console.log(await next.fs.read('/data/state.json'));   // {"step":1}
+await next.kill();
+```
+
+## Manage volumes
+
+```ts
+await Volume.list('proj_123');                 // [{ id, name, sizeGb, status, attachedTo, … }]
+const v = await Volume.get('proj_123', 'vol_abc');
+await v.getInfo('proj_123');
+await v.delete('proj_123');                     // must be detached first
+```
+
+| Method | Description |
+|---|---|
+| `Volume.create(projectId, name, { sizeGb })` | Create a volume (default 5 GB) |
+| `Volume.list(projectId)` | List volumes in a project |
+| `Volume.get(projectId, volumeId)` | Get a handle to an existing volume |
+| `volume.getInfo(projectId)` | Fetch metadata and attachment status |
+| `volume.delete(projectId)` | Delete a volume (must be unattached) |
+
+## In the dashboard
+
+Volumes live under a project's **Sandboxes → Volumes** tab. Create one with a name and size; the table shows each volume's size, status (`available` / `attached`), and which sandbox holds it. A volume is released back to `available` automatically when its sandbox is killed or expires. See the [Dashboard](/sandboxes/dashboard) guide.
+
+## Notes
+
+- A volume can only be attached to **one running sandbox** at a time. Attempting to attach an already-attached volume returns a conflict.
+- Deleting a sandbox (or letting it expire) **detaches** the volume — it does not delete it. Data is preserved for the next attachment.
+- Delete the volume itself to reclaim the storage.

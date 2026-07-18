@@ -1,0 +1,45 @@
+# lizard config
+
+Apply a `lizard-config.json` file to the project.
+
+## Usage
+
+```bash
+lizard config apply [flags]
+```
+
+## Subcommands
+
+### `lizard config apply`
+
+Apply a `lizard-config.json` file to the project.
+
+| Flag | Description |
+|------|-------------|
+| `-f, --file <path>` | Config file (default `lizard-config.json`) |
+| `--dry-run` | Show what would change without applying |
+
+## Examples
+
+### Apply the default config file
+
+```bash
+lizard config apply
+```
+
+### Apply a config file from a custom path
+
+```bash
+lizard config apply -f ./configs/prod.json
+```
+
+### Preview changes without applying them
+
+```bash
+lizard config apply --dry-run
+```
+
+## See also
+
+- [lizard service](/cli/service) — manage individual services
+- [Architecture](/concepts/architecture) — how workspaces, projects, and services relate

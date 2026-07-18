@@ -1,0 +1,187 @@
+# Quickstart
+
+Boot a sandbox, run code in it, expose a port, and checkpoint it — with the Lizard SDK. Everything here works the same against the [REST API](/sandboxes/api-reference) if you'd rather not use the SDK.
+
+## Install
+
+```bash
+# JavaScript / TypeScript
+npm install @lizard-build/sdk
+
+# Python
+pip install lizard-sdk
+```
+
+## Authenticate
+
+Sandboxes authenticate with an **API key**. Create one in the dashboard (**Sandboxes → Get started → New API key**) — it's shown once, so copy it immediately.
+
+Set it in your environment and the SDK picks it up automatically:
+
+```bash
+export LIZARD_API_KEY="liz_…"
+# Optional — override the API base URL (default: https://api.lizard.run)
+export LIZARD_API_URL="https://api.lizard.run"
+```
+
+You can also pass it explicitly: `Sandbox.create('base', { apiKey })`.
+
+## Your first sandbox
+
+**JavaScript / TypeScript**
+
+```ts
+import { Sandbox } from '@lizard-build/sdk';
+
+// Boot from a template (default: 'base')
+const sandbox = await Sandbox.create('base');
+
+// Run a command and wait for it to finish
+const result = await sandbox.process.exec('node -e "console.log(2 ** 10)"');
+console.log(result.stdout);     // 1024
+console.log(result.exitCode);   // 0
+
+// Always release resources when done
+await sandbox.kill();
+```
+
+**Python**
+
+```python
+from lizard import Sandbox
+
+sandbox = Sandbox.create("base")
+
+# exec_ (trailing underscore) because `exec` is reserved in Python
+result = sandbox.process.exec_("python -c 'print(2 ** 10)'")
+print(result.stdout)     # 1024
+
+sandbox.kill()
+```
+
+`process.exec` returns `{ stdout, stderr, exitCode }`. It waits for the command to complete — background long-running processes with a trailing `&`.
+
+## Working with files
+
+`sandbox.fs` reads and writes directly into the micro-VM filesystem, creating parent directories as needed.
+
+```ts
+await sandbox.fs.write('/app/server.js', `
+  const http = require('http');
+  http.createServer((_, res) => res.end('hello from Lizard')).listen(3000);
+`);
+
+const src = await sandbox.fs.read('/app/server.js');
+const entries = await sandbox.fs.list('/app');   // [{ name, path, type, size }]
+await sandbox.fs.makeDir('/app/data');
+await sandbox.fs.remove('/app/old.log');
+```
+
+| Method | Description |
+|---|---|
+| `fs.write(path, data)` | Write a file — string or bytes; makes parent dirs |
+| `fs.read(path)` | Read a file as a UTF-8 string |
+| `fs.list(path)` | List directory entries |
+| `fs.makeDir(path)` | Create a directory and any missing parents |
+| `fs.remove(path)` | Delete a file or directory |
+
+## Exposing a port
+
+Start an HTTP server inside the sandbox and get a public HTTPS URL for it — no tunneling.
+
+```ts
+await sandbox.process.exec('node /app/server.js &');   // listen on :3000
+
+const host = await sandbox.getHost(3000);
+console.log(`Live at https://${host}`);
+// https://<sandboxId>-3000.sandbox.<region>.onlizard.com
+```
+
+`getHost(port)` registers a route to that port and returns the hostname. The URL is public and TLS-terminated. Remove it again from the dashboard or the [REST unexpose endpoint](/sandboxes/api-reference#expose-a-port).
+
+## Pause and resume
+
+Pausing snapshots the whole micro-VM — memory, filesystem, and running processes. Resume and it continues exactly where it left off, so long agent sessions survive across separate invocations without re-running setup.
+
+```ts
+// Set the environment up once
+const sandbox = await Sandbox.create('base');
+await sandbox.process.exec('npm install -g some-heavy-toolchain');
+const id = sandbox.sandboxId;
+
+await sandbox.pause();          // snapshot; countdown frozen, compute → 0
+
+// …minutes or hours later, from anywhere:
+const resumed = await Sandbox.connect(id);   // auto-resumes from the snapshot
+await resumed.process.exec('some-heavy-toolchain --version');   // already installed
+await resumed.kill();
+```
+
+`Sandbox.connect(id)` resumes a paused sandbox automatically. You can also call `sandbox.resume()` on a handle you already hold.
+
+**Python**
+
+```python
+sandbox = Sandbox.create("base")
+sandbox.process.exec_("pip install numpy pandas")
+sandbox_id = sandbox.sandbox_id
+sandbox.pause()
+
+resumed = Sandbox.connect(sandbox_id)   # environment is exactly as left
+resumed.process.exec_("python -c 'import numpy'")
+resumed.kill()
+```
+
+## Timeouts
+
+Every sandbox expires after its timeout (SDK default: 5 minutes) and is reaped automatically. Adjust it at creation or any time while it runs:
+
+```ts
+const sandbox = await Sandbox.create('base', { timeoutMs: 10 * 60 * 1000 }); // 10 min
+await sandbox.setTimeout(30 * 60 * 1000);   // extend to 30 min from now
+```
+
+Pausing freezes the countdown, so a paused sandbox never expires while it's asleep.
+
+## Managing sandboxes
+
+```ts
+const sandbox = await Sandbox.create('base');
+const info = await sandbox.getInfo();     // { sandboxId, template, startedAt, endAt, … }
+
+const all = await Sandbox.list();         // every running sandbox for this account
+await sandbox.kill();
+```
+
+## Full example
+
+An agent that writes a script, runs it, serves the result, and checkpoints for later:
+
+```ts
+import { Sandbox } from '@lizard-build/sdk';
+
+const sandbox = await Sandbox.create('base', { timeoutMs: 15 * 60 * 1000 });
+
+try {
+  await sandbox.fs.write('/app/app.js', `
+    const http = require('http');
+    http.createServer((_, res) => res.end('ok')).listen(3000);
+  `);
+  await sandbox.process.exec('node /app/app.js &');
+
+  const host = await sandbox.getHost(3000);
+  const res = await fetch(`https://${host}`);
+  console.log(await res.text());          // ok
+
+  await sandbox.pause();                   // resume later with Sandbox.connect(sandbox.sandboxId)
+} catch (err) {
+  await sandbox.kill();
+  throw err;
+}
+```
+
+## Next steps
+
+- **[Code Interpreter](/sandboxes/code-interpreter)** — run stateful, multi-language code.
+- **[Persistent Volumes](/sandboxes/volumes)** — attach storage that outlives a single sandbox.
+- **[REST API](/sandboxes/api-reference)** — drive sandboxes from any language, no SDK.

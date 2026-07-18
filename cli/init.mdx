@@ -1,0 +1,48 @@
+# lizard init
+
+Create or select a project and link it to the current directory.
+
+## Usage
+
+```bash
+lizard init [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --name <name>` | Project name (create if missing) |
+| `-w, --workspace <ws>` | Workspace id, slug, or name |
+| `--force` | Relink even if already linked |
+
+## Examples
+
+### Link the current directory interactively
+
+```bash
+lizard init
+```
+
+### Link explicitly in CI
+
+`lizard up` will run `init` for you on a TTY, but in a non-TTY (CI) environment it errors instead of silently creating a project. Link explicitly first:
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+lizard init --name my-project
+lizard up --ci --service api
+```
+
+### Relink a directory that's already linked
+
+```bash
+lizard init --name my-project --force
+```
+
+## See also
+
+- [lizard link](/cli/link) — associate the current directory with an existing project instead of creating one
+- [lizard status](/cli/status) — show the linked workspace, project, and service for the current directory
+- [lizard up](/cli/up) — upload and deploy the current directory
+- [Core Concepts](/concepts/architecture) — projects, services, and the build pipeline
