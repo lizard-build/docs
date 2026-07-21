@@ -6,7 +6,7 @@ The page has three tabs: **Sandboxes**, **Volumes**, and **Snapshots**.
 
 ## Getting an API key
 
-If you haven't used sandboxes yet, the empty state walks you through creating an **API key** for the SDK and REST API. The key is shown **once** — copy it immediately; it can't be retrieved later. Store it as `LIZARD_API_KEY` (see the [Quickstart](/sandboxes/quickstart#authenticate)).
+If you haven't used sandboxes yet, the empty state walks you through creating an **API key** for the SDK. The key is shown **once** — copy it immediately; it can't be retrieved later. Store it as `LIZARD_API_KEY` (see the [Quickstart](/sandboxes/quickstart#authenticate)).
 
 ## Create a sandbox
 
@@ -24,7 +24,7 @@ Selecting a sandbox opens a detail drawer with two tabs.
 
 **Overview** shows its ID, template, status, region, and CPU/memory, plus:
 
-- **Exposed ports** — every port opened with [`getHost`](/sandboxes/quickstart#exposing-a-port) or the REST API, each with a copyable public `https://…onlizard.com` URL you can open directly.
+- **Exposed ports** — every port opened with [`getHost`](/sandboxes/quickstart#exposing-a-port), each with a copyable public `https://…onlizard.com` URL you can open directly.
 - **SSH access** — when available, a ready-to-paste `ssh root@<node-ip> -p <port>` command and the generated password.
 
 **Terminal** gives you an in-browser shell straight into the micro-VM (backed by SSH), so you can poke around without leaving the dashboard.
@@ -34,7 +34,7 @@ Live sandboxes report real-time CPU and memory usage in the list; paused and sto
 ## Lifecycle
 
 - **Kill Sandbox** (in the detail drawer) terminates it immediately and frees its resources — including detaching any [volume](/sandboxes/volumes).
-- **Pause / resume** are driven from the [SDK](/sandboxes/quickstart#pause-and-resume) or [REST API](/sandboxes/api-reference); a paused sandbox shows as **Paused** here and consumes no on-demand compute.
+- **Pause / resume** are driven from the [SDK](/sandboxes/quickstart#pause-and-resume); a paused sandbox shows as **Paused** here and consumes no on-demand compute.
 
 ## Snapshots
 
