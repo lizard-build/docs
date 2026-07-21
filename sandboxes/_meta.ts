@@ -5,5 +5,4 @@ export default {
   'code-interpreter': 'Code Interpreter',
   volumes: 'Persistent Volumes',
   dashboard: 'Dashboard',
-  'api-reference': 'REST API',
 };

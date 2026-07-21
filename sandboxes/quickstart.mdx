@@ -1,6 +1,6 @@
 # Quickstart
 
-Boot a sandbox, run code in it, expose a port, and checkpoint it — with the Lizard SDK. Everything here works the same against the [REST API](/sandboxes/api-reference) if you'd rather not use the SDK.
+Boot a sandbox, run code in it, expose a port, and checkpoint it — with the Lizard SDK.
 
 ## Install
 
@@ -20,8 +20,6 @@ Set it in your environment and the SDK picks it up automatically:
 
 ```bash
 export LIZARD_API_KEY="liz_…"
-# Optional — override the API base URL (default: https://api.lizard.run)
-export LIZARD_API_URL="https://api.lizard.run"
 ```
 
 You can also pass it explicitly: `Sandbox.create('base', { apiKey })`.
@@ -97,7 +95,7 @@ console.log(`Live at https://${host}`);
 // https://<sandboxId>-3000.sandbox.<region>.onlizard.com
 ```
 
-`getHost(port)` registers a route to that port and returns the hostname. The URL is public and TLS-terminated. Remove it again from the dashboard or the [REST unexpose endpoint](/sandboxes/api-reference#expose-a-port).
+`getHost(port)` registers a route to that port and returns the hostname. The URL is public and TLS-terminated. Remove it again from the dashboard.
 
 ## Pause and resume
 
@@ -185,4 +183,3 @@ try {
 - **[SDK Reference](/sandboxes/sdk-reference)** — every `Sandbox`, `CodeSandbox`, and `Volume` method.
 - **[Code Interpreter](/sandboxes/code-interpreter)** — run stateful, multi-language code.
 - **[Persistent Volumes](/sandboxes/volumes)** — attach storage that outlives a single sandbox.
-- **[REST API](/sandboxes/api-reference)** — drive sandboxes from any language, no SDK.

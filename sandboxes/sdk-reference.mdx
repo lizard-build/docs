@@ -1,6 +1,6 @@
 # SDK Reference
 
-The `@lizard-build/sdk` (JS/TS) and `lizard-sdk` (Python) packages are what most agents, apps, and scripts use to drive sandboxes. This page catalogs every class and method; see the [Quickstart](/sandboxes/quickstart) for a walkthrough and the [REST API](/sandboxes/api-reference) if you're not using the SDK.
+The `@lizard-build/sdk` (JS/TS) and `lizard-sdk` (Python) packages are what most agents, apps, and scripts use to drive sandboxes. This page catalogs every class and method; see the [Quickstart](/sandboxes/quickstart) for a walkthrough.
 
 ## Install & authenticate
 
@@ -9,7 +9,7 @@ npm install @lizard-build/sdk    # JavaScript / TypeScript
 pip install lizard-sdk           # Python
 ```
 
-The SDK reads `LIZARD_API_KEY` (and optionally `LIZARD_API_URL`, default `https://api.lizard.run`) from the environment, or accepts an explicit `apiKey` option on `Sandbox.create` / `Sandbox.connect`. See [Quickstart → Authenticate](/sandboxes/quickstart#authenticate) for how to create a key.
+The SDK reads `LIZARD_API_KEY` from the environment, or accepts an explicit `apiKey` option on `Sandbox.create` / `Sandbox.connect`. See [Quickstart → Authenticate](/sandboxes/quickstart#authenticate) for how to create a key.
 
 > Python method names with a trailing underscore (`exec_`) avoid shadowing reserved words, and properties are snake_case (`sandbox_id`) instead of camelCase (`sandboxId`). Everything else mirrors the JS/TS API 1:1.
 
@@ -100,4 +100,3 @@ See [Persistent Volumes](/sandboxes/volumes) for the full walkthrough.
 - [Quickstart](/sandboxes/quickstart) — install, authenticate, and a full walkthrough.
 - [Code Interpreter](/sandboxes/code-interpreter) — the `CodeSandbox` guide.
 - [Persistent Volumes](/sandboxes/volumes) — the `Volume` guide.
-- [REST API](/sandboxes/api-reference) — the same operations over HTTP.
