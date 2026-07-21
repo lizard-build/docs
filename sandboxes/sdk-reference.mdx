@@ -39,15 +39,13 @@ The SDK reads `LIZARD_API_KEY` from the environment, or accepts an explicit `api
 | Option | Type | Default | Notes |
 |---|---|---|---|
 | `template` | string | `'base'` | `'base'` or `'code-interpreter-v1'` (or a [custom template](/sandboxes#templates)) |
-| `cpus` | int | `1` | 1–8 |
-| `memoryMb` | int | `2048` | 128–8192 |
 | `timeoutMs` | int | SDK default 5 min | Lifetime in ms |
 | `region` | string | auto | Pin to a region |
 | `volumeId` | string | — | Attach a [volume](/sandboxes/volumes) at `/data` |
 | `apiKey` | string | `LIZARD_API_KEY` env var | Explicit API key, overrides the environment |
 
 ```ts
-const sandbox = await Sandbox.create('base', { cpus: 2, memoryMb: 4096, timeoutMs: 10 * 60 * 1000 });
+const sandbox = await Sandbox.create('base', { timeoutMs: 10 * 60 * 1000 });
 ```
 
 ## `CodeSandbox`

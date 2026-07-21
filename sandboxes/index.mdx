@@ -58,12 +58,7 @@ Every sandbox has a **timeout**. The SDK applies a 5-minute default; extend or s
 
 ## Resources & limits
 
-Set per sandbox at creation:
-
-| Setting | Range | Default |
-|---|---|---|
-| vCPUs (`cpus`) | 1–8 | 1 |
-| Memory (`memoryMb`) | 128–8192 MB | 2048 MB |
+Every sandbox runs at a fixed **4 vCPU / 4 GB RAM**. There's no per-sandbox size knob: `create` restores a golden snapshot — that's what makes it a millisecond boot — so every sandbox inherits the snapshot's size.
 
 Region is chosen automatically from available capacity; in the dashboard you can pin one. Sandboxes also count against your workspace's overall vCPU / RAM / disk quota, shared with your services and addons.
 
