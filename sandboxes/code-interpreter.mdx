@@ -9,7 +9,8 @@ It boots from the `code-interpreter-v1` template (Python 3.14 + Node.js 26, with
 ```ts
 import { CodeSandbox } from '@lizard-build/sdk';
 
-const sandbox = await CodeSandbox.create();   // defaults to 'code-interpreter-v1'
+// Every sandbox belongs to a project — usage is metered per project
+const sandbox = await CodeSandbox.create({ project: 'my-project' });   // defaults to 'code-interpreter-v1'
 
 await sandbox.runCode('x = 42');
 const result = await sandbox.runCode('print(x * 2)');
@@ -74,7 +75,7 @@ Pass **either** `context` **or** `language` to `runCode`, not both — a context
 Because `CodeSandbox` is a sandbox, [pause and resume](/sandboxes/quickstart#pause-and-resume) work the same. Install a heavy dependency stack once, pause, and resume later with the kernel state intact:
 
 ```ts
-const sandbox = await CodeSandbox.create();
+const sandbox = await CodeSandbox.create({ project: 'my-project' });
 await sandbox.runCode('import subprocess; subprocess.run(["pip", "install", "scikit-learn"])');
 const id = sandbox.sandboxId;
 await sandbox.pause();

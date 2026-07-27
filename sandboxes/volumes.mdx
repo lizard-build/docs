@@ -6,7 +6,7 @@ A volume attaches to **one sandbox at a time** and is mounted at **`/data`** ins
 
 ## Create and attach
 
-Attach a volume by passing its ID to `Sandbox.create`. Anything written under `/data` survives after the sandbox is gone.
+Attach a volume by passing its ID to `Sandbox.create`, alongside the project the sandbox is billed to. Anything written under `/data` survives after the sandbox is gone.
 
 ```ts
 import { Sandbox, Volume } from '@lizard-build/sdk';
@@ -15,12 +15,12 @@ import { Sandbox, Volume } from '@lizard-build/sdk';
 const volume = await Volume.create('proj_123', 'agent-workdir', { sizeGb: 10 });
 
 // Attach it to a sandbox — mounted at /data
-const sandbox = await Sandbox.create('base', { volumeId: volume.volumeId });
+const sandbox = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
 await sandbox.fs.write('/data/state.json', JSON.stringify({ step: 1 }));
 await sandbox.kill();            // the volume persists
 
 // A later sandbox re-attaches and sees the data
-const next = await Sandbox.create('base', { volumeId: volume.volumeId });
+const next = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
 console.log(await next.fs.read('/data/state.json'));   // {"step":1}
 await next.kill();
 ```

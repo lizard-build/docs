@@ -11,13 +11,39 @@ pip install lizard-sdk           # Python
 
 The SDK reads `LIZARD_API_KEY` from the environment, or accepts an explicit `apiKey` option on `Sandbox.create` / `Sandbox.connect`. See [Quickstart → Authenticate](/sandboxes/quickstart#authenticate) for how to create a key.
 
+Every sandbox also belongs to a **project** — usage is metered per project, so a create without one is refused.
+
+## `Lizard`
+
+A client pinned to one project, so you name the project once instead of on every call.
+
+| Member | Description |
+|---|---|
+| `new Lizard({ project, apiKey?, apiUrl?, timeoutMs? })` | Create a client. `project` is required — its ID, slug, or name (`Lizard(project=…)` in Python). |
+| `lizard.create(template?, options?)` | Boot a sandbox in the client's project. |
+| `lizard.connect(sandboxId)` | Attach to a sandbox by ID, auto-resuming it if paused. |
+| `lizard.list()` | List every running sandbox for the account. |
+| `lizard.projectId()` | Resolve the client's project reference to its ID (cached after the first call). |
+
+```ts
+const lizard = new Lizard({ project: 'my-project' });
+const sandbox = await lizard.create('base');
+```
+
+```python
+lizard = Lizard(project="my-project")
+sandbox = lizard.create("base")
+```
+
+A project reference that matches nothing the key can reach raises before any sandbox is booted, listing the projects it can see.
+
 > Python method names with a trailing underscore (`exec_`) avoid shadowing reserved words, and properties are snake_case (`sandbox_id`) instead of camelCase (`sandboxId`). Everything else mirrors the JS/TS API 1:1.
 
 ## `Sandbox`
 
 | Member | Description |
 |---|---|
-| `Sandbox.create(template?, options?)` | Boot a sandbox. `template` defaults to `'base'`. |
+| `Sandbox.create(template?, options?)` | Boot a sandbox. `template` defaults to `'base'`; `options.project` names the project to bill. |
 | `Sandbox.connect(sandboxId)` | Attach to a sandbox by ID, auto-resuming it if paused. |
 | `Sandbox.list()` | List every running sandbox for the account. |
 | `sandbox.sandboxId` | The sandbox's ID (`sandbox_id` in Python). |
@@ -39,13 +65,15 @@ The SDK reads `LIZARD_API_KEY` from the environment, or accepts an explicit `api
 | Option | Type | Default | Notes |
 |---|---|---|---|
 | `template` | string | `'base'` | `'base'` or `'code-interpreter-v1'` (or a [custom template](/sandboxes#templates)) |
+| `project` | string | — | **Required.** The project to bill — its ID, slug, or name (`project` in Python). Not needed via a `Lizard` client. |
+| `projectId` | string | — | Exact project ID; skips resolving `project` |
 | `timeoutMs` | int | SDK default 5 min | Lifetime in ms |
 | `region` | string | auto | Pin to a region |
 | `volumeId` | string | — | Attach a [volume](/sandboxes/volumes) at `/data` |
 | `apiKey` | string | `LIZARD_API_KEY` env var | Explicit API key, overrides the environment |
 
 ```ts
-const sandbox = await Sandbox.create('base', { timeoutMs: 10 * 60 * 1000 });
+const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 10 * 60 * 1000 });
 ```
 
 ## `CodeSandbox`
@@ -54,7 +82,7 @@ Extends `Sandbox` with a stateful kernel. See [Code Interpreter](/sandboxes/code
 
 | Member | Description |
 |---|---|
-| `CodeSandbox.create()` | Boot a code interpreter (defaults to the `code-interpreter-v1` template). |
+| `CodeSandbox.create(options?)` | Boot a code interpreter (defaults to the `code-interpreter-v1` template). Takes the same `project` option as `Sandbox.create`. |
 | `CodeSandbox.connect(sandboxId)` | Attach to (and auto-resume) an existing code interpreter sandbox. |
 | `sandbox.runCode(code, opts?)` | Execute code in the kernel. Returns an `Execution`. |
 | `sandbox.createContext(opts)` | Create an isolated namespace — `{ language }`. |

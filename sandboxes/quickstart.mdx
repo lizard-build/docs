@@ -22,7 +22,29 @@ Set it in your environment and the SDK picks it up automatically:
 export LIZARD_API_KEY="liz_…"
 ```
 
-You can also pass it explicitly: `Sandbox.create('base', { apiKey })`.
+You can also pass it explicitly: `Sandbox.create('base', { apiKey, project })`.
+
+## Pick a project
+
+Every sandbox belongs to a project — usage is metered per project, so the API refuses a create without one. Name the project by its ID, slug, or name.
+
+The `Lizard` client pins one project, so you only say it once:
+
+```ts
+import { Lizard } from '@lizard-build/sdk';
+
+const lizard = new Lizard({ project: 'my-project' });
+const sandbox = await lizard.create('base');
+```
+
+```python
+from lizard import Lizard
+
+lizard = Lizard(project="my-project")
+sandbox = lizard.create("base")
+```
+
+`Sandbox.create` takes the same `project` option when you'd rather not hold a client. Both forms are used below.
 
 ## Your first sandbox
 
@@ -31,8 +53,8 @@ You can also pass it explicitly: `Sandbox.create('base', { apiKey })`.
 ```ts
 import { Sandbox } from '@lizard-build/sdk';
 
-// Boot from a template (default: 'base')
-const sandbox = await Sandbox.create('base');
+// Boot from a template (default: 'base') in a project
+const sandbox = await Sandbox.create('base', { project: 'my-project' });
 
 // Run a command and wait for it to finish
 const result = await sandbox.process.exec('node -e "console.log(2 ** 10)"');
@@ -48,7 +70,7 @@ await sandbox.kill();
 ```python
 from lizard import Sandbox
 
-sandbox = Sandbox.create("base")
+sandbox = Sandbox.create("base", project="my-project")
 
 # exec_ (trailing underscore) because `exec` is reserved in Python
 result = sandbox.process.exec_("python -c 'print(2 ** 10)'")
@@ -103,7 +125,7 @@ Pausing snapshots the whole micro-VM — memory, filesystem, and running process
 
 ```ts
 // Set the environment up once
-const sandbox = await Sandbox.create('base');
+const sandbox = await Sandbox.create('base', { project: 'my-project' });
 await sandbox.process.exec('npm install -g some-heavy-toolchain');
 const id = sandbox.sandboxId;
 
@@ -120,7 +142,7 @@ await resumed.kill();
 **Python**
 
 ```python
-sandbox = Sandbox.create("base")
+sandbox = Sandbox.create("base", project="my-project")
 sandbox.process.exec_("pip install numpy pandas")
 sandbox_id = sandbox.sandbox_id
 sandbox.pause()
@@ -135,7 +157,7 @@ resumed.kill()
 Every sandbox expires after its timeout (SDK default: 5 minutes) and is reaped automatically. Adjust it at creation or any time while it runs:
 
 ```ts
-const sandbox = await Sandbox.create('base', { timeoutMs: 10 * 60 * 1000 }); // 10 min
+const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 10 * 60 * 1000 }); // 10 min
 await sandbox.setTimeout(30 * 60 * 1000);   // extend to 30 min from now
 ```
 
@@ -144,7 +166,7 @@ Pausing freezes the countdown, so a paused sandbox never expires while it's asle
 ## Managing sandboxes
 
 ```ts
-const sandbox = await Sandbox.create('base');
+const sandbox = await Sandbox.create('base', { project: 'my-project' });
 const info = await sandbox.getInfo();     // { sandboxId, template, startedAt, endAt, … }
 
 const all = await Sandbox.list();         // every running sandbox for this account
@@ -158,7 +180,7 @@ An agent that writes a script, runs it, serves the result, and checkpoints for l
 ```ts
 import { Sandbox } from '@lizard-build/sdk';
 
-const sandbox = await Sandbox.create('base', { timeoutMs: 15 * 60 * 1000 });
+const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 15 * 60 * 1000 });
 
 try {
   await sandbox.fs.write('/app/app.js', `

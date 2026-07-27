@@ -7,7 +7,7 @@ Sandboxes are the compute primitive behind AI agents, code interpreters, evals, 
 ```ts
 import { Sandbox } from '@lizard-build/sdk';
 
-const sandbox = await Sandbox.create('base');
+const sandbox = await Sandbox.create('base', { project: 'my-project' });
 const { stdout } = await sandbox.process.exec('echo "hello from Lizard"');
 console.log(stdout);            // hello from Lizard
 await sandbox.kill();
