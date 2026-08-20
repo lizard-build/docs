@@ -4,7 +4,7 @@ description: "How Lizard turns source into a container image: synthesized Docker
 
 # Build Pipeline
 
-Builds run on Lizard's build nodes — **you don't need Docker locally**. When you deploy, the platform decides how to turn your source into a container image using a fixed decision order, then runs it in a Firecracker micro-VM.
+Builds run on Lizard's build nodes — **you don't need Docker locally**. When you deploy, the platform decides how to turn your source into a container image using a fixed decision order, then runs that image in an isolated pod.
 
 ## Build decision order
 
@@ -55,7 +55,7 @@ If a build fails, read `lizard logs --build`, fix the cause (in your repo, or by
 
 ## Runtime notes
 
-- **No Docker `HEALTHCHECK`.** Firecracker VMs don't run Docker's healthcheck loop, so `HEALTHCHECK` directives are ignored. Lizard checks port reachability instead (skipped in [worker mode](/deploy/workers)).
+- **No Docker `HEALTHCHECK`.** The runtime doesn't run Docker's healthcheck loop, so `HEALTHCHECK` directives are ignored. Lizard runs a TCP probe against your port instead (skipped in [worker mode](/deploy/workers)).
 - **Don't write a Dockerfile unsolicited.** lizardpack auto-detects most stacks — try a deploy first, and only add a Dockerfile (or set `dockerfilePath`) if the auto-build doesn't fit.
 
 ## Build configuration reference

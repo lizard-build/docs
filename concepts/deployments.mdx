@@ -4,7 +4,7 @@ description: "The deploy lifecycle on Lizard: what triggers a build, how traffic
 
 # Deployments
 
-A **deployment** is one build-and-release of a service. Every deploy produces a build, starts new replicas in fresh micro-VMs, and shifts traffic once they're healthy.
+A **deployment** is one build-and-release of a service. Every deploy produces a build, starts new replicas in fresh pods, and shifts traffic once they're healthy.
 
 ## How a deploy happens
 
@@ -24,7 +24,7 @@ lizard up                          # upload cwd and deploy
 
 1. **Build** — the platform runs your build (see [Build Pipeline](/concepts/build-pipeline)).
 2. **Pre-deploy** — if `preDeployCommand` is set, it runs once (e.g. migrations).
-3. **Start** — new replicas boot in fresh Firecracker VMs.
+3. **Start** — new replicas start in fresh pods.
 4. **Health check** — the platform verifies the app's port is reachable (skipped for [workers](/deploy/workers)).
 5. **Route** — traffic shifts to the new replicas.
 

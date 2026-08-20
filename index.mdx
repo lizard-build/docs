@@ -1,10 +1,10 @@
 ---
-description: "Lizard builds apps, services, agents, and managed databases from a repo or a local folder, runs them on micro-VMs, and gives them a URL."
+description: "Lizard builds apps, services, agents, and managed databases from a repo or a local folder, runs them in isolated containers, and gives them a URL."
 ---
 
 # Introduction
 
-**Lizard** is a unified cloud for apps, services, agents, and managed databases. You point it at a repo or a local directory, and Lizard builds it, runs it on isolated micro-VMs, gives it a URL, and keeps it running — no Dockerfile, no YAML, and no local Docker required.
+**Lizard** is a unified cloud for apps, services, agents, and managed databases. You point it at a repo or a local directory, and Lizard builds it, runs it in isolated containers, gives it a URL, and keeps it running — no Dockerfile, no YAML, and no local Docker required.
 
 Everything the platform can do is exposed through the **`lizard` CLI** (npm package [`@lizard-build/cli`](https://www.npmjs.com/package/@lizard-build/cli)) and the **dashboard**. This documentation covers both.
 
@@ -20,7 +20,7 @@ lizard add -r your-org/your-app   # deploy a GitHub repo
 - **No Dockerfile needed** — the platform's builder ([lizardpack](/concepts/build-pipeline)) generates an optimized multi-stage image for you. Bring your own Dockerfile when you want full control.
 - **Managed addons in one command** — `lizard add postgres redis s3` provisions Postgres, Redis, and S3-compatible object storage, wired into your services by reference.
 - **Git-native** — connect a GitHub repo and every push to your branch auto-builds and redeploys.
-- **Isolated by default** — each service runs in its own Firecracker micro-VM with a generated `*.onlizard.com` domain and automatic TLS.
+- **Isolated by default** — each service runs in its own pod with a default-deny network policy, a generated `*.onlizard.com` domain, and automatic TLS.
 - **On-demand sandboxes** — spin up ephemeral Firecracker micro-VMs for AI agents, code interpreters, and evals via the [SDK](/sandboxes/quickstart) — boot in milliseconds, snapshot, and tear down. See [Sandboxes](/sandboxes).
 - **Built for both humans and agents** — the same capabilities are available to AI coding agents through an embedded [skill and MCP surface](/agents).
 

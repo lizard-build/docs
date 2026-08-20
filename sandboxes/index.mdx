@@ -30,7 +30,7 @@ Once an agent has produced a working app inside a sandbox, you can promote it to
 
 ## What makes them fast
 
-- **Firecracker micro-VMs** — the same isolation model as every Lizard [service](/concepts/architecture), sized down to a single task. Hardware-virtualized, so generated code can't reach your infrastructure.
+- **Firecracker micro-VMs** — a stronger boundary than the pod a [service](/concepts/architecture) runs in, sized down to a single task. Hardware-virtualized, so generated code can't reach your infrastructure.
 - **Snapshot-first** — pause a sandbox and its entire state (memory, filesystem, running processes) is snapshotted. Resume instantly, exactly where it left off — no re-installing packages or re-warming caches. This is what makes long-running agent sessions survive across separate invocations. See [pause & resume](/sandboxes/quickstart#pause-and-resume).
 - **Boot from a template** — every node pre-builds a golden snapshot per template, so `create` is a restore, not a cold boot.
 
