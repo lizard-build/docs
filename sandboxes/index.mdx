@@ -22,7 +22,7 @@ await sandbox.kill();
 | Use a **sandbox** when… | Use a **service** when… |
 |---|---|
 | An agent needs to run untrusted or generated code | You're deploying an app that stays up |
-| You want a fresh, throwaway Linux box per task | You want a stable `*.onlizard.com` URL and TLS |
+| You want a fresh, throwaway Linux box per task | You want a stable `<name>.<region>.onlizard.com` URL and TLS |
 | You need to fan out many isolated jobs at once | You have a single always-on process |
 | The workload is short-lived or checkpointed | The workload is git-backed and auto-redeploys |
 
@@ -31,7 +31,7 @@ Once an agent has produced a working app inside a sandbox, you can promote it to
 ## What makes them fast
 
 - **Firecracker micro-VMs** — a stronger boundary than the pod a [service](/concepts/architecture) runs in, sized down to a single task. Hardware-virtualized, so generated code can't reach your infrastructure.
-- **Snapshot-first** — pause a sandbox and its entire state (memory, filesystem, running processes) is snapshotted. Resume instantly, exactly where it left off — no re-installing packages or re-warming caches. This is what makes long-running agent sessions survive across separate invocations. See [pause & resume](/sandboxes/quickstart#pause-and-resume).
+- **Pause and resume** — pausing freezes the micro-VM's vCPUs. Memory, filesystem, and running processes are kept as they are, so resume picks up exactly where it left off — no re-installing packages or re-warming caches. This is what makes long-running agent sessions survive across separate invocations. State is held in the host's memory rather than written to disk, so it does not survive a host failure. See [pause & resume](/sandboxes/quickstart#pause-and-resume).
 - **Boot from a template** — every node pre-builds a golden snapshot per template, so `create` is a restore, not a cold boot.
 
 ## Templates
@@ -55,10 +55,12 @@ create ──▶ running ⇄ paused ──▶ stopped
 ```
 
 - **running** — vCPUs are live and billable. Exec commands, read/write files, expose ports.
-- **paused** — snapshotted to disk; the expiration countdown is frozen and on-demand compute drops to zero. `resume` (or `connect`) brings it back.
+- **paused** — vCPUs frozen. Memory, filesystem, and running processes are kept, and on-demand compute drops to zero. `resume` (or `connect`) brings it back. The timeout keeps running while paused — see below.
 - **stopped** — terminated. Reached by `kill()`, or automatically when the sandbox's timeout expires.
 
-Every sandbox has a **timeout**. The SDK applies a 5-minute default; extend or shorten it any time with [`setTimeout`](/sandboxes/quickstart#timeouts). Expired sandboxes are reaped within ~60s, so a leaked sandbox can't run forever. Dashboard-created sandboxes have no timeout and run until you pause or kill them.
+Every sandbox has a **timeout**. The SDK applies a 5-minute default; extend or shorten it any time with [`setTimeout`](/sandboxes/quickstart#timeouts). Expired sandboxes are reaped within ~60s, so a leaked sandbox can't run forever.
+
+**Pausing does not stop that clock.** A paused sandbox whose timeout passes is reaped like a running one, so a session parked on the SDK default is gone five minutes later. Before parking a sandbox, set a timeout that covers the pause — or pass `timeoutMs: 0` at create for no timeout at all. Dashboard-created sandboxes have no timeout and run until you pause or kill them.
 
 ## Resources & limits
 
