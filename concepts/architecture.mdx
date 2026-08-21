@@ -49,7 +49,7 @@ A **service** is a single deployable unit. Its source is one of:
 - **`github`** — a connected GitHub repo. Pushes to the tracked branch auto-redeploy.
 - **`upload`** — a tarball uploaded with `lizard up`.
 
-Each running service runs as its own **isolated pod** with a default-deny network policy, a generated `*.onlizard.com` domain, and automatic TLS. Inspect and manage services with:
+Each running service runs as its own **isolated pod** with a default-deny network policy, a generated `<name>.<region>.onlizard.com` domain, and automatic TLS. Inspect and manage services with:
 
 ```bash
 lizard ps                       # list services with status + URL
