@@ -68,6 +68,6 @@ lizard logs --restart <id>         # a specific restart
 lizard events                      # see replica status
 ```
 
-## Live config changes (no rebuild)
+## Config changes (no rebuild)
 
-Most environment variable and secret changes are pushed **live** to the running VM (via `SIGUSR1`) without a rebuild. Build-time values (`VITE_*`, `NEXT_PUBLIC_*`) and build-field changes do force a rebuild — see the [rebuild triggers table](/concepts/build-pipeline#what-triggers-a-rebuild).
+Most environment variable and secret changes apply without a rebuild: Lizard updates the service's config and restarts it, which takes a few seconds. Build-time values (`VITE_*`, `NEXT_PUBLIC_*`) and build-field changes do force a rebuild — see the [rebuild triggers table](/concepts/build-pipeline#what-triggers-a-rebuild).

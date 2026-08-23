@@ -62,7 +62,7 @@ So **app secrets override project secrets**, and **platform variables** (`PORT`,
 
 ## Build-time vs. runtime
 
-Most variable changes are pushed **live** to the running VM with no rebuild. The exceptions are build-time values baked into the image:
+Most variable changes apply with **no rebuild** — the service restarts to pick them up, which takes a few seconds. The exceptions are build-time values baked into the image:
 
 - `VITE_*` and `NEXT_PUBLIC_*` changes **force a rebuild** on the next deploy.
 
