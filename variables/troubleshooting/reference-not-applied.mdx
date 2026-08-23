@@ -14,7 +14,7 @@ The value you set never made it into the service's merged environment — or som
 
 - **The reference target or key doesn't exist.** A reference to a missing service/addon name, or a key that addon doesn't expose, resolves to an **empty string** instead of failing the deploy. There's no error to alert you — the service just boots with an empty value.
 - **Something with higher precedence overrode it.** Values merge in a fixed order — `addon-issued env < project secrets < project env < app env < app secrets < platform vars` — so a project-scoped (`--global`) secret can be silently shadowed by a service-scoped one with the same key, and platform variables (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`) always win and can't be overridden at all.
-- **You changed a build-time value but didn't rebuild.** Most variable changes are pushed live to the running VM with no rebuild. `VITE_*` and `NEXT_PUBLIC_*` values are the exception — they're baked into the built assets, so a plain restart won't pick up a new value; the service needs a fresh build.
+- **You changed a build-time value but didn't rebuild.** Most variable changes apply with no rebuild — the service restarts to pick them up. `VITE_*` and `NEXT_PUBLIC_*` values are the exception — they're baked into the built assets, so a plain restart won't pick up a new value; the service needs a fresh build.
 
 ## Possible solutions
 

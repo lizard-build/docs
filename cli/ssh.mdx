@@ -1,10 +1,10 @@
 ---
-description: "lizard ssh runs a command inside a live service VM and returns its exit code. The authoritative way to see what the container sees."
+description: "lizard ssh runs a command inside a live service container and returns its exit code. The authoritative way to see what the container sees."
 ---
 
 # lizard ssh
 
-Execute a command inside a running service's VM, streaming its output and returning the remote exit code.
+Execute a command inside a running service's container, streaming its output and returning the remote exit code.
 
 ## run vs. ssh
 
@@ -13,7 +13,7 @@ Execute a command inside a running service's VM, streaming its output and return
 | Command | Runs where | Use for |
 |---------|-----------|---------|
 | `lizard run` | **Locally**, with the service's project + service secrets injected | Migrations, seed scripts, local tooling that needs prod config |
-| `lizard ssh` | **Inside the running service VM** | Inspecting the live container, one-off remote commands, debugging |
+| `lizard ssh` | **Inside the running service container** | Inspecting the live container, one-off remote commands, debugging |
 
 `lizard run` shows your local injected copy of the environment, which is usually the same as production — but `lizard ssh` is authoritative for what the live container actually sees.
 

@@ -38,7 +38,7 @@ On this path:
 | Changing `VITE_*` or `NEXT_PUBLIC_*` vars | ✅ build-time values are baked in |
 | `service set` of build fields (`repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath`, `rootDirectory`) | ✅ auto-rebuilds |
 | `service set` of runtime-only fields (`startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns`) | ❌ run `lizard redeploy` to apply |
-| Any other env var / secret change | ❌ pushed live to the running VM (no rebuild) |
+| Any other env var / secret change | ❌ applied on a quick restart (no rebuild) |
 
 > **Don't double-build.** After a `service set` that changes a build field, the rebuild fires automatically — don't chain a `lizard redeploy` after it, or you'll queue a second redundant build.
 
