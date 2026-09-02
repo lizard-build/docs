@@ -56,6 +56,8 @@ lizard service set api --set preDeployCommand="npm run migrate"
 lizard redeploy --service api
 ```
 
+For a Django app the command is `python manage.py migrate`; [Python app hosting](https://lizard.build/blog/python-app-hosting#deploying-django) has the equivalent for Flask and FastAPI.
+
 ## Browse and query data
 
 Open the **Postgres editor** in the dashboard (`lizard open`) to run SQL and browse tables directly. For ad-hoc local work, run a command with the service's injected environment:

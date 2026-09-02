@@ -6,6 +6,8 @@ description: "Lizard builds apps, services, agents, and managed databases from a
 
 **Lizard** is a unified cloud for apps, services, agents, and managed databases. You point it at a repo or a local directory, and Lizard builds it, runs it in isolated containers, gives it a URL, and keeps it running — no Dockerfile, no YAML, and no local Docker required.
 
+The category name for that is [container as a service](https://lizard.build/blog/container-as-a-service), which the blog sets against PaaS, FaaS and IaaS with 2026 prices for nine providers.
+
 Everything the platform can do is exposed through the **`lizard` CLI** (npm package [`@lizard-build/cli`](https://www.npmjs.com/package/@lizard-build/cli)) and the **dashboard**. This documentation covers both.
 
 ```bash
@@ -22,7 +24,7 @@ lizard add -r your-org/your-app   # deploy a GitHub repo
 - **Git-native** — connect a GitHub repo and every push to your branch auto-builds and redeploys.
 - **Isolated by default** — each service runs in its own pod with a default-deny network policy, a generated `*.onlizard.com` domain, and automatic TLS.
 - **On-demand sandboxes** — spin up ephemeral Firecracker micro-VMs for AI agents, code interpreters, and evals via the [SDK](/sandboxes/quickstart) — boot in milliseconds, snapshot, and tear down. See [Sandboxes](/sandboxes).
-- **Built for both humans and agents** — the same capabilities are available to AI coding agents through an embedded [skill and MCP surface](/agents).
+- **Built for both humans and agents** — the same capabilities are available to AI coding agents through an embedded [skill and MCP surface](/agents). An app your AI IDE wrote ships the same way: see [deploying an app built in Google Antigravity](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production).
 
 ## How it fits together
 

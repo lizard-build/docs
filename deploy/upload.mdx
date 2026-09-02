@@ -38,7 +38,7 @@ lizard up --service api --start-command "node server.js" --port 8080
 
 ## Setting build/start commands
 
-Passing `--build-command` or `--start-command` switches the service to the **synthesized Dockerfile** path. On that path, `Procfile` and `package.json` `scripts.start` are **not** read — set the start command explicitly (or include a `CMD` in your own Dockerfile). See [Build Pipeline](/concepts/build-pipeline).
+Passing `--build-command` or `--start-command` switches the service to the **synthesized Dockerfile** path. On that path, `Procfile` and `package.json` `scripts.start` are **not** read — set the start command explicitly (or include a `CMD` in your own Dockerfile). See [Build Pipeline](/concepts/build-pipeline). Python is where this bites most often: [Django, Flask and FastAPI](https://lizard.build/blog/python-app-hosting#deploying-django) each need a different `gunicorn` or `uvicorn` line.
 
 ## Re-deploying an upload service
 

@@ -12,7 +12,7 @@ The platform's health check — which verifies your app's port is reachable — 
 
 ## Why this can happen
 
-- **Your app isn't listening on the expected port.** Lizard injects a `PORT` environment variable (default container port `3000`) and checks that your app is reachable there. If your app is hardcoded to a different port, or never binds one, the health check fails indefinitely.
+- **Your app isn't listening on the expected port.** Lizard injects a `PORT` environment variable (default container port `3000`) and checks that your app is reachable there. If your app is hardcoded to a different port, or never binds one, the health check fails indefinitely. A Python app is the usual case: `gunicorn` and `uvicorn` bind `127.0.0.1` unless you tell them otherwise, and the probe comes from outside the process. [Python app hosting](https://lizard.build/blog/python-app-hosting#what-a-python-app-actually-needs-from-a-host) has the `--bind 0.0.0.0:$PORT` line each framework needs.
 - **The service is accidentally in worker mode.** Setting `containerPort=0` puts a service into [worker mode](/deploy/workers), which **skips the health check and load-balancer registration entirely**. A service that's supposed to serve HTTP but got flipped to `containerPort=0` will deploy "successfully" and just never serve anything — worker mode hides the underlying startup problem instead of surfacing it.
 
 ## Possible solutions
