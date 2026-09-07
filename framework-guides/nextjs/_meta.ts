@@ -1,4 +1,4 @@
 export default {
-  index: 'Node.js server',
-  'static-export': 'Static export',
+  index: 'Next.js',
+  'static-export': { title: 'Static export', display: 'hidden' },
 };

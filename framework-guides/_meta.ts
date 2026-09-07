@@ -1,6 +1,6 @@
 export default {
   index: 'Overview',
-  nextjs: 'Next.js',
+  nextjs: { title: 'Next.js', display: 'children' },
   react: 'React (Vite)',
   vue: 'Vue (Vite)',
   astro: 'Astro',
