@@ -1,7 +1,7 @@
 import hmac
 import os
 from contextlib import contextmanager
-from uuid import UUID
+from uuid import UUID, uuid4
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
@@ -12,6 +12,7 @@ from graph import compile_graph
 
 TOKEN = os.environ["API_TOKEN"]
 DB = os.environ["DATABASE_URL"]
+INSTANCE_ID = str(uuid4())
 if len(TOKEN) < 32:
     raise RuntimeError("API_TOKEN must contain at least 32 characters")
 app = FastAPI(title="LangGraph checkpoint example", docs_url=None, redoc_url=None, openapi_url=None)
@@ -64,7 +65,7 @@ async def internal_error(_request, _error):
 def health():
     with PostgresSaver.from_conn_string(DB) as saver:
         saver.conn.execute("SELECT 1 FROM checkpoints LIMIT 1")
-    return {"ready": True}
+    return {"ready": True, "instanceId": INSTANCE_ID}
 
 
 @app.post("/threads/{thread}", dependencies=[Depends(authorize)])
