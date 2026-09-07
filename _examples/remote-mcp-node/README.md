@@ -7,3 +7,5 @@ This example uses the maintained v1 TypeScript SDK and Streamable HTTP in statel
 Source: https://ts.sdk.modelcontextprotocol.io/server
 
 After starting the server, set `MCP_URL` and `MCP_TOKEN` and run `node client.mjs`. It checks health, rejected credentials, method and Origin handling, initialization, tool discovery and the result of a tool call. Use the same client against the public HTTPS endpoint.
+
+MCP Inspector 2.5.0 is pinned as a development dependency. See the [Inspector client guide](https://lizard.build/docs/guides/mcp-inspector/) for `tools/list`, `tools/call` and the expected invalid-token failure. The deployed Docker image uses `npm ci --omit=dev` and does not include Inspector.
