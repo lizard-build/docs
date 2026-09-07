@@ -35,27 +35,35 @@ export MCP_TOKEN="$(cat .mcp-token)"
 node client.mjs
 ```
 
-The tool returns `5`. `/health` returns `ok`; a request to `/mcp` without a valid token returns `401`.
+The client checks initialization, tool discovery and the result `5`, then prints `MCP initialize, tools/list and tools/call passed: 5`. `/health` returns `ok`; a request to `/mcp` without a valid token returns `401`.
 
 ## Deploy the application
 
 Keep the example's Dockerfile and lockfile. From the directory containing them:
 
 ```bash
-lizard login
 lizard init --name mcp-example
-lizard up --service mcp --port 8000 --detach
-lizard ps --json
+lizard add --service mcp
+lizard domain --service mcp --json
 ```
 
-The first application start needs the two environment values below. Use the assigned hostname reported by `lizard ps`, without `https://` or a path:
+Sign in with `lizard login` if a command reports that authentication is required. `init` links the project; `add` creates the named service. The domain command assigns its hostname before deployment. Use the returned `hostname` below, without `https://` or a path:
 
 ```bash
 lizard secrets set MCP_PUBLIC_KEY="$(cat .mcp-public-key.pem)" --service mcp
 lizard secrets set MCP_ALLOWED_HOSTS=YOUR_SERVICE_HOSTNAME --service mcp
 ```
 
-Wait for the application to restart with those values and check its logs. `server.mjs` listens on `0.0.0.0` and reads `PORT`, with 8000 as its default. The deploy command sets the service port to 8000. Configure the public key as a multiline environment value; do not upload the private signing key or the token file.
+Set both values before the first deployment. Then run:
+
+```bash
+lizard up --service mcp --port 8000
+lizard logs --build --service mcp --json
+lizard logs --service mcp --json
+lizard ps --json
+```
+
+On macOS with Lizard CLI 0.3.92, use `COPYFILE_DISABLE=1 lizard up --service mcp --port 8000` to exclude AppleDouble metadata from the archive. A later CLI release may include the archive fix. Check the final deployment event and public endpoint; do not rely on this CLI version's exit code alone after a failed build. `server.mjs` listens on `0.0.0.0` and reads `PORT`, with 8000 as its default. The deploy command sets the service port to 8000. Configure the public key as a multiline environment value; do not upload the private signing key or the token file.
 
 ## Verify the public endpoint
 
@@ -74,7 +82,7 @@ A healthy process alone does not prove the MCP handshake or streamed response wo
 | Process exits during startup | `MCP_PUBLIC_KEY` must contain the public PEM key; `MCP_ALLOWED_HOSTS` must contain the service hostname. |
 | `401` | The token must use RS256, match issuer and audience `mcp-example`, and not have expired. |
 | `403` | Match the request hostname to `MCP_ALLOWED_HOSTS`. Browser origins are not enabled by this example. |
-| `405` from a browser tab | This stateless MCP endpoint accepts protocol requests through POST. Use an MCP client, not a browser GET. |
+| `405` with a valid token | This stateless MCP endpoint accepts protocol requests through POST. Use an MCP client. A browser GET without a token returns `401` first. |
 | Local test passes but remote call fails | Check port, HTTPS, response streaming, and proxy timeouts. |
 
 ## Limits and cost
@@ -88,3 +96,5 @@ An HTTP process may remain active between calls. Check [pricing](https://lizard.
 - [Environment references](/variables/references)
 - [Deployment recovery](/concepts/deployments)
 - [MCP TypeScript SDK server guide](https://ts.sdk.modelcontextprotocol.io/server)
+
+See [scenario test results](/guides/validation) for checked versions, cloud results and remaining limits.

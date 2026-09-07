@@ -17,7 +17,7 @@ The [example files](https://github.com/lizard-build/docs/tree/main/_examples/tel
 From the example directory:
 
 ```bash
-python -m unittest -v
+python3 -m unittest -v
 ```
 
 The checks cover text replies, ignored updates, empty polls, and failed sends. Run the bot locally with `TELEGRAM_BOT_TOKEN` set only if you intend to send replies. Stop that local process before starting the hosted worker.
@@ -25,12 +25,21 @@ The checks cover text replies, ignored updates, empty polls, and failed sends. R
 ## Deploy as a worker
 
 ```bash
-lizard login
 lizard init --name telegram-bot
-lizard up --service bot --port 0 --detach
+lizard add --service bot
 ```
 
-The first start will need the token. Set `TELEGRAM_BOT_TOKEN` on the **bot service** in the dashboard's variables editor. Keep it out of source files and screenshots. The service restarts to read its environment.
+Sign in with `lizard login` if a command reports that authentication is required. Set `TELEGRAM_BOT_TOKEN` on the **bot service** before deploying. You can use the dashboard's variables editor, or put the value in a local `.env` file and import it:
+
+```bash
+lizard secrets import --service bot < .env
+lizard run --service bot -- python3 check_bot.py
+lizard up --service bot --port 0
+```
+
+The preflight checks the token with `getMe` and refuses a bot with an active webhook. It does not remove or change that webhook. A second polling process can still conflict: stop any local copy before deployment.
+
+The example excludes `.env*` from uploads. Keep the token out of source files and screenshots. On macOS with Lizard CLI 0.3.92, prefix the upload command with `COPYFILE_DISABLE=1`. Read the final deployment event and logs even if the command exits successfully.
 
 For an existing service, set worker mode explicitly:
 
@@ -38,7 +47,7 @@ For an existing service, set worker mode explicitly:
 lizard service set bot --set containerPort=0
 ```
 
-Check deployment events before requesting another build. Worker mode skips HTTP port checks and the load-balancer route; do not add a dummy web server just to make this process look like an HTTP app.
+After changing worker mode on a running service, apply it with `lizard redeploy --service bot`. Check deployment events before requesting another build. Worker mode skips HTTP port checks and the load-balancer route; do not add a dummy web server just to make this process look like an HTTP app.
 
 ## Verify the result
 
@@ -70,3 +79,5 @@ For durable bot state, connect [Managed Postgres](/addons/postgres). Store proce
 - [Logs](/observability/logs)
 - [Limits](/platform/limits)
 - [Telegram getUpdates reference](https://core.telegram.org/bots/api#getupdates)
+
+See [scenario test results](/guides/validation) for checked versions, cloud results and remaining limits.

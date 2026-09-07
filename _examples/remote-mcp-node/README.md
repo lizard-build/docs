@@ -5,3 +5,5 @@ Run `npm ci`, then `npm test` for local HTTP checks. Set `MCP_PUBLIC_KEY` to an 
 This example uses the maintained v1 TypeScript SDK and Streamable HTTP in stateless mode. It exposes one arithmetic tool. It does not implement OAuth discovery, browser access, or an identity provider. A client must support a configured bearer token. Choose an OAuth integration for clients that require interactive login.
 
 Source: https://ts.sdk.modelcontextprotocol.io/server
+
+After starting the server, set `MCP_URL` and `MCP_TOKEN` and run `node client.mjs`. It checks health, rejected credentials, method and Origin handling, initialization, tool discovery and the result of a tool call. Use the same client against the public HTTPS endpoint.

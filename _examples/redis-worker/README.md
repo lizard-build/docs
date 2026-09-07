@@ -1,0 +1,1 @@
+Run the commands in the [worker guide](https://lizard.build/docs/deploy/workers/). `jobs.py` submits a fixed demo job and waits for its result. Keep one worker replica. Redis stores pending jobs and results; worker restart and Redis data loss are different failure cases. This example does not validate jobs from untrusted producers or guarantee exactly-once external effects.
