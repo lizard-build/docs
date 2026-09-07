@@ -6,6 +6,8 @@ description: "Run a Telegram long-polling bot as a Lizard worker. Configure its 
 
 A long-polling bot is a background worker: it asks Telegram for updates and does not need a public HTTP endpoint. Run it with `containerPort=0` and one replica per bot token.
 
+**Test status:** seven local tests with mocked Telegram responses pass. We have not checked this guide with a real bot in the cloud. Use a separate test bot and complete the message and restart checks below before relying on it. See [scenario test results](/guides/validation).
+
 ## Before you start
 
 Create a bot with BotFather and keep its token private. You need Python 3.13, Lizard CLI, and a project you can deploy to. A bot using long polling must not have an active webhook; check its current configuration before changing how it receives updates.
