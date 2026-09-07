@@ -1,0 +1,43 @@
+---
+description: "Choose storage for application data and sandbox files. Understand attachments, host failure, exports, and recovery before deleting or replacing a resource."
+---
+
+# Storage and recovery
+
+Choose storage by the data that must survive a process restart, a new deployment, or a host failure. These are different events. Persistent storage does not by itself provide a backup, a restore point, or high availability.
+
+| Data | Where to keep it | Boundary |
+|---|---|---|
+| Application records | Managed Postgres or another database | A restart is different from restoring deleted or corrupt data. Test a separate export and restore path. |
+| Cache and queue data | Managed Redis | Decide whether the workload can rebuild its state or needs its own recovery plan. |
+| Files shared by applications | Managed Object Storage | Set the bucket's access policy before uploading private data. The automatically created `default` bucket is public-read. |
+| Files needed by later Sandboxes | Persistent Volumes, mounted at `/data` | One sandbox attachment at a time; the volume stays on its node. |
+| Temporary sandbox files | The guest filesystem outside `/data` | Do not expect them after the sandbox ends or the guest is replaced. |
+| Paused process state | Host memory | Pause is not a durable snapshot; host failure loses that state. |
+
+## Keep files after a sandbox ends
+
+Create a Persistent Volume in the same project, attach it when creating the sandbox, and write under `/data`. End the first sandbox before attaching the volume to the next one. See the [complete example](/sandboxes/volumes).
+
+## Plan a database restore
+
+Before a migration or release that changes data:
+
+1. Choose an export method for the database and version in use.
+2. Store the export separately from the resource being changed.
+3. Restore into a separate test database and verify the application can read it.
+4. Record the restore duration and the latest data included in the export.
+
+Do not assume scheduled backups, point-in-time recovery, multi-node replication, or a restore-time guarantee from a database being managed. Confirm the current service agreement and available controls for your resource.
+
+## Environment references
+
+An application should read its database connection from an environment reference. A connection string is a credential; avoid printing it to verify an update. A connection check such as `SELECT 1` proves more than seeing the variable in a shell.
+
+## Related guides
+
+- [Managed Postgres](/addons/postgres)
+- [Managed Redis](/addons/redis)
+- [Managed Object Storage](/addons/storage)
+- [Persistent Volumes](/sandboxes/volumes)
+- [Deployment recovery](/concepts/deployments#failed-releases-and-recovery)

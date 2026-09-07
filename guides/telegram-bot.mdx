@@ -1,0 +1,72 @@
+---
+description: "Run a Telegram long-polling bot as a Lizard worker. Configure its token, disable HTTP routing, keep one replica, and check messages and retries."
+---
+
+# Run a Telegram bot
+
+A long-polling bot is a background worker: it asks Telegram for updates and does not need a public HTTP endpoint. Run it with `containerPort=0` and one replica per bot token.
+
+## Before you start
+
+Create a bot with BotFather and keep its token private. You need Python 3.13, Lizard CLI, and a project you can deploy to. A bot using long polling must not have an active webhook; check its current configuration before changing how it receives updates.
+
+The [example files](https://github.com/lizard-build/docs/tree/main/_examples/telegram-worker) include `worker.py`, a Dockerfile, and local unit tests. The tests do not call Telegram. The echo handler stores its offset in memory; it is not an exactly-once processing system.
+
+## Check locally
+
+From the example directory:
+
+```bash
+python -m unittest -v
+```
+
+The checks cover text replies, ignored updates, empty polls, and failed sends. Run the bot locally with `TELEGRAM_BOT_TOKEN` set only if you intend to send replies. Stop that local process before starting the hosted worker.
+
+## Deploy as a worker
+
+```bash
+lizard login
+lizard init --name telegram-bot
+lizard up --service bot --port 0 --detach
+```
+
+The first start will need the token. Set `TELEGRAM_BOT_TOKEN` on the **bot service** in the dashboard's variables editor. Keep it out of source files and screenshots. The service restarts to read its environment.
+
+For an existing service, set worker mode explicitly:
+
+```bash
+lizard service set bot --set containerPort=0
+```
+
+Check deployment events before requesting another build. Worker mode skips HTTP port checks and the load-balancer route; do not add a dummy web server just to make this process look like an HTTP app.
+
+## Verify the result
+
+```bash
+lizard ps --json
+lizard logs --service bot --json
+lizard events --json
+```
+
+The log should show `Telegram worker started`. Send a message to your bot and check for one echo reply. Then stop and restart the worker during an approved test window and confirm it reconnects. A worker that is marked running still needs this application-level check.
+
+## Common failures
+
+| Symptom | Check |
+|---|---|
+| Process exits immediately | Set `TELEGRAM_BOT_TOKEN` on the consuming service. |
+| HTTP health check never passes | Worker mode must use `containerPort=0`. |
+| Updates stop or conflict errors appear | Only one polling process should use this token; check for a local process, another replica, or an active webhook. |
+| Repeated replies after a failure | The demo does not persist offsets or deduplicate update IDs. Add durable idempotency before handling irreversible actions. |
+| Frequent retries | Check network access, token validity, Telegram limits, and your handler. Do not print request URLs: they contain the token. |
+
+## State and cost
+
+For durable bot state, connect [Managed Postgres](/addons/postgres). Store processed update IDs and make handlers safe to retry. Long polling can keep the worker active between messages; budget from [pricing](https://lizard.build/pricing) and observed resource use, not from message count alone.
+
+## Related guides
+
+- [Background workers](/deploy/workers)
+- [Logs](/observability/logs)
+- [Limits](/platform/limits)
+- [Telegram getUpdates reference](https://core.telegram.org/bots/api#getupdates)

@@ -1,6 +1,8 @@
 export default {
   index: 'Introduction',
-  'getting-started': 'Quickstart',
+  'getting-started': 'App quickstart',
+  guides: 'Guides',
+  platform: 'Limits & operations',
   concepts: 'Core Concepts',
   deploy: 'Deploying',
   variables: 'Variables',
@@ -9,6 +11,6 @@ export default {
   sandboxes: 'Sandboxes',
   observability: 'Observability',
   cli: 'CLI Reference',
-  dashboard: 'Dashboard',
-  agents: 'AI Agents & MCP',
+  dashboard: 'App dashboard',
+  agents: 'Coding agents',
 };

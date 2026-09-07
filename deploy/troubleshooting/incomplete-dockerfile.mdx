@@ -28,10 +28,10 @@ RUN npm ci && npm run build
 
 ### Or force verbatim use
 
-Set `dockerfilePath` explicitly — this tells the platform to use that file unchanged, regardless of whether it has a build step:
+Clear build and start overrides, then set `dockerfilePath` in the same update. Overrides take priority over the file path:
 
 ```bash
-lizard service set api --set dockerfilePath=Dockerfile
+lizard service set api --set buildCommand=null --set startCommand=null --set dockerfilePath=Dockerfile
 ```
 
 ## See also
@@ -39,3 +39,5 @@ lizard service set api --set dockerfilePath=Dockerfile
 - [Build Pipeline](/concepts/build-pipeline) — the full build decision order.
 - [Build configuration reference](/concepts/build-pipeline#build-configuration-reference)
 - [Deploying any Python app on Lizard](https://lizard.build/blog/python-app-hosting#deploying-any-python-app-on-lizard) — when to let lizardpack write the Dockerfile and when to bring your own.
+
+Changing these build fields can start a build. Check `lizard events` before sending another `redeploy`, to avoid starting a second build.

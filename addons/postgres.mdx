@@ -2,7 +2,7 @@
 description: "Provision a managed PostgreSQL database on Lizard, connect it to a service by reference, run migrations on deploy, and grow its storage."
 ---
 
-# Postgres
+# Managed Postgres
 
 A managed PostgreSQL database, provisioned in one command and wired into your services by reference.
 
@@ -41,15 +41,15 @@ lizard redeploy --service api
 
 The reference resolves at deploy time and rotates automatically if the addon's credentials change — every consumer picks up the new value on its next deploy.
 
-Verify the value landed:
+Verify connectivity without printing the connection string:
 
 ```bash
-lizard ssh --service api -- env | grep DATABASE_URL
+lizard run --service api -- sh -c 'psql "$DATABASE_URL" -c "SELECT 1"'
 ```
 
 ## Run migrations on deploy
 
-Use a pre-deploy command so migrations run once per deploy before new replicas start serving:
+Use a pre-deploy command for migrations. Make migrations safe to retry and compatible with both the old and new application version:
 
 ```bash
 lizard service set api --set preDeployCommand="npm run migrate"
@@ -63,7 +63,7 @@ For a Django app the command is `python manage.py migrate`; [Python app hosting]
 Open the **Postgres editor** in the dashboard (`lizard open`) to run SQL and browse tables directly. For ad-hoc local work, run a command with the service's injected environment:
 
 ```bash
-lizard run --service api -- psql "$DATABASE_URL"
+lizard run --service api -- sh -c 'exec psql "$DATABASE_URL"'
 ```
 
 ## Grow storage
@@ -87,3 +87,5 @@ lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_URL}}' --serv
 
 - [Managed Addons](/addons) — naming, references, and the dashboard browsers.
 - [Cross-Service References](/variables/references) — reference syntax and resolution.
+
+See [storage and recovery](/platform/storage-and-recovery) for backup and restore planning. Local `lizard run` requires `psql` and a reachable database endpoint; it does not run inside the deployed service.

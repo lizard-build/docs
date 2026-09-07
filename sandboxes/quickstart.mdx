@@ -1,10 +1,10 @@
 ---
-description: "Boot your first sandbox with the Lizard SDK: install, create an API key, pick a project, run code, move files, expose a port, and checkpoint."
+description: "Boot your first sandbox with the Lizard SDK: install, create an API key, pick a project, run code, move files, expose a port, and pause."
 ---
 
-# Quickstart
+# Sandboxes quickstart
 
-Boot a sandbox, run code in it, expose a port, and checkpoint it — with the Lizard SDK.
+Boot a sandbox, run code in it, expose a port, and pause it with the Lizard SDK.
 
 ## Install
 
@@ -23,7 +23,7 @@ Sandboxes authenticate with an **API key**. Create one in the dashboard (**Sandb
 Set it in your environment and the SDK picks it up automatically:
 
 ```bash
-export LIZARD_API_KEY="liz_…"
+export LIZARD_API_KEY="<your-api-key>"
 ```
 
 You can also pass it explicitly: `Sandbox.create('base', { apiKey, project })`.
@@ -61,12 +61,13 @@ import { Sandbox } from '@lizard-build/sdk';
 const sandbox = await Sandbox.create('base', { project: 'my-project' });
 
 // Run a command and wait for it to finish
-const result = await sandbox.process.exec('node -e "console.log(2 ** 10)"');
-console.log(result.stdout);     // 1024
-console.log(result.exitCode);   // 0
-
-// Always release resources when done
-await sandbox.kill();
+try {
+  const result = await sandbox.process.exec('node -e "console.log(2 ** 10)"');
+  console.log(result.stdout);     // 1024
+  console.log(result.exitCode);   // 0
+} finally {
+  await sandbox.kill();
+}
 ```
 
 **Python**
@@ -77,10 +78,11 @@ from lizard import Sandbox
 sandbox = Sandbox.create("base", project="my-project")
 
 # exec_ (trailing underscore) because `exec` is reserved in Python
-result = sandbox.process.exec_("python -c 'print(2 ** 10)'")
-print(result.stdout)     # 1024
-
-sandbox.kill()
+try:
+    result = sandbox.process.exec_("python -c 'print(2 ** 10)'")
+    print(result.stdout)     # 1024
+finally:
+    sandbox.kill()
 ```
 
 `process.exec` returns `{ stdout, stderr, exitCode }`. It waits for the command to complete — background long-running processes with a trailing `&`.
@@ -125,7 +127,7 @@ console.log(`Live at https://${host}`);
 
 ## Pause and resume
 
-Pausing snapshots the whole micro-VM — memory, filesystem, and running processes. Resume and it continues exactly where it left off, so long agent sessions survive across separate invocations without re-running setup.
+Pause freezes the guest vCPUs and retains its current state in host memory. It does not write a durable snapshot. Check the [pause and expiration issue](/platform/known-issues#sandbox-pause-and-expiration) before retaining a session beyond its original deadline.
 
 ```ts
 // Set the environment up once
@@ -133,10 +135,10 @@ const sandbox = await Sandbox.create('base', { project: 'my-project' });
 await sandbox.process.exec('npm install -g some-heavy-toolchain');
 const id = sandbox.sandboxId;
 
-await sandbox.pause();          // snapshot; countdown frozen, compute → 0
+await sandbox.pause();          // freeze the guest; see the lifecycle issue below
 
 // …minutes or hours later, from anywhere:
-const resumed = await Sandbox.connect(id);   // auto-resumes from the snapshot
+const resumed = await Sandbox.connect(id);   // resumes guest state still held by the host
 await resumed.process.exec('some-heavy-toolchain --version');   // already installed
 await resumed.kill();
 ```
@@ -151,21 +153,21 @@ sandbox.process.exec_("pip install numpy pandas")
 sandbox_id = sandbox.sandbox_id
 sandbox.pause()
 
-resumed = Sandbox.connect(sandbox_id)   # environment is exactly as left
+resumed = Sandbox.connect(sandbox_id)   # resumes guest state still held by the host
 resumed.process.exec_("python -c 'import numpy'")
 resumed.kill()
 ```
 
 ## Timeouts
 
-Every sandbox expires after its timeout (SDK default: 5 minutes) and is reaped automatically. Adjust it at creation or any time while it runs:
+A sandbox with a positive timeout expires after that lifetime. The SDK defaults to five minutes; `timeoutMs: 0` at creation disables expiration. Set an explicit limit and release the sandbox when the task ends. Adjust a running sandbox with:
 
 ```ts
 const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 10 * 60 * 1000 }); // 10 min
 await sandbox.setTimeout(30 * 60 * 1000);   // extend to 30 min from now
 ```
 
-Pausing freezes the countdown, so a paused sandbox never expires while it's asleep.
+Pause is intended to freeze the remaining running time, but the current [lifecycle issue](/platform/known-issues#sandbox-pause-and-expiration) needs a verified backend release. Do not rely on an unlimited pause for data retention.
 
 ## Managing sandboxes
 
@@ -179,7 +181,7 @@ await sandbox.kill();
 
 ## Full example
 
-An agent that writes a script, runs it, serves the result, and checkpoints for later:
+An agent that writes a script, runs it, serves the result, and pauses the guest for a later call:
 
 ```ts
 import { Sandbox } from '@lizard-build/sdk';

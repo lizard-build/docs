@@ -20,13 +20,19 @@ const volume = await Volume.create('proj_123', 'agent-workdir', { sizeGb: 10 });
 
 // Attach it to a sandbox — mounted at /data
 const sandbox = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
-await sandbox.fs.write('/data/state.json', JSON.stringify({ step: 1 }));
-await sandbox.kill();            // the volume persists
+try {
+  await sandbox.fs.write('/data/state.json', JSON.stringify({ step: 1 }));
+} finally {
+  await sandbox.kill();            // the volume persists
+}
 
 // A later sandbox re-attaches and sees the data
 const next = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
-console.log(await next.fs.read('/data/state.json'));   // {"step":1}
-await next.kill();
+try {
+  console.log(await next.fs.read('/data/state.json'));   // {"step":1}
+} finally {
+  await next.kill();
+}
 ```
 
 ## Manage volumes
@@ -52,9 +58,10 @@ Volumes live under a project's **Sandboxes → Volumes** tab. Create one with a 
 
 ## Notes
 
-- A volume can only be attached to **one running sandbox** at a time. Attempting to attach an already-attached volume returns a conflict.
+- A volume can only be attached to **one sandbox** at a time. Attempting to attach an already-attached volume returns a conflict.
 - Deleting a sandbox (or letting it expire) **detaches** the volume — it does not delete it. Data is preserved for the next attachment.
 - Delete the volume itself to reclaim the storage.
+- A paused sandbox still holds its attachment. Persistent Volumes use node-local storage; export data you need to recover after a node failure. See [storage and recovery](/platform/storage-and-recovery).
 
 ## See also
 
