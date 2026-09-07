@@ -120,4 +120,10 @@ Use the exit code and JSON error from the failed command. A compile error, a pro
 
 An agent can create billable resources through the same CLI as a person. Check [limits](/platform/limits) and [pricing](https://lizard.build/pricing), and scope credentials to the project and services it needs.
 
-See [scenario test results](/guides/validation) for checked versions, cloud results and remaining limits.
+## Hand off a working application
+
+Record the project, workspace, service, source revision and public URL. Include the command that checked application behavior, not just a build ID or `running` status. For a database-backed application, keep a record ID, restart the test service and read that same record without reseeding it. Include failures that remain, such as missing runtime logs or an untested external integration.
+
+Use [Next.js with Managed Postgres](/guides/nextjs-postgres) for a complete migration, authenticated API and restart check. Use [LangGraph checkpoints](/guides/langgraph-postgres) when the application's graph state must survive a process restart. A checkpoint and a job queue solve different problems; a graph does not become a background worker just because it stores state.
+
+See [scenario test results](/guides/validation) and [persistence test results](/guides/stateful-validation) for checked versions, cloud results and remaining limits.

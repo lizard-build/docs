@@ -88,6 +88,12 @@ This demo only accepts the JSON jobs created by `jobs.py`. It does not implement
 
 ## Troubleshooting
 
+For a long-running consumer, check completed job IDs and queue age as well as process health. An empty queue and a blocked consumer can both produce no new log lines. Keep the job check in deployment verification, and alert on jobs that remain pending beyond your workload's normal duration.
+
+The demo keeps results without expiration and retries Redis connection errors every five seconds. Plan result retention, retry limits and a dead-letter queue before accepting an unbounded stream of jobs. Keep one replica for this example: starting another consumer can requeue an entry that the first is still processing. Worker mode does not prevent duplicate work or supply leader election.
+
+If the workload runs LangGraph, use a [Postgres checkpointer](/guides/langgraph-postgres) for graph state and a queue for scheduling. A saved interrupt waits for a resume request; it is not evidence that a consumer is still running.
+
 | Symptom | Check |
 |---|---|
 | Missing service | Run `lizard add --service worker` after creating the project. |
