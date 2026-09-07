@@ -6,16 +6,18 @@ description: "Deploy Next.js with Managed Postgres on Lizard. Run repeatable SQL
 
 Use a Node.js service for Next.js and Managed Postgres for data that must survive application restarts. This example runs SQL migrations before the HTTP server starts, protects its notes API with a bearer token, and checks the same saved note after a restart.
 
-The [complete example](https://github.com/lizard-build/docs/tree/f9bbf7cee52acdc49b8ca21808d49cc01e6646f3/_examples/nextjs-postgres) uses Next.js 16.3.4, React 19.2.8 and `pg` 8.23.0. It has no model API or paid third-party dependency. See [test results](/guides/stateful-validation) for the checked runtime and scope.
+The [complete example](https://github.com/lizard-build/docs/tree/ee8da05c7297ccf3ca7eb5787129dd3f8cb3290e/_examples/nextjs-postgres) uses Next.js 16.3.4, React 19.2.8 and `pg` 8.23.0. It has no model API or paid third-party dependency. See [test results](/guides/stateful-validation) for the checked runtime and scope.
 
 ## Prepare the example
 
-Use a fresh copy of the example directory, Node.js 22 and Lizard CLI. Run `npm ci` from the directory containing `package.json`:
+Use a fresh copy of the example directory, Node.js 22, `curl` and Lizard CLI. Run `npm ci` from the directory containing `package.json`:
 
 ```bash
 npm ci
 npm run build
 ```
+
+If macOS blocks native SWC and the build reports that Turbopack cannot use its WASM fallback, run `npm run build -- --webpack`. The checked Linux deployment uses the default build command. Do not change the host's security policy to run this example.
 
 The build does not need a database connection. Database code stays in server-only modules, and the API and health route use `force-dynamic` so they run at request time. Keep `DATABASE_URL` and `API_TOKEN` out of `NEXT_PUBLIC_*` variables. Public variables become part of the browser bundle.
 
@@ -69,6 +71,7 @@ Set `APP_URL` to the deploy output's HTTPS URL, without a trailing slash. Keep t
 ```bash
 export APP_URL=https://YOUR_SERVICE_HOSTNAME
 export NOTE_ID="$(node -e 'console.log(require("node:crypto").randomUUID())')"
+curl --fail --silent --show-error --retry 30 --retry-delay 2 --retry-connrefused --max-time 5 "$APP_URL/health"
 node --env-file=.env scripts/check.mjs create
 ```
 
@@ -77,12 +80,14 @@ The script checks readiness, rejects an unauthenticated read, verifies a missing
 ## Prove persistence after restart
 
 ```bash
-lizard restart --service web --json
+node scripts/restart-and-wait.mjs web
 lizard events --service web --json
 node --env-file=.env scripts/check.mjs read
 ```
 
-Wait for a ready service before running the last command. The read-only check must find the original ID and `Saved before restart` text. It does not create a replacement note. A new UUID would test a different record.
+The helper runs `lizard restart --service web --json` and waits for a new process. `/health` includes a random `instanceId` created at process startup. The helper requires a different ID in three successful responses, two seconds apart, and fails after 120 seconds. This prevents a response from the old process from passing the restart test.
+
+The read-only check must find the original ID and `Saved before restart` text. It does not create a replacement note. A new UUID would test a different record. Keep one replica for this check; multiple replicas can return different IDs without a restart.
 
 ## Troubleshooting
 

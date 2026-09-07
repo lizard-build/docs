@@ -8,9 +8,9 @@ Deploy an MCP server as an HTTP application when clients need a remote URL. This
 
 ## Before you start
 
-You need Node.js 22.19 or newer, Lizard CLI, a project you can deploy to, and an MCP client that accepts a configured bearer token. The example uses `@modelcontextprotocol/sdk` 1.30.0 in stateless mode. It does not provide OAuth login, browser access, or an identity provider.
+You need Node.js 22.19 or newer, `curl`, Lizard CLI, a project you can deploy to, and an MCP client that accepts a configured bearer token. The example uses `@modelcontextprotocol/sdk` 1.30.0 in stateless mode. It does not provide OAuth login, browser access, or an identity provider.
 
-The runnable files live in [remote-mcp-node](https://github.com/lizard-build/docs/tree/f9bbf7cee52acdc49b8ca21808d49cc01e6646f3/_examples/remote-mcp-node). Use the checked-in lockfile. The local smoke test checks initialization, tool discovery, a tool call, and rejection without a valid token. A deployment check must also confirm the public proxy and TLS path.
+The runnable files live in [remote-mcp-node](https://github.com/lizard-build/docs/tree/ee8da05c7297ccf3ca7eb5787129dd3f8cb3290e/_examples/remote-mcp-node). Use the checked-in lockfile. The local smoke test checks initialization, tool discovery, a tool call, and rejection without a valid token. A deployment check must also confirm the public proxy and TLS path.
 
 ## Run locally
 
@@ -68,7 +68,16 @@ On macOS with Lizard CLI 0.3.92, use `COPYFILE_DISABLE=1 lizard up --service mcp
 
 ## Verify the public endpoint
 
-Set `MCP_URL` to `https://YOUR_SERVICE_HOSTNAME/mcp`, keep a valid token in the client environment, and run `node client.mjs`. Verify all three results:
+Set the public URL, load the local token and wait for HTTP readiness before running the client:
+
+```bash
+export MCP_URL=https://YOUR_SERVICE_HOSTNAME/mcp
+export MCP_TOKEN="$(cat .mcp-token)"
+curl --fail --silent --show-error --retry 30 --retry-delay 2 --retry-connrefused --max-time 5 "${MCP_URL%/mcp}/health"
+node client.mjs
+```
+
+The `curl` command retries temporary 503 responses while the process starts. Stop if it fails after its retries. Verify all three results:
 
 1. `/health` returns `200` over HTTPS.
 2. `/mcp` rejects a client with no valid token.

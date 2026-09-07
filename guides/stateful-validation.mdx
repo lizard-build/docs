@@ -16,6 +16,16 @@ The MCP server's own client also passed health, missing and invalid token, rejec
 
 ## Persistence checks
 
+### Final guide walkthrough
+
+A follow-up on 2026-09-08 ran the guide steps from clean example directories. Next.js and LangGraph each used a new project and a new Managed Postgres database. MCP used a separate new project. Workspace names, test project names and assigned hostnames filled the guide's configuration values; macOS used the documented upload and Webpack instructions.
+
+The first sequential LangGraph attempt exposed a missing wait: `lizard restart --json` returned `restarting`, then the next check received 503. A single successful health request was also insufficient: the old process could answer before a later request received 502.
+
+The examples now include restart helpers. Each captures `/health`'s process `instanceId`, runs the CLI restart and requires three successful responses from a different instance. After this change, both persistence guides passed again from new projects and databases. The Next.js note survived one confirmed process change; the LangGraph interrupt and completed result survived two. The helper fails after 120 seconds and assumes the example's single replica.
+
+The MCP server and Inspector guides also passed their full sequence: clean install, local server and client, project and service creation, public key and hostname setup, upload, public client, Inspector tool discovery and call, then invalid-token rejection. This confirms the named client and recipe, not every MCP client.
+
 The Next.js check wrote one UUID and kept it through the restart. The read-only check found the original `Saved before restart` text. Startup migrations do not seed that note. A SQL check confirmed one applied migration and one note.
 
 The LangGraph check kept one `thread_id` through start, restart, read, resume, a second restart and a final read. The graph paused at an explicit approval interrupt. Read checks did not invoke or recreate the graph.

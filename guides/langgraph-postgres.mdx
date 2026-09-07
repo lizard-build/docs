@@ -6,11 +6,11 @@ description: "Deploy LangGraph with a Postgres checkpointer on Lizard. Save an i
 
 Use `PostgresSaver` to save LangGraph checkpoints outside the application process. Keep the same `thread_id` when resuming a graph. This example pauses for approval, restarts the service, and resumes from the saved checkpoint in Managed Postgres.
 
-The [complete example](https://github.com/lizard-build/docs/tree/f9bbf7cee52acdc49b8ca21808d49cc01e6646f3/_examples/langgraph-postgres) runs Python 3.13, LangGraph 1.2.11 and `langgraph-checkpoint-postgres` 3.1.2. A small FastAPI service exposes authenticated start, state and resume endpoints. The graph makes an uppercase draft so the persistence check needs no model API key. It tests graph state, not the quality or billing of an LLM.
+The [complete example](https://github.com/lizard-build/docs/tree/ee8da05c7297ccf3ca7eb5787129dd3f8cb3290e/_examples/langgraph-postgres) runs Python 3.13, LangGraph 1.2.11 and `langgraph-checkpoint-postgres` 3.1.2. A small FastAPI service exposes authenticated start, state and resume endpoints. The graph makes an uppercase draft so the persistence check needs no model API key. It tests graph state, not the quality or billing of an LLM.
 
 ## Prepare the graph
 
-Use a fresh example directory, Python 3.13, `uv` and Lizard CLI:
+Use a fresh example directory, Python 3.13, `uv`, `curl` and Lizard CLI:
 
 ```bash
 uv sync --frozen
@@ -61,6 +61,7 @@ Use the public HTTPS URL, without a trailing slash. Export the local token and k
 export APP_URL=https://YOUR_SERVICE_HOSTNAME
 export API_TOKEN="$(python3 -c 'from pathlib import Path; print(Path(".env").read_text().strip().split("=", 1)[1])')"
 export THREAD_ID="$(python3 -c 'import uuid; print(uuid.uuid4())')"
+curl --fail --silent --show-error --retry 30 --retry-delay 2 --retry-connrefused --max-time 5 "$APP_URL/health"
 python3 check.py start
 ```
 
@@ -69,18 +70,20 @@ The script checks `/health`, 401 without a token and 404 for an unknown thread. 
 ## Restart, read, then resume
 
 ```bash
-lizard restart --service graph --json
+python3 restart_and_wait.py graph
 lizard events --service graph --json
 python3 check.py waiting
 python3 check.py resume
 ```
 
-Wait for readiness before reading. `waiting` only reads the stored checkpoint; it cannot create a new graph. `resume` approves the existing draft and expects `result: "SAVED BEFORE RESTART"` with no next node. A second resume returns 409 because the thread has finished.
+The helper runs `lizard restart --service graph --json` and waits for a new process. `/health` includes a random `instanceId` created at process startup. The helper requires a different ID in three successful responses, two seconds apart, and fails after 120 seconds. A 200 response from the old process cannot pass this check. Keep one replica and one HTTP worker, as the example does.
+
+`waiting` only reads the stored checkpoint; it cannot create a new graph. `resume` approves the existing draft and expects `result: "SAVED BEFORE RESTART"` with no next node. A second resume returns 409 because the thread has finished.
 
 Restart once more and read the completed state:
 
 ```bash
-lizard restart --service graph --json
+python3 restart_and_wait.py graph
 python3 check.py done
 ```
 
