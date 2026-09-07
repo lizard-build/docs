@@ -1,0 +1,37 @@
+---
+description: "Current Sandboxes lifecycle caveats, deployment recovery limits, and build-setting precedence to check before relying on a workflow."
+---
+
+# Known issues
+
+This page records behavior that needs care or a verified release. A code fix under review is not a guarantee about a running service.
+
+## Sandbox pause and expiration
+
+Pause is intended to freeze the remaining lifetime. A conflict between the node's clock and a separate cleanup process can end a paused sandbox after its original deadline. Node-agent restart and resume of a sandbox with no expiration also need the lifecycle fix.
+
+Until that fix has passed a live test and reached your region, do not rely on pause alone for long-term state. Save files under `/data` on a Persistent Volume, or store application state in a database or object storage. Host memory is not a backup. Use an explicit lifetime and release the sandbox when the task ends.
+
+## Redeploy is not rollback
+
+`lizard redeploy` builds the selected source again with the current configuration. It does not select a previous build. A failed build and a failed start have different effects; inspect the active service and its logs before choosing a recovery step. Do not assume every runtime keeps the old release serving through a failed start.
+
+## Dockerfile precedence
+
+Explicit build or start commands take priority over a repository Dockerfile. Clear those overrides when selecting `dockerfilePath`. A settings update can itself start a build, so check events before sending another redeploy. See [Dockerfile troubleshooting](/deploy/troubleshooting/incomplete-dockerfile).
+
+## Templates and MCP
+
+The current Sandboxes create API accepts the two built-in templates. Instructions using `lizard push` for custom templates do not match the current public CLI.
+
+Lizard Skill uses Lizard CLI. That workflow does not expose an MCP transport. Hosting your own remote MCP server is a separate application deployment; see the [guide](/guides/deploy-mcp-server).
+
+## Public URL after a service port change
+
+In the 2026-09-07 deployment check, changing an existing upload service from port `3000` to `80` with `lizard up --port 80` finished with `running` and a ready pod, but its public URL returned HTTP 503. The same static app worked on a fresh service. Verify the public URL after changing a service's port; the reported runtime state alone is not enough. If this occurs, include the service ID, build ID, old/new port, and URL when reporting it to support.
+
+## Upload archives and failed-build exit codes
+
+Lizard CLI 0.3.92 can include macOS `._*` metadata entries in source uploads. Nuxt can treat these as route source and fail to build. Set `COPYFILE_DISABLE=1` before uploading on macOS; see [framework setup](/framework-guides#prepare-the-project).
+
+The same CLI version returned exit code `0` for a failed cloud build in the 2026-09-07 check. A zero exit code alone does not prove that the release worked. Both CLI fixes are under review; check the build and the public URL until a fixed version reaches your environment.

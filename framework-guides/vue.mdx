@@ -1,0 +1,58 @@
+---
+description: "Deploy a Vue app built with Vite on Lizard. Configure dist output, port 80, Vue Router history mode, public environment variables, and production checks."
+---
+
+# Deploy Vue with Vite on Lizard
+
+Deploy a Vue app built with Vite as a static web service on Lizard. The build produces `dist/`, and nginx serves the files on port `80`. For Nuxt server rendering and server routes, use the [Nuxt guide](/framework-guides/nuxt).
+
+## Prepare the project
+
+Run from the Vue app directory with `package.json`, a lockfile, and the Vite configuration. Keep the scaffold's build script, including `vue-tsc` if it checks your TypeScript code. The build must finish by producing the Vite bundle in `dist/`.
+
+| Setting | Value |
+|---|---|
+| Build | `npm run build` |
+| Output | `dist/` |
+| Start command | None for the static detection path |
+| Service port | `80` |
+
+Keep `base: '/'` for a site at the domain root. If you use a path prefix, align Vite's base with the router base and the URL where the app actually runs. A custom output directory needs a Dockerfile that copies that directory.
+
+## Check the build locally
+
+```bash
+npm ci
+npm run build
+npm run preview
+```
+
+Use the local preview URL to check a component that fetches data and a page reached through the router. `vite preview` is for this local check; nginx serves the production files. See [Vite's deployment guide](https://vite.dev/guide/static-deploy.html) for the build output and preview behavior.
+
+## Deploy
+
+After [CLI setup](/framework-guides#prepare-the-project), deploy the current source directory:
+
+```bash
+lizard init --name vue-app
+lizard add --service web
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+Exclude local dependencies, `dist/`, and `.env` files from the upload. With no existing command overrides, lizardpack detects Vite and builds the static image. Do not add `npm run dev` as a service start command.
+
+## Vue Router history mode
+
+If your app uses `createWebHistory`, its server must handle direct requests to client routes. The default static image serves `index.html` when it cannot find a file, so `/account` can reach Vue Router on a hard reload. Match the router base to the Vite base, for example with `createWebHistory(import.meta.env.BASE_URL)`. See [Vue Router history modes](https://router.vuejs.org/guide/essentials/history-mode.html).
+
+Test both navigation from the home page and opening `/account` in a new tab. Add a catch-all view for missing client routes. The server fallback returns HTTP 200 even for unknown paths; it does not supply search-friendly 404 responses. Read [static routes and 404s](/framework-guides/static-routing) before using this setup for an indexed content site.
+
+## Variables and API requests
+
+Vite writes `VITE_*` values into the browser bundle during the build. Use them only for public values, such as your API's public HTTPS URL. Set them through [variables and secrets](/variables), then check the rebuilt app's actual network request. A runtime-only restart cannot replace a value inside built JavaScript.
+
+If requests fail only after deployment, check CORS on the API and confirm that the browser is not calling `localhost` or a private backend hostname. If the HTML loads but assets fail, inspect Vite's base and the asset paths. For pages that need HTML before JavaScript runs, choose Nuxt rendering or an explicit prerendering step.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

@@ -1,0 +1,86 @@
+---
+description: "Deploy Astro on Lizard as a static site or with the standalone Node adapter. Configure output, build commands, ports, and checks for server routes and missing pages."
+---
+
+# Deploy Astro on Lizard
+
+Astro has two deployment paths on Lizard: serve a static `dist/` directory on port `80`, or run the standalone Node adapter on port `3000` for on-demand routes. Choose the mode before deploying because the adapter changes both the output and the runtime.
+
+## Choose a mode
+
+| Mode | Configuration | Runtime | Port |
+|---|---|---|---|
+| Static site | Static output without a server adapter | nginx serves `dist/` | `80` |
+| Node server | `@astrojs/node` in standalone mode | `node ./dist/server/entry.mjs` | `3000` |
+
+Both paths use a `build` script that runs `astro build`. Commit the lockfile and keep the default `dist` output path. The current detection checks installed dependencies; an unused Node adapter dependency can still select the server path.
+
+## Configure a Node server
+
+For on-demand pages, add a Node adapter version compatible with your Astro version:
+
+```bash
+npx astro add node
+```
+
+Check `astro.config.mjs`:
+
+```js
+import { defineConfig } from 'astro/config';
+import node from '@astrojs/node';
+
+export default defineConfig({
+  output: 'server',
+  adapter: node({ mode: 'standalone' }),
+});
+```
+
+Standalone mode starts its own HTTP server. Middleware mode requires a separate server and does not fit this launch command. Read the [Astro Node adapter guide](https://docs.astro.build/en/guides/integrations-guide/node/) if you need middleware or a mix of prerendered and on-demand routes.
+
+## Test locally
+
+```bash
+npm ci
+npm run build
+```
+
+For the Node mode:
+
+```bash
+HOST=0.0.0.0 PORT=3000 node ./dist/server/entry.mjs
+```
+
+Request a route that actually runs on the server and a built asset. For a static site, use `npm run preview` locally and inspect the generated route files in `dist/`.
+
+## Deploy
+
+After [CLI setup](/framework-guides#prepare-the-project), create the project:
+
+```bash
+lizard init --name astro-app
+lizard add --service web
+```
+
+For the Node adapter:
+
+```bash
+lizard up --service web --port 3000
+```
+
+For a static site:
+
+```bash
+lizard up --service web --port 80
+```
+
+Use only the command for your chosen mode. Leave service command overrides unset for lizardpack detection. Read `lizard logs --build --service web --json`, then check runtime logs and the live URL.
+
+## Variables, sessions, and routes
+
+Values used to generate static HTML require a new build when they change. Server code can read runtime variables through the mechanisms supported by your Astro version; configure them in [variables and secrets](/variables). Browser-visible values must not contain credentials.
+
+If your app uses sessions, choose storage that fits restarts and multiple replicas. Do not rely on the container filesystem as a shared durable store. See [storage and recovery](/platform/storage-and-recovery).
+
+For a static content site, test a missing URL and use [static routes and 404s](/framework-guides/static-routing) to return the proper status. If an SSR deployment exits or serves no routes, verify that `dist/server/entry.mjs` exists, the adapter uses standalone mode, and the service port is `3000`.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

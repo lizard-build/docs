@@ -2,7 +2,7 @@
 description: "Create and inspect sandboxes by hand from a project's Sandboxes page: API keys, live shells, lifecycle controls, snapshots, and volumes."
 ---
 
-# Dashboard
+# Sandboxes dashboard
 
 Every project has a **Sandboxes** page for creating and inspecting sandboxes by hand — useful for debugging an agent's environment, grabbing an interactive shell, or spot-checking what code produced. Open a project and select **Sandboxes** in the sidebar (`/<workspace>/<project>/sandboxes`).
 
@@ -18,7 +18,7 @@ Click **New Sandbox** and set:
 
 - **Snapshot** — the [template](/sandboxes#templates) to boot from (`base` or `code-interpreter-v1`).
 - **Location** — the region to run in (defaults to the nearest available).
-- **Resources** — vCPUs (1 / 2 / 4 / 8) and memory.
+- **Resources** — the current templates use 4 vCPU and 4096 MiB RAM; these are not per-create size options.
 
 Sandboxes created here have no timeout — they run until you kill them.
 
@@ -42,7 +42,7 @@ Live sandboxes report real-time CPU and memory usage in the list; paused and sto
 
 ## Snapshots
 
-The **Snapshots** tab lists the templates a sandbox can boot from — the built-in `base` and `code-interpreter-v1`, plus any custom templates pushed with `lizard push`. Each entry shows its default vCPU/memory and description.
+The **Snapshots** tab lists the templates a sandbox can boot from — the built-in `base` and `code-interpreter-v1`. A custom-template upload command is not part of the current public CLI. Each entry shows its default vCPU/memory and description.
 
 ## Volumes
 

@@ -1,0 +1,123 @@
+---
+description: "Deploy an app from Claude Code, Codex, or Cursor with Lizard Skill and Lizard CLI. Choose GitHub or local source, connect a database, and verify the result."
+---
+
+# Deploy from a coding agent
+
+A coding agent can use Lizard Skill and Lizard CLI to deploy the app it has built. The agent reads the installed CLI's guide, checks the target project, runs the build, and inspects the result. This does not require a separate MCP transport.
+
+## Before you start
+
+Have a working application, permission to deploy it, and an account on Lizard. The application must listen on `0.0.0.0` and the configured port. Run its local checks before starting a cloud build.
+
+## Give the agent the current guide
+
+```bash
+npm install -g @lizard-build/cli
+lizard skills get core --json
+lizard --help --json
+```
+
+Lizard Skill loads instructions that match the installed CLI. For a specific command, read its schema rather than guessing flags:
+
+```bash
+lizard up --help --json
+lizard service set --help --json
+```
+
+A useful prompt is:
+
+> Deploy this app with Lizard. Read the installed CLI guide, check the linked project and service, run the app's checks, and show the build result and a working URL. Ask before changing an existing production service or deleting data.
+
+## Deploy local source
+
+For a complete test, use the [agent-app example](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/agent-app). It uses Node.js 22 and `pg` 8.16.3, listens on port 3000 and reads one row from Managed Postgres. Its startup creates the demo table and row if they do not exist. For a larger application, use your own migration process.
+
+Copy the example into its own directory and run its local checks:
+
+```bash
+npm ci
+npm run check
+lizard status --json
+```
+
+This checks JavaScript syntax. The database and public HTTP checks come after deployment. If this directory is already linked, check that it is the intended project. For a new test project:
+
+```bash
+lizard init --name agent-example --json
+lizard add --service api --json
+lizard add postgres --json
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api --json
+lizard up --service api --port 3000 --json
+```
+
+Use the database's actual name if it is not `postgres`. Keep the reference quoted so the local shell does not expand it. Configure it before the first deployment. Sign in with `lizard login` only if a command reports that authentication is required.
+
+The upload path is intentional for this copied example. For an application already in GitHub, use the next section instead. On macOS with Lizard CLI 0.3.92, run `COPYFILE_DISABLE=1 lizard up --service api --port 3000 --json` to exclude AppleDouble metadata. In that CLI version a failed build may still exit with code 0: inspect the terminal `failed`/`deployed` event and verify the application. See [known issues](/platform/known-issues).
+
+## Deploy from GitHub
+
+Use this path when the application has a GitHub repository. Check the remote first:
+
+```bash
+git remote get-url origin
+lizard status --json
+lizard ps --json
+```
+
+Use a linked test project or create one with `lizard init --name YOUR_PROJECT_NAME`. Attach the repository without starting a build so there is time to configure its environment:
+
+```bash
+lizard add --repo YOUR_ORG/YOUR_REPO --name api-git --no-deploy --json
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api-git --json
+```
+
+Provision Managed Postgres first if this project does not have it. This sequence uses the same Node.js example as above. For a repository with that app in a subdirectory or on another branch, configure it before deployment:
+
+```bash
+lizard service set api-git --set branch=YOUR_BRANCH --set rootDirectory=YOUR_APP_DIRECTORY --set containerPort=3000 --json
+lizard redeploy --service api-git --json
+```
+
+For an app at the repository root on `main`, omit the `service set` command. Set the correct port if your application uses another one. If the repository is not available to Lizard, connect the GitHub app; do not silently replace this path with an upload.
+
+For later updates to an existing GitHub service, use `lizard redeploy --service api-git` or push to its tracked branch when auto-deploy is enabled. `lizard up` switches a service to upload source. Changing build settings on an already running service can trigger its own build; inspect events before requesting another.
+
+## Verify the result
+
+Read build and runtime logs separately:
+
+```bash
+lizard logs --build --service api --json
+lizard logs --service api --json
+lizard ps --json
+```
+
+Use `api-git` instead of `api` for the GitHub path. Set `APP_URL` to the HTTPS URL reported by the CLI, then run:
+
+```bash
+curl --fail "$APP_URL/health"
+curl --fail "$APP_URL/data"
+```
+
+The first response is `App ready`. The second is `{"value":"database-connected"}`. A build alone does not prove the database reference resolved. The example exposes only this fixed demo row, not a database administration API.
+
+For this test service, verify a runtime restart:
+
+```bash
+lizard restart --service api --json
+```
+
+Wait for the service to return to `running` in `lizard ps --json` and repeat both HTTP requests. A runtime log tail can be empty; the HTTP response is the application check. The row is stored in Managed Postgres; the service process does not store it. To check reuse of existing data, update the demo row to a distinct value in the database editor before the restart and confirm `/data` returns that value afterward.
+
+`logs --json` returns a log tail and exits. Read [storage and recovery](/platform/storage-and-recovery) before changing real application data.
+
+## When deployment fails
+
+Use the exit code and JSON error from the failed command. A compile error, a process that exits, and an unreachable port require different fixes. See [JSON and automation](/cli/json) and [service never healthy](/deploy/troubleshooting/service-never-healthy). `redeploy` is a new build, not a rollback to an older version.
+
+## Limits and cost
+
+An agent can create billable resources through the same CLI as a person. Check [limits](/platform/limits) and [pricing](https://lizard.build/pricing), and scope credentials to the project and services it needs.
+
+See [scenario test results](/guides/validation) for checked versions, cloud results and remaining limits.

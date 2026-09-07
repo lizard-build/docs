@@ -20,7 +20,7 @@ If the current directory isn't linked to a project yet, `up` runs `init` first. 
 
 | Flag | Description |
 |------|-------------|
-| `-s, --service <name>` | Target/create a specific service |
+| `-s, --service <name>` | Target an existing service |
 | `--build-command <cmd>` | Override the build command |
 | `--start-command <cmd>` | Override the start command |
 | `--pre-deploy-command <cmd>` | Run once before each deploy |
@@ -46,6 +46,8 @@ lizard up
 
 ### Deploy to a specific service with a custom start command and port
 
+Create the named service with `lizard add --service api` first if it does not exist.
+
 ```bash
 lizard up --service api --start-command "node server.js" --port 8080
 ```
@@ -55,8 +57,11 @@ lizard up --service api --start-command "node server.js" --port 8080
 ```bash
 export LIZARD_TOKEN=lzd_xxx
 lizard init --name my-project
+lizard add --service api
 lizard up --ci --service api
 ```
+
+Skip `lizard add` when the service already exists. With Lizard CLI 0.3.92, a failed build can still exit with code `0`; inspect build status and the deployed URL before marking a CI release successful. A fix is pending release. On macOS, also set `COPYFILE_DISABLE=1` before an upload to avoid extra `._*` metadata files in the archive. See [framework setup](/framework-guides#prepare-the-project).
 
 ## See also
 

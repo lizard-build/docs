@@ -1,0 +1,63 @@
+---
+description: "Deploy Next.js, React, Vue, Astro, Nuxt, SvelteKit, FastAPI, Django, Docusaurus, VitePress, and Hugo on Lizard. Find build commands, adapters, ports, and checks."
+---
+
+# Framework guides
+
+Deploy a framework app on Lizard from source. Choose your framework and rendering mode below, prepare its production build, then deploy with Lizard CLI or connect a GitHub repository. Server apps run a process; static sites serve the generated files through nginx.
+
+## Choose your framework
+
+These settings describe the standard project layouts in the linked guides. Commands assume npm for JavaScript projects. Custom output paths, adapters, and build overrides can change the result.
+
+| Framework | Build | Runtime or output | Service port |
+|---|---|---|---|
+| [Next.js](/framework-guides/nextjs) | `npm run build` | `next start` through the start script | `3000` |
+| [Next.js static export](/framework-guides/nextjs/static-export) | `npm run build` | `out/` through a Dockerfile | `80` |
+| [React with Vite](/framework-guides/react) | `npm run build` | `dist/` | `80` |
+| [Vue with Vite](/framework-guides/vue) | `npm run build` | `dist/` | `80` |
+| [Astro](/framework-guides/astro) | `npm run build` | `dist/`, or the standalone Node adapter | `80` static; `3000` server |
+| [Nuxt](/framework-guides/nuxt) | `npm run build` | `node .output/server/index.mjs` | `3000` |
+| [SvelteKit](/framework-guides/sveltekit) | `npm run build` | `node build` with adapter-node | `3000` |
+| [FastAPI](/framework-guides/fastapi) | Install Python dependencies | `uvicorn main:app --host 0.0.0.0 --port 8000` | `8000` |
+| [Django](/framework-guides/django) | Install Python dependencies | Gunicorn with your WSGI module | `8000` |
+| [Docusaurus](/framework-guides/docusaurus) | `npm run build` | `build/` | `80` |
+| [VitePress](/framework-guides/vitepress) | `npm run docs:build` | `docs/.vitepress/dist/` in this guide | `80` |
+| [Hugo](/framework-guides/hugo) | `hugo --minify` | `public/` | `80` |
+
+## Prepare the project
+
+Run commands from the application directory. Commit source files, configuration, and the package lockfile. Exclude `.env`, local dependencies, and local build output from uploads. Node projects can select the Node major version in `.nvmrc`; the current default is `22`. This selects a major version, not an exact patch release.
+
+Install Lizard CLI and sign in once:
+
+```bash
+npm install -g @lizard-build/cli
+lizard login
+```
+
+Each guide uses a new project and a service named `web` or `api`. Create that service with `lizard add --service web` (or `api`) before the first `lizard up --service` call. In Lizard CLI 0.3.92, `up --service` selects an existing service; it does not create a missing named service. For an existing project, check `lizard status --json` and `lizard ps --json` before deploying. The port must match the process inside the container, which must listen on `0.0.0.0`.
+
+On macOS with Lizard CLI 0.3.92, set this before uploading:
+
+```bash
+export COPYFILE_DISABLE=1
+```
+
+This prevents macOS `tar` from adding `._*` metadata entries to the source archive. In the cloud test, an extra `server/api/._probe.get.ts` caused Nuxt's build to fail. The CLI archive fix is pending release; the environment setting works with the released version. It does not change application settings.
+
+## Choose GitHub or local source
+
+The guide commands use `lizard up` to upload the current folder. That command changes an existing service to upload source. To keep git push to deploy, [connect GitHub](/deploy/github) instead and use the guide's build settings in the repository. Configure the service port from the table.
+
+## Keep build settings consistent
+
+These guides use lizardpack detection unless they call for a Dockerfile. Existing `buildCommand` or `startCommand` overrides take precedence over detection and the repository Dockerfile. Check [build decision order](/concepts/build-pipeline#build-decision-order) before switching build methods. Set scripts in `package.json` when a guide tells you to; adding a CLI override is a different build path.
+
+## Check a release
+
+Read build logs, runtime logs, and the active URL. Test an inner route, a missing route, and any API or form action. A process that opens its port can still serve a broken page. For generated sites, use [static routes and 404s](/framework-guides/static-routing) to avoid returning the home page with HTTP 200 for every unknown URL.
+
+Runtime support does not imply shared caches, persistent local files, or every framework version. See [limits](/platform/limits), [storage and recovery](/platform/storage-and-recovery), and [known issues](/platform/known-issues) when your app relies on those features.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

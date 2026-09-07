@@ -2,7 +2,7 @@
 description: "Add a managed Redis instance for caching, queues, rate limiting, and pub/sub, and connect it to a service with a single reference."
 ---
 
-# Redis
+# Managed Redis
 
 A managed Redis instance for caching, queues, rate limiting, and pub/sub.
 
@@ -48,7 +48,7 @@ lizard redeploy --service jobs
 Open the **Redis browser** in the dashboard (`lizard open`) to inspect keys and values. For local access:
 
 ```bash
-lizard run --service api -- redis-cli -u "$REDIS_URL"
+lizard run --service api -- sh -c 'exec redis-cli -u "$REDIS_URL"'
 ```
 
 ## Grow storage
@@ -61,3 +61,5 @@ lizard scale --service redis --storage 4096
 
 - [Managed Addons](/addons) — naming, references, and the dashboard browsers.
 - [Background Workers](/deploy/workers) — pairing Redis with a queue-consuming worker.
+
+`lizard run` starts the command locally with the selected service environment. Install `redis-cli` locally and check that the endpoint is reachable.

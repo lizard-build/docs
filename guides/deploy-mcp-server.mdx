@@ -1,0 +1,100 @@
+---
+description: "Host a remote MCP server on Lizard with Streamable HTTP, bearer-token checks, a health endpoint, and a client that verifies a tool call."
+---
+
+# Host a remote MCP server
+
+Deploy an MCP server as an HTTP application when clients need a remote URL. This example serves one arithmetic tool, validates a bearer token, and exposes a health endpoint. It uses Streamable HTTP; a local `stdio` server cannot serve remote clients by itself.
+
+## Before you start
+
+You need Node.js 22, Lizard CLI, a project you can deploy to, and an MCP client that accepts a configured bearer token. The example uses `@modelcontextprotocol/sdk` 1.30.0 in stateless mode. It does not provide OAuth login, browser access, or an identity provider.
+
+The runnable files live in [remote-mcp-node](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/remote-mcp-node). Use the checked-in lockfile. The local smoke test checks initialization, tool discovery, a tool call, and rejection without a valid token. A deployment check must also confirm the public proxy and TLS path.
+
+## Run locally
+
+From the example directory:
+
+```bash
+npm ci
+npm test
+node issue-token.mjs
+export MCP_PUBLIC_KEY="$(cat .mcp-public-key.pem)"
+export MCP_ALLOWED_HOSTS=127.0.0.1,localhost
+npm start
+```
+
+The generated token expires after one hour. The private signing key is not saved. Use your own token issuer and rotation process for a lasting deployment; keep its private key outside the server.
+
+In another terminal:
+
+```bash
+export MCP_URL=http://127.0.0.1:8000/mcp
+export MCP_TOKEN="$(cat .mcp-token)"
+node client.mjs
+```
+
+The client checks initialization, tool discovery and the result `5`, then prints `MCP initialize, tools/list and tools/call passed: 5`. `/health` returns `ok`; a request to `/mcp` without a valid token returns `401`.
+
+## Deploy the application
+
+Keep the example's Dockerfile and lockfile. From the directory containing them:
+
+```bash
+lizard init --name mcp-example
+lizard add --service mcp
+lizard domain --service mcp --json
+```
+
+Sign in with `lizard login` if a command reports that authentication is required. `init` links the project; `add` creates the named service. The domain command assigns its hostname before deployment. Use the returned `hostname` below, without `https://` or a path:
+
+```bash
+lizard secrets set MCP_PUBLIC_KEY="$(cat .mcp-public-key.pem)" --service mcp
+lizard secrets set MCP_ALLOWED_HOSTS=YOUR_SERVICE_HOSTNAME --service mcp
+```
+
+Set both values before the first deployment. Then run:
+
+```bash
+lizard up --service mcp --port 8000
+lizard logs --build --service mcp --json
+lizard logs --service mcp --json
+lizard ps --json
+```
+
+On macOS with Lizard CLI 0.3.92, use `COPYFILE_DISABLE=1 lizard up --service mcp --port 8000` to exclude AppleDouble metadata from the archive. A later CLI release may include the archive fix. Check the final deployment event and public endpoint; do not rely on this CLI version's exit code alone after a failed build. `server.mjs` listens on `0.0.0.0` and reads `PORT`, with 8000 as its default. The deploy command sets the service port to 8000. Configure the public key as a multiline environment value; do not upload the private signing key or the token file.
+
+## Verify the public endpoint
+
+Set `MCP_URL` to `https://YOUR_SERVICE_HOSTNAME/mcp`, keep a valid token in the client environment, and run `node client.mjs`. Verify all three results:
+
+1. `/health` returns `200` over HTTPS.
+2. `/mcp` rejects a client with no valid token.
+3. The authenticated client lists tools and calls `add`, returning `5`.
+
+A healthy process alone does not prove the MCP handshake or streamed response works through the public proxy.
+
+## Troubleshooting
+
+| Result | Check |
+|---|---|
+| Process exits during startup | `MCP_PUBLIC_KEY` must contain the public PEM key; `MCP_ALLOWED_HOSTS` must contain the service hostname. |
+| `401` | The token must use RS256, match issuer and audience `mcp-example`, and not have expired. |
+| `403` | Match the request hostname to `MCP_ALLOWED_HOSTS`. Browser origins are not enabled by this example. |
+| `405` with a valid token | This stateless MCP endpoint accepts protocol requests through POST. Use an MCP client. A browser GET without a token returns `401` first. |
+| Local test passes but remote call fails | Check port, HTTPS, response streaming, and proxy timeouts. |
+
+## Limits and cost
+
+This example does not keep user sessions or durable files in server memory. Add a database for lasting application state and check access per user before exposing private tools. For clients that require OAuth discovery or interactive login, add a supported OAuth provider instead of distributing this test token.
+
+An HTTP process may remain active between calls. Check [pricing](https://lizard.build/pricing), [limits](/platform/limits), and measured CPU/memory; an empty request queue does not imply no charges.
+
+## Next steps
+
+- [Environment references](/variables/references)
+- [Deployment recovery](/concepts/deployments)
+- [MCP TypeScript SDK server guide](https://ts.sdk.modelcontextprotocol.io/server)
+
+See [scenario test results](/guides/validation) for checked versions, cloud results and remaining limits.

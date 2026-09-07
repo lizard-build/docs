@@ -1,0 +1,95 @@
+---
+description: "Deploy SvelteKit on Lizard with adapter-node. Configure the production build, port 3000, ORIGIN, form actions, and the separate adapter-static path."
+---
+
+# Deploy SvelteKit on Lizard
+
+Use `@sveltejs/adapter-node` to build a SvelteKit server for Lizard. It produces `build/`, which starts with `node build` on port `3000`. Install and configure the adapter explicitly; a scaffold that still uses `adapter-auto` does not establish a Node deployment target.
+
+## Configure the adapter
+
+```bash
+npm install --save-dev @sveltejs/adapter-node
+```
+
+In `svelte.config.js`, keep your existing preprocess and other settings, but set `kit.adapter` to the Node adapter:
+
+```js
+import adapter from '@sveltejs/adapter-node';
+
+export default {
+  kit: { adapter: adapter() },
+};
+```
+
+Keep only the deployment adapter you intend to use. In particular, an unused `@sveltejs/adapter-static` dependency can select the static path in the current detector even when your config imports adapter-node.
+
+| Setting | Value |
+|---|---|
+| Build | `npm run build`, usually `vite build` |
+| Output | `build/` |
+| Runtime | `node build` |
+| Host and port | `HOST=0.0.0.0`, `PORT=3000` |
+| Service port | `3000` |
+
+## Test the production server
+
+```bash
+npm ci
+npm run build
+HOST=0.0.0.0 PORT=3000 ORIGIN=http://localhost:3000 node build
+```
+
+Open a server-rendered page and submit a form action if the app has one. Keep the adapter's default output path for the detection used in this guide.
+
+## Deploy and set the public origin
+
+After [CLI setup](/framework-guides#prepare-the-project):
+
+```bash
+lizard init --name sveltekit-app
+lizard add --service web
+lizard up --service web --port 3000
+lizard ps --json
+```
+
+Set `ORIGIN` to the exact public HTTPS origin from the deployment output, without a path. For example, replace this placeholder with your actual URL:
+
+```bash
+lizard secrets set ORIGIN=https://YOUR_PUBLIC_HOST --service web
+```
+
+Use the custom domain instead if that is the origin visitors will use. Recheck forms after the variable change. For several allowed origins or proxy-derived URLs, read the [SvelteKit Node server guide](https://svelte.dev/docs/kit/adapter-node) and configure trusted proxy headers deliberately.
+
+## Verify and troubleshoot
+
+Read build and runtime logs with `lizard logs --build --service web --json` and `lizard logs --service web --json`. Open an inner route directly, submit a form, and request a missing route.
+
+If forms report a cross-site submission error, check `ORIGIN` before disabling a security check. If `node build` cannot find the server, verify the active adapter and the output path. Leave service command overrides unset to use the lizardpack path.
+
+## Static SvelteKit sites
+
+An app that can prerender all required pages can use `@sveltejs/adapter-static`, its default `build/` output, and service port `80`. That output cannot run server actions or request-time endpoints. Configure prerendering for the routes you need; installing the package alone is not enough.
+
+Install `@sveltejs/adapter-static` and replace the adapter import in `svelte.config.js`:
+
+```js
+import adapter from '@sveltejs/adapter-static';
+
+export default {
+  kit: { adapter: adapter() },
+};
+```
+
+For a site whose routes can all be generated, add this to `src/routes/+layout.js`:
+
+```js
+export const prerender = true;
+export const trailingSlash = 'always';
+```
+
+Remove unused deployment adapters from dependencies. Run `npm run build` and check that `build/` contains each required page. Use the complete Dockerfile and nginx config in the static-routing guide, with `OUTPUT_DIR=build`, then deploy a new service on port `80`. Do not reuse the server recipe's port `3000` for nginx.
+
+Use [static routes and 404s](/framework-guides/static-routing) to choose between generated HTML routes and an SPA fallback. See the [SvelteKit static adapter](https://svelte.dev/docs/kit/adapter-static) for framework options and limitations.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

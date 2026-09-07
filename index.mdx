@@ -1,61 +1,47 @@
 ---
-description: "Lizard builds apps, services, agents, and managed databases from a repo or a local folder, runs them in isolated containers, and gives them a URL."
+description: "Deploy an app, run a worker, connect Managed Postgres, or run code in Sandboxes. Choose a task, follow a guide, and check the limits."
 ---
 
-# Introduction
+# Lizard documentation
 
-**Lizard** is a unified cloud for apps, services, agents, and managed databases. You point it at a repo or a local directory, and Lizard builds it, runs it in isolated containers, gives it a URL, and keeps it running — no Dockerfile, no YAML, and no local Docker required.
+Lizard builds and runs applications from a GitHub repository or a local folder. Use Lizard CLI or the dashboard to deploy a web service, run a background worker, connect Managed Postgres or Managed Redis, and inspect logs. Use Lizard SDK to create Sandboxes for code execution.
 
-The category name for that is [container as a service](https://lizard.build/blog/container-as-a-service), which the blog sets against PaaS, FaaS and IaaS with 2026 prices for nine providers.
+## Choose a task
 
-Everything the platform can do is exposed through the **`lizard` CLI** (npm package [`@lizard-build/cli`](https://www.npmjs.com/package/@lizard-build/cli)) and the **dashboard**. This documentation covers both.
+| I want to… | Start here |
+|---|---|
+| Deploy my first app | [App quickstart](/getting-started) |
+| Deploy Next.js, React, Vue, or a Python app | [Framework guides](/framework-guides) |
+| Deploy from Claude Code or another coding agent | [Coding agent guide](/guides/deploy-from-coding-agent) |
+| Host a remote MCP server | [Remote MCP guide](/guides/deploy-mcp-server) |
+| Keep a Telegram bot running | [Telegram worker guide](/guides/telegram-bot) |
+| Connect a database | [Managed Postgres](/addons/postgres) |
+| Run generated code in a separate environment | [Sandboxes quickstart](/sandboxes/quickstart) |
+| Keep files after a sandbox ends | [Persistent Volumes](/sandboxes/volumes) |
+
+## Deploy an app
+
+Install Lizard CLI and sign in, then deploy a repository you can access:
 
 ```bash
 npm install -g @lizard-build/cli
 lizard login
-lizard add -r your-org/your-app   # deploy a GitHub repo
+lizard add -r your-org/your-app
 ```
 
-## Why Lizard
+Lizard builds the image on its servers, so this path does not need local Docker. [lizardpack](/concepts/build-pipeline) detects supported projects; projects with special build needs can use explicit commands or a Dockerfile. Check the build logs and verify the application URL after deployment.
 
-- **Deploy anything** — Go, Node, Python, Rust, Ruby, PHP, Java, or static sites are auto-detected and built. No buildpack config required.
-- **No Dockerfile needed** — the platform's builder ([lizardpack](/concepts/build-pipeline)) generates an optimized multi-stage image for you. Bring your own Dockerfile when you want full control.
-- **Managed addons in one command** — `lizard add postgres redis s3` provisions Postgres, Redis, and S3-compatible object storage, wired into your services by reference.
-- **Git-native** — connect a GitHub repo and every push to your branch auto-builds and redeploys.
-- **Isolated by default** — each service runs in its own pod with a default-deny network policy, a generated `*.onlizard.com` domain, and automatic TLS.
-- **On-demand sandboxes** — spin up ephemeral Firecracker micro-VMs for AI agents, code interpreters, and evals via the [SDK](/sandboxes/quickstart) — boot in milliseconds, snapshot, and tear down. See [Sandboxes](/sandboxes).
-- **Built for both humans and agents** — the same capabilities are available to AI coding agents through an embedded [skill and MCP surface](/agents). An app your AI IDE wrote ships the same way: see [deploying an app built in Google Antigravity](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production).
+## Understand your resources
 
-## How it fits together
+A **workspace** groups members and projects. A **project** groups services, databases, and Sandboxes. A **service** runs an application or worker. Managed Postgres, Managed Redis, and Managed Object Storage provide data services that applications connect to through environment references.
 
-Lizard organizes everything into a simple hierarchy:
+Apps and Sandboxes have different runtime and storage rules. Read [limits](/platform/limits) and [storage and recovery](/platform/storage-and-recovery) before depending on a resource's size, lifetime, or data retention.
 
-```
-workspace  →  project  →  service  (+ managed addons)
-```
+## Find the right level of detail
 
-- A **workspace** is your account or organization.
-- A **project** groups related services (your app, a worker, a database).
-- A **service** is a single deployable unit — built from a GitHub repo or an uploaded tarball.
-- **Managed addons** (Postgres, Redis, S3) attach to a project and are referenced by your services.
-
-Read more in [Core Concepts → Architecture](/concepts/architecture).
-
-## Two ways to drive Lizard
-
-| Surface | Best for |
-|---------|----------|
-| **CLI** (`lizard …`) | Day-to-day deploys, CI, scripting, and AI agents. See the [CLI Reference](/cli). |
-| **Dashboard** (`lizard open`) | Visual deploy history, log streaming, metrics, the database/Redis/S3 browsers, secrets, domains, billing, and team management. See [Dashboard](/dashboard). |
-
-## Next steps
-
-<div className="doc-cards">
-
-- **[Quickstart](/getting-started)** — install the CLI and ship your first app.
-- **[Core Concepts](/concepts/architecture)** — the workspace → project → service model and the build pipeline.
-- **[Deploying](/deploy/github)** — from GitHub, from local code, workers, and scaling.
-- **[Managed Addons](/addons)** — Postgres, Redis, and object storage.
-- **[CLI Reference](/cli)** — every command, flag, and exit code.
-
-</div>
+- [Guides](/guides) cover a task from setup to a check of the result.
+- [Framework guides](/framework-guides) give build commands, adapters, ports, and checks for each stack.
+- [Core concepts](/concepts/architecture) explain projects, builds, and deployments.
+- [Lizard CLI reference](/cli) lists commands, flags, and exit codes.
+- [Troubleshooting](/deploy/troubleshooting/service-never-healthy) helps diagnose a failed start.
+- [Known issues](/platform/known-issues) records limits and recovery cases to check before a release.

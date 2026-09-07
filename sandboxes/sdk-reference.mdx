@@ -41,7 +41,7 @@ sandbox = lizard.create("base")
 
 A project reference that matches nothing the key can reach raises before any sandbox is booted, listing the projects it can see.
 
-> Python method names with a trailing underscore (`exec_`) avoid shadowing reserved words, and properties are snake_case (`sandbox_id`) instead of camelCase (`sandboxId`). Everything else mirrors the JS/TS API 1:1.
+> Python method names with a trailing underscore (`exec_`) avoid shadowing reserved words, and properties are snake_case (`sandbox_id`) instead of camelCase (`sandboxId`). The examples below use JS/TS names; check the installed Python package for method signatures.
 
 ## `Sandbox`
 
@@ -58,9 +58,9 @@ A project reference that matches nothing the key can reach raises before any san
 | `sandbox.fs.makeDir(path)` | Create a directory and any missing parents. |
 | `sandbox.fs.remove(path)` | Delete a file or directory. |
 | `sandbox.getHost(port)` | Register a route to `port` and return its public, TLS-terminated hostname. |
-| `sandbox.pause()` | Snapshot the sandbox; expiration countdown freezes and on-demand compute drops to zero. |
+| `sandbox.pause()` | Stop guest vCPUs and retain state in host memory. See [lifecycle status](#lifecycle-status) before relying on a pause beyond the original deadline. |
 | `sandbox.resume()` | Resume a paused sandbox in place. |
-| `sandbox.setTimeout(ms)` | Set or extend the sandbox's lifetime, from now. |
+| `sandbox.setTimeout(ms)` | Set a running sandbox's remaining lifetime in milliseconds (minimum 1000). |
 | `sandbox.getInfo()` | Fetch metadata → `{ sandboxId, template, startedAt, endAt, … }`. |
 | `sandbox.kill()` | Terminate the sandbox immediately and free its resources. |
 
@@ -68,7 +68,7 @@ A project reference that matches nothing the key can reach raises before any san
 
 | Option | Type | Default | Notes |
 |---|---|---|---|
-| `template` | string | `'base'` | `'base'` or `'code-interpreter-v1'` (or a [custom template](/sandboxes#templates)) |
+| `template` | string | `'base'` | `'base'` or `'code-interpreter-v1'` — the two supported [templates](/sandboxes#templates) |
 | `project` | string | — | **Required.** The project to bill — its ID, slug, or name (`project` in Python). Not needed via a `Lizard` client. |
 | `projectId` | string | — | Exact project ID; skips resolving `project` |
 | `timeoutMs` | int | SDK default 5 min | Lifetime in ms |
@@ -130,3 +130,7 @@ See [Persistent Volumes](/sandboxes/volumes) for the full walkthrough.
 - [Quickstart](/sandboxes/quickstart) — install, authenticate, and a full walkthrough.
 - [Code Interpreter](/sandboxes/code-interpreter) — the `CodeSandbox` guide.
 - [Persistent Volumes](/sandboxes/volumes) — the `Volume` guide.
+
+## Lifecycle status
+
+Before relying on pause to retain a session beyond its original deadline, read [known issues](/platform/known-issues#sandbox-pause-and-expiration). Pause keeps guest state in host memory; it is not a durable backup.

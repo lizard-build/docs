@@ -4,7 +4,7 @@ description: "The deploy lifecycle on Lizard: what triggers a build, how traffic
 
 # Deployments
 
-A **deployment** is one build-and-release of a service. Every deploy produces a build, starts new replicas in fresh pods, and shifts traffic once they're healthy. Rolling replicas without touching a server is what you pay a [container as a service](https://lizard.build/blog/container-as-a-service) for; the blog prices nine of them.
+A **deployment** is one build-and-release of a service. The release path depends on the service runtime. A successful build does not by itself prove that the application started or can serve requests.
 
 ## How a deploy happens
 
@@ -24,9 +24,9 @@ lizard up                          # upload cwd and deploy
 
 1. **Build** — the platform runs your build (see [Build Pipeline](/concepts/build-pipeline)).
 2. **Pre-deploy** — if `preDeployCommand` is set, it runs once (e.g. migrations).
-3. **Start** — new replicas start in fresh pods.
+3. **Start** — Lizard starts the application for its configured runtime.
 4. **Health check** — the platform verifies the app's port is reachable (skipped for [workers](/deploy/workers)).
-5. **Route** — traffic shifts to the new replicas.
+5. **Verify** — inspect the release status and call the application URL. Port reachability is not a full application health check.
 
 ## Streaming output
 
@@ -53,7 +53,7 @@ In the [dashboard](/dashboard), the **Deployments** view shows the full timeline
 
 | Command | What it does |
 |---------|--------------|
-| `lizard restart --service <svc>` | Rolling restart of the **current** build — no rebuild |
+| `lizard restart --service <svc>` | Restart of the **current** build — no rebuild |
 | `lizard redeploy --service <svc>` | Fresh **build** from latest commit/upload, then release |
 
 Use `restart` to recycle replicas (e.g. to pick up a runtime secret that didn't hot-reload); use `redeploy` when you need a new build.
@@ -71,3 +71,7 @@ lizard events                      # see replica status
 ## Config changes (no rebuild)
 
 Most environment variable and secret changes apply without a rebuild: Lizard updates the service's config and restarts it, which takes a few seconds. Build-time values (`VITE_*`, `NEXT_PUBLIC_*`) and build-field changes do force a rebuild — see the [rebuild triggers table](/concepts/build-pipeline#what-triggers-a-rebuild).
+
+## Failed releases and recovery
+
+A failed build and a failed application start are different cases. Do not assume an old release continues serving in every runtime. Inspect the active service, build logs, and runtime logs. `lizard redeploy` builds the selected source again; it is not a command for restoring a previous build. Revert the source commit when needed, deploy it, and check the result. See [known issues](/platform/known-issues).

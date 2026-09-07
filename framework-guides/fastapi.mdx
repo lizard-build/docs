@@ -1,0 +1,82 @@
+---
+description: "Deploy FastAPI on Lizard with Uvicorn, requirements.txt, a Procfile, and port 8000. Verify a health endpoint and diagnose import, host, and dependency errors."
+---
+
+# Deploy FastAPI on Lizard
+
+Run FastAPI on Lizard with Uvicorn listening on `0.0.0.0:8000`. Include both FastAPI and Uvicorn in the app's dependencies. Importing a file that declares `app = FastAPI()` does not start an HTTP server by itself.
+
+## Prepare an app
+
+This example uses `requirements.txt` and a `main.py` at the application root:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+```
+
+Add `fastapi` and `uvicorn` to your dependency workflow and save the resolved, tested versions in `requirements.txt`. Select your Python minor version in `.python-version`, for example `3.13`, if your dependencies support it.
+
+Create a `Procfile` with an explicit import target:
+
+```text
+web: uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+`main:app` means the `app` object in `main.py`. For `src/api.py`, use the import path that works from your app root, such as `src.api:app`. The explicit Procfile avoids relying on detection of source-code patterns in custom layouts.
+
+| Setting | Value |
+|---|---|
+| Install | `pip install -r requirements.txt` |
+| Start | Procfile `web:` command |
+| Service port | `8000` |
+| Build output | Python source and installed dependencies |
+
+## Test locally
+
+Use a local virtual environment:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+In another terminal:
+
+```bash
+curl --fail http://localhost:8000/health
+```
+
+Expect a successful response containing `{"status":"ok"}`. Keep reload mode for development. The [FastAPI server guide](https://fastapi.tiangolo.com/deployment/manually/) explains the ASGI server and import target.
+
+## Deploy
+
+After [CLI setup](/framework-guides#prepare-the-project), upload from the application root:
+
+```bash
+lizard init --name fastapi-app
+lizard add --service api
+lizard up --service api --port 8000
+lizard logs --build --service api --json
+lizard logs --service api --json
+lizard ps --json
+```
+
+Exclude `.venv/`, `__pycache__/`, and `.env` files. Leave service build/start overrides unset so lizardpack reads the Procfile. The requirements-based path here does not need a separate compile command.
+
+Request `/health` on the returned HTTPS URL, then test a real API action. A TCP health probe only establishes that the process opens its port; your health endpoint can add checks that matter to the app.
+
+## Data and common failures
+
+Set credentials through [variables and secrets](/variables). Add [Managed Postgres](/addons/postgres) when the app needs a database, and use a service-scoped connection reference. Container-local files are not durable application storage; see [storage and recovery](/platform/storage-and-recovery).
+
+For `No module named uvicorn`, check the installed requirements. For an ASGI import error, run the exact Procfile command locally from the same root. For a service that never becomes healthy, check port `8000` and the bind host. If the process exits with no server logs, confirm that it runs Uvicorn rather than just `python main.py`.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

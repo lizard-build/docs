@@ -1,0 +1,1 @@
+Run `npm ci` and `npm run check`, then follow the [coding-agent guide](https://lizard.build/docs/guides/deploy-from-coding-agent/). Set `DATABASE_URL` before starting. `/health` returns `App ready`; `/data` reads the fixed demo row from Postgres. Startup creates the demo table and inserts the row only if absent. This is a deployment check, not a general database API.

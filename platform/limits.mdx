@@ -1,0 +1,41 @@
+---
+description: "Check app replica limits, Sandboxes resources and timeouts, regions, and the scope of account quotas before deployment."
+---
+
+# Limits
+
+Limits depend on the resource, plan, and account. A per-replica setting is not the total available to a service or an account. Check your current plan and the result of the create or scale request before sizing a workload.
+
+## Applications
+
+| Setting | Scope | What to check |
+|---|---|---|
+| CPU and memory | Each replica | Three replicas with a 2 vCPU / 2 GiB ceiling have a combined configured ceiling of 6 vCPU / 6 GiB. This is not a usage forecast. |
+| Replica count | Service and plan | The API accepts 1–10; plan limits can reduce that range. Standard plan checks allow 1, or 5 for Pro/Enterprise, with account overrides. |
+| Account resource cap | Account owner | A second project does not necessarily create a second quota. Ask for the effective account cap before planning a large deployment. |
+| Worker mode | Service | `containerPort=0` runs without an HTTP listener or public load-balancer route. |
+| Custom domain | Hostname | Wildcard custom domains are not accepted. Use a specific hostname and complete ownership and DNS checks. |
+
+Applications can use different runtimes. Do not assume that every application has the same Firecracker micro-VM boundary as Sandboxes.
+
+## Sandboxes
+
+| Setting | Current create API |
+|---|---|
+| CPU and memory | 4 vCPU / 4096 MiB |
+| Templates | `base`, `code-interpreter-v1` |
+| Raw API default lifetime | `timeoutMs: 0`, no expiration |
+| Lizard SDK default lifetime | 300000 ms, five minutes |
+| Explicit lifetime range | Integer milliseconds from 0 to 2147483647 |
+| Updating a lifetime | At least 1000 ms; it is not an idle timer |
+| Persistent volume attachment | One sandbox at a time, on the volume's node |
+
+Pass an explicit lifetime from scripts. For example, `--timeout 300000` makes the intended limit clear across Lizard CLI releases. See [pause and expiration](/platform/known-issues#sandbox-pause-and-expiration) before parking a session.
+
+## Regions
+
+The current configured regions include US East (Virginia), `us-east-1`, and EU West (Limburg), `eu-west-lim-a`. A region in the catalog does not guarantee available capacity for every resource. Check region choices when creating the resource; a sandbox using an existing volume must run on that volume's node.
+
+## Before increasing scale
+
+Check the active plan, per-replica settings, account cap, database connection limit, and storage growth together. Use [scaling](/deploy/scaling), [metrics](/observability/metrics), and [pricing](https://lizard.build/pricing) to compare configured capacity with measured usage.

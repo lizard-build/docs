@@ -1,0 +1,96 @@
+---
+description: "Deploy a Next.js static export on Lizard with output export, an nginx Dockerfile, port 80, and real 404 responses. Learn which features still need a Node.js server."
+---
+
+# Deploy a Next.js static export
+
+A Next.js static export produces HTML, JavaScript, and assets in `out/`. Deploy that directory on Lizard with an nginx Dockerfile. Use this path for pages that can be built ahead of time; use the [Node.js server guide](/framework-guides/nextjs) for request-time server features.
+
+## Configure the export
+
+Merge these options into `next.config.mjs`:
+
+```js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: 'export',
+  trailingSlash: true,
+  images: { unoptimized: true },
+};
+
+export default nextConfig;
+```
+
+Keep `"build": "next build"` in `package.json`. This example uses plain exported images; an external image loader is another option. Generate all required dynamic route parameters during the build. Request-time cookies, Server Actions, and other features that need a running Next.js server cannot run in this static container. Check the [Next.js static export reference](https://nextjs.org/docs/app/guides/static-exports) against the features your app uses.
+
+## Add a complete Dockerfile
+
+The Next.js auto-detection path expects a Node server. It does not switch to nginx just because the configuration exports `out/`. Add this Dockerfile at the app root; it assumes npm and a committed `package-lock.json`:
+
+```dockerfile
+FROM node:22-slim AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=build /app/out /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+```
+
+Create `nginx.conf` beside it:
+
+```nginx
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+  location / {
+    try_files $uri $uri/ =404;
+  }
+  error_page 404 /404.html;
+  location = /404.html {
+    internal;
+  }
+}
+```
+
+The trailing-slash export creates route directories with `index.html`. The nginx rule serves those directories and returns HTTP 404 for missing paths. Add `node_modules`, `.next`, `out`, `.git`, and `.env*` to `.dockerignore` and exclude local build files from uploads.
+
+## Build and deploy
+
+```bash
+npm ci
+npm run build
+```
+
+Check that `out/index.html` and an expected inner route exist. With Docker available, test the actual server locally:
+
+```bash
+docker build -t nextjs-static .
+docker run --rm -p 8080:80 nextjs-static
+```
+
+After [CLI setup](/framework-guides#prepare-the-project), deploy to a new service:
+
+```bash
+lizard init --name nextjs-static
+lizard add --service web
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+The complete Dockerfile includes an npm build step that lizardpack can recognize. On an existing service, inspect and clear conflicting build/start overrides before selecting a Dockerfile; see [build decision order](/concepts/build-pipeline#build-decision-order).
+
+## Verify routes and updates
+
+Request the live home page, an exported inner route, a JavaScript asset, and a made-up path. The made-up path must return HTTP 404, not the home page with HTTP 200. Use the checks in [static routes and 404s](/framework-guides/static-routing#verify-http-responses).
+
+All exported content changes require a new build. Runtime environment variables cannot change values already written into `out/`. For public build variables in a custom Dockerfile, declare the needed `ARG` before `RUN npm run build`; never place private credentials in the exported bundle.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

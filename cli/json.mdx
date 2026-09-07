@@ -50,7 +50,7 @@ The response shape is `{ cli, version, command: { arguments, options, subcommand
 Authenticate with a token and link the project explicitly (headless `up` won't auto-create a project):
 
 ```bash
-export LIZARD_TOKEN=lzd_xxx
+# Set LIZARD_TOKEN through your CI secret store.
 lizard init --name my-project
 lizard up --ci --service api --detach
 ```
@@ -67,9 +67,12 @@ Check exit codes to branch your pipeline:
 | `5` | cancelled |
 
 ```bash
-if ! lizard redeploy --service api --json; then
-  echo "deploy failed with code $?"
-  lizard logs --build --json
-  exit 1
+if lizard redeploy --service api --json; then
+  echo "Deploy succeeded"
+else
+  status=$?
+  echo "Deploy failed with code $status" >&2
+  lizard logs --build --json || true
+  exit "$status"
 fi
 ```

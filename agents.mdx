@@ -1,8 +1,8 @@
 ---
-description: "Drive Lizard from an AI coding agent: read the CLI's embedded skill, discover any command schema with --json, and wire up MCP and editors."
+description: "Drive Lizard from an AI coding agent: read Lizard Skill, discover command schemas with --json, and deploy through Lizard CLI."
 ---
 
-# AI Agents & MCP
+# Coding agents
 
 Lizard is designed to be driven by AI coding agents as easily as by humans. The CLI ships an **embedded skill** that teaches an agent the whole platform, and every command is **self-describing** via `--json` so agents never have to guess.
 
@@ -58,9 +58,9 @@ npm install -g @lizard-build/cli
 - **Don't write Dockerfiles unsolicited** — lizardpack auto-detects most stacks. Try a deploy first. See [Build Pipeline](/concepts/build-pipeline).
 - **Don't use `lizard up` to switch a git-backed service to upload** — use `service set` + `redeploy`.
 
-## Editor & MCP integrations
+## Editor integrations
 
-The skill is distributed as a public bootstrap so agents in editors and assistants can install and load it on demand, then drive the same CLI described throughout these docs. The CLI is the single source of truth — there's no separate agent API to learn.
+Lizard Skill is distributed as a public bootstrap so agents in editors and assistants can install and load it on demand, then drive the same CLI described throughout these docs. The CLI is the single source of truth — there's no separate agent API to learn.
 
 That covers the AI IDEs too: they write and test an app but don't host it. See [deploying an app built in Google Antigravity](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-an-antigravity-app-to-production-without-typing-a-command), where the whole deploy runs from two prompts.
 
@@ -70,3 +70,7 @@ That covers the AI IDEs too: they write and test an app but don't host it. See [
 - [JSON & Automation](/cli/json) — `--json` output and schema discovery.
 - [Variables & Secrets](/variables#scoping) — secret-scoping conventions agents should follow.
 - [Deploy your app from Claude Code](https://lizard.build/blog/deploy-from-claude-code#deploy-from-claude-code-in-3-steps) — the same bootstrap written as a walkthrough, with the prompts that drive it.
+
+## Hosting your own MCP server
+
+An agent using Lizard CLI and an application exposing MCP are separate workflows. The CLI commands above do not provide an MCP transport. To deploy your own server with Streamable HTTP, follow the [remote MCP guide](/guides/deploy-mcp-server).

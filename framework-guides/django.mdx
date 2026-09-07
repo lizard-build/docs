@@ -1,0 +1,101 @@
+---
+description: "Deploy Django on Lizard with Gunicorn, an explicit WSGI module, port 8000, production settings, database migrations, and a plan for static and uploaded files."
+---
+
+# Deploy Django on Lizard
+
+Run Django on Lizard with Gunicorn and your project's WSGI module on port `8000`. Prepare production settings, database access, and static-file serving before relying on the deployed app. `manage.py runserver` is a development server.
+
+## Set the start command
+
+This guide assumes `manage.py`, `requirements.txt`, and a project package named `config` containing `wsgi.py`. Replace `config` with your actual package name.
+
+Include Django, Gunicorn, and the database driver your app uses in your tested requirements. Add a `Procfile`:
+
+```text
+web: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+```
+
+The explicit module avoids ambiguity when settings live in nested packages. An ASGI app with WebSockets needs an ASGI server and a different launch command; this guide covers WSGI.
+
+| Setting | Value |
+|---|---|
+| Install | `pip install -r requirements.txt` |
+| Runtime | Gunicorn with your WSGI module |
+| Service port | `8000` |
+| Working directory | Directory containing `manage.py` |
+
+## Prepare production settings
+
+Read `SECRET_KEY` from a service secret, set `DEBUG=False`, and configure `ALLOWED_HOSTS` for the actual application hostname. Set `CSRF_TRUSTED_ORIGINS` to the HTTPS origins that submit forms. Make your settings parse environment values explicitly; merely setting a variable does not make Django read it.
+
+Choose a database configuration that consumes your service's connection values. Set a scoped [Managed Postgres reference](/variables/references) if you use that addon. Do not use container-local SQLite as the durable database for a deployed app.
+
+Run these commands in the same local environment where you installed the requirements, with production-like configuration:
+
+```bash
+python manage.py check --deploy
+gunicorn config.wsgi:application --bind 0.0.0.0:8000
+```
+
+Review Django's [deployment checklist](https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/) for settings relevant to your app. Verify proxy and HTTPS handling with the actual public URL before enabling redirects that could cause a loop.
+
+## Plan static files and migrations
+
+Gunicorn alone does not serve Django's static files. Choose static-file middleware configured in the app or a separate static host. Collect assets into the path that setup serves. lizardpack's requirements-based Python path does not automatically run `collectstatic`; put it in a complete Dockerfile build when the app needs that step.
+
+For WhiteNoise, include `whitenoise` in `requirements.txt`, add `whitenoise.middleware.WhiteNoiseMiddleware` after Django's `SecurityMiddleware`, and set `STATIC_ROOT = BASE_DIR / 'staticfiles'`. This complete Dockerfile collects static files and starts the WSGI server:
+
+```dockerfile
+FROM python:3.13-slim
+WORKDIR /app
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
+COPY . .
+RUN SECRET_KEY=build-only-placeholder python manage.py collectstatic --noinput
+EXPOSE 8000
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+```
+
+The placeholder applies only to the asset collection step. Set a separate secret for runtime. If importing your settings requires other values during `collectstatic`, supply non-secret build values that let this step run without a live database connection. Exclude `.env*`, virtual environments, `.git/`, `__pycache__/`, and local databases in `.dockerignore`.
+
+Keep user uploads in durable storage, such as [Managed Object Storage](/addons/storage), rather than the container's static directory. Review [storage and recovery](/platform/storage-and-recovery).
+
+Treat database migrations as a separate release step. Back up data as needed, make migrations safe to retry, and apply them before requests require the new schema. A pre-deploy command is not a substitute for checking concurrency and failure behavior.
+
+## Deploy and verify
+
+After [CLI setup](/framework-guides#prepare-the-project), connect a [GitHub service](/deploy/github), configure its secrets and production settings, and deploy with container port `8000`. For a new upload-based project:
+
+```bash
+lizard init --name django-app
+lizard add --service web
+```
+
+Set the required secret and database reference before the first upload. This example creates a new Managed Postgres instance in the project; use your existing instance's name if you already have one:
+
+```bash
+lizard add postgres --name postgres
+DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
+lizard secrets set SECRET_KEY="$DJANGO_SECRET_KEY" DATABASE_URL='${{postgres.DATABASE_URL}}' --service web
+lizard up --service web --port 8000
+lizard ps --json
+```
+
+Include a PostgreSQL driver such as `psycopg[binary]` in the requirements. Your settings must parse `DATABASE_URL` into Django's `DATABASES` setting. Replace these placeholders with the returned public hostname and HTTPS origin:
+
+```bash
+lizard secrets set ALLOWED_HOSTS=YOUR_PUBLIC_HOST CSRF_TRUSTED_ORIGINS=https://YOUR_PUBLIC_HOST --service web
+```
+
+The variable change restarts the process. A first request can return 400 until the host setting matches. Exclude local virtual environments, secrets, and local databases from uploads. Once the process runs, apply migrations:
+
+```bash
+lizard ssh --service web -- python manage.py migrate --noinput
+```
+
+Run the command again to check that no migrations remain. Do not treat a successful port check as proof that tables exist.
+
+Check the app URL, a database-backed page, a form submission, and a static asset. If the app uses Django admin, also check its CSS. Read `lizard logs --service web --json` for import or settings errors. A 400 response often means `ALLOWED_HOSTS` is wrong; missing CSS usually means static assets were not collected or served. Check the actual error before changing settings.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.
