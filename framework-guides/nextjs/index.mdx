@@ -1,0 +1,78 @@
+---
+description: "Deploy Next.js on Lizard as a Node.js server. Configure next build, next start, port 3000, environment variables, and checks for pages, APIs, and Server Actions."
+---
+
+# Deploy Next.js on Lizard
+
+Run Next.js on Lizard as a Node.js server with `next build` and `next start`. This path keeps a server available for request-time rendering, Route Handlers, and Server Actions. If every route can be built ahead of time, follow [Next.js static export](/framework-guides/nextjs/static-export) instead.
+
+## Build settings
+
+| Setting | Value |
+|---|---|
+| Project root | Directory containing `package.json` and the Next.js configuration |
+| Build script | `next build` |
+| Start script | `next start --hostname 0.0.0.0 --port 3000` |
+| Build output | `.next/` |
+| Service port | `3000` |
+| Runtime | Node.js |
+
+## Prepare the app
+
+Keep `next`, `react`, and `react-dom` in your dependencies and commit your lockfile. Merge these scripts into `package.json`:
+
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0 --port 3000"
+  }
+}
+```
+
+Use the standard Next.js output for this guide. `output: 'export'` needs a static server, and `output: 'standalone'` needs its own `server.js` launch and asset layout. Neither uses this `next start` recipe unchanged.
+
+Select a supported Node major version in `.nvmrc`, such as `22`. Exclude `.next/`, `node_modules/`, and `.env*` from the uploaded source; keep a sample environment file free of secrets if needed.
+
+## Test the production build locally
+
+```bash
+npm ci
+npm run build
+npm run start
+```
+
+In another terminal, open `http://localhost:3000` and test an inner route. If the app has an API or Server Action, exercise it too. Passing the development server check alone does not prove that the production build works.
+
+## Deploy
+
+After [installing Lizard CLI and signing in](/framework-guides#prepare-the-project), run from the app directory:
+
+```bash
+lizard init --name nextjs-app
+lizard up --service web --port 3000
+lizard logs --build --service web --json
+lizard logs --service web --json
+lizard ps --json
+```
+
+Lizard detects the `next` dependency and runs the build and start scripts. These commands assume the service has no existing build or start overrides. Use the URL in the deploy output to repeat the local checks.
+
+## Environment variables and data
+
+`NEXT_PUBLIC_*` values become part of the browser bundle during the build. Keep credentials in server-only variables and configure them for the service through [variables and secrets](/variables). Code that fetches data while building also needs access to that data at build time. A runtime restart does not change already generated HTML or JavaScript.
+
+Local cache files and uploaded files do not form a shared store across replicas. Review Next.js cache and Server Action requirements before scaling beyond one replica. Put durable app data in a database or object storage, and read [storage and recovery](/platform/storage-and-recovery).
+
+## Troubleshooting
+
+| Symptom | Check |
+|---|---|
+| `Missing script: start` | Add the production start script above; `next dev` is for local development. |
+| App never becomes healthy | Match `--port 3000` to the start command and bind to `0.0.0.0`. |
+| Public API URL still has its old value | Rebuild with the new `NEXT_PUBLIC_*` value. |
+| Build cannot reach a database | Check whether a route fetches data at build time and whether that dependency is reachable then. |
+| Static export fails under `next start` | Follow the separate static export guide. |
+
+The [Next.js self-hosting guide](https://nextjs.org/docs/app/guides/self-hosting) covers framework-level cache, image, and multi-instance behavior. For deployment errors, see [service never healthy](/deploy/troubleshooting/service-never-healthy).

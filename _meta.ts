@@ -1,6 +1,7 @@
 export default {
   index: 'Introduction',
   'getting-started': 'App quickstart',
+  'framework-guides': 'Framework guides',
   guides: 'Guides',
   platform: 'Limits & operations',
   concepts: 'Core Concepts',

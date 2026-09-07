@@ -1,0 +1,54 @@
+---
+description: "Deploy Hugo on Lizard by building public with hugo --minify and serving it on port 80. Check detection, themes, baseURL, generated routes, and missing-page status."
+---
+
+# Deploy Hugo on Lizard
+
+Lizard can build a Hugo source site with `hugo --minify` and serve `public/` through nginx on port `80`. Start from the Hugo source directory, with a Hugo configuration and `content/`, rather than uploading only the generated HTML.
+
+## Prepare the source
+
+Include your Hugo config, content, layouts, assets, and all theme files needed by the build. The Hugo detector looks for configuration such as `hugo.toml`, `hugo.yaml`, or `config/_default/` plus a `content/` directory.
+
+| Setting | Value |
+|---|---|
+| Build | `hugo --minify` |
+| Output | `public/` |
+| Production server | nginx |
+| Service port | `80` |
+
+Set `baseURL` to the intended public site URL, including its trailing slash. Rebuild after assigning a different hostname so links and generated sitemap entries use it. Check [Hugo's build and output guide](https://gohugo.io/getting-started/usage/).
+
+## Check build dependencies
+
+The default Hugo build image is `hugomods/hugo:base`; it does not pin a Hugo version for your project. If a theme needs a particular Hugo version, the extended edition, Node tooling, or module downloads, use a complete Dockerfile with those dependencies and the version you tested.
+
+Provider detection runs Go and Node checks before Hugo. A site with `go.mod` for Hugo Modules or `package.json` for an asset pipeline can therefore select a different provider. For that layout, use an explicit Dockerfile rather than assuming the Hugo config wins. See [build decision order](/concepts/build-pipeline#build-decision-order).
+
+## Build locally and deploy
+
+```bash
+hugo --minify
+hugo server
+```
+
+Inspect `public/` after the first command. Use the local server to check content and theme rendering; `hugo server` is not the production start command.
+
+After [CLI setup](/framework-guides#prepare-the-project), deploy a simple source layout without conflicting provider files:
+
+```bash
+lizard init --name hugo-site
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+Exclude local generated output and secrets. For an upload, ensure theme source files actually exist in the directory you send; a remote submodule reference alone is not the theme content.
+
+## Verify the deployed site
+
+Open the live home page, an inner article, and an image. Check the generated canonical URLs and `sitemap.xml`. Test a made-up path's HTTP status. The default static server uses a home-page fallback; an indexed Hugo site should return a real 404 for a missing page.
+
+Use the nginx rules in [static routes and 404s](/framework-guides/static-routing). For Hugo, pair those rules with a Hugo build stage that runs `hugo --minify` and copies `/src/public`; the Node build stage in that shared guide is for JavaScript generators.
+
+If theme assets are missing, inspect the build logs, theme source, and `baseURL`. If the wrong language builder starts, inspect conflicting `go.mod` or `package.json` files and existing service overrides. Hugo produces static files, so content changes need a new build.

@@ -1,0 +1,74 @@
+---
+description: "Deploy Nuxt on Lizard with Nitro's node-server preset. Add a production start script, run the generated server on port 3000, and check routes and runtime config."
+---
+
+# Deploy Nuxt on Lizard
+
+Run Nuxt on Lizard with Nitro's `node-server` preset. The build produces `.output/server/index.mjs`, and a Node.js process serves pages and server routes on port `3000`. This guide covers the Node server build, not the output of `nuxt generate`.
+
+## Configure the production build
+
+Set the preset in `nuxt.config.ts`:
+
+```ts
+export default defineNuxtConfig({
+  nitro: { preset: 'node-server' },
+});
+```
+
+Merge these scripts into `package.json`, keeping any other scripts your app needs:
+
+```json
+{
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "start": "HOST=0.0.0.0 PORT=3000 node .output/server/index.mjs"
+  }
+}
+```
+
+The start script uses the Linux shell in the deployment container. lizardpack detects the `nuxt` dependency and runs the build and start scripts. A fresh Nuxt project may not include `start`; add it rather than assuming `nuxt dev` will serve the production build.
+
+| Setting | Value |
+|---|---|
+| Build | `npm run build` |
+| Server entry | `.output/server/index.mjs` |
+| Start | `npm run start` |
+| Service port | `3000` |
+
+## Test the built app
+
+```bash
+npm ci
+npm run build
+npm run start
+```
+
+Open `http://localhost:3000`, request an inner page directly, and call one of your `server/api` routes if present. Check that the build reports the Node server preset. A provider-specific Nitro preset can produce a different entry point.
+
+## Deploy
+
+After [CLI setup](/framework-guides#prepare-the-project), run from the Nuxt app directory:
+
+```bash
+lizard init --name nuxt-app
+lizard up --service web --port 3000
+lizard logs --build --service web --json
+lizard logs --service web --json
+lizard ps --json
+```
+
+Keep `.nuxt/`, `.output/`, `node_modules/`, and `.env` files out of the upload. Include source, config, and the lockfile. Existing service build/start overrides bypass the detection used here; see [build decision order](/concepts/build-pipeline#build-decision-order).
+
+## Runtime configuration
+
+Declare runtime settings in `runtimeConfig` and configure their matching `NUXT_*` values for the service. Keep secrets outside `runtimeConfig.public`; the public part reaches the browser. Values used to prerender pages still affect the generated build, so check both request-time and prerendered routes after a change.
+
+Use [variables and secrets](/variables) to configure the service and [storage and recovery](/platform/storage-and-recovery) for durable data. Do not treat a local cache or session file as shared storage across replicas.
+
+## Troubleshooting
+
+If the process reports a missing `.output/server/index.mjs`, inspect the preset and the build output. If it reports a missing start script, add the one above. If the site never becomes healthy, check the host and port.
+
+For a purely generated Nuxt site, serve `.output/public/` with a static Dockerfile and correct route handling. Do not start that output with the Node command above. The [Nuxt deployment guide](https://nuxt.com/docs/4.x/getting-started/deployment) explains the Node and generated outputs; [static routes and 404s](/framework-guides/static-routing) covers the Lizard static server setup.

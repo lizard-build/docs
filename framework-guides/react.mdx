@@ -1,0 +1,68 @@
+---
+description: "Deploy a React app built with Vite on Lizard. Build dist, serve it on port 80, configure client routes and public API variables, and check the deployed app."
+---
+
+# Deploy React with Vite on Lizard
+
+Lizard builds a React app that uses Vite and serves its `dist/` directory through nginx on port `80`. This guide covers a browser-rendered app. For React pages that need a server, follow the [Next.js guide](/framework-guides/nextjs) or provide a production server for your chosen React framework.
+
+## Prepare the build
+
+Use an existing React and Vite project with a committed lockfile. Its `package.json` needs a production build script:
+
+```json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
+```
+
+If your scaffold runs TypeScript checks before `vite build`, keep those checks. Keep Vite's default `dist` output directory. A custom `build.outDir` needs a matching Dockerfile because the standard detection path copies `dist`.
+
+| Setting | Value |
+|---|---|
+| Detection | `vite` in dependencies or dev dependencies |
+| Build | `npm run build` |
+| Output | `dist/` |
+| Production server | nginx; no Node start script needed |
+| Service port | `80` |
+
+## Test locally
+
+```bash
+npm ci
+npm run build
+npm run preview
+```
+
+Open the local preview URL and test a page that calls your API. The preview command checks the build locally; do not set `vite preview` as the production start command. See [Vite deployment](https://vite.dev/guide/static-deploy.html).
+
+## Deploy the source
+
+After [CLI setup](/framework-guides#prepare-the-project), run from the directory containing `package.json`:
+
+```bash
+lizard init --name react-app
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+Upload source and the lockfile, excluding `node_modules/`, `dist/`, and secrets. Leave service build/start overrides unset to use the static detection path. The nginx container listens on port 80 even though the development and preview servers use other ports.
+
+## Connect an API
+
+Use a public variable such as `VITE_API_URL` for the API's browser-reachable HTTPS address. Read it as `import.meta.env.VITE_API_URL`. Configure that value through [variables and secrets](/variables) and rebuild when it changes. Never expose a database URL, API credential, or internal-only service address through a `VITE_*` variable.
+
+For an API on another origin, configure its allowed origins to include the frontend URL. A private service hostname that works between backend services will not resolve in a visitor's browser.
+
+## Verify routing
+
+Open the live app, follow a client route, then reload that URL directly. The default static server falls back to `index.html` so the client router can render an inner route. Add a route for unknown paths in the React app too. That fallback still returns HTTP 200; use [static routes and 404s](/framework-guides/static-routing) to choose a server policy for pages that need real HTTP 404 responses.
+
+If an asset returns HTML or the page goes blank, check Vite's `base`, the requested asset URL, and the output directory. If the app never becomes healthy, check that the service port is `80` and that an old start-command override has not selected a different build path.
+
+For pages meant to appear in search, inspect the initial HTML response. A browser-rendered shell may not contain the text you expect a search engine or answer engine to read. Choose prerendering or a server framework when you need that text in the response.

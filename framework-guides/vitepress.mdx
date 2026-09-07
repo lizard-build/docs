@@ -1,0 +1,62 @@
+---
+description: "Deploy VitePress on Lizard with docs:build, the correct .vitepress/dist directory, nginx, and port 80. Configure clean URLs and verify documentation routes and 404s."
+---
+
+# Deploy VitePress on Lizard
+
+Lizard can build a VitePress documentation site and serve the generated HTML through nginx on port `80`. Match the npm script and output directory to your docs root: `vitepress build docs` writes `docs/.vitepress/dist`, while `vitepress build` writes `.vitepress/dist`.
+
+## Set the build script
+
+For Markdown files in `docs/`, keep these scripts in `package.json`:
+
+```json
+{
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  }
+}
+```
+
+| Setting | Value in this guide |
+|---|---|
+| Build | `npm run docs:build` |
+| Docs root | `docs/` |
+| Output | `docs/.vitepress/dist/` |
+| Production server | nginx |
+| Service port | `80` |
+
+The detector finds a script containing `vitepress build` and uses its root argument. Keep that script direct and unambiguous. Shell wrappers, several matching scripts, or a custom `outDir` need explicit build configuration or a Dockerfile.
+
+## Check the site locally
+
+```bash
+npm ci
+npm run docs:build
+npm run docs:preview
+```
+
+Check an inner Markdown page and an asset. With `cleanUrls: true`, VitePress links to extensionless routes; the production server must resolve those URLs to the generated HTML files. Set `base` to the actual path prefix, or `/` for the domain root. See [VitePress deployment](https://vitepress.dev/guide/deploy).
+
+## Deploy
+
+After [CLI setup](/framework-guides#prepare-the-project), run from the directory containing `package.json`, not from inside `docs/`:
+
+```bash
+lizard init --name vitepress-docs
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+Include the VitePress config, Markdown, source assets, package manifest, and lockfile. Exclude local dependencies, generated output, caches, and secrets. Do not set `vitepress dev` or `vitepress preview` as the service start command.
+
+## Fix clean routes and HTTP status
+
+Use [static routes and 404s](/framework-guides/static-routing) with build script `docs:build` and output directory `docs/.vitepress/dist`. It includes lookup of `$uri.html`, which an extensionless generated page needs, and a real 404 response for missing URLs.
+
+Check a clean URL directly and reload it. Request a path that does not exist and confirm HTTP 404. The default SPA fallback can make a path look reachable while serving the home page with status 200.
+
+If the build reports `Missing script: build`, check that the selected path uses the VitePress detector and that no service command override replaces it. If the build succeeds but nginx serves no docs, compare the script's docs root with the copied output directory. Rebuild after content or configuration changes.

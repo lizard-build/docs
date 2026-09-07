@@ -1,0 +1,53 @@
+---
+description: "Deploy Docusaurus on Lizard as a static documentation site. Build the build directory, set URL and baseUrl, use port 80, and verify direct routes and real 404s."
+---
+
+# Deploy Docusaurus on Lizard
+
+Build Docusaurus on Lizard and serve its generated `build/` directory through nginx on port `80`. The production deployment serves static files; it does not run the `docusaurus start` development server.
+
+## Prepare the site
+
+Run from the Docusaurus directory containing `package.json`, its lockfile, and `docusaurus.config.*`. Keep `@docusaurus/core` in the dependencies and a build script that runs `docusaurus build`.
+
+| Setting | Value |
+|---|---|
+| Build | `npm run build` |
+| Output | `build/` |
+| Runtime | nginx |
+| Service port | `80` |
+
+Set `url` in the Docusaurus config to the site's intended public origin and `baseUrl` to the path where it will run. For a site at the domain root, `baseUrl` is `/`. Once you know the final hostname, rebuild with that hostname so generated canonical URLs and sitemap entries use it.
+
+Choose a consistent trailing-slash policy and check the resulting files. Keep the default output directory unless you provide a Dockerfile that copies your custom directory. The [Docusaurus deployment guide](https://docusaurus.io/docs/deployment) explains these framework settings.
+
+## Build and check locally
+
+```bash
+npm ci
+npm run build
+npm run serve
+```
+
+The last command assumes your project has the scaffold's `serve` script. Check the home page, a nested documentation page, an image, and a versioned page if you use docs versions. Fix broken links reported by the build before deployment.
+
+## Deploy
+
+After [CLI setup](/framework-guides#prepare-the-project):
+
+```bash
+lizard init --name docusaurus-docs
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+Commit source, plugins, configuration, and the lockfile. Exclude `node_modules/`, `build/`, `.docusaurus/`, and `.env` files from uploads. Leave service command overrides unset to use the Docusaurus detection path.
+
+## Serve inner routes and missing pages
+
+The default generated static server uses an SPA fallback. For an indexed documentation site, use [static routes and 404s](/framework-guides/static-routing) with build script `build` and output directory `build`. That recipe serves generated route files and returns a real HTTP 404 for unknown pages.
+
+After deployment, request a nested docs URL directly, refresh it, and check a made-up URL's status. Also inspect the canonical URL and sitemap on the final hostname. A visible error page with HTTP 200 is still a soft 404.
+
+If assets are missing, compare their URLs with `baseUrl`. If an inner route returns the home page, inspect the generated file layout and nginx rules. If old content remains after editing an environment value or Markdown file, verify that a new build actually completed; static HTML changes only with a build.
