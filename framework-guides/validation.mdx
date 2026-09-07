@@ -1,0 +1,52 @@
+---
+description: "Framework guide test results from real Lizard CLI uploads: versions, rendering modes, route and form checks, database migrations, and known limits."
+---
+
+# Framework guide test results
+
+On 2026-09-07, we tested 16 recipes across 11 frameworks through real `lizard up` deployments in an isolated test project. Each final recipe passed its build, runtime, and public HTTPS checks. These results apply to the versions and small test apps below.
+
+## Tested recipes
+
+| Recipe | Tested versions | Port | Cloud check |
+|---|---|---|---|
+| Next.js server | Next.js 16.3.4, React 19.2.8 | `3000` | Passed |
+| Next.js static export | Next.js 16.3.4, React 19.2.8 | `80` | Passed |
+| React with Vite | React 19.2.8, Vite 8.2.2 | `80` | Passed |
+| Vue with Vite | Vue 3.5.42, Vue Router 5.3.1, Vite 8.2.2 | `80` | Passed |
+| Astro static | Astro 7.3.1 | `80` | Passed |
+| Astro Node server | Astro 7.3.1, Node adapter 11.1.5 | `3000` | Passed |
+| Nuxt Node server | Nuxt 4.5.2 | `3000` | Passed |
+| Nuxt generate | Nuxt 4.5.2 | `80` | Passed |
+| SvelteKit Node server | SvelteKit 2.70.3, Svelte 5.57.0, adapter-node 5.5.7 | `3000` | Passed |
+| SvelteKit static | SvelteKit 2.70.3, Svelte 5.57.0, adapter-static 3.0.10 | `80` | Passed |
+| Docusaurus | Docusaurus 3.10.2 | `80` | Passed |
+| VitePress, docs root | VitePress 1.6.4 | `80` | Passed |
+| VitePress, project root | VitePress 1.6.4 | `80` | Passed |
+| FastAPI | FastAPI 0.141.1, Uvicorn 0.52.4 | `8000` | Passed |
+| Django | Django 6.1.1, Gunicorn 26.2.0, WhiteNoise 6.12.0, psycopg 3.3.5 | `8000` | Passed |
+| Hugo | Hugo 0.165.0 (extended) | `80` | Passed |
+
+JavaScript builds used Node 22. Python builds used Python 3.13. Uploads used Lizard CLI 0.3.92 from macOS; the Nuxt server retry and later uploads used `COPYFILE_DISABLE=1` as described in [project setup](/framework-guides#prepare-the-project). Dependency manifests pin the listed versions. Container image tags can change independently of a package lockfile.
+
+## What we checked
+
+- Installed dependencies and built the apps in Linux containers, then uploaded source with `lizard up` and read cloud build and runtime logs.
+- Requested the public home page, an inner route, a real asset, a missing page, and a missing JavaScript path. Server recipes also returned request-time API data.
+- Opened inner routes directly in a browser and reloaded them. React interaction and Vue Router navigation worked. Next.js Server Actions and SvelteKit form responses returned the submitted value; SvelteKit rejected a form from an untrusted origin.
+- Checked generated JavaScript and CSS responses. Docusaurus canonical URLs and its sitemap used the public host. Hugo's sitemap used the host after rebuilding its `baseURL`.
+- Ran Django migrations against Managed Postgres (PostgreSQL 18.4), wrote and read a test row, served collected static files, accepted a valid CSRF form, and rejected a form without its token.
+
+The test project used a separate service for each recipe, with test-specific names. Build and start overrides stayed unset. The guides' Dockerfiles and framework configs selected the documented runtime.
+
+## Problems found and addressed
+
+The initial commands omitted service creation. The guides now call `lizard add --service` before the first named upload. The Nuxt static recipe now uses `nuxt generate` and a prerender config without the Node server preset.
+
+Default static nginx builds returned the home page with status 200 for missing URLs. VitePress clean URLs also needed `.html` lookup. The complete Dockerfile and nginx setup in [static routes and 404s](/framework-guides/static-routing) passed the cloud checks. This workaround does not change the default builder for existing services.
+
+The cloud run also found macOS archive metadata and failed-build exit-code defects in Lizard CLI 0.3.92. CLI fixes are under review. A service port change could leave its public URL returning 503 even when the process was ready. See [known issues](/platform/known-issues) before relying on those paths.
+
+## Limits of these results
+
+These checks cover source uploads and the documented modes. They do not establish support for every plugin, custom adapter output, theme dependency, framework version, GitHub deployment path, database recovery procedure, or multiple-replica workload. Django’s `check --deploy` returned four HTTP security warnings in the small test app; this is not a complete security setup. They do not measure SEO rankings or AI citations. Recheck your app's own routes and data operations before release.

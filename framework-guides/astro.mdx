@@ -58,6 +58,7 @@ After [CLI setup](/framework-guides#prepare-the-project), create the project:
 
 ```bash
 lizard init --name astro-app
+lizard add --service web
 ```
 
 For the Node adapter:
@@ -81,3 +82,5 @@ Values used to generate static HTML require a new build when they change. Server
 If your app uses sessions, choose storage that fits restarts and multiple replicas. Do not rely on the container filesystem as a shared durable store. See [storage and recovery](/platform/storage-and-recovery).
 
 For a static content site, test a missing URL and use [static routes and 404s](/framework-guides/static-routing) to return the proper status. If an SSR deployment exits or serves no routes, verify that `dist/server/entry.mjs` exists, the adapter uses standalone mode, and the service port is `3000`.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

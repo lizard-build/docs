@@ -68,12 +68,13 @@ EXPOSE 80
 | VitePress at the project root | `docs:build` or your actual script | `.vitepress/dist` |
 | SvelteKit with adapter-static | `build` | `build` |
 | Next.js export | `build` | `out` |
+| Nuxt generate | `build` with `nuxt generate` | `.output/public` |
 
 Use the generated-pages policy only when the app has those route files. A SvelteKit SPA fallback, for example, needs its own routing policy. [Next.js static export](/framework-guides/nextjs/static-export) has a complete recipe with a trailing-slash layout.
 
 Exclude dependencies, build output, `.git`, and `.env*` in `.dockerignore`. If the build needs public variables, declare their `ARG` values before the build command. Do not copy private secrets into the image or browser output.
 
-For a new service, deploy this source with `lizard up --service web --port 80` after [CLI setup](/framework-guides#prepare-the-project). On an existing service, check [build decision order](/concepts/build-pipeline#build-decision-order): command overrides can take precedence over the Dockerfile. A config file by itself does not replace the generated nginx configuration; the Dockerfile must copy it into the image.
+After [CLI setup](/framework-guides#prepare-the-project), create a service with `lizard add --service web`, then deploy this source with `lizard up --service web --port 80`. Skip the add step when the service already exists. On an existing service, check [build decision order](/concepts/build-pipeline#build-decision-order): command overrides can take precedence over the Dockerfile. A config file by itself does not replace the generated nginx configuration; the Dockerfile must copy it into the image.
 
 ## Verify HTTP responses
 
@@ -89,3 +90,5 @@ curl -sS -o /dev/null -w '%{http_code}\n' "$SITE_URL/this-page-does-not-exist"
 Expect 200 for real pages and 404 for the missing path. If a valid route redirects to its canonical form, inspect the redirect and then verify the destination. Also test an actual asset and a made-up `.js` path: a missing script must not return the home page as HTML with status 200.
 
 Finally, open the inner route directly in a browser and reload it. Correct client navigation alone can hide a server routing error. Check the framework's canonical URL and sitemap settings alongside HTTP status before publishing an indexed site.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

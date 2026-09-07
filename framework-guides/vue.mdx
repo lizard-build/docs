@@ -35,6 +35,7 @@ After [CLI setup](/framework-guides#prepare-the-project), deploy the current sou
 
 ```bash
 lizard init --name vue-app
+lizard add --service web
 lizard up --service web --port 80
 lizard logs --build --service web --json
 lizard ps --json
@@ -53,3 +54,5 @@ Test both navigation from the home page and opening `/account` in a new tab. Add
 Vite writes `VITE_*` values into the browser bundle during the build. Use them only for public values, such as your API's public HTTPS URL. Set them through [variables and secrets](/variables), then check the rebuilt app's actual network request. A runtime-only restart cannot replace a value inside built JavaScript.
 
 If requests fail only after deployment, check CORS on the API and confirm that the browser is not calling `localhost` or a private backend hostname. If the HTML loads but assets fail, inspect Vite's base and the asset paths. For pages that need HTML before JavaScript runs, choose Nuxt rendering or an explicit prerendering step.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

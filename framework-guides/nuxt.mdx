@@ -4,9 +4,11 @@ description: "Deploy Nuxt on Lizard with Nitro's node-server preset. Add a produ
 
 # Deploy Nuxt on Lizard
 
-Run Nuxt on Lizard with Nitro's `node-server` preset. The build produces `.output/server/index.mjs`, and a Node.js process serves pages and server routes on port `3000`. This guide covers the Node server build, not the output of `nuxt generate`.
+Run Nuxt on Lizard with Nitro's `node-server` preset. The build produces `.output/server/index.mjs`, and a Node.js process serves pages and server routes on port `3000`. For a generated site on port `80`, use the static recipe below.
 
 ## Configure the production build
+
+On macOS, complete the `COPYFILE_DISABLE=1` setup in [Prepare the project](/framework-guides#prepare-the-project) before running `lizard up` with Lizard CLI 0.3.92. An error naming a `._*.ts` route can come from archive metadata rather than the route source.
 
 Set the preset in `nuxt.config.ts`:
 
@@ -53,6 +55,7 @@ After [CLI setup](/framework-guides#prepare-the-project), run from the Nuxt app 
 
 ```bash
 lizard init --name nuxt-app
+lizard add --service web
 lizard up --service web --port 3000
 lizard logs --build --service web --json
 lizard logs --service web --json
@@ -72,3 +75,21 @@ Use [variables and secrets](/variables) to configure the service and [storage an
 If the process reports a missing `.output/server/index.mjs`, inspect the preset and the build output. If it reports a missing start script, add the one above. If the site never becomes healthy, check the host and port.
 
 For a purely generated Nuxt site, serve `.output/public/` with a static Dockerfile and correct route handling. Do not start that output with the Node command above. The [Nuxt deployment guide](https://nuxt.com/docs/4.x/getting-started/deployment) explains the Node and generated outputs; [static routes and 404s](/framework-guides/static-routing) covers the Lizard static server setup.
+
+## Generate a static site
+
+For generated HTML, replace the Node preset with explicit prerender settings and change the build script to `nuxt generate`:
+
+```ts
+export default defineNuxtConfig({
+  nitro: {
+    prerender: { crawlLinks: true, routes: ['/'] },
+  },
+});
+```
+
+Add unlinked or dynamic routes to `routes` when the crawler cannot discover them. Run `npm run build` and check that `.output/public/index.html` and your inner route files exist. In the test with Nuxt 4.5.2, keeping `preset: 'node-server'` while switching only to `nuxt generate` produced the fallback pages without the site's routes. A successful build alone did not establish that the export contained the site.
+
+Use the Dockerfile and nginx configuration in [static routes and 404s](/framework-guides/static-routing), with build script `build`, output directory `.output/public`, and service port `80`. The static container does not run Nuxt server routes or read runtime config for already generated pages.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

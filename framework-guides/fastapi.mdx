@@ -62,6 +62,7 @@ After [CLI setup](/framework-guides#prepare-the-project), upload from the applic
 
 ```bash
 lizard init --name fastapi-app
+lizard add --service api
 lizard up --service api --port 8000
 lizard logs --build --service api --json
 lizard logs --service api --json
@@ -77,3 +78,5 @@ Request `/health` on the returned HTTPS URL, then test a real API action. A TCP 
 Set credentials through [variables and secrets](/variables). Add [Managed Postgres](/addons/postgres) when the app needs a database, and use a service-scoped connection reference. Container-local files are not durable application storage; see [storage and recovery](/platform/storage-and-recovery).
 
 For `No module named uvicorn`, check the installed requirements. For an ASGI import error, run the exact Procfile command locally from the same root. For a service that never becomes healthy, check port `8000` and the bind host. If the process exits with no server logs, confirm that it runs Uvicorn rather than just `python main.py`.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

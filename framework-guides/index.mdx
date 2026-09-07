@@ -36,7 +36,15 @@ npm install -g @lizard-build/cli
 lizard login
 ```
 
-Each guide uses a new project and a service named `web` or `api`. For an existing project, check `lizard status --json` and `lizard ps --json` before deploying. The port must match the process inside the container, which must listen on `0.0.0.0`.
+Each guide uses a new project and a service named `web` or `api`. Create that service with `lizard add --service web` (or `api`) before the first `lizard up --service` call. In Lizard CLI 0.3.92, `up --service` selects an existing service; it does not create a missing named service. For an existing project, check `lizard status --json` and `lizard ps --json` before deploying. The port must match the process inside the container, which must listen on `0.0.0.0`.
+
+On macOS with Lizard CLI 0.3.92, set this before uploading:
+
+```bash
+export COPYFILE_DISABLE=1
+```
+
+This prevents macOS `tar` from adding `._*` metadata entries to the source archive. In the cloud test, an extra `server/api/._probe.get.ts` caused Nuxt's build to fail. The CLI archive fix is pending release; the environment setting works with the released version. It does not change application settings.
 
 ## Choose GitHub or local source
 
@@ -51,3 +59,5 @@ These guides use lizardpack detection unless they call for a Dockerfile. Existin
 Read build logs, runtime logs, and the active URL. Test an inner route, a missing route, and any API or form action. A process that opens its port can still serve a broken page. For generated sites, use [static routes and 404s](/framework-guides/static-routing) to avoid returning the home page with HTTP 200 for every unknown URL.
 
 Runtime support does not imply shared caches, persistent local files, or every framework version. See [limits](/platform/limits), [storage and recovery](/platform/storage-and-recovery), and [known issues](/platform/known-issues) when your app relies on those features.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

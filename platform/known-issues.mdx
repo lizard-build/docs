@@ -25,3 +25,13 @@ Explicit build or start commands take priority over a repository Dockerfile. Cle
 The current Sandboxes create API accepts the two built-in templates. Instructions using `lizard push` for custom templates do not match the current public CLI.
 
 Lizard Skill uses Lizard CLI. That workflow does not expose an MCP transport. Hosting your own remote MCP server is a separate application deployment; see the [guide](/guides/deploy-mcp-server).
+
+## Public URL after a service port change
+
+In the 2026-09-07 deployment check, changing an existing upload service from port `3000` to `80` with `lizard up --port 80` finished with `running` and a ready pod, but its public URL returned HTTP 503. The same static app worked on a fresh service. Verify the public URL after changing a service's port; the reported runtime state alone is not enough. If this occurs, include the service ID, build ID, old/new port, and URL when reporting it to support.
+
+## Upload archives and failed-build exit codes
+
+Lizard CLI 0.3.92 can include macOS `._*` metadata entries in source uploads. Nuxt can treat these as route source and fail to build. Set `COPYFILE_DISABLE=1` before uploading on macOS; see [framework setup](/framework-guides#prepare-the-project).
+
+The same CLI version returned exit code `0` for a failed cloud build in the 2026-09-07 check. A zero exit code alone does not prove that the release worked. Both CLI fixes are under review; check the build and the public URL until a fixed version reaches your environment.

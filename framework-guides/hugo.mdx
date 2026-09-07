@@ -38,6 +38,7 @@ After [CLI setup](/framework-guides#prepare-the-project), deploy a simple source
 
 ```bash
 lizard init --name hugo-site
+lizard add --service web
 lizard up --service web --port 80
 lizard logs --build --service web --json
 lizard ps --json
@@ -51,4 +52,22 @@ Open the live home page, an inner article, and an image. Check the generated can
 
 Use the nginx rules in [static routes and 404s](/framework-guides/static-routing). For Hugo, pair those rules with a Hugo build stage that runs `hugo --minify` and copies `/src/public`; the Node build stage in that shared guide is for JavaScript generators.
 
+Save those rules as `nginx.conf` beside this Dockerfile, then run the same `lizard up` command again:
+
+```dockerfile
+FROM hugomods/hugo:base AS build
+WORKDIR /src
+COPY . .
+RUN hugo --minify
+
+FROM nginx:alpine
+COPY --from=build /src/public /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+```
+
+This example uses the same floating Hugo image as the default builder. Pin its image digest in a release workflow if you need the same build tool on each run.
+
 If theme assets are missing, inspect the build logs, theme source, and `baseURL`. If the wrong language builder starts, inspect conflicting `go.mod` or `package.json` files and existing service overrides. Hugo produces static files, so content changes need a new build.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

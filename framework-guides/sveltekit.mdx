@@ -48,6 +48,7 @@ After [CLI setup](/framework-guides#prepare-the-project):
 
 ```bash
 lizard init --name sveltekit-app
+lizard add --service web
 lizard up --service web --port 3000
 lizard ps --json
 ```
@@ -70,4 +71,25 @@ If forms report a cross-site submission error, check `ORIGIN` before disabling a
 
 An app that can prerender all required pages can use `@sveltejs/adapter-static`, its default `build/` output, and service port `80`. That output cannot run server actions or request-time endpoints. Configure prerendering for the routes you need; installing the package alone is not enough.
 
+Install `@sveltejs/adapter-static` and replace the adapter import in `svelte.config.js`:
+
+```js
+import adapter from '@sveltejs/adapter-static';
+
+export default {
+  kit: { adapter: adapter() },
+};
+```
+
+For a site whose routes can all be generated, add this to `src/routes/+layout.js`:
+
+```js
+export const prerender = true;
+export const trailingSlash = 'always';
+```
+
+Remove unused deployment adapters from dependencies. Run `npm run build` and check that `build/` contains each required page. Use the complete Dockerfile and nginx config in the static-routing guide, with `OUTPUT_DIR=build`, then deploy a new service on port `80`. Do not reuse the server recipe's port `3000` for nginx.
+
 Use [static routes and 404s](/framework-guides/static-routing) to choose between generated HTML routes and an SPA fallback. See the [SvelteKit static adapter](https://svelte.dev/docs/kit/adapter-static) for framework options and limitations.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

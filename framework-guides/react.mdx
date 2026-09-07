@@ -46,6 +46,7 @@ After [CLI setup](/framework-guides#prepare-the-project), run from the directory
 
 ```bash
 lizard init --name react-app
+lizard add --service web
 lizard up --service web --port 80
 lizard logs --build --service web --json
 lizard ps --json
@@ -66,3 +67,5 @@ Open the live app, follow a client route, then reload that URL directly. The def
 If an asset returns HTML or the page goes blank, check Vite's `base`, the requested asset URL, and the output directory. If the app never becomes healthy, check that the service port is `80` and that an old start-command override has not selected a different build path.
 
 For pages meant to appear in search, inspect the initial HTML response. A browser-rendered shell may not contain the text you expect a search engine or answer engine to read. Choose prerendering or a server framework when you need that text in the response.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

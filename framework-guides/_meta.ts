@@ -12,4 +12,5 @@ export default {
   vitepress: 'VitePress',
   hugo: 'Hugo',
   'static-routing': 'Static routes & 404s',
+  validation: 'Tested versions & results',
 };

@@ -37,6 +37,7 @@ After [CLI setup](/framework-guides#prepare-the-project):
 
 ```bash
 lizard init --name docusaurus-docs
+lizard add --service web
 lizard up --service web --port 80
 lizard logs --build --service web --json
 lizard ps --json
@@ -51,3 +52,5 @@ The default generated static server uses an SPA fallback. For an indexed documen
 After deployment, request a nested docs URL directly, refresh it, and check a made-up URL's status. Also inspect the canonical URL and sitemap on the final hostname. A visible error page with HTTP 200 is still a soft 404.
 
 If assets are missing, compare their URLs with `baseUrl`. If an inner route returns the home page, inspect the generated file layout and nginx rules. If old content remains after editing an environment value or Markdown file, verify that a new build actually completed; static HTML changes only with a build.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

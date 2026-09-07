@@ -79,6 +79,7 @@ After [CLI setup](/framework-guides#prepare-the-project), deploy to a new servic
 
 ```bash
 lizard init --name nextjs-static
+lizard add --service web
 lizard up --service web --port 80
 lizard logs --build --service web --json
 lizard ps --json
@@ -91,3 +92,5 @@ The complete Dockerfile includes an npm build step that lizardpack can recognize
 Request the live home page, an exported inner route, a JavaScript asset, and a made-up path. The made-up path must return HTTP 404, not the home page with HTTP 200. Use the checks in [static routes and 404s](/framework-guides/static-routing#verify-http-responses).
 
 All exported content changes require a new build. Runtime environment variables cannot change values already written into `out/`. For public build variables in a custom Dockerfile, declare the needed `ARG` before `RUN npm run build`; never place private credentials in the exported bundle.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.

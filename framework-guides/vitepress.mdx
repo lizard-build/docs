@@ -46,6 +46,7 @@ After [CLI setup](/framework-guides#prepare-the-project), run from the directory
 
 ```bash
 lizard init --name vitepress-docs
+lizard add --service web
 lizard up --service web --port 80
 lizard logs --build --service web --json
 lizard ps --json
@@ -60,3 +61,5 @@ Use [static routes and 404s](/framework-guides/static-routing) with build script
 Check a clean URL directly and reload it. Request a path that does not exist and confirm HTTP 404. The default SPA fallback can make a path look reachable while serving the home page with status 200.
 
 If the build reports `Missing script: build`, check that the selected path uses the VitePress detector and that no service command override replaces it. If the build succeeds but nginx serves no docs, compare the script's docs root with the copied output directory. Rebuild after content or configuration changes.
+
+See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.
