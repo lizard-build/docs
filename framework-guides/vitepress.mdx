@@ -6,6 +6,8 @@ description: "Deploy VitePress on Lizard with docs:build, the correct .vitepress
 
 Lizard can build a VitePress documentation site and serve the generated HTML through nginx on port `80`. Match the npm script and output directory to your docs root: `vitepress build docs` writes `docs/.vitepress/dist`, while `vitepress build` writes `.vitepress/dist`.
 
+Start with the [complete source example](https://github.com/lizard-build/docs/tree/main/_examples/vitepress), which includes the configuration and files used by this recipe.
+
 ## Set the build script
 
 For Markdown files in `docs/`, keep these scripts in `package.json`:
@@ -54,12 +56,13 @@ lizard ps --json
 
 Include the VitePress config, Markdown, source assets, package manifest, and lockfile. Exclude local dependencies, generated output, caches, and secrets. Do not set `vitepress dev` or `vitepress preview` as the service start command.
 
-## Fix clean routes and HTTP status
+## Check clean routes and HTTP status
 
-Use [static routes and 404s](/framework-guides/static-routing) with build script `docs:build` and output directory `docs/.vitepress/dist`. It includes lookup of `$uri.html`, which an extensionless generated page needs, and a real 404 response for missing URLs.
+New VitePress builds resolve extensionless routes to their generated `.html` files and return HTTP 404 for missing URLs. Keep command overrides unset to use this detection path. No custom Dockerfile is needed for the standard output. See [static routes and 404s](/framework-guides/static-routing) for custom routing.
 
-Check a clean URL directly and reload it. Request a path that does not exist and confirm HTTP 404. The default SPA fallback can make a path look reachable while serving the home page with status 200.
+Check a clean URL directly and reload it. Request a path that does not exist and confirm HTTP 404. If an older image serves the home page for missing paths, rebuild the service to pick up the current routing rules.
 
 If the build reports `Missing script: build`, check that the selected path uses the VitePress detector and that no service command override replaces it. If the build succeeds but nginx serves no docs, compare the script's docs root with the copied output directory. Rebuild after content or configuration changes.
 
 See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.
+

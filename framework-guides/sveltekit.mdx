@@ -6,6 +6,8 @@ description: "Deploy SvelteKit on Lizard with adapter-node. Configure the produc
 
 Use `@sveltejs/adapter-node` to build a SvelteKit server for Lizard. It produces `build/`, which starts with `node build` on port `3000`. Install and configure the adapter explicitly; a scaffold that still uses `adapter-auto` does not establish a Node deployment target.
 
+Start with the [complete source example](https://github.com/lizard-build/docs/tree/main/_examples/sveltekit), which includes the configuration and files used by this recipe.
+
 ## Configure the adapter
 
 ```bash
@@ -88,8 +90,9 @@ export const prerender = true;
 export const trailingSlash = 'always';
 ```
 
-Remove unused deployment adapters from dependencies. Run `npm run build` and check that `build/` contains each required page. Use the complete Dockerfile and nginx config in the static-routing guide, with `OUTPUT_DIR=build`, then deploy a new service on port `80`. Do not reuse the server recipe's port `3000` for nginx.
+Remove unused deployment adapters from dependencies. Run `npm run build` and check that `build/` contains each required page. For the default output, leave service command overrides unset and deploy a new service on port `80`. New builds serve the generated HTML and return HTTP 404 for missing pages. Do not reuse the server recipe's port `3000` for nginx.
 
 Use [static routes and 404s](/framework-guides/static-routing) to choose between generated HTML routes and an SPA fallback. See the [SvelteKit static adapter](https://svelte.dev/docs/kit/adapter-static) for framework options and limitations.
 
 See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.
+

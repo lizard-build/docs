@@ -6,6 +6,12 @@ description: "Framework guide test results from real Lizard CLI uploads: version
 
 On 2026-09-07, we tested 16 recipes across 11 frameworks through real `lizard up` deployments in an isolated test project. Each final recipe passed its build, runtime, and public HTTPS checks. These results apply to the versions and small test apps below.
 
+## Routing recheck on 2026-09-08
+
+We rebuilt Astro static, SvelteKit adapter-static, Docusaurus, Hugo, and both VitePress layouts without a Dockerfile, nginx config, or service command overrides. All 30 public HTTPS checks passed: home pages, inner pages, and real assets returned 200; missing pages and JavaScript paths returned 404. VitePress returned the inner page's content at its clean URL.
+
+These results supersede the static-routing workaround described in the original run below. Existing images need a rebuild to receive the updated rules. The [source examples](https://github.com/lizard-build/docs/tree/main/_examples) include small Docusaurus, VitePress, Hugo, and SvelteKit projects. They do not establish support for every theme, plugin, or adapter configuration.
+
 ## Tested recipes
 
 | Recipe | Tested versions | Port | Cloud check |
@@ -39,7 +45,7 @@ JavaScript builds used Node 22. Python builds used Python 3.13. Uploads used Liz
 
 The test project used a separate service for each recipe, with test-specific names. Build and start overrides stayed unset. The guides' Dockerfiles and framework configs selected the documented runtime.
 
-## Problems found and addressed
+## Problems found and addressed on 2026-09-07
 
 The initial commands omitted service creation. The guides now call `lizard add --service` before the first named upload. The Nuxt static recipe now uses `nuxt generate` and a prerender config without the Node server preset.
 
@@ -50,3 +56,4 @@ The cloud run also found macOS archive metadata and failed-build exit-code defec
 ## Limits of these results
 
 These checks cover source uploads and the documented modes. They do not establish support for every plugin, custom adapter output, theme dependency, framework version, GitHub deployment path, database recovery procedure, or multiple-replica workload. Django’s `check --deploy` returned four HTTP security warnings in the small test app; this is not a complete security setup. They do not measure SEO rankings or AI citations. Recheck your app's own routes and data operations before release.
+
