@@ -13,7 +13,7 @@ Astro has two deployment paths on Lizard: serve a static `dist/` directory on po
 | Static site | Static output without a server adapter | nginx serves `dist/` | `80` |
 | Node server | `@astrojs/node` in standalone mode | `node ./dist/server/entry.mjs` | `3000` |
 
-Both paths use a `build` script that runs `astro build`. Commit the lockfile and keep the default `dist` output path. The current detection checks installed dependencies; an unused Node adapter dependency can still select the server path.
+Both paths use a `build` script that runs `astro build`. Commit the lockfile and keep the default `dist` output path. Detection reads the Astro config and installed dependencies. An unused Node adapter dependency alone does not select the server path. Use literal `output` and adapter settings; dynamic values, custom output paths, and middleware mode need a Dockerfile.
 
 ## Configure a Node server
 
@@ -83,4 +83,4 @@ If your app uses sessions, choose storage that fits restarts and multiple replic
 
 For a static content site, test a missing URL and use [static routes and 404s](/framework-guides/static-routing) to return the proper status. If an SSR deployment exits or serves no routes, verify that `dist/server/entry.mjs` exists, the adapter uses standalone mode, and the service port is `3000`.
 
-See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.
+See [tested versions and cloud results](/framework-guides/validation) for the September 9, 2026 deployment checks and their limits.

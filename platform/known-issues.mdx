@@ -26,12 +26,12 @@ The current Sandboxes create API accepts the two built-in templates. Instruction
 
 Lizard Skill uses Lizard CLI. That workflow does not expose an MCP transport. Hosting your own remote MCP server is a separate application deployment; see the [guide](/guides/deploy-mcp-server).
 
-## Public URL after a service port change
+## Service port changes: fixed and verified on 2026-09-09
 
-In the 2026-09-07 deployment check, changing an existing upload service from port `3000` to `80` with `lizard up --port 80` finished with `running` and a ready pod, but its public URL returned HTTP 503. The same static app worked on a fresh service. Verify the public URL after changing a service's port; the reported runtime state alone is not enough. If this occurs, include the service ID, build ID, old/new port, and URL when reporting it to support.
+The September 7 check found HTTP 503 after changing an upload service from port `3000` to `80`, despite a ready process. The production fix now applies the chosen port to the running service and preserves an explicit port during upload and rebuild. A live port-change check passed on September 9. Check the public URL after a deployment as well as the service state.
 
-## Upload archives and failed-build exit codes
+## Upload archives and failed-build exit codes: fixed
 
-Lizard CLI 0.3.92 can include macOS `._*` metadata entries in source uploads. Nuxt can treat these as route source and fail to build. Set `COPYFILE_DISABLE=1` before uploading on macOS; see [framework setup](/framework-guides#prepare-the-project).
+Lizard CLI 0.3.95 excludes macOS `._*` metadata entries from source uploads and returns a nonzero exit code for failed cloud builds. Update older CLI versions; `COPYFILE_DISABLE` is no longer needed. The [framework checks](/framework-guides/validation) cover uploads from macOS with the current CLI.
 
-The same CLI version returned exit code `0` for a failed cloud build in the 2026-09-07 check. A zero exit code alone does not prove that the release worked. Both CLI fixes are under review; check the build and the public URL until a fixed version reaches your environment.
+A successful build alone does not prove the app works. Check the public URL, routes, forms, and data operations after deployment.
