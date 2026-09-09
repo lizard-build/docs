@@ -1,5 +1,5 @@
 ---
-description: "Task guides for deploying from coding agents, hosting remote MCP servers, running Telegram workers, and keeping sandbox files."
+description: "Tested guides for Next.js with Postgres, LangGraph checkpoints, remote MCP clients, coding-agent deployments and background workers."
 ---
 
 # Guides
@@ -10,6 +10,9 @@ Choose the workload you want to run. Each guide explains its setup, checks, and 
 |---|---|
 | Deploy an app written by Claude Code, Codex, or Cursor | [Deploy from a coding agent](/guides/deploy-from-coding-agent) |
 | Give an MCP client a remote HTTPS endpoint | [Host a remote MCP server](/guides/deploy-mcp-server) |
+| Save Next.js data and run SQL migrations | [Next.js with Managed Postgres](/guides/nextjs-postgres) |
+| Resume an interrupted graph after a service restart | [LangGraph with Postgres checkpoints](/guides/langgraph-postgres) |
+| Verify a remote tool call from a named MCP client | [Connect MCP Inspector](/guides/mcp-inspector) |
 | Keep one Telegram long-polling process running | [Run a Telegram bot](/guides/telegram-bot) |
 | Consume queued jobs without an HTTP listener | [Background workers](/deploy/workers) |
 | Run code in a separate Linux guest | [Sandboxes quickstart](/sandboxes/quickstart) |
@@ -18,3 +21,5 @@ Choose the workload you want to run. Each guide explains its setup, checks, and 
 Check [limits](/platform/limits), [storage and recovery](/platform/storage-and-recovery), and [known issues](/platform/known-issues) when choosing a resource.
 
 Read the [scenario test results](/guides/validation) for tested versions, cloud checks and remaining gaps.
+
+The [persistence and client test results](/guides/stateful-validation) cover the separate Next.js, LangGraph and MCP Inspector checks.

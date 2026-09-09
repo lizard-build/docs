@@ -1,0 +1,84 @@
+---
+description: "Connect MCP Inspector to a remote MCP server on Lizard. Test Streamable HTTP, bearer authorization, tools/list and tools/call, and diagnose 401, 403, 405 and 503 responses."
+---
+
+# Connect MCP Inspector to a remote server
+
+Use MCP Inspector's CLI to test a deployed MCP server over public HTTPS. This guide connects the official client to the [remote MCP example](/guides/deploy-mcp-server), lists its tools and calls `add`. It also verifies that an invalid token fails.
+
+The [example files](https://github.com/lizard-build/docs/tree/ee8da05c7297ccf3ca7eb5787129dd3f8cb3290e/_examples/remote-mcp-node) pin MCP Inspector 2.5.0 as a development dependency. Its CLI needs Node.js 22.19 or newer. The deployed server uses MCP TypeScript SDK 1.30.0 and installs only production dependencies.
+
+## Deploy the server first
+
+Follow [Host a remote MCP server](/guides/deploy-mcp-server) through `lizard init`, `lizard add`, service-scoped public key and hostname settings, and `lizard up --port 8000`. Keep its `.mcp-token` locally. The public endpoint must pass `node client.mjs` before the checks below.
+
+Set the public key with the command from that guide:
+
+```bash
+lizard secrets set MCP_PUBLIC_KEY="$(cat .mcp-public-key.pem)" --service mcp --json
+```
+
+The PEM needs actual line breaks. A value containing literal backslash-n characters is a different string and can stop the server at startup. Never put the private key or client token in the service's uploaded source.
+
+## Install and connect the client
+
+From the same example directory:
+
+```bash
+npm ci
+export MCP_URL=https://YOUR_SERVICE_HOSTNAME/mcp
+export MCP_TOKEN="$(cat .mcp-token)"
+npm exec -- mcp-inspector --cli "$MCP_URL" --transport http \
+  --header "Authorization: Bearer $MCP_TOKEN" \
+  --method tools/list --format json --stored-auth-only
+```
+
+Expect `result.tools` to include `add`, with required integer arguments `a` and `b`. Inspector initializes the connection before making the request. `--stored-auth-only` prevents an unattended test from starting an interactive OAuth flow. The bearer header supplies authorization for this example.
+
+## Call a tool
+
+```bash
+npm exec -- mcp-inspector --cli "$MCP_URL" --transport http \
+  --header "Authorization: Bearer $MCP_TOKEN" \
+  --method tools/call --tool-name add \
+  --tool-args-json '{"a":2,"b":3}' --format json --stored-auth-only
+```
+
+Expected output:
+
+```json
+{"result":{"content":[{"type":"text","text":"5"}]}}
+```
+
+Keep numeric arguments as JSON numbers. A successful `/health` response or successful `tools/list` does not prove that a tool can run; check its result too.
+
+## Check authorization failure
+
+Repeat tool discovery with an invalid token:
+
+```bash
+npm exec -- mcp-inspector --cli "$MCP_URL" --transport http \
+  --header "Authorization: Bearer invalid" \
+  --method tools/list --format json --stored-auth-only
+```
+
+In the checked Inspector version this exits with code `3` and reports `auth_required`. This is the expected negative test, not a successful connection. The server's broader `node client.mjs` check also verifies missing-token 401, rejected browser Origin 403 and authenticated GET 405.
+
+## Troubleshooting
+
+| Result | What it means here |
+|---|---|
+| `auth_required` / 401 | Supply the current signed bearer token. It must match the server public key, issuer and audience and must not have expired. |
+| 403 | Check the hostname allowlist. This server rejects browser Origin headers; the guide tests the Inspector CLI. |
+| 405 on browser GET | Use Streamable HTTP POST through an MCP client. Opening `/mcp` in a browser is not a protocol test. |
+| Tool argument error | Use `--tool-args-json` with `a` and `b` as integers. |
+| 503 from the public URL | Check `lizard events --service mcp --json` for a crash or an unready process, then the PEM value, port and runtime logs. |
+| OAuth login is required by another client | This example has no OAuth discovery or consent flow. A configured bearer token does not prove compatibility with clients that require OAuth. |
+
+## Limits and token lifetime
+
+The example token lasts one hour. `issue-token.mjs` creates a new key pair each time and deliberately refuses to overwrite its files. For another test, use a fresh directory, generate a new token, update the service public key and verify the client again. A lasting deployment needs a token issuer and a rotation process; keep signing keys outside the MCP server.
+
+CLI header values can appear in the local process argument list. Use a trusted workstation, avoid shell tracing and do not paste expanded commands or token files into logs. Do not put the token in a URL.
+
+This test establishes Inspector CLI compatibility for this stateless Streamable HTTP server. It does not establish Inspector web UI support, OAuth, every coding-agent client, subscriptions or long-duration streaming. See [test results](/guides/stateful-validation) and the [official Inspector documentation](https://modelcontextprotocol.io/docs/tools/inspector).

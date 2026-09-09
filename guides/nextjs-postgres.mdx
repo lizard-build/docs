@@ -1,0 +1,108 @@
+---
+description: "Deploy Next.js with Managed Postgres on Lizard. Run repeatable SQL migrations, scope database secrets, and prove that a saved note survives a service restart."
+---
+
+# Deploy Next.js with Managed Postgres
+
+Use a Node.js service for Next.js and Managed Postgres for data that must survive application restarts. This example runs SQL migrations before the HTTP server starts, protects its notes API with a bearer token, and checks the same saved note after a restart.
+
+The [complete example](https://github.com/lizard-build/docs/tree/ee8da05c7297ccf3ca7eb5787129dd3f8cb3290e/_examples/nextjs-postgres) uses Next.js 16.3.4, React 19.2.8 and `pg` 8.23.0. It has no model API or paid third-party dependency. See [test results](/guides/stateful-validation) for the checked runtime and scope.
+
+## Prepare the example
+
+Use a fresh copy of the example directory, Node.js 22, `curl` and Lizard CLI. Run `npm ci` from the directory containing `package.json`:
+
+```bash
+npm ci
+npm run build
+```
+
+If macOS blocks native SWC and the build reports that Turbopack cannot use its WASM fallback, run `npm run build -- --webpack`. The checked Linux deployment uses the default build command. Do not change the host's security policy to run this example.
+
+The build does not need a database connection. Database code stays in server-only modules, and the API and health route use `force-dynamic` so they run at request time. Keep `DATABASE_URL` and `API_TOKEN` out of `NEXT_PUBLIC_*` variables. Public variables become part of the browser bundle.
+
+Create a local token file. This command refuses to overwrite an existing `.env`:
+
+```bash
+node --input-type=module -e 'import { randomBytes } from "node:crypto"; import { writeFileSync } from "node:fs"; writeFileSync(".env", "API_TOKEN=" + randomBytes(32).toString("hex") + "\n", {mode: 0o600, flag: "wx"})'
+```
+
+The example excludes `.env*`, `node_modules/` and `.next/` from source uploads. Its token grants access to every demo note; it is a test credential, not a user account system.
+
+## Create the service and database
+
+```bash
+lizard init --name nextjs-postgres-example --workspace YOUR_WORKSPACE
+lizard status --json
+lizard add --service web --json
+lizard add postgres --json
+lizard secrets import --service web --json < .env
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service web --json
+```
+
+Replace `YOUR_WORKSPACE` with your workspace slug or ID. Check the workspace in `status` before adding resources. Sign in with `lizard login` only if a command asks for authentication. Use the database's actual name in the reference if it is not `postgres`.
+
+Set both secrets on the web service before deploying. Managed Postgres has a separate lifecycle from the application; restarting the web service leaves the database in place.
+
+## Deploy and run migrations
+
+```bash
+lizard up --service web --port 3000 --json
+lizard events --service web --json
+lizard logs --service web --json
+```
+
+On macOS with Lizard CLI 0.3.92, prefix `lizard up` with `COPYFILE_DISABLE=1`. Inspect the final deployment event and the public response; this CLI version can exit successfully after a failed build. See [known issues](/platform/known-issues).
+
+The `start` script runs `scripts/migrate.mjs`, then `next start` on `0.0.0.0:3000`. The migration runner uses a transaction, a Postgres advisory lock and a migration table. It applies `001_notes.sql` once and checks its checksum on later starts. A failed migration prevents the server from starting. It never seeds the note used in the persistence test.
+
+Verify that a second migration run changes nothing:
+
+```bash
+lizard ssh --service web --json -- node scripts/migrate.mjs
+```
+
+Expect `Already applied: 001_notes.sql`. Keep applied migration files unchanged; add a new numbered file for the next change. This small runner supports transactional SQL only. For large schema changes, use a migration tool and a reviewed release step; startup migrations can delay readiness or hold table locks.
+
+## Check the public application
+
+Set `APP_URL` to the deploy output's HTTPS URL, without a trailing slash. Keep the same `NOTE_ID` for the restart test:
+
+```bash
+export APP_URL=https://YOUR_SERVICE_HOSTNAME
+export NOTE_ID="$(node -e 'console.log(require("node:crypto").randomUUID())')"
+curl --fail --silent --show-error --retry 30 --retry-delay 2 --retry-connrefused --max-time 5 "$APP_URL/health"
+node --env-file=.env scripts/check.mjs create
+```
+
+The script checks readiness, rejects an unauthenticated read, verifies a missing route returns 404, writes a note and reads it back. It also checks invalid input returns 400 and a duplicate note ID returns 409 without overwriting the first note. `/health` tests the notes table; a database failure returns 503.
+
+## Prove persistence after restart
+
+```bash
+node scripts/restart-and-wait.mjs web
+lizard events --service web --json
+node --env-file=.env scripts/check.mjs read
+```
+
+The helper runs `lizard restart --service web --json` and waits for a new process. `/health` includes a random `instanceId` created at process startup. The helper requires a different ID in three successful responses, two seconds apart, and fails after 120 seconds. This prevents a response from the old process from passing the restart test.
+
+The read-only check must find the original ID and `Saved before restart` text. It does not create a replacement note. A new UUID would test a different record. Keep one replica for this check; multiple replicas can return different IDs without a restart.
+
+## Troubleshooting
+
+| Symptom | What to check |
+|---|---|
+| Build tries to connect to Postgres | Keep database calls in dynamic server routes. Do not query from static generation or module initialization. |
+| Migration fails before startup | Check service-scoped `DATABASE_URL`, the addon name, database readiness and migration SQL. Never print the DSN. |
+| Changed migration fails | Restore the original applied file and put the change in a new migration. Do not bypass the checksum check. |
+| API returns 401 | Use the same `API_TOKEN` in the service and local `.env`. The token must contain at least 32 characters. |
+| API returns 409 | That ID already exists. Read it to check persistence; generate a new ID only for a new test. |
+| Status says running but HTTPS returns 503 | Inspect `lizard events` for readiness and restarts. Confirm the server listens on port 3000 and run the HTTP checks. |
+| Local macOS build cannot load native SWC | The test host used `npm run build -- --webpack` with Next.js's WASM fallback. The Linux cloud build passed with the default build command. |
+
+## Limits
+
+This example proves persistence across an application restart, not database backup, failover or recovery after database deletion. It uses one application replica and a pool of at most five connections per process. Account for every process when sizing database connections. The API lists the latest 50 notes and has one shared token; add user authentication and per-record authorization before storing private user data.
+
+See [storage and recovery](/platform/storage-and-recovery), [environment references](/variables/references), [deploying from a coding agent](/guides/deploy-from-coding-agent), and the [Next.js self-hosting guide](https://nextjs.org/docs/app/guides/self-hosting).

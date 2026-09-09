@@ -35,3 +35,9 @@ In the 2026-09-07 deployment check, changing an existing upload service from por
 Lizard CLI 0.3.92 can include macOS `._*` metadata entries in source uploads. Nuxt can treat these as route source and fail to build. Set `COPYFILE_DISABLE=1` before uploading on macOS; see [framework setup](/framework-guides#prepare-the-project).
 
 The same CLI version returned exit code `0` for a failed cloud build in the 2026-09-07 check. A zero exit code alone does not prove that the release worked. Both CLI fixes are under review; check the build and the public URL until a fixed version reaches your environment.
+
+## Missing startup log history
+
+In the 2026-09-07 and 2026-09-08 guide checks, some runtime log tails returned no startup or crash messages. New live worker messages did arrive in the earlier check, so this does not establish a complete logging outage. The collection or history failure remains unresolved.
+
+An empty `lizard logs --json` response does not prove that the process started. Check `lizard events --service NAME --json` for readiness and restarts, then run the guide's HTTP, MCP or job-result check. When reporting missing logs, include the service ID, build ID, restart time and expected log marker. See [persistence test results](/guides/stateful-validation).

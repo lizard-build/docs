@@ -1,0 +1,66 @@
+---
+description: "Cloud test results for Next.js with Managed Postgres, LangGraph checkpoints and MCP Inspector on Lizard: restart checks, authorization, versions and known limits."
+---
+
+# Persistence and MCP client test results
+
+On 2026-09-08, all three examples passed application checks over public HTTPS in a separate Lizard test project. We used Lizard CLI 0.3.92, service-scoped secrets and source uploads through `lizard up`. The Next.js and LangGraph services shared a test Managed Postgres database. The examples can also use separate databases as their guides show.
+
+| Guide | Result | Checks |
+|---|---|---|
+| [Next.js with Managed Postgres](/guides/nextjs-postgres) | Passed in the cloud | Default Linux build; migration applied once; repeat migration skipped; health 200; missing token 401; unknown route 404; valid write 201; invalid input 400; duplicate ID 409; original note read after application restart |
+| [LangGraph with Postgres](/guides/langgraph-postgres) | Passed in the cloud | Schema setup; health 200; missing token 401; unknown thread 404; duplicate start 409; invalid approval 422; interrupted thread read after restart; same thread resumed; completed result read after a second restart |
+| [MCP Inspector](/guides/mcp-inspector) | Passed against the cloud server | Streamable HTTP initialization; tool discovery; `add(2, 3)` returned `5`; invalid bearer token returned `auth_required` with Inspector exit code 3 |
+
+The MCP server's own client also passed health, missing and invalid token, rejected Origin, authenticated GET, tool discovery and tool call checks. The Inspector test used its CLI, not its browser UI.
+
+## Persistence checks
+
+### Final guide walkthrough
+
+A follow-up on 2026-09-08 ran the guide steps from clean example directories. Next.js and LangGraph each used a new project and a new Managed Postgres database. MCP used a separate new project. Workspace names, test project names and assigned hostnames filled the guide's configuration values; macOS used the documented upload and Webpack instructions.
+
+The first sequential LangGraph attempt exposed a missing wait: `lizard restart --json` returned `restarting`, then the next check received 503. A single successful health request was also insufficient: the old process could answer before a later request received 502.
+
+The examples now include restart helpers. Each captures `/health`'s process `instanceId`, runs the CLI restart and requires three successful responses from a different instance. After this change, both persistence guides passed again from new projects and databases. The Next.js note survived one confirmed process change; the LangGraph interrupt and completed result survived two. The helper fails after 120 seconds and assumes the example's single replica.
+
+The MCP server and Inspector guides also passed their full sequence: clean install, local server and client, project and service creation, public key and hostname setup, upload, public client, Inspector tool discovery and call, then invalid-token rejection. This confirms the named client and recipe, not every MCP client.
+
+The Next.js check wrote one UUID and kept it through the restart. The read-only check found the original `Saved before restart` text. Startup migrations do not seed that note. A SQL check confirmed one applied migration and one note.
+
+The LangGraph check kept one `thread_id` through start, restart, read, resume, a second restart and a final read. The graph paused at an explicit approval interrupt. Read checks did not invoke or recreate the graph.
+
+A separate LangGraph check sent two simultaneous resume requests for one interrupted thread. One returned 200 and the other 409. This checks the example's per-thread lock in that test; it is not a load or multi-replica test.
+
+## Versions
+
+| Component | Checked version |
+|---|---|
+| Lizard CLI | 0.3.92 |
+| Node.js in Next.js and MCP containers | 22.23.2 |
+| Next.js / React / node-postgres | 16.3.4 / 19.2.8 / 8.23.0 |
+| Managed Postgres | PostgreSQL 18.4 |
+| Python in the LangGraph container | 3.13.15 |
+| LangGraph / Postgres checkpointer | 1.2.11 / 3.1.2 |
+| psycopg / FastAPI | 3.3.5 / 0.141.1 |
+| MCP TypeScript SDK / MCP Inspector | 1.30.0 / 2.5.0 |
+
+Dependency lockfiles live with the linked examples. Runtime versions above came from the deployed services; they are not a promise that future builds will select the same patch version.
+
+## Corrections from the tests
+
+The first LangGraph container built but crashed before readiness. Its `Procfile` used plain `python`, while dependencies lived in the `uv` environment. Adding `uv run --frozen` to both startup commands fixed the recipe. The full cloud sequence passed after that correction.
+
+An MCP configuration attempt supplied the PEM with literal backslash-n characters. Setting the public key with actual line breaks, as shown in the server guide, and restarting the service fixed startup. The client checks passed after that correction.
+
+The macOS test host rejected native Next.js SWC and Python `pydantic_core` binaries under its system policy. The local Next.js build passed with `npm run build -- --webpack` and the supported WASM fallback. Local LangGraph execution did not pass that host restriction; its application checks ran successfully in the Linux cloud container. We did not change the host's security policy.
+
+## Scope and remaining limits
+
+These checks establish application persistence across service restarts. They do not test database deletion, backup restore, failover or arbitrary process termination during an external side effect. The LangGraph graph uses deterministic text processing and an explicit resume request; no model provider or automatic job scheduler ran.
+
+Each service used one replica. Both application APIs use a shared test token rather than user accounts. MCP uses a signed token that expires after one hour, without an OAuth flow. The examples are test recipes, not permanent public demo endpoints.
+
+Startup and crash log tails were empty during part of this batch even when deployment events reported restarts. Use readiness, HTTP responses and saved application results to judge a deployment. See [known issues](/platform/known-issues) for CLI and logging limits.
+
+The [coding-agent and Redis worker tests](/guides/validation) remain a separate 2026-09-07 batch. Their guides now link these persistence examples and explain the difference between saved graph state and queued work. Telegram still has local tests only.

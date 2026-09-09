@@ -1,0 +1,116 @@
+---
+description: "Deploy LangGraph with a Postgres checkpointer on Lizard. Save an interrupted graph, restart the service, and resume the same thread through an authenticated HTTP API."
+---
+
+# Persist LangGraph state across restarts
+
+Use `PostgresSaver` to save LangGraph checkpoints outside the application process. Keep the same `thread_id` when resuming a graph. This example pauses for approval, restarts the service, and resumes from the saved checkpoint in Managed Postgres.
+
+The [complete example](https://github.com/lizard-build/docs/tree/ee8da05c7297ccf3ca7eb5787129dd3f8cb3290e/_examples/langgraph-postgres) runs Python 3.13, LangGraph 1.2.11 and `langgraph-checkpoint-postgres` 3.1.2. A small FastAPI service exposes authenticated start, state and resume endpoints. The graph makes an uppercase draft so the persistence check needs no model API key. It tests graph state, not the quality or billing of an LLM.
+
+## Prepare the graph
+
+Use a fresh example directory, Python 3.13, `uv`, `curl` and Lizard CLI:
+
+```bash
+uv sync --frozen
+```
+
+`uv.lock` fixes the Python dependencies. The graph runs `draft → review → finish`. `review` calls `interrupt()`; a later request sends `Command(resume=True)` or `Command(resume=False)`. Every request uses a UUID as its `thread_id`.
+
+Generate a token in a new local `.env` file:
+
+```bash
+python3 - <<'PY'
+import os, secrets
+fd = os.open('.env', os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+with os.fdopen(fd, 'w') as f:
+    f.write('API_TOKEN=' + secrets.token_hex(32) + '\n')
+PY
+```
+
+The example excludes `.env*` and `.venv/` from uploads. The shared token controls all demo threads. Replace it with user authentication and thread ownership checks before accepting private conversations.
+
+## Configure Lizard
+
+```bash
+lizard init --name langgraph-postgres-example --workspace YOUR_WORKSPACE
+lizard status --json
+lizard add --service graph --json
+lizard add postgres --json
+lizard secrets import --service graph --json < .env
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service graph --json
+lizard up --service graph --port 8000 --json
+```
+
+Choose your workspace explicitly and check `status` before creating resources. Sign in if a command asks for authentication. Use the addon's actual name in `DATABASE_URL`. On macOS with Lizard CLI 0.3.92, prefix the upload with `COPYFILE_DISABLE=1` and inspect the final deployment event.
+
+Keep the checked-in `Procfile`:
+
+```text
+web: uv run --frozen python setup_db.py && exec uv run --frozen uvicorn app:app --host 0.0.0.0 --port 8000 --workers 1
+```
+
+`setup_db.py` calls `PostgresSaver.setup()` before the HTTP server starts. It serializes schema setup with a database advisory lock. The start command must enter the `uv` environment: lizardpack runs a `Procfile` command as written, even when it installed packages with `uv`. Running plain `python` in this recipe caused the tested container to crash before readiness.
+
+## Start a thread and reach the interrupt
+
+Use the public HTTPS URL, without a trailing slash. Export the local token and keep the same UUID through all checks:
+
+```bash
+export APP_URL=https://YOUR_SERVICE_HOSTNAME
+export API_TOKEN="$(python3 -c 'from pathlib import Path; print(Path(".env").read_text().strip().split("=", 1)[1])')"
+export THREAD_ID="$(python3 -c 'import uuid; print(uuid.uuid4())')"
+curl --fail --silent --show-error --retry 30 --retry-delay 2 --retry-connrefused --max-time 5 "$APP_URL/health"
+python3 check.py start
+```
+
+The script checks `/health`, 401 without a token and 404 for an unknown thread. It starts the graph and expects `next: ["review"]`, an interrupt and the draft `SAVED BEFORE RESTART`. A second start for the same thread returns 409. A non-boolean approval returns 422.
+
+## Restart, read, then resume
+
+```bash
+python3 restart_and_wait.py graph
+lizard events --service graph --json
+python3 check.py waiting
+python3 check.py resume
+```
+
+The helper runs `lizard restart --service graph --json` and waits for a new process. `/health` includes a random `instanceId` created at process startup. The helper requires a different ID in three successful responses, two seconds apart, and fails after 120 seconds. A 200 response from the old process cannot pass this check. Keep one replica and one HTTP worker, as the example does.
+
+`waiting` only reads the stored checkpoint; it cannot create a new graph. `resume` approves the existing draft and expects `result: "SAVED BEFORE RESTART"` with no next node. A second resume returns 409 because the thread has finished.
+
+Restart once more and read the completed state:
+
+```bash
+python3 restart_and_wait.py graph
+python3 check.py done
+```
+
+The result must remain after this second restart. See [test results](/guides/stateful-validation) for the cloud checks and exact versions.
+
+## What a checkpoint does not do
+
+A checkpointer stores graph state. It is not a job queue and does not automatically schedule interrupted HTTP work after a process crash. This guide resumes an explicit approval interrupt through a new request. For autonomous jobs, use a [background worker](/deploy/workers), durable queue and retry policy as separate parts of the application.
+
+A node restarts from its beginning when an interrupt resumes. Put retry-safe work before `interrupt()` and make external effects idempotent. The demo has no payments, emails or external writes. Persisted checkpoints do not make arbitrary side effects run exactly once. LangGraph's [interrupts guide](https://docs.langchain.com/oss/python/langgraph/interrupts) explains this execution model.
+
+The API takes a connection-scoped Postgres advisory lock per thread, including reads. Concurrent requests for that thread serialize; a lock wait over five seconds fails. The checkpointer uses autocommit as provided by `PostgresSaver.from_conn_string`. Do not wrap its schema setup in a transaction: some setup operations require autocommit.
+
+## Troubleshooting
+
+| Symptom | What to check |
+|---|---|
+| Container restarts before health is ready | Keep `uv run --frozen` in both `Procfile` commands. Check `lizard events`; a running build is not a ready process. |
+| Checkpoint tables do not exist | Run `setup_db.py` with the same database and environment as the app, before starting the server. |
+| New thread has no saved state | Use the exact original `THREAD_ID` and the same Managed Postgres addon. A new UUID starts a separate history. |
+| Resume returns 409 | Read the thread: it may already be complete or may not be waiting at an interrupt. |
+| Resume returns 422 | Send a boolean `approved`, not a string. |
+| API returns 503 | Check database access, schema setup, thread lock contention and graph errors. The public error omits connection details. |
+| Updated graph cannot resume old checkpoints | Keep node names and saved state compatible. Test interrupted threads before changing graph structure. |
+
+## Limits
+
+The cloud test uses one HTTP worker, one application replica and short deterministic nodes. It does not establish model streaming, long-running request timeouts, database failover or crash recovery at every instruction. A Postgres connection opens per request; add a bounded pool and load tests for higher concurrency. Apply retention and access controls to checkpoints, which can contain the full conversation or tool data. No backup or encryption-at-rest claim follows from the restart check.
+
+Read [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence), [Postgres checkpointer setup](https://docs.langchain.com/oss/python/langgraph/add-memory), and [storage and recovery](/platform/storage-and-recovery).

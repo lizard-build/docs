@@ -62,6 +62,8 @@ Lizard detects the `next` dependency and runs the build and start scripts. These
 
 ## Environment variables and data
 
+For a complete database-backed example with SQL migrations and a restart test, follow [Next.js with Managed Postgres](/guides/nextjs-postgres).
+
 `NEXT_PUBLIC_*` values become part of the browser bundle during the build. Keep credentials in server-only variables and configure them for the service through [variables and secrets](/variables). Code that fetches data while building also needs access to that data at build time. A runtime restart does not change already generated HTML or JavaScript.
 
 Local cache files and uploaded files do not form a shared store across replicas. Review Next.js cache and Server Action requirements before scaling beyond one replica. Put durable app data in a database or object storage, and read [storage and recovery](/platform/storage-and-recovery).
