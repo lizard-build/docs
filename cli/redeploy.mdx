@@ -9,7 +9,7 @@ Trigger a fresh build (latest commit / last upload) with current variables.
 ## Usage
 
 ```bash
-lizard redeploy [flags]
+lizard redeploy [nameOrId] [flags]
 ```
 
 ## Flags
@@ -17,7 +17,10 @@ lizard redeploy [flags]
 | Flag | Description |
 |------|--------------|
 | `-s, --service <name>` | Service |
-| `--detach` | Don't stream logs |
+| `--detach` | Return after the build is accepted |
+| `--wait` | Wait for the build and deployment readiness; works with `--json` |
+| `--timeout <seconds>` | Readiness wait budget after the build; default `120` |
+| `--json` | Return JSON for scripts |
 
 ## Examples
 
@@ -32,6 +35,18 @@ lizard redeploy --service api
 ```bash
 lizard redeploy --service api --detach
 ```
+
+### Wait in a script
+
+Requires CLI 0.3.94 or later. Use 0.3.95 or later for workers without HTTP.
+
+```bash
+lizard --json redeploy --service api --wait --timeout 120
+```
+
+Without `--wait`, JSON mode returns after the build request is accepted. With `--wait`, the CLI follows that build and then waits for deployment readiness. The JSON result includes `buildId`, `ok`, and `status`. A build failure, failed readiness check, or timeout returns a nonzero exit code.
+
+The timeout applies to readiness after the build finishes; it does not limit build duration or cancel the deployment. Workers with `containerPort=0` use the readiness status from the backend without an HTTP check. After a successful command, check an application endpoint or stored data if your workflow needs to verify application behavior.
 
 ## See also
 

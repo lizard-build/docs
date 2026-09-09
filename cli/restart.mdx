@@ -9,7 +9,7 @@ Rolling restart of the current build — no rebuild.
 ## Usage
 
 ```bash
-lizard restart [flags]
+lizard restart [nameOrId] [flags]
 ```
 
 ## Flags
@@ -17,7 +17,10 @@ lizard restart [flags]
 | Flag | Description |
 |------|--------------|
 | `-s, --service <name>` | Service |
-| `--detach` | Don't stream logs |
+| `--detach` | Return after the restart is accepted |
+| `--wait` | Wait for the new restart attempt to become ready; works with `--json` |
+| `--timeout <seconds>` | Readiness wait budget with `--wait`; default `120` |
+| `--json` | Return JSON for scripts |
 
 ## Examples
 
@@ -32,6 +35,24 @@ lizard restart --service api
 ```bash
 lizard restart --service api --detach
 ```
+
+### Wait before running the next check
+
+Requires CLI 0.3.94 or later. Use 0.3.95 or later for workers without HTTP.
+
+```bash
+lizard --json restart --service api --wait --timeout 120
+```
+
+Without `--wait`, JSON mode returns after the restart is accepted. With `--wait`, the result includes `ok`, `status`, `attemptId`, and `waitedMs`. The CLI waits for a new restart attempt, so an unchanged status from before the request does not count as success. A failed wait or timeout returns a nonzero exit code.
+
+For HTTP services, the CLI also checks the service domain twice. Workers with `containerPort=0` use the readiness status from the backend and do not need an HTTP listener, even when they have a generated domain.
+
+```bash
+lizard --json restart --service worker --wait --timeout 60
+```
+
+The timeout applies to the readiness wait after the restart request. It does not cancel the restart, and network calls can make the total command take longer. Check application data or a health endpoint after the command when your workflow needs more than process readiness.
 
 ## See also
 
