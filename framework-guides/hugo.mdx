@@ -6,6 +6,8 @@ description: "Deploy Hugo on Lizard by building public with hugo --minify and se
 
 Lizard can build a Hugo source site with `hugo --minify` and serve `public/` through nginx on port `80`. Start from the Hugo source directory, with a Hugo configuration and `content/`, rather than uploading only the generated HTML.
 
+Start with the [complete source example](https://github.com/lizard-build/docs/tree/main/_examples/hugo), which includes the configuration and files used by this recipe.
+
 ## Prepare the source
 
 Include your Hugo config, content, layouts, assets, and all theme files needed by the build. The Hugo detector looks for configuration such as `hugo.toml`, `hugo.yaml`, or `config/_default/` plus a `content/` directory.
@@ -48,26 +50,11 @@ Exclude local generated output and secrets. For an upload, ensure theme source f
 
 ## Verify the deployed site
 
-Open the live home page, an inner article, and an image. Check the generated canonical URLs and `sitemap.xml`. Test a made-up path's HTTP status. The default static server uses a home-page fallback; an indexed Hugo site should return a real 404 for a missing page.
+Open the live home page, an inner article, and an image. Check the generated canonical URLs and `sitemap.xml`. Test a made-up path's HTTP status. New Hugo builds serve the generated HTML and return HTTP 404 for missing pages. No custom Dockerfile is needed for the simple source layout in this guide. Rebuild older images to pick up the current routing rules.
 
-Use the nginx rules in [static routes and 404s](/framework-guides/static-routing). For Hugo, pair those rules with a Hugo build stage that runs `hugo --minify` and copies `/src/public`; the Node build stage in that shared guide is for JavaScript generators.
-
-Save those rules as `nginx.conf` beside this Dockerfile, then run the same `lizard up` command again:
-
-```dockerfile
-FROM hugomods/hugo:base AS build
-WORKDIR /src
-COPY . .
-RUN hugo --minify
-
-FROM nginx:alpine
-COPY --from=build /src/public /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-```
-
-This example uses the same floating Hugo image as the default builder. Pin its image digest in a release workflow if you need the same build tool on each run.
+Use [static routes and 404s](/framework-guides/static-routing) if you need a custom nginx policy. A custom Hugo build stage must include the theme's required Hugo version and tools, run `hugo --minify`, and copy `public/` into the serving image.
 
 If theme assets are missing, inspect the build logs, theme source, and `baseURL`. If the wrong language builder starts, inspect conflicting `go.mod` or `package.json` files and existing service overrides. Hugo produces static files, so content changes need a new build.
 
 See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.
+

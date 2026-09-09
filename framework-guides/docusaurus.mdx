@@ -6,6 +6,8 @@ description: "Deploy Docusaurus on Lizard as a static documentation site. Build 
 
 Build Docusaurus on Lizard and serve its generated `build/` directory through nginx on port `80`. The production deployment serves static files; it does not run the `docusaurus start` development server.
 
+Start with the [complete source example](https://github.com/lizard-build/docs/tree/main/_examples/docusaurus), which includes the configuration and files used by this recipe.
+
 ## Prepare the site
 
 Run from the Docusaurus directory containing `package.json`, its lockfile, and `docusaurus.config.*`. Keep `@docusaurus/core` in the dependencies and a build script that runs `docusaurus build`.
@@ -47,10 +49,11 @@ Commit source, plugins, configuration, and the lockfile. Exclude `node_modules/`
 
 ## Serve inner routes and missing pages
 
-The default generated static server uses an SPA fallback. For an indexed documentation site, use [static routes and 404s](/framework-guides/static-routing) with build script `build` and output directory `build`. That recipe serves generated route files and returns a real HTTP 404 for unknown pages.
+New Docusaurus builds serve generated route files and return HTTP 404 for unknown paths. A custom Dockerfile is not needed for this routing policy. If your service still uses an image built before the September 2026 routing fix, rebuild it. Use [static routes and 404s](/framework-guides/static-routing) only when you need custom nginx behavior.
 
 After deployment, request a nested docs URL directly, refresh it, and check a made-up URL's status. Also inspect the canonical URL and sitemap on the final hostname. A visible error page with HTTP 200 is still a soft 404.
 
 If assets are missing, compare their URLs with `baseUrl`. If an inner route returns the home page, inspect the generated file layout and nginx rules. If old content remains after editing an environment value or Markdown file, verify that a new build actually completed; static HTML changes only with a build.
 
 See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.
+
