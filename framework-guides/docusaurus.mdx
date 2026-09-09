@@ -45,6 +45,25 @@ lizard logs --build --service web --json
 lizard ps --json
 ```
 
+If you use the generated hostname, read it after the first deploy:
+
+```bash
+lizard service show web --json
+```
+
+Set `url` in `docusaurus.config.js` to that hostname:
+
+```js
+url: 'https://YOUR_PUBLIC_HOST',
+```
+
+Upload the changed config so the build uses the public URL:
+
+```bash
+lizard up --service web --port 80
+```
+
+
 Commit source, plugins, configuration, and the lockfile. Exclude `node_modules/`, `build/`, `.docusaurus/`, and `.env` files from uploads. Leave service command overrides unset to use the Docusaurus detection path.
 
 ## Serve inner routes and missing pages
@@ -55,5 +74,5 @@ After deployment, request a nested docs URL directly, refresh it, and check a ma
 
 If assets are missing, compare their URLs with `baseUrl`. If an inner route returns the home page, inspect the generated file layout and nginx rules. If old content remains after editing an environment value or Markdown file, verify that a new build actually completed; static HTML changes only with a build.
 
-See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.
+See [tested versions and cloud results](/framework-guides/validation) for the September 9, 2026 deployment checks and their limits.
 

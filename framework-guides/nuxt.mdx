@@ -8,7 +8,7 @@ Run Nuxt on Lizard with Nitro's `node-server` preset. The build produces `.outpu
 
 ## Configure the production build
 
-On macOS, complete the `COPYFILE_DISABLE=1` setup in [Prepare the project](/framework-guides#prepare-the-project) before running `lizard up` with Lizard CLI 0.3.92. An error naming a `._*.ts` route can come from archive metadata rather than the route source.
+Use the current Lizard CLI from [Prepare the project](/framework-guides#prepare-the-project). Version 0.3.95 excludes macOS archive metadata during uploads. If an older CLI reports a `._*.ts` route error, update the CLI and upload again.
 
 Set the preset in `nuxt.config.ts`:
 
@@ -92,4 +92,4 @@ Add unlinked or dynamic routes to `routes` when the crawler cannot discover them
 
 Use the Dockerfile and nginx configuration in [static routes and 404s](/framework-guides/static-routing), with build script `build`, output directory `.output/public`, and service port `80`. The static container does not run Nuxt server routes or read runtime config for already generated pages.
 
-See [tested versions and cloud results](/framework-guides/validation) for the 2026-09-07 checks and their limits.
+See [tested versions and cloud results](/framework-guides/validation) for the September 9, 2026 deployment checks and their limits.

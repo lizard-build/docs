@@ -1,16 +1,12 @@
 ---
-description: "Framework guide test results from real Lizard CLI uploads: versions, rendering modes, route and form checks, database migrations, and known limits."
+description: "Framework guide results from 16 real Lizard CLI deployments on September 9, 2026: tested versions, routes, forms, migrations, canonical URLs, and limits."
 ---
 
 # Framework guide test results
 
-On 2026-09-07, we tested 16 recipes across 11 frameworks through real `lizard up` deployments in an isolated test project. Each final recipe passed its build, runtime, and public HTTPS checks. These results apply to the versions and small test apps below.
+On September 9, 2026, all 16 recipes across 11 frameworks passed a local build and a new cloud deployment with Lizard CLI 0.3.95. We followed the published setup, created a fresh project and service for each recipe, and uploaded source with `lizard up`. These results cover the versions and small test apps below.
 
-## Routing recheck on 2026-09-08
-
-We rebuilt Astro static, SvelteKit adapter-static, Docusaurus, Hugo, and both VitePress layouts without a Dockerfile, nginx config, or service command overrides. All 30 public HTTPS checks passed: home pages, inner pages, and real assets returned 200; missing pages and JavaScript paths returned 404. VitePress returned the inner page's content at its clean URL.
-
-These results supersede the static-routing workaround described in the original run below. Existing images need a rebuild to receive the updated rules. The [source examples](https://github.com/lizard-build/docs/tree/main/_examples) include small Docusaurus, VitePress, Hugo, and SvelteKit projects. They do not establish support for every theme, plugin, or adapter configuration.
+The cloud run passed 100 checks of routes, APIs, and forms, plus 45 checks of linked JavaScript and CSS files. Django migrations, a database write and read, and the final Docusaurus and Hugo site URLs also passed.
 
 ## Tested recipes
 
@@ -33,27 +29,32 @@ These results supersede the static-routing workaround described in the original 
 | Django | Django 6.1.1, Gunicorn 26.2.0, WhiteNoise 6.12.0, psycopg 3.3.5 | `8000` | Passed |
 | Hugo | Hugo 0.165.0 (extended) | `80` | Passed |
 
-JavaScript builds used Node 22. Python builds used Python 3.13. Uploads used Lizard CLI 0.3.92 from macOS; the Nuxt server retry and later uploads used `COPYFILE_DISABLE=1` as described in [project setup](/framework-guides#prepare-the-project). Dependency manifests pin the listed versions. Container image tags can change independently of a package lockfile.
+JavaScript builds used Node 22; Python builds used Python 3.13. Uploads ran from macOS without `COPYFILE_DISABLE`. Package manifests and lockfiles pin the versions above. Container image tags can change independently of a package lockfile.
 
-## What we checked
+## What we checked on September 9
 
-- Installed dependencies and built the apps in Linux containers, then uploaded source with `lizard up` and read cloud build and runtime logs.
-- Requested the public home page, an inner route, a real asset, a missing page, and a missing JavaScript path. Server recipes also returned request-time API data.
-- Opened inner routes directly in a browser and reloaded them. React interaction and Vue Router navigation worked. Next.js Server Actions and SvelteKit form responses returned the submitted value; SvelteKit rejected a form from an untrusted origin.
-- Checked generated JavaScript and CSS responses. Docusaurus canonical URLs and its sitemap used the public host. Hugo's sitemap used the host after rebuilding its `baseURL`.
-- Ran Django migrations against Managed Postgres (PostgreSQL 18.4), wrote and read a test row, served collected static files, accepted a valid CSRF form, and rejected a form without its token.
+- Ran the documented local build and server commands in Linux containers, then ran `lizard init`, `lizard add`, and `lizard up` for each recipe. Read cloud build and runtime logs and checked the final service state and port.
+- Requested the public home page, an inner route, a real asset, a missing page, and a missing JavaScript path. Static content sites returned real 404s; React and Vue kept their documented SPA fallback. Both VitePress layouts returned the right content at clean URLs.
+- Checked request-time API responses, POST handlers, SvelteKit form results, and rejection of a form from an untrusted origin. Submitted the deployed Next.js Server Action form over HTTP using its generated action ID and checked the redirect and returned value.
+- Rebuilt Docusaurus and Hugo after setting the generated hostname in the config. Docusaurus canonical URLs and both sitemaps used the public host.
+- Ran Django migrations against Managed Postgres twice, wrote and read a test row, served collected static files, accepted a valid CSRF form, and rejected a form without its token.
 
-The test project used a separate service for each recipe, with test-specific names. Build and start overrides stayed unset. The guides' Dockerfiles and framework configs selected the documented runtime.
+Each recipe used a separate test project, with different names to keep the run isolated. Workspace, region, and JSON flags made the test context explicit. Build, start, and Dockerfile-path service overrides stayed unset. Only the Next.js static export, Nuxt generate, and Django recipes supplied the Dockerfiles documented in their guides. The Docusaurus, VitePress, Hugo, and SvelteKit Node tests included the [published source examples](https://github.com/lizard-build/docs/tree/main/_examples).
 
-## Problems found and addressed on 2026-09-07
+## Browser checks
 
-The initial commands omitted service creation. The guides now call `lizard add --service` before the first named upload. The Nuxt static recipe now uses `nuxt generate` and a prerender config without the Node server preset.
+The September 9 run confirmed a React button click in the browser. The browser connection then returned repeated timeouts during navigation and page reads, so this run does **not** claim a fresh browser pass for all 16 recipes. HTTP route and form checks passed independently.
 
-Default static nginx builds returned the home page with status 200 for missing URLs. VitePress clean URLs also needed `.html` lookup. The complete Dockerfile and nginx setup in [static routes and 404s](/framework-guides/static-routing) passed the cloud checks. This workaround does not change the default builder for existing services.
+The September 7 run included direct-route reloads, React interaction, Vue Router navigation, Next.js Server Actions, and SvelteKit form submissions in a browser. Those remain results from that earlier run.
 
-The cloud run also found macOS archive metadata and failed-build exit-code defects in Lizard CLI 0.3.92. CLI fixes are under review. A service port change could leave its public URL returning 503 even when the process was ready. See [known issues](/platform/known-issues) before relying on those paths.
+## Fixes since the first run
+
+The September 7 run found missing service-creation steps, a Nuxt static preset mismatch, static routing defects, macOS archive metadata, failed-build exit codes, and port-change errors. The guides now include `lizard add` and the corrected Nuxt static setup.
+
+The September 8 static-routing recheck passed without custom Dockerfiles for Astro static, SvelteKit static, Docusaurus, Hugo, and both VitePress layouts. New builds include those routing rules; existing images need a rebuild.
+
+Lizard CLI 0.3.95 includes the archive and failed-build exit-code fixes. The September 9 production checks also verified service port changes and preservation of an explicit port during upload and rebuild. See [known issues](/platform/known-issues) for the release notes and remaining limits.
 
 ## Limits of these results
 
-These checks cover source uploads and the documented modes. They do not establish support for every plugin, custom adapter output, theme dependency, framework version, GitHub deployment path, database recovery procedure, or multiple-replica workload. Django’s `check --deploy` returned four HTTP security warnings in the small test app; this is not a complete security setup. They do not measure SEO rankings or AI citations. Recheck your app's own routes and data operations before release.
-
+These checks cover source uploads and the documented modes. They do not establish support for every plugin, adapter, theme, framework version, GitHub deployment path, database recovery procedure, or multiple-replica workload. Django's small test app still reports security warnings from `check --deploy`; it is not a complete production security setup. These tests do not measure search rankings or AI citations. Check your app's own routes and data operations before release.
