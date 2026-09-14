@@ -1,6 +1,7 @@
 export default {
   index: 'Introduction',
   'getting-started': 'App quickstart',
+  studio: 'Lizard Studio',
   'framework-guides': 'Framework guides',
   guides: 'Guides',
   platform: 'Limits & operations',
