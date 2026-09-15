@@ -1,0 +1,51 @@
+---
+description: "Lizard pay as you go: resource rates, account credits, optional auto top-up, payment fees and what happens when your balance runs out."
+---
+
+# Pay as you go
+
+Lizard has no monthly subscription or seat fee for standard accounts. Add credits to your account and pay for the resources you use. Unused purchased credits stay in your balance, so a quiet month does not require buying another package.
+
+## Resource rates
+
+Resource rates are 10% lower than the previous rates. Prices are in US dollars.
+
+| Resource | Rate |
+| --- | ---: |
+| CPU | $0.000006948 per vCPU-second |
+| Memory | $0.000003474 per GB-second |
+| Persistent Volumes | $0.000000054 per GB-second |
+| Managed Object Storage | $0.0135 per GB-month |
+| Outgoing traffic | $0.045 per GB, from the first byte |
+
+Incoming traffic has no charge. Apps, Managed Postgres, Managed Redis and Sandboxes use the same applicable resource rates. Account resource limits still apply; adding credits does not increase those limits.
+
+For example, one vCPU and 1 GB of memory used for one hour cost $0.0375192 in compute. Storage, outgoing traffic and payment fees can add to that amount. This is a resource-cost example, not the amount charged for a top-up.
+
+See [current pricing](https://lizard.build/pricing) for the full offer. Enterprise billing follows your contract.
+
+## Account balance
+
+Usage in a workspace draws from its owner's account balance. Adding members has no seat fee. The Credits page shows your balance, purchases and any credits that expire.
+
+- **Purchased credits do not expire.** They do not reset each month.
+- **Trial credits expire.** New accounts receive $10 in trial credits, valid for 31 days.
+- **Promo credits may expire.** Check the terms and expiry date shown for the grant.
+
+A purchased balance pays for usage; it is not a discount on the resource rate. Do not subtract it again when comparing costs with another provider.
+
+## Top-ups and fees
+
+Open **Credits** in account settings to add funds. Before you confirm, the top-up screen shows the minimum amount, credit amount, payment fee and total charge. A minimum top-up is not a monthly charge.
+
+Auto top-up is optional. Choose the balance threshold and amount in your Credits settings. You can turn it off there. Turning off auto top-up does not stop resources or end charges for their use.
+
+## Low or empty balance
+
+Lizard warns you when your balance is low. If your balance runs out and payment does not restore it, resource creation can be restricted and running services can pause after the applicable grace period. Check your Credits page for account terms and restore the balance before the grace period ends to avoid a pause.
+
+## Idle apps and stored data
+
+An app can use memory and CPU even when it has no requests. Stop the app to stop compute usage. Persistent Volumes and Managed Object Storage keep accruing storage charges while you keep data, including when the app is stopped.
+
+See [storage and recovery](/platform/storage-and-recovery) before removing data. Read [metrics](/observability/metrics) to compare configured limits with measured use.
