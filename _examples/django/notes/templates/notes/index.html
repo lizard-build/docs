@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8"><title>Django deployment example</title></head>
+  <body>
+    <h1>Django deployment example</h1>
+    <form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">Save note</button></form>
+    <ul>{% for note in notes %}<li>{{ note.text }}</li>{% endfor %}</ul>
+  </body>
+</html>

@@ -27,37 +27,127 @@ The explicit module avoids ambiguity when settings live in nested packages. An A
 
 ## Prepare production settings
 
-Read `SECRET_KEY` from a service secret, set `DEBUG=False`, and configure `ALLOWED_HOSTS` for the actual application hostname. Set `CSRF_TRUSTED_ORIGINS` to the HTTPS origins that submit forms. Make your settings parse environment values explicitly; merely setting a variable does not make Django read it.
+Django expects a `DATABASES` dictionary in `settings.py`. Setting `DATABASE_URL` on the service alone does not connect Django to PostgreSQL. The steps below create [Managed Postgres](/addons/postgres), pass its URL to the app, and turn that URL into Django's connection settings.
 
-Choose a database configuration that consumes your service's connection values. Set a scoped [Managed Postgres reference](/variables/references) if you use that addon. Do not use container-local SQLite as the durable database for a deployed app.
+Add these packages to `requirements.txt`, keeping any other dependencies your app needs. These are the versions used by the [complete example](https://github.com/lizard-build/docs/tree/main/_examples/django):
 
-Run these commands in the same local environment where you installed the requirements, with production-like configuration:
+```text
+Django==6.1.1
+gunicorn==26.2.0
+whitenoise==6.12.0
+psycopg[binary]==3.3.5
+dj-database-url==3.1.2
+```
+
+`psycopg` is the PostgreSQL driver. `dj-database-url` reads the database name, user, password, host, and port from the connection URL. Replace the corresponding settings in your project's `settings.py` with this block; keep your existing apps, middleware, templates, and other settings:
+
+```python
+import os
+from pathlib import Path
+
+import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def required_env(name):
+    value = os.environ.get(name, "").strip()
+    if not value:
+        raise ImproperlyConfigured(f"Set the {name} environment variable.")
+    return value
+
+
+def env_list(name):
+    values = [item.strip() for item in required_env(name).split(",") if item.strip()]
+    if not values:
+        raise ImproperlyConfigured(f"Set at least one value in {name}.")
+    return values
+
+
+SECRET_KEY = required_env("SECRET_KEY")
+debug_value = os.environ.get("DEBUG", "false").strip().lower()
+if debug_value not in {"true", "false"}:
+    raise ImproperlyConfigured("DEBUG must be true or false.")
+DEBUG = debug_value == "true"
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
+DATABASES = {
+    "default": dj_database_url.parse(
+        required_env("DATABASE_URL"),
+        conn_max_age=60,
+        conn_health_checks=True,
+    )
+}
+```
+
+Do not leave an older `DATABASES`, `SECRET_KEY`, or `DEBUG` assignment later in the file: it would replace these values. This example requires nonempty `SECRET_KEY`, `DATABASE_URL`, `ALLOWED_HOSTS`, and `CSRF_TRUSTED_ORIGINS` values. Missing or empty values stop startup with the variable's name. `DEBUG` defaults to `false`; set it to `false` on the deployed service.
+
+`ALLOWED_HOSTS` takes comma-separated hostnames without a scheme or path, such as `app.example.com,www.example.com`. `CSRF_TRUSTED_ORIGINS` takes comma-separated origins with a scheme, such as `https://app.example.com`. Include a port for local origins that use one. The example requires an explicit origin list; Django itself permits an empty list for apps that do not need extra trusted origins. Trust only origins that should submit forms to this app. These settings do not replace CSRF tokens.
+
+The URL comes from a service [secret or reference](/variables), not from a value committed to source. Do not use container-local SQLite as the durable database for a deployed app. See [dj-database-url usage](https://pypi.org/project/dj-database-url/) for URL parsing and connection options.
+
+With your local environment variables set and PostgreSQL reachable, run:
 
 ```bash
+python -m pip install -r requirements.txt
 python manage.py check --deploy
 gunicorn config.wsgi:application --bind 0.0.0.0:8000
 ```
 
-Review Django's [deployment checklist](https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/) for settings relevant to your app. Verify proxy and HTTPS handling with the actual public URL before enabling redirects that could cause a loop.
+Review Django's [deployment checklist](https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/) for settings relevant to your app. The small example does not configure every production security setting. Verify proxy and HTTPS handling with the actual public URL before enabling secure cookies, HSTS, or redirects. Only trust forwarded HTTPS headers when the proxy controls them.
 
 ## Plan static files and migrations
 
 Gunicorn alone does not serve Django's static files. Choose static-file middleware configured in the app or a separate static host. Collect assets into the path that setup serves. lizardpack's requirements-based Python path does not automatically run `collectstatic`; put it in a complete Dockerfile build when the app needs that step.
 
-For WhiteNoise, include `whitenoise` in `requirements.txt`, add `whitenoise.middleware.WhiteNoiseMiddleware` after Django's `SecurityMiddleware`, and set `STATIC_ROOT = BASE_DIR / 'staticfiles'`. This complete Dockerfile collects static files and starts the WSGI server:
+For WhiteNoise, keep `django.contrib.staticfiles` in `INSTALLED_APPS` and insert `whitenoise.middleware.WhiteNoiseMiddleware` immediately after Django's `SecurityMiddleware`. Add or update these settings:
+
+```python
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+```
+
+Keep your existing `STORAGES["default"]` backend if the app already stores uploads elsewhere. WhiteNoise serves collected static assets, not user uploads.
+
+Use this Dockerfile at the project root:
 
 ```dockerfile
 FROM python:3.13-slim
 WORKDIR /app
 COPY requirements.txt ./
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
-RUN SECRET_KEY=build-only-placeholder python manage.py collectstatic --noinput
+RUN SECRET_KEY=build-only-placeholder \
+    DATABASE_URL=postgresql://build:build@127.0.0.1:1/build \
+    ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
+    python manage.py collectstatic --noinput
 EXPOSE 8000
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
 ```
 
-The placeholder applies only to the asset collection step. Set a separate secret for runtime. If importing your settings requires other values during `collectstatic`, supply non-secret build values that let this step run without a live database connection. Exclude `.env*`, virtual environments, `.git/`, `__pycache__/`, and local databases in `.dockerignore`.
+The values on the `RUN` line exist only for `collectstatic`. The database URL is a placeholder pointing at an unused local port; no database runs there. Loading settings parses the URL, but asset collection does not need a database connection. Do not query the database from module imports or `AppConfig.ready()`. The example also passes `collectstatic` with container networking disabled.
+
+These assignments do not become runtime environment variables. Set a fresh `SECRET_KEY` and the real database reference on the service before startup. Do not pass production secrets to the Docker build.
+
+Create `.dockerignore` and exclude the same paths from [source uploads](/cli/up):
+
+```text
+.env*
+.venv/
+venv/
+.git/
+__pycache__/
+*.pyc
+*.sqlite3
+staticfiles/
+```
 
 Keep user uploads in durable storage, such as [Managed Object Storage](/addons/storage), rather than the container's static directory. Review [storage and recovery](/platform/storage-and-recovery).
 
@@ -72,23 +162,34 @@ lizard init --name django-app
 lizard add --service web
 ```
 
-Set the required secret and database reference before the first upload. This example creates a new Managed Postgres instance in the project; use your existing instance's name if you already have one:
+Create [Managed Postgres](/addons/postgres) in this project. If you already have an instance, skip `add postgres` and use its name in the reference:
 
 ```bash
 lizard add postgres --name postgres
+```
+
+Set the app's [service secrets](/cli/secrets). The `postgres` in `${{postgres.DATABASE_URL}}` names the database service, not a Django database alias. Lizard resolves the [reference](/variables/references) at deploy time and injects the resulting URL into the `web` process. The single quotes keep your shell from expanding the reference. The `settings.py` block above then turns the URL into `DATABASES["default"]`.
+
+```bash
 DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
-lizard secrets set SECRET_KEY="$DJANGO_SECRET_KEY" DATABASE_URL='${{postgres.DATABASE_URL}}' --service web
+lizard secrets set SECRET_KEY="$DJANGO_SECRET_KEY" \
+  DATABASE_URL='${{postgres.DATABASE_URL}}' DEBUG=false \
+  ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
+  --service web
 lizard up --service web --port 8000
 lizard ps --json
 ```
 
-Include a PostgreSQL driver such as `psycopg[binary]` in the requirements. Your settings must parse `DATABASE_URL` into Django's `DATABASES` setting. Replace these placeholders with the returned public hostname and HTTPS origin:
+`localhost` is a temporary host setting that lets the process start while you obtain its public hostname; public requests will return 400. If you already know the hostname, set it before the first upload. Otherwise, replace these placeholders with the hostname and HTTPS origin returned for your service:
 
 ```bash
-lizard secrets set ALLOWED_HOSTS=YOUR_PUBLIC_HOST CSRF_TRUSTED_ORIGINS=https://YOUR_PUBLIC_HOST --service web
+lizard secrets set ALLOWED_HOSTS=YOUR_PUBLIC_HOST \
+  CSRF_TRUSTED_ORIGINS=https://YOUR_PUBLIC_HOST --service web
 ```
 
-The variable change restarts the process. A first request can return 400 until the host setting matches. Exclude local virtual environments, secrets, and local databases from uploads. Once the process runs, apply migrations:
+A missing reference target or key can resolve to an empty string. The required-value check then stops Django with `Set the DATABASE_URL environment variable.` Check the database service name and its `DATABASE_URL` key; do not print the connection URL into logs.
+
+The variable change restarts the process. Exclude local virtual environments, secrets, and local databases from uploads. Once the process runs, apply migrations:
 
 ```bash
 lizard ssh --service web -- python manage.py migrate --noinput
@@ -99,3 +200,10 @@ Run the command again to check that no migrations remain. Do not treat a success
 Check the app URL, a database-backed page, a form submission, and a static asset. If the app uses Django admin, also check its CSS. Read `lizard logs --service web --json` for import or settings errors. A 400 response often means `ALLOWED_HOSTS` is wrong; missing CSS usually means static assets were not collected or served. Check the actual error before changing settings.
 
 See [tested versions and cloud results](/framework-guides/validation) for the September 9, 2026 deployment checks and their limits.
+
+
+## Reproduce this example
+
+The [Django example](https://github.com/lizard-build/docs/tree/main/_examples/django) includes the settings, Dockerfile, requirements, a database-backed form, and a test runner. Copy it into a standalone directory and run `python3 tests/verify.py` with Docker running. It builds the image, starts local PostgreSQL, checks migrations and HTTP behavior, and stops its test containers. It does not create Lizard services. See its README for the checks and retained Docker resources.
+
+The September 14, 2026 check covers this revised example in local Linux containers. The earlier cloud results linked above cover the September 9 guide; the revised settings have not had a new cloud deployment yet.
