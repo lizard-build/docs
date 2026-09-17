@@ -6,22 +6,28 @@ description: "lizard scale はサービスのレプリカ数、CPU、メモリ�
 
 サービスをスケールします（レプリカ数 / CPU / メモリ / ストレージ）。
 
-## Usage
+<span id="usage" />
+
+## 使い方
 
 ```bash
 lizard scale [flags]
 ```
 
-## Flags
+<span id="flags" />
 
-| Flag | Description |
+## フラグ
+
+| フラグ | 説明 |
 |------|-------------|
 | `--replicas <n>` | レプリカ数 `1`–`10`（アプリ） |
 | `--cpu <cores>` | `1`、`2`、`3`、または `4` |
 | `--memory <mb>` | `128`–`8192` MB |
 | `--storage <mb>` | アドオンボリュームのサイズ、拡張のみ |
 
-## Examples
+<span id="examples" />
+
+## 例
 
 <span id="scale-replicas-horizontally" />
 
@@ -51,9 +57,11 @@ lizard scale --service postgres --storage 8192
 
 アドオンのデータボリュームは拡張のみです — ストレージは増やせますが、縮小はできません。
 
-## See also
+<span id="see-also" />
+
+## 関連項目
 
 - [Scaling](/deploy/scaling) — 水平スケーリングと垂直スケーリング、およびアドオンストレージの拡張
 - [lizard metrics](/cli/metrics) — スケール変更の前後で CPU / メモリ / ネットワーク / ディスクを確認
 - [lizard ps](/cli/ps) — スケール変更後にレプリカの状態を確認
-- [Observability → Metrics](/observability/metrics) — リソースとコストの監視
+- [オブザーバビリティ → Metrics](/observability/metrics) — リソースとコストの監視

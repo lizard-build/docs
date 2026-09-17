@@ -1,0 +1,104 @@
+---
+description: "lizard domain показывает домен сервиса, создаёт поддомен onlizard.com или привязывает и проверяет пользовательское имя хоста с автоматическим TLS."
+---
+
+# lizard domain
+
+Показывает текущий домен или привязывает пользовательский.
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard domain [hostname] [flags]
+```
+
+Имя хоста — позиционный аргумент, отдельного `add` подкоманды нет. Запуск `lizard domain` без аргументов показывает текущий домен сервиса.
+
+<span id="flags" />
+
+## Флаги
+
+| Флаг | Описание |
+|------|-------------|
+| `-s, --service <name>` | Сервис |
+| `--port <n>` | Порт для публикации |
+
+<span id="subcommands" />
+
+## Подкоманды
+
+### `lizard domain generate`
+
+Создаёт новый поддомен `*.onlizard.com`.
+
+### `lizard domain verify <hostname>`
+
+Проверяет TXT-запись и активирует домен. TLS выпускается автоматически.
+
+### `lizard domain delete <hostname>`
+
+Удаляет домен (алиас `rm`).
+
+| Флаг | Описание |
+|------|-------------|
+| `-y, --yes` | Пропустить подтверждение |
+
+<span id="examples" />
+
+## Примеры
+
+<span id="show-the-current-domain" />
+
+### Показать текущий домен
+
+```bash
+lizard domain
+```
+
+<span id="generate-a-subdomain" />
+
+### Создать поддомен
+
+```bash
+lizard domain generate
+```
+
+<span id="attach-a-custom-domain" />
+
+### Привязать пользовательский домен
+
+```bash
+lizard domain app.example.com --service web
+```
+
+Lizard возвращает DNS-записи для создания (`CNAME` для имени хоста и `TXT` для проверки). Добавьте их у вашего DNS-провайдера, затем выполните проверку:
+
+```bash
+lizard domain verify app.example.com
+```
+
+<span id="attach-a-domain-to-a-specific-port" />
+
+### Привязать домен к конкретному порту
+
+```bash
+lizard domain app.example.com --service web --port 8080
+```
+
+<span id="remove-a-domain" />
+
+### Удалить домен
+
+```bash
+lizard domain delete app.example.com
+lizard domain rm app.example.com --yes
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [Networking](/networking) — сгенерированные домены, TLS и рабочие сервисы
+- [Развернуть в регионах](/deploy/regions) — выбор региона для сервисов

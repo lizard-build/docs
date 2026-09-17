@@ -12,7 +12,7 @@ description: "lizard run は、サービスのプロジェクトシークレッ�
 
 2 つのコマンドで、サービスのコンテキストを使ってコマンドを実行できます。実行される場所が異なるため、どちらが必要かを把握してください。
 
-| Command | Runs where | Use for |
+| コマンド | 実行場所 | 用途 |
 |---------|-----------|---------|
 | `lizard run` | ローカル。サービスの project + service secrets を注入した状態 | マイグレーション、シードスクリプト、本番設定が必要なローカルツール |
 | `lizard ssh` | 実行中のサービスコンテナ内 | 稼働中コンテナの確認、単発のリモートコマンド、デバッグ |
@@ -31,7 +31,7 @@ lizard run [flags] -- <command>
 
 ## フラグ
 
-| Flag | Description |
+| フラグ | 説明 |
 |------|-------------|
 | `-s, --service <name>` | 環境変数を注入する対象のサービス |
 | `--no-service` | サービス環境変数を注入しない |
@@ -61,5 +61,5 @@ lizard run --service api -- printenv DATABASE_URL
 ## 関連項目
 
 - [lizard ssh](/cli/ssh) — ローカルではなく、実行中のサービスコンテナ内でコマンドを実行します
-- [Variables](/variables) — プロジェクト変数とサービス変数の定義方法および参照方法
-- [Python app hosting](https://lizard.build/blog/python-app-hosting) — デプロイ済みデータベースに対して `manage.py` やその他のフレームワークツールを実行する方法
+- [変数](/variables) — プロジェクト変数とサービス変数の定義方法および参照方法
+- [Pythonアプリホスティング](https://lizard.build/blog/python-app-hosting) — デプロイ済みデータベースに対して `manage.py` やその他のフレームワークツールを実行する方法

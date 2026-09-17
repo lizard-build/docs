@@ -6,22 +6,28 @@ description: "lizard scale cambia las réplicas, CPU y memoria de un servicio, y
 
 Escala un servicio (réplicas / CPU / memoria / almacenamiento).
 
-## Usage
+<span id="usage" />
+
+## Uso
 
 ```bash
 lizard scale [flags]
 ```
 
-## Flags
+<span id="flags" />
 
-| Flag | Description |
+## Banderas
+
+| Bandera | Descripción |
 |------|-------------|
 | `--replicas <n>` | Réplicas `1`–`10` (apps) |
 | `--cpu <cores>` | `1`, `2`, `3` o `4` |
 | `--memory <mb>` | `128`–`8192` MB |
 | `--storage <mb>` | Tamaño del volumen del addon, solo ampliable |
 
-## Examples
+<span id="examples" />
+
+## Ejemplos
 
 <span id="scale-replicas-horizontally" />
 
@@ -51,7 +57,9 @@ lizard scale --service postgres --storage 8192
 
 Los volúmenes de datos del addon son solo ampliables: puedes aumentar el almacenamiento, pero no reducirlo.
 
-## See also
+<span id="see-also" />
+
+## Véase también
 
 - [Escalado](/deploy/scaling) — escalado horizontal vs. vertical y ampliación del almacenamiento del addon
 - [lizard metrics](/cli/metrics) — consulta CPU / memoria / red / disco antes y después del escalado

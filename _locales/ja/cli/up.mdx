@@ -6,7 +6,9 @@ description: "lizard up は現在のディレクトリをパッケージ化し�
 
 現在のディレクトリをアップロードしてデプロイします。
 
-## Usage
+<span id="usage" />
+
+## 使い方
 
 ```bash
 lizard up [flags]
@@ -16,9 +18,11 @@ lizard up [flags]
 
 現在のディレクトリがまだプロジェクトにリンクされていない場合、`up` は最初に `init` を実行します。TTY では対話的に動作します。非 TTY（CI）環境では、無言でプロジェクトを作成することは**ありません**。代わりにエラーになり、`lizard init --name <project>` を実行するよう求めます（または `--name` を渡します）。これは、タイプミスによって空のプロジェクトが作成されるのを防ぐためです。
 
-## Flags
+<span id="flags" />
 
-| Flag | Description |
+## フラグ
+
+| フラグ | 説明 |
 |------|-------------|
 | `-s, --service <name>` | 既存のサービスを対象にします |
 | `--build-command <cmd>` | ビルドコマンドを上書きします |
@@ -30,13 +34,17 @@ lizard up [flags]
 | `-c, --ci` | CI 向けの出力 |
 | `--no-gitignore` | `.gitignore` を無視して、すべてをアップロードします |
 
-## Subcommands
+<span id="subcommands" />
+
+## サブコマンド
 
 ### `lizard up status`
 
 進行中のアップロードデプロイの状態を報告します。
 
-## Examples
+<span id="examples" />
+
+## 例
 
 <span id="deploy-the-current-directory" />
 
@@ -69,7 +77,9 @@ lizard up --ci --service api
 
 サービスがすでに存在する場合は `lizard add` を省略してください。Lizard CLI 0.3.92 では、ビルドが失敗しても終了コード `0` で終了することがあります。CI リリースを成功と判断する前に、ビルドステータスとデプロイされた URL を確認してください。修正はリリース待ちです。macOS では、アーカイブに余分な `._*` メタデータファイルが入るのを避けるため、アップロード前に `COPYFILE_DISABLE=1` も設定してください。[framework setup](/framework-guides#prepare-the-project) を参照してください。
 
-## See also
+<span id="see-also" />
+
+## 関連項目
 
 - [ローカルコードからデプロイ](/deploy/upload) — アップロードベースのデプロイの完全な手順
 - [lizard redeploy](/cli/redeploy) — 再アップロードせずに最後のアップロードを再ビルドします

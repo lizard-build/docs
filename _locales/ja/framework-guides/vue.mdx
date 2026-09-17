@@ -14,12 +14,12 @@ Vite でビルドした Vue アプリを、Lizard 上の静的 Web サービス�
 
 Vue アプリのディレクトリで、`package.json`、lockfile、Vite 設定ファイルを使って実行します。TypeScript コードをチェックする場合は `vue-tsc` を含めて、scaffold の build スクリプトはそのまま維持してください。ビルドは、`dist/` に Vite バンドルを生成して完了する必要があります。
 
-| Setting | Value |
+| 設定 | 値 |
 |---|---|
-| Build | `npm run build` |
+| ビルド | `npm run build` |
 | Output | `dist/` |
 | Start command | 静的検出パスでは不要 |
-| Service port | `80` |
+| サービスポート | `80` |
 
 ドメインのルートでサイトを公開する場合は、`base: '/'` を維持してください。パスプレフィックスを使う場合は、Vite の base を router の base およびアプリが実際に動作する URL に合わせてください。出力ディレクトリをカスタマイズする場合は、そのディレクトリをコピーする Dockerfile が必要です。
 
@@ -63,7 +63,7 @@ lizard ps --json
 
 ## 変数と API リクエスト
 
-Vite はビルド時に `VITE_*` の値をブラウザバンドルへ書き込みます。これらは、API の公開 HTTPS URL など、公開してよい値にのみ使用してください。[variables and secrets](/variables)で設定し、その後、再ビルドされたアプリの実際のネットワークリクエストを確認してください。ランタイムのみの再起動では、ビルド済み JavaScript 内の値は置き換えられません。
+Vite はビルド時に `VITE_*` の値をブラウザバンドルへ書き込みます。これらは、API の公開 HTTPS URL など、公開してよい値にのみ使用してください。[変数とシークレット](/variables)で設定し、その後、再ビルドされたアプリの実際のネットワークリクエストを確認してください。ランタイムのみの再起動では、ビルド済み JavaScript 内の値は置き換えられません。
 
 デプロイ後にのみリクエストが失敗する場合は、API 側の CORS を確認し、ブラウザが `localhost` やプライベートなバックエンドホスト名を呼び出していないことを確認してください。HTML は読み込まれるのにアセットが失敗する場合は、Vite の base とアセットパスを確認してください。JavaScript 実行前に HTML が必要なページでは、Nuxt レンダリングまたは明示的な prerendering ステップを選択してください。
 

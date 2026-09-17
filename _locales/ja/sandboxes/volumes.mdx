@@ -48,7 +48,7 @@ await v.getInfo('proj_123');
 await v.delete('proj_123');                     // must be detached first
 ```
 
-| Method | Description |
+| メソッド | 説明 |
 |---|---|
 | `Volume.create(projectId, name, { sizeGb })` | ボリュームを作成します（デフォルト 5 GB） |
 | `Volume.list(projectId)` | プロジェクト内のボリュームを一覧表示します |
@@ -60,7 +60,7 @@ await v.delete('proj_123');                     // must be detached first
 
 ## ダッシュボード内
 
-ボリュームは、プロジェクトの **Sandboxes → Volumes** タブにあります。名前とサイズを指定して作成できます。テーブルには各ボリュームのサイズ、ステータス（`available` / `attached`）、およびそれを保持しているサンドボックスが表示されます。サンドボックスが停止または期限切れになると、ボリュームは自動的に `available` に戻されます。[Dashboard](/sandboxes/dashboard) ガイドを参照してください。
+ボリュームは、プロジェクトの **Sandboxes → ボリューム** タブにあります。名前とサイズを指定して作成できます。テーブルには各ボリュームのサイズ、ステータス（`available` / `attached`）、およびそれを保持しているサンドボックスが表示されます。サンドボックスが停止または期限切れになると、ボリュームは自動的に `available` に戻されます。[ダッシュボード](/sandboxes/dashboard) ガイドを参照してください。
 
 <span id="notes" />
 
@@ -69,7 +69,7 @@ await v.delete('proj_123');                     // must be detached first
 - ボリュームは同時に **1 つのサンドボックス**にしかアタッチできません。すでにアタッチされているボリュームをアタッチしようとすると、競合が返されます。
 - サンドボックスを削除する（または期限切れにする）と、ボリュームは**デタッチ**されます — 削除はされません。データは次回のアタッチに備えて保持されます。
 - ストレージを解放するには、ボリューム自体を削除してください。
-- 一時停止中のサンドボックスもアタッチを保持します。Persistent Volumes はノードローカルストレージを使用します。ノード障害後に復旧する必要があるデータはエクスポートしてください。[storage and recovery](/platform/storage-and-recovery) を参照してください。
+- 一時停止中のサンドボックスもアタッチを保持します。Persistent Volumes はノードローカルストレージを使用します。ノード障害後に復旧する必要があるデータはエクスポートしてください。[ストレージとリカバリ](/platform/storage-and-recovery) を参照してください。
 
 <span id="see-also" />
 

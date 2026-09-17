@@ -36,20 +36,24 @@ await sandbox.kill();
 
 - **Firecracker micro-VMs** — 各 sandbox ごとに個別の Linux ゲストが用意されます。アプリランタイムには異なる分離ルールがあります。ハードウェア仮想化によってゲストはホストから分離されます。信頼できないコードに対しては、認証情報とネットワークアクセスを管理してください。
 - **Pause and resume** — 一時停止すると micro-VM の vCPU は停止します。メモリ、ファイルシステム、実行中のプロセスはそのまま保持されるため、再開すると中断した場所から正確に再開されます。パッケージの再インストールやキャッシュの再ウォームは不要です。これにより、長時間動作するエージェントセッションが別々の呼び出しをまたいで維持されます。状態はディスクに書き込まれるのではなくホストのメモリに保持されるため、ホスト障害は越えられません。[pause & resume](/sandboxes/quickstart#pause-and-resume) を参照してください。
-- **Boot from a template** — 各ノードはテンプレートごとに golden snapshot を事前構築するため、`create` はコールドブートではなく復元です。
+- **テンプレートから起動** — 各ノードはテンプレートごとに golden snapshot を事前構築するため、`create` はコールドブートではなく復元です。
 
-## Templates
+<span id="templates" />
+
+## テンプレート
 
 sandbox は **template**（ダッシュボードでは *snapshot* とも呼ばれます）から起動します。組み込みは 2 つあります。
 
-| Template | 内容 | 最適な用途 |
+| テンプレート | 内容 | 最適な用途 |
 |---|---|---|
 | `base` | Debian Linux、Node.js 26、Lizard CLI | 汎用シェルおよびビルド環境 |
 | `code-interpreter-v1` | Python 3.14 + Node.js 26、ポート 8080 でコード実行用 HTTP API を提供 | AI コードインタープリタ — [`CodeSandbox`](/sandboxes/code-interpreter) で操作 |
 
 `base` がデフォルトです。公開 create API はこの 2 つの template 名を受け付けます。カスタム template のアップロードフローは公開されていません。
 
-## Lifecycle
+<span id="lifecycle" />
+
+## ライフサイクル
 
 sandbox は 3 つの状態を移動します。
 
@@ -76,7 +80,7 @@ Pause は、残りの実行時間を保持することを意図しています�
 
 ## Sandboxes を操作する方法
 
-| Surface | 最適な用途 | ここから開始 |
+| 表面 | 最適な用途 | ここから開始 |
 |---|---|---|
 | **SDK** (JS / Python) | エージェント、アプリ、スクリプト — [`CodeSandbox`](/sandboxes/code-interpreter) を使ったステートフルな多言語実行を含む | [Quickstart](/sandboxes/quickstart) · [SDK Reference](/sandboxes/sdk-reference) |
-| **Dashboard** | 手動作成、ターミナル、SSH、モニタリング | [Dashboard](/sandboxes/dashboard) |
+| **ダッシュボード** | 手動作成、ターミナル、SSH、モニタリング | [ダッシュボード](/sandboxes/dashboard) |

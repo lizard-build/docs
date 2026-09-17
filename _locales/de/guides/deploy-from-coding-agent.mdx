@@ -39,7 +39,7 @@ Ein nützlicher Prompt ist:
 
 ## Lokalen Quellcode bereitstellen
 
-Für einen vollständigen Test verwende das Beispiel [agent-app example](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/agent-app). Es nutzt Node.js 22 und `pg` 8.16.3, lauscht auf Port 3000 und liest eine Zeile aus Managed Postgres. Beim Start werden die Demo-Tabelle und die Demo-Zeile erstellt, falls sie nicht vorhanden sind. Für eine größere Anwendung solltest du deinen eigenen Migrationsprozess verwenden.
+Für einen vollständigen Test verwende das Beispiel [agent-app-Beispiel](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/agent-app). Es nutzt Node.js 22 und `pg` 8.16.3, lauscht auf Port 3000 und liest eine Zeile aus Managed Postgres. Beim Start werden die Demo-Tabelle und die Demo-Zeile erstellt, falls sie nicht vorhanden sind. Für eine größere Anwendung solltest du deinen eigenen Migrationsprozess verwenden.
 
 Kopiere das Beispiel in ein eigenes Verzeichnis und führe seine lokalen Prüfungen aus:
 
@@ -91,7 +91,7 @@ lizard redeploy --service api-git --json
 
 Für eine App im Repository-Root auf `main` lasse den Befehl `service set` weg. Setze den korrekten Port, falls deine Anwendung einen anderen verwendet. Wenn das Repository für Lizard nicht verfügbar ist, verbinde die GitHub-App; ersetze diesen Weg nicht stillschweigend durch einen Upload.
 
-Für spätere Aktualisierungen eines bestehenden GitHub-Service verwende `lizard redeploy --service api-git` oder pushe in den verfolgten Branch, wenn Auto-Deploy aktiviert ist. `lizard up` stellt einen Service auf Upload-Quellcode um. Das Ändern von Build-Einstellungen bei einem bereits laufenden Service kann einen eigenen Build auslösen; prüfe die Ereignisse, bevor du einen weiteren anforderst.
+Für spätere Aktualisierungen eines bestehenden GitHub-Service verwende `lizard redeploy --service api-git` oder pushe in den verfolgten Branch, wenn Auto-Bereitstellen aktiviert ist. `lizard up` stellt einen Service auf Upload-Quellcode um. Das Ändern von Build-Einstellungen bei einem bereits laufenden Service kann einen eigenen Build auslösen; prüfe die Ereignisse, bevor du einen weiteren anforderst.
 
 <span id="verify-the-result" />
 

@@ -10,7 +10,7 @@ Führe einen Befehl in dem Container eines laufenden Service aus, streame seine 
 
 `lizard run` und `lizard ssh` führen beide einen Befehl im Kontext eines Service aus, aber sie laufen an unterschiedlichen Orten — du solltest wissen, welchen du brauchst.
 
-| Command | Runs where | Use for |
+| Befehl | Wird ausgeführt in | Verwenden für |
 |---------|-----------|---------|
 | `lizard run` | **Lokal**, mit injiziertem Projekt des Service + Service-Secrets | Migrationen, Seed-Skripte, lokale Tools, die Produktionskonfiguration brauchen |
 | `lizard ssh` | **Im laufenden Service-Container** | Den Live-Container inspizieren, einmalige Remote-Befehle, Debugging |
@@ -66,5 +66,5 @@ lizard ssh --service api -- env | grep DATABASE_URL
 ## Siehe auch
 
 - [lizard run](/cli/run) — stattdessen einen Befehl lokal mit injizierter Service-Umgebung ausführen
-- [Variables](/variables) — wie Secrets und Referenzen einen Service erreichen
-- [Deploy from Claude Code](https://lizard.build/blog/deploy-from-claude-code#claude-code-deployment-compared-with-the-alternatives) — warum ein Agent eine Shell in den laufenden Container braucht und welche Plattformen keine bereitstellen
+- [Variablen](/variables) — wie Secrets und Referenzen einen Service erreichen
+- [Von Claude Code bereitstellen](https://lizard.build/blog/deploy-from-claude-code#claude-code-deployment-compared-with-the-alternatives) — warum ein Agent eine Shell in den laufenden Container braucht und welche Plattformen keine bereitstellen

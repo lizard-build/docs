@@ -30,13 +30,13 @@ export default {
 
 使用する予定のデプロイ adapter だけを残してください。特に、未使用の `@sveltejs/adapter-static` 依存関係があると、設定で adapter-node を import していても、現在の detector では static の経路が選ばれることがあります。
 
-| Setting | Value |
+| 設定 | 値 |
 |---|---|
-| Build | `npm run build`、通常は `vite build` |
+| ビルド | `npm run build`、通常は `vite build` |
 | Output | `build/` |
-| Runtime | `node build` |
+| ランタイム | `node build` |
 | Host and port | `HOST=0.0.0.0`、`PORT=3000` |
-| Service port | `3000` |
+| サービスポート | `3000` |
 
 <span id="test-the-production-server" />
 
@@ -69,7 +69,7 @@ lizard ps --json
 lizard secrets set ORIGIN=https://YOUR_PUBLIC_HOST --service web
 ```
 
-訪問者が使用する origin がカスタムドメインであれば、代わりにそちらを使用してください。変数変更後に forms を再確認してください。複数の許可された origins や proxy 由来の URL を使う場合は、[SvelteKit Node server guide](https://svelte.dev/docs/kit/adapter-node) を読み、信頼する proxy headers を意図的に設定してください。
+訪問者が使用する origin がカスタムドメインであれば、代わりにそちらを使用してください。変数変更後に forms を再確認してください。複数の許可された origins や proxy 由来の URL を使う場合は、[SvelteKit Nodeサーバーガイド](https://svelte.dev/docs/kit/adapter-node) を読み、信頼する proxy headers を意図的に設定してください。
 
 <span id="verify-and-troubleshoot" />
 
@@ -104,7 +104,7 @@ export const trailingSlash = 'always';
 
 未使用のデプロイ adapter は dependencies から削除してください。`npm run build` を実行し、`build/` に必要な各ページが含まれていることを確認します。デフォルト出力では、service command overrides は未設定のままにし、port `80` で新しい service をデプロイしてください。新しい build は生成された HTML を配信し、存在しないページには HTTP 404 を返します。nginx に server レシピの port `3000` を再利用しないでください。
 
-生成された HTML routes と SPA fallback のどちらを選ぶかは、[static routes and 404s](/framework-guides/static-routing) を参照してください。フレームワークのオプションと制限については、[SvelteKit static adapter](https://svelte.dev/docs/kit/adapter-static) を参照してください。
+生成された HTML routes と SPA fallback のどちらを選ぶかは、[静的ルートと404エラー](/framework-guides/static-routing) を参照してください。フレームワークのオプションと制限については、[SvelteKit静的アダプター](https://svelte.dev/docs/kit/adapter-static) を参照してください。
 
-2026年9月9日のデプロイ確認とその制限については、[tested versions and cloud results](/framework-guides/validation) を参照してください。
+2026年9月9日のデプロイ確認とその制限については、[テスト済みバージョンとクラウド結果](/framework-guides/validation) を参照してください。
 

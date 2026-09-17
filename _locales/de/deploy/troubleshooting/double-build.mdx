@@ -18,7 +18,7 @@ Der Aufruf `service set` hat bereits selbstständig einen Rebuild ausgelöst. Da
 
 ## Warum das passieren kann
 
-Wenn du ein **build-relevantes** Feld eines Service änderst — `repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath` oder `rootDirectory` — wird sofort automatisch ein Rebuild ausgelöst. Wenn du ein **reines Laufzeitfeld** änderst — `startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns` — wird **kein** automatischer Rebuild ausgelöst; die Änderung wird erst beim nächsten Deploy wirksam.
+Wenn du ein **build-relevantes** Feld eines Service änderst — `repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath` oder `rootDirectory` — wird sofort automatisch ein Rebuild ausgelöst. Wenn du ein **reines Laufzeitfeld** änderst — `startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns` — wird **kein** automatischer Rebuild ausgelöst; die Änderung wird erst beim nächsten Bereitstellen wirksam.
 
 Es ist leicht, reflexartig nach jedem `service set` noch ein `redeploy` anzuhängen, aber das ist nur bei reinen Laufzeitfeldern sinnvoll.
 

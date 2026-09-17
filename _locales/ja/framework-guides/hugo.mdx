@@ -16,12 +16,12 @@ Lizard は、`hugo --minify` で Hugo のソースサイトをビルドし、`pu
 
 ビルドに必要な Hugo の設定、content、layouts、assets、およびすべてのテーマファイルを含めてください。Hugo の検出は、`hugo.toml`、`hugo.yaml`、`config/_default/` のような設定に加え、`content/` ディレクトリを探します。
 
-| Setting | Value |
+| 設定 | 値 |
 |---|---|
-| Build | `hugo --minify` |
+| ビルド | `hugo --minify` |
 | Output | `public/` |
 | Production server | nginx |
-| Service port | `80` |
+| サービスポート | `80` |
 
 `baseURL` には、末尾のスラッシュを含む想定公開サイト URL を設定します。別のホスト名を割り当てた後は再ビルドし、リンクや生成されるサイトマップ項目がそれを使うようにしてください。[Hugo の build and output guide](https://gohugo.io/getting-started/usage/) を確認してください。
 
@@ -31,7 +31,7 @@ Lizard は、`hugo --minify` で Hugo のソースサイトをビルドし、`pu
 
 デフォルトの Hugo ビルドイメージは `hugomods/hugo:base` です。これはプロジェクト用の Hugo バージョンを固定しません。テーマに特定の Hugo バージョン、extended edition、または Node ツールが必要な場合は、それらの依存関係とテスト済みバージョンを含む完全な Dockerfile を使ってください。
 
-Hugo の設定と `content/` により、Go や Node の検出より前に Hugo ビルダーが選択されます。`go.mod` を使う Hugo Modules プロジェクトでは、Go サポート付きのビルドイメージが使われます。`package.json` があると、ビルドは Dockerfile を要求して停止します。Node の依存関係をインストールし、assets をビルドしてから、`hugo --minify` を実行してください。[build decision order](/concepts/build-pipeline#build-decision-order) を参照してください。
+Hugo の設定と `content/` により、Go や Node の検出より前に Hugo ビルダーが選択されます。`go.mod` を使う Hugo Modules プロジェクトでは、Go サポート付きのビルドイメージが使われます。`package.json` があると、ビルドは Dockerfile を要求して停止します。Node の依存関係をインストールし、assets をビルドしてから、`hugo --minify` を実行してください。[ビルドの決定順序](/concepts/build-pipeline#build-decision-order) を参照してください。
 
 <span id="build-locally-and-deploy" />
 
@@ -81,9 +81,9 @@ lizard up --service web --port 80
 
 公開中のホームページ、内部記事、画像を開いてください。生成された canonical URL と `sitemap.xml` を確認します。適当な存在しないパスの HTTP ステータスもテストしてください。新しい Hugo ビルドは生成された HTML を配信し、存在しないページには HTTP 404 を返します。このガイドのシンプルなソース構成では、カスタム Dockerfile は不要です。現在のルーティングルールを反映するには、古いイメージを再ビルドしてください。
 
-カスタム nginx ポリシーが必要な場合は、[static routes and 404s](/framework-guides/static-routing) を使ってください。カスタム Hugo ビルドステージには、テーマが必要とする Hugo バージョンとツールを含め、`hugo --minify` を実行し、`public/` を配信用イメージにコピーする必要があります。
+カスタム nginx ポリシーが必要な場合は、[静的ルートと404エラー](/framework-guides/static-routing) を使ってください。カスタム Hugo ビルドステージには、テーマが必要とする Hugo バージョンとツールを含め、`hugo --minify` を実行し、`public/` を配信用イメージにコピーする必要があります。
 
 テーマ assets が見つからない場合は、ビルドログ、テーマソース、`baseURL` を確認してください。誤ったビルダーが起動する場合は、Hugo の設定と `content/` がアップロードのルートにあることを確認し、既存のサービスオーバーライドを調べてください。Hugo は静的ファイルを生成するため、content の変更には新しいビルドが必要です。
 
-September 9, 2026 のデプロイ確認とその制限については、[tested versions and cloud results](/framework-guides/validation) を参照してください。
+September 9, 2026 のデプロイ確認とその制限については、[テスト済みバージョンとクラウド結果](/framework-guides/validation) を参照してください。
 

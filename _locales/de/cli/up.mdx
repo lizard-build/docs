@@ -25,10 +25,10 @@ Wenn das aktuelle Verzeichnis noch nicht mit einem Projekt verknüpft ist, führ
 | `-s, --service <name>` | Einen vorhandenen Dienst als Ziel verwenden |
 | `--build-command <cmd>` | Den Build-Befehl überschreiben |
 | `--start-command <cmd>` | Den Startbefehl überschreiben |
-| `--pre-deploy-command <cmd>` | Vor jedem Deploy einmal ausführen |
+| `--pre-deploy-command <cmd>` | Vor jedem Bereitstellen einmal ausführen |
 | `--port <number>` | Container-Port (`0` = Worker-Modus) |
-| `--region <code>` | Region für das Deploy |
-| `-d, --detach` | Das Deploy starten und beenden, ohne Logs zu streamen |
+| `--region <code>` | Region für das Bereitstellen |
+| `-d, --detach` | Das Bereitstellen starten und beenden, ohne Logs zu streamen |
 | `-c, --ci` | CI-freundliche Ausgabe |
 | `--no-gitignore` | Alles hochladen und `.gitignore` ignorieren |
 
@@ -81,6 +81,6 @@ lizard up --ci --service api
 
 - [Aus lokalem Code bereitstellen](/deploy/upload) — vollständige Anleitung für Upload-basierte Deploys
 - [lizard redeploy](/cli/redeploy) — den letzten Upload neu bauen, ohne erneut hochzuladen
-- [lizard init](/cli/init) — ein Projekt vor dem Deploy explizit erstellen oder verknüpfen
+- [lizard init](/cli/init) — ein Projekt vor dem Bereitstellen explizit erstellen oder verknüpfen
 - [Worker-Dienste](/deploy/workers) — was `--port 0` bedeutet
 - [Einen Container bereitstellen, ohne einen zu konfigurieren](https://lizard.build/blog/container-as-a-service#deploy-a-container-without-configuring-one) — wie sich dieser Befehl unter Container-as-a-Service-Plattformen einordnet

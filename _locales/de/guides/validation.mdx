@@ -8,11 +8,11 @@ description: "Prüft die Anleitungen für MCP, Coding-Agent, Redis-Worker und Te
 
 Am 2026-09-07 haben wir diese Anleitungen in einem separaten Testprojekt mit Lizard CLI 0.3.92 geprüft. Anwendungsprüfungen sind vom Build-Status getrennt. Die Tests verwendeten die Befehle aus den Anleitungen, mit einem eigenen Projektnamen und dem Dokumentations-Test-Branch für das GitHub-Beispiel.
 
-| Guide | Ergebnis | Prüfungen |
+| Anleitung | Ergebnis | Prüfungen |
 |---|---|---|
 | [Remote MCP](/guides/deploy-mcp-server) | Lokal und in der Cloud bestanden | Health 200; fehlendes und ungültiges Token 401; authentifiziertes GET 405; abgelehnter Origin 403; initialize, tools/list und tools/call; Ergebnis `5` über öffentliches HTTPS |
-| [Coding agent: upload](/guides/deploy-from-coding-agent) | Bestanden | `lizard up`, Health 200, datenbankgestützte Antwort 200, unbekannte Route 404; eine aktualisierte Postgres-Zeile blieb nach einem Service-Neustart erhalten |
-| [Coding agent: GitHub](/guides/deploy-from-coding-agent) | Bestanden | Repository mit `--no-deploy` verknüpft; Branch, Stammverzeichnis und Umgebung vor `redeploy` konfiguriert; die öffentliche App las dieselbe vorhandene Postgres-Zeile |
+| [Coding-Agent: Upload](/guides/deploy-from-coding-agent) | Bestanden | `lizard up`, Health 200, datenbankgestützte Antwort 200, unbekannte Route 404; eine aktualisierte Postgres-Zeile blieb nach einem Service-Neustart erhalten |
+| [Coding-Agent: GitHub](/guides/deploy-from-coding-agent) | Bestanden | Repository mit `--no-deploy` verknüpft; Branch, Stammverzeichnis und Umgebung vor `redeploy` konfiguriert; die öffentliche App las dieselbe vorhandene Postgres-Zeile |
 | [Redis worker](/deploy/workers) | Bestanden | Port 0; enqueue und Ergebnis; Ergebnis nach Neustart beibehalten; neuer Job nach Neustart; ein nicht abgeschlossener Verarbeitungseintrag wurde beim Start wiederhergestellt |
 | [Telegram bot](/guides/telegram-bot) | Nur lokale Tests | Sieben gemockte Tests decken Updates, fehlgeschlagene Sends, Token-Prüfungen und Webhook-Ablehnung ab. Ein echter Token-, Chat- und Cloud-Echo-Test ist weiterhin erforderlich |
 
@@ -36,4 +36,4 @@ Die Laufzeit-Log-Tails waren für die Test-Services anfangs leer. Ein Live-Log-S
 
 Das Telegram-Beispiel ist nicht als cloud-verifiziert markiert. Sein Preflight liest `getMe` und `getWebhookInfo`, ohne den Webhook des Bots zu ändern. Verwende einen separaten Test-Bot, bevor du seine Polling-Schleife aktivierst.
 
-Siehe [framework test results](/framework-guides/validation) für den separaten Framework-Batch mit 16 Rezepten und [known issues](/platform/known-issues) für CLI-Archiv- und Exit-Code-Einschränkungen bei fehlgeschlagenen Builds.
+Siehe [Framework-Testergebnisse](/framework-guides/validation) für den separaten Framework-Batch mit 16 Rezepten und [known issues](/platform/known-issues) für CLI-Archiv- und Exit-Code-Einschränkungen bei fehlgeschlagenen Builds.

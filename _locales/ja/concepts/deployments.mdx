@@ -4,7 +4,7 @@ description: "Lizard におけるデプロイのライフサイクル: 何がビ
 
 <span id="deployments" />
 
-# デプロイ
+# デプロイの仕組み
 
 **deployment** とは、サービスの 1 回のビルドとリリースのことです。リリース経路はサービスのランタイムによって異なります。ビルドが成功しただけでは、アプリケーションが起動したことやリクエストを処理できることは証明されません。
 
@@ -28,7 +28,7 @@ lizard up                          # upload cwd and deploy
 
 ## ライフサイクル
 
-1. **Build** — プラットフォームがビルドを実行します（[Build Pipeline](/concepts/build-pipeline) を参照）。
+1. **ビルド** — プラットフォームがビルドを実行します（[ビルド Pipeline](/concepts/build-pipeline) を参照）。
 2. **Pre-deploy** — `preDeployCommand` が設定されている場合、1 回だけ実行されます（例: マイグレーション）。
 3. **Start** — Lizard が設定されたランタイムでアプリケーションを起動します。
 4. **Health check** — プラットフォームがアプリのポートに到達可能かを確認します（[workers](/deploy/workers) ではスキップされます）。
@@ -57,13 +57,13 @@ lizard events --limit 25       # show more
 lizard ps                      # current services, status, and URLs
 ```
 
-[ダッシュボード](/dashboard) では、**Deployments** ビューに完全なタイムライン、デプロイごとのビルドログ、各リリースの詳細ドロワーが表示されます。
+[ダッシュボード](/dashboard) では、**デプロイメント** ビューに完全なタイムライン、デプロイごとのビルドログ、各リリースの詳細ドロワーが表示されます。
 
 <span id="restarts-vs-redeploys" />
 
 ## 再起動と再デプロイ
 
-| Command | 何をするか |
+| コマンド | 何をするか |
 |---------|--------------|
 | `lizard restart --service <svc>` | **現在の** ビルドを再起動 — 再ビルドなし |
 | `lizard redeploy --service <svc>` | 最新のコミット/アップロードから新しく **ビルド** し、その後リリース |

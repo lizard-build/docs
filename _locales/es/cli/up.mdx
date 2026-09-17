@@ -1,12 +1,14 @@
 ---
-description: "lizard up empaqueta el directorio actual, lo compila en los nodos de compilación de Lizard y devuelve una URL activa. Flags, comportamiento en CI y ejemplos."
+description: "lizard up empaqueta el directorio actual, lo compila en los nodos de compilación de Lizard y devuelve una URL activa. Banderas, comportamiento en CI y ejemplos."
 ---
 
 # lizard up
 
 Sube el directorio actual y lo despliega.
 
-## Usage
+<span id="usage" />
+
+## Uso
 
 ```bash
 lizard up [flags]
@@ -16,9 +18,11 @@ lizard up [flags]
 
 Si el directorio actual todavía no está vinculado a un proyecto, `up` ejecuta primero `init`. En un TTY eso es interactivo; en un entorno sin TTY (CI) **no** creará un proyecto silenciosamente: devolverá un error y te pedirá que ejecutes `lizard init --name <project>` (o que pases `--name`), para evitar que un error tipográfico genere un proyecto vacío.
 
-## Flags
+<span id="flags" />
 
-| Flag | Description |
+## Banderas
+
+| Bandera | Descripción |
 |------|-------------|
 | `-s, --service <name>` | Apunta a un servicio existente |
 | `--build-command <cmd>` | Sobrescribe el comando de compilación |
@@ -30,13 +34,17 @@ Si el directorio actual todavía no está vinculado a un proyecto, `up` ejecuta 
 | `-c, --ci` | Salida compatible con CI |
 | `--no-gitignore` | Sube todo, ignorando `.gitignore` |
 
-## Subcommands
+<span id="subcommands" />
+
+## Subcomandos
 
 ### `lizard up status`
 
 Informa el estado de un despliegue por subida en curso.
 
-## Examples
+<span id="examples" />
+
+## Ejemplos
 
 <span id="deploy-the-current-directory" />
 
@@ -69,10 +77,12 @@ lizard up --ci --service api
 
 Omite `lizard add` cuando el servicio ya exista. Con Lizard CLI 0.3.92, una compilación fallida todavía puede salir con el código `0`; inspecciona el estado de la compilación y la URL desplegada antes de marcar una versión de CI como exitosa. Hay una corrección pendiente de publicación. En macOS, también configura `COPYFILE_DISABLE=1` antes de una subida para evitar archivos de metadatos adicionales de `._*` en el archivo. Consulta [framework setup](/framework-guides#prepare-the-project).
 
-## See also
+<span id="see-also" />
 
-- [Deploy from local code](/deploy/upload) — guía completa de los despliegues basados en subida
+## Véase también
+
+- [Desplegar desde código local](/deploy/upload) — guía completa de los despliegues basados en subida
 - [lizard redeploy](/cli/redeploy) — vuelve a compilar la última subida sin volver a subirla
 - [lizard init](/cli/init) — crea o vincula un proyecto explícitamente antes de desplegar
 - [Worker services](/deploy/workers) — qué significa `--port 0`
-- [Deploy a container without configuring one](https://lizard.build/blog/container-as-a-service#deploy-a-container-without-configuring-one) — dónde se ubica este comando entre las plataformas de contenedor como servicio
+- [Desplegar un contenedor sin configurar uno](https://lizard.build/blog/container-as-a-service#deploy-a-container-without-configuring-one) — dónde se ubica este comando entre las plataformas de contenedor como servicio

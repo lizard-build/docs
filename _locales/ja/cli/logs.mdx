@@ -6,15 +6,19 @@ description: "lizard logs はサービスのランタイムログをストリー
 
 サービスのランタイムログをストリーミングします。直近 200 行を表示したあと、ライブ tail を続けます。
 
-## Usage
+<span id="usage" />
+
+## 使い方
 
 ```bash
 lizard logs [flags]
 ```
 
-## Flags
+<span id="flags" />
 
-| Flag | Description |
+## フラグ
+
+| フラグ | 説明 |
 |------|-------------|
 | `--build` | 代わりにビルドログを表示 |
 | `--tail <n>` | 直近 N 行（最大 1000） |
@@ -25,7 +29,9 @@ lizard logs [flags]
 
 `--json` を使うと、`lizard logs` はストリームではありません。直近 200 行を返し（`--tail N` で上書き、最大 1000）、終了します。スナップショットやスクリプトで使用してください。ライブストリームになるのは `--json` がない場合だけです。
 
-## Examples
+<span id="examples" />
+
+## 例
 
 <span id="tail-runtime-logs" />
 
@@ -77,9 +83,11 @@ lizard logs --restart latest
 lizard logs --restart <id>
 ```
 
-## See also
+<span id="see-also" />
 
-- [Logs](/observability/logs) — ランタイム、ビルド、再起動ログの挙動、および `lizard service logs` で履歴をページ送りする方法
+## 関連項目
+
+- [ログ](/observability/logs) — ランタイム、ビルド、再起動ログの挙動、および `lizard service logs` で履歴をページ送りする方法
 - [Incomplete Dockerfile](/deploy/troubleshooting/incomplete-dockerfile) — `lizard logs --build` から失敗したビルドを診断する
 - [lizard events](/cli/events) — デプロイ履歴とレプリカのステータス
-- [Deploy from Claude Code](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) — ビルド失敗時にエージェントが実行する、ログ確認、修正、再デプロイのループ
+- [Claude Codeからデプロイする](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) — ビルド失敗時にエージェントが実行する、ログ確認、修正、再デプロイのループ

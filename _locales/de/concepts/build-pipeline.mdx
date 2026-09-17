@@ -4,7 +4,7 @@ description: "Wie Lizard Quellcode in ein Container-Image verwandelt: synthetisi
 
 # Build-Pipeline
 
-Builds laufen auf den Build-Nodes von Lizard — **du brauchst Docker lokal nicht**. Beim Deploy entscheidet die Plattform anhand einer festen Reihenfolge, wie dein Quellcode in ein Container-Image umgewandelt wird, und führt dieses Image dann in einem isolierten Pod aus. Nicht jeder [container as a service](https://lizard.build/blog/container-as-a-service) baut das Image für dich; der Blog vergleicht die drei Varianten, in denen diese Kategorie vorkommt.
+Builds laufen auf den Build-Nodes von Lizard — **du brauchst Docker lokal nicht**. Beim Bereitstellen entscheidet die Plattform anhand einer festen Reihenfolge, wie dein Quellcode in ein Container-Image umgewandelt wird, und führt dieses Image dann in einem isolierten Pod aus. Nicht jeder [container as a service](https://lizard.build/blog/container-as-a-service) baut das Image für dich; der Blog vergleicht die drei Varianten, in denen diese Kategorie vorkommt.
 
 <span id="build-decision-order" />
 
@@ -30,7 +30,7 @@ Auf diesem Pfad gilt:
 
 - Wenn eine `Dockerfile` im Repo existiert **und** einen echten Build-Schritt hat (eine `RUN <package-manager>`-Zeile, nicht nur `COPY dist/`), wird sie unverändert verwendet.
 - Andernfalls erzeugt lizardpack die Dockerfile für dich.
-- Der **Startbefehl** wird automatisch erkannt: eine `Procfile`-`web:`-Zeile (Python/Ruby) oder `package.json` `scripts.start` (Node) wird automatisch übernommen. Welche genaue Zeile Django, Flask und FastAPI jeweils brauchen, steht unter [Python app hosting](https://lizard.build/blog/python-app-hosting).
+- Der **Startbefehl** wird automatisch erkannt: eine `Procfile`-`web:`-Zeile (Python/Ruby) oder `package.json` `scripts.start` (Node) wird automatisch übernommen. Welche genaue Zeile Django, Flask und FastAPI jeweils brauchen, steht unter [Python-App-Hosting](https://lizard.build/blog/python-app-hosting).
 - Der **Port** wird aus `EXPOSE`, Framework-Standards oder einer expliziten `PORT`-Umgebungsvariable abgeleitet.
 
 > **Wichtig:** Eine Dockerfile, die nur vorgebaute Artefakte kopiert (`COPY dist/`, `build/`, `out/`, `.next/`, `public/`) **ohne** einen `RUN`-Build-Schritt, gilt als unvollständig und wird von lizardpack neu erzeugt. Füge einen echten Build-Schritt hinzu oder setze `dockerfilePath`, um die unveränderte Verwendung zu erzwingen.
@@ -68,7 +68,7 @@ Wenn ein Build fehlschlägt, lies `lizard logs --build`, behebe die Ursache (in 
 ## Hinweise zur Laufzeit
 
 - **Keine Docker-`HEALTHCHECK`.** Die Laufzeit führt keine Docker-Healthcheck-Schleife aus, daher werden `HEALTHCHECK`-Direktiven ignoriert. Lizard führt stattdessen einen TCP-Probe gegen deinen Port aus (im [worker mode](/deploy/workers) übersprungen).
-- **Schreibe nicht ungefragt eine Dockerfile.** lizardpack erkennt die meisten Stacks automatisch — versuche zuerst ein Deploy und füge nur dann eine Dockerfile hinzu (oder setze `dockerfilePath`), wenn der Auto-Build nicht passt.
+- **Schreibe nicht ungefragt eine Dockerfile.** lizardpack erkennt die meisten Stacks automatisch — versuche zuerst ein Bereitstellen und füge nur dann eine Dockerfile hinzu (oder setze `dockerfilePath`), wenn der Auto-Build nicht passt.
 
 <span id="build-configuration-reference" />
 
@@ -78,7 +78,7 @@ Wenn ein Build fehlschlägt, lies `lizard logs --build`, behebe die Ursache (in 
 |-------|-------------|
 | `buildCommand` | Befehl zum Bauen deiner App → erzwingt den Pfad **synthetisierte Dockerfile** |
 | `startCommand` | Befehl zum Starten deiner App zur Laufzeit |
-| `preDeployCommand` | Wird vor jedem Deploy einmal ausgeführt (z. B. DB-Migrationen) |
+| `preDeployCommand` | Wird vor jedem Bereitstellen einmal ausgeführt (z. B. DB-Migrationen) |
 | `dockerfilePath` | Pfad zu einer Dockerfile im Repo, die **unverändert** verwendet wird |
 | `rootDirectory` | Unterverzeichnis, aus dem gebaut wird (Monorepos) |
 | `watchPatterns` | Nur neu deployen, wenn sich passende Pfade ändern |

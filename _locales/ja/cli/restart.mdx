@@ -6,15 +6,19 @@ description: "lizard restart は、再ビルドなしでサービスの現在の
 
 現在のビルドをローリング再起動 — 再ビルドなし。
 
-## Usage
+<span id="usage" />
+
+## 使い方
 
 ```bash
 lizard restart [nameOrId] [flags]
 ```
 
-## Flags
+<span id="flags" />
 
-| Flag | Description |
+## フラグ
+
+| フラグ | 説明 |
 |------|--------------|
 | `-s, --service <name>` | サービス |
 | `--detach` | 再起動が受理されたら戻る |
@@ -22,7 +26,9 @@ lizard restart [nameOrId] [flags]
 | `--timeout <seconds>` | `--wait` 使用時の readiness 待機時間の上限。デフォルトは `120` |
 | `--json` | スクリプト用に JSON を返す |
 
-## Examples
+<span id="examples" />
+
+## 例
 
 <span id="restart-a-service" />
 
@@ -60,8 +66,10 @@ lizard --json restart --service worker --wait --timeout 60
 
 タイムアウトは、再起動リクエスト後の readiness 待機に適用されます。再起動自体はキャンセルされず、ネットワーク呼び出しによりコマンド全体の所要時間はさらに長くなる場合があります。ワークフローでプロセスの readiness 以上が必要な場合は、コマンド実行後にアプリケーションデータまたはヘルスエンドポイントを確認してください。
 
-## See also
+<span id="see-also" />
+
+## 関連項目
 
 - [lizard redeploy](/cli/redeploy) — 現在のものを再利用するのではなく、新しいビルドをトリガーする
 - [lizard logs](/cli/logs) — `--restart latest` または `--restart <id>` を使って、再起動前後のログを確認する
-- [Deployments](/concepts/deployments) — 再起動と再デプロイの違い、およびクラッシュからの復旧
+- [デプロイメント](/concepts/deployments) — 再起動と再デプロイの違い、およびクラッシュからの復旧

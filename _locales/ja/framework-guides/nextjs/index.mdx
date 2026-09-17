@@ -6,20 +6,20 @@ description: "Next.js を Node.js サーバーとして Lizard にデプロイ�
 
 # Next.js を Lizard にデプロイする
 
-`next build` と `next start` を使って、Next.js を Node.js サーバーとして Lizard で実行します。この方法では、リクエスト時レンダリング、Route Handlers、Server Actions のためにサーバーを利用可能な状態に保てます。すべてのルートを事前にビルドできる場合は、代わりに [Next.js static export](/framework-guides/nextjs/static-export) に従ってください。
+`next build` と `next start` を使って、Next.js を Node.js サーバーとして Lizard で実行します。この方法では、リクエスト時レンダリング、Route Handlers、Server Actions のためにサーバーを利用可能な状態に保てます。すべてのルートを事前にビルドできる場合は、代わりに [Next.js静的エクスポート](/framework-guides/nextjs/static-export) に従ってください。
 
 <span id="build-settings" />
 
 ## ビルド設定
 
-| Setting | Value |
+| 設定 | 値 |
 |---|---|
-| Project root | `package.json` と Next.js 設定を含むディレクトリ |
-| Build script | `next build` |
+| プロジェクト root | `package.json` と Next.js 設定を含むディレクトリ |
+| ビルド script | `next build` |
 | Start script | `next start --hostname 0.0.0.0 --port 3000` |
-| Build output | `.next/` |
-| Service port | `3000` |
-| Runtime | Node.js |
+| ビルド output | `.next/` |
+| サービスポート | `3000` |
+| ランタイム | Node.js |
 
 <span id="prepare-the-app" />
 
@@ -51,13 +51,13 @@ npm run build
 npm run start
 ```
 
-別のターミナルで `http://localhost:3000` を開き、内部ルートをテストします。アプリに API または Server Action がある場合は、それも実行して確認してください。開発サーバーのチェックだけを通過しても、本番ビルドが動作する証明にはなりません。
+別のターミナルで `http://localhost:3000` を開き、内部ルートをテストします。アプリに API または Server アクション がある場合は、それも実行して確認してください。開発サーバーのチェックだけを通過しても、本番ビルドが動作する証明にはなりません。
 
 <span id="deploy" />
 
 ## デプロイ
 
-[installing Lizard CLI and signing in](/framework-guides#prepare-the-project) の後、アプリのディレクトリから次を実行します:
+[Lizard CLIのインストールとサインイン](/framework-guides#prepare-the-project) の後、アプリのディレクトリから次を実行します:
 
 ```bash
 lizard init --name nextjs-app
@@ -74,15 +74,15 @@ Lizard は `next` の依存関係を検出し、ビルドスクリプトと起�
 
 ## 環境変数とデータ
 
-`NEXT_PUBLIC_*` の値は、ビルド中にブラウザバンドルの一部になります。認証情報はサーバー専用の変数に保持し、サービスに対して [variables and secrets](/variables) から設定してください。ビルド中にデータを取得するコードは、ビルド時にもそのデータへアクセスできる必要があります。ランタイムを再起動しても、すでに生成済みの HTML や JavaScript は変更されません。
+`NEXT_PUBLIC_*` の値は、ビルド中にブラウザバンドルの一部になります。認証情報はサーバー専用の変数に保持し、サービスに対して [変数とシークレット](/variables) から設定してください。ビルド中にデータを取得するコードは、ビルド時にもそのデータへアクセスできる必要があります。ランタイムを再起動しても、すでに生成済みの HTML や JavaScript は変更されません。
 
-ローカルキャッシュファイルとアップロードされたファイルは、レプリカ間で共有されるストアにはなりません。1 レプリカを超えてスケールする前に、Next.js のキャッシュ要件と Server Action の要件を確認してください。永続的なアプリデータはデータベースまたはオブジェクトストレージに保存し、[storage and recovery](/platform/storage-and-recovery) を読んでください。
+ローカルキャッシュファイルとアップロードされたファイルは、レプリカ間で共有されるストアにはなりません。1 レプリカを超えてスケールする前に、Next.js のキャッシュ要件と Server アクション の要件を確認してください。永続的なアプリデータはデータベースまたはオブジェクトストレージに保存し、[ストレージとリカバリ](/platform/storage-and-recovery) を読んでください。
 
 <span id="troubleshooting" />
 
 ## トラブルシューティング
 
-| Symptom | Check |
+| 症状 | 確認 |
 |---|---|
 | `Missing script: start` | 上記の本番用起動スクリプトを追加してください。`next dev` はローカル開発用です。 |
 | アプリが正常状態にならない | `--port 3000` を起動コマンドに一致させ、`0.0.0.0` にバインドしてください。 |
@@ -90,6 +90,6 @@ Lizard は `next` の依存関係を検出し、ビルドスクリプトと起�
 | ビルドがデータベースに到達できない | ルートがビルド時にデータを取得しているか、その依存先がその時点で到達可能かを確認してください。 |
 | `next start` で static export が失敗する | 別の static export ガイドに従ってください。 |
 
-[Next.js self-hosting guide](https://nextjs.org/docs/app/guides/self-hosting) では、フレームワークレベルのキャッシュ、画像、マルチインスタンス動作を扱っています。デプロイエラーについては、[service never healthy](/deploy/troubleshooting/service-never-healthy) を参照してください。
+[Next.jsセルフホスティングガイド](https://nextjs.org/docs/app/guides/self-hosting) では、フレームワークレベルのキャッシュ、画像、マルチインスタンス動作を扱っています。デプロイエラーについては、[サービスが常にhealthyにならない](/deploy/troubleshooting/service-never-healthy) を参照してください。
 
-September 9, 2026 のデプロイチェックとその制限については、[tested versions and cloud results](/framework-guides/validation) を参照してください。
+September 9, 2026 のデプロイチェックとその制限については、[テスト済みバージョンとクラウド結果](/framework-guides/validation) を参照してください。

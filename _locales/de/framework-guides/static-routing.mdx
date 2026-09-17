@@ -1,12 +1,12 @@
 ---
-description: "Konfigurieren Sie statische Site-Routen auf Lizard: Stellen Sie erzeugtes HTML bereit, unterstützen Sie saubere URLs, geben Sie für fehlende Seiten HTTP 404 zurück und wählen Sie, wann ein SPA-Fallback sinnvoll ist."
+description: "Konfigurieren Sie statische Website-Routen auf Lizard: Stellen Sie erzeugtes HTML bereit, unterstützen Sie saubere URLs, geben Sie für fehlende Seiten HTTP 404 zurück und wählen Sie, wann ein SPA-Fallback sinnvoll ist."
 ---
 
 <span id="static-routes-and-404s" />
 
 # Statische Routen und 404-Fehler
 
-Eine Site mit erzeugten Inhalten sollte für jede Route deren HTML ausliefern und für eine fehlende Seite HTTP 404 zurückgeben. Neue lizardpack-Builds für Astro static, Docusaurus, VitePress, Hugo und SvelteKit adapter-static verwenden diese Richtlinie. React- und Vue-SPAs behalten den `index.html`-Fallback, den Browser-Router benötigen.
+Eine Website mit erzeugten Inhalten sollte für jede Route deren HTML ausliefern und für eine fehlende Seite HTTP 404 zurückgeben. Neue lizardpack-Builds für Astro static, Docusaurus, VitePress, Hugo und SvelteKit adapter-static verwenden diese Richtlinie. React- und Vue-SPAs behalten den `index.html`-Fallback, den Browser-Router benötigen.
 
 Die benutzerdefinierte Konfiguration unten ist optional. Verwenden Sie sie für eine Routing-Richtlinie, die das erkannte Framework nicht bereitstellt. Bestehende Images behalten ihre alten Regeln, bis Sie sie neu bauen.
 
@@ -46,11 +46,11 @@ server {
 }
 ```
 
-Dies unterstützt sowohl `guide.html`- als auch `guide/index.html`-Ausgabelayouts. Fügen Sie ein erzeugtes `404.html` ein, wenn Sie eine benutzerdefinierte Fehlerseite möchten. Lassen Sie andernfalls die `error_page`- und Exact-Location-Blöcke weg, um den Standard-Fehlertext von nginx zu verwenden. Behalten Sie in den Links und der Sitemap der Site einen kanonischen URL-Stil bei; diese Suchregel fügt keine kanonischen Weiterleitungen hinzu.
+Dies unterstützt sowohl `guide.html`- als auch `guide/index.html`-Ausgabelayouts. Fügen Sie ein erzeugtes `404.html` ein, wenn Sie eine benutzerdefinierte Fehlerseite möchten. Lassen Sie andernfalls die `error_page`- und Exact-Location-Blöcke weg, um den Standard-Fehlertext von nginx zu verwenden. Behalten Sie in den Links und der Sitemap der Website einen kanonischen URL-Stil bei; diese Suchregel fügt keine kanonischen Weiterleitungen hinzu.
 
 <span id="build-the-site-with-the-config" />
 
-## Site mit der Konfiguration bauen
+## Website mit der Konfiguration bauen
 
 Verwenden Sie dieses vollständige Dockerfile für ein npm-Projekt mit einer eingecheckten Lockfile. Passen Sie die Standardwerte für `BUILD_SCRIPT` und `OUTPUT_DIR` an die folgende Tabelle an:
 
@@ -70,7 +70,7 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 ```
 
-| Site | `BUILD_SCRIPT` | `OUTPUT_DIR` |
+| Website | `BUILD_SCRIPT` | `OUTPUT_DIR` |
 |---|---|---|
 | Astro static | `build` | `dist` |
 | Docusaurus | `build` | `build` |
@@ -80,7 +80,7 @@ EXPOSE 80
 | Next.js export | `build` | `out` |
 | Nuxt generate | `build` mit `nuxt generate` | `.output/public` |
 
-Verwenden Sie die Richtlinie für erzeugte Seiten nur, wenn die App diese Routendateien hat. Ein SvelteKit-SPA-Fallback benötigt zum Beispiel seine eigene Routing-Richtlinie. [Next.js static export](/framework-guides/nextjs/static-export) enthält eine vollständige Anleitung mit einem Trailing-Slash-Layout.
+Verwenden Sie die Richtlinie für erzeugte Seiten nur, wenn die App diese Routendateien hat. Ein SvelteKit-SPA-Fallback benötigt zum Beispiel seine eigene Routing-Richtlinie. [Next.js statischer Export](/framework-guides/nextjs/static-export) enthält eine vollständige Anleitung mit einem Trailing-Slash-Layout.
 
 Schließen Sie Abhängigkeiten, Build-Ausgabe, `.git` und `.env*` in `.dockerignore` aus. Wenn der Build öffentliche Variablen benötigt, deklarieren Sie ihre `ARG`-Werte vor dem Build-Befehl. Kopieren Sie keine privaten Secrets in das Image oder die Browser-Ausgabe.
 
@@ -101,7 +101,7 @@ curl -sS -o /dev/null -w '%{http_code}\n' "$SITE_URL/this-page-does-not-exist"
 
 Erwarten Sie 200 für echte Seiten und 404 für den fehlenden Pfad. Wenn eine gültige Route zu ihrer kanonischen Form weiterleitet, prüfen Sie die Weiterleitung und verifizieren Sie dann das Ziel. Testen Sie auch ein tatsächliches Asset und einen erfundenen `.js`-Pfad: Ein fehlendes Skript darf nicht die Startseite als HTML mit Status 200 zurückgeben.
 
-Öffnen Sie die innere Route abschließend direkt in einem Browser und laden Sie sie neu. Korrekte Client-Navigation allein kann einen Server-Routing-Fehler verbergen. Prüfen Sie vor der Veröffentlichung einer indexierten Site zusammen mit dem HTTP-Status auch die Einstellungen des Frameworks für kanonische URLs und die Sitemap.
+Öffnen Sie die innere Route abschließend direkt in einem Browser und laden Sie sie neu. Korrekte Client-Navigation allein kann einen Server-Routing-Fehler verbergen. Prüfen Sie vor der Veröffentlichung einer indexierten Website zusammen mit dem HTTP-Status auch die Einstellungen des Frameworks für kanonische URLs und die Sitemap.
 
 Unter [getestete Versionen und Cloud-Ergebnisse](/framework-guides/validation) finden Sie die Deployment-Prüfungen vom 9. September 2026 und ihre Grenzen.
 

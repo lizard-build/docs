@@ -10,20 +10,24 @@ Ejecuta un comando dentro del contenedor de un servicio en ejecución, transmite
 
 `lizard run` y `lizard ssh` ejecutan un comando con el contexto de un servicio, pero se ejecutan en lugares distintos — conviene saber cuál quieres.
 
-| Command | Runs where | Use for |
+| Comando | Dónde se ejecuta | Usar para |
 |---------|-----------|---------|
 | `lizard run` | **Localmente**, con el proyecto del servicio + los secretos del servicio inyectados | Migraciones, scripts de seed, herramientas locales que necesitan configuración de prod |
 | `lizard ssh` | **Dentro del contenedor del servicio en ejecución** | Inspeccionar el contenedor en vivo, comandos remotos puntuales, depuración |
 
 `lizard run` muestra tu copia local inyectada del entorno, que normalmente es la misma que producción — pero `lizard ssh` es la referencia autorizada de lo que realmente ve el contenedor en vivo.
 
-## Usage
+<span id="usage" />
+
+## Uso
 
 ```bash
 lizard ssh --service <name> -- <command>
 ```
 
-## Examples
+<span id="examples" />
+
+## Ejemplos
 
 <span id="inspect-the-environment-the-running-app-sees" />
 
@@ -57,8 +61,10 @@ lizard ssh --service api -- cat /etc/os-release
 lizard ssh --service api -- env | grep DATABASE_URL
 ```
 
-## See also
+<span id="see-also" />
+
+## Véase también
 
 - [lizard run](/cli/run) — ejecuta un comando localmente con el entorno del servicio inyectado en su lugar
 - [Variables](/variables) — cómo llegan los secretos y las referencias a un servicio
-- [Deploy from Claude Code](https://lizard.build/blog/deploy-from-claude-code#claude-code-deployment-compared-with-the-alternatives) — por qué un agente necesita una shell dentro del contenedor en ejecución, y qué plataformas no ofrecen una
+- [Desplegar desde Claude Code](https://lizard.build/blog/deploy-from-claude-code#claude-code-deployment-compared-with-the-alternatives) — por qué un agente necesita una shell dentro del contenedor en ejecución, y qué plataformas no ofrecen una

@@ -6,7 +6,9 @@ description: "lizard domain はサービスのドメインを表示し、onlizar
 
 現在のドメインを表示するか、カスタムドメインを接続します。
 
-## Usage
+<span id="usage" />
+
+## 使い方
 
 ```bash
 lizard domain [hostname] [flags]
@@ -14,14 +16,18 @@ lizard domain [hostname] [flags]
 
 ホスト名は位置引数です。`add` サブコマンドはありません。引数なしで `lizard domain` を実行すると、サービスの現在のドメインが表示されます。
 
-## Flags
+<span id="flags" />
 
-| Flag | Description |
+## フラグ
+
+| フラグ | 説明 |
 |------|-------------|
 | `-s, --service <name>` | サービス |
 | `--port <n>` | 公開するポート |
 
-## Subcommands
+<span id="subcommands" />
+
+## サブコマンド
 
 ### `lizard domain generate`
 
@@ -35,11 +41,13 @@ TXT レコードを確認してドメインを有効化します。TLS は自動
 
 ドメインを削除します（別名: `rm`）。
 
-| Flag | Description |
+| フラグ | 説明 |
 |------|-------------|
 | `-y, --yes` | 確認をスキップ |
 
-## Examples
+<span id="examples" />
+
+## 例
 
 <span id="show-the-current-domain" />
 
@@ -88,7 +96,9 @@ lizard domain delete app.example.com
 lizard domain rm app.example.com --yes
 ```
 
-## See also
+<span id="see-also" />
+
+## 関連項目
 
 - [Networking](/networking) — 生成されるドメイン、TLS、worker サービス
-- [Deploy to regions](/deploy/regions) — サービスのリージョン選択
+- [リージョンにデプロイする](/deploy/regions) — サービスのリージョン選択

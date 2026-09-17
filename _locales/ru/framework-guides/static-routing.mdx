@@ -1,0 +1,107 @@
+---
+description: "Настройте статические маршруты на Lizard: раздавайте сгенерированный HTML, поддерживайте чистые URL, возвращайте HTTP 404 для отсутствующих страниц и выбирайте, когда нужен fallback для SPA."
+---
+
+<span id="static-routes-and-404s" />
+
+# Статические маршруты и 404
+
+Сайт со статически сгенерированным контентом должен отдавать HTML для каждого маршрута и возвращать HTTP 404 для несуществующей страницы. Новые сборки lizardpack для Astro static, Docusaurus, VitePress, Hugo и SvelteKit adapter-static используют эту политику. React и Vue SPA сохраняют fallback `index.html`, необходимый браузерным роутерам.
+
+Приведённая ниже пользовательская конфигурация опциональна. Используйте её для политики маршрутизации, которую не предоставляет обнаруженный фреймворк. Существующие образы сохраняют старые правила до следующей пересборки.
+
+<span id="choose-the-routing-policy" />
+
+## Выбор политики маршрутизации
+
+| Тип приложения | Поведение маршрутов |
+|---|---|
+| React или Vue SPA | Валидный клиентский маршрут загружает `index.html`, затем клиентский роутер отрисовывает его. |
+| Сгенерированная документация или контент | Маршрут резолвится в свой сгенерированный HTML; неизвестный путь возвращает HTTP 404. |
+| Серверно рендеримое приложение | Сервер приложения резолвит маршруты и возвращает статус. |
+
+Catch-all в SPA может показывать сообщение об отсутствующей странице, но браузерный код не может изменить HTTP-статус уже отправленного HTML-ответа. Если вам нужен route-aware HTTP-статус для SPA, используйте серверную или prerender-настройку, которая знает, какие пути существуют.
+
+<span id="configure-nginx-for-generated-pages" />
+
+## Настройка nginx для сгенерированных страниц
+
+Создайте `nginx.conf` в корне приложения:
+
+```nginx
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+
+  location / {
+    try_files $uri $uri.html $uri/ =404;
+  }
+
+  error_page 404 /404.html;
+  location = /404.html {
+    internal;
+  }
+}
+```
+
+Это поддерживает оба варианта структуры вывода `guide.html` и `guide/index.html`. Добавьте сгенерированный `404.html`, если нужна собственная страница ошибки. Иначе опустите блоки `error_page` и exact-location, чтобы использовать стандартное тело ошибки nginx. Используйте один канонический стиль URL в ссылках и sitemap сайта; это правило поиска не добавляет канонические редиректы.
+
+<span id="build-the-site-with-the-config" />
+
+## Сборка сайта с конфигурацией
+
+Используйте этот полный Dockerfile для npm-проекта с закоммиченным lockfile. Измените `BUILD_SCRIPT` и `OUTPUT_DIR` на значения из таблицы ниже:
+
+```dockerfile
+FROM node:22-slim AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+ARG BUILD_SCRIPT=build
+RUN npm run "$BUILD_SCRIPT"
+
+FROM nginx:alpine
+ARG OUTPUT_DIR=dist
+COPY --from=build /app/${OUTPUT_DIR}/ /usr/share/nginx/html/
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+```
+
+| Сайт | `BUILD_SCRIPT` | `OUTPUT_DIR` |
+|---|---|---|
+| Astro static | `build` | `dist` |
+| Docusaurus | `build` | `build` |
+| VitePress с корнем `docs/` | `docs:build` | `docs/.vitepress/dist` |
+| VitePress в корне проекта | `docs:build` или ваш скрипт | `.vitepress/dist` |
+| SvelteKit с adapter-static | `build` | `build` |
+| Next.js export | `build` | `out` |
+| Nuxt generate | `build` с `nuxt generate` | `.output/public` |
+
+Политику generated-pages используйте только когда у приложения есть эти файлы маршрутов. Например, SPA fallback в SvelteKit требует свою политику маршрутизации. У [Статический экспорт Next.js](/framework-guides/nextjs/static-export) есть полный рецепт с trailing-slash структурой.
+
+Исключите зависимости, сборку, `.git` и `.env*` в `.dockerignore`. Если сборке нужны публичные переменные, объявите их `ARG` перед командой сборки. Не копируйте приватные секреты в образ или браузерный вывод.
+
+После [настройки CLI](/framework-guides#prepare-the-project) создайте сервис командой `lizard add --service web`, затем разверните исходники командой `lizard up --service web --port 80`. Шаг add можно пропустить, если сервис уже существует. На существующем сервисе проверьте [порядок принятия решения о сборке](/concepts/build-pipeline#build-decision-order): переопределения командой могут иметь приоритет над Dockerfile. Сам по себе конфиг не заменяет сгенерированную nginx-конфигурацию; Dockerfile должен скопировать его в образ.
+
+<span id="verify-http-responses" />
+
+## Проверка HTTP-ответов
+
+Установите `SITE_URL` в реальный локальный тестовый URL или deployed origin, затем замените `/guide/` на существующую страницу:
+
+```bash
+SITE_URL=https://YOUR_PUBLIC_HOST
+curl -sS -o /dev/null -w '%{http_code}\n' "$SITE_URL/"
+curl -sS -o /dev/null -w '%{http_code}\n' "$SITE_URL/guide/"
+curl -sS -o /dev/null -w '%{http_code}\n' "$SITE_URL/this-page-does-not-exist"
+```
+
+Ожидайте 200 для реальных страниц и 404 для отсутствующего пути. Если валидный маршрут редиректит на каноническую форму, проверьте редирект, а затем верифицируйте цель. Также протестируйте реальный ассет и вымышленный путь `.js`: отсутствующий скрипт не должен возвращать домашнюю страницу как HTML со статусом 200.
+
+Наконец, откройте внутренний маршрут прямо в браузере и перезагрузите его. Корректная клиентская навигация может скрыть ошибку серверной маршрутизации. Проверьте настройки канонических URL и sitemap фреймворка вместе с HTTP-статусом перед публикацией индексируемого сайта.
+
+См. [проверенные версии и облачные результаты](/framework-guides/validation) для проверок деплоя 9 сентября 2026 года и их ограничений.
+

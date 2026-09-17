@@ -24,9 +24,9 @@ Si el directorio todavía no está vinculado a un proyecto, `up` ejecuta primero
 
 <span id="common-flags" />
 
-## Flags comunes
+## Banderas comunes
 
-| Flag | Propósito |
+| Bandera | Propósito |
 |------|---------|
 | `-s, --service <name>` | Apuntar a un servicio específico o crearlo |
 | `--build-command <cmd>` | Anular el comando de compilación |
@@ -46,7 +46,7 @@ lizard up --service api --start-command "node server.js" --port 8080
 
 ## Configurar comandos de compilación/arranque
 
-Pasar `--build-command` o `--start-command` cambia el servicio a la ruta de **Dockerfile sintetizado**. En esa ruta, `Procfile` y `package.json` `scripts.start` **no** se leen — establece el comando de arranque explícitamente (o incluye un `CMD` en tu propio Dockerfile). Consulta [Build Pipeline](/concepts/build-pipeline). Python es donde esto más suele afectar: [Django, Flask and FastAPI](https://lizard.build/blog/python-app-hosting#deploying-django) necesitan cada uno una línea distinta de `gunicorn` o `uvicorn`.
+Pasar `--build-command` o `--start-command` cambia el servicio a la ruta de **Dockerfile sintetizado**. En esa ruta, `Procfile` y `package.json` `scripts.start` **no** se leen — establece el comando de arranque explícitamente (o incluye un `CMD` en tu propio Dockerfile). Consulta [Proceso de compilación](/concepts/build-pipeline). Python es donde esto más suele afectar: [Django, Flask and FastAPI](https://lizard.build/blog/python-app-hosting#deploying-django) necesitan cada uno una línea distinta de `gunicorn` o `uvicorn`.
 
 <span id="re-deploying-an-upload-service" />
 
@@ -81,4 +81,4 @@ La subida es excelente para iterar rápido y para situaciones sin remoto. Para c
 ## Ver también
 
 - [`lizard up`](/cli/up) — la referencia completa del comando.
-- [Build Pipeline](/concepts/build-pipeline) — cómo se detecta y compila tu stack.
+- [Proceso de compilación](/concepts/build-pipeline) — cómo se detecta y compila tu stack.

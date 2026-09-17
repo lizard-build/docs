@@ -26,13 +26,13 @@ lizardpack はリポジトリを検査し、最適化されたマルチステー
 
 **Hugo → Go → Node → Python → Rust → Ruby → PHP → Java → static**
 
-本番用スクリプト、アダプター、出力パス、ポートについては [Framework guides](/framework-guides) を参照してください。検出はプロジェクトファイルと依存関係を使用します。複数のプロバイダーに一致するリポジトリは、この順序に従います。
+本番用スクリプト、アダプター、出力パス、ポートについては [フレームワーク guides](/framework-guides) を参照してください。検出はプロジェクトファイルと依存関係を使用します。複数のプロバイダーに一致するリポジトリは、この順序に従います。
 
 この経路では:
 
 - リポジトリに `Dockerfile` が存在し、**かつ** 実際のビルドステップ（`RUN <package-manager>` の行であり、単なる `COPY dist/` ではない）がある場合、それがそのまま使用されます。
 - それ以外の場合、lizardpack が Dockerfile を生成します。
-- **開始コマンド** は自動検出されます: `Procfile` `web:` の行（Python/Ruby）または `package.json` `scripts.start`（Node）が自動的に検出されます。Django、Flask、FastAPI がそれぞれ必要とする正確な行については、[Python app hosting](https://lizard.build/blog/python-app-hosting) を参照してください。
+- **開始コマンド** は自動検出されます: `Procfile` `web:` の行（Python/Ruby）または `package.json` `scripts.start`（Node）が自動的に検出されます。Django、Flask、FastAPI がそれぞれ必要とする正確な行については、[Pythonアプリホスティング](https://lizard.build/blog/python-app-hosting) を参照してください。
 - **ポート** は `EXPOSE`、フレームワークのデフォルト、または明示的な `PORT` 環境変数から推定されます。
 
 > **注意:** 事前ビルド済みアーティファクトのみをコピーする Dockerfile（`COPY dist/`、`build/`、`out/`、`.next/`、`public/`）で、`RUN` のビルドステップが**ない**場合は、不完全と見なされ、lizardpack によって再生成されます。実際のビルドステップを追加するか、`dockerfilePath` を設定してそのまま使用するよう強制してください。
@@ -41,7 +41,7 @@ lizardpack はリポジトリを検査し、最適化されたマルチステー
 
 ## 何が再ビルドを引き起こすか
 
-| Action | Rebuilds? |
+| アクション | Rebuilds? |
 |--------|-----------|
 | 追跡対象ブランチへの `git push` | ✅ GitHub webhook 経由 |
 | `lizard redeploy` / `lizard up` | ✅ 明示的 |
@@ -76,7 +76,7 @@ lizard events                  # deploy history + replica status
 
 ## ビルド設定リファレンス
 
-| Field | Description |
+| フィールド | 説明 |
 |-------|-------------|
 | `buildCommand` | アプリをビルドするコマンド → **合成された Dockerfile** 経路を強制 |
 | `startCommand` | ランタイムでアプリを起動するコマンド |

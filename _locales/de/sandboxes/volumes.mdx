@@ -48,7 +48,7 @@ await v.getInfo('proj_123');
 await v.delete('proj_123');                     // must be detached first
 ```
 
-| Method | Description |
+| Methode | Beschreibung |
 |---|---|
 | `Volume.create(projectId, name, { sizeGb })` | Ein Volume erstellen (standardmäßig 5 GB) |
 | `Volume.list(projectId)` | Volumes in einem Projekt auflisten |
@@ -67,7 +67,7 @@ Volumes befinden sich im Tab **Sandboxes → Volumes** eines Projekts. Erstelle 
 ## Hinweise
 
 - Ein Volume kann jeweils nur an **eine Sandbox** gleichzeitig angehängt werden. Der Versuch, ein bereits angehängtes Volume einzuhängen, führt zu einem Konflikt.
-- Das Löschen einer Sandbox (oder ihr Ablauf) **hängt** das Volume **aus** — es löscht es nicht. Die Daten bleiben für die nächste Einhängung erhalten.
+- Das Löschen einer Sandbox (oder ihr Ablauf) **trennt** das Volume — es löscht es nicht. Die Daten bleiben für die nächste Einhängung erhalten.
 - Lösche das Volume selbst, um den Speicherplatz freizugeben.
 - Eine pausierte Sandbox behält ihre Einhängung weiterhin. Persistent Volumes verwenden Node-lokalen Speicher; exportiere Daten, die du nach einem Node-Ausfall wiederherstellen können musst. Siehe [Speicher und Wiederherstellung](/platform/storage-and-recovery).
 

@@ -1,0 +1,98 @@
+---
+description: "Развертывание FastAPI на Lizard с Uvicorn, requirements.txt, Procfile и портом 8000. Проверка эндпоинта здоровья и диагностика ошибок импорта, хоста и зависимостей."
+---
+
+<span id="deploy-fastapi-on-lizard" />
+
+# Развертывание FastAPI на Lizard
+
+Запустите FastAPI на Lizard с Uvicorn, прослушивающим `0.0.0.0:8000`. Включите и FastAPI, и Uvicorn в зависимости приложения. Импорт файла, объявляющего `app = FastAPI()`, сам по себе не запускает HTTP-сервер.
+
+<span id="example-project" />
+
+## Пример проекта
+
+[Пример FastAPI](https://github.com/lizard-build/fastapi-example) включает приложение, Procfile, закреплённые зависимости, лицензию MIT и HTTP-тесты. Его CI запускает производственную точку входа Uvicorn на Linux. Мы также развернули коммит `df522c1` с GitHub и проверили health, OpenAPI, интерактивную документацию, эхо JSON, невалидный ввод и отсутствующий маршрут через публичный HTTPS 09.09.2026.
+
+<span id="prepare-an-app" />
+
+## Подготовка приложения
+
+В этом примере используются `requirements.txt` и `main.py` в корне приложения:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+```
+
+Добавьте `fastapi` и `uvicorn` в рабочий процесс зависимостей и сохраните проверенные, разрешённые версии в `requirements.txt`. Выберите минорную версию Python в `.python-version`, например `3.13`, если ваши зависимости это поддерживают.
+
+Создайте `Procfile` с явной целью импорта:
+
+```text
+web: uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+`main:app` означает объект `app` в `main.py`. Для `src/api.py` используйте путь импорта, работающий из корня приложения, например `src.api:app`. Явный Procfile избавляет от зависимости от обнаружения паттернов исходного кода в пользовательских компоновках.
+
+| Настройка | Значение |
+|---|---|
+| Установка | `pip install -r requirements.txt` |
+| Запуск | команда Procfile `web:` |
+| Порт сервиса | `8000` |
+| Результат сборки | Исходный код Python и установленные зависимости |
+
+<span id="test-locally" />
+
+## Локальное тестирование
+
+Используйте локальное виртуальное окружение:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+В другом терминале:
+
+```bash
+curl --fail http://localhost:8000/health
+```
+
+Ожидается успешный ответ, содержащий `{"status":"ok"}`. Оставьте режим перезагрузки для разработки. [Руководство по серверу FastAPI](https://fastapi.tiangolo.com/deployment/manually/) объясняет ASGI-сервер и цель импорта.
+
+<span id="deploy" />
+
+## Развертывание
+
+После [настройки CLI](/framework-guides#prepare-the-project) загрузите из корня приложения:
+
+```bash
+lizard init --name fastapi-app
+lizard add --service api
+lizard up --service api --port 8000
+lizard logs --build --service api --json
+lizard logs --service api --json
+lizard ps --json
+```
+
+Исключите файлы `.venv/`, `__pycache__/` и `.env`. Оставьте переопределения сборки/запуска сервиса неустановленными, чтобы lizardpack читал Procfile. Путь на основе requirements здесь не требует отдельной команды компиляции.
+
+Запросите `/health` на возвращённом HTTPS URL, затем протестируйте реальное действие API. TCP-проба здоровья лишь подтверждает, что процесс открыл порт; ваш эндпоинт здоровья может добавлять проверки, важные для приложения.
+
+<span id="data-and-common-failures" />
+
+## Данные и частые ошибки
+
+Задайте учётные данные через [переменные и секреты](/variables). Добавьте [Managed Postgres](/addons/postgres), когда приложению нужна база данных, и используйте ссылку на соединение в области сервиса. Файлы, локальные для контейнера, не являются долговечным хранилищем приложения; см. [хранилище и восстановление](/platform/storage-and-recovery).
+
+При `No module named uvicorn` проверьте установленные требования. При ошибке ASGI-импорта выполните точную команду Procfile локально из того же корня. Если сервис никогда не становится работоспособным, проверьте порт `8000` и хост привязки. Если процесс завершается без логов сервера, убедитесь, что он запускает Uvicorn, а не просто `python main.py`.
+
+См. [проверенные версии и результаты в облаке](/framework-guides/validation) для проверок развертывания 9 сентября 2026 года и их ограничений.

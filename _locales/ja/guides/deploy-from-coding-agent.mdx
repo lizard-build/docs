@@ -6,7 +6,7 @@ description: "Lizard Skill と Lizard CLI を使って、Claude Code、Codex、�
 
 # コーディングエージェントからデプロイする
 
-コーディングエージェントは、Lizard Skill と Lizard CLI を使って、自身が構築したアプリをデプロイできます。エージェントはインストール済み CLI のガイドを読み、対象プロジェクトを確認し、ビルドを実行して、結果を確認します。これに отдельの MCP transport は不要です。
+コーディングエージェントは、Lizard Skill と Lizard CLI を使って、自身が構築したアプリをデプロイできます。エージェントはインストール済み CLI のガイドを読み、対象プロジェクトを確認し、ビルドを実行して、結果を確認します。これに別途のMCPトランスポートは不要です。
 
 <span id="before-you-start" />
 
@@ -39,7 +39,7 @@ lizard service set --help --json
 
 ## ローカルソースをデプロイする
 
-完全なテストには、[agent-app example](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/agent-app) を使ってください。これは Node.js 22 と `pg` 8.16.3 を使用し、port 3000 で待ち受け、Managed Postgres から 1 行読み取ります。起動時に、存在しない場合はデモ用のテーブルと行を作成します。より大きなアプリケーションでは、独自のマイグレーションプロセスを使用してください。
+完全なテストには、[agent-appの例](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/agent-app) を使ってください。これは Node.js 22 と `pg` 8.16.3 を使用し、port 3000 で待ち受け、Managed Postgres から 1 行読み取ります。起動時に、存在しない場合はデモ用のテーブルと行を作成します。より大きなアプリケーションでは、独自のマイグレーションプロセスを使用してください。
 
 例を専用ディレクトリにコピーし、ローカルチェックを実行します:
 
@@ -122,13 +122,13 @@ lizard restart --service api --json
 
 サービスが `lizard ps --json` で `running` に戻るまで待ち、両方の HTTP リクエストを再実行してください。ランタイムログの tail は空の場合があります。アプリケーションの確認は HTTP レスポンスです。行は Managed Postgres に保存されており、サービスプロセスはそれを保存しません。既存データの再利用を確認するには、再起動前にデータベースエディタでデモ行を識別しやすい値に更新し、その後 `/data` がその値を返すことを確認してください。
 
-`logs --json` はログの tail を返して終了します。実際のアプリケーションデータを変更する前に、[storage and recovery](/platform/storage-and-recovery) を読んでください。
+`logs --json` はログの tail を返して終了します。実際のアプリケーションデータを変更する前に、[ストレージとリカバリ](/platform/storage-and-recovery) を読んでください。
 
 <span id="when-deployment-fails" />
 
 ## デプロイに失敗した場合
 
-失敗したコマンドの終了 code と JSON エラーを使用してください。コンパイルエラー、終了するプロセス、到達できないポートでは、それぞれ異なる修正が必要です。[JSON and automation](/cli/json) と [service never healthy](/deploy/troubleshooting/service-never-healthy) を参照してください。`redeploy` は新しいビルドであり、古いバージョンへのロールバックではありません。
+失敗したコマンドの終了 code と JSON エラーを使用してください。コンパイルエラー、終了するプロセス、到達できないポートでは、それぞれ異なる修正が必要です。[JSONと自動化](/cli/json) と [サービスが常にhealthyにならない](/deploy/troubleshooting/service-never-healthy) を参照してください。`redeploy` は新しいビルドであり、古いバージョンへのロールバックではありません。
 
 <span id="limits-and-cost" />
 
@@ -136,4 +136,4 @@ lizard restart --service api --json
 
 エージェントは、人と同じ CLI を通じて課金対象リソースを作成できます。[limits](/platform/limits) と [pricing](https://lizard.build/pricing) を確認し、必要なプロジェクトとサービスに認証情報の範囲を限定してください。
 
-確認済みバージョン、クラウド結果、残っている制限については、[scenario test results](/guides/validation) を参照してください。
+確認済みバージョン、クラウド結果、残っている制限については、[シナリオテストの結果](/guides/validation) を参照してください。

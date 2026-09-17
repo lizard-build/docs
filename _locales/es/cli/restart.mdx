@@ -6,15 +6,19 @@ description: "lizard restart realiza un reinicio gradual de la compilación actu
 
 Reinicio gradual de la compilación actual — sin reconstrucción.
 
-## Usage
+<span id="usage" />
+
+## Uso
 
 ```bash
 lizard restart [nameOrId] [flags]
 ```
 
-## Flags
+<span id="flags" />
 
-| Flag | Description |
+## Banderas
+
+| Bandera | Descripción |
 |------|--------------|
 | `-s, --service <name>` | Servicio |
 | `--detach` | Volver después de que se acepte el reinicio |
@@ -22,7 +26,9 @@ lizard restart [nameOrId] [flags]
 | `--timeout <seconds>` | Tiempo máximo de espera de preparación con `--wait`; valor predeterminado: `120` |
 | `--json` | Devolver JSON para scripts |
 
-## Examples
+<span id="examples" />
+
+## Ejemplos
 
 <span id="restart-a-service" />
 
@@ -60,8 +66,10 @@ lizard --json restart --service worker --wait --timeout 60
 
 El tiempo de espera se aplica a la espera de preparación después de la solicitud de reinicio. No cancela el reinicio, y las llamadas de red pueden hacer que el comando tarde más en total. Comprueba los datos de la aplicación o un endpoint de estado después del comando cuando tu flujo de trabajo necesite más que la preparación del proceso.
 
-## See also
+<span id="see-also" />
+
+## Véase también
 
 - [lizard redeploy](/cli/redeploy) — activar una nueva compilación en lugar de reciclar la actual
 - [lizard logs](/cli/logs) — inspeccionar los logs en torno a un reinicio con `--restart latest` o `--restart <id>`
-- [Deployments](/concepts/deployments) — reinicios frente a redespliegues y recuperación tras un fallo
+- [Despliegues](/concepts/deployments) — reinicios frente a redespliegues y recuperación tras un fallo

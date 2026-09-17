@@ -36,12 +36,12 @@ export default defineNuxtConfig({
 
 start スクリプトは、デプロイコンテナ内の Linux シェルを使用します。lizardpack は `nuxt` 依存関係を検出し、build スクリプトと start スクリプトを実行します。新規の Nuxt プロジェクトには `start` が含まれていない場合があります。その場合は、`nuxt dev` が本番ビルドを配信すると想定せず、これを追加してください。
 
-| Setting | Value |
+| 設定 | 値 |
 |---|---|
-| Build | `npm run build` |
+| ビルド | `npm run build` |
 | Server entry | `.output/server/index.mjs` |
 | Start | `npm run start` |
-| Service port | `3000` |
+| サービスポート | `3000` |
 
 <span id="test-the-built-app" />
 
@@ -70,13 +70,15 @@ lizard logs --service web --json
 lizard ps --json
 ```
 
-`.nuxt/`、`.output/`、`node_modules/`、`.env` ファイルはアップロード対象から除外してください。ソース、設定、lockfile は含めてください。既存のサービスの build/start 上書き設定は、ここで使用される検出をバイパスします。[build decision order](/concepts/build-pipeline#build-decision-order) を参照してください。
+`.nuxt/`、`.output/`、`node_modules/`、`.env` ファイルはアップロード対象から除外してください。ソース、設定、lockfile は含めてください。既存のサービスの build/start 上書き設定は、ここで使用される検出をバイパスします。[ビルドの決定順序](/concepts/build-pipeline#build-decision-order) を参照してください。
 
-## Runtime configuration
+<span id="runtime-configuration" />
+
+## ランタイム設定
 
 runtime 設定は `runtimeConfig` で宣言し、サービスには対応する `NUXT_*` 値を設定してください。シークレットは `runtimeConfig.public` の外に置いてください。public 部分はブラウザに届きます。ページの prerender に使用される値は生成済みビルドにも影響するため、変更後はリクエスト時のルートと prerender 済みルートの両方を確認してください。
 
-サービスの設定には [variables and secrets](/variables) を、永続データには [storage and recovery](/platform/storage-and-recovery) を使用してください。ローカルキャッシュやセッションファイルを、レプリカ間で共有されるストレージとして扱わないでください。
+サービスの設定には [変数とシークレット](/variables) を、永続データには [ストレージとリカバリ](/platform/storage-and-recovery) を使用してください。ローカルキャッシュやセッションファイルを、レプリカ間で共有されるストレージとして扱わないでください。
 
 <span id="troubleshooting" />
 
@@ -84,7 +86,7 @@ runtime 設定は `runtimeConfig` で宣言し、サービスには対応する 
 
 プロセスが `.output/server/index.mjs` の不足を報告する場合は、プリセットとビルド出力を確認してください。start スクリプトがないと報告される場合は、上記のものを追加してください。サイトがいつまでも healthy にならない場合は、host と port を確認してください。
 
-完全に生成された Nuxt サイトでは、静的 Dockerfile と正しいルート処理で `.output/public/` を配信してください。その出力を上記の Node コマンドで起動しないでください。[Nuxt deployment guide](https://nuxt.com/docs/4.x/getting-started/deployment) では Node 出力と生成出力が説明されています。[static routes and 404s](/framework-guides/static-routing) では Lizard の静的サーバー設定を扱っています。
+完全に生成された Nuxt サイトでは、静的 Dockerfile と正しいルート処理で `.output/public/` を配信してください。その出力を上記の Node コマンドで起動しないでください。[Nuxtデプロイガイド](https://nuxt.com/docs/4.x/getting-started/deployment) では Node 出力と生成出力が説明されています。[静的ルートと404エラー](/framework-guides/static-routing) では Lizard の静的サーバー設定を扱っています。
 
 <span id="generate-a-static-site" />
 
@@ -102,6 +104,6 @@ export default defineNuxtConfig({
 
 クローラーが発見できない未リンクまたは動的ルートは、`routes` に追加してください。`npm run build` を実行し、`.output/public/index.html` と内部ルートファイルが存在することを確認してください。Nuxt 4.5.2 でのテストでは、`preset: 'node-server'` を残したまま `nuxt generate` のみに切り替えると、サイトのルートがないフォールバックページが生成されました。ビルドが成功しただけでは、エクスポートにサイトが含まれていることは確認できませんでした。
 
-[static routes and 404s](/framework-guides/static-routing) の Dockerfile と nginx 設定を使用し、build スクリプトは `build`、出力ディレクトリは `.output/public`、service port は `80` にしてください。静的コンテナは Nuxt server routes を実行せず、すでに生成済みのページについて runtime config も読み取りません。
+[静的ルートと404エラー](/framework-guides/static-routing) の Dockerfile と nginx 設定を使用し、build スクリプトは `build`、出力ディレクトリは `.output/public`、service port は `80` にしてください。静的コンテナは Nuxt server routes を実行せず、すでに生成済みのページについて runtime config も読み取りません。
 
-2026年9月9日のデプロイ確認とその制限については、[tested versions and cloud results](/framework-guides/validation) を参照してください。
+2026年9月9日のデプロイ確認とその制限については、[テスト済みバージョンとクラウド結果](/framework-guides/validation) を参照してください。

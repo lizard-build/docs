@@ -1,5 +1,5 @@
 ---
-description: "Aktuelle Hinweise zum Lebenszyklus von Sandboxes, Grenzen bei der Wiederherstellung von Deployments und Vorrangregeln für Build-Einstellungen, die Sie prüfen sollten, bevor Sie sich auf einen Workflow verlassen."
+description: "Aktuelle Hinweise zum Lebenszyklus von Sandboxes, Grenzen bei der Wiederherstellung von Bereitstellungen und Vorrangregeln für Build-Einstellungen, die Sie prüfen sollten, bevor Sie sich auf einen Workflow verlassen."
 ---
 
 <span id="known-issues" />
@@ -12,9 +12,9 @@ Diese Seite dokumentiert Verhalten, das besondere Vorsicht oder eine verifiziert
 
 ## Pause und Ablauf von Sandboxen
 
-Die Pause soll die verbleibende Laufzeit einfrieren. Ein Konflikt zwischen der Uhr des Knotens und einem separaten Bereinigungsprozess kann dazu führen, dass eine pausierte Sandbox nach ihrer ursprünglichen Frist beendet wird. Auch der Neustart des Node-Agent und das Fortsetzen einer Sandbox ohne Ablaufzeit benötigen den Lifecycle-Fix.
+Die Pause soll die verbleibende Laufzeit einfrieren. Ein Konflikt zwischen der Uhr des Knotens und einem separaten Bereinigungsprozess kann dazu führen, dass eine pausierte Sandbox nach ihrer ursprünglichen Frist beendet wird. Auch der Neustart des Node-Agent und das Fortsetzen einer Sandbox ohne Ablaufzeit benötigen den Lebenszyklus-Fix.
 
-Bis dieser Fix einen Live-Test bestanden hat und Ihre Region erreicht hat, sollten Sie sich für langfristigen Zustand nicht allein auf Pause verlassen. Speichern Sie Dateien unter `/data` auf einem Persistent Volume, oder speichern Sie den Anwendungszustand in einer Datenbank oder einem Object Storage. Host-Arbeitsspeicher ist kein Backup. Verwenden Sie eine explizite Laufzeit und geben Sie die Sandbox frei, wenn die Aufgabe beendet ist.
+Bis dieser Fix einen Live-Test bestanden hat und Ihre Region erreicht hat, sollten Sie sich für langfristigen Zustand nicht allein auf Pause verlassen. Speichern Sie Dateien unter `/data` auf einem Persistent Volume, oder speichern Sie den Anwendungszustand in einer Datenbank oder einem Object Storage. Host-Arbeitsspeicher ist kein Backup. Verwenden Sie eine explizite Laufzeit und beenden Sie die Sandbox, wenn die Aufgabe erledigt ist.
 
 <span id="redeploy-is-not-rollback" />
 
@@ -30,9 +30,9 @@ Explizite Build- oder Start-Befehle haben Vorrang vor einem Dockerfile im Reposi
 
 <span id="templates-and-mcp" />
 
-## Templates und MCP
+## Vorlagen und MCP
 
-Die aktuelle API zum Erstellen von Sandboxes akzeptiert die zwei integrierten Templates. Anleitungen, die `lizard push` für benutzerdefinierte Templates verwenden, entsprechen nicht der aktuellen öffentlichen CLI.
+Die aktuelle API zum Erstellen von Sandboxes akzeptiert die zwei integrierten Vorlagen. Anleitungen, die `lizard push` für benutzerdefinierte Vorlagen verwenden, entsprechen nicht der aktuellen öffentlichen CLI.
 
 Lizard Skill verwendet Lizard CLI. Dieser Workflow stellt keinen MCP-Transport bereit. Das Hosting eines eigenen entfernten MCP-Servers ist ein separates Application-Deployment; siehe den [Leitfaden](/guides/deploy-mcp-server).
 

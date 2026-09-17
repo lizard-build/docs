@@ -53,7 +53,7 @@ Ein **Service** ist eine einzelne deploybare Einheit. Seine Quelle ist eine der 
 - **`github`** — ein verbundenes GitHub-Repo. Pushes auf den verfolgten Branch lösen automatisch ein Redeploy aus.
 - **`upload`** — ein mit `lizard up` hochgeladenes Tarball.
 
-Jeder laufende Service läuft in seinem eigenen **isolierten Pod** mit einer Network Policy nach dem Prinzip Default Deny, einer generierten `<name>.<region>.onlizard.com`-Domain und automatischem TLS. Diese Aufteilung — Sie liefern den Container, die Plattform führt ihn aus — ist [container as a service](https://lizard.build/blog/container-as-a-service), und der Blog behandelt, was dabei trotzdem noch bei Ihnen verbleibt. Prüfen und verwalten Sie Services mit:
+Jeder laufende Service läuft in seinem eigenen **isolierten Pod** mit einer Network Policy nach dem Prinzip Standard Deny, einer generierten `<name>.<region>.onlizard.com`-Domain und automatischem TLS. Diese Aufteilung — Sie liefern den Container, die Plattform führt ihn aus — ist [container as a service](https://lizard.build/blog/container-as-a-service), und der Blog behandelt, was dabei trotzdem noch bei Ihnen verbleibt. Prüfen und verwalten Sie Services mit:
 
 ```bash
 lizard ps                       # list services with status + URL
@@ -81,7 +81,7 @@ Standardmäßig ist ein Service eine **HTTP-App**, die auf einem Port lauscht (S
 lizard add postgres redis s3
 ```
 
-Jedes Addon stellt einen festen Satz an Umgebungsvariablen bereit, den Ihre Services per **Referenz** verwenden (`${{<addon-name>.KEY}}`). Siehe [Managed Addons](/addons).
+Jedes Add-on stellt einen festen Satz an Umgebungsvariablen bereit, den Ihre Services per **Referenz** verwenden (`${{<addon-name>.KEY}}`). Siehe [Managed Addons](/addons).
 
 <span id="cross-resource-references" />
 
@@ -93,7 +93,7 @@ Jeder Wert eines Service oder Addons kann aus der Umgebung einer anderen Ressour
 ${{<name>.<KEY>}}
 ```
 
-Referenzen werden zur **Deploy-Zeit** gegen die zusammengeführte Umgebung des Ziels aufgelöst. Sie werden per ID gespeichert, daher bricht ein späteres Umbenennen des Ziels die Referenz nicht. Eine Referenz auf ein fehlendes Ziel oder einen fehlenden Schlüssel wird zu einer leeren Zeichenfolge aufgelöst (das Deploy schlägt **nicht** fehl); nur zirkuläre Referenzen führen zu einem Fehler.
+Referenzen werden zur **Bereitstellen-Zeit** gegen die zusammengeführte Umgebung des Ziels aufgelöst. Sie werden per ID gespeichert, daher bricht ein späteres Umbenennen des Ziels die Referenz nicht. Eine Referenz auf ein fehlendes Ziel oder einen fehlenden Schlüssel wird zu einer leeren Zeichenfolge aufgelöst (das Bereitstellen schlägt **nicht** fehl); nur zirkuläre Referenzen führen zu einem Fehler.
 
 ```bash
 # Wire a service to the project's Postgres

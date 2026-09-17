@@ -6,7 +6,9 @@ description: "lizard service lee y edita la configuración de compilación, inic
 
 Administra la configuración, el origen y el ciclo de vida de un servicio individual.
 
-## Usage
+<span id="usage" />
+
+## Uso
 
 ```bash
 lizard service set [flags]
@@ -17,13 +19,15 @@ lizard service logs
 lizard service link
 ```
 
-## Subcommands
+<span id="subcommands" />
+
+## Subcomandos
 
 ### `lizard service set`
 
 Aplica cambios de compilación/inicio/origen/variables/cambio de nombre a un servicio.
 
-| Flag | Description |
+| Bandera | Descripción |
 |------|-------------|
 | `--set <path>=<value>` | Establece un campo (repetible) |
 | `-f, --file <path>` | Archivo de configuración JSON para aplicar |
@@ -53,7 +57,9 @@ Transmite los registros de un servicio (consulta también [lizard logs](/cli/log
 
 Vincula un servicio al directorio actual.
 
-## Examples
+<span id="examples" />
+
+## Ejemplos
 
 <span id="update-a-services-build-and-start-commands" />
 
@@ -79,9 +85,11 @@ lizard service show -s api
 lizard service delete -y
 ```
 
-## See also
+<span id="see-also" />
+
+## Véase también
 
 - [lizard port](/cli/port) — muestra o cambia el puerto del contenedor de un servicio
 - [lizard scale](/cli/scale) — escala las réplicas, CPU, memoria o almacenamiento de un servicio
 - [Architecture](/concepts/architecture) — cómo se relacionan los servicios con los proyectos y los addons
-- [Build pipeline](/concepts/build-pipeline) — cómo se usan `buildCommand`, `startCommand` y la configuración de origen en tiempo de compilación
+- [Compilar pipeline](/concepts/build-pipeline) — cómo se usan `buildCommand`, `startCommand` y la configuración de origen en tiempo de compilación

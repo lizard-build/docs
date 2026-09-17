@@ -6,7 +6,9 @@ description: "アップロード、アセット、バックアップ向けの S3
 
 アップロード、アセット、バックアップ向けの S3互換オブジェクトストレージです。`s3` アドオンをプロビジョニングすると、**`default` という名前の public-read バケット** も作成されるため、追加設定なしでファイルを配信できます。
 
-## Provision
+<span id="provision" />
+
+## プロビジョニング
 
 ```bash
 lizard add s3
@@ -14,9 +16,11 @@ lizard add s3
 
 最初の S3 アドオンの名前は `s3` なので、`${{s3.S3_ENDPOINT}}` などもすぐに使えます。
 
-## Environment variables
+<span id="environment-variables" />
 
-| Variable | Description |
+## 環境変数
+
+| 変数 | 説明 |
 |----------|-------------|
 | `S3_ENDPOINT` | S3互換エンドポイント URL |
 | `S3_DEFAULT_BUCKET` | 自動作成されるバケット名 (`default`) |
@@ -24,7 +28,9 @@ lizard add s3
 | `S3_SECRET_ACCESS_KEY` | シークレットキー |
 | `S3_REGION` | リージョン |
 
-## Connect a service
+<span id="connect-a-service" />
+
+## サービスを接続
 
 ```bash
 lizard secrets set \
@@ -37,7 +43,9 @@ lizard secrets set \
 lizard redeploy --service api
 ```
 
-## Using an AWS SDK
+<span id="using-an-aws-sdk" />
+
+## AWS SDKを使用する
 
 エンドポイントは S3互換です。**path-style** アドレッシングを設定してください:
 
@@ -55,7 +63,9 @@ const s3 = new S3Client({
 });
 ```
 
-## Public files
+<span id="public-files" />
+
+## 公開ファイル
 
 任意の **public** バケット内のオブジェクトは、認証なしで次の 2 つの方法で配信されます:
 
@@ -74,19 +84,25 @@ const s3 = new S3Client({
 <dashboard-host>/api/s3/<addonId>/public/default/<key>
 ```
 
-## Browse objects
+<span id="browse-objects" />
+
+## オブジェクトの参照
 
 ダッシュボードで **S3 browser** (`lizard open`) を開くと、オブジェクトとバケットのアップロード、ダウンロード、管理を行えます。
 
 > **Bucket ACL の変更** (バケットを public/private にすること) はまだ CLI ではできません — ダッシュボードから管理してください。
 
-## Grow storage
+<span id="grow-storage" />
+
+## ストレージを拡張
 
 ```bash
 lizard scale --service s3 --storage 16384
 ```
 
-## See also
+<span id="see-also" />
+
+## 関連項目
 
 - [Managed Addons](/addons) — 命名、参照、ダッシュボードのブラウザーについて。
-- [Cross-Service References](/variables/references) — 参照構文と解決方法。
+- [サービス間参照](/variables/references) — 参照構文と解決方法。

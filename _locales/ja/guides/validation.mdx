@@ -8,12 +8,12 @@ description: "MCP、coding-agent、Redis worker、Telegram ガイドについて
 
 2026-09-07 に、Lizard CLI 0.3.92 を使って、これらのガイドを別のテストプロジェクトで確認しました。アプリケーションの確認はビルドステータスとは別です。テストではガイドのコマンドを使用し、GitHub の例では別のプロジェクト名とドキュメント用テストブランチを使いました。
 
-| Guide | Result | Checks |
+| ガイド | 結果 | チェック |
 |---|---|---|
 | [Remote MCP](/guides/deploy-mcp-server) | ローカルおよびクラウドで合格 | Health 200; トークンなしおよび無効なトークン 401; 認証済み GET 405; 拒否された Origin 403; initialize、tools/list、tools/call; 公開 HTTPS 経由の結果 `5` |
-| [Coding agent: upload](/guides/deploy-from-coding-agent) | 合格 | `lizard up`、health 200、データベースを使用したレスポンス 200、未知のルート 404; 更新された Postgres 行はサービス再起動後も保持された |
-| [Coding agent: GitHub](/guides/deploy-from-coding-agent) | 合格 | リポジトリは `--no-deploy` で接続; ブランチ、ルートディレクトリ、環境は `redeploy` の前に設定; 公開アプリは同じ既存の Postgres 行を読み取った |
-| [Redis worker](/deploy/workers) | 合格 | Port 0; enqueue と result; result は再起動後も保持; 再起動後の新しいジョブ; 完了していない processing エントリは起動時に復旧 |
+| [コーディング エージェント: アップロード](/guides/deploy-from-coding-agent) | 合格 | `lizard up`、health 200、データベースを使用したレスポンス 200、未知のルート 404; 更新された Postgres 行はサービス再起動後も保持された |
+| [コーディング エージェント: GitHub](/guides/deploy-from-coding-agent) | 合格 | リポジトリは `--no-deploy` で接続; ブランチ、ルートディレクトリ、環境は `redeploy` の前に設定; 公開アプリは同じ既存の Postgres 行を読み取った |
+| [Redis worker](/deploy/workers) | 合格 | ポート 0; enqueue と result; result は再起動後も保持; 再起動後の新しいジョブ; 完了していない processing エントリは起動時に復旧 |
 | [Telegram bot](/guides/telegram-bot) | ローカルテストのみ | 7 つのモックテストで updates、送信失敗、トークン確認、webhook 拒否をカバー。実際のトークン、chat、クラウドでの echo テストはまだ必要 |
 
 <span id="versions" />
@@ -36,4 +36,4 @@ Redis 復旧の確認では、単一の consumer を再起動する前に、完�
 
 Telegram の example は cloud-verified としてはマークされていません。preflight ではボットの webhook を変更せずに `getMe` と `getWebhookInfo` を読み取ります。polling loop を有効にする前に、別のテスト用 bot を使用してください。
 
-CLI アーカイブと failed-build の exit-code 制限については [framework test results](/framework-guides/validation) の別の 16 レシピの framework バッチと、[known issues](/platform/known-issues) を参照してください。
+CLI アーカイブと failed-build の exit-code 制限については [フレームワークのテスト結果](/framework-guides/validation) の別の 16 レシピの framework バッチと、[known issues](/platform/known-issues) を参照してください。

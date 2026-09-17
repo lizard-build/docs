@@ -6,7 +6,9 @@ description: "lizard restart führt einen Rolling-Restart des aktuellen Builds e
 
 Rolling-Restart des aktuellen Builds — kein Rebuild.
 
-## Usage
+<span id="usage" />
+
+## Verwendung
 
 ```bash
 lizard restart [nameOrId] [flags]
@@ -14,7 +16,7 @@ lizard restart [nameOrId] [flags]
 
 ## Flags
 
-| Flag | Description |
+| Flag | Beschreibung |
 |------|--------------|
 | `-s, --service <name>` | Dienst |
 | `--detach` | Nach Annahme des Restarts zurückkehren |
@@ -22,7 +24,9 @@ lizard restart [nameOrId] [flags]
 | `--timeout <seconds>` | Wartebudget für Bereitschaft mit `--wait`; Standard `120` |
 | `--json` | JSON für Skripte zurückgeben |
 
-## Examples
+<span id="examples" />
+
+## Beispiele
 
 <span id="restart-a-service" />
 
@@ -60,8 +64,10 @@ lizard --json restart --service worker --wait --timeout 60
 
 Das Timeout gilt für das Warten auf Bereitschaft nach der Restart-Anfrage. Es bricht den Restart nicht ab, und Netzwerkaufrufe können dazu führen, dass der gesamte Befehl länger dauert. Prüfe nach dem Befehl Anwendungsdaten oder einen Health-Endpunkt, wenn dein Workflow mehr als Prozessbereitschaft benötigt.
 
-## See also
+<span id="see-also" />
+
+## Siehe auch
 
 - [lizard redeploy](/cli/redeploy) — einen frischen Build auslösen, statt den aktuellen wiederzuverwenden
 - [lizard logs](/cli/logs) — Logs rund um einen Restart mit `--restart latest` oder `--restart <id>` prüfen
-- [Deployments](/concepts/deployments) — Restarts vs. Redeploys und Wiederherstellung nach einem Absturz
+- [Bereitstellungen](/concepts/deployments) — Restarts vs. Redeploys und Wiederherstellung nach einem Absturz

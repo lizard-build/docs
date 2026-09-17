@@ -1,12 +1,12 @@
 ---
-description: "Fügen Sie Replikate hinzu oder erhöhen Sie CPU und Arbeitsspeicher für einen Service und erweitern Sie den Addon-Speicher. Zulässige Bereiche, Rollout-Verhalten und wie Sie eine Änderung prüfen."
+description: "Fügen Sie Replikate hinzu oder erhöhen Sie CPU und Arbeitsspeicher für einen Service und erweitern Sie den Add-on-Speicher. Zulässige Bereiche, Rollout-Verhalten und wie Sie eine Änderung prüfen."
 ---
 
 <span id="scaling" />
 
 # Skalierung
 
-Skalieren Sie einen Service horizontal (mehr Replikate) oder vertikal (mehr CPU/Arbeitsspeicher) mit `lizard scale`. Addon-Speicher wird auf die gleiche Weise erweitert.
+Skalieren Sie einen Service horizontal (mehr Replikate) oder vertikal (mehr CPU/Arbeitsspeicher) mit `lizard scale`. Add-on-Speicher wird auf die gleiche Weise erweitert.
 
 <span id="scale-a-service" />
 
@@ -50,9 +50,9 @@ lizard scale --service api --cpu 4 --memory 8192
 
 <span id="growing-addon-storage" />
 
-## Addon-Speicher erweitern
+## Add-on-Speicher erweitern
 
-Addon-Daten-Volumes können **nur vergrößert** werden — Sie können den Speicher erhöhen, aber nicht verkleinern:
+Add-on-Daten-Volumes können **nur vergrößert** werden — Sie können den Speicher erhöhen, aber nicht verkleinern:
 
 ```bash
 lizard scale --service postgres --storage 8192
@@ -75,4 +75,4 @@ lizard metrics --cost     # include cost
 
 - [Observability → Metrics](/observability/metrics) — Ressourcen- und Kostenüberwachung.
 - [`lizard scale`](/cli/scale) — die vollständige Befehlsreferenz.
-- [What CaaS providers charge in 2026](https://lizard.build/blog/container-as-a-service#what-caas-providers-charge-in-2026) — Preise pro vCPU, pro GB und für Egress über neun Plattformen hinweg, um eine Rechnung abzuschätzen, bevor Sie skalieren.
+- [Was CaaS-Anbieter 2026 berechnen](https://lizard.build/blog/container-as-a-service#what-caas-providers-charge-in-2026) — Preise pro vCPU, pro GB und für Egress über neun Plattformen hinweg, um eine Rechnung abzuschätzen, bevor Sie skalieren.

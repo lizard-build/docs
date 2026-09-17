@@ -14,7 +14,7 @@ description: "Lizard で静的サイトのルートを設定します: 生成さ
 
 ## ルーティングポリシーを選ぶ
 
-| App type | Route behavior |
+| アプリ タイプ | ルート動作 |
 |---|---|
 | React または Vue SPA | 有効なクライアントルートでは `index.html` が読み込まれ、その後クライアントルーターがそれをレンダリングします。 |
 | 生成されたドキュメントまたはコンテンツ | ルートは生成された HTML に解決されます。未知のパスは HTTP 404 を返します。 |
@@ -70,7 +70,7 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 ```
 
-| Site | `BUILD_SCRIPT` | `OUTPUT_DIR` |
+| サイト | `BUILD_SCRIPT` | `OUTPUT_DIR` |
 |---|---|---|
 | Astro static | `build` | `dist` |
 | Docusaurus | `build` | `build` |
@@ -80,11 +80,11 @@ EXPOSE 80
 | Next.js export | `build` | `out` |
 | Nuxt generate | `nuxt generate` を使う `build` | `.output/public` |
 
-生成ページのポリシーは、アプリにそれらのルートファイルがある場合にのみ使用してください。たとえば、SvelteKit の SPA フォールバックには、その専用のルーティングポリシーが必要です。[Next.js static export](/framework-guides/nextjs/static-export) には、trailing-slash レイアウトを含む完全な手順があります。
+生成ページのポリシーは、アプリにそれらのルートファイルがある場合にのみ使用してください。たとえば、SvelteKit の SPA フォールバックには、その専用のルーティングポリシーが必要です。[Next.js静的エクスポート](/framework-guides/nextjs/static-export) には、trailing-slash レイアウトを含む完全な手順があります。
 
 依存関係、ビルド出力、`.git`、`.env*` は `.dockerignore` で除外してください。ビルドに公開変数が必要な場合は、ビルドコマンドの前にその `ARG` 値を宣言してください。秘密のシークレットをイメージやブラウザ出力にコピーしないでください。
 
-[CLI setup](/framework-guides#prepare-the-project) の後、`lizard add --service web` でサービスを作成し、次に `lizard up --service web --port 80` でこのソースをデプロイします。サービスがすでに存在する場合は、add ステップをスキップしてください。既存のサービスでは、[build decision order](/concepts/build-pipeline#build-decision-order) を確認してください。コマンドのオーバーライドが Dockerfile より優先される場合があります。設定ファイルだけでは生成済みの nginx 設定は置き換えられません。Dockerfile でそれをイメージにコピーする必要があります。
+[CLI setup](/framework-guides#prepare-the-project) の後、`lizard add --service web` でサービスを作成し、次に `lizard up --service web --port 80` でこのソースをデプロイします。サービスがすでに存在する場合は、add ステップをスキップしてください。既存のサービスでは、[ビルドの決定順序](/concepts/build-pipeline#build-decision-order) を確認してください。コマンドのオーバーライドが Dockerfile より優先される場合があります。設定ファイルだけでは生成済みの nginx 設定は置き換えられません。Dockerfile でそれをイメージにコピーする必要があります。
 
 <span id="verify-http-responses" />
 
@@ -103,5 +103,5 @@ curl -sS -o /dev/null -w '%{http_code}\n' "$SITE_URL/this-page-does-not-exist"
 
 最後に、ブラウザで内側のルートを直接開いて再読み込みします。クライアントナビゲーションが正しくても、サーバーのルーティングエラーが隠れることがあります。インデックスされるサイトを公開する前に、HTTP ステータスとあわせてフレームワークの正規 URL とサイトマップ設定を確認してください。
 
-2026 年 9 月 9 日のデプロイ確認とその制限については、[tested versions and cloud results](/framework-guides/validation) を参照してください。
+2026 年 9 月 9 日のデプロイ確認とその制限については、[テスト済みバージョンとクラウド結果](/framework-guides/validation) を参照してください。
 

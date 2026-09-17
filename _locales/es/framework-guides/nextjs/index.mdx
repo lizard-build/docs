@@ -6,20 +6,20 @@ description: "Implementa Next.js en Lizard como un servidor Node.js. Configura n
 
 # Implementar Next.js en Lizard
 
-Ejecuta Next.js en Lizard como un servidor Node.js con `next build` y `next start`. Esta opción mantiene un servidor disponible para el renderizado en tiempo de solicitud, Route Handlers y Server Actions. Si todas las rutas se pueden compilar por adelantado, sigue [Next.js static export](/framework-guides/nextjs/static-export) en su lugar.
+Ejecuta Next.js en Lizard como un servidor Node.js con `next build` y `next start`. Esta opción mantiene un servidor disponible para el renderizado en tiempo de solicitud, Route Handlers y Server Actions. Si todas las rutas se pueden compilar por adelantado, sigue [Exportación estática de Next.js](/framework-guides/nextjs/static-export) en su lugar.
 
 <span id="build-settings" />
 
 ## Configuración de compilación
 
-| Setting | Value |
+| Ajuste | Valor |
 |---|---|
 | Raíz del proyecto | Directorio que contiene `package.json` y la configuración de Next.js |
 | Script de compilación | `next build` |
 | Script de inicio | `next start --hostname 0.0.0.0 --port 3000` |
 | Salida de compilación | `.next/` |
 | Puerto del servicio | `3000` |
-| Runtime | Node.js |
+| Entorno de ejecución | Node.js |
 
 <span id="prepare-the-app" />
 
@@ -51,7 +51,7 @@ npm run build
 npm run start
 ```
 
-En otra terminal, abre `http://localhost:3000` y prueba una ruta interna. Si la app tiene una API o una Server Action, pruébala también. Superar solo la comprobación del servidor de desarrollo no demuestra que la compilación de producción funcione.
+En otra terminal, abre `http://localhost:3000` y prueba una ruta interna. Si la app tiene una API o una Server Acción, pruébala también. Superar solo la comprobación del servidor de desarrollo no demuestra que la compilación de producción funcione.
 
 <span id="deploy" />
 
@@ -76,13 +76,13 @@ Lizard detecta la dependencia `next` y ejecuta los scripts de compilación e ini
 
 Los valores de `NEXT_PUBLIC_*` pasan a formar parte del paquete del navegador durante la compilación. Mantén las credenciales en variables solo del servidor y configúralas para el servicio mediante [variables y secretos](/variables). El código que obtiene datos durante la compilación también necesita acceso a esos datos en el momento de compilar. Un reinicio en tiempo de ejecución no cambia el HTML o JavaScript ya generados.
 
-Los archivos de caché locales y los archivos subidos no forman un almacenamiento compartido entre réplicas. Revisa los requisitos de caché y de Server Action de Next.js antes de escalar más allá de una réplica. Coloca los datos persistentes de la app en una base de datos o en almacenamiento de objetos, y consulta [almacenamiento y recuperación](/platform/storage-and-recovery).
+Los archivos de caché locales y los archivos subidos no forman un almacenamiento compartido entre réplicas. Revisa los requisitos de caché y de Server Acción de Next.js antes de escalar más allá de una réplica. Coloca los datos persistentes de la app en una base de datos o en almacenamiento de objetos, y consulta [almacenamiento y recuperación](/platform/storage-and-recovery).
 
 <span id="troubleshooting" />
 
 ## Solución de problemas
 
-| Symptom | Check |
+| Síntoma | Comprobar |
 |---|---|
 | `Missing script: start` | Agrega el script de inicio de producción anterior; `next dev` es para desarrollo local. |
 | La app nunca pasa a estado healthy | Haz coincidir `--port 3000` con el comando de inicio y enlaza a `0.0.0.0`. |
@@ -90,6 +90,6 @@ Los archivos de caché locales y los archivos subidos no forman un almacenamient
 | La compilación no puede alcanzar una base de datos | Comprueba si una ruta obtiene datos en tiempo de compilación y si esa dependencia es accesible en ese momento. |
 | La exportación estática falla con `next start` | Sigue la guía separada de exportación estática. |
 
-La [guía de self-hosting de Next.js](https://nextjs.org/docs/app/guides/self-hosting) cubre el comportamiento del caché, las imágenes y múltiples instancias a nivel del framework. Para errores de implementación, consulta [service never healthy](/deploy/troubleshooting/service-never-healthy).
+La [guía de self-hosting de Next.js](https://nextjs.org/docs/app/guides/self-hosting) cubre el comportamiento del caché, las imágenes y múltiples instancias a nivel del framework. Para errores de implementación, consulta [servicio nunca saludable](/deploy/troubleshooting/service-never-healthy).
 
 Consulta [versiones probadas y resultados en la nube](/framework-guides/validation) para las comprobaciones de implementación del 9 de septiembre de 2026 y sus límites.

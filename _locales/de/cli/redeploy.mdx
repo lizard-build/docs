@@ -6,7 +6,9 @@ description: "lizard redeploy löst einen frischen Build aus dem neuesten Commit
 
 Löst einen frischen Build aus (neuester Commit / letzter Upload) mit den aktuellen Variablen.
 
-## Usage
+<span id="usage" />
+
+## Verwendung
 
 ```bash
 lizard redeploy [nameOrId] [flags]
@@ -14,7 +16,7 @@ lizard redeploy [nameOrId] [flags]
 
 ## Flags
 
-| Flag | Description |
+| Flag | Beschreibung |
 |------|--------------|
 | `-s, --service <name>` | Service |
 | `--detach` | Gibt zurück, nachdem der Build akzeptiert wurde |
@@ -22,7 +24,9 @@ lizard redeploy [nameOrId] [flags]
 | `--timeout <seconds>` | Zeitbudget für das Warten auf Readiness nach dem Build; Standard `120` |
 | `--json` | Gibt JSON für Skripte zurück |
 
-## Examples
+<span id="examples" />
+
+## Beispiele
 
 <span id="rebuild-and-redeploy-a-service" />
 
@@ -54,8 +58,10 @@ Ohne `--wait` gibt der JSON-Modus zurück, nachdem die Build-Anfrage akzeptiert 
 
 Das Timeout gilt für die Readiness, nachdem der Build abgeschlossen ist; es begrenzt nicht die Build-Dauer und bricht das Deployment nicht ab. Worker mit `containerPort=0` verwenden den Readiness-Status aus dem Backend ohne HTTP-Prüfung. Prüfe nach einem erfolgreichen Befehl einen Anwendungsendpunkt oder gespeicherte Daten, wenn dein Workflow das Anwendungsverhalten verifizieren muss.
 
-## See also
+<span id="see-also" />
+
+## Siehe auch
 
 - [lizard restart](/cli/restart) — Rolling-Restart des aktuellen Builds, kein Neubau
 - [lizard up](/cli/up) — lädt das aktuelle Verzeichnis hoch und deployt es
-- [Deployments](/concepts/deployments) — wie Deploys, Neustarts und Rebuilds funktionieren
+- [Bereitstellungen](/concepts/deployments) — wie Deploys, Neustarts und Rebuilds funktionieren

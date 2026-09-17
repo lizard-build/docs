@@ -16,14 +16,14 @@ Beginne mit dem [vollständigen Quellbeispiel](https://github.com/lizard-build/d
 
 Füge deine Hugo-Konfiguration, Inhalte, Layouts, Assets und alle Theme-Dateien ein, die der Build benötigt. Die Hugo-Erkennung sucht nach einer Konfiguration wie `hugo.toml`, `hugo.yaml` oder `config/_default/` sowie nach einem Verzeichnis `content/`.
 
-| Setting | Value |
+| Einstellung | Wert |
 |---|---|
 | Build | `hugo --minify` |
 | Output | `public/` |
 | Produktionsserver | nginx |
 | Service-Port | `80` |
 
-Setze `baseURL` auf die vorgesehene öffentliche Site-URL einschließlich des abschließenden Schrägstrichs. Baue nach der Zuweisung eines anderen Hostnamens neu, damit Links und generierte Sitemap-Einträge ihn verwenden. Siehe [Hugos Anleitung zu Build und Output](https://gohugo.io/getting-started/usage/).
+Setze `baseURL` auf die vorgesehene öffentliche Website-URL einschließlich des abschließenden Schrägstrichs. Baue nach der Zuweisung eines anderen Hostnamens neu, damit Links und generierte Sitemap-Einträge ihn verwenden. Siehe [Hugos Anleitung zu Build und Output](https://gohugo.io/getting-started/usage/).
 
 <span id="check-build-dependencies" />
 
@@ -54,7 +54,7 @@ lizard logs --build --service web --json
 lizard ps --json
 ```
 
-Wenn du den generierten Hostnamen verwendest, lies ihn nach dem ersten Deploy aus:
+Wenn du den generierten Hostnamen verwendest, lies ihn nach dem ersten Bereitstellen aus:
 
 ```bash
 lizard service show web --json
@@ -77,7 +77,7 @@ Schließe lokal generierten Output und Secrets aus. Stelle bei einem Upload sich
 
 <span id="verify-the-deployed-site" />
 
-## Die bereitgestellte Site prüfen
+## Die bereitgestellte Website prüfen
 
 Öffne die Live-Startseite, einen internen Artikel und ein Bild. Prüfe die generierten kanonischen URLs und `sitemap.xml`. Teste den HTTP-Status eines erfundenen Pfads. Neue Hugo-Builds liefern das generierte HTML aus und geben für fehlende Seiten HTTP 404 zurück. Für das einfache Quelllayout in dieser Anleitung ist kein eigenes Dockerfile erforderlich. Baue ältere Images neu, um die aktuellen Routing-Regeln zu übernehmen.
 
@@ -85,5 +85,5 @@ Verwende [statische Routen und 404er](/framework-guides/static-routing), wenn du
 
 Wenn Theme-Assets fehlen, prüfe die Build-Logs, die Theme-Quelle und `baseURL`. Wenn der falsche Builder startet, prüfe, ob die Hugo-Konfiguration und `content/` im Upload-Root liegen, und überprüfe vorhandene Service-Overrides. Hugo erzeugt statische Dateien, daher erfordern Inhaltsänderungen einen neuen Build.
 
-Siehe [getestete Versionen und Cloud-Ergebnisse](/framework-guides/validation) für die Deploy-Prüfungen vom 9. September 2026 und ihre Grenzen.
+Siehe [getestete Versionen und Cloud-Ergebnisse](/framework-guides/validation) für die Bereitstellen-Prüfungen vom 9. September 2026 und ihre Grenzen.
 

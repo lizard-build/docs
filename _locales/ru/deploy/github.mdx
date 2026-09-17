@@ -1,0 +1,100 @@
+---
+description: "Подключите репозиторий GitHub, чтобы каждый push в отслеживаемую ветку запускал сборку и переразвёртывание, включая приватные репозитории, смену веток и монорепозитории."
+---
+
+<span id="deploy-from-github" />
+
+# Развёртывание из GitHub
+
+Подключение репозитория GitHub — рекомендуемый способ запуска приложения на Lizard: каждый push в отслеживаемую ветку автоматически собирает и переразвёртывает приложение.
+
+<span id="create-a-service-from-a-repo" />
+
+## Создание сервиса из репозитория
+
+```bash
+lizard add -r your-org/your-app
+```
+
+Это создаёт `github`-сервис, клонирует репозиторий, автоматически определяет стек ([lizardpack](/concepts/build-pipeline)), собирает его и возвращает работающий URL. Полезные флаги:
+
+| Флаг | Назначение |
+|------|------------|
+| `-r, --repo <owner/repo>` | Исходный репозиторий |
+| `-n, --name <name>` | Имя сервиса (используется в ссылках `${{name.KEY}}` и на панели управления) |
+| `-v, --variables <K=V>` | Задать переменную окружения; можно повторять |
+| `--region <code>` | Регион для развёртывания |
+| `--no-deploy` | Подключить репозиторий, но пропустить первую сборку |
+
+<span id="private-repositories" />
+
+## Приватные репозитории
+
+Подключите приложение Lizard для GitHub один раз на аккаунт, чтобы получить доступ к приватным репозиториям:
+
+```bash
+lizard git connect
+lizard git status        # show connection + repo status
+```
+
+Также можно подключить репозитории и управлять доступом на странице **GitHub integration** в панели управления (`lizard open`).
+
+<span id="point-an-existing-service-at-a-repo" />
+
+## Подключение существующего сервиса к репозиторию
+
+Чтобы переключить сервис на git-источник (или сменить репозиторий/ветку):
+
+```bash
+lizard service set api \
+  --set sourceType=github \
+  --set repoUrl=https://github.com/your-org/your-app \
+  --set branch=main
+```
+
+Изменение поля сборки автоматически запускает пересборку — **не** добавляйте `redeploy` после этого.
+
+> **Примечание:** `lizard up` всегда принудительно включает `sourceType=upload`. Не используйте его для обновления git-сервиса — отправьте push в удалённый репозиторий или используйте `lizard redeploy`.
+
+<span id="auto-redeploy-on-push" />
+
+## Автоматическое переразвёртывание при push
+
+После настройки `repoUrl` пуши в соответствующую `branch` автоматически переразвёртывают сервис через вебхук GitHub. Чтобы ограничить, какие пуши запускают переразвёртывание:
+
+- **`rootDirectory`** — собирать только подкаталог (монорепозитории).
+- **`watchPatterns`** — переразвёртывать только при изменении соответствующих путей.
+
+```bash
+lizard service set api --set watchPatterns='apps/api/**,packages/**'
+```
+
+<span id="switch-branches" />
+
+## Смена веток
+
+```bash
+lizard git checkout api staging      # move the `api` service to the `staging` branch and redeploy
+```
+
+<span id="monorepos" />
+
+## Монорепозитории
+
+Для репозитория с несколькими приложениями создайте отдельный сервис для каждого и укажите его `rootDirectory` как подпуть:
+
+```bash
+lizard add -r your-org/monorepo -n api
+lizard service set api --set rootDirectory=apps/api
+```
+
+Если текущая директория — под-приложение внутри репозитория, чей родитель уже подключен, добавьте сервис в проект родителя и укажите `rootDirectory` как подпуть от cwd.
+
+<span id="see-also" />
+
+## См. также
+
+- [Сборка Pipeline](/concepts/build-pipeline) — как стек определяется и собирается.
+- [Развернуть из локального кода](/deploy/upload) — когда нет удалённого репозитория.
+- [`lizard git`](/cli/git) — полная справочная информация по командам `connect`, `status` и `checkout`.
+- [Куда развернуть приложение, созданное вашим AI IDE](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#where-to-deploy-an-app-your-ai-ide-built) — подключение к репозиторию, написанному агентом, и стоимость.

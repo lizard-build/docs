@@ -6,7 +6,9 @@ description: "Lizard でマネージド PostgreSQL データベースをプロ�
 
 1 つのコマンドでプロビジョニングされ、参照によってサービスに接続されるマネージド PostgreSQL データベースです。
 
-## Provision
+<span id="provision" />
+
+## プロビジョニング
 
 ```bash
 lizard add postgres
@@ -14,11 +16,13 @@ lizard add postgres
 
 最初の Postgres アドオンの名前は `postgres` なので、`${{postgres.DATABASE_URL}}` はすぐに使えます。
 
-## Environment variables
+<span id="environment-variables" />
+
+## 環境変数
 
 このアドオンは、標準的な接続変数一式を公開します:
 
-| Variable | Description |
+| 変数 | 説明 |
 |----------|-------------|
 | `DATABASE_URL` | 完全な接続文字列 (`postgres://…`) |
 | `PGHOST` | ホスト |
@@ -30,7 +34,9 @@ lizard add postgres
 | `POSTGRES_DB` | データベースのエイリアス |
 | `POSTGRES_PASSWORD` | パスワードのエイリアス |
 
-## Connect a service
+<span id="connect-a-service" />
+
+## サービスを接続
 
 コンシューマーサービスから接続文字列を参照し、再デプロイします:
 
@@ -47,7 +53,9 @@ lizard redeploy --service api
 lizard run --service api -- sh -c 'psql "$DATABASE_URL" -c "SELECT 1"'
 ```
 
-## Run migrations on deploy
+<span id="run-migrations-on-deploy" />
+
+## デプロイ時にマイグレーションを実行
 
 マイグレーションには pre-deploy コマンドを使用します。マイグレーションは安全に再試行でき、古いアプリケーション バージョンと新しいアプリケーション バージョンの両方に互換性があるようにしてください:
 
@@ -56,9 +64,11 @@ lizard service set api --set preDeployCommand="npm run migrate"
 lizard redeploy --service api
 ```
 
-Django アプリの場合、コマンドは `python manage.py migrate` です。[Python app hosting](https://lizard.build/blog/python-app-hosting#deploying-django) には Flask と FastAPI で同等の方法があります。
+Django アプリの場合、コマンドは `python manage.py migrate` です。[Pythonアプリホスティング](https://lizard.build/blog/python-app-hosting#deploying-django) には Flask と FastAPI で同等の方法があります。
 
-## Browse and query data
+<span id="browse-and-query-data" />
+
+## データの参照とクエリ
 
 ダッシュボードの **Postgres editor** (`lizard open`) を開いて、SQL を実行し、テーブルを直接参照できます。一時的なローカル作業には、サービスに注入された環境でコマンドを実行します:
 
@@ -66,7 +76,9 @@ Django アプリの場合、コマンドは `python manage.py migrate` です。
 lizard run --service api -- sh -c 'exec psql "$DATABASE_URL"'
 ```
 
-## Grow storage
+<span id="grow-storage" />
+
+## ストレージを拡張
 
 データボリュームは拡張のみ可能です:
 
@@ -74,7 +86,9 @@ lizard run --service api -- sh -c 'exec psql "$DATABASE_URL"'
 lizard scale --service postgres --storage 8192
 ```
 
-## Multiple databases
+<span id="multiple-databases" />
+
+## 複数のデータベース
 
 2 つ目の Postgres を追加すると、自動生成された名前が付きます（例: `postgres-autumn-bear`）。明示的に参照してください:
 
@@ -83,9 +97,11 @@ lizard add postgres
 lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_URL}}' --service api
 ```
 
-## See also
+<span id="see-also" />
+
+## 関連項目
 
 - [Managed Addons](/addons) — 命名、参照、ダッシュボードのブラウザー。
-- [Cross-Service References](/variables/references) — 参照構文と解決方法。
+- [サービス間参照](/variables/references) — 参照構文と解決方法。
 
-バックアップとリストアの計画については、[storage and recovery](/platform/storage-and-recovery) を参照してください。ローカルの `lizard run` には `psql` と到達可能なデータベース エンドポイントが必要です。これはデプロイされたサービス内では実行されません。
+バックアップとリストアの計画については、[ストレージとリカバリ](/platform/storage-and-recovery) を参照してください。ローカルの `lizard run` には `psql` と到達可能なデータベース エンドポイントが必要です。これはデプロイされたサービス内では実行されません。

@@ -1,0 +1,68 @@
+---
+description: "Команда lizard metrics показывает загрузку CPU, память, сеть и диск для сервиса, с живым режимом --watch и опциональными данными о стоимости."
+---
+
+# lizard metrics
+
+Показывает CPU / память / сеть / диск и стоимость.
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard metrics [flags]
+```
+
+<span id="flags" />
+
+## Флаги
+
+| Флаг | Описание |
+|------|-------------|
+| `-r, --range <range>` | Временное окно |
+| `-w, --watch` | Живое обновление |
+| `--cost` | Включить стоимость |
+
+<span id="examples" />
+
+## Примеры
+
+<span id="view-metrics-for-the-current-service" />
+
+### Просмотр метрик для текущего сервиса
+
+```bash
+lizard metrics
+```
+
+<span id="view-metrics-for-a-specific-service" />
+
+### Просмотр метрик для конкретного сервиса
+
+```bash
+lizard metrics --service api
+```
+
+<span id="watch-metrics-live" />
+
+### Живой просмотр метрик
+
+```bash
+lizard metrics --watch
+```
+
+<span id="include-cost" />
+
+### С включением стоимости
+
+```bash
+lizard metrics --cost
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [Метрики и стоимость](/observability/metrics) — представления дашборда и действия на основе использования
+- [Масштабирование](/deploy/scaling) — изменение размера или добавление реплик в ответ на метрики

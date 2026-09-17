@@ -1,0 +1,69 @@
+---
+description: "Разверните Next.js, React, Vue, Astro, Nuxt, SvelteKit, FastAPI, Django, Docusaurus, VitePress и Hugo на Lizard. Найдите команды сборки, адаптеры, порты и проверки."
+---
+
+<span id="framework-guides" />
+
+# Руководства по фреймворкам
+
+Разверните приложение на фреймворке на Lizard из исходного кода. Выберите свой фреймворк и режим рендеринга ниже, подготовьте его production-сборку, затем разверните с помощью Lizard CLI или подключите репозиторий GitHub. Серверные приложения запускают процесс; статические сайты отдают сгенерированные файлы через nginx.
+
+<span id="choose-your-framework" />
+
+## Выберите фреймворк
+
+Эти настройки описывают стандартную структуру проектов в связанных руководствах. Команды подразумевают npm для JavaScript-проектов. Пользовательские пути вывода, адаптеры и переопределения сборки могут изменить результат.
+
+| Фреймворк | Сборка | Среда выполнения или вывод | Порт сервиса |
+|---|---|---|---|
+| [Next.js](/framework-guides/nextjs) | `npm run build` | `next start` через скрипт start | `3000` |
+| [Статический экспорт Next.js](/framework-guides/nextjs/static-export) | `npm run build` | `out/` через Dockerfile | `80` |
+| [React с Vite](/framework-guides/react) | `npm run build` | `dist/` | `80` |
+| [Vue с Vite](/framework-guides/vue) | `npm run build` | `dist/` | `80` |
+| [Astro](/framework-guides/astro) | `npm run build` | `dist/` или автономный Node-адаптер | `80` статический; `3000` сервер |
+| [Nuxt](/framework-guides/nuxt) | `npm run build` | `node .output/server/index.mjs` | `3000` |
+| [SvelteKit](/framework-guides/sveltekit) | `npm run build` | `node build` с adapter-node | `3000` |
+| [FastAPI](/framework-guides/fastapi) | Установка Python-зависимостей | `uvicorn main:app --host 0.0.0.0 --port 8000` | `8000` |
+| [Django](/framework-guides/django) | Установка Python-зависимостей | Gunicorn с вашим WSGI-модулем | `8000` |
+| [Docusaurus](/framework-guides/docusaurus) | `npm run build` | `build/` | `80` |
+| [VitePress](/framework-guides/vitepress) | `npm run docs:build` | `docs/.vitepress/dist/` в этом руководстве | `80` |
+| [Hugo](/framework-guides/hugo) | `hugo --minify` | `public/` | `80` |
+
+<span id="prepare-the-project" />
+
+## Подготовка проекта
+
+Выполняйте команды из директории приложения. Закоммитьте исходные файлы, конфигурацию и lockfile пакетов. Исключите `.env`, локальные зависимости и локальные артефакты сборки из загрузки. Node-проекты могут выбрать мажорную версию Node в `.nvmrc`; текущее значение по умолчанию — `22`. Это выбирает мажорную версию, а не конкретный патч-релиз.
+
+Установите Lizard CLI и войдите один раз:
+
+```bash
+npm install -g @lizard-build/cli
+lizard login
+```
+
+В каждом руководстве используется новый проект и сервис с именем `web` или `api`. Создайте этот сервис с помощью `lizard add --service web` (или `api`) перед первым вызовом `lizard up --service`. `up --service` выбирает существующий сервис; он не создает отсутствующий именованный сервис. Для существующего проекта проверьте `lizard status --json` и `lizard ps --json` перед развертыванием. Порт должен совпадать с процессом внутри контейнера, который должен слушать на `0.0.0.0`.
+
+Lizard CLI 0.3.95 исключает метаданные архивов macOS при загрузке. Настройка `COPYFILE_DISABLE` не нужна. Обновите старые версии CLI перед использованием этих руководств.
+
+<span id="choose-github-or-local-source" />
+
+## Выбор GitHub или локального источника
+
+Команды в руководствах используют `lizard up` для загрузки текущей папки. Эта команда меняет существующий сервис на загрузку исходного кода. Чтобы сохранить git push to deploy, [подключите GitHub](/deploy/github) и используйте настройки сборки из руководства в репозитории. Настройте порт сервиса из таблицы.
+
+<span id="keep-build-settings-consistent" />
+
+## Согласованность настроек сборки
+
+В этих руководствах используется определение через lizardpack, если не требуется Dockerfile. Существующие `buildCommand` или `startCommand` имеют приоритет над определением и Dockerfile репозитория. Проверьте [порядок решений о сборке](/concepts/build-pipeline#build-decision-order) перед сменой метода сборки. Задайте скрипты в `package.json`, когда об этом сказано в руководстве; добавление CLI-переопределения — это другой путь сборки.
+
+<span id="check-a-release" />
+
+## Проверка релиза
+
+Читайте логи сборки, логи рантайма и активный URL. Проверьте внутренний маршрут, отсутствующий маршрут и любые API или form action. Процесс, открывший свой порт, может все равно отдавать сломанную страницу. Для сгенерированных сайтов используйте [статические маршруты и 404](/framework-guides/static-routing), чтобы не возвращать главную страницу с HTTP 200 для любого неизвестного URL.
+
+Поддержка рантайма не подразумевает общие кэши, постоянные локальные файлы или каждую версию фреймворка. См. [ограничения](/platform/limits), [хранилище и восстановление](/platform/storage-and-recovery) и [известные проблемы](/platform/known-issues), когда ваше приложение полагается на эти функции.
+
+См. [проверенные версии и результаты в облаке](/framework-guides/validation) для проверок развертывания от 9 сентября 2026 года и их ограничений.

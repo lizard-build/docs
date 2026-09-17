@@ -18,7 +18,7 @@ Der von dir gesetzte Wert ist nie in die zusammengeführte Umgebung des Service 
 
 ## Warum das passieren kann
 
-- **Das Verweisziel oder der Schlüssel existiert nicht.** Ein Verweis auf einen fehlenden Service-/Addon-Namen oder auf einen Schlüssel, den dieses Addon nicht bereitstellt, wird zu einem **leeren String** aufgelöst, statt das Deployment fehlschlagen zu lassen. Es gibt keinen Fehler als Hinweis — der Service startet einfach mit einem leeren Wert.
+- **Das Verweisziel oder der Schlüssel existiert nicht.** Ein Verweis auf einen fehlenden Service-/Add-on-Namen oder auf einen Schlüssel, den dieses Add-on nicht bereitstellt, wird zu einem **leeren String** aufgelöst, statt das Deployment fehlschlagen zu lassen. Es gibt keinen Fehler als Hinweis — der Service startet einfach mit einem leeren Wert.
 - **Etwas mit höherer Priorität hat ihn überschrieben.** Werte werden in einer festen Reihenfolge zusammengeführt — `addon-issued env < project secrets < project env < app env < app secrets < platform vars` — daher kann ein projektbezogenes (`--global`) Secret stillschweigend von einem servicebezogenen Secret mit demselben Schlüssel verdeckt werden, und Plattformvariablen (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`) haben immer Vorrang und können überhaupt nicht überschrieben werden.
 - **Du hast einen Build-Zeit-Wert geändert, aber keinen neuen Build ausgeführt.** Die meisten Variablenänderungen werden ohne Rebuild übernommen — der Service startet neu, um sie zu übernehmen. `VITE_*`- und `NEXT_PUBLIC_*`-Werte sind die Ausnahme — sie werden in die gebauten Assets eingebettet, daher übernimmt ein einfacher Neustart keinen neuen Wert; der Service braucht einen frischen Build.
 
@@ -36,7 +36,7 @@ Das ist maßgeblich — es zeigt die Umgebung des Live-Containers, nicht das, vo
 lizard ssh --service api -- env | grep DATABASE_URL
 ```
 
-Wenn der Schlüssel fehlt oder leer ist, ist das Verweisziel bzw. der Schlüssel falsch, oder für diesen Geltungsbereich ist nichts gesetzt. Prüfe den Addon- oder Service-Namen mit `lizard ps` noch einmal und den Schlüssel anhand der [dokumentierten Variablen](/addons) des Addons.
+Wenn der Schlüssel fehlt oder leer ist, ist das Verweisziel bzw. der Schlüssel falsch, oder für diesen Geltungsbereich ist nichts gesetzt. Prüfe den Add-on- oder Service-Namen mit `lizard ps` noch einmal und den Schlüssel anhand der [dokumentierten Variablen](/addons) des Addons.
 
 <span id="check-for-a-scope-collision" />
 

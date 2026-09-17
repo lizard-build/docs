@@ -1,5 +1,5 @@
 ---
-description: "Laufzeit-Logs streamen, Build-Logs nach einem fehlgeschlagenen Deploy lesen und den Log-Tail rund um einen Neustart abrufen – über die CLI oder das Dashboard."
+description: "Laufzeit-Logs streamen, Build-Logs nach einem fehlgeschlagenen Bereitstellen lesen und den Log-Tail rund um einen Neustart abrufen – über die CLI oder das Dashboard."
 ---
 
 # Logs
@@ -29,7 +29,7 @@ lizard logs --level error         # filter by level
 lizard logs --build               # the most recent build's logs
 ```
 
-Das ist das Erste, was du prüfen solltest, wenn ein Deploy fehlschlägt — lies die Logs, behebe die Ursache und dann `lizard redeploy`. Siehe [Build-Pipeline](/concepts/build-pipeline).
+Das ist das Erste, was du prüfen solltest, wenn ein Bereitstellen fehlschlägt — lies die Logs, behebe die Ursache und dann `lizard redeploy`. Siehe [Build-Pipeline](/concepts/build-pipeline).
 
 <span id="restart--crash-logs" />
 
@@ -56,12 +56,12 @@ lizard service logs --service api --page 2       # older window (implies --tail 
 
 ## Dashboard
 
-Das Dashboard (`lizard open`) streamt Laufzeit- und Build-Logs mit Such- und Level-Filtern und zeigt die Build-Ausgabe pro Deployment in der Ansicht **Deployments**.
+Das Dashboard (`lizard open`) streamt Laufzeit- und Build-Logs mit Such- und Level-Filtern und zeigt die Build-Ausgabe pro Deployment in der Ansicht **Bereitstellungen**.
 
 <span id="see-also" />
 
 ## Siehe auch
 
 - [`lizard logs`](/cli/logs) — die vollständige Befehlsreferenz.
-- [Ereignisse & Verlauf](/observability/events) — Deploy-Verlauf und Replik-Status.
-- [Deploy aus Claude Code](https://lizard.build/blog/deploy-from-claude-code) — Logs, die dafür geschrieben sind, von einem Agenten gelesen zu werden, nicht nur von dir.
+- [Ereignisse & Verlauf](/observability/events) — Bereitstellen-Verlauf und Replik-Status.
+- [Bereitstellen aus Claude Code](https://lizard.build/blog/deploy-from-claude-code) — Logs, die dafür geschrieben sind, von einem Agenten gelesen zu werden, nicht nur von dir.

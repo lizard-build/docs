@@ -28,7 +28,7 @@ lizard up                          # upload cwd and deploy
 
 ## Ciclo de vida
 
-1. **Compilación** — la plataforma ejecuta tu compilación (consulta [Build Pipeline](/concepts/build-pipeline)).
+1. **Compilación** — la plataforma ejecuta tu compilación (consulta [Proceso de compilación](/concepts/build-pipeline)).
 2. **Predeploy** — si `preDeployCommand` está configurado, se ejecuta una vez (por ejemplo, migraciones).
 3. **Inicio** — Lizard inicia la aplicación para su entorno de ejecución configurado.
 4. **Comprobación de estado** — la plataforma verifica que se pueda acceder al puerto de la app (se omite para [workers](/deploy/workers)).
@@ -57,13 +57,13 @@ lizard events --limit 25       # show more
 lizard ps                      # current services, status, and URLs
 ```
 
-En el [panel](/dashboard), la vista de **Deployments** muestra la cronología completa, los registros de compilación de cada despliegue y un panel de detalles para cada publicación.
+En el [panel](/dashboard), la vista de **Despliegues** muestra la cronología completa, los registros de compilación de cada despliegue y un panel de detalles para cada publicación.
 
 <span id="restarts-vs-redeploys" />
 
 ## Reinicios vs. redespliegues
 
-| Command | Qué hace |
+| Comando | Qué hace |
 |---------|--------------|
 | `lizard restart --service <svc>` | Reinicio de la compilación **actual** — sin recompilar |
 | `lizard redeploy --service <svc>` | **Compilación** nueva desde el último commit/carga, y luego publicación |

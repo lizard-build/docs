@@ -1,5 +1,5 @@
 ---
-description: "Was das Lizard-Dashboard zusätzlich zur CLI bietet: Service-Status, Deploy-Zeitleiste, Live-Logs, Metriken, Datenbrowser, Team und Abrechnung."
+description: "Was das Lizard-Dashboard zusätzlich zur CLI bietet: Service-Status, Bereitstellen-Zeitleiste, Live-Logs, Metriken, Datenbrowser, Team und Abrechnung."
 ---
 
 # App-Dashboard
@@ -23,9 +23,11 @@ lizard docs          # open this documentation
 
 Die Startansicht des Projekts listet jeden Service mit seinem Status-Badge, der generierten Domain und einem schnellen Zugriff auf Logs, Metriken, Secrets und Einstellungen auf. Erstellen Sie neue Services (aus einem GitHub-Repository oder leer) direkt von hier aus.
 
-### Deployments
+<span id="deployments" />
 
-Eine Zeitleiste aller Deploys mit Build-Logs pro Deploy und einer Detailansicht (Commit, Status, Replikate). Das ist das visuelle Gegenstück zu `lizard events` + `lizard logs --build`.
+### Bereitstellungen
+
+Eine Zeitleiste aller Deploys mit Build-Logs pro Bereitstellen und einer Detailansicht (Commit, Status, Replikate). Das ist das visuelle Gegenstück zu `lizard events` + `lizard logs --build`.
 
 ### Logs
 
@@ -51,15 +53,15 @@ Fügen Sie benutzerdefinierte Domains hinzu, sehen Sie DNS-Einträge ein und ver
 
 ### Browser für Managed Addons
 
-Jedes Addon enthält einen Datenbrowser:
+Jedes Add-on enthält einen Datenbrowser:
 
 - **Postgres** — ein SQL-/Tabelleneditor zum Abfragen und Bearbeiten von Daten.
-- **Redis** — ein Key/Value-Browser.
+- **Redis** — ein Key/Wert-Browser.
 - **S3** — ein Bucket- und Objektbrowser mit Upload/Download.
 
 ### GitHub-Integration
 
-Verbinden Sie die GitHub-App, wählen Sie Repositories aus und verwalten Sie, welche Repos Lizard bauen darf. Siehe [Deploy from GitHub](/deploy/github).
+Verbinden Sie die GitHub-App, wählen Sie Repositories aus und verwalten Sie, welche Repos Lizard bauen darf. Siehe [Von GitHub bereitstellen](/deploy/github).
 
 <span id="settings-team--billing" />
 
@@ -71,12 +73,12 @@ Projekt- und Workspace-Einstellungen, Einladungen und Rollen für Mitglieder, Re
 
 | Aufgabe | CLI | Dashboard-Ansicht |
 |------|-----|----------------|
-| Deploy-Verlauf | `lizard events` | Deployments |
+| Bereitstellen-Verlauf | `lizard events` | Bereitstellungen |
 | Logs streamen | `lizard logs` | Logs |
 | Ressourcendiagramme | `lizard metrics` | Metriken / Nutzung |
 | Secrets verwalten | `lizard secrets` | Variablen |
 | Benutzerdefinierte Domains | `lizard domain` | Domains |
-| Postgres/Redis/S3 durchsuchen | `lizard run` / `lizard ssh` | Addon-Browser |
+| Postgres/Redis/S3 durchsuchen | `lizard run` / `lizard ssh` | Add-on-Browser |
 | Teammitglieder einladen | — | Team / Einstellungen |
 
 Verwenden Sie einfach das, was gerade am besten passt — beide arbeiten mit denselben Projekten und Services.

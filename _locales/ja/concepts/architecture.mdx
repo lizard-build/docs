@@ -19,7 +19,9 @@ workspace
         └── s3
 ```
 
-## Workspace
+<span id="workspace" />
+
+## ワークスペース
 
 **workspace** はアカウントまたは organization のレベルです。少なくとも 1 つの workspace に所属し、課金、メンバー、project はその配下にあります。アクセスできるものを一覧表示するには、次を実行します:
 
@@ -30,7 +32,9 @@ lizard whoami        # shows your active workspace
 
 同じ project 名が複数の workspace に存在する場合に区別できるよう、多くのコマンドは `-w, --workspace <ws>` を受け付けます。
 
-## Project
+<span id="project" />
+
+## プロジェクト
 
 **project** は、workspace 内で関連する service と addons をまとめる単位です。作業ディレクトリは project に *link* され、その link（`~/.lizard/config.json` に保存されます）によって CLI は対象を判別します。
 
@@ -44,7 +48,9 @@ lizard project list             # all projects in the workspace
 
 > **ヒント:** project には repo 名またはディレクトリ名を使い、service にはアプリらしい名前（`api`、`worker`、`web`）を使ってください。
 
-## Service
+<span id="service" />
+
+## サービス
 
 **service** は単一のデプロイ可能な unit です。その source は次のいずれかです:
 
@@ -61,7 +67,7 @@ lizard service rename --service <svc>
 lizard service delete --service <svc>
 ```
 
-Service configuration fields は **flat** で、wire schema に 1:1 で対応しています（例: `repoUrl`、`branch`、`buildCommand`、`startCommand`、`containerPort`、`rootDirectory`）。`build.*` / `deploy.*` のようなネストはありません。完全な一覧は [`lizard service`](/cli/service) を参照してください。
+サービス configuration fields は **flat** で、wire schema に 1:1 で対応しています（例: `repoUrl`、`branch`、`buildCommand`、`startCommand`、`containerPort`、`rootDirectory`）。`build.*` / `deploy.*` のようなネストはありません。完全な一覧は [`lizard service`](/cli/service) を参照してください。
 
 <span id="app-vs-worker-services" />
 
@@ -69,7 +75,9 @@ Service configuration fields は **flat** で、wire schema に 1:1 で対応し
 
 デフォルトでは、service はポート（デフォルトは `3000`）で待ち受けし、その domain で提供される **HTTP app** です。ポートで待ち受けしない service、たとえば queue consumer、reconciler、polling loop は、`containerPort=0` を設定して [**worker mode**](/deploy/workers) で実行する必要があります。worker はポートの注入、到達性の health check、load-balancer への登録をスキップします。
 
-## Managed addons
+<span id="managed-addons" />
+
+## マネージドアドオン
 
 **addons** は、project ごとにプロビジョニングする managed Postgres、Redis、および S3 互換 storage です:
 
@@ -79,7 +87,9 @@ lizard add postgres redis s3
 
 各 addon は固定された一連の環境変数を公開し、service はそれらを **reference**（`${{<addon-name>.KEY}}`）によって利用します。[Managed Addons](/addons) を参照してください。
 
-## Cross-resource references
+<span id="cross-resource-references" />
+
+## リソース間参照
 
 任意の service または addon の値は、別の resource の環境変数から次の形式で参照できます:
 
@@ -100,15 +110,17 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 lizard ssh --service api -- env | grep DATABASE_URL
 ```
 
-## Platform-injected variables
+<span id="platform-injected-variables" />
+
+## プラットフォーム注入変数
 
 すべての service は自動的に次の変数を受け取ります（これらは上書きできません）:
 
-| Variable | Description |
+| 変数 | 説明 |
 |----------|-------------|
 | `PORT` | アプリが待ち受けるべきポート（worker mode では省略） |
 | `LIZARD_SERVICE_NAME` | service の名前 |
 | `LIZARD_PROJECT_ID` | project ID |
 | `LIZARD_PUBLIC_DOMAIN` | service の public domain |
 
-これらが独自の変数とどのように相互作用するか、および完全な優先順位については [Variables & Secrets](/variables) を参照してください。
+これらが独自の変数とどのように相互作用するか、および完全な優先順位については [変数 & Secrets](/variables) を参照してください。

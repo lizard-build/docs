@@ -14,7 +14,7 @@ Esta página registra comportamientos que requieren precaución o una versión v
 
 La pausa está pensada para congelar el tiempo de vida restante. Un conflicto entre el reloj del nodo y un proceso de limpieza independiente puede finalizar un sandbox en pausa después de su fecha límite original. El reinicio del node-agent y la reanudación de un sandbox sin vencimiento también necesitan la corrección del ciclo de vida.
 
-Hasta que esa corrección haya superado una prueba en vivo y haya llegado a tu región, no dependas solo de la pausa para conservar el estado a largo plazo. Guarda los archivos en `/data` en un Persistent Volume, o almacena el estado de la aplicación en una base de datos o en object storage. La memoria del host no es una copia de seguridad. Usa un tiempo de vida explícito y libera el sandbox cuando termine la tarea.
+Hasta que esa corrección haya superado una prueba en vivo y haya llegado a tu región, no dependas solo de la pausa para conservar el estado a largo plazo. Guarda los archivos en `/data` en un Persistent Volumes, o almacena el estado de la aplicación en una base de datos o en object storage. La memoria del host no es una copia de seguridad. Usa un tiempo de vida explícito y libera el sandbox cuando termine la tarea.
 
 <span id="redeploy-is-not-rollback" />
 

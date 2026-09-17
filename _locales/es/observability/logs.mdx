@@ -31,7 +31,7 @@ lizard logs --level error         # filter by level
 lizard logs --build               # the most recent build's logs
 ```
 
-Esto es lo primero que debes revisar cuando falla un deploy: léelo, corrige la causa y luego `lizard redeploy`. Consulta [Build Pipeline](/concepts/build-pipeline).
+Esto es lo primero que debes revisar cuando falla un deploy: léelo, corrige la causa y luego `lizard redeploy`. Consulta [Proceso de compilación](/concepts/build-pipeline).
 
 <span id="restart--crash-logs" />
 
@@ -56,9 +56,11 @@ lizard service logs --service api --tail all     # full history (no follow)
 lizard service logs --service api --page 2       # older window (implies --tail 200)
 ```
 
-## Dashboard
+<span id="dashboard" />
 
-El dashboard (`lizard open`) transmite logs de ejecución y de compilación con filtros de búsqueda y nivel, y muestra la salida de compilación por deploy en la vista de **Deployments**.
+## Panel
+
+El dashboard (`lizard open`) transmite logs de ejecución y de compilación con filtros de búsqueda y nivel, y muestra la salida de compilación por deploy en la vista de **Despliegues**.
 
 <span id="see-also" />
 
@@ -66,4 +68,4 @@ El dashboard (`lizard open`) transmite logs de ejecución y de compilación con 
 
 - [`lizard logs`](/cli/logs) — la referencia completa de comandos.
 - [Events & History](/observability/events) — historial de deploys y estado de las réplicas.
-- [Deploy from Claude Code](https://lizard.build/blog/deploy-from-claude-code) — logs escritos para que los lea un agente, no solo tú.
+- [Desplegar desde Claude Code](https://lizard.build/blog/deploy-from-claude-code) — logs escritos para que los lea un agente, no solo tú.

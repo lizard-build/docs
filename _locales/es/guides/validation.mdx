@@ -8,11 +8,11 @@ description: "Verifica las guías de MCP, coding-agent, worker de Redis y Telegr
 
 El 2026-09-07, verificamos estas guías en un proyecto de prueba separado con Lizard CLI 0.3.92. Las verificaciones de la aplicación son independientes del estado de compilación. Las pruebas usaron los comandos de la guía, con un nombre de proyecto distinto y la rama de prueba de documentación para el ejemplo de GitHub.
 
-| Guide | Result | Checks |
+| Guía | Resultado | Comprobaciones |
 |---|---|---|
 | [Remote MCP](/guides/deploy-mcp-server) | Aprobado localmente y en la nube | Health 200; token faltante e inválido 401; GET autenticado 405; Origin rechazado 403; initialize, tools/list y tools/call; resultado `5` sobre HTTPS público |
-| [Coding agent: upload](/guides/deploy-from-coding-agent) | Aprobado | `lizard up`, health 200, respuesta con respaldo en base de datos 200, ruta desconocida 404; una fila de Postgres actualizada permaneció después de reiniciar el servicio |
-| [Coding agent: GitHub](/guides/deploy-from-coding-agent) | Aprobado | Repositorio adjunto con `--no-deploy`; rama, directorio raíz y entorno configurados antes de `redeploy`; la aplicación pública leyó la misma fila existente de Postgres |
+| [Agente de codificación: subida](/guides/deploy-from-coding-agent) | Aprobado | `lizard up`, health 200, respuesta con respaldo en base de datos 200, ruta desconocida 404; una fila de Postgres actualizada permaneció después de reiniciar el servicio |
+| [Agente de codificación: GitHub](/guides/deploy-from-coding-agent) | Aprobado | Repositorio adjunto con `--no-deploy`; rama, directorio raíz y entorno configurados antes de `redeploy`; la aplicación pública leyó la misma fila existente de Postgres |
 | [Redis worker](/deploy/workers) | Aprobado | Puerto 0; enqueue y resultado; resultado conservado después del reinicio; nuevo trabajo después del reinicio; una entrada de procesamiento sin finalizar se recuperó al iniciar |
 | [Telegram bot](/guides/telegram-bot) | Solo pruebas locales | Siete pruebas simuladas cubren updates, envíos fallidos, verificaciones de token y rechazo de webhook. Todavía se requiere un token real, chat y prueba de eco en la nube |
 
@@ -36,4 +36,4 @@ Las colas finales de logs del runtime estuvieron inicialmente vacías para los s
 
 El ejemplo de Telegram no está marcado como verificado en la nube. Su preflight lee `getMe` y `getWebhookInfo` sin cambiar el webhook del bot. Usa un bot de prueba separado antes de habilitar su bucle de polling.
 
-Consulta [framework test results](/framework-guides/validation) para el lote separado de 16 recetas de framework, y [known issues](/platform/known-issues) para los límites del archivo del CLI y los códigos de salida de compilaciones fallidas.
+Consulta [resultados de pruebas de frameworks](/framework-guides/validation) para el lote separado de 16 recetas de framework, y [known issues](/platform/known-issues) para los límites del archivo del CLI y los códigos de salida de compilaciones fallidas.

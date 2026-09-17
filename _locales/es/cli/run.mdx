@@ -10,7 +10,7 @@ Ejecuta un comando localmente con los secretos del proyecto y del servicio inyec
 
 Dos comandos te permiten ejecutar comandos con el contexto de un servicio. Se ejecutan en lugares distintos — asegúrate de usar el que necesitas.
 
-| Command | Runs where | Use for |
+| Comando | Dónde se ejecuta | Usar para |
 |---------|-----------|---------|
 | `lizard run` | Localmente, con los secretos del proyecto + servicio del servicio inyectados | Migraciones, scripts de seed, herramientas locales que necesitan configuración de prod |
 | `lizard ssh` | Dentro del contenedor del servicio en ejecución | Inspeccionar el contenedor en vivo, comandos remotos puntuales, depuración |
@@ -25,9 +25,11 @@ Dos comandos te permiten ejecutar comandos con el contexto de un servicio. Se ej
 lizard run [flags] -- <command>
 ```
 
-## Flags
+<span id="flags" />
 
-| Flag | Description |
+## Banderas
+
+| Bandera | Descripción |
 |------|-------------|
 | `-s, --service <name>` | Servicio cuyo env se debe inyectar |
 | `--no-service` | No inyectar el env del servicio |
@@ -58,4 +60,4 @@ lizard run --service api -- printenv DATABASE_URL
 
 - [lizard ssh](/cli/ssh) — ejecuta un comando dentro del contenedor del servicio en ejecución en lugar de hacerlo localmente
 - [Variables](/variables) — cómo se definen y se referencian las variables del proyecto y del servicio
-- [Python app hosting](https://lizard.build/blog/python-app-hosting) — ejecutar `manage.py` y otras herramientas del framework contra una base de datos desplegada
+- [Alojamiento de apps en Python](https://lizard.build/blog/python-app-hosting) — ejecutar `manage.py` y otras herramientas del framework contra una base de datos desplegada

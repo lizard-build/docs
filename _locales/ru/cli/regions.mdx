@@ -1,0 +1,64 @@
+---
+description: "lizard regions выводит список регионов, доступных вашему аккаунту, и показывает, как передавать --region при создании сервиса или аддона."
+---
+
+# lizard regions
+
+Выводит список доступных регионов.
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard regions [flags]
+```
+
+<span id="flags" />
+
+## Флаги
+
+| Флаг | Описание |
+|------|-------------|
+| `--json` | Вывод в формате JSON |
+
+<span id="examples" />
+
+## Примеры
+
+<span id="list-available-regions" />
+
+### Список доступных регионов
+
+```bash
+lizard regions
+```
+
+<span id="list-regions-as-json" />
+
+### Список регионов в формате JSON
+
+```bash
+lizard regions --json
+```
+
+<span id="choose-a-region-when-creating-a-service-or-addon" />
+
+### Выбор региона при создании сервиса или аддона
+
+Передайте `--region <code>` в `lizard add` или `lizard up`:
+
+```bash
+lizard add -r your-org/your-app --region <code>
+lizard add postgres --region <code>
+lizard up --region <code>
+```
+
+Если вы не укажете регион, платформа использует регион проекта по умолчанию.
+
+<span id="see-also" />
+
+## См. также
+
+- [Регионы](/deploy/regions) — выбор региона, совместное размещение и генерируемые домены
+- [`lizard add`](/cli/add) — добавление сервиса, репозитория или аддона с помощью `--region`

@@ -58,7 +58,7 @@ lizard port --service worker
 
 ## キューコンシューマーを実行する
 
-[redis-worker example](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/redis-worker) を使います。これはジョブを pending リストから processing リストへ移動し、その大文字化した結果を保存し、Redis トランザクションでジョブを確認済みにします。レプリカは 1 つのままにしてください。起動時の復旧は単一コンシューマーを前提にしています。この例は Python 3.13 と redis-py 6.4.0 を使います。
+[redis-workerの例](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/redis-worker) を使います。これはジョブを pending リストから processing リストへ移動し、その大文字化した結果を保存し、Redis トランザクションでジョブを確認済みにします。レプリカは 1 つのままにしてください。起動時の復旧は単一コンシューマーを前提にしています。この例は Python 3.13 と redis-py 6.4.0 を使います。
 
 その Dockerfile を含むディレクトリから実行します:
 
@@ -98,13 +98,13 @@ lizard ssh --service worker -- python jobs.py result after-restart
 
 SSH がまだ使えない場合は、`lizard ps --json` でサービスが `running` に戻るまで待ってください。両方の結果は `HELLO` になるはずです。最初の結果は Redis に保存されるため、ワーカーを再起動しても削除されません。起動時に単一コンシューマーは未完了の processing エントリを pending リストに戻します。
 
-このデモは `jobs.py` が作成した JSON ジョブのみを受け付けます。dead-letter queue、信頼できない producer 向けのバリデーション、または external side effects の exactly-once は実装していません。支払い、メール、その他の副作用には、実績のあるキューライブラリと冪等なハンドラーを使用してください。Redis の永続性とバックアップは、ワーカー再起動時の挙動とは別です。[storage and recovery](/platform/storage-and-recovery) を参照してください。
+このデモは `jobs.py` が作成した JSON ジョブのみを受け付けます。dead-letter queue、信頼できない producer 向けのバリデーション、または external side effects の exactly-once は実装していません。支払い、メール、その他の副作用には、実績のあるキューライブラリと冪等なハンドラーを使用してください。Redis の永続性とバックアップは、ワーカー再起動時の挙動とは別です。[ストレージとリカバリ](/platform/storage-and-recovery) を参照してください。
 
 <span id="troubleshooting" />
 
 ## トラブルシューティング
 
-| Symptom | Check |
+| 症状 | 確認 |
 |---|---|
 | サービスが見つからない | プロジェクト作成後に `lizard add --service worker` を実行してください。 |
 | `Queue worker ready` がない | サービススコープの `REDIS_URL`、addon の準備完了状態、接続エラーを確認してください。接続文字列は絶対に表示しないでください。 |
@@ -117,8 +117,8 @@ SSH がまだ使えない場合は、`lizard ps --json` でサービスが `runn
 ## 関連項目
 
 - [`lizard port`](/cli/port) — サービスのコンテナポートを表示または変更します。
-- [Service never becomes healthy](/deploy/troubleshooting/service-never-healthy) — worker-mode で最もよくある設定ミスです。
+- [サービスがヘルシー状態にならない](/deploy/troubleshooting/service-never-healthy) — worker-mode で最もよくある設定ミスです。
 - [Managed Addons](/addons) — ステートフルなワークロード向けの Redis、Postgres、S3。
-- [Python app hosting](https://lizard.build/blog/python-app-hosting#deploying-django) — Celery ワーカーは、コマンドだけが異なり HTTP ポートがない同じイメージです。
+- [Pythonアプリホスティング](https://lizard.build/blog/python-app-hosting#deploying-django) — Celery ワーカーは、コマンドだけが異なり HTTP ポートがない同じイメージです。
 
-確認済みバージョン、クラウドでの結果、残っている制限については、[scenario test results](/guides/validation) を参照してください。
+確認済みバージョン、クラウドでの結果、残っている制限については、[シナリオテストの結果](/guides/validation) を参照してください。

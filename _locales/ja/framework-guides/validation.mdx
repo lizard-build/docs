@@ -17,18 +17,18 @@ description: "2026年9月9日に行った 16 件の実際の Lizard CLI デプ�
 | レシピ | テストしたバージョン | ポート | クラウドチェック |
 |---|---|---|---|
 | Next.js server | Next.js 16.3.4, React 19.2.8 | `3000` | 合格 |
-| Next.js static export | Next.js 16.3.4, React 19.2.8 | `80` | 合格 |
+| Next.js静的エクスポート | Next.js 16.3.4, React 19.2.8 | `80` | 合格 |
 | React with Vite | React 19.2.8, Vite 8.2.2 | `80` | 合格 |
 | Vue with Vite | Vue 3.5.42, Vue Router 5.3.1, Vite 8.2.2 | `80` | 合格 |
 | Astro static | Astro 7.3.1 | `80` | 合格 |
-| Astro Node server | Astro 7.3.1, Node adapter 11.1.5 | `3000` | 合格 |
+| Astro Node サーバー | Astro 7.3.1, Node adapter 11.1.5 | `3000` | 合格 |
 | Nuxt Node server | Nuxt 4.5.2 | `3000` | 合格 |
 | Nuxt generate | Nuxt 4.5.2 | `80` | 合格 |
-| SvelteKit Node server | SvelteKit 2.70.3, Svelte 5.57.0, adapter-node 5.5.7 | `3000` | 合格 |
+| SvelteKit Nodeサーバー | SvelteKit 2.70.3, Svelte 5.57.0, adapter-node 5.5.7 | `3000` | 合格 |
 | SvelteKit static | SvelteKit 2.70.3, Svelte 5.57.0, adapter-static 3.0.10 | `80` | 合格 |
 | Docusaurus | Docusaurus 3.10.2 | `80` | 合格 |
-| VitePress, docs root | VitePress 1.6.4 | `80` | 合格 |
-| VitePress, project root | VitePress 1.6.4 | `80` | 合格 |
+| VitePress、ドキュメントルート | VitePress 1.6.4 | `80` | 合格 |
+| VitePress、プロジェクトルート | VitePress 1.6.4 | `80` | 合格 |
 | FastAPI | FastAPI 0.141.1, Uvicorn 0.52.4 | `8000` | 合格 |
 | Django | Django 6.1.1, Gunicorn 26.2.0, WhiteNoise 6.12.0, psycopg 3.3.5 | `8000` | 合格 |
 | Hugo | Hugo 0.165.0 (extended) | `80` | 合格 |
@@ -41,11 +41,11 @@ JavaScript ビルドでは Node 22 を使用し、Python ビルドでは Python 
 
 - Linux コンテナ内でドキュメント記載のローカルビルドおよびサーバーコマンドを実行し、その後、各レシピに対して `lizard init`、`lizard add`、`lizard up` を実行しました。クラウドのビルドログとランタイムログを読み、最終的なサービスの状態とポートを確認しました。
 - 公開ホームページ、内部ルート、実在するアセット、存在しないページ、存在しない JavaScript パスをリクエストしました。静的コンテンツサイトは実際の 404 を返し、React と Vue はドキュメントどおり SPA フォールバックを維持しました。両方の VitePress レイアウトは clean URL で正しいコンテンツを返しました。
-- リクエスト時の API レスポンス、POST ハンドラー、SvelteKit フォーム結果、信頼されていないオリジンからのフォーム拒否を確認しました。デプロイされた Next.js Server Action フォームを、その生成された action ID を使って HTTP 経由で送信し、リダイレクトと返された値を確認しました。
+- リクエスト時の API レスポンス、POST ハンドラー、SvelteKit フォーム結果、信頼されていないオリジンからのフォーム拒否を確認しました。デプロイされた Next.js Server アクション フォームを、その生成された action ID を使って HTTP 経由で送信し、リダイレクトと返された値を確認しました。
 - 生成されたホスト名を config に設定した後、Docusaurus と Hugo を再ビルドしました。Docusaurus の canonical URL と両方の sitemap は公開ホストを使用していました。
 - Managed Postgres に対して Django マイグレーションを 2 回実行し、テスト行の書き込みと読み取りを行い、収集済み静的ファイルを配信し、有効な CSRF フォームを受け入れ、トークンのないフォームを拒否しました。
 
-各レシピでは、実行を分離するために異なる名前の個別テストプロジェクトを使用しました。workspace、region、JSON フラグにより、テストコンテキストを明示しました。build、start、および Dockerfile path のサービスオーバーライドは未設定のままにしました。ガイドに記載された Dockerfile を指定したのは、Next.js static export、Nuxt generate、Django の各レシピのみです。Docusaurus、VitePress、Hugo、および SvelteKit Node のテストには、[公開されているソース例](https://github.com/lizard-build/docs/tree/main/_examples) が含まれていました。
+各レシピでは、実行を分離するために異なる名前の個別テストプロジェクトを使用しました。workspace、region、JSON フラグにより、テストコンテキストを明示しました。build、start、および Dockerfile path のサービスオーバーライドは未設定のままにしました。ガイドに記載された Dockerfile を指定したのは、Next.js静的エクスポート、Nuxt generate、Django の各レシピのみです。Docusaurus、VitePress、Hugo、および SvelteKit Node のテストには、[公開されているソース例](https://github.com/lizard-build/docs/tree/main/_examples) が含まれていました。
 
 <span id="browser-checks" />
 

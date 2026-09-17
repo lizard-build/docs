@@ -1,0 +1,106 @@
+---
+description: "Разверните статический экспорт Next.js на Lizard с output export, Dockerfile для nginx, портом 80 и реальными ответами 404. Узнайте, для каких функций всё ещё нужен сервер Node.js."
+---
+
+<span id="deploy-a-nextjs-static-export" />
+
+# Развертывание статического экспорта Next.js
+
+Статический экспорт Next.js создаёт HTML, JavaScript и ресурсы в `out/`. Разверните эту директорию на Lizard с Dockerfile для nginx. Используйте этот путь для страниц, которые можно собрать заранее; для функций, нужных во время запроса, см. [руководство по серверу Node.js](/framework-guides/nextjs).
+
+<span id="configure-the-export" />
+
+## Настройка экспорта
+
+Добавьте эти параметры в `next.config.mjs`:
+
+```js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: 'export',
+  trailingSlash: true,
+  images: { unoptimized: true },
+};
+
+export default nextConfig;
+```
+
+Оставьте `"build": "next build"` в `package.json`. В этом примере используются обычные экспортированные изображения; внешний загрузчик изображений — другой вариант. Сгенерируйте все необходимые параметры динамических маршрутов во время сборки. Cookies во время запроса, Server Actions и другие функции, требующие запущенный сервер Next.js, не будут работать в этом статическом контейнере. Сверьте используемые функции приложения со [справочником по статическому экспорту Next.js](https://nextjs.org/docs/app/guides/static-exports).
+
+<span id="add-a-complete-dockerfile" />
+
+## Добавьте полный Dockerfile
+
+Путь автоопределения Next.js рассчитан на сервер Node. Он не переключается на nginx только из‑за того, что конфигурация экспортирует `out/`. Добавьте этот Dockerfile в корень приложения; он предполагает наличие npm и закоммиченного `package-lock.json`:
+
+```dockerfile
+FROM node:22-slim AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=build /app/out /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+```
+
+Создайте `nginx.conf` рядом с ним:
+
+```nginx
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+  location / {
+    try_files $uri $uri/ =404;
+  }
+  error_page 404 /404.html;
+  location = /404.html {
+    internal;
+  }
+}
+```
+
+Экспорт с trailing-slash создаёт директории маршрутов с `index.html`. Правило nginx отдаёт эти директории и возвращает HTTP 404 для отсутствующих путей. Добавьте `node_modules`, `.next`, `out`, `.git` и `.env*` в `.dockerignore` и исключите локальные файлы сборки из загрузки.
+
+<span id="build-and-deploy" />
+
+## Сборка и развертывание
+
+```bash
+npm ci
+npm run build
+```
+
+Проверьте, что существуют `out/index.html` и ожидаемый внутренний маршрут. Если Docker доступен, протестируйте настоящий сервер локально:
+
+```bash
+docker build -t nextjs-static .
+docker run --rm -p 8080:80 nextjs-static
+```
+
+После [настройки CLI](/framework-guides#prepare-the-project) разверните в новый сервис:
+
+```bash
+lizard init --name nextjs-static
+lizard add --service web
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+Полный Dockerfile включает шаг npm‑сборки, который может распознать lizardpack. Для существующего сервиса проверьте и удалите конфликтующие переопределения build/start перед выбором Dockerfile; см. [порядок решения о сборке](/concepts/build-pipeline#build-decision-order).
+
+<span id="verify-routes-and-updates" />
+
+## Проверка маршрутов и обновлений
+
+Запросите главную страницу, экспортированный внутренний маршрут, JavaScript‑ресурс и несуществующий путь. Несуществующий путь должен вернуть HTTP 404, а не главную страницу с HTTP 200. Используйте проверки из [статические маршруты и 404](/framework-guides/static-routing#verify-http-responses).
+
+Все изменения экспортированного контента требуют новой сборки. Переменные окружения во время выполнения не могут изменить значения, уже записанные в `out/`. Для публичных переменных сборки в пользовательском Dockerfile объявляйте нужные `ARG` до `RUN npm run build`; никогда не помещайте приватные учётные данные в экспортируемый пакет.
+
+См. [проверенные версии и результаты в облаке](/framework-guides/validation) для проверок развертывания от 9 сентября 2026 года и их ограничений.

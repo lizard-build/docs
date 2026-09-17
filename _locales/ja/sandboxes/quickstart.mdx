@@ -6,7 +6,7 @@ description: "Lizard SDK で最初の sandbox を起動: インストール、AP
 
 # Sandboxes クイックスタート
 
-sandbox を起動し、その中でコードを実行し、ポートを公開して、Lizard SDK で一時停止します。
+サンドボックスを起動し、その中でコードを実行し、ポートを公開して、Lizard SDK で一時停止します。
 
 <span id="install" />
 
@@ -24,7 +24,7 @@ pip install lizard-sdk
 
 ## 認証
 
-Sandboxes は **API キー** で認証します。ダッシュボードの **Sandboxes → Get started → New API key** で作成してください。表示されるのは一度だけなので、すぐにコピーしてください。
+Sandboxes は **API キー** で認証します。ダッシュボードの **サンドボックス → 開始する → 新しいAPIキー** で作成してください。表示されるのは一度だけなので、すぐにコピーしてください。
 
 環境変数に設定すると、SDK が自動的に読み取ります:
 
@@ -38,7 +38,7 @@ export LIZARD_API_KEY="<your-api-key>"
 
 ## プロジェクトを選ぶ
 
-すべての sandbox はプロジェクトに属します。利用量はプロジェクトごとに計測されるため、指定しないと API は作成を拒否します。プロジェクトは ID、slug、または名前で指定します。
+すべてのサンドボックスはプロジェクトに属します。利用量はプロジェクトごとに計測されるため、指定しないと API は作成を拒否します。プロジェクトは ID、slug、または名前で指定します。
 
 `Lizard` クライアントは 1 つのプロジェクトに固定されるため、指定は一度だけで済みます:
 
@@ -115,7 +115,7 @@ await sandbox.fs.makeDir('/app/data');
 await sandbox.fs.remove('/app/old.log');
 ```
 
-| Method | Description |
+| メソッド | 説明 |
 |---|---|
 | `fs.write(path, data)` | ファイルを書き込む — string または bytes; 親ディレクトリも作成 |
 | `fs.read(path)` | ファイルを UTF-8 string として読み込む |
@@ -127,7 +127,7 @@ await sandbox.fs.remove('/app/old.log');
 
 ## ポートを公開する
 
-sandbox 内で HTTP サーバーを起動し、それに対する公開 HTTPS URL を取得します。トンネリングは不要です。
+サンドボックス内で HTTP サーバーを起動し、それに対する公開 HTTPS URL を取得します。トンネリングは不要です。
 
 ```ts
 await sandbox.process.exec('node /app/server.js &');   // listen on :3000
@@ -143,7 +143,7 @@ console.log(`Live at https://${host}`);
 
 ## 一時停止と再開
 
-一時停止するとゲストの vCPU は凍結され、現在の状態はホストメモリに保持されます。永続的なスナップショットは書き込みません。元の期限を超えてセッションを保持する前に、[pause and expiration issue](/platform/known-issues#sandbox-pause-and-expiration) を確認してください。
+一時停止するとゲストの vCPU は凍結され、現在の状態はホストメモリに保持されます。永続的なスナップショットは書き込みません。元の期限を超えてセッションを保持する前に、[一時停止と期限切れの問題](/platform/known-issues#sandbox-pause-and-expiration) を確認してください。
 
 ```ts
 // Set the environment up once
@@ -178,7 +178,7 @@ resumed.kill()
 
 ## タイムアウト
 
-sandbox に正のタイムアウトがある場合、その存続期間を過ぎると期限切れになります。SDK のデフォルトは 5 分です。作成時に `timeoutMs: 0` を指定すると有効期限を無効化できます。明示的な上限を設定し、タスク終了時に sandbox を解放してください。実行中の sandbox は次で調整できます:
+sandbox に正のタイムアウトがある場合、その存続期間を過ぎると期限切れになります。SDK のデフォルトは 5 分です。作成時に `timeoutMs: 0` を指定すると有効期限を無効化できます。明示的な上限を設定し、タスク終了時に sandbox を解放してください。実行中のサンドボックスは次で調整できます:
 
 ```ts
 const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 10 * 60 * 1000 }); // 10 min
@@ -189,7 +189,7 @@ await sandbox.setTimeout(30 * 60 * 1000);   // extend to 30 min from now
 
 <span id="managing-sandboxes" />
 
-## sandbox を管理する
+## サンドボックスを管理する
 
 ```ts
 const sandbox = await Sandbox.create('base', { project: 'my-project' });
@@ -233,5 +233,5 @@ try {
 ## 次のステップ
 
 - **[SDK Reference](/sandboxes/sdk-reference)** — すべての `Sandbox`、`CodeSandbox`、`Volume` メソッド。
-- **[Code Interpreter](/sandboxes/code-interpreter)** — 状態を保持するマルチ言語コードを実行。
-- **[Persistent Volumes](/sandboxes/volumes)** — 単一の sandbox より長く存続するストレージをアタッチ。
+- **[コード インタープリタ](/sandboxes/code-interpreter)** — 状態を保持するマルチ言語コードを実行。
+- **[Persistent Volumes](/sandboxes/volumes)** — 単一のサンドボックスより長く存続するストレージをアタッチ。

@@ -6,15 +6,19 @@ description: "lizard redeploy は、現在の変数を使用して最新のコ�
 
 現在の変数を使用して新しいビルド（最新のコミット / 最後のアップロード）を開始します。
 
-## Usage
+<span id="usage" />
+
+## 使い方
 
 ```bash
 lizard redeploy [nameOrId] [flags]
 ```
 
-## Flags
+<span id="flags" />
 
-| Flag | Description |
+## フラグ
+
+| フラグ | 説明 |
 |------|--------------|
 | `-s, --service <name>` | サービス |
 | `--detach` | ビルドが受け付けられたら戻る |
@@ -22,7 +26,9 @@ lizard redeploy [nameOrId] [flags]
 | `--timeout <seconds>` | ビルド後の準備完了待機時間の上限。デフォルトは `120` |
 | `--json` | スクリプト用に JSON を返します |
 
-## Examples
+<span id="examples" />
+
+## 例
 
 <span id="rebuild-and-redeploy-a-service" />
 
@@ -54,8 +60,10 @@ lizard --json redeploy --service api --wait --timeout 120
 
 タイムアウトはビルド完了後の準備完了に適用されます。ビルド時間を制限したり、デプロイをキャンセルしたりはしません。`containerPort=0` を持つ worker は、HTTP チェックなしでバックエンドの準備完了ステータスを使用します。コマンドが正常に完了した後は、ワークフローでアプリケーションの動作確認が必要な場合、アプリケーションのエンドポイントまたは保存済みデータを確認してください。
 
-## See also
+<span id="see-also" />
+
+## 関連項目
 
 - [lizard restart](/cli/restart) — 現在のビルドをローリング再起動、再ビルドなし
 - [lizard up](/cli/up) — 現在のディレクトリをアップロードしてデプロイします
-- [Deployments](/concepts/deployments) — デプロイ、再起動、再ビルドの仕組み
+- [デプロイメント](/concepts/deployments) — デプロイ、再起動、再ビルドの仕組み

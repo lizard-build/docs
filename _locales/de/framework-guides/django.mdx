@@ -22,7 +22,7 @@ web: gunicorn config.wsgi:application --bind 0.0.0.0:8000
 
 Das explizite Modul vermeidet Unklarheiten, wenn Einstellungen in verschachtelten Paketen liegen. Eine ASGI-App mit WebSockets benötigt einen ASGI-Server und einen anderen Startbefehl; diese Anleitung behandelt WSGI.
 
-| Setting | Value |
+| Einstellung | Wert |
 |---|---|
 | Installation | `pip install -r requirements.txt` |
 | Laufzeit | Gunicorn mit deinem WSGI-Modul |
@@ -45,7 +45,7 @@ psycopg[binary]==3.3.5
 dj-database-url==3.1.2
 ```
 
-`psycopg` ist der PostgreSQL-Treiber. `dj-database-url` liest Datenbankname, Benutzer, Passwort, Host und Port aus der Verbindungs-URL. Ersetze die entsprechenden Einstellungen in der `settings.py` deines Projekts durch diesen Block; behalte deine vorhandenen Apps, Middleware, Templates und weiteren Einstellungen bei:
+`psycopg` ist der PostgreSQL-Treiber. `dj-database-url` liest Datenbankname, Benutzer, Passwort, Host und Port aus der Verbindungs-URL. Ersetze die entsprechenden Einstellungen in der `settings.py` deines Projekts durch diesen Block; behalte deine vorhandenen Apps, Middleware, Vorlagen und weiteren Einstellungen bei:
 
 ```python
 import os
@@ -159,7 +159,7 @@ staticfiles/
 
 Bewahre Benutzer-Uploads in dauerhaftem Speicher auf, etwa [Managed Object Storage](/addons/storage), statt im statischen Verzeichnis des Containers. Prüfe [Speicherung und Wiederherstellung](/platform/storage-and-recovery).
 
-Behandle Datenbankmigrationen als separaten Release-Schritt. Sichere Daten bei Bedarf, mache Migrationen sicher erneut ausführbar und wende sie an, bevor Requests das neue Schema benötigen. Ein Befehl vor dem Deploy ist kein Ersatz dafür, Nebenläufigkeit und Fehlerverhalten zu prüfen.
+Behandle Datenbankmigrationen als separaten Release-Schritt. Sichere Daten bei Bedarf, mache Migrationen sicher erneut ausführbar und wende sie an, bevor Requests das neue Schema benötigen. Ein Befehl vor dem Bereitstellen ist kein Ersatz dafür, Nebenläufigkeit und Fehlerverhalten zu prüfen.
 
 <span id="deploy-and-verify" />
 
@@ -178,7 +178,7 @@ Erstelle [Managed Postgres](/addons/postgres) in diesem Projekt. Wenn du bereits
 lizard add postgres --name postgres
 ```
 
-Setze die [Service Secrets](/cli/secrets) der App. Das `postgres` in `${{postgres.DATABASE_URL}}` bezeichnet den Datenbank-Service, nicht einen Django-Datenbankalias. Lizard löst die [Referenz](/variables/references) beim Deploy auf und injiziert die resultierende URL in den Prozess `web`. Die einfachen Anführungszeichen verhindern, dass deine Shell die Referenz expandiert. Der oben stehende Block `settings.py` wandelt die URL dann in `DATABASES["default"]` um.
+Setze die [Service Secrets](/cli/secrets) der App. Das `postgres` in `${{postgres.DATABASE_URL}}` bezeichnet den Datenbank-Service, nicht einen Django-Datenbankalias. Lizard löst die [Referenz](/variables/references) beim Bereitstellen auf und injiziert die resultierende URL in den Prozess `web`. Die einfachen Anführungszeichen verhindern, dass deine Shell die Referenz expandiert. Der oben stehende Block `settings.py` wandelt die URL dann in `DATABASES["default"]` um.
 
 ```bash
 DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"

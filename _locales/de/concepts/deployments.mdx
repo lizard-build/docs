@@ -1,14 +1,16 @@
 ---
-description: "Der Deploy-Lebenszyklus auf Lizard: was einen Build auslöst, wie der Traffic auf fehlerfreie Replikate umgeschaltet wird und wie sich Neustarts von Redeploys unterscheiden."
+description: "Der Bereitstellen-Lebenszyklus auf Lizard: was einen Build auslöst, wie der Traffic auf fehlerfreie Replikate umgeschaltet wird und wie sich Neustarts von Redeploys unterscheiden."
 ---
 
-# Deployments
+<span id="deployments" />
+
+# Bereitstellungen
 
 Ein **Deployment** ist ein Build-und-Release eines Service. Der Release-Ablauf hängt von der Laufzeitumgebung des Service ab. Ein erfolgreicher Build belegt für sich allein nicht, dass die Anwendung gestartet ist oder Anfragen verarbeiten kann.
 
 <span id="how-a-deploy-happens" />
 
-## Wie ein Deploy erfolgt
+## Wie ein Bereitstellen erfolgt
 
 Ein Deployment wird ausgelöst durch:
 
@@ -27,23 +29,23 @@ lizard up                          # upload cwd and deploy
 ## Ablauf
 
 1. **Build** — die Plattform führt Ihren Build aus (siehe [Build-Pipeline](/concepts/build-pipeline)).
-2. **Vor dem Deploy** — wenn `preDeployCommand` gesetzt ist, wird es einmal ausgeführt (z. B. Migrationen).
+2. **Vor dem Bereitstellen** — wenn `preDeployCommand` gesetzt ist, wird es einmal ausgeführt (z. B. Migrationen).
 3. **Start** — Lizard startet die Anwendung für ihre konfigurierte Laufzeitumgebung.
-4. **Health-Check** — die Plattform prüft, ob der Port der App erreichbar ist (entfällt bei [Workers](/deploy/workers)).
-5. **Prüfen** — prüfen Sie den Release-Status und rufen Sie die Anwendungs-URL auf. Die Erreichbarkeit des Ports ist kein vollständiger Health-Check der Anwendung.
+4. **Health-Checks** — die Plattform prüft, ob der Port der App erreichbar ist (entfällt bei [Workers](/deploy/workers)).
+5. **Prüfen** — prüfen Sie den Release-Status und rufen Sie die Anwendungs-URL auf. Die Erreichbarkeit des Ports ist kein vollständiger Health-Checks der Anwendung.
 
 <span id="streaming-output" />
 
 ## Streaming-Ausgabe
 
-Wenn Sie ein nicht detachdtes `lizard up` (oder `redeploy`) ausführen, werden Build-Logs live gestreamt. Mit `--json` erhalten Sie ein JSON-Ereignis pro Zeile:
+Wenn Sie ein nicht-detachtes `lizard up` (oder `redeploy`) ausführen, werden Build-Logs live gestreamt. Mit `--json` erhalten Sie ein JSON-Ereignis pro Zeile:
 
 ```json
 { "event": "log", "line": "..." }
 { "event": "deployed", "status": "...", "url": "https://..." }
 ```
 
-endet mit `deployed`, `failed` oder `deploying`. Verwenden Sie `--detach`, um das Deploy zu starten und sofort zurückzukehren, ohne Streaming.
+endet mit `deployed`, `failed` oder `deploying`. Verwenden Sie `--detach`, um das Bereitstellen zu starten und sofort zurückzukehren, ohne Streaming.
 
 <span id="inspecting-history" />
 
@@ -55,13 +57,13 @@ lizard events --limit 25       # show more
 lizard ps                      # current services, status, and URLs
 ```
 
-Im [Dashboard](/dashboard) zeigt die Ansicht **Deployments** die vollständige Zeitleiste, Build-Logs pro Deployment und einen Detailbereich für jedes Release.
+Im [Dashboard](/dashboard) zeigt die Ansicht **Bereitstellungen** die vollständige Zeitleiste, Build-Logs pro Deployment und einen Detailbereich für jedes Release.
 
 <span id="restarts-vs-redeploys" />
 
 ## Neustarts vs. Redeploys
 
-| Command | Was es tut |
+| Befehl | Was es tut |
 |---------|--------------|
 | `lizard restart --service <svc>` | Neustart des **aktuellen** Builds — kein Neuaufbau |
 | `lizard redeploy --service <svc>` | Neuer **Build** vom neuesten Commit/Upload, dann Release |

@@ -25,7 +25,7 @@ Jede Sandbox gehört außerdem zu einem **Projekt** — die Nutzung wird pro Pro
 
 Ein Client, der an ein Projekt gebunden ist, sodass Sie das Projekt einmal angeben statt bei jedem Aufruf.
 
-| Member | Description |
+| Mitglied | Beschreibung |
 |---|---|
 | `new Lizard({ project, apiKey?, apiUrl?, timeoutMs? })` | Einen Client erstellen. `project` ist erforderlich — seine ID, sein Slug oder sein Name (`Lizard(project=…)` in Python). |
 | `lizard.create(template?, options?)` | Eine Sandbox im Projekt des Clients starten. |
@@ -49,7 +49,7 @@ Eine Projektreferenz, die zu nichts passt, auf das der Schlüssel zugreifen kann
 
 ## `Sandbox`
 
-| Member | Description |
+| Mitglied | Beschreibung |
 |---|---|
 | `Sandbox.create(template?, options?)` | Eine Sandbox starten. `template` ist standardmäßig `'base'`; `options.project` benennt das Projekt, dem die Kosten berechnet werden. |
 | `Sandbox.connect(sandboxId)` | Eine Sandbox per ID anbinden und sie automatisch fortsetzen, wenn sie pausiert ist. |
@@ -62,7 +62,7 @@ Eine Projektreferenz, die zu nichts passt, auf das der Schlüssel zugreifen kann
 | `sandbox.fs.makeDir(path)` | Ein Verzeichnis und alle fehlenden übergeordneten Verzeichnisse erstellen. |
 | `sandbox.fs.remove(path)` | Eine Datei oder ein Verzeichnis löschen. |
 | `sandbox.getHost(port)` | Eine Route zu `port` registrieren und ihren öffentlichen, TLS-terminierten Hostnamen zurückgeben. |
-| `sandbox.pause()` | Guest-vCPUs stoppen und den Zustand im Host-Speicher behalten. Lesen Sie den [Lifecycle-Status](#lifecycle-status), bevor Sie sich auf eine Pause über die ursprüngliche Frist hinaus verlassen. |
+| `sandbox.pause()` | Guest-vCPUs stoppen und den Zustand im Host-Speicher behalten. Lesen Sie den [Lebenszyklus-Status](#lifecycle-status), bevor Sie sich auf eine Pause über die ursprüngliche Frist hinaus verlassen. |
 | `sandbox.resume()` | Eine pausierte Sandbox an Ort und Stelle fortsetzen. |
 | `sandbox.setTimeout(ms)` | Die verbleibende Lebensdauer einer laufenden Sandbox in Millisekunden setzen (mindestens 1000). |
 | `sandbox.getInfo()` | Metadaten abrufen → `{ sandboxId, template, startedAt, endAt, … }`. |
@@ -70,7 +70,7 @@ Eine Projektreferenz, die zu nichts passt, auf das der Schlüssel zugreifen kann
 
 ### `Sandbox.create(template?, options?)`
 
-| Option | Type | Default | Notes |
+| Option | Typ | Standard | Hinweise |
 |---|---|---|---|
 | `template` | string | `'base'` | `'base'` oder `'code-interpreter-v1'` — die beiden unterstützten [Vorlagen](/sandboxes#templates) |
 | `project` | string | — | **Erforderlich.** Das Projekt, dem die Kosten berechnet werden — seine ID, sein Slug oder sein Name (`project` in Python). Nicht nötig über einen Client `Lizard`. |
@@ -88,7 +88,7 @@ const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs:
 
 Erweitert `Sandbox` um einen zustandsbehafteten Kernel. Die vollständige Einführung finden Sie unter [Code Interpreter](/sandboxes/code-interpreter).
 
-| Member | Description |
+| Mitglied | Beschreibung |
 |---|---|
 | `CodeSandbox.create(options?)` | Einen Code-Interpreter starten (standardmäßig mit der Vorlage `code-interpreter-v1`). Akzeptiert dieselbe Option `project` wie `Sandbox.create`. |
 | `CodeSandbox.connect(sandboxId)` | Einen vorhandenen Code-Interpreter-Sandbox anbinden (und automatisch fortsetzen). |
@@ -100,17 +100,17 @@ Erweitert `Sandbox` um einen zustandsbehafteten Kernel. Die vollständige Einfü
 
 ### `runCode(code, opts?)`
 
-| Option | Description |
+| Option | Beschreibung |
 |---|---|
 | `language` | Laufzeit für einen einmaligen Aufruf — `'python'` (Standard), `'javascript'` oder `'bash'`. Gegenseitig ausschließend mit `context`. |
 | `context` | Innerhalb eines bestimmten isolierten Kontexts statt des Standardkontexts ausführen. Gegenseitig ausschließend mit `language`. |
 | `onStdout` / `onStderr` | Ausgabe zeilenweise streamen, während sie erzeugt wird. |
-| `onResult` | Wird für jedes Rich Result aufgerufen (Werte, erzeugte Bilder/Diagramme). |
+| `onResult` | Wird für jedes Rich Ergebnis aufgerufen (Werte, erzeugte Bilder/Diagramme). |
 | `onError` | Wird mit einem `ExecutionError` aufgerufen, wenn der Code eine Ausnahme auslöst. |
 
 Gibt ein `Execution` zurück:
 
-| Field | Description |
+| Feld | Beschreibung |
 |---|---|
 | `stdout` / `stderr` | Erfasste Ausgabeströme |
 | `results` | Rich Results (Werte sowie eventuell erzeugte Bilder / Diagramme) |
@@ -121,7 +121,7 @@ Gibt ein `Execution` zurück:
 
 Die vollständige Einführung finden Sie unter [Persistent Volumes](/sandboxes/volumes).
 
-| Member | Description |
+| Mitglied | Beschreibung |
 |---|---|
 | `Volume.create(projectId, name, options)` | Ein Volume erstellen. `options.sizeGb` ist standardmäßig `5`. |
 | `Volume.list(projectId)` | Volumes in einem Projekt auflisten → `[{ id, name, sizeGb, status, attachedTo, … }]`. |
@@ -137,6 +137,8 @@ Die vollständige Einführung finden Sie unter [Persistent Volumes](/sandboxes/v
 - [Code Interpreter](/sandboxes/code-interpreter) — der Leitfaden zu `CodeSandbox`.
 - [Persistent Volumes](/sandboxes/volumes) — der Leitfaden zu `Volume`.
 
-## Lifecycle-Status
+<span id="lifecycle-status" />
+
+## Lebenszyklus-Status
 
 Bevor Sie sich darauf verlassen, dass eine Pause eine Sitzung über ihre ursprüngliche Frist hinaus erhält, lesen Sie die [bekannten Probleme](/platform/known-issues#sandbox-pause-and-expiration). Eine Pause hält den Guest-Zustand im Host-Speicher; sie ist kein dauerhaftes Backup.

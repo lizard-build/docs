@@ -1,0 +1,144 @@
+---
+description: "Все классы и методы Lizard SDK для JavaScript и Python: Lizard, Песочница, CodeSandbox и Том с параметрами и типами возвращаемых значений."
+---
+
+<span id="sdk-reference" />
+
+# Справочник SDK
+
+Пакеты `@lizard-build/sdk` (JS/TS) и `lizard-sdk` (Python) — это то, чем пользуются большинство агентов, приложений и скриптов для управления песочницами. На этой странице перечислены все классы и методы; пошаговое руководство см. в [Quickstart](/sandboxes/quickstart).
+
+<span id="install--authenticate" />
+
+## Установка и аутентификация
+
+```bash
+npm install @lizard-build/sdk    # JavaScript / TypeScript
+pip install lizard-sdk           # Python
+```
+
+SDK считывает `LIZARD_API_KEY` из окружения или принимает явный параметр `apiKey` в `Sandbox.create` / `Sandbox.connect`. Как создать ключ — в [Quickstart → Аутентификация](/sandboxes/quickstart#authenticate).
+
+Каждая песочница также принадлежит **проекту** — расход учитывается по проекту, поэтому попытка создания без проекта будет отклонена.
+
+## `Lizard`
+
+Клиент, привязанный к одному проекту, чтобы указывать проект один раз, а не при каждом вызове.
+
+| Метод | Описание |
+|---|---|
+| `new Lizard({ project, apiKey?, apiUrl?, timeoutMs? })` | Создать клиент. `project` обязателен — его ID, slug или имя (`Lizard(project=…)` в Python). |
+| `lizard.create(template?, options?)` | Запустить песочницу в проекте клиента. |
+| `lizard.connect(sandboxId)` | Подключиться к песочнице по ID, автоматически возобновив её, если была приостановлена. |
+| `lizard.list()` | Получить список всех запущенных песочниц аккаунта. |
+| `lizard.projectId()` | Разрешить ссылку на проект клиента в его ID (кэшируется после первого вызова). |
+
+```ts
+const lizard = new Lizard({ project: 'my-project' });
+const sandbox = await lizard.create('base');
+```
+
+```python
+lizard = Lizard(project="my-project")
+sandbox = lizard.create("base")
+```
+
+Ссылка на проект, не соответствующая ни одному из доступных ключу, вызовет ошибку до запуска песочницы, перечислив доступные проекты.
+
+> В Python имена методов с подчёркиванием на конце (`exec_`) избегают перекрытия с зарезервированными словами, а свойства — в snake_case (`sandbox_id`) вместо camelCase (`sandboxId`). В примерах ниже используются имена JS/TS; точные сигнатуры смотрите в установленном Python-пакете.
+
+## `Sandbox`
+
+| Метод | Описание |
+|---|---|
+| `Sandbox.create(template?, options?)` | Запустить песочницу. `template` по умолчанию `'base'`; `options.project` задаёт проект для биллинга. |
+| `Sandbox.connect(sandboxId)` | Подключиться к песочнице по ID, автоматически возобновив её, если была приостановлена. |
+| `Sandbox.list()` | Получить список всех запущенных песочниц аккаунта. |
+| `sandbox.sandboxId` | ID песочницы (`sandbox_id` в Python). |
+| `sandbox.process.exec(cmd)` | Выполнить команду и дождаться завершения (`process.exec_` в Python). Возвращает `{ stdout, stderr, exitCode }`. |
+| `sandbox.fs.write(path, data)` | Записать файл — строка или байты; создаёт родительские директории. |
+| `sandbox.fs.read(path)` | Прочитать файл как UTF-8 строку. |
+| `sandbox.fs.list(path)` | Список элементов директории → `[{ name, path, type, size }]`. |
+| `sandbox.fs.makeDir(path)` | Создать директорию и все недостающие родители. |
+| `sandbox.fs.remove(path)` | Удалить файл или директорию. |
+| `sandbox.getHost(port)` | Зарегистрировать маршрут к `port` и вернуть публичный TLS-хост. |
+| `sandbox.pause()` | Остановить гостевые vCPU и сохранить состояние в памяти хоста. Подробнее в [статусах жизненного цикла](#lifecycle-status) перед тем как полагаться на паузу после исходного дедлайна. |
+| `sandbox.resume()` | Возобновить приостановленную песочницу на месте. |
+| `sandbox.setTimeout(ms)` | Задать оставшееся время жизни запущенной песочницы в миллисекундах (минимум 1000). |
+| `sandbox.getInfo()` | Получить метаданные → `{ sandboxId, template, startedAt, endAt, … }`. |
+| `sandbox.kill()` | Немедленно завершить песочницу и освободить ресурсы. |
+
+### `Sandbox.create(template?, options?)`
+
+| Параметр | Тип | По умолчанию | Примечания |
+|---|---|---|---|
+| `template` | string | `'base'` | `'base'` или `'code-interpreter-v1'` — две поддерживаемые [шаблоны](/sandboxes#templates) |
+| `project` | string | — | **Обязательно.** Проект для биллинга — его ID, slug или имя (`project` в Python). Не требуется при использовании клиента `Lizard`. |
+| `projectId` | string | — | Точный ID проекта; пропускает разрешение `project` |
+| `timeoutMs` | int | дефолт SDK 5 мин | Время жизни в мс |
+| `region` | string | auto | Закрепить за регионом |
+| `volumeId` | string | — | Подключить [том](/sandboxes/volumes) в `/data` |
+| `apiKey` | string | переменная `LIZARD_API_KEY` | Явный API-ключ, переопределяет окружение |
+
+```ts
+const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 10 * 60 * 1000 });
+```
+
+## `CodeSandbox`
+
+Расширяет `Sandbox` стейтфул-ядром. Полное руководство в [Интерпретатор кода](/sandboxes/code-interpreter).
+
+| Метод | Описание |
+|---|---|
+| `CodeSandbox.create(options?)` | Запустить интерпретатор кода (по умолчанию шаблон `code-interpreter-v1`). Принимает те же `project`, что и `Sandbox.create`. |
+| `CodeSandbox.connect(sandboxId)` | Подключиться к (и автоматически возобновить) существующую песочницу интерпретатора. |
+| `sandbox.runCode(code, opts?)` | Выполнить код в ядре. Возвращает `Execution`. |
+| `sandbox.createContext(opts)` | Создать изолированное пространство имён — `{ language }`. |
+| `sandbox.listContexts()` | Получить список контекстов песочницы. |
+| `sandbox.restartContext(context)` | Очистить все переменные/состояние в контексте. |
+| `sandbox.deleteContext(context)` | Освободить ресурсы контекста. |
+
+### `runCode(code, opts?)`
+
+| Параметр | Описание |
+|---|---|
+| `language` | Среда выполнения для разового вызова — `'python'` (по умолчанию), `'javascript'` или `'bash'`. Взаимоисключающ с `context`. |
+| `context` | Выполнить внутри конкретного изолированного контекста вместо дефолтного. Взаимоисключающ с `language`. |
+| `onStdout` / `onStderr` | Потоковый вывод построчно по мере генерации. |
+| `onResult` | Вызывается для каждого насыщенного результата (значения, сгенерированные изображения/диаграммы). |
+| `onError` | Вызывается с `ExecutionError`, если код выбросил ошибку. |
+
+Возвращает `Execution`:
+
+| Поле | Описание |
+|---|---|
+| `stdout` / `stderr` | Захваченные потоки вывода |
+| `results` | Насыщенные результаты (значения и любые сгенерированные изображения/диаграммы) |
+| `error` | `ExecutionError` (`name`, `message`, `traceback`), если код выбросил ошибку |
+| `executionCount` | Монотонный счётчик ядра |
+
+## `Volume`
+
+Подробнее в [Persistent Volumes](/sandboxes/volumes).
+
+| Метод | Описание |
+|---|---|
+| `Volume.create(projectId, name, options)` | Создать том. `options.sizeGb` по умолчанию `5`. |
+| `Volume.list(projectId)` | Список томов в проекте → `[{ id, name, sizeGb, status, attachedTo, … }]`. |
+| `Volume.get(projectId, volumeId)` | Получить хендл существующего тома. |
+| `volume.getInfo(projectId)` | Получить метаданные и статус подключения. |
+| `volume.delete(projectId)` | Удалить том — он должен быть сначала отключён. |
+
+<span id="see-also" />
+
+## См. также
+
+- [Quickstart](/sandboxes/quickstart) — установка, аутентификация и полное руководство.
+- [Интерпретатор кода](/sandboxes/code-interpreter) — руководство по `CodeSandbox`.
+- [Persistent Volumes](/sandboxes/volumes) — руководство по `Volume`.
+
+<span id="lifecycle-status" />
+
+## Статусы жизненного цикла
+
+Перед тем как полагаться на паузу для сохранения сессии после исходного дедлайна, прочитайте [известные проблемы](/platform/known-issues#sandbox-pause-and-expiration). Пауза держит состояние гостя в памяти хоста; это не долговечный бэкап.

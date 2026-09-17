@@ -25,7 +25,7 @@ const nextConfig = {
 export default nextConfig;
 ```
 
-`"build": "next build"` は `package.json` のままにしてください。この例では通常の export された画像を使います。外部の画像ローダーも別の選択肢です。必要な動的ルートパラメーターはすべてビルド中に生成してください。リクエスト時の cookies、Server Actions、および実行中の Next.js サーバーを必要とするその他の機能は、この static コンテナでは実行できません。アプリで使っている機能については、[Next.js static export リファレンス](https://nextjs.org/docs/app/guides/static-exports) を確認してください。
+`"build": "next build"` は `package.json` のままにしてください。この例では通常の export された画像を使います。外部の画像ローダーも別の選択肢です。必要な動的ルートパラメーターはすべてビルド中に生成してください。リクエスト時の cookies、Server Actions、および実行中の Next.js サーバーを必要とするその他の機能は、この static コンテナでは実行できません。アプリで使っている機能については、[Next.js静的エクスポート リファレンス](https://nextjs.org/docs/app/guides/static-exports) を確認してください。
 
 <span id="add-a-complete-dockerfile" />
 
@@ -93,14 +93,14 @@ lizard logs --build --service web --json
 lizard ps --json
 ```
 
-完全な Dockerfile には、lizardpack が認識できる npm build ステップが含まれています。既存のサービスでは、Dockerfile を選択する前に、競合する build/start オーバーライドを確認してクリアしてください。詳細は [build decision order](/concepts/build-pipeline#build-decision-order) を参照してください。
+完全な Dockerfile には、lizardpack が認識できる npm build ステップが含まれています。既存のサービスでは、Dockerfile を選択する前に、競合する build/start オーバーライドを確認してクリアしてください。詳細は [ビルドの決定順序](/concepts/build-pipeline#build-decision-order) を参照してください。
 
 <span id="verify-routes-and-updates" />
 
 ## ルートと更新を確認する
 
-公開中のホームページ、export された内部ルート、JavaScript アセット、そして存在しない適当なパスをリクエストしてください。存在しないパスは、HTTP 200 のホームページではなく、HTTP 404 を返す必要があります。[static routes and 404s](/framework-guides/static-routing#verify-http-responses) の確認手順を使ってください。
+公開中のホームページ、export された内部ルート、JavaScript アセット、そして存在しない適当なパスをリクエストしてください。存在しないパスは、HTTP 200 のホームページではなく、HTTP 404 を返す必要があります。[静的ルートと404エラー](/framework-guides/static-routing#verify-http-responses) の確認手順を使ってください。
 
 &#101;xport されたコンテンツの変更はすべて、新しいビルドが必要です。ランタイム環境変数では、`out/` にすでに書き込まれた値は変更できません。カスタム Dockerfile で公開用の build 変数を使う場合は、必要な `ARG` を `RUN npm run build` の前に宣言してください。秘密の認証情報を export 済みバンドルに入れないでください。
 
-2026年9月9日のデプロイ確認とその制限については、[tested versions and cloud results](/framework-guides/validation) を参照してください。
+2026年9月9日のデプロイ確認とその制限については、[テスト済みバージョンとクラウド結果](/framework-guides/validation) を参照してください。

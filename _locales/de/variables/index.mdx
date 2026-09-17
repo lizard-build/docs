@@ -42,10 +42,10 @@ Im [Befehlsreferenz für `lizard secrets`](/cli/secrets) finden Sie alle Flags.
 
 ## Geltungsbereich
 
-| Scope | Command | Stored as | Visible to |
+| Gültigkeitsbereich | Befehl | Gespeichert als | Sichtbar für |
 |-------|---------|-----------|------------|
 | **Service** (default) | `lizard secrets set K=v --service <svc>` | `secrets.services[<svc>]` | nur dieser Service |
-| **Project** (global) | `lizard secrets set K=v --global` | `secrets.shared` | jeder Service im Projekt |
+| **Projekt** (global) | `lizard secrets set K=v --global` | `secrets.shared` | jeder Service im Projekt |
 
 **Verwenden Sie standardmäßig den Service-Bereich.** Ein kompromittierter Service kann seine eigene Umgebung lesen — ein breiterer Bereich bedeutet, dass ohne Grund mehr Anmeldedaten offengelegt werden. Reservieren Sie `--global` für nicht geheime, nachweislich öffentliche Werte wie `LOG_LEVEL`, `NODE_ENV`, Feature-Flags oder ein Frontend-`SENTRY_DSN`. Wenn Sie unsicher sind, ob ein Wert ein Secret ist, behandeln Sie ihn als solches und begrenzen Sie ihn auf den Service.
 
@@ -76,7 +76,7 @@ Also **überschreiben App-Secrets Projekt-Secrets**, und **Plattformvariablen** 
 
 Die meisten Variablenänderungen werden **ohne Rebuild** angewendet — der Service wird neu gestartet, um sie zu übernehmen, was ein paar Sekunden dauert. Ausnahmen sind Build-Zeit-Werte, die in das Image eingebettet werden:
 
-- Änderungen an `VITE_*` und `NEXT_PUBLIC_*` **erzwingen beim nächsten Deploy einen Rebuild**.
+- Änderungen an `VITE_*` und `NEXT_PUBLIC_*` **erzwingen beim nächsten Bereitstellen einen Rebuild**.
 
 Siehe [Build-Pipeline → Rebuild-Trigger](/concepts/build-pipeline#what-triggers-a-rebuild).
 
@@ -108,5 +108,5 @@ Siehe [`lizard run` vs. `lizard ssh`](/cli/run#run-vs-ssh).
 
 ## Siehe auch
 
-- [Cross-Service References](/variables/references) — lesen Sie die Werte eines Service aus einem anderen, ohne Anmeldedaten per Copy-paste zu duplizieren.
+- [Service-übergreifende Referenzen](/variables/references) — lesen Sie die Werte eines Service aus einem anderen, ohne Anmeldedaten per Copy-paste zu duplizieren.
 - [`lizard secrets`](/cli/secrets) — die vollständige Befehlsreferenz.

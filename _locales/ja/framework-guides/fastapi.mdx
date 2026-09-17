@@ -40,12 +40,12 @@ web: uvicorn main:app --host 0.0.0.0 --port 8000
 
 `main:app` は、`main.py` 内の `app` オブジェクトを意味します。`src/api.py` には、`src.api:app` のように、アプリルートから動作する import パスを使用してください。明示的な Procfile により、カスタムレイアウトでのソースコードパターン検出への依存を避けられます。
 
-| Setting | Value |
+| 設定 | 値 |
 |---|---|
 | Install | `pip install -r requirements.txt` |
 | Start | Procfile `web:` command |
-| Service port | `8000` |
-| Build output | Python source and installed dependencies |
+| サービスポート | `8000` |
+| ビルド output | Pythonソースとインストール済み依存関係 |
 
 <span id="test-locally" />
 
@@ -66,7 +66,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 curl --fail http://localhost:8000/health
 ```
 
-`{"status":"ok"}` を含む正常なレスポンスを期待してください。開発中はリロードモードを維持します。[FastAPI server guide](https://fastapi.tiangolo.com/deployment/manually/) では、ASGI サーバーと import ターゲットについて説明しています。
+`{"status":"ok"}` を含む正常なレスポンスを期待してください。開発中はリロードモードを維持します。[FastAPIサーバーガイド](https://fastapi.tiangolo.com/deployment/manually/) では、ASGI サーバーと import ターゲットについて説明しています。
 
 <span id="deploy" />
 
@@ -91,8 +91,8 @@ lizard ps --json
 
 ## データとよくある障害
 
-認証情報は [variables and secrets](/variables) を通じて設定します。アプリがデータベースを必要とする場合は [Managed Postgres](/addons/postgres) を追加し、サービススコープの接続参照を使用してください。コンテナローカルのファイルは永続的なアプリケーションストレージではありません。[storage and recovery](/platform/storage-and-recovery) を参照してください。
+認証情報は [変数とシークレット](/variables) を通じて設定します。アプリがデータベースを必要とする場合は [Managed Postgres](/addons/postgres) を追加し、サービススコープの接続参照を使用してください。コンテナローカルのファイルは永続的なアプリケーションストレージではありません。[ストレージとリカバリ](/platform/storage-and-recovery) を参照してください。
 
 `No module named uvicorn` の場合は、インストールされた requirements を確認してください。ASGI の import エラーについては、同じルートから正確な Procfile コマンドをローカルで実行します。サービスがいつまでも healthy にならない場合は、ポート `8000` と bind host を確認してください。サーバーログがないままプロセスが終了する場合は、Uvicorn ではなく単に `python main.py` を実行していないか確認してください。
 
-2026 年 9 月 9 日のデプロイ確認とその制限については、[tested versions and cloud results](/framework-guides/validation) を参照してください。
+2026 年 9 月 9 日のデプロイ確認とその制限については、[テスト済みバージョンとクラウド結果](/framework-guides/validation) を参照してください。

@@ -1,0 +1,80 @@
+---
+description: "Создайте управляемые Postgres, Redis и S3-совместимое хранилище одной командой lizard add, а затем подключите их к сервисам по ссылке."
+---
+
+<span id="managed-addons" />
+
+# Управляемые дополнения
+
+Lizard создаёт управляемые **Postgres**, **Redis** и **S3-совместимое объектное хранилище** одной командой. Каждое дополнение существует в рамках вашего проекта, предоставляет фиксированный набор переменных окружения и подключается к сервисам через [ссылки](/concepts/architecture#cross-resource-references).
+
+<span id="provision-an-addon" />
+
+## Создание дополнения
+
+```bash
+lizard add postgres            # one addon
+lizard add postgres redis s3   # several at once
+lizard add --list              # show available types
+```
+
+<span id="naming" />
+
+## Имена
+
+**Первое** дополнение каждого типа получает в качестве имени само название типа — поэтому `${{postgres.DATABASE_URL}}` работает сразу после создания. Дополнительные дополнения того же типа получают сгенерированное имя, например `postgres-autumn-bear`.
+
+Псевдонимы типов не поддерживаются: ссылка должна содержать **фактическое** имя дополнения. Поскольку ссылки хранятся по идентификатору, имя дополнения можно изменить позже, не нарушая работу уже использующих его сервисов:
+
+```bash
+lizard service rename --service postgres   # addons rename through the same command
+```
+
+<span id="consuming-an-addon" />
+
+## Использование дополнения
+
+Ссылки на переменные дополнения можно использовать из любого сервиса. Ссылка разрешается во время развёртывания и автоматически обновляется при изменении учётных данных дополнения:
+
+```bash
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+lizard redeploy --service api
+```
+
+Настройте область действия ссылки только для тех сервисов, которые её используют (см. [Ограничение области действия секретов](/variables#scoping)).
+
+<span id="variables-by-type" />
+
+## Переменные по типам
+
+| Дополнение | Переменные |
+|-------|-----------|
+| **postgres** | `DATABASE_URL`, `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `POSTGRES_USER`, `POSTGRES_DB`, `POSTGRES_PASSWORD` |
+| **redis** | `REDIS_URL` |
+| **s3** | `S3_ENDPOINT`, `S3_DEFAULT_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION` |
+
+<span id="dashboard-browsers" />
+
+## Просмотр данных в панели управления
+
+В [панели управления](/dashboard) есть браузер данных для каждого дополнения: редактор SQL и таблиц для Postgres, просмотр ключей для Redis и просмотр бакетов и объектов для S3. Вы сможете просматривать и изменять данные, не покидая Lizard.
+
+<span id="storage" />
+
+## Хранилище
+
+Объём томов данных дополнений можно только увеличивать. Чтобы увеличить ёмкость, используйте:
+
+```bash
+lizard scale --service postgres --storage 8192
+```
+
+<span id="per-type-guides" />
+
+## Руководства по типам
+
+- [Postgres](/addons/postgres)
+- [Redis](/addons/redis)
+- [Object Storage (S3)](/addons/storage)
+
+О том, зачем прототипу обычно нужны все три компонента сразу, см. [остальную часть стека, необходимого SaaS](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#the-rest-of-the-stack-a-saas-needs).

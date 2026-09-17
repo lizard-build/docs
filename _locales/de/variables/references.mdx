@@ -1,5 +1,5 @@
 ---
-description: "Lies die Werte eines Dienstes oder Add-ons aus einem anderen mit der Syntax ${{name.KEY}}. Wie Referenzen beim Deploy aufgelöst werden und warum sie besser sind als Kopieren."
+description: "Lies die Werte eines Dienstes oder Add-ons aus einem anderen mit der Syntax ${{name.KEY}}. Wie Referenzen beim Bereitstellen aufgelöst werden und warum sie besser sind als Kopieren."
 ---
 
 <span id="cross-service-references" />
@@ -29,7 +29,7 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 
 - Referenzen werden zur **Deploy-Zeit** anhand der zusammengeführten Umgebung des Ziels aufgelöst.
 - Sie werden per **ID** gespeichert, daher macht ein späteres Umbenennen des Ziels die Referenz nicht kaputt.
-- Eine Referenz auf ein **fehlendes** Ziel oder einen fehlenden Schlüssel wird zu einem **leeren String** aufgelöst — das Deploy schlägt dadurch *nicht* fehl.
+- Eine Referenz auf ein **fehlendes** Ziel oder einen fehlenden Schlüssel wird zu einem **leeren String** aufgelöst — das Bereitstellen schlägt dadurch *nicht* fehl.
 - Nur **zirkuläre** Referenzen werfen einen Fehler.
 
 > Weil ein fehlender Schlüssel stillschweigend leer wird, prüfe nach dem Einrichten einer Referenz immer, ob der Consumer den Wert tatsächlich erhalten hat:

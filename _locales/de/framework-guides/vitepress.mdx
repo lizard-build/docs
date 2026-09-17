@@ -26,13 +26,13 @@ Für Markdown-Dateien in `docs/` behalte diese Skripte in `package.json` bei:
 }
 ```
 
-| Setting | Value in this guide |
+| Einstellung | Wert in dieser Anleitung |
 |---|---|
 | Build | `npm run docs:build` |
 | Docs root | `docs/` |
 | Output | `docs/.vitepress/dist/` |
 | Production server | nginx |
-| Service port | `80` |
+| Service-Port | `80` |
 
 Die Erkennung findet ein Skript, das `vitepress build` enthält, und verwendet dessen Root-Argument. Halte dieses Skript direkt und eindeutig. Shell-Wrapper, mehrere passende Skripte oder ein benutzerdefiniertes `outDir` erfordern eine explizite Build-Konfiguration oder ein Dockerfile.
 
@@ -68,11 +68,11 @@ Schließe die VitePress-Konfiguration, Markdown, Quell-Assets, das Package-Manif
 
 ## Saubere Routen und HTTP-Status prüfen
 
-Neue VitePress-Builds lösen Routen ohne Dateiendung zu ihren generierten `.html`-Dateien auf und geben für fehlende URLs HTTP 404 zurück. Lass Befehlsüberschreibungen deaktiviert, um diesen Erkennungspfad zu verwenden. Für die Standardausgabe ist kein benutzerdefiniertes Dockerfile nötig. Siehe [static routes and 404s](/framework-guides/static-routing) für benutzerdefiniertes Routing.
+Neue VitePress-Builds lösen Routen ohne Dateiendung zu ihren generierten `.html`-Dateien auf und geben für fehlende URLs HTTP 404 zurück. Lass Befehlsüberschreibungen deaktiviert, um diesen Erkennungspfad zu verwenden. Für die Standardausgabe ist kein benutzerdefiniertes Dockerfile nötig. Siehe [Statische Routen und 404er](/framework-guides/static-routing) für benutzerdefiniertes Routing.
 
 Prüfe eine saubere URL direkt und lade sie neu. Rufe einen nicht existierenden Pfad auf und bestätige HTTP 404. Wenn ein älteres Image für fehlende Pfade die Startseite ausliefert, baue den Service neu, damit die aktuellen Routing-Regeln übernommen werden.
 
 Wenn der Build `Missing script: build` meldet, prüfe, dass der ausgewählte Pfad die VitePress-Erkennung verwendet und keine Überschreibung des Service-Befehls diese ersetzt. Wenn der Build erfolgreich ist, nginx aber keine Doku ausliefert, vergleiche das Docs-Root des Skripts mit dem kopierten Ausgabeverzeichnis. Baue nach Änderungen an Inhalt oder Konfiguration neu.
 
-Siehe [tested versions and cloud results](/framework-guides/validation) für die Bereitstellungsprüfungen vom 9. September 2026 und ihre Grenzen.
+Siehe [Getestete Versionen und Cloud-Ergebnisse](/framework-guides/validation) für die Bereitstellungsprüfungen vom 9. September 2026 und ihre Grenzen.
 

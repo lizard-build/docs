@@ -8,7 +8,7 @@ description: "Elige el almacenamiento para los datos de la aplicación y los arc
 
 Elige el almacenamiento según los datos que deben sobrevivir a un reinicio del proceso, un nuevo despliegue o un fallo del host. Son eventos diferentes. El almacenamiento persistente no proporciona por sí solo una copia de seguridad, un punto de restauración ni alta disponibilidad.
 
-| Data | Where to keep it | Boundary |
+| Datos | Dónde mantenerla | Límite |
 |---|---|---|
 | Registros de la aplicación | Managed Postgres u otra base de datos | Un reinicio es distinto de restaurar datos eliminados o dañados. Prueba una ruta independiente de exportación y restauración. |
 | Datos de caché y cola | Managed Redis | Decide si la carga de trabajo puede reconstruir su estado o necesita su propio plan de recuperación. |
@@ -21,7 +21,7 @@ Elige el almacenamiento según los datos que deben sobrevivir a un reinicio del 
 
 ## Conservar archivos después de que termine un sandbox
 
-Crea un Persistent Volume en el mismo proyecto, adjúntalo al crear el sandbox y escribe en `/data`. Termina el primer sandbox antes de adjuntar el volumen al siguiente. Consulta el [ejemplo completo](/sandboxes/volumes).
+Crea un Persistent Volumes en el mismo proyecto, adjúntalo al crear el sandbox y escribe en `/data`. Termina el primer sandbox antes de adjuntar el volumen al siguiente. Consulta el [ejemplo completo](/sandboxes/volumes).
 
 <span id="plan-a-database-restore" />
 

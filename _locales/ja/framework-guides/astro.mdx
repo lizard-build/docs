@@ -12,7 +12,7 @@ Astro には Lizard 上で 2 つのデプロイ方法があります: ポート 
 
 ## モードを選ぶ
 
-| Mode | Configuration | Runtime | Port |
+| モード | 設定 | ランタイム | ポート |
 |---|---|---|---|
 | 静的サイト | サーバー adapter を使わない静的 output | nginx が `dist/` を配信 | `80` |
 | Node サーバー | standalone モードの `@astrojs/node` | `node ./dist/server/entry.mjs` | `3000` |
@@ -41,7 +41,7 @@ export default defineConfig({
 });
 ```
 
-Standalone モードは独自の HTTP サーバーを起動します。Middleware モードには別のサーバーが必要であり、この起動コマンドには適していません。middleware や prerendered ルートとオンデマンドルートの組み合わせが必要な場合は、[Astro Node adapter guide](https://docs.astro.build/en/guides/integrations-guide/node/) を読んでください。
+Standalone モードは独自の HTTP サーバーを起動します。Middleware モードには別のサーバーが必要であり、この起動コマンドには適していません。middleware や prerendered ルートとオンデマンドルートの組み合わせが必要な場合は、[Astro Node アダプタ ガイド](https://docs.astro.build/en/guides/integrations-guide/node/) を読んでください。
 
 <span id="test-locally" />
 
@@ -87,12 +87,12 @@ lizard up --service web --port 80
 
 <span id="variables-sessions-and-routes" />
 
-## Variables、sessions、routes
+## 変数、sessions、routes
 
-静的 HTML の生成に使われる値は、変更時に新しい build が必要です。サーバーコードは、Astro のバージョンでサポートされる仕組みを通じて runtime variables を読み取れます。[variables and secrets](/variables) で設定してください。ブラウザから見える値には credentials を含めてはいけません。
+静的 HTML の生成に使われる値は、変更時に新しい build が必要です。サーバーコードは、Astro のバージョンでサポートされる仕組みを通じて runtime variables を読み取れます。[変数とシークレット](/variables) で設定してください。ブラウザから見える値には credentials を含めてはいけません。
 
-アプリで sessions を使う場合は、再起動や複数レプリカに適したストレージを選んでください。container filesystem を共有可能で永続的なストアとして当てにしないでください。[storage and recovery](/platform/storage-and-recovery) を参照してください。
+アプリで sessions を使う場合は、再起動や複数レプリカに適したストレージを選んでください。container filesystem を共有可能で永続的なストアとして当てにしないでください。[ストレージとリカバリ](/platform/storage-and-recovery) を参照してください。
 
-静的コンテンツサイトでは、存在しない URL をテストし、適切な status を返すために [static routes and 404s](/framework-guides/static-routing) を使ってください。SSR デプロイが終了する、またはどのルートも配信しない場合は、`dist/server/entry.mjs` が存在すること、adapter が standalone モードを使っていること、service port が `3000` であることを確認してください。
+静的コンテンツサイトでは、存在しない URL をテストし、適切な status を返すために [静的ルートと404エラー](/framework-guides/static-routing) を使ってください。SSR デプロイが終了する、またはどのルートも配信しない場合は、`dist/server/entry.mjs` が存在すること、adapter が standalone モードを使っていること、service port が `3000` であることを確認してください。
 
-2026 年 9 月 9 日のデプロイチェックとその制限については、[tested versions and cloud results](/framework-guides/validation) を参照してください。
+2026 年 9 月 9 日のデプロイチェックとその制限については、[テスト済みバージョンとクラウド結果](/framework-guides/validation) を参照してください。

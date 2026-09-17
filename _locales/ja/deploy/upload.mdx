@@ -26,7 +26,7 @@ lizard up
 
 ## よく使うフラグ
 
-| Flag | Purpose |
+| フラグ | 目的 |
 |------|---------|
 | `-s, --service <name>` | 特定のサービスを対象にする／作成する |
 | `--build-command <cmd>` | build コマンドを上書きする |
@@ -46,7 +46,7 @@ lizard up --service api --start-command "node server.js" --port 8080
 
 ## build/start コマンドの設定
 
-`--build-command` または `--start-command` を渡すと、サービスは **synthesized Dockerfile** パスに切り替わります。このパスでは、`Procfile` と `package.json` `scripts.start` は読み取られ**ません**。start コマンドを明示的に設定してください（または独自の Dockerfile に `CMD` を含めてください）。詳しくは [Build Pipeline](/concepts/build-pipeline) を参照してください。特に影響を受けやすいのは Python です。[Django, Flask and FastAPI](https://lizard.build/blog/python-app-hosting#deploying-django) では、それぞれ異なる `gunicorn` または `uvicorn` の行が必要です。
+`--build-command` または `--start-command` を渡すと、サービスは **synthesized Dockerfile** パスに切り替わります。このパスでは、`Procfile` と `package.json` `scripts.start` は読み取られ**ません**。start コマンドを明示的に設定してください（または独自の Dockerfile に `CMD` を含めてください）。詳しくは [ビルド Pipeline](/concepts/build-pipeline) を参照してください。特に影響を受けやすいのは Python です。[Django, Flask and FastAPI](https://lizard.build/blog/python-app-hosting#deploying-django) では、それぞれ異なる `gunicorn` または `uvicorn` の行が必要です。
 
 <span id="re-deploying-an-upload-service" />
 
@@ -81,4 +81,4 @@ lizard up --ci --service api
 ## 関連項目
 
 - [`lizard up`](/cli/up) — 完全なコマンドリファレンス。
-- [Build Pipeline](/concepts/build-pipeline) — スタックがどのように検出され、ビルドされるか。
+- [ビルド Pipeline](/concepts/build-pipeline) — スタックがどのように検出され、ビルドされるか。

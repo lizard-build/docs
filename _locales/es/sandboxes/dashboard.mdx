@@ -8,7 +8,7 @@ description: "Crea e inspecciona sandboxes manualmente desde la página Sandboxe
 
 Cada proyecto tiene una página de **Sandboxes** para crear e inspeccionar sandboxes manualmente; es útil para depurar el entorno de un agente, abrir un shell interactivo o verificar rápidamente qué código se produjo. Abre un proyecto y selecciona **Sandboxes** en la barra lateral (`/<workspace>/<project>/sandboxes`).
 
-La página tiene tres pestañas: **Sandboxes**, **Volumes** y **Snapshots**.
+La página tiene tres pestañas: **Sandboxes**, **Volúmenes** y **Instantáneas**.
 
 <span id="getting-an-api-key" />
 
@@ -50,10 +50,14 @@ Los sandboxes en vivo informan el uso de CPU y memoria en tiempo real en la list
 - **Kill Sandbox** (en el panel de detalles) lo termina de inmediato y libera sus recursos, incluida la desconexión de cualquier [volumen](/sandboxes/volumes).
 - **Pause / resume** se controla desde el [SDK](/sandboxes/quickstart#pause-and-resume); un sandbox en pausa aparece aquí como **Paused** y no consume cómputo bajo demanda.
 
-## Snapshots
+<span id="snapshots" />
 
-La pestaña **Snapshots** enumera las plantillas desde las que puede arrancar un sandbox: las integradas `base` y `code-interpreter-v1`. Un comando de carga de plantilla personalizada no forma parte del CLI público actual. Cada entrada muestra su vCPU/memoria predeterminados y su descripción.
+## Instantáneas
 
-## Volumes
+La pestaña **Instantáneas** enumera las plantillas desde las que puede arrancar un sandbox: las integradas `base` y `code-interpreter-v1`. Un comando de carga de plantilla personalizada no forma parte del CLI público actual. Cada entrada muestra su vCPU/memoria predeterminados y su descripción.
 
-La pestaña **Volumes** gestiona el [almacenamiento persistente](/sandboxes/volumes): crea un volumen con un nombre y un tamaño, y ve a qué sandbox está conectado cada uno.
+<span id="volumes" />
+
+## Volúmenes
+
+La pestaña **Volúmenes** gestiona el [almacenamiento persistente](/sandboxes/volumes): crea un volumen con un nombre y un tamaño, y ve a qué sandbox está conectado cada uno.

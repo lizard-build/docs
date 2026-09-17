@@ -42,10 +42,10 @@ cat .env | lizard secrets import          # import dotenv from stdin
 
 ## スコープ
 
-| Scope | Command | Stored as | Visible to |
+| スコープ | コマンド | 保存形式 | 表示対象 |
 |-------|---------|-----------|------------|
-| **Service**（デフォルト） | `lizard secrets set K=v --service <svc>` | `secrets.services[<svc>]` | そのサービスのみ |
-| **Project**（グローバル） | `lizard secrets set K=v --global` | `secrets.shared` | プロジェクト内のすべてのサービス |
+| **サービス**（デフォルト） | `lizard secrets set K=v --service <svc>` | `secrets.services[<svc>]` | そのサービスのみ |
+| **プロジェクト**（グローバル） | `lizard secrets set K=v --global` | `secrets.shared` | プロジェクト内のすべてのサービス |
 
 **デフォルトでは service スコープを使ってください。** 侵害されたサービスは自身の環境を読み取れます。より広いスコープは、理由もなく公開される認証情報が増えることを意味します。`--global` は、`LOG_LEVEL`、`NODE_ENV`、feature flag、またはフロントエンドの `SENTRY_DSN` のような、secret ではなく公開されても問題ないと証明できる値に限って使ってください。値が secret かどうか迷う場合は、secret として扱い、service にスコープしてください。
 
@@ -78,7 +78,7 @@ addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets
 
 - `VITE_*` と `NEXT_PUBLIC_*` の変更は、次回のデプロイ時に **再ビルドを強制** します。
 
-[Build Pipeline → rebuild triggers](/concepts/build-pipeline#what-triggers-a-rebuild) を参照してください。
+[ビルド パイプライン → 再ビルド トリガー](/concepts/build-pipeline#what-triggers-a-rebuild) を参照してください。
 
 <span id="verifying" />
 
@@ -108,5 +108,5 @@ lizard run --service api -- node scripts/seed.js
 
 ## 関連項目
 
-- [Cross-Service References](/variables/references) — 認証情報をコピー＆ペーストせずに、あるサービスから別のサービスの値を読み取ります。
+- [サービス間参照](/variables/references) — 認証情報をコピー＆ペーストせずに、あるサービスから別のサービスの値を読み取ります。
 - [`lizard secrets`](/cli/secrets) — 完全なコマンドリファレンス。

@@ -14,21 +14,21 @@ La ejecución en la nube superó 100 comprobaciones de rutas, API y formularios,
 
 ## Recetas probadas
 
-| Recipe | Tested versions | Port | Cloud check |
+| Receta | Versiones probadas | Puerto | Comprobación en la nube |
 |---|---|---|---|
 | Next.js server | Next.js 16.3.4, React 19.2.8 | `3000` | Superado |
-| Next.js static export | Next.js 16.3.4, React 19.2.8 | `80` | Superado |
+| Exportación estática de Next.js | Next.js 16.3.4, React 19.2.8 | `80` | Superado |
 | React with Vite | React 19.2.8, Vite 8.2.2 | `80` | Superado |
 | Vue with Vite | Vue 3.5.42, Vue Router 5.3.1, Vite 8.2.2 | `80` | Superado |
 | Astro static | Astro 7.3.1 | `80` | Superado |
-| Astro Node server | Astro 7.3.1, Node adapter 11.1.5 | `3000` | Superado |
+| Servidor Node de Astro | Astro 7.3.1, Node adapter 11.1.5 | `3000` | Superado |
 | Nuxt Node server | Nuxt 4.5.2 | `3000` | Superado |
 | Nuxt generate | Nuxt 4.5.2 | `80` | Superado |
-| SvelteKit Node server | SvelteKit 2.70.3, Svelte 5.57.0, adapter-node 5.5.7 | `3000` | Superado |
+| Servidor Node de SvelteKit | SvelteKit 2.70.3, Svelte 5.57.0, adapter-node 5.5.7 | `3000` | Superado |
 | SvelteKit static | SvelteKit 2.70.3, Svelte 5.57.0, adapter-static 3.0.10 | `80` | Superado |
 | Docusaurus | Docusaurus 3.10.2 | `80` | Superado |
-| VitePress, docs root | VitePress 1.6.4 | `80` | Superado |
-| VitePress, project root | VitePress 1.6.4 | `80` | Superado |
+| VitePress, raíz de docs | VitePress 1.6.4 | `80` | Superado |
+| VitePress, raíz del proyecto | VitePress 1.6.4 | `80` | Superado |
 | FastAPI | FastAPI 0.141.1, Uvicorn 0.52.4 | `8000` | Superado |
 | Django | Django 6.1.1, Gunicorn 26.2.0, WhiteNoise 6.12.0, psycopg 3.3.5 | `8000` | Superado |
 | Hugo | Hugo 0.165.0 (extended) | `80` | Superado |
@@ -41,11 +41,11 @@ Las compilaciones de JavaScript usaron Node 22; las compilaciones de Python usar
 
 - Ejecutamos los comandos documentados de compilación local y servidor en contenedores Linux, luego ejecutamos `lizard init`, `lizard add` y `lizard up` para cada receta. Leímos los logs de compilación y ejecución en la nube y comprobamos el estado final del servicio y el puerto.
 - Solicitamos la página de inicio pública, una ruta interna, un recurso real, una página inexistente y una ruta de JavaScript inexistente. Los sitios de contenido estático devolvieron 404 reales; React y Vue mantuvieron su fallback SPA documentado. Ambos diseños de VitePress devolvieron el contenido correcto en URL limpias.
-- Comprobamos respuestas de API en tiempo de solicitud, manejadores POST, resultados de formularios de SvelteKit y el rechazo de un formulario desde un origen no confiable. Enviamos el formulario desplegado de Next.js Server Action por HTTP usando su ID de acción generado y comprobamos la redirección y el valor devuelto.
+- Comprobamos respuestas de API en tiempo de solicitud, manejadores POST, resultados de formularios de SvelteKit y el rechazo de un formulario desde un origen no confiable. Enviamos el formulario desplegado de Next.js Server Acción por HTTP usando su ID de acción generado y comprobamos la redirección y el valor devuelto.
 - Volvimos a compilar Docusaurus y Hugo después de configurar el hostname generado en la configuración. Las URL canónicas de Docusaurus y ambos sitemaps usaron el host público.
 - Ejecutamos las migraciones de Django contra Managed Postgres dos veces, escribimos y leímos una fila de prueba, servimos archivos estáticos recopilados, aceptamos un formulario CSRF válido y rechazamos un formulario sin su token.
 
-Cada receta usó un proyecto de prueba independiente, con nombres distintos para mantener la ejecución aislada. Workspace, region y las flags JSON hicieron explícito el contexto de prueba. Los overrides de servicio de compilación, inicio y ruta de Dockerfile se dejaron sin configurar. Solo las recetas de Next.js static export, Nuxt generate y Django proporcionaron los Dockerfiles documentados en sus guías. Las pruebas de Docusaurus, VitePress, Hugo y SvelteKit Node incluyeron los [ejemplos de código publicados](https://github.com/lizard-build/docs/tree/main/_examples).
+Cada receta usó un proyecto de prueba independiente, con nombres distintos para mantener la ejecución aislada. Espacio de trabajo, region y las flags JSON hicieron explícito el contexto de prueba. Los overrides de servicio de compilación, inicio y ruta de Dockerfile se dejaron sin configurar. Solo las recetas de Exportación estática de Next.js, Nuxt generate y Django proporcionaron los Dockerfiles documentados en sus guías. Las pruebas de Docusaurus, VitePress, Hugo y SvelteKit Node incluyeron los [ejemplos de código publicados](https://github.com/lizard-build/docs/tree/main/_examples).
 
 <span id="browser-checks" />
 

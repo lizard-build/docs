@@ -6,7 +6,9 @@ description: "lizard port zeigt den Container-Port eines Service an oder ändert
 
 Zeigt den Container-Port eines Service an oder ändert ihn. Ohne Argument wird der aktuelle Port ausgegeben (`worker mode`, wenn er `0` ist).
 
-## Usage
+<span id="usage" />
+
+## Verwendung
 
 ```bash
 lizard port [value] [flags]
@@ -14,11 +16,13 @@ lizard port [value] [flags]
 
 ## Flags
 
-| Flag | Description |
+| Flag | Beschreibung |
 |------|-------------|
 | `-s, --service <name>` | Ziel-Service |
 
-## Examples
+<span id="examples" />
+
+## Beispiele
 
 <span id="show-the-current-port" />
 
@@ -44,8 +48,10 @@ lizard port 0 -s worker
 lizard port --service worker
 ```
 
-## See also
+<span id="see-also" />
+
+## Siehe auch
 
 - [Background workers](/deploy/workers) — setze den Port auf `0`, um einen Service ohne eingehendes Routing auszuführen
 - [lizard service](/cli/service) — den Rest der Konfiguration eines Service verwalten
-- [What a Python app needs from a host](https://lizard.build/blog/python-app-hosting#what-a-python-app-actually-needs-from-a-host) — warum ein `gunicorn`- oder `uvicorn`-Prozess `$PORT` an `0.0.0.0` binden muss
+- [Was eine Python-App vom Host braucht](https://lizard.build/blog/python-app-hosting#what-a-python-app-actually-needs-from-a-host) — warum ein `gunicorn`- oder `uvicorn`-Prozess `$PORT` an `0.0.0.0` binden muss

@@ -1,0 +1,73 @@
+---
+description: "Потоковое вещание логов времени выполнения, чтение логов сборки после неудачного деплоя и получение хвоста логов вокруг перезапуска через CLI или панель управления."
+---
+
+<span id="logs" />
+
+# Логи
+
+Lizard захватывает **логи времени выполнения**, **логи сборки** и хвост логов вокруг **перезапусков**. Смотрите их в реальном времени в терминале или просматривайте в панели управления.
+
+<span id="runtime-logs" />
+
+## Логи времени выполнения
+
+```bash
+lizard logs                       # last 200 runtime lines, then live tail
+lizard logs --service api         # a specific service
+lizard logs --tail 1000           # more history (max 1000)
+lizard logs --level error         # filter by level
+```
+
+<span id="behavior-with---json" />
+
+### Поведение с `--json`
+
+`lizard logs --json` **не** является потоком — он возвращает последние 200 строк (переопределить можно через `--tail N`, максимум 1000) и завершает работу. Используйте его для снимков и скриптов. Для интерактивного потока используйте команду без `--json`.
+
+<span id="build-logs" />
+
+## Логи сборки
+
+```bash
+lizard logs --build               # the most recent build's logs
+```
+
+Это первое, что нужно проверить при неудачном деплое — прочтите, устраните причину, затем `lizard redeploy`. См. [Конвейер сборки](/concepts/build-pipeline).
+
+<span id="restart--crash-logs" />
+
+## Логи перезапуска / аварийного завершения
+
+Когда реплика аварийно завершается или перезапускается, получите окружающий хвост логов:
+
+```bash
+lizard logs --restart latest      # the most recent restart
+lizard logs --restart <id>        # a specific restart
+lizard logs --restarts            # list recent restarts
+```
+
+<span id="paging-through-history" />
+
+## Листание истории
+
+`lizard service logs` поддерживает постраничную навигацию по старым окнам:
+
+```bash
+lizard service logs --service api --tail all     # full history (no follow)
+lizard service logs --service api --page 2       # older window (implies --tail 200)
+```
+
+<span id="dashboard" />
+
+## Панель управления
+
+Панель управления (`lizard open`) транслирует логи времени выполнения и сборки с поиском и фильтрами по уровню, и показывает вывод сборки для каждого деплоя в представлении **Развертывания**.
+
+<span id="see-also" />
+
+## См. также
+
+- [`lizard logs`](/cli/logs) — полный справочник команд.
+- [События и история](/observability/events) — история деплоев и статус реплик.
+- [Деплой из Claude Code](https://lizard.build/blog/deploy-from-claude-code) — логи, написанные для чтения агентом, а не только человеком.

@@ -6,7 +6,9 @@ description: "lizard service は、サービスの build、start、source、vari
 
 個々のサービスの設定、ソース、ライフサイクルを管理します。
 
-## Usage
+<span id="usage" />
+
+## 使い方
 
 ```bash
 lizard service set [flags]
@@ -17,13 +19,15 @@ lizard service logs
 lizard service link
 ```
 
-## Subcommands
+<span id="subcommands" />
+
+## サブコマンド
 
 ### `lizard service set`
 
 サービスに build/start/source/variables/rename の変更を適用します。
 
-| Flag | Description |
+| フラグ | 説明 |
 |------|-------------|
 | `--set <path>=<value>` | フィールドを設定します（繰り返し指定可） |
 | `-f, --file <path>` | 適用する JSON 設定ファイル |
@@ -53,7 +57,9 @@ lizard service link
 
 サービスを現在のディレクトリにリンクします。
 
-## Examples
+<span id="examples" />
+
+## 例
 
 <span id="update-a-services-build-and-start-commands" />
 
@@ -79,9 +85,11 @@ lizard service show -s api
 lizard service delete -y
 ```
 
-## See also
+<span id="see-also" />
+
+## 関連項目
 
 - [lizard port](/cli/port) — サービスのコンテナポートを表示または変更
 - [lizard scale](/cli/scale) — サービスのレプリカ数、CPU、メモリ、またはストレージをスケール
 - [Architecture](/concepts/architecture) — サービスが project や addon とどう関連するか
-- [Build pipeline](/concepts/build-pipeline) — `buildCommand`、`startCommand`、および source 設定がビルド時にどのように使用されるか
+- [ビルド pipeline](/concepts/build-pipeline) — `buildCommand`、`startCommand`、および source 設定がビルド時にどのように使用されるか

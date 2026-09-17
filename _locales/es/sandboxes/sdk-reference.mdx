@@ -1,5 +1,5 @@
 ---
-description: "Todas las clases y métodos del Lizard SDK para JavaScript y Python: Lizard, Sandbox, CodeSandbox y Volume, con opciones y tipos de retorno."
+description: "Todas las clases y métodos del Lizard SDK para JavaScript y Python: Lizard, Sandbox, CodeSandbox y Volumen, con opciones y tipos de retorno."
 ---
 
 <span id="sdk-reference" />
@@ -25,7 +25,7 @@ Cada sandbox también pertenece a un **proyecto**: el uso se mide por proyecto, 
 
 Un cliente fijado a un proyecto, para que nombres el proyecto una vez en lugar de hacerlo en cada llamada.
 
-| Member | Description |
+| Miembro | Descripción |
 |---|---|
 | `new Lizard({ project, apiKey?, apiUrl?, timeoutMs? })` | Crea un cliente. `project` es obligatorio: su ID, slug o nombre (`Lizard(project=…)` en Python). |
 | `lizard.create(template?, options?)` | Inicia un sandbox en el proyecto del cliente. |
@@ -49,7 +49,7 @@ Una referencia de proyecto que no coincide con nada a lo que la clave pueda acce
 
 ## `Sandbox`
 
-| Member | Description |
+| Miembro | Descripción |
 |---|---|
 | `Sandbox.create(template?, options?)` | Inicia un sandbox. `template` usa por defecto `'base'`; `options.project` indica el proyecto al que se facturará. |
 | `Sandbox.connect(sandboxId)` | Se conecta a un sandbox por ID, reanudándolo automáticamente si está en pausa. |
@@ -70,7 +70,7 @@ Una referencia de proyecto que no coincide con nada a lo que la clave pueda acce
 
 ### `Sandbox.create(template?, options?)`
 
-| Option | Type | Default | Notes |
+| Opción | Tipo | Predeterminado | Notas |
 |---|---|---|---|
 | `template` | string | `'base'` | `'base'` o `'code-interpreter-v1'`: las dos [plantillas](/sandboxes#templates) compatibles |
 | `project` | string | — | **Obligatorio.** El proyecto al que se facturará: su ID, slug o nombre (`project` en Python). No hace falta con un cliente `Lizard`. |
@@ -86,9 +86,9 @@ const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs:
 
 ## `CodeSandbox`
 
-Amplía `Sandbox` con un kernel con estado. Consulta [Code Interpreter](/sandboxes/code-interpreter) para ver el recorrido completo.
+Amplía `Sandbox` con un kernel con estado. Consulta [Intérprete de código](/sandboxes/code-interpreter) para ver el recorrido completo.
 
-| Member | Description |
+| Miembro | Descripción |
 |---|---|
 | `CodeSandbox.create(options?)` | Inicia un intérprete de código (usa por defecto la plantilla `code-interpreter-v1`). Acepta la misma opción `project` que `Sandbox.create`. |
 | `CodeSandbox.connect(sandboxId)` | Se conecta a un sandbox existente de intérprete de código (y lo reanuda automáticamente). |
@@ -100,7 +100,7 @@ Amplía `Sandbox` con un kernel con estado. Consulta [Code Interpreter](/sandbox
 
 ### `runCode(code, opts?)`
 
-| Option | Description |
+| Opción | Descripción |
 |---|---|
 | `language` | Entorno de ejecución para una llamada puntual: `'python'` (predeterminado), `'javascript'` o `'bash'`. Excluyente con `context`. |
 | `context` | Ejecuta dentro de un contexto aislado específico en lugar del predeterminado. Excluyente con `language`. |
@@ -110,7 +110,7 @@ Amplía `Sandbox` con un kernel con estado. Consulta [Code Interpreter](/sandbox
 
 Devuelve un `Execution`:
 
-| Field | Description |
+| Campo | Descripción |
 |---|---|
 | `stdout` / `stderr` | Flujos de salida capturados |
 | `results` | Resultados enriquecidos (valores y cualquier imagen / gráfico generado) |
@@ -121,7 +121,7 @@ Devuelve un `Execution`:
 
 Consulta [Persistent Volumes](/sandboxes/volumes) para ver el recorrido completo.
 
-| Member | Description |
+| Miembro | Descripción |
 |---|---|
 | `Volume.create(projectId, name, options)` | Crea un volume. `options.sizeGb` usa por defecto `5`. |
 | `Volume.list(projectId)` | Lista los volúmenes de un proyecto → `[{ id, name, sizeGb, status, attachedTo, … }]`. |
@@ -134,7 +134,7 @@ Consulta [Persistent Volumes](/sandboxes/volumes) para ver el recorrido completo
 ## Ver también
 
 - [Guía de inicio rápido](/sandboxes/quickstart): instalación, autenticación y un recorrido completo.
-- [Code Interpreter](/sandboxes/code-interpreter): la guía de `CodeSandbox`.
+- [Intérprete de código](/sandboxes/code-interpreter): la guía de `CodeSandbox`.
 - [Persistent Volumes](/sandboxes/volumes): la guía de `Volume`.
 
 <span id="lifecycle-status" />

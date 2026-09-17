@@ -14,7 +14,7 @@ Eine Managed Redis-Instanz für Caching, Warteschlangen, Rate Limiting und Pub/S
 lizard add redis
 ```
 
-Das erste Redis-Addon heißt `redis`, daher funktioniert `${{redis.REDIS_URL}}` sofort.
+Das erste Redis-Add-on heißt `redis`, daher funktioniert `${{redis.REDIS_URL}}` sofort.
 
 <span id="environment-variables" />
 
@@ -33,7 +33,7 @@ lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service api
 lizard redeploy --service api
 ```
 
-Der Verweis wird beim Deploy aufgelöst und mit den Zugangsdaten des Addons rotiert.
+Der Verweis wird beim Bereitstellen aufgelöst und mit den Zugangsdaten des Addons rotiert.
 
 <span id="common-uses" />
 
@@ -76,4 +76,4 @@ lizard scale --service redis --storage 4096
 - [Managed Addons](/addons) — Benennung, Verweise und die Browser im Dashboard.
 - [Background Workers](/deploy/workers) — Redis mit einem Worker kombinieren, der eine Warteschlange verarbeitet.
 
-`lizard run` startet den Befehl lokal mit der ausgewählten Service-Umgebung. Installieren Sie `redis-cli` lokal und prüfen Sie, dass der Endpoint erreichbar ist.
+`lizard run` startet den Befehl lokal mit der ausgewählten Service-Umgebung. Installieren Sie `redis-cli` lokal und prüfen Sie, dass der Endpunkt erreichbar ist.

@@ -22,11 +22,11 @@ web: gunicorn config.wsgi:application --bind 0.0.0.0:8000
 
 設定がネストしたパッケージ内にある場合、この明示的なモジュール指定により曖昧さを避けられます。WebSockets を使う ASGI アプリには ASGI サーバーと別の起動コマンドが必要です。このガイドは WSGI を対象としています。
 
-| Setting | Value |
+| 設定 | 値 |
 |---|---|
 | Install | `pip install -r requirements.txt` |
-| Runtime | WSGI モジュールを使う Gunicorn |
-| Service port | `8000` |
+| ランタイム | WSGI モジュールを使う Gunicorn |
+| サービスポート | `8000` |
 | Working directory | `manage.py` を含むディレクトリ |
 
 <span id="prepare-production-settings" />
@@ -91,7 +91,7 @@ DATABASES = {
 
 `ALLOWED_HOSTS` には、`app.example.com,www.example.com` のように、scheme や path を含まないカンマ区切りのホスト名を指定します。`CSRF_TRUSTED_ORIGINS` には、`https://app.example.com` のように、scheme を含むカンマ区切りの origin を指定します。ローカル origin が port を使う場合は、それも含めてください。この例では明示的な origin リストが必要です。Django 自体は、追加の trusted origins を必要としないアプリであれば空のリストも許可します。このアプリにフォーム送信してよい origin だけを trust してください。これらの設定は CSRF トークンの代わりにはなりません。
 
-この URL は、ソースにコミットされた値ではなく、サービスの [secret または reference](/variables) から取得します。デプロイしたアプリの永続データベースとして、コンテナローカルの SQLite を使わないでください。URL の解析と接続オプションについては、[dj-database-url usage](https://pypi.org/project/dj-database-url/) を参照してください。
+この URL は、ソースにコミットされた値ではなく、サービスの [secret または reference](/variables) から取得します。デプロイしたアプリの永続データベースとして、コンテナローカルの SQLite を使わないでください。URL の解析と接続オプションについては、[dj-database-urlの使用](https://pypi.org/project/dj-database-url/) を参照してください。
 
 ローカル環境変数を設定し、PostgreSQL に到達できる状態で、次を実行します:
 
@@ -157,7 +157,7 @@ __pycache__/
 staticfiles/
 ```
 
-ユーザー uploads は、コンテナの静的ディレクトリではなく、[Managed Object Storage](/addons/storage) のような永続ストレージに保持してください。[storage and recovery](/platform/storage-and-recovery) を確認してください。
+ユーザー uploads は、コンテナの静的ディレクトリではなく、[Managed Object Storage](/addons/storage) のような永続ストレージに保持してください。[ストレージとリカバリ](/platform/storage-and-recovery) を確認してください。
 
 データベースマイグレーションは別個のリリース手順として扱ってください。必要に応じてデータをバックアップし、マイグレーションは再試行しても安全になるようにし、新しい schema がリクエストで必要になる前に適用してください。pre-deploy command は、並行実行性や障害時の挙動を確認する代わりにはなりません。
 
@@ -209,7 +209,7 @@ lizard ssh --service web -- python manage.py migrate --noinput
 
 アプリ URL、データベースを使うページ、フォーム送信、静的 asset を確認してください。アプリが Django admin を使う場合は、その CSS も確認してください。import または settings のエラーについては `lizard logs --service web --json` を読んでください。400 レスポンスは `ALLOWED_HOSTS` が間違っていることを意味する場合がよくあります。CSS が欠けている場合は、通常、静的 asset が collect されていないか配信されていません。設定を変更する前に、実際のエラーを確認してください。
 
-2026 年 9 月 9 日のデプロイ確認とその制限については、[tested versions and cloud results](/framework-guides/validation) を参照してください。
+2026 年 9 月 9 日のデプロイ確認とその制限については、[テスト済みバージョンとクラウド結果](/framework-guides/validation) を参照してください。
 
 
 <span id="reproduce-this-example" />

@@ -115,7 +115,7 @@ await sandbox.fs.makeDir('/app/data');
 await sandbox.fs.remove('/app/old.log');
 ```
 
-| Method | Beschreibung |
+| Methode | Beschreibung |
 |---|---|
 | `fs.write(path, data)` | Eine Datei schreiben — String oder Bytes; erstellt übergeordnete Verzeichnisse |
 | `fs.read(path)` | Eine Datei als UTF-8-String lesen |
@@ -183,7 +183,7 @@ const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs:
 await sandbox.setTimeout(30 * 60 * 1000);   // extend to 30 min from now
 ```
 
-Pause soll die verbleibende Laufzeit einfrieren, aber das aktuelle [Lifecycle-Problem](/platform/known-issues#sandbox-pause-and-expiration) erfordert ein verifiziertes Backend-Release. Verlasse dich nicht auf unbegrenztes Pausieren zur Datenaufbewahrung.
+Pause soll die verbleibende Laufzeit einfrieren, aber das aktuelle [Lebenszyklus-Problem](/platform/known-issues#sandbox-pause-and-expiration) erfordert ein verifiziertes Backend-Release. Verlasse dich nicht auf unbegrenztes Pausieren zur Datenaufbewahrung.
 
 <span id="managing-sandboxes" />
 

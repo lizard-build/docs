@@ -6,15 +6,19 @@ description: "lizard logs transmite los logs de ejecución de un servicio, o rec
 
 Transmite los logs de ejecución de un servicio, las últimas 200 líneas seguidas de una cola en vivo.
 
-## Usage
+<span id="usage" />
+
+## Uso
 
 ```bash
 lizard logs [flags]
 ```
 
-## Flags
+<span id="flags" />
 
-| Flag | Description |
+## Banderas
+
+| Bandera | Descripción |
 |------|-------------|
 | `--build` | Mostrar los logs de compilación en su lugar |
 | `--tail <n>` | Últimas N líneas (máx. 1000) |
@@ -25,7 +29,9 @@ lizard logs [flags]
 
 Con `--json`, `lizard logs` no es un flujo: devuelve las últimas 200 líneas (anúlalo con `--tail N`, máximo 1000) y sale. Úsalo para capturas y scripts; transmite en vivo solo sin `--json`.
 
-## Examples
+<span id="examples" />
+
+## Ejemplos
 
 <span id="tail-runtime-logs" />
 
@@ -77,9 +83,11 @@ lizard logs --restart latest
 lizard logs --restart <id>
 ```
 
-## See also
+<span id="see-also" />
+
+## Véase también
 
 - [Logs](/observability/logs) — comportamiento de los logs de ejecución, compilación y reinicio, además de la paginación por el historial con `lizard service logs`
 - [Incomplete Dockerfile](/deploy/troubleshooting/incomplete-dockerfile) — diagnosticar una compilación fallida desde `lizard logs --build`
 - [lizard events](/cli/events) — historial de despliegues y estado de las réplicas
-- [Deploy from Claude Code](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) — el ciclo de leer logs, corregir y volver a desplegar que ejecuta un agente en una compilación fallida
+- [Desplegar desde Claude Code](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) — el ciclo de leer logs, corregir y volver a desplegar que ejecuta un agente en una compilación fallida

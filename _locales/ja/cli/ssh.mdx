@@ -12,20 +12,24 @@ description: "lizard ssh は稼働中のサービスコンテナ内でコマン�
 
 `lizard run` と `lizard ssh` はどちらもサービスのコンテキストでコマンドを実行しますが、実行される場所が異なります。どちらが必要かを理解して選んでください。
 
-| Command | Runs where | Use for |
+| コマンド | 実行場所 | 用途 |
 |---------|-----------|---------|
 | `lizard run` | **ローカル**, サービスの project + service secrets が注入された状態 | マイグレーション、シードスクリプト、本番設定が必要なローカルツール |
 | `lizard ssh` | **稼働中のサービスコンテナ内** | 稼働中コンテナの調査、単発のリモートコマンド、デバッグ |
 
 `lizard run` ではローカルに注入された環境のコピーが表示されます。これは通常本番環境と同じですが、稼働中コンテナが実際に見ている内容については `lizard ssh` が信頼できる基準です。
 
-## Usage
+<span id="usage" />
+
+## 使用量
 
 ```bash
 lizard ssh --service <name> -- <command>
 ```
 
-## Examples
+<span id="examples" />
+
+## 例
 
 <span id="inspect-the-environment-the-running-app-sees" />
 
@@ -59,8 +63,10 @@ lizard ssh --service api -- cat /etc/os-release
 lizard ssh --service api -- env | grep DATABASE_URL
 ```
 
-## See also
+<span id="see-also" />
+
+## 関連項目
 
 - [lizard run](/cli/run) — 代わりにサービスの env を注入した状態でローカルでコマンドを実行する
-- [Variables](/variables) — シークレットや参照がサービスに渡る仕組み
-- [Deploy from Claude Code](https://lizard.build/blog/deploy-from-claude-code#claude-code-deployment-compared-with-the-alternatives) — エージェントがなぜ稼働中コンテナへのシェルを必要とするのか、またそれを提供しないプラットフォームはどれか
+- [変数](/variables) — シークレットや参照がサービスに渡る仕組み
+- [Claude Codeからデプロイする](https://lizard.build/blog/deploy-from-claude-code#claude-code-deployment-compared-with-the-alternatives) — エージェントがなぜ稼働中コンテナへのシェルを必要とするのか、またそれを提供しないプラットフォームはどれか

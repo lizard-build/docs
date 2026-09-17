@@ -1,12 +1,14 @@
 ---
-description: "lizard scale ändert die Replikas, CPU und den Arbeitsspeicher eines Service und vergrößert den Addon-Speicher. Zulässige Werte und Beispiele für jedes Flag."
+description: "lizard scale ändert die Replikas, CPU und den Arbeitsspeicher eines Service und vergrößert den Add-on-Speicher. Zulässige Werte und Beispiele für jedes Flag."
 ---
 
 # lizard scale
 
 Skaliert einen Service (Replikas / CPU / Arbeitsspeicher / Speicher).
 
-## Usage
+<span id="usage" />
+
+## Verwendung
 
 ```bash
 lizard scale [flags]
@@ -19,7 +21,7 @@ lizard scale [flags]
 | `--replicas <n>` | Replikas `1`–`10` (Apps) |
 | `--cpu <cores>` | `1`, `2`, `3` oder `4` |
 | `--memory <mb>` | `128`–`8192` MB |
-| `--storage <mb>` | Größe des Addon-Volumes, nur vergrößerbar |
+| `--storage <mb>` | Größe des Add-on-Volumes, nur vergrößerbar |
 
 <span id="examples" />
 
@@ -45,7 +47,7 @@ lizard scale --service api --cpu 4 --memory 8192
 
 <span id="grow-addon-storage" />
 
-### Addon-Speicher vergrößern
+### Add-on-Speicher vergrößern
 
 ```bash
 lizard scale --service postgres --storage 8192
@@ -57,7 +59,7 @@ Daten-Volumes von Addons sind nur vergrößerbar — du kannst den Speicher erh�
 
 ## Siehe auch
 
-- [Scaling](/deploy/scaling) — horizontale vs. vertikale Skalierung und Vergrößern des Addon-Speichers
+- [Scaling](/deploy/scaling) — horizontale vs. vertikale Skalierung und Vergrößern des Add-on-Speichers
 - [lizard metrics](/cli/metrics) — CPU / Arbeitsspeicher / Netzwerk / Festplatte vor und nach der Skalierung prüfen
 - [lizard ps](/cli/ps) — Replika-Status nach einer Skalierungsänderung prüfen
 - [Observability → Metrics](/observability/metrics) — Ressourcen- und Kostenüberwachung

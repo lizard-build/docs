@@ -1,0 +1,90 @@
+---
+description: "Скриптируйте Lizard CLI: --json для каждой команды, построчные события для стриминговых сборок, обнаружение схемы и токеновая авторизация в CI."
+---
+
+<span id="json--automation" />
+
+# JSON и автоматизация
+
+CLI создан для скриптинга. Передавайте `--json` для машиночитаемого вывода, управляйте из CI с помощью токена и обнаруживайте схему любой команды в рантайме.
+
+Другой читатель этого вывода — ИИ-агент для кодинга — [деплой из Claude Code](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) показывает, что он делает с JSON неудачной сборки.
+
+<span id="--json-everywhere" />
+
+## `--json` везде
+
+Добавляйте `--json` к любой команде для структурированного вывода. CLI также автоматически переключается на JSON, когда stdout не является TTY.
+
+```bash
+lizard ps --json
+lizard secrets list --json
+lizard metrics --json
+```
+
+<span id="streaming-commands" />
+
+### Команды со стримингом
+
+Для стриминговых команд (`lizard up` без `--detach`) `--json` выдаёт **один JSON-объект на строку**:
+
+```json
+{ "event": "log", "line": "Step 1/8 : FROM node:20" }
+{ "event": "log", "line": "..." }
+{ "event": "deployed", "status": "running", "url": "https://app.onlizard.com" }
+```
+
+Поток завершается `done`, или `error` / `failed`. `lizard up` дополнительно выдаёт финальное событие `deployed` / `failed` / `deploying` с `status` и `url` (которые могут быть `null`).
+
+<span id="logs---json-is-a-snapshot-not-a-stream" />
+
+### `logs --json` — это снимок, а не поток
+
+`lizard logs --json` возвращает **последние 200 строк** (переопределяется через `--tail N`, максимум 1000) и завершается. Не ждите от него дополнительного вывода. Для конкретного инцидента используйте `--restart latest` или `--restart <id>`.
+
+<span id="schema-discovery" />
+
+## Обнаружение схемы
+
+Выведите точные аргументы, опции и коды выхода любой команды:
+
+```bash
+lizard --help --json                 # whole tree + global flags + exit codes
+lizard service set --help --json     # one command
+```
+
+Формат ответа — `{ cli, version, command: { arguments, options, subcommands }, globalOptions, exitCodes }`. Поскольку он генерируется из вашего установленного бинарника, он всегда соответствует вашей версии — лучше полагаться на него, чем хардкодить флаги.
+
+<span id="ci--headless-usage" />
+
+## CI / работа без интерфейса
+
+Аутентифицируйтесь токеном и явно укажите проект (безголовый `up` не создаст проект автоматически):
+
+```bash
+# Set LIZARD_TOKEN through your CI secret store.
+lizard init --name my-project
+lizard up --ci --service api --detach
+```
+
+Проверяйте коды выхода для ветвления пайплайна:
+
+| Код | Значение |
+|------|---------|
+| `0` | успех |
+| `1` | общая ошибка |
+| `2` | авторизация — токен отсутствует / просрочен |
+| `3` | не найдено |
+| `4` | таймаут |
+| `5` | отменено |
+
+```bash
+if lizard redeploy --service api --json; then
+  echo "Deploy succeeded"
+else
+  status=$?
+  echo "Deploy failed with code $status" >&2
+  lizard logs --build --json || true
+  exit "$status"
+fi
+```

@@ -8,7 +8,7 @@ description: "アプリケーションデータと sandbox ファイルのため
 
 プロセスの再起動、新しいデプロイ、またはホスト障害をまたいで保持する必要があるデータに応じてストレージを選択してください。これらはそれぞれ異なるイベントです。永続ストレージ自体は、バックアップ、復元ポイント、高可用性を提供しません。
 
-| Data | Where to keep it | Boundary |
+| データ | 保管場所 | 境界 |
 |---|---|---|
 | アプリケーションレコード | Managed Postgres または別のデータベース | 再起動と、削除または破損したデータの復元は別です。別個のエクスポートおよび復元経路をテストしてください。 |
 | キャッシュおよびキューデータ | Managed Redis | ワークロードが状態を再構築できるのか、独自の復旧計画が必要なのかを判断してください。 |
@@ -21,7 +21,7 @@ description: "アプリケーションデータと sandbox ファイルのため
 
 ## sandbox の終了後もファイルを保持する
 
-同じ project に Persistent Volume を作成し、sandbox の作成時にアタッチして、`/data` の配下に書き込んでください。volume を次の sandbox にアタッチする前に、最初の sandbox を終了してください。[完全な例](/sandboxes/volumes)を参照してください。
+同じ project に Persistent Volumes を作成し、sandbox の作成時にアタッチして、`/data` の配下に書き込んでください。volume を次の sandbox にアタッチする前に、最初の sandbox を終了してください。[完全な例](/sandboxes/volumes)を参照してください。
 
 <span id="plan-a-database-restore" />
 
