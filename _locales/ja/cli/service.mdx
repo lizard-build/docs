@@ -1,0 +1,87 @@
+---
+description: "lizard service は、サービスの build、start、source、variable 設定を読み取り・編集し、rename、delete、logs、linking も処理します。"
+---
+
+# lizard service
+
+個々のサービスの設定、ソース、ライフサイクルを管理します。
+
+## Usage
+
+```bash
+lizard service set [flags]
+lizard service show [flags]
+lizard service rename
+lizard service delete [flags]
+lizard service logs
+lizard service link
+```
+
+## Subcommands
+
+### `lizard service set`
+
+サービスに build/start/source/variables/rename の変更を適用します。
+
+| Flag | Description |
+|------|-------------|
+| `--set <path>=<value>` | フィールドを設定します（繰り返し指定可） |
+| `-f, --file <path>` | 適用する JSON 設定ファイル |
+| `--force` | リモートで変更されていても上書きします |
+
+共通フィールドはフラットで、wire schema に 1:1 で対応します: `sourceType`, `repoUrl`, `branch`, `rootDirectory`, `dockerfilePath`, `buildCommand`, `startCommand`, `preDeployCommand`, `watchPatterns`, `containerPort`, `name`.
+
+`service set` は `configRevision` による楽観的並行制御を使用します。`409` が発生した場合は、`lizard service show` で設定を再読み込みし、調整して再試行するか、`--force` を渡してください。
+
+### `lizard service show`
+
+現在のサービス設定を JSON として表示します。1 つのサービスだけに限定するには `-s` を使用します。
+
+### `lizard service rename`
+
+サービスまたは addon の名前を変更します。その参照先（`${{name.KEY}}`）は安定したままです。
+
+### `lizard service delete`
+
+サービスを削除します。`-y, --yes` は確認をスキップします。
+
+### `lizard service logs`
+
+サービスのログをストリーミング表示します（[lizard logs](/cli/logs) も参照）。
+
+### `lizard service link`
+
+サービスを現在のディレクトリにリンクします。
+
+## Examples
+
+<span id="update-a-services-build-and-start-commands" />
+
+### サービスの build コマンドと start コマンドを更新する
+
+```bash
+lizard service set api --set branch=main --set buildCommand="npm run build"
+```
+
+<span id="inspect-a-services-full-configuration" />
+
+### サービスの完全な設定を確認する
+
+```bash
+lizard service show -s api
+```
+
+<span id="delete-a-service-without-a-confirmation-prompt" />
+
+### 確認プロンプトなしでサービスを削除する
+
+```bash
+lizard service delete -y
+```
+
+## See also
+
+- [lizard port](/cli/port) — サービスのコンテナポートを表示または変更
+- [lizard scale](/cli/scale) — サービスのレプリカ数、CPU、メモリ、またはストレージをスケール
+- [Architecture](/concepts/architecture) — サービスが project や addon とどう関連するか
+- [Build pipeline](/concepts/build-pipeline) — `buildCommand`、`startCommand`、および source 設定がビルド時にどのように使用されるか

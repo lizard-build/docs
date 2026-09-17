@@ -1,0 +1,67 @@
+---
+description: "lizard restart は、再ビルドなしでサービスの現在のビルドをローリング再起動します。クラッシュからの復旧に役立ちます。"
+---
+
+# lizard restart
+
+現在のビルドをローリング再起動 — 再ビルドなし。
+
+## Usage
+
+```bash
+lizard restart [nameOrId] [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|--------------|
+| `-s, --service <name>` | サービス |
+| `--detach` | 再起動が受理されたら戻る |
+| `--wait` | 新しい再起動試行が ready になるまで待機する。`--json` と併用可能 |
+| `--timeout <seconds>` | `--wait` 使用時の readiness 待機時間の上限。デフォルトは `120` |
+| `--json` | スクリプト用に JSON を返す |
+
+## Examples
+
+<span id="restart-a-service" />
+
+### サービスを再起動する
+
+```bash
+lizard restart --service api
+```
+
+<span id="restart-without-streaming-logs" />
+
+### ログをストリーミングせずに再起動する
+
+```bash
+lizard restart --service api --detach
+```
+
+<span id="wait-before-running-the-next-check" />
+
+### 次のチェックを実行する前に待機する
+
+CLI 0.3.94 以降が必要です。HTTP を使わない worker では 0.3.95 以降を使用してください。
+
+```bash
+lizard --json restart --service api --wait --timeout 120
+```
+
+`--wait` がない場合、JSON モードは再起動が受理された時点で返ります。`--wait` を付けると、結果には `ok`、`status`、`attemptId`、`waitedMs` が含まれます。CLI は新しい再起動試行を待機するため、リクエスト前から変わっていないステータスは成功として扱われません。待機の失敗またはタイムアウトでは、非ゼロの終了コードが返されます。
+
+HTTP サービスでは、CLI はサービスドメインも 2 回確認します。`containerPort=0` を使う worker は、バックエンドの readiness ステータスを使用するため、生成されたドメインがある場合でも HTTP リスナーは不要です。
+
+```bash
+lizard --json restart --service worker --wait --timeout 60
+```
+
+タイムアウトは、再起動リクエスト後の readiness 待機に適用されます。再起動自体はキャンセルされず、ネットワーク呼び出しによりコマンド全体の所要時間はさらに長くなる場合があります。ワークフローでプロセスの readiness 以上が必要な場合は、コマンド実行後にアプリケーションデータまたはヘルスエンドポイントを確認してください。
+
+## See also
+
+- [lizard redeploy](/cli/redeploy) — 現在のものを再利用するのではなく、新しいビルドをトリガーする
+- [lizard logs](/cli/logs) — `--restart latest` または `--restart <id>` を使って、再起動前後のログを確認する
+- [Deployments](/concepts/deployments) — 再起動と再デプロイの違い、およびクラッシュからの復旧

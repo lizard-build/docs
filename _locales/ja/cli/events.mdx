@@ -1,0 +1,52 @@
+---
+description: "lizard events は、サービスのデプロイ履歴と現在のレプリカ状態を表示し、エントリ数を制限したり 1 つのサービスを対象にしたりするためのフラグを備えています。"
+---
+
+# lizard events
+
+デプロイ履歴とレプリカ状態を表示します。
+
+## Usage
+
+```bash
+lizard events [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --limit <n>` | 表示するエントリ数 (デフォルト 10) |
+| `-s, --service <name>` | 特定のサービスのイベントを表示 |
+
+## Examples
+
+<span id="show-deploy-history-and-replica-status" />
+
+### デプロイ履歴とレプリカ状態を表示
+
+```bash
+lizard events
+```
+
+<span id="show-events-for-a-specific-service" />
+
+### 特定のサービスのイベントを表示
+
+```bash
+lizard events --service api
+```
+
+<span id="show-more-entries" />
+
+### より多くのエントリを表示
+
+```bash
+lizard events --limit 25
+```
+
+## See also
+
+- [Events & History](/observability/events) — 各エントリに含まれる内容と、ダッシュボードの Deployments ビューへの対応
+- [lizard ps](/cli/ps) — すべてのサービスの状態と URL をすばやく確認できるスナップショット
+- [Deployments](/concepts/deployments) — デプロイのライフサイクル

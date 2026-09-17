@@ -1,0 +1,86 @@
+---
+description: "Installiere und aktualisiere die lizard CLI, authentifiziere dich und schlage globale Flags, Exit-Codes und die Laufzeit-Schema-Erkennung für jeden Befehl nach."
+---
+
+<span id="cli-reference" />
+
+# CLI-Referenz
+
+Die `lizard` CLI ist die primäre Schnittstelle zur Plattform. Diese Seite behandelt Installation, globale Flags, Exit-Codes und Laufzeit-Erkennung. Jeder Befehl hat seine eigene Referenzseite in der Seitenleiste — siehe [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets) und die übrigen.
+
+> Referenz generiert für CLI **v0.3.62**. Führe `lizard <cmd> --help --json` aus, um das exakte, versionspassende Schema eines beliebigen Befehls zu sehen.
+
+<span id="install--upgrade" />
+
+## Installation & Aktualisierung
+
+```bash
+npm install -g @lizard-build/cli
+lizard --version
+lizard upgrade            # update to the latest version
+lizard upgrade --check    # check without installing
+```
+
+Verwende immer die global installierte `lizard`-Binärdatei — **nicht** `npx`. Hinweise zur Behebung von Berechtigungsfehlern findest du unter [Quickstart](/getting-started#1-install-the-cli).
+
+<span id="authentication" />
+
+## Authentifizierung
+
+```bash
+lizard login                  # browser OAuth
+lizard login --token lzd_xxx  # token auth
+lizard logout
+lizard whoami                 # current user, workspace, linked project
+```
+
+In CI solltest du `LIZARD_TOKEN` in der Umgebung setzen, statt `login` auszuführen.
+
+<span id="global-flags" />
+
+## Globale Flags
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-V, --version` | CLI-Version ausgeben |
+| `--json` | Maschinell lesbare Ausgabe. Mit `--help` kombinieren, um das Schema eines Befehls auszugeben |
+
+Die meisten Befehle akzeptieren außerdem `-p, --project`, `-s, --service` und `-w, --workspace`, um statt der verknüpften Ressource eine bestimmte Ressource anzusteuern.
+
+## Exit-Codes
+
+| Code | Bedeutung | Was zu tun ist |
+|------|---------|------------|
+| `0` | Erfolg | fortfahren |
+| `1` | allgemeiner Fehler | Nachricht lesen |
+| `2` | Authentifizierung (401/403) | `lizard login` ausführen |
+| `3` | nicht gefunden (404) | Namen mit `lizard ps` / `lizard project list` prüfen |
+| `4` | Zeitüberschreitung (408/504) | erneut versuchen |
+| `5` | vom Benutzer abgebrochen | stoppen |
+
+<span id="runtime-discovery" />
+
+## Laufzeit-Erkennung
+
+Die CLI dokumentiert sich selbst. Um den vollständigen Befehlsbaum, globale Flags und Exit-Codes anzuzeigen:
+
+```bash
+lizard --help --json
+```
+
+Für die exakten Argumente und Optionen eines beliebigen Befehls oder Unterbefehls:
+
+```bash
+lizard <cmd> --help --json
+lizard <cmd> <sub> --help --json     # e.g. lizard service set --help --json
+```
+
+Das entspricht immer deiner installierten Version — ziehe es Vermutungen über Flag-Formen vor. So lernt auch ein Agent die CLI kennen, ohne darauf trainiert worden zu sein: siehe [Deployment aus Claude Code](https://lizard.build/blog/deploy-from-claude-code).
+
+<span id="configuration--state" />
+
+## Konfiguration & Status
+
+- Die CLI speichert Authentifizierung und die Projektverknüpfung des aktuellen Verzeichnisses in `~/.lizard/config.json`.
+- `lizard status` zeigt die Workspace-/Projekt-/Service-Verknüpfung des cwd an (keine Authentifizierung erforderlich).
+- `lizard config apply` wendet eine `lizard-config.json`-Datei auf ein Projekt an (verwende `--dry-run` für eine Vorschau).

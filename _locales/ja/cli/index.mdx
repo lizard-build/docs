@@ -1,0 +1,88 @@
+---
+description: "lizard CLI をインストールおよびアップグレードし、認証し、すべてのコマンドのグローバルフラグ、終了コード、実行時スキーマ検出を確認します。"
+---
+
+<span id="cli-reference" />
+
+# CLI リファレンス
+
+`lizard` CLI はプラットフォームへの主要なインターフェースです。このページでは、インストール、グローバルフラグ、終了コード、実行時検出について扱います。各コマンドにはサイドバーに専用のリファレンスページがあります — [`lizard up`](/cli/up)、[`lizard service`](/cli/service)、[`lizard secrets`](/cli/secrets) などを参照してください。
+
+> CLI **v0.3.62** を基準に生成されたリファレンスです。任意のコマンドの正確でバージョン一致のスキーマを確認するには、`lizard <cmd> --help --json` を実行してください。
+
+<span id="install--upgrade" />
+
+## インストールとアップグレード
+
+```bash
+npm install -g @lizard-build/cli
+lizard --version
+lizard upgrade            # update to the latest version
+lizard upgrade --check    # check without installing
+```
+
+必ずグローバルにインストールされた `lizard` バイナリを使用してください — `npx` ではありません。権限エラーの修正については [Quickstart](/getting-started#1-install-the-cli) を参照してください。
+
+<span id="authentication" />
+
+## 認証
+
+```bash
+lizard login                  # browser OAuth
+lizard login --token lzd_xxx  # token auth
+lizard logout
+lizard whoami                 # current user, workspace, linked project
+```
+
+CI では、`login` を実行する代わりに、環境変数に `LIZARD_TOKEN` を設定してください。
+
+<span id="global-flags" />
+
+## グローバルフラグ
+
+| Flag | Description |
+|------|-------------|
+| `-V, --version` | CLI バージョンを表示 |
+| `--json` | 機械可読な出力。`--help` と組み合わせると、コマンドのスキーマをダンプします |
+
+ほとんどのコマンドは、リンク済みのものではなく特定のリソースを対象にするために、`-p, --project`、`-s, --service`、`-w, --workspace` も受け付けます。
+
+<span id="exit-codes" />
+
+## 終了コード
+
+| Code | Meaning | What to do |
+|------|---------|------------|
+| `0` | 成功 | 続行 |
+| `1` | 一般的なエラー | メッセージを確認 |
+| `2` | 認証 (401/403) | `lizard login` を実行 |
+| `3` | 見つからない (404) | `lizard ps` / `lizard project list` で名前を確認 |
+| `4` | タイムアウト (408/504) | 再試行 |
+| `5` | ユーザーによってキャンセル | 停止 |
+
+<span id="runtime-discovery" />
+
+## 実行時検出
+
+CLI は自己文書化されています。完全なコマンドツリー、グローバルフラグ、終了コードを確認するには、次を実行します。
+
+```bash
+lizard --help --json
+```
+
+任意のコマンドまたはサブコマンドの正確な引数とオプションを確認するには、次を実行します。
+
+```bash
+lizard <cmd> --help --json
+lizard <cmd> <sub> --help --json     # e.g. lizard service set --help --json
+```
+
+これは常にインストール済みのバージョンを反映します — フラグの形式を推測するよりこちらを優先してください。また、これはエージェントが CLI について事前学習されていなくても CLI を学習する方法でもあります: [Claude Code からのデプロイ](https://lizard.build/blog/deploy-from-claude-code) を参照してください。
+
+<span id="configuration--state" />
+
+## 設定と状態
+
+- CLI は認証情報と現在のディレクトリのプロジェクトリンクを `~/.lizard/config.json` に保存します。
+- `lizard status` は cwd の workspace/project/service リンクを表示します（認証不要）。
+- `lizard config apply` は `lizard-config.json` ファイルをプロジェクトに適用します（プレビューには `--dry-run` を使用）。

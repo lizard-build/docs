@@ -1,0 +1,53 @@
+---
+description: "Por qué lizard service set seguido de un redeploy pone en cola dos builds, qué campos reconstruyen por sí solos y cómo detener el redundante."
+---
+
+<span id="my-change-queued-two-builds-back-to-back" />
+
+# Mi cambio puso en cola dos builds seguidos
+
+Ejecutaste `lizard service set` para cambiar un campo, luego `lizard redeploy`, y terminaste con dos builds en lugar de uno.
+
+<span id="what-this-means" />
+
+## Qué significa esto
+
+La llamada `service set` ya activó una reconstrucción por sí sola. El `redeploy` posterior puso en cola una segunda reconstrucción redundante.
+
+<span id="why-this-can-happen" />
+
+## Por qué puede pasar esto
+
+Cambiar un campo que **afecta al build** en un servicio — `repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath` o `rootDirectory` — activa una reconstrucción automática de inmediato. Cambiar un campo **solo de runtime** — `startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns` — **no** activa una reconstrucción automática; solo surte efecto en el siguiente deploy.
+
+Es fácil encadenar por reflejo un `redeploy` después de cada `service set`, pero eso solo tiene sentido para los campos solo de runtime.
+
+<span id="possible-solutions" />
+
+## Posibles soluciones
+
+<span id="check-which-kind-of-field-you-changed" />
+
+### Comprueba qué tipo de campo cambiaste
+
+Consulta la [tabla de activadores de reconstrucción](/concepts/build-pipeline#what-triggers-a-rebuild). Si es un campo de build, la reconstrucción ya está en cola; no hagas nada más.
+
+```bash
+lizard events   # confirm only one build is in flight
+```
+
+<span id="only-redeploy-after-runtime-only-changes" />
+
+### Solo vuelve a desplegar después de cambios solo de runtime
+
+```bash
+lizard service set api --set startCommand="node server.js"
+lizard redeploy --service api   # needed here — startCommand doesn't auto-rebuild
+```
+
+<span id="see-also" />
+
+## Ver también
+
+- [Pipeline de build → qué activa una reconstrucción](/concepts/build-pipeline#what-triggers-a-rebuild)
+- [`lizard service`](/cli/service) — la referencia completa de comandos.

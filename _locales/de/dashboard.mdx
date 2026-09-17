@@ -1,0 +1,82 @@
+---
+description: "Was das Lizard-Dashboard zusätzlich zur CLI bietet: Service-Status, Deploy-Zeitleiste, Live-Logs, Metriken, Datenbrowser, Team und Abrechnung."
+---
+
+# App-Dashboard
+
+Das Lizard-Dashboard ist die visuelle Ergänzung zur CLI. Alles, was Sie mit `lizard …` tun, wird hier angezeigt, plus Dinge, die sich mit einer UI einfacher erledigen lassen — Live-Logs, Diagramme, die Datenbrowser und die Team-/Abrechnungsverwaltung.
+
+Wenn Sie lieber gar kein Terminal öffnen möchten, lassen Sie den Agenten die Befehle ausführen und verfolgen Sie das Ergebnis hier — die Anleitung unter [Bereitstellen einer Antigravity-App in der Produktion](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-an-antigravity-app-to-production-without-typing-a-command), die nur zwei Prompts erfordert und keinerlei Eingaben im Terminal.
+
+Öffnen Sie es aus der CLI:
+
+```bash
+lizard open          # open the current project
+lizard docs          # open this documentation
+```
+
+<span id="whats-in-the-dashboard" />
+
+## Was im Dashboard enthalten ist
+
+### Services
+
+Die Startansicht des Projekts listet jeden Service mit seinem Status-Badge, der generierten Domain und einem schnellen Zugriff auf Logs, Metriken, Secrets und Einstellungen auf. Erstellen Sie neue Services (aus einem GitHub-Repository oder leer) direkt von hier aus.
+
+### Deployments
+
+Eine Zeitleiste aller Deploys mit Build-Logs pro Deploy und einer Detailansicht (Commit, Status, Replikate). Das ist das visuelle Gegenstück zu `lizard events` + `lizard logs --build`.
+
+### Logs
+
+Live-Streaming von Laufzeit- und Build-Logs mit Such- und Level-Filtern — das UI-Gegenstück zu [`lizard logs`](/observability/logs).
+
+<span id="metrics--usage" />
+
+### Metriken & Nutzung
+
+CPU-, Speicher-, Netzwerk- und Datenträgerdiagramme pro Service sowie eine **Nutzungs**-Ansicht, die Verbrauch und Kosten im gesamten Projekt aufschlüsselt. Entspricht [`lizard metrics --cost`](/observability/metrics).
+
+<span id="variables--secrets" />
+
+### Variablen & Secrets
+
+Verwalten Sie Secrets auf Service- und Projektebene mit maskierten Werten und Unterstützung für Referenzen (`${{…}}`). Siehe [Variablen & Secrets](/variables).
+
+### Domains
+
+Fügen Sie benutzerdefinierte Domains hinzu, sehen Sie DNS-Einträge ein und verfolgen Sie den Verifizierungs- und TLS-Status. Siehe [Networking](/networking).
+
+<span id="managed-addon-browsers" />
+
+### Browser für Managed Addons
+
+Jedes Addon enthält einen Datenbrowser:
+
+- **Postgres** — ein SQL-/Tabelleneditor zum Abfragen und Bearbeiten von Daten.
+- **Redis** — ein Key/Value-Browser.
+- **S3** — ein Bucket- und Objektbrowser mit Upload/Download.
+
+### GitHub-Integration
+
+Verbinden Sie die GitHub-App, wählen Sie Repositories aus und verwalten Sie, welche Repos Lizard bauen darf. Siehe [Deploy from GitHub](/deploy/github).
+
+<span id="settings-team--billing" />
+
+### Einstellungen, Team & Abrechnung
+
+Projekt- und Workspace-Einstellungen, Einladungen und Rollen für Mitglieder, Ressourcennutzung, Kontoguthaben und optionales automatisches Aufladen. Standardkonten verwenden [pay as you go](/platform/billing) ohne monatliches Abonnement.
+
+## CLI ↔ Dashboard
+
+| Aufgabe | CLI | Dashboard-Ansicht |
+|------|-----|----------------|
+| Deploy-Verlauf | `lizard events` | Deployments |
+| Logs streamen | `lizard logs` | Logs |
+| Ressourcendiagramme | `lizard metrics` | Metriken / Nutzung |
+| Secrets verwalten | `lizard secrets` | Variablen |
+| Benutzerdefinierte Domains | `lizard domain` | Domains |
+| Postgres/Redis/S3 durchsuchen | `lizard run` / `lizard ssh` | Addon-Browser |
+| Teammitglieder einladen | — | Team / Einstellungen |
+
+Verwenden Sie einfach das, was gerade am besten passt — beide arbeiten mit denselben Projekten und Services.

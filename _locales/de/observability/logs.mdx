@@ -1,0 +1,67 @@
+---
+description: "Laufzeit-Logs streamen, Build-Logs nach einem fehlgeschlagenen Deploy lesen und den Log-Tail rund um einen Neustart abrufen – über die CLI oder das Dashboard."
+---
+
+# Logs
+
+Lizard erfasst **Laufzeit**-Logs, **Build**-Logs und den Log-Tail rund um **Neustarts**. Streame sie live in deinem Terminal oder sieh sie dir im Dashboard an.
+
+<span id="runtime-logs" />
+
+## Laufzeit-Logs
+
+```bash
+lizard logs                       # last 200 runtime lines, then live tail
+lizard logs --service api         # a specific service
+lizard logs --tail 1000           # more history (max 1000)
+lizard logs --level error         # filter by level
+```
+
+<span id="behavior-with---json" />
+
+### Verhalten mit `--json`
+
+`lizard logs --json` ist **kein** Stream — es gibt die letzten 200 Zeilen zurück (überschreibbar mit `--tail N`, maximal 1000) und beendet sich dann. Nutze das für Snapshots und Skripting. Streame nur dann live ohne `--json`, wenn du ein interaktives Tail möchtest.
+
+## Build-Logs
+
+```bash
+lizard logs --build               # the most recent build's logs
+```
+
+Das ist das Erste, was du prüfen solltest, wenn ein Deploy fehlschlägt — lies die Logs, behebe die Ursache und dann `lizard redeploy`. Siehe [Build-Pipeline](/concepts/build-pipeline).
+
+<span id="restart--crash-logs" />
+
+## Neustart- / Crash-Logs
+
+Wenn eine Replik abstürzt oder neu startet, hol dir den umgebenden Log-Tail:
+
+```bash
+lizard logs --restart latest      # the most recent restart
+lizard logs --restart <id>        # a specific restart
+lizard logs --restarts            # list recent restarts
+```
+
+<span id="paging-through-history" />
+
+## Durch den Verlauf blättern
+
+`lizard service logs` unterstützt das Blättern durch ältere Fenster:
+
+```bash
+lizard service logs --service api --tail all     # full history (no follow)
+lizard service logs --service api --page 2       # older window (implies --tail 200)
+```
+
+## Dashboard
+
+Das Dashboard (`lizard open`) streamt Laufzeit- und Build-Logs mit Such- und Level-Filtern und zeigt die Build-Ausgabe pro Deployment in der Ansicht **Deployments**.
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [`lizard logs`](/cli/logs) — die vollständige Befehlsreferenz.
+- [Ereignisse & Verlauf](/observability/events) — Deploy-Verlauf und Replik-Status.
+- [Deploy aus Claude Code](https://lizard.build/blog/deploy-from-claude-code) — Logs, die dafür geschrieben sind, von einem Agenten gelesen zu werden, nicht nur von dir.

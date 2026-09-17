@@ -1,0 +1,61 @@
+---
+description: "lizard run führt einen Befehl auf deinem Rechner mit eingefügten Projekt- und Service-Geheimnissen eines Service aus. Enthält auch, wann du stattdessen ssh verwenden solltest."
+---
+
+# lizard run
+
+Führe einen Befehl lokal mit eingefügten Projekt- und Service-Geheimnissen aus.
+
+## run vs. ssh
+
+Mit zwei Befehlen kannst du Befehle im Kontext eines Service ausführen. Sie laufen an unterschiedlichen Orten — du solltest wissen, welchen du brauchst.
+
+| Command | Runs where | Use for |
+|---------|-----------|---------|
+| `lizard run` | Lokal, mit eingefügten Projekt- und Service-Geheimnissen des Service | Migrationen, Seed-Skripte, lokale Tools, die eine Produktionskonfiguration brauchen |
+| `lizard ssh` | Innerhalb des laufenden Service-Containers | Den Live-Container untersuchen, einmalige Remote-Befehle, Debugging |
+
+`lizard run` zeigt deine lokal eingefügte Kopie der Umgebung an, die normalerweise mit dem übereinstimmt, was die laufende App sieht — aber `lizard ssh` ist für den Live-Container maßgeblich. Um zu prüfen, was die laufende App tatsächlich sieht, verwende stattdessen `lizard ssh`.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard run [flags] -- <command>
+```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | Service, dessen env eingefügt werden soll |
+| `--no-service` | Service-env nicht einfügen |
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="run-a-migration-with-service-secrets-injected" />
+
+### Eine Migration mit eingefügten Service-Geheimnissen ausführen
+
+```bash
+lizard run --service api -- node scripts/migrate.js
+```
+
+<span id="print-an-injected-environment-variable" />
+
+### Eine eingefügte Umgebungsvariable ausgeben
+
+```bash
+lizard run --service api -- printenv DATABASE_URL
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [lizard ssh](/cli/ssh) — einen Befehl innerhalb des laufenden Service-Containers statt lokal ausführen
+- [Variablen](/variables) — wie Projekt- und Service-Variablen definiert und referenziert werden
+- [Python-App-Hosting](https://lizard.build/blog/python-app-hosting) — `manage.py` und andere Framework-Tools gegen eine bereitgestellte Datenbank ausführen

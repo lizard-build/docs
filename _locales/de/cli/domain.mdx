@@ -1,0 +1,94 @@
+---
+description: "lizard domain zeigt die Domain eines Dienstes, erzeugt eine onlizard.com-Subdomain oder hängt einen benutzerdefinierten Hostnamen an und verifiziert ihn mit automatischem TLS."
+---
+
+# lizard domain
+
+Zeigt die aktuelle Domain an oder hängt eine benutzerdefinierte an.
+
+## Usage
+
+```bash
+lizard domain [hostname] [flags]
+```
+
+Der Hostname ist ein Positionsargument — es gibt kein Subcommand `add`. Wenn du `lizard domain` ohne Argumente ausführst, wird die aktuelle Domain des Dienstes angezeigt.
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | Dienst |
+| `--port <n>` | Freizugebender Port |
+
+## Subcommands
+
+### `lizard domain generate`
+
+Erzeugt eine neue `*.onlizard.com`-Subdomain.
+
+### `lizard domain verify <hostname>`
+
+Prüft den TXT-Record und aktiviert die Domain. TLS wird automatisch bereitgestellt.
+
+### `lizard domain delete <hostname>`
+
+Entfernt eine Domain (Alias `rm`).
+
+| Flag | Description |
+|------|-------------|
+| `-y, --yes` | Bestätigung überspringen |
+
+## Examples
+
+<span id="show-the-current-domain" />
+
+### Aktuelle Domain anzeigen
+
+```bash
+lizard domain
+```
+
+<span id="generate-a-subdomain" />
+
+### Eine Subdomain erzeugen
+
+```bash
+lizard domain generate
+```
+
+<span id="attach-a-custom-domain" />
+
+### Eine benutzerdefinierte Domain anhängen
+
+```bash
+lizard domain app.example.com --service web
+```
+
+Lizard gibt die zu erstellenden DNS-Records zurück (einen `CNAME` für den Hostnamen und einen `TXT`-Record zur Verifizierung). Füge sie bei deinem DNS-Anbieter hinzu und verifiziere dann:
+
+```bash
+lizard domain verify app.example.com
+```
+
+<span id="attach-a-domain-to-a-specific-port" />
+
+### Eine Domain an einen bestimmten Port anhängen
+
+```bash
+lizard domain app.example.com --service web --port 8080
+```
+
+<span id="remove-a-domain" />
+
+### Eine Domain entfernen
+
+```bash
+lizard domain delete app.example.com
+lizard domain rm app.example.com --yes
+```
+
+## See also
+
+- [Networking](/networking) — erzeugte Domains, TLS und Worker-Dienste
+- [Deploy to regions](/deploy/regions) — Regionsauswahl für Dienste

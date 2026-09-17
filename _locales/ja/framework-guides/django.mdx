@@ -1,0 +1,221 @@
+---
+description: "Gunicorn、明示的な WSGI モジュール、port 8000、本番設定、データベースマイグレーション、静的ファイルとアップロードファイルの方針を使って、Lizard に Django をデプロイします。"
+---
+
+<span id="deploy-django-on-lizard" />
+
+# Lizard に Django をデプロイする
+
+Gunicorn と、プロジェクトの WSGI モジュールを port `8000` で使って、Lizard 上で Django を実行します。デプロイしたアプリを運用に使う前に、本番設定、データベースアクセス、静的ファイル配信を準備してください。`manage.py runserver` は開発サーバーです。
+
+<span id="set-the-start-command" />
+
+## 起動コマンドを設定する
+
+このガイドでは、`manage.py`、`requirements.txt`、そして `config` を含む `wsgi.py` というプロジェクトパッケージ名を前提としています。`config` は実際のパッケージ名に置き換えてください。
+
+テスト済みの requirements に、Django、Gunicorn、そしてアプリが使うデータベースドライバーを含めてください。`Procfile` を追加します:
+
+```text
+web: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+```
+
+設定がネストしたパッケージ内にある場合、この明示的なモジュール指定により曖昧さを避けられます。WebSockets を使う ASGI アプリには ASGI サーバーと別の起動コマンドが必要です。このガイドは WSGI を対象としています。
+
+| Setting | Value |
+|---|---|
+| Install | `pip install -r requirements.txt` |
+| Runtime | WSGI モジュールを使う Gunicorn |
+| Service port | `8000` |
+| Working directory | `manage.py` を含むディレクトリ |
+
+<span id="prepare-production-settings" />
+
+## 本番設定を準備する
+
+Django は `settings.py` 内に `DATABASES` 辞書があることを前提としています。サービスで `DATABASE_URL` だけを設定しても、Django は PostgreSQL に接続しません。以下の手順では、[Managed Postgres](/addons/postgres) を作成し、その URL をアプリに渡し、その URL を Django の接続設定に変換します。
+
+`requirements.txt` に以下のパッケージを追加してください。アプリに必要なほかの依存関係はそのまま維持します。これらは [完全な例](https://github.com/lizard-build/docs/tree/main/_examples/django) で使っているバージョンです:
+
+```text
+Django==6.1.1
+gunicorn==26.2.0
+whitenoise==6.12.0
+psycopg[binary]==3.3.5
+dj-database-url==3.1.2
+```
+
+`psycopg` は PostgreSQL ドライバーです。`dj-database-url` は接続 URL からデータベース名、ユーザー、パスワード、ホスト、port を読み取ります。プロジェクトの `settings.py` 内で対応する設定をこのブロックに置き換えてください。既存の apps、middleware、templates、そのほかの設定はそのまま維持します:
+
+```python
+import os
+from pathlib import Path
+
+import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def required_env(name):
+    value = os.environ.get(name, "").strip()
+    if not value:
+        raise ImproperlyConfigured(f"Set the {name} environment variable.")
+    return value
+
+
+def env_list(name):
+    values = [item.strip() for item in required_env(name).split(",") if item.strip()]
+    if not values:
+        raise ImproperlyConfigured(f"Set at least one value in {name}.")
+    return values
+
+
+SECRET_KEY = required_env("SECRET_KEY")
+debug_value = os.environ.get("DEBUG", "false").strip().lower()
+if debug_value not in {"true", "false"}:
+    raise ImproperlyConfigured("DEBUG must be true or false.")
+DEBUG = debug_value == "true"
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
+DATABASES = {
+    "default": dj_database_url.parse(
+        required_env("DATABASE_URL"),
+        conn_max_age=60,
+        conn_health_checks=True,
+    )
+}
+```
+
+ファイルの後ろに古い `DATABASES`、`SECRET_KEY`、または `DEBUG` の代入を残さないでください。残っていると、これらの値が上書きされます。この例では、`SECRET_KEY`、`DATABASE_URL`、`ALLOWED_HOSTS`、`CSRF_TRUSTED_ORIGINS` に空でない値が必要です。値がない、または空の場合、起動はその変数名を表示して停止します。`DEBUG` のデフォルトは `false` です。デプロイしたサービスでは `false` に設定してください。
+
+`ALLOWED_HOSTS` には、`app.example.com,www.example.com` のように、scheme や path を含まないカンマ区切りのホスト名を指定します。`CSRF_TRUSTED_ORIGINS` には、`https://app.example.com` のように、scheme を含むカンマ区切りの origin を指定します。ローカル origin が port を使う場合は、それも含めてください。この例では明示的な origin リストが必要です。Django 自体は、追加の trusted origins を必要としないアプリであれば空のリストも許可します。このアプリにフォーム送信してよい origin だけを trust してください。これらの設定は CSRF トークンの代わりにはなりません。
+
+この URL は、ソースにコミットされた値ではなく、サービスの [secret または reference](/variables) から取得します。デプロイしたアプリの永続データベースとして、コンテナローカルの SQLite を使わないでください。URL の解析と接続オプションについては、[dj-database-url usage](https://pypi.org/project/dj-database-url/) を参照してください。
+
+ローカル環境変数を設定し、PostgreSQL に到達できる状態で、次を実行します:
+
+```bash
+python -m pip install -r requirements.txt
+python manage.py check --deploy
+gunicorn config.wsgi:application --bind 0.0.0.0:8000
+```
+
+アプリに関連する設定については、Django の [deployment checklist](https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/) を確認してください。この小さな例では、本番用のすべてのセキュリティ設定を構成していません。secure cookies、HSTS、redirects を有効にする前に、実際の公開 URL で proxy と HTTPS の扱いを確認してください。転送された HTTPS ヘッダーは、proxy がそれを制御している場合にだけ trust してください。
+
+<span id="plan-static-files-and-migrations" />
+
+## 静的ファイルとマイグレーションを計画する
+
+Gunicorn 単体では Django の静的ファイルは配信されません。アプリ内で設定した静的ファイル用 middleware を使うか、別の静的ホストを選んでください。asset は、その構成が配信する path に collect してください。lizardpack の requirements ベースの Python path は `collectstatic` を自動実行しません。アプリでその手順が必要なら、完全な Dockerfile build に含めてください。
+
+WhiteNoise を使う場合は、`INSTALLED_APPS` に `django.contrib.staticfiles` を維持し、Django の `SecurityMiddleware` の直後に `whitenoise.middleware.WhiteNoiseMiddleware` を挿入してください。以下の設定を追加または更新します:
+
+```python
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+```
+
+アプリがすでに別の場所に uploads を保存しているなら、既存の `STORAGES["default"]` backend はそのまま維持してください。WhiteNoise が配信するのは collect 済みの静的 asset であり、ユーザー uploads ではありません。
+
+プロジェクトルートにこの Dockerfile を使います:
+
+```dockerfile
+FROM python:3.13-slim
+WORKDIR /app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+RUN SECRET_KEY=build-only-placeholder \
+    DATABASE_URL=postgresql://build:build@127.0.0.1:1/build \
+    ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
+    python manage.py collectstatic --noinput
+EXPOSE 8000
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+```
+
+`RUN` 行の値は、`collectstatic` のためだけに存在します。データベース URL は未使用のローカル port を指すプレースホルダーで、その場所ではデータベースは動作していません。settings の読み込みでは URL が解析されますが、asset collection にデータベース接続は不要です。モジュール import や `AppConfig.ready()` からデータベースを問い合わせないでください。この例では、コンテナネットワークを無効にした状態で `collectstatic` も渡しています。
+
+これらの代入は実行時環境変数にはなりません。起動前に、サービス上で新しい `SECRET_KEY` と実際のデータベース reference を設定してください。本番 secrets を Docker build に渡さないでください。
+
+`.dockerignore` を作成し、同じ path を [source uploads](/cli/up) からも除外してください:
+
+```text
+.env*
+.venv/
+venv/
+.git/
+__pycache__/
+*.pyc
+*.sqlite3
+staticfiles/
+```
+
+ユーザー uploads は、コンテナの静的ディレクトリではなく、[Managed Object Storage](/addons/storage) のような永続ストレージに保持してください。[storage and recovery](/platform/storage-and-recovery) を確認してください。
+
+データベースマイグレーションは別個のリリース手順として扱ってください。必要に応じてデータをバックアップし、マイグレーションは再試行しても安全になるようにし、新しい schema がリクエストで必要になる前に適用してください。pre-deploy command は、並行実行性や障害時の挙動を確認する代わりにはなりません。
+
+<span id="deploy-and-verify" />
+
+## デプロイして確認する
+
+[CLI setup](/framework-guides#prepare-the-project) の後、[GitHub service](/deploy/github) を接続し、その secrets と本番設定を構成して、コンテナ port `8000` でデプロイしてください。新しい upload ベースのプロジェクトの場合:
+
+```bash
+lizard init --name django-app
+lizard add --service web
+```
+
+このプロジェクト内に [Managed Postgres](/addons/postgres) を作成します。すでにインスタンスがある場合は、`add postgres` をスキップして、その名前を reference で使ってください:
+
+```bash
+lizard add postgres --name postgres
+```
+
+アプリの [service secrets](/cli/secrets) を設定します。`${{postgres.DATABASE_URL}}` 内の `postgres` は、Django のデータベース alias ではなく、データベースサービス名を表します。Lizard はデプロイ時に [reference](/variables/references) を解決し、得られた URL を `web` process に注入します。単一引用符は、shell がその reference を展開しないようにするためです。上の `settings.py` ブロックが、その URL を `DATABASES["default"]` に変換します。
+
+```bash
+DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
+lizard secrets set SECRET_KEY="$DJANGO_SECRET_KEY" \
+  DATABASE_URL='${{postgres.DATABASE_URL}}' DEBUG=false \
+  ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
+  --service web
+lizard up --service web --port 8000
+lizard ps --json
+```
+
+`localhost` は一時的な host 設定で、公開 hostname を取得するまで process を起動できるようにするものです。公開リクエストは 400 を返します。すでに hostname がわかっている場合は、最初の upload 前に設定してください。そうでない場合は、これらのプレースホルダーを、サービスに対して返された hostname と HTTPS origin に置き換えてください:
+
+```bash
+lizard secrets set ALLOWED_HOSTS=YOUR_PUBLIC_HOST \
+  CSRF_TRUSTED_ORIGINS=https://YOUR_PUBLIC_HOST --service web
+```
+
+reference の対象または key が見つからないと、空文字列に解決されることがあります。その場合、必須値チェックにより Django は `Set the DATABASE_URL environment variable.` で停止します。データベースサービス名と、その `DATABASE_URL` key を確認してください。接続 URL を logs に出力しないでください。
+
+変数変更により process は再起動されます。ローカル virtual environments、secrets、ローカルデータベースは uploads から除外してください。process が動作したら、マイグレーションを適用します:
+
+```bash
+lizard ssh --service web -- python manage.py migrate --noinput
+```
+
+マイグレーションが残っていないことを確認するために、もう一度コマンドを実行してください。port check が成功したことを、tables が存在する証拠と見なさないでください。
+
+アプリ URL、データベースを使うページ、フォーム送信、静的 asset を確認してください。アプリが Django admin を使う場合は、その CSS も確認してください。import または settings のエラーについては `lizard logs --service web --json` を読んでください。400 レスポンスは `ALLOWED_HOSTS` が間違っていることを意味する場合がよくあります。CSS が欠けている場合は、通常、静的 asset が collect されていないか配信されていません。設定を変更する前に、実際のエラーを確認してください。
+
+2026 年 9 月 9 日のデプロイ確認とその制限については、[tested versions and cloud results](/framework-guides/validation) を参照してください。
+
+
+<span id="reproduce-this-example" />
+
+## この例を再現する
+
+[Django example](https://github.com/lizard-build/docs/tree/main/_examples/django) には、settings、Dockerfile、requirements、データベースを使うフォーム、テストランナーが含まれています。これを独立したディレクトリにコピーし、Docker を起動した状態で `python3 tests/verify.py` を実行してください。image を build し、ローカル PostgreSQL を起動し、マイグレーションと HTTP の挙動を確認し、テスト用コンテナを停止します。Lizard のサービスは作成しません。確認項目と保持される Docker リソースについては、その README を参照してください。
+
+2026 年 9 月 14 日の確認では、この改訂版の例をローカル Linux コンテナで扱っています。前述の cloud results は 9 月 9 日のガイドを対象としており、改訂後の settings はまだ新たな cloud デプロイを行っていません。

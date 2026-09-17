@@ -1,0 +1,89 @@
+---
+description: "Lizard がソースをコンテナイメージに変換する方法: 合成された Dockerfile、リポジトリの Dockerfile、または lizardpack の自動検出、そして何が再ビルドを引き起こすか。"
+---
+
+<span id="build-pipeline" />
+
+# ビルドパイプライン
+
+ビルドは Lizard のビルドノード上で実行されます — **ローカルに Docker は不要です**。デプロイすると、プラットフォームは固定の判定順序に従って、ソースをどのようにコンテナイメージへ変換するかを決定し、その後そのイメージを分離された pod で実行します。すべての [container as a service](https://lizard.build/blog/container-as-a-service) がイメージをビルドしてくれるわけではありません。このブログでは、このカテゴリにある 3 つの形態を比較しています。
+
+<span id="build-decision-order" />
+
+## ビルドの判定順序
+
+プラットフォームは次の順序で、ビルド戦略をちょうど 1 つ選びます:
+
+1. **合成された Dockerfile** — サービスに `buildCommand` および/または `startCommand` が設定されている場合（または `lizard up --build-command` / `--start-command` 経由で渡された場合）、Lizard はそれらのコマンドから Dockerfile を生成します。lizardpack は呼び出されません。
+2. **リポジトリの Dockerfile（そのまま）** — サービスに `dockerfilePath` が設定されている場合、リポジトリ内のその Dockerfile が変更されずに使用されます。
+3. **lizardpack 自動検出** — それ以外の場合、プラットフォームはソースをクローンし、ビルドパック / Dockerfile ジェネレーターである **lizardpack** を実行します。
+
+<span id="lizardpack-auto-detect" />
+
+### lizardpack 自動検出
+
+lizardpack はリポジトリを検査し、最適化されたマルチステージイメージをビルドします。サポートされるスタックは次の順序で照合されます:
+
+**Hugo → Go → Node → Python → Rust → Ruby → PHP → Java → static**
+
+本番用スクリプト、アダプター、出力パス、ポートについては [Framework guides](/framework-guides) を参照してください。検出はプロジェクトファイルと依存関係を使用します。複数のプロバイダーに一致するリポジトリは、この順序に従います。
+
+この経路では:
+
+- リポジトリに `Dockerfile` が存在し、**かつ** 実際のビルドステップ（`RUN <package-manager>` の行であり、単なる `COPY dist/` ではない）がある場合、それがそのまま使用されます。
+- それ以外の場合、lizardpack が Dockerfile を生成します。
+- **開始コマンド** は自動検出されます: `Procfile` `web:` の行（Python/Ruby）または `package.json` `scripts.start`（Node）が自動的に検出されます。Django、Flask、FastAPI がそれぞれ必要とする正確な行については、[Python app hosting](https://lizard.build/blog/python-app-hosting) を参照してください。
+- **ポート** は `EXPOSE`、フレームワークのデフォルト、または明示的な `PORT` 環境変数から推定されます。
+
+> **注意:** 事前ビルド済みアーティファクトのみをコピーする Dockerfile（`COPY dist/`、`build/`、`out/`、`.next/`、`public/`）で、`RUN` のビルドステップが**ない**場合は、不完全と見なされ、lizardpack によって再生成されます。実際のビルドステップを追加するか、`dockerfilePath` を設定してそのまま使用するよう強制してください。
+
+<span id="what-triggers-a-rebuild" />
+
+## 何が再ビルドを引き起こすか
+
+| Action | Rebuilds? |
+|--------|-----------|
+| 追跡対象ブランチへの `git push` | ✅ GitHub webhook 経由 |
+| `lizard redeploy` / `lizard up` | ✅ 明示的 |
+| `VITE_*` または `NEXT_PUBLIC_*` 変数の変更 | ✅ ビルド時の値は焼き込まれます |
+| ビルドフィールド（`repoUrl`、`branch`、`sourceType`、`buildCommand`、`dockerfilePath`、`rootDirectory`）の `service set` | ✅ 自動的に再ビルド |
+| ランタイム専用フィールド（`startCommand`、`preDeployCommand`、`containerPort`、`watchPatterns`）の `service set` | ❌ 適用するには `lizard redeploy` を実行 |
+| その他の環境変数 / シークレットの変更 | ❌ クイック再起動で適用（再ビルドなし） |
+
+> **二重にビルドしないでください。** ビルドフィールドを変更する `service set` の後は、再ビルドが自動的に発火します — その後に `lizard redeploy` を続けないでください。2 回目の冗長なビルドがキューに入ります。
+
+<span id="watching-a-build" />
+
+## ビルドを監視する
+
+ビルドログは `lizard up` 中にストリーミングされます。どのサービスでも:
+
+```bash
+lizard logs --build            # the most recent build's logs
+lizard events                  # deploy history + replica status
+```
+
+ビルドが失敗した場合は、`lizard logs --build` を読み、原因を修正し（リポジトリ内、または `lizard service set` 経由で `buildCommand` / `startCommand` を調整して）、その後 `lizard redeploy` を実行してください。
+
+<span id="runtime-notes" />
+
+## ランタイムに関する注意
+
+- **Docker の `HEALTHCHECK` はありません。** ランタイムは Docker の healthcheck ループを実行しないため、`HEALTHCHECK` ディレクティブは無視されます。代わりに Lizard はポートに対して TCP プローブを実行します（[worker mode](/deploy/workers) ではスキップされます）。
+- **求められていないのに Dockerfile を書かないでください。** lizardpack はほとんどのスタックを自動検出します — まずデプロイを試し、自動ビルドが合わない場合にのみ Dockerfile を追加する（または `dockerfilePath` を設定する）ようにしてください。
+
+<span id="build-configuration-reference" />
+
+## ビルド設定リファレンス
+
+| Field | Description |
+|-------|-------------|
+| `buildCommand` | アプリをビルドするコマンド → **合成された Dockerfile** 経路を強制 |
+| `startCommand` | ランタイムでアプリを起動するコマンド |
+| `preDeployCommand` | 各デプロイ前に 1 回実行されます（例: DB マイグレーション） |
+| `dockerfilePath` | **そのまま**使用する、リポジトリ内 Dockerfile へのパス |
+| `rootDirectory` | ビルド元のサブディレクトリ（モノレポ） |
+| `watchPatterns` | 一致するパスが変更された場合のみ再デプロイ |
+| `containerPort` | アプリが listen する TCP ポート（デフォルト `3000`; `0` = [worker](/deploy/workers)） |
+
+これらはいずれも `lizard service set <svc> --set <field>=<value>` で設定できます。[`lizard service`](/cli/service) を参照してください.

@@ -1,0 +1,55 @@
+---
+description: "Sandboxes manuell über die Sandboxes-Seite eines Projekts erstellen und prüfen: API-Schlüssel, Live-Shells, Lifecycle-Steuerung, Snapshots und Volumes."
+---
+
+# Sandboxes-Dashboard
+
+Jedes Projekt hat eine **Sandboxes**-Seite, auf der du Sandboxes manuell erstellen und prüfen kannst — nützlich zum Debuggen der Umgebung eines Agents, für den Zugriff auf eine interaktive Shell oder um stichprobenartig zu prüfen, welchen Code etwas erzeugt hat. Öffne ein Projekt und wähle in der Seitenleiste **Sandboxes** aus (`/<workspace>/<project>/sandboxes`).
+
+Die Seite hat drei Tabs: **Sandboxes**, **Volumes** und **Snapshots**.
+
+<span id="getting-an-api-key" />
+
+## API-Schlüssel abrufen
+
+Wenn du Sandboxes noch nicht verwendet hast, führt dich der Leerzustand durch das Erstellen eines **API-Schlüssels** für das SDK. Der Schlüssel wird **einmalig** angezeigt — kopiere ihn sofort; später kann er nicht mehr abgerufen werden. Speichere ihn als `LIZARD_API_KEY` (siehe [Quickstart](/sandboxes/quickstart#authenticate)).
+
+<span id="create-a-sandbox" />
+
+## Sandbox erstellen
+
+Klicke auf **New Sandbox** und lege Folgendes fest:
+
+- **Snapshot** — die [Vorlage](/sandboxes#templates), von der gebootet wird (`base` oder `code-interpreter-v1`).
+- **Location** — die Region, in der sie ausgeführt wird (standardmäßig die nächstgelegene verfügbare).
+- **Resources** — die aktuellen Vorlagen verwenden 4 vCPU und 4096 MiB RAM; das sind keine Größenoptionen pro Erstellung.
+
+Hier erstellte Sandboxes haben kein Timeout — sie laufen, bis du sie beendest.
+
+<span id="inspect-a-running-sandbox" />
+
+## Laufende Sandbox prüfen
+
+Wenn du eine Sandbox auswählst, öffnet sich ein Detailbereich mit zwei Tabs.
+
+**Overview** zeigt ID, Vorlage, Status, Region sowie CPU/Arbeitsspeicher an, außerdem:
+
+- **Exposed ports** — jeder Port, der mit [`getHost`](/sandboxes/quickstart#exposing-a-port) geöffnet wurde, jeweils mit einer kopierbaren öffentlichen `https://…onlizard.com`-URL, die du direkt öffnen kannst.
+- **SSH access** — falls verfügbar, ein direkt einfügbarer `ssh root@<node-ip> -p <port>`-Befehl und das generierte Passwort.
+
+**Terminal** gibt dir eine browserbasierte Shell direkt in die micro-VM (über SSH), sodass du dich umsehen kannst, ohne das Dashboard zu verlassen.
+
+Aktive Sandboxes melden in der Liste CPU- und Speicherauslastung in Echtzeit; pausierte und gestoppte melden null.
+
+## Lifecycle
+
+- **Kill Sandbox** (im Detailbereich) beendet sie sofort und gibt ihre Ressourcen frei — einschließlich des Trennens eines eventuell verbundenen [Volumes](/sandboxes/volumes).
+- **Pause / resume** werden über das [SDK](/sandboxes/quickstart#pause-and-resume) gesteuert; eine pausierte Sandbox wird hier als **Paused** angezeigt und verbraucht keine bedarfsabhängige Rechenleistung.
+
+## Snapshots
+
+Im Tab **Snapshots** werden die Vorlagen aufgelistet, von denen eine Sandbox booten kann — die integrierten `base` und `code-interpreter-v1`. Ein Upload-Befehl für benutzerdefinierte Vorlagen ist nicht Teil der aktuellen öffentlichen CLI. Jeder Eintrag zeigt die standardmäßigen vCPU-/Speicherwerte und die Beschreibung.
+
+## Volumes
+
+Im Tab **Volumes** verwaltest du [persistenten Speicher](/sandboxes/volumes): Erstelle ein Volume mit Name und Größe und sieh, an welche Sandbox es jeweils angehängt ist.

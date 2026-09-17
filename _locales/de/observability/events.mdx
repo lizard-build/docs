@@ -1,0 +1,45 @@
+---
+description: "Lies die Deploy-Zeitleiste eines Service und den Live-Status seiner Replikate mit lizard events und finde denselben Verlauf in der Deployments-Ansicht des Dashboards."
+---
+
+<span id="events--history" />
+
+# Events & Verlauf
+
+`lizard events` zeigt den Deploy-Verlauf eines Service und den Live-Status seiner Replikate — die Zeitleiste dessen, was ausgeliefert wurde und was gerade läuft.
+
+<span id="view-events" />
+
+## Events anzeigen
+
+```bash
+lizard events                     # deploy history + replica status
+lizard events --service api       # a specific service
+lizard events --limit 25          # show more entries (default 10)
+```
+
+Jeder Eintrag umfasst eine Deploy- oder Skalierungsaktion und den daraus resultierenden Replikatstatus, sodass du "Was hat sich geändert, und ist es gesund?" auf einen Blick beantworten kannst.
+
+<span id="quick-status" />
+
+## Schnellstatus
+
+Für eine schnelle Übersicht aller Services im Projekt — Status und URL — verwende:
+
+```bash
+lizard ps
+lizard status        # the current directory's workspace/project/service link
+```
+
+## Dashboard
+
+Die Ansicht **Deployments** im Dashboard (`lizard open`) stellt denselben Verlauf als Zeitleiste dar, mit einem Detailbereich pro Deploy (Build-Logs, Commit, Status) und dem Gesundheitsstatus pro Replikat.
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Deployments](/concepts/deployments) — der Deploy-Lebenszyklus.
+- [Logs](/observability/logs) — Laufzeit-, Build- und Neustart-Logs.
+- [Metrics & Cost](/observability/metrics) — Ressourcennutzung und Abrechnung.
+- [`lizard events`](/cli/events) — die vollständige Befehlsreferenz.

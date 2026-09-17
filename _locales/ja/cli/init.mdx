@@ -1,0 +1,58 @@
+---
+description: "lizard init はプロジェクトを作成または選択し、現在のディレクトリにリンクします。CI で必要な明示的な形式も含みます。"
+---
+
+# lizard init
+
+プロジェクトを作成または選択し、現在のディレクトリにリンクします。
+
+## Usage
+
+```bash
+lizard init [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --name <name>` | プロジェクト名（存在しない場合は作成） |
+| `-w, --workspace <ws>` | ワークスペースの id、slug、または名前 |
+| `--force` | すでにリンクされていても再リンク |
+
+## Examples
+
+<span id="link-the-current-directory-interactively" />
+
+### 現在のディレクトリを対話的にリンクする
+
+```bash
+lizard init
+```
+
+<span id="link-explicitly-in-ci" />
+
+### CI で明示的にリンクする
+
+`lizard up` は TTY では `init` を実行しますが、非 TTY（CI）環境では、暗黙にプロジェクトを作成せずにエラーになります。まず明示的にリンクしてください:
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+lizard init --name my-project
+lizard up --ci --service api
+```
+
+<span id="relink-a-directory-thats-already-linked" />
+
+### すでにリンクされているディレクトリを再リンクする
+
+```bash
+lizard init --name my-project --force
+```
+
+## See also
+
+- [lizard link](/cli/link) — 作成する代わりに、現在のディレクトリを既存のプロジェクトに関連付けます
+- [lizard status](/cli/status) — 現在のディレクトリにリンクされたワークスペース、プロジェクト、およびサービスを表示します
+- [lizard up](/cli/up) — 現在のディレクトリをアップロードしてデプロイします
+- [Core Concepts](/concepts/architecture) — プロジェクト、サービス、およびビルドパイプライン

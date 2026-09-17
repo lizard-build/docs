@@ -1,0 +1,124 @@
+---
+description: "HTTPポートなしでキューコンシューマーとポーリングループを実行します。containerPort=0 で何が変わるか、有効化方法、そして使うべきでない場合を説明します。"
+---
+
+<span id="background-workers" />
+
+# バックグラウンドワーカー
+
+すべてのサービスが HTTP を提供するわけではありません。キューコンシューマー、reconciler、cron 風のポーリングループ、その他のバックグラウンドワークロードはポートを listen しません。コンテナポートを `0` に設定して、**worker mode** で実行してください。
+
+<span id="what-worker-mode-changes" />
+
+## worker mode で変わること
+
+`containerPort=0` の場合、プラットフォームは次のように動作します:
+
+- **`PORT` injection をスキップ** — ワーカーはどこにも bind しません。
+- **ポート到達性チェックをスキップ** — `app port X unreachable` のログスパムや、誤検知の "unhealthy" ステータスは発生しません。
+- 合成された Dockerfile の **`EXPOSE`** をスキップ。
+- **ロードバランサーのルート登録をスキップ** — 何も配信されません。（生成された `*.onlizard.com` ドメインがサービス上に表示される場合はありますが、応答しません。）
+
+<span id="enable-worker-mode" />
+
+## worker mode を有効にする
+
+同等の方法が 3 つあります:
+
+```bash
+# New upload-source worker
+lizard up --port 0
+
+# Flip an existing service
+lizard port 0 --service worker
+
+# Via the config:apply path
+lizard service set worker --set containerPort=0
+```
+
+worker mode は完全な切り替えです。ポート変更を反映するには再デプロイが必要です。
+
+<span id="check-the-current-port" />
+
+## 現在のポートを確認する
+
+```bash
+lizard port --service worker
+```
+
+現在のコンテナポート、またはそれが `0` の場合は `worker mode` を表示します。
+
+<span id="when-not-to-use-worker-mode" />
+
+## worker mode を使うべきでない場合
+
+起動が遅いだけの通常の HTTP サービスには worker mode を使わないでください。worker mode は到達性チェックを完全に無効化するため、**「リスナーが起動しなかった」** バグを隠してしまいます。サービスがトラフィックを処理する想定なら、実際のポートを維持し、代わりに起動処理を修正してください。
+
+<span id="run-a-queue-consumer" />
+
+## キューコンシューマーを実行する
+
+[redis-worker example](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/redis-worker) を使います。これはジョブを pending リストから processing リストへ移動し、その大文字化した結果を保存し、Redis トランザクションでジョブを確認済みにします。レプリカは 1 つのままにしてください。起動時の復旧は単一コンシューマーを前提にしています。この例は Python 3.13 と redis-py 6.4.0 を使います。
+
+その Dockerfile を含むディレクトリから実行します:
+
+```bash
+lizard init --name queue-example
+lizard add --service worker
+lizard add redis
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service worker
+lizard up --service worker --port 0
+```
+
+コマンドで認証が必要と表示されたら、`lizard login` でサインインしてください。データベースの実際の名前が `redis` でない場合は、その名前を使用してください。参照は引用符で囲んだままにしてください。アプリケーションをアップロードする前に設定します。macOS で Lizard CLI 0.3.92 を使う場合、AppleDouble metadata を除外するには `lizard up` の前に `COPYFILE_DISABLE=1` を付けてください。
+
+最後のデプロイイベントを確認し、その後ワーカーを確認します:
+
+```bash
+lizard port --service worker
+lizard logs --service worker --json
+lizard ssh --service worker -- python jobs.py enqueue first-job
+lizard ssh --service worker -- python jobs.py result first-job
+```
+
+プロセスは `Queue worker ready` を出力します。ログの tail が空でも、下のジョブ確認に進んでください。[test results](/guides/validation) に観測されたロギング制限が記録されています。結果確認コマンドは最大 30 秒待機し、`{"id": "first-job", "result": "HELLO"}` を表示します。プロセスが動作中であることだけでは、ジョブを消費できる証明にはなりません。Managed Redis にはサービス内部から到達します。CLI コマンドでは、あなたの laptop からその private address に到達できる必要はありません。
+
+<span id="verify-a-restart" />
+
+## 再起動を検証する
+
+このテストサービスでは、ワーカーを再起動して別のジョブを送信します:
+
+```bash
+lizard restart --service worker
+lizard ssh --service worker -- python jobs.py result first-job
+lizard ssh --service worker -- python jobs.py enqueue after-restart
+lizard ssh --service worker -- python jobs.py result after-restart
+```
+
+SSH がまだ使えない場合は、`lizard ps --json` でサービスが `running` に戻るまで待ってください。両方の結果は `HELLO` になるはずです。最初の結果は Redis に保存されるため、ワーカーを再起動しても削除されません。起動時に単一コンシューマーは未完了の processing エントリを pending リストに戻します。
+
+このデモは `jobs.py` が作成した JSON ジョブのみを受け付けます。dead-letter queue、信頼できない producer 向けのバリデーション、または external side effects の exactly-once は実装していません。支払い、メール、その他の副作用には、実績のあるキューライブラリと冪等なハンドラーを使用してください。Redis の永続性とバックアップは、ワーカー再起動時の挙動とは別です。[storage and recovery](/platform/storage-and-recovery) を参照してください。
+
+<span id="troubleshooting" />
+
+## トラブルシューティング
+
+| Symptom | Check |
+|---|---|
+| サービスが見つからない | プロジェクト作成後に `lizard add --service worker` を実行してください。 |
+| `Queue worker ready` がない | サービススコープの `REDIS_URL`、addon の準備完了状態、接続エラーを確認してください。接続文字列は絶対に表示しないでください。 |
+| ワーカーが HTTP ポートを想定している | `containerPort=0` を設定してください。実行中サービスでこれを変更するには再デプロイが必要です。 |
+| 30 秒後も結果がない | ワーカーログを読み、ジョブ ID を確認してください。この例は自身の `jobs.py` からのジョブのみ受け付けます。 |
+| 副作用が重複する | リトライにより処理が再実行されることがあります。この例は結果をジョブ ID ごとに保存します。external effects には独自の冪等性が必要です。 |
+
+<span id="see-also" />
+
+## 関連項目
+
+- [`lizard port`](/cli/port) — サービスのコンテナポートを表示または変更します。
+- [Service never becomes healthy](/deploy/troubleshooting/service-never-healthy) — worker-mode で最もよくある設定ミスです。
+- [Managed Addons](/addons) — ステートフルなワークロード向けの Redis、Postgres、S3。
+- [Python app hosting](https://lizard.build/blog/python-app-hosting#deploying-django) — Celery ワーカーは、コマンドだけが異なり HTTP ポートがない同じイメージです。
+
+確認済みバージョン、クラウドでの結果、残っている制限については、[scenario test results](/guides/validation) を参照してください。

@@ -1,0 +1,237 @@
+---
+description: "Lizard SDK で最初の sandbox を起動: インストール、API キーの作成、プロジェクトの選択、コードの実行、ファイルの移動、ポートの公開、一時停止まで。"
+---
+
+<span id="sandboxes-quickstart" />
+
+# Sandboxes クイックスタート
+
+sandbox を起動し、その中でコードを実行し、ポートを公開して、Lizard SDK で一時停止します。
+
+<span id="install" />
+
+## インストール
+
+```bash
+# JavaScript / TypeScript
+npm install @lizard-build/sdk
+
+# Python
+pip install lizard-sdk
+```
+
+<span id="authenticate" />
+
+## 認証
+
+Sandboxes は **API キー** で認証します。ダッシュボードの **Sandboxes → Get started → New API key** で作成してください。表示されるのは一度だけなので、すぐにコピーしてください。
+
+環境変数に設定すると、SDK が自動的に読み取ります:
+
+```bash
+export LIZARD_API_KEY="<your-api-key>"
+```
+
+明示的に渡すこともできます: `Sandbox.create('base', { apiKey, project })`.
+
+<span id="pick-a-project" />
+
+## プロジェクトを選ぶ
+
+すべての sandbox はプロジェクトに属します。利用量はプロジェクトごとに計測されるため、指定しないと API は作成を拒否します。プロジェクトは ID、slug、または名前で指定します。
+
+`Lizard` クライアントは 1 つのプロジェクトに固定されるため、指定は一度だけで済みます:
+
+```ts
+import { Lizard } from '@lizard-build/sdk';
+
+const lizard = new Lizard({ project: 'my-project' });
+const sandbox = await lizard.create('base');
+```
+
+```python
+from lizard import Lizard
+
+lizard = Lizard(project="my-project")
+sandbox = lizard.create("base")
+```
+
+クライアントを保持したくない場合は、`Sandbox.create` でも同じ `project` オプションを使えます。以下では両方の形式を使います。
+
+<span id="your-first-sandbox" />
+
+## 最初の sandbox
+
+**JavaScript / TypeScript**
+
+```ts
+import { Sandbox } from '@lizard-build/sdk';
+
+// Boot from a template (default: 'base') in a project
+const sandbox = await Sandbox.create('base', { project: 'my-project' });
+
+// Run a command and wait for it to finish
+try {
+  const result = await sandbox.process.exec('node -e "console.log(2 ** 10)"');
+  console.log(result.stdout);     // 1024
+  console.log(result.exitCode);   // 0
+} finally {
+  await sandbox.kill();
+}
+```
+
+**Python**
+
+```python
+from lizard import Sandbox
+
+sandbox = Sandbox.create("base", project="my-project")
+
+# exec_ (trailing underscore) because `exec` is reserved in Python
+try:
+    result = sandbox.process.exec_("python -c 'print(2 ** 10)'")
+    print(result.stdout)     # 1024
+finally:
+    sandbox.kill()
+```
+
+`process.exec` は `{ stdout, stderr, exitCode }` を返します。コマンドの完了を待機します。長時間実行するプロセスをバックグラウンドで動かすには、末尾に `&` を付けてください。
+
+<span id="working-with-files" />
+
+## ファイルを扱う
+
+`sandbox.fs` は micro-VM filesystem に直接読み書きし、必要に応じて親ディレクトリを作成します。
+
+```ts
+await sandbox.fs.write('/app/server.js', `
+  const http = require('http');
+  http.createServer((_, res) => res.end('hello from Lizard')).listen(3000);
+`);
+
+const src = await sandbox.fs.read('/app/server.js');
+const entries = await sandbox.fs.list('/app');   // [{ name, path, type, size }]
+await sandbox.fs.makeDir('/app/data');
+await sandbox.fs.remove('/app/old.log');
+```
+
+| Method | Description |
+|---|---|
+| `fs.write(path, data)` | ファイルを書き込む — string または bytes; 親ディレクトリも作成 |
+| `fs.read(path)` | ファイルを UTF-8 string として読み込む |
+| `fs.list(path)` | ディレクトリエントリを一覧表示 |
+| `fs.makeDir(path)` | ディレクトリと不足している親を作成 |
+| `fs.remove(path)` | ファイルまたはディレクトリを削除 |
+
+<span id="exposing-a-port" />
+
+## ポートを公開する
+
+sandbox 内で HTTP サーバーを起動し、それに対する公開 HTTPS URL を取得します。トンネリングは不要です。
+
+```ts
+await sandbox.process.exec('node /app/server.js &');   // listen on :3000
+
+const host = await sandbox.getHost(3000);
+console.log(`Live at https://${host}`);
+// https://<sandboxId>-3000.sandbox.<region>.onlizard.com
+```
+
+`getHost(port)` はそのポートへのルートを登録し、hostname を返します。URL は公開され、TLS 終端されています。再度削除するにはダッシュボードを使用してください。
+
+<span id="pause-and-resume" />
+
+## 一時停止と再開
+
+一時停止するとゲストの vCPU は凍結され、現在の状態はホストメモリに保持されます。永続的なスナップショットは書き込みません。元の期限を超えてセッションを保持する前に、[pause and expiration issue](/platform/known-issues#sandbox-pause-and-expiration) を確認してください。
+
+```ts
+// Set the environment up once
+const sandbox = await Sandbox.create('base', { project: 'my-project' });
+await sandbox.process.exec('npm install -g some-heavy-toolchain');
+const id = sandbox.sandboxId;
+
+await sandbox.pause();          // freeze the guest; see the lifecycle issue below
+
+// …minutes or hours later, from anywhere:
+const resumed = await Sandbox.connect(id);   // resumes guest state still held by the host
+await resumed.process.exec('some-heavy-toolchain --version');   // already installed
+await resumed.kill();
+```
+
+`Sandbox.connect(id)` は一時停止された sandbox を自動的に再開します。すでに保持しているハンドルに対して `sandbox.resume()` を呼び出すこともできます。
+
+**Python**
+
+```python
+sandbox = Sandbox.create("base", project="my-project")
+sandbox.process.exec_("pip install numpy pandas")
+sandbox_id = sandbox.sandbox_id
+sandbox.pause()
+
+resumed = Sandbox.connect(sandbox_id)   # resumes guest state still held by the host
+resumed.process.exec_("python -c 'import numpy'")
+resumed.kill()
+```
+
+<span id="timeouts" />
+
+## タイムアウト
+
+sandbox に正のタイムアウトがある場合、その存続期間を過ぎると期限切れになります。SDK のデフォルトは 5 分です。作成時に `timeoutMs: 0` を指定すると有効期限を無効化できます。明示的な上限を設定し、タスク終了時に sandbox を解放してください。実行中の sandbox は次で調整できます:
+
+```ts
+const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 10 * 60 * 1000 }); // 10 min
+await sandbox.setTimeout(30 * 60 * 1000);   // extend to 30 min from now
+```
+
+一時停止は残りの実行時間を凍結することを意図していますが、現在の [lifecycle issue](/platform/known-issues#sandbox-pause-and-expiration) ではバックエンドのリリース確認が必要です。データ保持のために無制限の一時停止を当てにしないでください。
+
+<span id="managing-sandboxes" />
+
+## sandbox を管理する
+
+```ts
+const sandbox = await Sandbox.create('base', { project: 'my-project' });
+const info = await sandbox.getInfo();     // { sandboxId, template, startedAt, endAt, … }
+
+const all = await Sandbox.list();         // every running sandbox for this account
+await sandbox.kill();
+```
+
+<span id="full-example" />
+
+## 完全な例
+
+スクリプトを書き込み、それを実行し、結果を配信し、後で呼び出すためにゲストを一時停止するエージェント:
+
+```ts
+import { Sandbox } from '@lizard-build/sdk';
+
+const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 15 * 60 * 1000 });
+
+try {
+  await sandbox.fs.write('/app/app.js', `
+    const http = require('http');
+    http.createServer((_, res) => res.end('ok')).listen(3000);
+  `);
+  await sandbox.process.exec('node /app/app.js &');
+
+  const host = await sandbox.getHost(3000);
+  const res = await fetch(`https://${host}`);
+  console.log(await res.text());          // ok
+
+  await sandbox.pause();                   // resume later with Sandbox.connect(sandbox.sandboxId)
+} catch (err) {
+  await sandbox.kill();
+  throw err;
+}
+```
+
+<span id="next-steps" />
+
+## 次のステップ
+
+- **[SDK Reference](/sandboxes/sdk-reference)** — すべての `Sandbox`、`CodeSandbox`、`Volume` メソッド。
+- **[Code Interpreter](/sandboxes/code-interpreter)** — 状態を保持するマルチ言語コードを実行。
+- **[Persistent Volumes](/sandboxes/volumes)** — 単一の sandbox より長く存続するストレージをアタッチ。

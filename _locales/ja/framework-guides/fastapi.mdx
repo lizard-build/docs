@@ -1,0 +1,98 @@
+---
+description: "Uvicorn、requirements.txt、Procfile、ポート 8000 を使って Lizard に FastAPI をデプロイします。ヘルスエンドポイントを確認し、import、host、依存関係のエラーを診断します。"
+---
+
+<span id="deploy-fastapi-on-lizard" />
+
+# Lizard に FastAPI をデプロイする
+
+Uvicorn が `0.0.0.0:8000` で待ち受けるようにして、Lizard で FastAPI を実行します。アプリの依存関係には FastAPI と Uvicorn の両方を含めてください。`app = FastAPI()` を宣言するファイルを import するだけでは、HTTP サーバーは起動しません。
+
+<span id="example-project" />
+
+## プロジェクト例
+
+[FastAPI example](https://github.com/lizard-build/fastapi-example) には、アプリ、Procfile、固定された依存関係、MIT ライセンス、HTTP テストが含まれています。その CI は Linux 上で本番用の Uvicorn エントリポイントを実行します。GitHub からコミット `df522c1` もデプロイし、2026-09-09 に公開 HTTPS 経由でヘルス、OpenAPI、対話型ドキュメント、JSON エコー、不正な入力、存在しないルートを確認しました。
+
+<span id="prepare-an-app" />
+
+## アプリを準備する
+
+この例では、`requirements.txt` と、アプリケーションルートにある `main.py` を使用します:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+```
+
+`fastapi` と `uvicorn` を依存関係のワークフローに追加し、解決済みでテスト済みのバージョンを `requirements.txt` に保存します。依存関係が対応している場合は、`.python-version` で Python のマイナーバージョンを選択します。たとえば `3.13` です。
+
+明示的な import ターゲットを持つ `Procfile` を作成します:
+
+```text
+web: uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+`main:app` は、`main.py` 内の `app` オブジェクトを意味します。`src/api.py` には、`src.api:app` のように、アプリルートから動作する import パスを使用してください。明示的な Procfile により、カスタムレイアウトでのソースコードパターン検出への依存を避けられます。
+
+| Setting | Value |
+|---|---|
+| Install | `pip install -r requirements.txt` |
+| Start | Procfile `web:` command |
+| Service port | `8000` |
+| Build output | Python source and installed dependencies |
+
+<span id="test-locally" />
+
+## ローカルでテストする
+
+ローカルの仮想環境を使用します:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+別のターミナルで:
+
+```bash
+curl --fail http://localhost:8000/health
+```
+
+`{"status":"ok"}` を含む正常なレスポンスを期待してください。開発中はリロードモードを維持します。[FastAPI server guide](https://fastapi.tiangolo.com/deployment/manually/) では、ASGI サーバーと import ターゲットについて説明しています。
+
+<span id="deploy" />
+
+## デプロイ
+
+[CLI setup](/framework-guides#prepare-the-project) の後、アプリケーションルートからアップロードします:
+
+```bash
+lizard init --name fastapi-app
+lizard add --service api
+lizard up --service api --port 8000
+lizard logs --build --service api --json
+lizard logs --service api --json
+lizard ps --json
+```
+
+`.venv/`、`__pycache__/`、`.env` のファイルは除外してください。サービスの build/start オーバーライドは未設定のままにして、lizardpack が Procfile を読み取るようにします。ここでの requirements ベースの経路では、別個の compile コマンドは不要です。
+
+返された HTTPS URL で `/health` をリクエストし、その後に実際の API アクションをテストします。TCP ヘルスプローブで確認できるのは、そのプロセスがポートを開いていることだけです。ヘルスエンドポイントには、アプリにとって重要なチェックを追加できます。
+
+<span id="data-and-common-failures" />
+
+## データとよくある障害
+
+認証情報は [variables and secrets](/variables) を通じて設定します。アプリがデータベースを必要とする場合は [Managed Postgres](/addons/postgres) を追加し、サービススコープの接続参照を使用してください。コンテナローカルのファイルは永続的なアプリケーションストレージではありません。[storage and recovery](/platform/storage-and-recovery) を参照してください。
+
+`No module named uvicorn` の場合は、インストールされた requirements を確認してください。ASGI の import エラーについては、同じルートから正確な Procfile コマンドをローカルで実行します。サービスがいつまでも healthy にならない場合は、ポート `8000` と bind host を確認してください。サーバーログがないままプロセスが終了する場合は、Uvicorn ではなく単に `python main.py` を実行していないか確認してください。
+
+2026 年 9 月 9 日のデプロイ確認とその制限については、[tested versions and cloud results](/framework-guides/validation) を参照してください。

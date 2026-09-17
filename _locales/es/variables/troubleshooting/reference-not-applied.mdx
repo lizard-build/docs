@@ -1,0 +1,71 @@
+---
+description: "Tu secreto o referencia está configurado, pero el servicio nunca lo ve. Los destinos que faltan se resuelven como cadenas vacías, y la precedencia puede ocultar un valor."
+---
+
+<span id="a-secret-or-reference-isnt-showing-up-in-my-service" />
+
+# Un secreto o una referencia no aparece en mi servicio
+
+Configuraste un secreto o una referencia `${{name.KEY}}`, volviste a desplegar y el servicio en ejecución sigue sin ver el valor que esperas.
+
+<span id="what-this-means" />
+
+## Qué significa esto
+
+El valor que configuraste nunca llegó al entorno combinado del servicio, o algo más en la combinación lo sobrescribió antes de que la app se iniciara.
+
+<span id="why-this-can-happen" />
+
+## Por qué puede pasar esto
+
+- **El destino o la clave de la referencia no existen.** Una referencia a un nombre de servicio/addon que no existe, o a una clave que ese addon no expone, se resuelve como una **cadena vacía** en lugar de hacer fallar el despliegue. No hay ningún error que te avise: el servicio simplemente arranca con un valor vacío.
+- **Algo con mayor precedencia lo sobrescribió.** Los valores se combinan en un orden fijo — `addon-issued env < project secrets < project env < app env < app secrets < platform vars` — así que un secreto con alcance de proyecto (`--global`) puede quedar oculto silenciosamente por uno con alcance de servicio con la misma clave, y las variables de la plataforma (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`) siempre prevalecen y no se pueden sobrescribir en absoluto.
+- **Cambiaste un valor de tiempo de compilación pero no recompilaste.** La mayoría de los cambios de variables se aplican sin recompilar: el servicio se reinicia para tomarlos. Los valores de `VITE_*` y `NEXT_PUBLIC_*` son la excepción: quedan integrados en los recursos compilados, así que un reinicio normal no aplicará un valor nuevo; el servicio necesita una compilación nueva.
+
+<span id="possible-solutions" />
+
+## Posibles soluciones
+
+<span id="confirm-what-the-running-service-actually-sees" />
+
+### Confirma lo que realmente ve el servicio en ejecución
+
+Esto es determinante: muestra el entorno del contenedor activo, no lo que crees haber configurado:
+
+```bash
+lizard ssh --service api -- env | grep DATABASE_URL
+```
+
+Si la clave falta o está vacía, el destino/clave de la referencia es incorrecto, o no hay nada configurado para ese alcance. Vuelve a comprobar el nombre del addon o servicio con `lizard ps`, y la clave en las [variables documentadas](/addons) del addon.
+
+<span id="check-for-a-scope-collision" />
+
+### Comprueba si hay una colisión de alcance
+
+Enumera los secretos en ambos alcances y compáralos:
+
+```bash
+lizard secrets list --service api --show
+lizard secrets list --global --show
+```
+
+Recuerda que **los secretos de la app sobrescriben los secretos del proyecto**: si existe un valor con alcance de servicio para la misma clave, prevalece sobre cualquier cosa configurada con `--global`.
+
+<span id="rebuild-after-a-build-time-change" />
+
+### Recompila después de un cambio en tiempo de compilación
+
+Si la clave modificada es `VITE_*` o `NEXT_PUBLIC_*`, activa una recompilación real en lugar de un reinicio:
+
+```bash
+lizard redeploy --service api
+```
+
+Consulta [Tiempo de compilación vs. tiempo de ejecución](/variables#build-time-vs-runtime) y [Build Pipeline → qué activa una recompilación](/concepts/build-pipeline#what-triggers-a-rebuild).
+
+<span id="see-also" />
+
+## Ver también
+
+- [Variables y secretos](/variables) — alcance y precedencia.
+- [Referencias entre servicios](/variables/references) — sintaxis de referencia y resolución.

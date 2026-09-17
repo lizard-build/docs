@@ -1,0 +1,98 @@
+---
+description: "Astro を Lizard に静的サイトとして、または standalone Node adapter とともにデプロイします。サーバールートや見つからないページのために、output、build コマンド、ポート、チェックを設定します。"
+---
+
+<span id="deploy-astro-on-lizard" />
+
+# Astro を Lizard にデプロイする
+
+Astro には Lizard 上で 2 つのデプロイ方法があります: ポート `80` で静的な `dist/` ディレクトリを配信するか、オンデマンドルートのためにポート `3000` で standalone Node adapter を実行します。adapter は output と runtime の両方を変更するため、デプロイ前にモードを選んでください。
+
+<span id="choose-a-mode" />
+
+## モードを選ぶ
+
+| Mode | Configuration | Runtime | Port |
+|---|---|---|---|
+| 静的サイト | サーバー adapter を使わない静的 output | nginx が `dist/` を配信 | `80` |
+| Node サーバー | standalone モードの `@astrojs/node` | `node ./dist/server/entry.mjs` | `3000` |
+
+どちらの方法でも、`astro build` を実行する `build` スクリプトを使います。lockfile をコミットし、デフォルトの `dist` output path を維持してください。検出は Astro の config とインストール済みの依存関係を読み取ります。未使用の Node adapter dependency だけではサーバーパスは選択されません。リテラルな `output` と adapter 設定を使ってください。動的な値、カスタム output path、middleware モードでは Dockerfile が必要です。
+
+<span id="configure-a-node-server" />
+
+## Node サーバーを設定する
+
+オンデマンドページでは、Astro のバージョンと互換性のある Node adapter のバージョンを追加します:
+
+```bash
+npx astro add node
+```
+
+`astro.config.mjs` を確認します:
+
+```js
+import { defineConfig } from 'astro/config';
+import node from '@astrojs/node';
+
+export default defineConfig({
+  output: 'server',
+  adapter: node({ mode: 'standalone' }),
+});
+```
+
+Standalone モードは独自の HTTP サーバーを起動します。Middleware モードには別のサーバーが必要であり、この起動コマンドには適していません。middleware や prerendered ルートとオンデマンドルートの組み合わせが必要な場合は、[Astro Node adapter guide](https://docs.astro.build/en/guides/integrations-guide/node/) を読んでください。
+
+<span id="test-locally" />
+
+## ローカルでテストする
+
+```bash
+npm ci
+npm run build
+```
+
+Node モードの場合:
+
+```bash
+HOST=0.0.0.0 PORT=3000 node ./dist/server/entry.mjs
+```
+
+実際にサーバー上で実行されるルートと、ビルド済みアセットをリクエストしてください。静的サイトでは、ローカルで `npm run preview` を使い、`dist/` 内の生成されたルートファイルを確認してください。
+
+<span id="deploy" />
+
+## デプロイする
+
+[CLI setup](/framework-guides#prepare-the-project) の後、プロジェクトを作成します:
+
+```bash
+lizard init --name astro-app
+lizard add --service web
+```
+
+Node adapter の場合:
+
+```bash
+lizard up --service web --port 3000
+```
+
+静的サイトの場合:
+
+```bash
+lizard up --service web --port 80
+```
+
+選んだモードに対応するコマンドだけを使ってください。lizardpack 検出のために、service command overrides は未設定のままにしてください。`lizard logs --build --service web --json` を読み、その後 runtime logs と live URL を確認してください。
+
+<span id="variables-sessions-and-routes" />
+
+## Variables、sessions、routes
+
+静的 HTML の生成に使われる値は、変更時に新しい build が必要です。サーバーコードは、Astro のバージョンでサポートされる仕組みを通じて runtime variables を読み取れます。[variables and secrets](/variables) で設定してください。ブラウザから見える値には credentials を含めてはいけません。
+
+アプリで sessions を使う場合は、再起動や複数レプリカに適したストレージを選んでください。container filesystem を共有可能で永続的なストアとして当てにしないでください。[storage and recovery](/platform/storage-and-recovery) を参照してください。
+
+静的コンテンツサイトでは、存在しない URL をテストし、適切な status を返すために [static routes and 404s](/framework-guides/static-routing) を使ってください。SSR デプロイが終了する、またはどのルートも配信しない場合は、`dist/server/entry.mjs` が存在すること、adapter が standalone モードを使っていること、service port が `3000` であることを確認してください。
+
+2026 年 9 月 9 日のデプロイチェックとその制限については、[tested versions and cloud results](/framework-guides/validation) を参照してください。

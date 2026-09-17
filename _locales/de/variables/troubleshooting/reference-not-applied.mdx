@@ -1,0 +1,71 @@
+---
+description: "Dein Secret oder Verweis ist gesetzt, aber der Service sieht ihn nie. Fehlende Ziele werden zu leeren Strings aufgelöst, und die Rangfolge kann einen Wert verdecken."
+---
+
+<span id="a-secret-or-reference-isnt-showing-up-in-my-service" />
+
+# Ein Secret oder Verweis erscheint nicht in meinem Service
+
+Du hast ein Secret oder einen `${{name.KEY}}`-Verweis gesetzt, erneut bereitgestellt, und der laufende Service sieht den erwarteten Wert trotzdem nicht.
+
+<span id="what-this-means" />
+
+## Was das bedeutet
+
+Der von dir gesetzte Wert ist nie in die zusammengeführte Umgebung des Service gelangt — oder etwas anderes in der Zusammenführung hat ihn überschrieben, bevor die App gestartet wurde.
+
+<span id="why-this-can-happen" />
+
+## Warum das passieren kann
+
+- **Das Verweisziel oder der Schlüssel existiert nicht.** Ein Verweis auf einen fehlenden Service-/Addon-Namen oder auf einen Schlüssel, den dieses Addon nicht bereitstellt, wird zu einem **leeren String** aufgelöst, statt das Deployment fehlschlagen zu lassen. Es gibt keinen Fehler als Hinweis — der Service startet einfach mit einem leeren Wert.
+- **Etwas mit höherer Priorität hat ihn überschrieben.** Werte werden in einer festen Reihenfolge zusammengeführt — `addon-issued env < project secrets < project env < app env < app secrets < platform vars` — daher kann ein projektbezogenes (`--global`) Secret stillschweigend von einem servicebezogenen Secret mit demselben Schlüssel verdeckt werden, und Plattformvariablen (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`) haben immer Vorrang und können überhaupt nicht überschrieben werden.
+- **Du hast einen Build-Zeit-Wert geändert, aber keinen neuen Build ausgeführt.** Die meisten Variablenänderungen werden ohne Rebuild übernommen — der Service startet neu, um sie zu übernehmen. `VITE_*`- und `NEXT_PUBLIC_*`-Werte sind die Ausnahme — sie werden in die gebauten Assets eingebettet, daher übernimmt ein einfacher Neustart keinen neuen Wert; der Service braucht einen frischen Build.
+
+<span id="possible-solutions" />
+
+## Mögliche Lösungen
+
+<span id="confirm-what-the-running-service-actually-sees" />
+
+### Prüfe, was der laufende Service tatsächlich sieht
+
+Das ist maßgeblich — es zeigt die Umgebung des Live-Containers, nicht das, von dem du glaubst, dass du es gesetzt hast:
+
+```bash
+lizard ssh --service api -- env | grep DATABASE_URL
+```
+
+Wenn der Schlüssel fehlt oder leer ist, ist das Verweisziel bzw. der Schlüssel falsch, oder für diesen Geltungsbereich ist nichts gesetzt. Prüfe den Addon- oder Service-Namen mit `lizard ps` noch einmal und den Schlüssel anhand der [dokumentierten Variablen](/addons) des Addons.
+
+<span id="check-for-a-scope-collision" />
+
+### Prüfe auf eine Kollision zwischen Geltungsbereichen
+
+Liste Secrets in beiden Geltungsbereichen auf und vergleiche sie:
+
+```bash
+lizard secrets list --service api --show
+lizard secrets list --global --show
+```
+
+Denke daran: **App-Secrets überschreiben Projekt-Secrets** — wenn ein servicebezogener Wert für denselben Schlüssel existiert, hat er Vorrang vor allem, was mit `--global` gesetzt wurde.
+
+<span id="rebuild-after-a-build-time-change" />
+
+### Nach einer Änderung zur Build-Zeit neu bauen
+
+Wenn der geänderte Schlüssel `VITE_*` oder `NEXT_PUBLIC_*` ist, löse einen echten Rebuild statt eines Neustarts aus:
+
+```bash
+lizard redeploy --service api
+```
+
+Siehe [Build-Zeit vs. Laufzeit](/variables#build-time-vs-runtime) und [Build-Pipeline → was einen Rebuild auslöst](/concepts/build-pipeline#what-triggers-a-rebuild).
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Variablen & Secrets](/variables) — Geltungsbereiche und Priorität.
+- [Service-übergreifende Verweise](/variables/references) — Verweissyntax und Auflösung.

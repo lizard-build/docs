@@ -1,0 +1,134 @@
+---
+description: "lizard CLI をインストールし、ログインして、GitHub リポジトリまたはローカルフォルダから数分で最初のアプリを公開し、その後データベースを追加します。"
+---
+
+<span id="app-quickstart" />
+
+# アプリ クイックスタート
+
+数分で最初のアプリを Lizard に公開できます。Node.js 18+ と npm が必要です。`lizard login` した最初のタイミングで、Lizard アカウントは自動的に作成されます。CLI をインストールしてログインし、デプロイします。方法は GitHub リポジトリから直接行うか、ローカルディレクトリから行うかのどちらかです。
+
+<span id="1-install-the-cli" />
+
+## 1. CLI をインストールする
+
+npm から `lizard` バイナリをグローバルにインストールします:
+
+```bash
+npm install -g @lizard-build/cli
+```
+
+`PATH` 上にあることを確認します:
+
+```bash
+lizard --version
+```
+
+> **`npx` は使わないでください。** 必ずグローバルにインストールされた `lizard` バイナリを使ってください。`npx @lizard-build/cli` を実行すると、その場限りのコピーが取得され、バージョンがプラットフォームとずれる可能性があります。後で `lizard upgrade` を使ってその場でアップグレードしてください。
+
+> **権限エラー (EACCES)?** `sudo` は使わないでください。代わりに npm の保存先をユーザー所有の prefix に向けてください:
+> ```bash
+> mkdir -p ~/.npm-global
+> npm config set prefix ~/.npm-global
+> echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.zshrc && source ~/.zshrc
+> npm install -g @lizard-build/cli
+> ```
+
+<span id="2-log-in" />
+
+## 2. ログインする
+
+```bash
+lizard login
+```
+
+ブラウザが開いて認証し、確認するとターミナルに戻ります。CI やその他の非対話環境では、代わりにトークンで認証します:
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+# or
+lizard login --token lzd_xxx
+```
+
+現在どのアカウントであるかはいつでも確認できます:
+
+```bash
+lizard whoami
+```
+
+<span id="3-deploy" />
+
+## 3. デプロイする
+
+コードがどこにあるかに応じて、該当する方法を選んでください。
+
+<span id="option-a--deploy-a-github-repo-recommended" />
+
+### オプション A — GitHub リポジトリをデプロイする（推奨）
+
+コードが GitHub 上にある場合は、リポジトリから直接サービスを作成します。Lizard がそれをクローンし、スタックを自動検出してビルドし、公開 URL を返します:
+
+```bash
+lizard add -r your-org/your-app
+```
+
+以後、その追跡ブランチへの push によって自動的に再デプロイされます。プライベートリポジトリの場合は、先に GitHub App を接続してください:
+
+```bash
+lizard git connect
+```
+
+<span id="option-b--deploy-local-code" />
+
+### オプション B — ローカルコードをデプロイする
+
+プロジェクトディレクトリ内から、現在のフォルダをアップロードしてデプロイします（`.gitignore` を尊重します）:
+
+```bash
+lizard up
+```
+
+ディレクトリがまだプロジェクトにリンクされていない場合、`up` が対話的に作成または選択を行います。CI では、先に `lizard init --name my-project` で明示的にリンクしてください。
+
+どちらの場合でも、ビルドが完了すると `https://your-app-production.onlizard.com` のような生成済み URL が取得できます。
+
+<span id="4-watch-it-build-and-run" />
+
+## 4. ビルドと実行を確認する
+
+```bash
+lizard ps          # services in the project, with status + URL
+lizard logs        # last runtime log lines
+lizard logs --build  # the most recent build's logs
+lizard open        # open the project in the dashboard
+```
+
+<span id="5-add-a-database-optional" />
+
+## 5. データベースを追加する（任意）
+
+マネージド Postgres をプロビジョニングし、サービスから参照します:
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service your-app
+lizard redeploy --service your-app
+```
+
+`${{postgres.DATABASE_URL}}` 参照はデプロイ時に解決され、addon とともに自動的にローテーションされます。[Managed Addons](/addons) を参照してください。
+
+<span id="next-steps" />
+
+## 次のステップ
+
+- **[Core Concepts](/concepts/architecture)** — プロジェクト、サービス、ビルドパイプラインを理解します。
+- **[Deploying from GitHub](/deploy/github)** — ブランチ、モノレポ、自動再デプロイ。
+- **[Variables & Secrets](/variables)** — スコープと優先順位。
+- **[Networking](/networking)** — 自動 TLS で独自のホスト名を接続します。
+- **[Deploying an app your AI IDE built](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — Google Antigravity で書かれたアプリについて、同じ 3 つの手順を代わりにエージェントに渡します。
+
+<span id="hosting-costs" />
+
+## ホスティング費用
+
+Lizard は月額サブスクリプションなしの [pay as you go](/platform/billing) を採用しています。リソース使用量はアカウント残高から差し引かれます。購入したクレジットに有効期限はありません。トライアルクレジットには有効期限があります。デプロイ前に [pricing](https://lizard.build/pricing) とアカウントの上限を確認してください。

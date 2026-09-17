@@ -1,0 +1,61 @@
+---
+description: "lizard run ejecuta un comando en tu máquina con el proyecto de un servicio y los secretos del servicio inyectados. Incluye cuándo usar ssh en su lugar."
+---
+
+# lizard run
+
+Ejecuta un comando localmente con los secretos del proyecto y del servicio inyectados.
+
+## run vs. ssh
+
+Dos comandos te permiten ejecutar comandos con el contexto de un servicio. Se ejecutan en lugares distintos — asegúrate de usar el que necesitas.
+
+| Command | Runs where | Use for |
+|---------|-----------|---------|
+| `lizard run` | Localmente, con los secretos del proyecto + servicio del servicio inyectados | Migraciones, scripts de seed, herramientas locales que necesitan configuración de prod |
+| `lizard ssh` | Dentro del contenedor del servicio en ejecución | Inspeccionar el contenedor en vivo, comandos remotos puntuales, depuración |
+
+`lizard run` muestra tu copia local inyectada del entorno, que normalmente es la misma que ve la app en ejecución — pero `lizard ssh` es la referencia autoritativa para el contenedor en vivo. Para comprobar lo que realmente ve la app en ejecución, usa `lizard ssh` en su lugar.
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard run [flags] -- <command>
+```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | Servicio cuyo env se debe inyectar |
+| `--no-service` | No inyectar el env del servicio |
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="run-a-migration-with-service-secrets-injected" />
+
+### Ejecutar una migración con los secretos del servicio inyectados
+
+```bash
+lizard run --service api -- node scripts/migrate.js
+```
+
+<span id="print-an-injected-environment-variable" />
+
+### Imprimir una variable de entorno inyectada
+
+```bash
+lizard run --service api -- printenv DATABASE_URL
+```
+
+<span id="see-also" />
+
+## Ver también
+
+- [lizard ssh](/cli/ssh) — ejecuta un comando dentro del contenedor del servicio en ejecución en lugar de hacerlo localmente
+- [Variables](/variables) — cómo se definen y se referencian las variables del proyecto y del servicio
+- [Python app hosting](https://lizard.build/blog/python-app-hosting) — ejecutar `manage.py` y otras herramientas del framework contra una base de datos desplegada

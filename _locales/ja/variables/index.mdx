@@ -1,0 +1,112 @@
+---
+description: "サービスまたはプロジェクトのスコープで secrets を設定し、マージ時の優先順位と、どの値がビルドと実行中のコンテナに届くかを確認します。"
+---
+
+<span id="variables--secrets" />
+
+# 変数と Secrets
+
+Lizard は設定を **secrets** として保存します。これらには **service**（デフォルト）と **project**（`--global`）の 2 つのスコープがあり、定義された優先順位に従ってアプリの環境にマージされます。workspace レベルのグローバルスコープはありません。
+
+<span id="setting-variables" />
+
+## 変数の設定
+
+`lizard secrets set` は可変長です。一度に 1 つでも複数でも設定できます。デフォルトでは **linked service** に書き込みます。
+
+```bash
+lizard secrets set DATABASE_URL=postgres://… LOG_LEVEL=info
+lizard secrets set API_KEY=sk_live_… --service api
+```
+
+**project** スコープに書き込むには `--global` を追加します（プロジェクト内のすべてのサービスから参照できます）。
+
+```bash
+lizard secrets set NODE_ENV=production --global
+```
+
+<span id="listing-deleting-importing" />
+
+## 一覧表示、削除、インポート
+
+```bash
+lizard secrets list                       # current scope
+lizard secrets list --show                # reveal values
+lizard secrets delete OLD_KEY ANOTHER_KEY # variadic
+cat .env | lizard secrets import          # import dotenv from stdin
+```
+
+すべてのフラグについては、[`lizard secrets` コマンドリファレンス](/cli/secrets)を参照してください。
+
+<span id="scoping" />
+
+## スコープ
+
+| Scope | Command | Stored as | Visible to |
+|-------|---------|-----------|------------|
+| **Service**（デフォルト） | `lizard secrets set K=v --service <svc>` | `secrets.services[<svc>]` | そのサービスのみ |
+| **Project**（グローバル） | `lizard secrets set K=v --global` | `secrets.shared` | プロジェクト内のすべてのサービス |
+
+**デフォルトでは service スコープを使ってください。** 侵害されたサービスは自身の環境を読み取れます。より広いスコープは、理由もなく公開される認証情報が増えることを意味します。`--global` は、`LOG_LEVEL`、`NODE_ENV`、feature flag、またはフロントエンドの `SENTRY_DSN` のような、secret ではなく公開されても問題ないと証明できる値に限って使ってください。値が secret かどうか迷う場合は、secret として扱い、service にスコープしてください。
+
+データベースのような共有リソースでは、DSN を `--global` に置かないでください。代わりに、[reference](/variables/references) を使って利用側ごとにバインドしてください。
+
+```bash
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service worker
+```
+
+ローテーションは addon 側で一度行えば済み、すべての reference が更新されます。
+
+<span id="precedence" />
+
+## 優先順位
+
+同じキーが複数の場所で定義されている場合、**最後に書き込まれたものが勝ちます**。
+
+```
+addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets  <  platform vars
+```
+
+したがって、**app secrets は project secrets を上書き**し、**platform variables**（`PORT`、`LIZARD_SERVICE_NAME`、`LIZARD_PROJECT_ID`、`LIZARD_PUBLIC_DOMAIN`）は最後に適用されるため、上書きできません。
+
+<span id="build-time-vs-runtime" />
+
+## ビルド時と実行時
+
+ほとんどの変数変更は **再ビルドなし** で反映されます。反映のためにサービスは再起動され、これには数秒かかります。例外は、イメージに焼き込まれるビルド時の値です。
+
+- `VITE_*` と `NEXT_PUBLIC_*` の変更は、次回のデプロイ時に **再ビルドを強制** します。
+
+[Build Pipeline → rebuild triggers](/concepts/build-pipeline#what-triggers-a-rebuild) を参照してください。
+
+<span id="verifying" />
+
+## 確認
+
+実行中のサービスが実際に何を参照しているか確認します。
+
+```bash
+lizard ssh --service api -- env
+```
+
+想定していた値が存在しない場合は、[Troubleshooting → secret または reference が表示されない](/variables/troubleshooting/reference-not-applied)を参照してください。
+
+<span id="local-development" />
+
+## ローカル開発
+
+サービスの project + service secrets を注入した状態で、**ローカル** でコマンドを実行します（スクリプトや migration に便利です）。
+
+```bash
+lizard run --service api -- node scripts/seed.js
+```
+
+[`lizard run` と `lizard ssh` の違い](/cli/run#run-vs-ssh)を参照してください。
+
+<span id="see-also" />
+
+## 関連項目
+
+- [Cross-Service References](/variables/references) — 認証情報をコピー＆ペーストせずに、あるサービスから別のサービスの値を読み取ります。
+- [`lizard secrets`](/cli/secrets) — 完全なコマンドリファレンス。

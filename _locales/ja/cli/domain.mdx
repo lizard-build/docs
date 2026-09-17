@@ -1,0 +1,94 @@
+---
+description: "lizard domain はサービスのドメインを表示し、onlizard.com サブドメインを生成するか、自動 TLS 付きでカスタムホスト名を接続して検証します。"
+---
+
+# lizard domain
+
+現在のドメインを表示するか、カスタムドメインを接続します。
+
+## Usage
+
+```bash
+lizard domain [hostname] [flags]
+```
+
+ホスト名は位置引数です。`add` サブコマンドはありません。引数なしで `lizard domain` を実行すると、サービスの現在のドメインが表示されます。
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | サービス |
+| `--port <n>` | 公開するポート |
+
+## Subcommands
+
+### `lizard domain generate`
+
+新しい `*.onlizard.com` サブドメインを生成します。
+
+### `lizard domain verify <hostname>`
+
+TXT レコードを確認してドメインを有効化します。TLS は自動的にプロビジョニングされます。
+
+### `lizard domain delete <hostname>`
+
+ドメインを削除します（別名: `rm`）。
+
+| Flag | Description |
+|------|-------------|
+| `-y, --yes` | 確認をスキップ |
+
+## Examples
+
+<span id="show-the-current-domain" />
+
+### 現在のドメインを表示する
+
+```bash
+lizard domain
+```
+
+<span id="generate-a-subdomain" />
+
+### サブドメインを生成する
+
+```bash
+lizard domain generate
+```
+
+<span id="attach-a-custom-domain" />
+
+### カスタムドメインを接続する
+
+```bash
+lizard domain app.example.com --service web
+```
+
+Lizard は作成する DNS レコード（ホスト名用の `CNAME` と、検証用の `TXT` レコード）を返します。DNS プロバイダーでそれらを追加してから、検証します:
+
+```bash
+lizard domain verify app.example.com
+```
+
+<span id="attach-a-domain-to-a-specific-port" />
+
+### 特定のポートにドメインを接続する
+
+```bash
+lizard domain app.example.com --service web --port 8080
+```
+
+<span id="remove-a-domain" />
+
+### ドメインを削除する
+
+```bash
+lizard domain delete app.example.com
+lizard domain rm app.example.com --yes
+```
+
+## See also
+
+- [Networking](/networking) — 生成されるドメイン、TLS、worker サービス
+- [Deploy to regions](/deploy/regions) — サービスのリージョン選択

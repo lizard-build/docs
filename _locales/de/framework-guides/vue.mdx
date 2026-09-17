@@ -1,0 +1,70 @@
+---
+description: "Stelle eine mit Vite gebaute Vue-App auf Lizard bereit. Konfiguriere dist-Ausgabe, Port 80, den History-Modus von Vue Router, öffentliche Umgebungsvariablen und Prüfungen für die Produktion."
+---
+
+<span id="deploy-vue-with-vite-on-lizard" />
+
+# Vue mit Vite auf Lizard bereitstellen
+
+Stelle eine mit Vite gebaute Vue-App als statischen Webservice auf Lizard bereit. Der Build erzeugt `dist/`, und nginx liefert die Dateien auf Port `80` aus. Für Nuxt-Server-Rendering und Server-Routen nutze den [Nuxt-Leitfaden](/framework-guides/nuxt).
+
+<span id="prepare-the-project" />
+
+## Projekt vorbereiten
+
+Führe den Vorgang im Verzeichnis der Vue-App aus, mit `package.json`, einer Lockfile und der Vite-Konfiguration. Behalte das Build-Skript des Scaffolds bei, einschließlich `vue-tsc`, wenn damit dein TypeScript-Code geprüft wird. Der Build muss erfolgreich abgeschlossen werden, indem das Vite-Bundle in `dist/` erzeugt wird.
+
+| Setting | Value |
+|---|---|
+| Build | `npm run build` |
+| Output | `dist/` |
+| Start command | Keine für den Erkennungspfad statischer Bereitstellung |
+| Service port | `80` |
+
+Behalte `base: '/'` für eine Website an der Domain-Wurzel bei. Wenn du ein Pfadpräfix verwendest, richte die base von Vite an der Router-Basis und der URL aus, unter der die App tatsächlich läuft. Ein benutzerdefiniertes Ausgabeverzeichnis benötigt ein Dockerfile, das dieses Verzeichnis kopiert.
+
+<span id="check-the-build-locally" />
+
+## Build lokal prüfen
+
+```bash
+npm ci
+npm run build
+npm run preview
+```
+
+Nutze die lokale Vorschau-URL, um eine Komponente zu prüfen, die Daten abruft, und eine Seite, die über den Router erreicht wird. `vite preview` ist für diese lokale Prüfung gedacht; nginx liefert die Produktionsdateien aus. Informationen zum Build-Output und zum Verhalten der Vorschau findest du im [Deployment-Leitfaden von Vite](https://vite.dev/guide/static-deploy.html).
+
+<span id="deploy" />
+
+## Bereitstellen
+
+Stelle nach dem [CLI-Setup](/framework-guides#prepare-the-project) das aktuelle Quellverzeichnis bereit:
+
+```bash
+lizard init --name vue-app
+lizard add --service web
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+Schließe lokale Abhängigkeiten, `dist/` und `.env`-Dateien vom Upload aus. Ohne bestehende Befehlsüberschreibungen erkennt lizardpack Vite und erstellt das statische Image. Füge `npm run dev` nicht als Startbefehl des Service hinzu.
+
+<span id="vue-router-history-mode" />
+
+## Vue Router History-Modus
+
+Wenn deine App `createWebHistory` verwendet, muss ihr Server direkte Anfragen an Client-Routen verarbeiten können. Das standardmäßige statische Image liefert `index.html` aus, wenn keine Datei gefunden wird, sodass `/account` Vue Router bei einem harten Neuladen erreichen kann. Stimme die Router-Basis auf die Vite-base ab, zum Beispiel mit `createWebHistory(import.meta.env.BASE_URL)`. Siehe [History-Modi von Vue Router](https://router.vuejs.org/guide/essentials/history-mode.html).
+
+Teste sowohl die Navigation von der Startseite als auch das Öffnen von `/account` in einem neuen Tab. Füge eine Catch-all-Ansicht für fehlende Client-Routen hinzu. Der Server-Fallback gibt selbst für unbekannte Pfade HTTP 200 zurück; suchmaschinenfreundliche 404-Antworten liefert er nicht. Lies [statische Routen und 404er](/framework-guides/static-routing), bevor du dieses Setup für eine indexierte Content-Website verwendest.
+
+<span id="variables-and-api-requests" />
+
+## Variablen und API-Anfragen
+
+Vite schreibt `VITE_*`-Werte während des Builds in das Browser-Bundle. Verwende sie nur für öffentliche Werte, etwa die öffentliche HTTPS-URL deiner API. Setze sie über [Variablen und Secrets](/variables) und prüfe dann die tatsächliche Netzwerkanfrage der neu gebauten App. Ein reiner Laufzeit-Neustart kann keinen Wert in bereits gebautem JavaScript ersetzen.
+
+Wenn Anfragen nur nach dem Deployment fehlschlagen, prüfe CORS auf der API und bestätige, dass der Browser nicht `localhost` oder einen privaten Backend-Hostnamen aufruft. Wenn das HTML lädt, aber Assets fehlschlagen, prüfe die base von Vite und die Asset-Pfade. Für Seiten, die HTML benötigen, bevor JavaScript läuft, wähle Nuxt-Rendering oder einen expliziten Prerendering-Schritt.
+
+Siehe [getestete Versionen und Cloud-Ergebnisse](/framework-guides/validation) für die Deployment-Prüfungen vom 9. September 2026 und ihre Grenzen.

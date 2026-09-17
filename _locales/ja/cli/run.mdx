@@ -1,0 +1,65 @@
+---
+description: "lizard run は、サービスのプロジェクトシークレットとサービスシークレットを注入した状態で、あなたのマシン上でコマンドを実行します。ssh を使うべき場合も含みます。"
+---
+
+# lizard run
+
+プロジェクトシークレットとサービスシークレットを注入した状態で、ローカルでコマンドを実行します。
+
+<span id="run-vs-ssh" />
+
+## run と ssh の違い
+
+2 つのコマンドで、サービスのコンテキストを使ってコマンドを実行できます。実行される場所が異なるため、どちらが必要かを把握してください。
+
+| Command | Runs where | Use for |
+|---------|-----------|---------|
+| `lizard run` | ローカル。サービスの project + service secrets を注入した状態 | マイグレーション、シードスクリプト、本番設定が必要なローカルツール |
+| `lizard ssh` | 実行中のサービスコンテナ内 | 稼働中コンテナの確認、単発のリモートコマンド、デバッグ |
+
+`lizard run` は、ローカルに注入された環境のコピーを表示します。通常は実行中のアプリが参照しているものと同じですが、稼働中コンテナに対して信頼できる情報源は `lizard ssh` です。実行中のアプリが実際に参照している内容を確認するには、代わりに `lizard ssh` を使ってください。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard run [flags] -- <command>
+```
+
+<span id="flags" />
+
+## フラグ
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | 環境変数を注入する対象のサービス |
+| `--no-service` | サービス環境変数を注入しない |
+
+<span id="examples" />
+
+## 例
+
+<span id="run-a-migration-with-service-secrets-injected" />
+
+### サービスシークレットを注入してマイグレーションを実行する
+
+```bash
+lizard run --service api -- node scripts/migrate.js
+```
+
+<span id="print-an-injected-environment-variable" />
+
+### 注入された環境変数を表示する
+
+```bash
+lizard run --service api -- printenv DATABASE_URL
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [lizard ssh](/cli/ssh) — ローカルではなく、実行中のサービスコンテナ内でコマンドを実行します
+- [Variables](/variables) — プロジェクト変数とサービス変数の定義方法および参照方法
+- [Python app hosting](https://lizard.build/blog/python-app-hosting) — デプロイ済みデータベースに対して `manage.py` やその他のフレームワークツールを実行する方法

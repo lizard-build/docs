@@ -1,0 +1,110 @@
+---
+description: "Despliega SvelteKit en Lizard con adapter-node. Configura la compilación de producción, el puerto 3000, ORIGIN, las acciones de formularios y la ruta separada de adapter-static."
+---
+
+<span id="deploy-sveltekit-on-lizard" />
+
+# Desplegar SvelteKit en Lizard
+
+Usa `@sveltejs/adapter-node` para compilar un servidor SvelteKit para Lizard. Produce `build/`, que se inicia con `node build` en el puerto `3000`. Instala y configura el adaptador de forma explícita; un proyecto base que todavía usa `adapter-auto` no establece un destino de despliegue Node.
+
+Empieza con el [ejemplo completo del código fuente](https://github.com/lizard-build/docs/tree/main/_examples/sveltekit), que incluye la configuración y los archivos usados por esta guía.
+
+<span id="configure-the-adapter" />
+
+## Configurar el adaptador
+
+```bash
+npm install --save-dev @sveltejs/adapter-node
+```
+
+En `svelte.config.js`, mantén tu preprocess actual y los demás ajustes, pero establece `kit.adapter` en el adaptador Node:
+
+```js
+import adapter from '@sveltejs/adapter-node';
+
+export default {
+  kit: { adapter: adapter() },
+};
+```
+
+Conserva solo el adaptador de despliegue que realmente vayas a usar. En particular, una dependencia `@sveltejs/adapter-static` sin usar puede seleccionar la ruta estática en el detector actual incluso cuando tu configuración importa adapter-node.
+
+| Ajuste | Valor |
+|---|---|
+| Compilación | `npm run build`, normalmente `vite build` |
+| Salida | `build/` |
+| Entorno de ejecución | `node build` |
+| Host y puerto | `HOST=0.0.0.0`, `PORT=3000` |
+| Puerto del servicio | `3000` |
+
+<span id="test-the-production-server" />
+
+## Probar el servidor de producción
+
+```bash
+npm ci
+npm run build
+HOST=0.0.0.0 PORT=3000 ORIGIN=http://localhost:3000 node build
+```
+
+Abre una página renderizada en el servidor y envía una acción de formulario si la app tiene una. Mantén la ruta de salida predeterminada del adaptador para la detección usada en esta guía.
+
+<span id="deploy-and-set-the-public-origin" />
+
+## Desplegar y establecer el origen público
+
+Después de la [configuración de la CLI](/framework-guides#prepare-the-project):
+
+```bash
+lizard init --name sveltekit-app
+lizard add --service web
+lizard up --service web --port 3000
+lizard ps --json
+```
+
+Establece `ORIGIN` con el origen HTTPS público exacto de la salida del despliegue, sin una ruta. Por ejemplo, reemplaza este marcador con tu URL real:
+
+```bash
+lizard secrets set ORIGIN=https://YOUR_PUBLIC_HOST --service web
+```
+
+Usa el dominio personalizado en su lugar si ese es el origen que usarán los visitantes. Vuelve a comprobar los formularios después de cambiar la variable. Si necesitas varios orígenes permitidos o URL derivadas de proxy, lee la [guía del servidor Node de SvelteKit](https://svelte.dev/docs/kit/adapter-node) y configura deliberadamente los encabezados de proxy de confianza.
+
+<span id="verify-and-troubleshoot" />
+
+## Verificar y solucionar problemas
+
+Lee los logs de compilación y ejecución con `lizard logs --build --service web --json` y `lizard logs --service web --json`. Abre directamente una ruta interna, envía un formulario y solicita una ruta inexistente.
+
+Si los formularios muestran un error de envío entre sitios, revisa `ORIGIN` antes de desactivar una comprobación de seguridad. Si `node build` no puede encontrar el servidor, verifica el adaptador activo y la ruta de salida. Deja sin configurar las anulaciones del comando del servicio para usar la ruta de lizardpack.
+
+<span id="static-sveltekit-sites" />
+
+## Sitios estáticos de SvelteKit
+
+Una app que pueda prerenderizar todas las páginas necesarias puede usar `@sveltejs/adapter-static`, su salida predeterminada `build/` y el puerto de servicio `80`. Esa salida no puede ejecutar acciones de servidor ni endpoints en tiempo de solicitud. Configura el prerenderizado para las rutas que necesites; instalar el paquete por sí solo no es suficiente.
+
+Instala `@sveltejs/adapter-static` y reemplaza la importación del adaptador en `svelte.config.js`:
+
+```js
+import adapter from '@sveltejs/adapter-static';
+
+export default {
+  kit: { adapter: adapter() },
+};
+```
+
+Para un sitio cuyas rutas puedan generarse por completo, añade esto a `src/routes/+layout.js`:
+
+```js
+export const prerender = true;
+export const trailingSlash = 'always';
+```
+
+Elimina de las dependencias los adaptadores de despliegue que no uses. Ejecuta `npm run build` y comprueba que `build/` contiene cada página necesaria. Para la salida predeterminada, deja sin configurar las anulaciones del comando del servicio y despliega un servicio nuevo en el puerto `80`. Las compilaciones nuevas sirven el HTML generado y devuelven HTTP 404 para las páginas inexistentes. No reutilices el puerto `3000` de la receta del servidor para nginx.
+
+Usa [rutas estáticas y 404](/framework-guides/static-routing) para elegir entre rutas HTML generadas y una reserva SPA. Consulta [el adaptador estático de SvelteKit](https://svelte.dev/docs/kit/adapter-static) para ver las opciones y limitaciones del framework.
+
+Consulta [versiones probadas y resultados en la nube](/framework-guides/validation) para ver las comprobaciones de despliegue del 9 de septiembre de 2026 y sus límites.
+

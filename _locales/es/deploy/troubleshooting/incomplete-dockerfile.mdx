@@ -1,0 +1,57 @@
+---
+description: "Por qué Lizard reemplaza un Dockerfile del repositorio que no tiene paso de compilación, cómo funciona la regla de Dockerfile incompleto y cómo hacer que se use el tuyo literalmente."
+---
+
+<span id="my-dockerfile-changes-dont-seem-to-apply" />
+
+# Mis cambios en el Dockerfile no parecen aplicarse
+
+Tienes un `Dockerfile` en tu repositorio, lo editaste, pero la compilación que ejecuta Lizard no coincide con lo que escribiste.
+
+<span id="what-this-means" />
+
+## Qué significa esto
+
+La plataforma decidió que el Dockerfile de tu repositorio estaba **incompleto** y regeneró uno por ti con [lizardpack](/concepts/build-pipeline) en lugar de usar el tuyo literalmente.
+
+<span id="why-this-can-happen" />
+
+## Por qué puede pasar esto
+
+Lizard solo usa un Dockerfile del repositorio **literalmente** en la ruta de autodetección de lizardpack si tiene un paso de compilación real: una línea `RUN <package-manager>`. Un Dockerfile que solo copia artefactos precompilados (`COPY dist/`, `build/`, `out/`, `.next/`, `public/`) sin un paso `RUN` se trata como incompleto, asumiendo que esos artefactos se compilaron fuera de la imagen. En ese caso, lizardpack genera un Dockerfile de reemplazo que incluye el paso de compilación faltante.
+
+Esto solo se aplica en la ruta de autodetección de lizardpack. Si `buildCommand` o `startCommand` está configurado en el servicio, Lizard sintetiza un Dockerfile a partir de esos comandos y no mira en absoluto el Dockerfile de tu repositorio.
+
+<span id="possible-solutions" />
+
+## Posibles soluciones
+
+<span id="add-a-real-build-step" />
+
+### Agrega un paso de compilación real
+
+Si quieres que tu Dockerfile se use tal cual, dale un paso de compilación real en lugar de copiar salida precompilada:
+
+```dockerfile
+RUN npm ci && npm run build
+```
+
+<span id="or-force-verbatim-use" />
+
+### O fuerza el uso literal
+
+Borra las anulaciones de compilación e inicio, y luego configura `dockerfilePath` en la misma actualización. Las anulaciones tienen prioridad sobre la ruta del archivo:
+
+```bash
+lizard service set api --set buildCommand=null --set startCommand=null --set dockerfilePath=Dockerfile
+```
+
+<span id="see-also" />
+
+## Ver también
+
+- [Build Pipeline](/concepts/build-pipeline) — el orden completo de decisión de compilación.
+- [Referencia de configuración de compilación](/concepts/build-pipeline#build-configuration-reference)
+- [Implementar cualquier aplicación Python en Lizard](https://lizard.build/blog/python-app-hosting#deploying-any-python-app-on-lizard) — cuándo dejar que lizardpack escriba el Dockerfile y cuándo aportar el tuyo.
+
+Cambiar estos campos de compilación puede iniciar una compilación. Revisa `lizard events` antes de enviar otro `redeploy`, para evitar iniciar una segunda compilación.

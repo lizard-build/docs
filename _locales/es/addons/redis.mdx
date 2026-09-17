@@ -1,0 +1,79 @@
+---
+description: "Añade una instancia de Managed Redis para caché, colas, limitación de tasa y pub/sub, y conéctala a un servicio con una sola referencia."
+---
+
+# Managed Redis
+
+Una instancia de Managed Redis para caché, colas, limitación de tasa y pub/sub.
+
+<span id="provision" />
+
+## Aprovisionar
+
+```bash
+lizard add redis
+```
+
+El primer addon de Redis se llama `redis`, así que `${{redis.REDIS_URL}}` funciona de inmediato.
+
+<span id="environment-variables" />
+
+## Variables de entorno
+
+| Variable | Descripción |
+|----------|-------------|
+| `REDIS_URL` | Cadena de conexión completa (`redis://…`) |
+
+<span id="connect-a-service" />
+
+## Conectar un servicio
+
+```bash
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service api
+lizard redeploy --service api
+```
+
+La referencia se resuelve en el momento del despliegue y rota junto con las credenciales del addon.
+
+<span id="common-uses" />
+
+## Usos comunes
+
+- **Caché** — almacena resultados calculados indexados por solicitud.
+- **Cola / worker** — combina Redis con un [servicio en modo worker](/deploy/workers) que consume trabajos.
+- **Limitación de tasa / sesiones** — estado compartido rápido entre [réplicas](/deploy/scaling).
+
+```bash
+# A worker that drains a Redis queue
+lizard add -r your-org/worker -n jobs
+lizard service set jobs --set containerPort=0
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service jobs
+lizard redeploy --service jobs
+```
+
+<span id="browse-keys" />
+
+## Explorar claves
+
+Abre el **navegador de Redis** en el panel (`lizard open`) para inspeccionar claves y valores. Para acceso local:
+
+```bash
+lizard run --service api -- sh -c 'exec redis-cli -u "$REDIS_URL"'
+```
+
+<span id="grow-storage" />
+
+## Ampliar almacenamiento
+
+```bash
+lizard scale --service redis --storage 4096
+```
+
+<span id="see-also" />
+
+## Ver también
+
+- [Managed Addons](/addons) — nombres, referencias y los navegadores del panel.
+- [Background Workers](/deploy/workers) — combinar Redis con un worker que consume colas.
+
+`lizard run` inicia el comando localmente con el entorno del servicio seleccionado. Instala `redis-cli` localmente y comprueba que se pueda acceder al endpoint.

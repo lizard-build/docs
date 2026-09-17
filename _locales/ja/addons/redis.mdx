@@ -1,0 +1,79 @@
+---
+description: "キャッシュ、キュー、レート制限、pub/sub のために Managed Redis インスタンスを追加し、単一の参照でサービスに接続します。"
+---
+
+# Managed Redis
+
+キャッシュ、キュー、レート制限、pub/sub のためのマネージド Redis インスタンスです。
+
+<span id="provision" />
+
+## プロビジョニング
+
+```bash
+lizard add redis
+```
+
+最初の Redis アドオンの名前は `redis` なので、`${{redis.REDIS_URL}}` はすぐに使えます。
+
+<span id="environment-variables" />
+
+## 環境変数
+
+| Variable | Description |
+|----------|-------------|
+| `REDIS_URL` | 完全な接続文字列 (`redis://…`) |
+
+<span id="connect-a-service" />
+
+## サービスを接続する
+
+```bash
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service api
+lizard redeploy --service api
+```
+
+参照はデプロイ時に解決され、アドオンの認証情報に合わせてローテーションされます。
+
+<span id="common-uses" />
+
+## 一般的な用途
+
+- **キャッシュ** — リクエストをキーにして計算結果を保存します。
+- **キュー / ワーカー** — Redis を、ジョブを消費する [worker-mode service](/deploy/workers) と組み合わせます。
+- **レート制限 / セッション** — [replicas](/deploy/scaling) 間で高速に共有状態を扱います。
+
+```bash
+# A worker that drains a Redis queue
+lizard add -r your-org/worker -n jobs
+lizard service set jobs --set containerPort=0
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service jobs
+lizard redeploy --service jobs
+```
+
+<span id="browse-keys" />
+
+## キーを参照する
+
+ダッシュボードの **Redis browser** (`lizard open`) を開いて、キーと値を確認します。ローカルからアクセスするには:
+
+```bash
+lizard run --service api -- sh -c 'exec redis-cli -u "$REDIS_URL"'
+```
+
+<span id="grow-storage" />
+
+## ストレージを拡張する
+
+```bash
+lizard scale --service redis --storage 4096
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [Managed Addons](/addons) — 命名、参照、ダッシュボードブラウザーについて。
+- [Background Workers](/deploy/workers) — Redis とキューを消費するワーカーの組み合わせについて。
+
+`lizard run` は、選択したサービス環境でローカルにコマンドを開始します。`redis-cli` をローカルにインストールし、エンドポイントに到達可能であることを確認してください。

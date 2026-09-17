@@ -1,0 +1,79 @@
+---
+description: "Hänge ein Volume unter /data ein, um Checkpoints, Weights oder ein Arbeitsverzeichnis über Sandbox-Neustarts hinweg zu behalten. Volumes erstellen, einhängen und verwalten."
+---
+
+# Persistent Volumes
+
+Sandboxes sind flüchtig — wenn eine beendet wird oder abläuft, ist ihr Dateisystem weg. Ein **Volume** ist persistenter Blockspeicher, der länger lebt als jede einzelne Sandbox. Hänge eines ein, um Daten (Checkpoints, Modellgewichte, ein Arbeitsverzeichnis) über Sandbox-Neustarts hinweg zu behalten.
+
+Ein Volume kann **jeweils nur an eine Sandbox gleichzeitig** angehängt werden und wird innerhalb der Micro-VM unter **`/data`** eingehängt. Da ein Volume an den Node gebunden ist, auf dem es liegt, wird eine Sandbox, die es einhängt, auf genau diesem Node geplant.
+
+<span id="create-and-attach" />
+
+## Erstellen und einhängen
+
+Hänge ein Volume ein, indem du seine ID an `Sandbox.create` übergibst, zusammen mit dem Projekt, dem die Sandbox in Rechnung gestellt wird. Alles, was unter `/data` geschrieben wird, bleibt erhalten, nachdem die Sandbox verschwunden ist.
+
+```ts
+import { Sandbox, Volume } from '@lizard-build/sdk';
+
+// Create a 10 GB volume in a project (default size: 5 GB)
+const volume = await Volume.create('proj_123', 'agent-workdir', { sizeGb: 10 });
+
+// Attach it to a sandbox — mounted at /data
+const sandbox = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+try {
+  await sandbox.fs.write('/data/state.json', JSON.stringify({ step: 1 }));
+} finally {
+  await sandbox.kill();            // the volume persists
+}
+
+// A later sandbox re-attaches and sees the data
+const next = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+try {
+  console.log(await next.fs.read('/data/state.json'));   // {"step":1}
+} finally {
+  await next.kill();
+}
+```
+
+<span id="manage-volumes" />
+
+## Volumes verwalten
+
+```ts
+await Volume.list('proj_123');                 // [{ id, name, sizeGb, status, attachedTo, … }]
+const v = await Volume.get('proj_123', 'vol_abc');
+await v.getInfo('proj_123');
+await v.delete('proj_123');                     // must be detached first
+```
+
+| Method | Description |
+|---|---|
+| `Volume.create(projectId, name, { sizeGb })` | Ein Volume erstellen (standardmäßig 5 GB) |
+| `Volume.list(projectId)` | Volumes in einem Projekt auflisten |
+| `Volume.get(projectId, volumeId)` | Ein Handle für ein vorhandenes Volume abrufen |
+| `volume.getInfo(projectId)` | Metadaten und Anhangsstatus abrufen |
+| `volume.delete(projectId)` | Ein Volume löschen (muss ausgehängt sein) |
+
+<span id="in-the-dashboard" />
+
+## Im Dashboard
+
+Volumes befinden sich im Tab **Sandboxes → Volumes** eines Projekts. Erstelle eines mit Name und Größe; die Tabelle zeigt für jedes Volume Größe, Status (`available` / `attached`) und welche Sandbox es hält. Ein Volume wird automatisch wieder auf `available` freigegeben, wenn seine Sandbox beendet wird oder abläuft. Siehe die Anleitung zum [Dashboard](/sandboxes/dashboard).
+
+<span id="notes" />
+
+## Hinweise
+
+- Ein Volume kann jeweils nur an **eine Sandbox** gleichzeitig angehängt werden. Der Versuch, ein bereits angehängtes Volume einzuhängen, führt zu einem Konflikt.
+- Das Löschen einer Sandbox (oder ihr Ablauf) **hängt** das Volume **aus** — es löscht es nicht. Die Daten bleiben für die nächste Einhängung erhalten.
+- Lösche das Volume selbst, um den Speicherplatz freizugeben.
+- Eine pausierte Sandbox behält ihre Einhängung weiterhin. Persistent Volumes verwenden Node-lokalen Speicher; exportiere Daten, die du nach einem Node-Ausfall wiederherstellen können musst. Siehe [Speicher und Wiederherstellung](/platform/storage-and-recovery).
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [SDK Reference](/sandboxes/sdk-reference) — jede `Volume`-Methode.
+- [Quickstart](/sandboxes/quickstart) — ein Volume beim Erstellen der Sandbox einhängen.

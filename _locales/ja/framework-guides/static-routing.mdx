@@ -1,0 +1,107 @@
+---
+description: "Lizard で静的サイトのルートを設定します: 生成された HTML を配信し、クリーン URL をサポートし、存在しないページには HTTP 404 を返し、SPA フォールバックが適切な場面を選びます。"
+---
+
+<span id="static-routes-and-404s" />
+
+# 静的ルートと 404
+
+生成コンテンツのサイトでは、各ルートの HTML を配信し、存在しないページには HTTP 404 を返すべきです。Astro static、Docusaurus、VitePress、Hugo、SvelteKit adapter-static 向けの新しい lizardpack ビルドでは、そのポリシーを使用します。React と Vue の SPA では、ブラウザルーターに必要な `index.html` フォールバックを維持します。
+
+以下のカスタム設定は任意です。検出されたフレームワークで提供されないルーティングポリシーに使ってください。既存のイメージは、再ビルドするまで以前のルールを維持します。
+
+<span id="choose-the-routing-policy" />
+
+## ルーティングポリシーを選ぶ
+
+| App type | Route behavior |
+|---|---|
+| React または Vue SPA | 有効なクライアントルートでは `index.html` が読み込まれ、その後クライアントルーターがそれをレンダリングします。 |
+| 生成されたドキュメントまたはコンテンツ | ルートは生成された HTML に解決されます。未知のパスは HTTP 404 を返します。 |
+| サーバーレンダリングアプリ | アプリケーションサーバーがルートを解決し、ステータスを返します。 |
+
+SPA の catch-all view では存在しないページのメッセージを表示できますが、ブラウザコードはすでに送信済みの HTML レスポンスの HTTP ステータスを変更できません。SPA でルート認識の HTTP ステータスが必要な場合は、どのパスが存在するかを把握しているサーバーまたは事前レンダリングされたルート構成を使用してください。
+
+<span id="configure-nginx-for-generated-pages" />
+
+## 生成ページ向けに nginx を設定する
+
+アプリケーションルートに `nginx.conf` を作成します:
+
+```nginx
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+
+  location / {
+    try_files $uri $uri.html $uri/ =404;
+  }
+
+  error_page 404 /404.html;
+  location = /404.html {
+    internal;
+  }
+}
+```
+
+これは `guide.html` と `guide/index.html` の両方の出力レイアウトをサポートします。カスタムエラーページを使いたい場合は、生成された `404.html` を含めてください。それ以外の場合は、nginx のデフォルトのエラーボディを使うために `error_page` と exact-location ブロックを省略してください。サイトのリンクとサイトマップでは、正規 URL スタイルを 1 つに統一してください。このルックアップルールは正規リダイレクトを追加しません。
+
+<span id="build-the-site-with-the-config" />
+
+## この設定でサイトをビルドする
+
+コミット済み lockfile がある npm プロジェクトでは、この完全な Dockerfile を使用してください。以下の表に合わせて、`BUILD_SCRIPT` と `OUTPUT_DIR` のデフォルト値を変更します:
+
+```dockerfile
+FROM node:22-slim AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+ARG BUILD_SCRIPT=build
+RUN npm run "$BUILD_SCRIPT"
+
+FROM nginx:alpine
+ARG OUTPUT_DIR=dist
+COPY --from=build /app/${OUTPUT_DIR}/ /usr/share/nginx/html/
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+```
+
+| Site | `BUILD_SCRIPT` | `OUTPUT_DIR` |
+|---|---|---|
+| Astro static | `build` | `dist` |
+| Docusaurus | `build` | `build` |
+| `docs/` ルートを持つ VitePress | `docs:build` | `docs/.vitepress/dist` |
+| プロジェクトルートにある VitePress | `docs:build` または実際のスクリプト | `.vitepress/dist` |
+| adapter-static を使う SvelteKit | `build` | `build` |
+| Next.js export | `build` | `out` |
+| Nuxt generate | `nuxt generate` を使う `build` | `.output/public` |
+
+生成ページのポリシーは、アプリにそれらのルートファイルがある場合にのみ使用してください。たとえば、SvelteKit の SPA フォールバックには、その専用のルーティングポリシーが必要です。[Next.js static export](/framework-guides/nextjs/static-export) には、trailing-slash レイアウトを含む完全な手順があります。
+
+依存関係、ビルド出力、`.git`、`.env*` は `.dockerignore` で除外してください。ビルドに公開変数が必要な場合は、ビルドコマンドの前にその `ARG` 値を宣言してください。秘密のシークレットをイメージやブラウザ出力にコピーしないでください。
+
+[CLI setup](/framework-guides#prepare-the-project) の後、`lizard add --service web` でサービスを作成し、次に `lizard up --service web --port 80` でこのソースをデプロイします。サービスがすでに存在する場合は、add ステップをスキップしてください。既存のサービスでは、[build decision order](/concepts/build-pipeline#build-decision-order) を確認してください。コマンドのオーバーライドが Dockerfile より優先される場合があります。設定ファイルだけでは生成済みの nginx 設定は置き換えられません。Dockerfile でそれをイメージにコピーする必要があります。
+
+<span id="verify-http-responses" />
+
+## HTTP レスポンスを確認する
+
+`SITE_URL` を実際のローカルテスト URL またはデプロイ済みオリジンに設定し、次に `/guide/` を存在するページに置き換えます:
+
+```bash
+SITE_URL=https://YOUR_PUBLIC_HOST
+curl -sS -o /dev/null -w '%{http_code}\n' "$SITE_URL/"
+curl -sS -o /dev/null -w '%{http_code}\n' "$SITE_URL/guide/"
+curl -sS -o /dev/null -w '%{http_code}\n' "$SITE_URL/this-page-does-not-exist"
+```
+
+実在するページでは 200、存在しないパスでは 404 を期待してください。有効なルートが正規形式にリダイレクトされる場合は、リダイレクトを確認してから宛先を検証してください。実際のアセットと架空の `.js` パスもテストしてください。存在しないスクリプトで、ホームページが HTML としてステータス 200 で返ってはいけません。
+
+最後に、ブラウザで内側のルートを直接開いて再読み込みします。クライアントナビゲーションが正しくても、サーバーのルーティングエラーが隠れることがあります。インデックスされるサイトを公開する前に、HTTP ステータスとあわせてフレームワークの正規 URL とサイトマップ設定を確認してください。
+
+2026 年 9 月 9 日のデプロイ確認とその制限については、[tested versions and cloud results](/framework-guides/validation) を参照してください。
+

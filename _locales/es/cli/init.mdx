@@ -1,0 +1,58 @@
+---
+description: "lizard init crea o selecciona un proyecto y lo vincula al directorio actual, incluida la forma explícita que necesitas en CI."
+---
+
+# lizard init
+
+Crea o selecciona un proyecto y lo vincula al directorio actual.
+
+## Usage
+
+```bash
+lizard init [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --name <name>` | Nombre del proyecto (créalo si no existe) |
+| `-w, --workspace <ws>` | ID, slug o nombre del workspace |
+| `--force` | Volver a vincular aunque ya esté vinculado |
+
+## Examples
+
+<span id="link-the-current-directory-interactively" />
+
+### Vincular el directorio actual de forma interactiva
+
+```bash
+lizard init
+```
+
+<span id="link-explicitly-in-ci" />
+
+### Vincular explícitamente en CI
+
+`lizard up` ejecutará `init` por ti en un TTY, pero en un entorno no TTY (CI) devuelve un error en lugar de crear un proyecto silenciosamente. Vincúlalo explícitamente primero:
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+lizard init --name my-project
+lizard up --ci --service api
+```
+
+<span id="relink-a-directory-thats-already-linked" />
+
+### Volver a vincular un directorio que ya está vinculado
+
+```bash
+lizard init --name my-project --force
+```
+
+## See also
+
+- [lizard link](/cli/link) — asocia el directorio actual con un proyecto existente en lugar de crear uno
+- [lizard status](/cli/status) — muestra el workspace, proyecto y servicio vinculados para el directorio actual
+- [lizard up](/cli/up) — sube e implementa el directorio actual
+- [Core Concepts](/concepts/architecture) — proyectos, servicios y el pipeline de compilación

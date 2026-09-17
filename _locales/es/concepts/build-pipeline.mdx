@@ -1,0 +1,89 @@
+---
+description: "Cómo Lizard convierte el código fuente en una imagen de contenedor: Dockerfile sintetizado, Dockerfile del repositorio o autodetección de lizardpack, y qué activa una reconstrucción."
+---
+
+<span id="build-pipeline" />
+
+# Canal de compilación
+
+Las compilaciones se ejecutan en los nodos de compilación de Lizard — **no necesitas Docker localmente**. Cuando despliegas, la plataforma decide cómo convertir tu código fuente en una imagen de contenedor usando un orden de decisión fijo, y luego ejecuta esa imagen en un pod aislado. No todos los [container as a service](https://lizard.build/blog/container-as-a-service) compilan la imagen por ti; el blog compara las tres formas en que se presenta esta categoría.
+
+<span id="build-decision-order" />
+
+## Orden de decisión de compilación
+
+La plataforma elige exactamente una estrategia de compilación, en este orden:
+
+1. **Dockerfile sintetizado** — si `buildCommand` y/o `startCommand` están configurados en el servicio (o se pasan mediante `lizard up --build-command` / `--start-command`), Lizard genera un Dockerfile a partir de esos comandos. lizardpack no se invoca.
+2. **Dockerfile del repositorio (literal)** — si `dockerfilePath` está configurado en el servicio, ese Dockerfile de tu repositorio se usa sin cambios.
+3. **Autodetección de lizardpack** — en caso contrario, la plataforma clona tu código fuente y ejecuta **lizardpack**, su generador de buildpacks/Dockerfile.
+
+<span id="lizardpack-auto-detect" />
+
+### Autodetección de lizardpack
+
+lizardpack inspecciona tu repositorio y construye una imagen optimizada de múltiples etapas. Stacks compatibles, emparejados en este orden:
+
+**Hugo → Go → Node → Python → Rust → Ruby → PHP → Java → static**
+
+Consulta las [Guías de frameworks](/framework-guides) para ver scripts de producción, adaptadores, rutas de salida y puertos. La detección usa archivos del proyecto y dependencias; un repositorio que coincida con varios proveedores sigue este orden.
+
+En esta ruta:
+
+- Si existe un `Dockerfile` del repositorio **y** tiene un paso de compilación real (una línea `RUN <package-manager>`, no solo `COPY dist/`), se usa literalmente.
+- En caso contrario, lizardpack genera el Dockerfile por ti.
+- El **comando de inicio** se detecta automáticamente: una línea `Procfile` `web:` (Python/Ruby) o `package.json` `scripts.start` (Node) se recoge automáticamente. Para ver la línea exacta que quieren Django, Flask y FastAPI, consulta [hosting de aplicaciones Python](https://lizard.build/blog/python-app-hosting).
+- El **puerto** se infiere a partir de `EXPOSE`, los valores predeterminados del framework o una variable de entorno `PORT` explícita.
+
+> **Ojo:** Un Dockerfile que solo copia artefactos ya compilados (`COPY dist/`, `build/`, `out/`, `.next/`, `public/`) **sin** un paso de compilación `RUN` se considera incompleto y lizardpack lo regenera. Añade un paso de compilación real o configura `dockerfilePath` para forzar el uso literal.
+
+<span id="what-triggers-a-rebuild" />
+
+## Qué activa una reconstrucción
+
+| Acción | ¿Reconstruye? |
+|--------|-----------|
+| `git push` en la rama seguida | ✅ mediante webhook de GitHub |
+| `lizard redeploy` / `lizard up` | ✅ explícito |
+| Cambiar variables `VITE_*` o `NEXT_PUBLIC_*` | ✅ los valores de tiempo de compilación se integran en la imagen |
+| `service set` de campos de compilación (`repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath`, `rootDirectory`) | ✅ reconstruye automáticamente |
+| `service set` de campos solo de runtime (`startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns`) | ❌ ejecuta `lizard redeploy` para aplicar |
+| Cualquier otro cambio de variable de entorno / secreto | ❌ se aplica con un reinicio rápido (sin reconstrucción) |
+
+> **No compiles dos veces.** Después de un `service set` que cambia un campo de compilación, la reconstrucción se activa automáticamente — no encadenes un `lizard redeploy` después, o pondrás en cola una segunda compilación redundante.
+
+<span id="watching-a-build" />
+
+## Ver una compilación
+
+Los registros de compilación se transmiten durante `lizard up`. Para cualquier servicio:
+
+```bash
+lizard logs --build            # the most recent build's logs
+lizard events                  # deploy history + replica status
+```
+
+Si una compilación falla, lee `lizard logs --build`, corrige la causa (en tu repositorio o ajustando `buildCommand` / `startCommand` mediante `lizard service set`) y luego `lizard redeploy`.
+
+<span id="runtime-notes" />
+
+## Notas de runtime
+
+- **Sin Docker `HEALTHCHECK`.** El runtime no ejecuta el ciclo de healthcheck de Docker, por lo que las directivas `HEALTHCHECK` se ignoran. Lizard ejecuta en su lugar una sonda TCP contra tu puerto (omitida en [modo worker](/deploy/workers)).
+- **No escribas un Dockerfile sin necesidad.** lizardpack detecta automáticamente la mayoría de los stacks — prueba primero con un despliegue y añade un Dockerfile (o configura `dockerfilePath`) solo si la compilación automática no se ajusta a tu caso.
+
+<span id="build-configuration-reference" />
+
+## Referencia de configuración de compilación
+
+| Campo | Descripción |
+|-------|-------------|
+| `buildCommand` | Comando para compilar tu aplicación → fuerza la ruta de **Dockerfile sintetizado** |
+| `startCommand` | Comando para iniciar tu aplicación en runtime |
+| `preDeployCommand` | Se ejecuta una vez antes de cada despliegue (p. ej., migraciones de BD) |
+| `dockerfilePath` | Ruta a un Dockerfile del repositorio para usar **literalmente** |
+| `rootDirectory` | Subdirectorio desde el que compilar (monorepos) |
+| `watchPatterns` | Solo redesplegar cuando cambien rutas coincidentes |
+| `containerPort` | Puerto TCP en el que escucha tu aplicación (predeterminado `3000`; `0` = [worker](/deploy/workers)) |
+
+Configura cualquiera de estos con `lizard service set <svc> --set <field>=<value>`. Consulta [`lizard service`](/cli/service).

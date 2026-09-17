@@ -1,0 +1,90 @@
+---
+description: "Steuere Lizard über einen KI-Coding-Agenten: Lies Lizard Skill, ermittle Befehlsschemata mit --json und deploye über Lizard CLI."
+---
+
+# Coding-Agents
+
+Lizard ist so konzipiert, dass es sich von KI-Coding-Agents genauso einfach steuern lässt wie von Menschen. Die CLI enthält ein **eingebettetes Skill**, das einem Agenten die gesamte Plattform vermittelt, und jeder Befehl ist über `--json` **selbstbeschreibend**, sodass Agents nie raten müssen.
+
+<span id="the-embedded-skill" />
+
+## Das eingebettete Skill
+
+Die maßgebliche Nutzungsanleitung befindet sich in der CLI und ist mit ihr versioniert, sodass sie immer zur installierten Version passt. Ein Agent liest sie mit:
+
+```bash
+lizard skills get core --json
+```
+
+Dies gibt `{ name, frontmatter, content, … }` zurück — `content` ist die vollständige Anleitung (Build-Pipeline, env-Priorität, Add-ons, Discovery, Exit-Codes). Zugehörige Unterbefehle:
+
+```bash
+lizard skills list        # available embedded skills
+lizard skills get core    # the core guide
+lizard skills path        # where skills are stored
+```
+
+Da die Anleitung mit dem Binary gebündelt ist, aktualisiert `lizard upgrade` auch die Anweisungen des Agenten.
+
+<span id="self-describing-commands" />
+
+## Selbstbeschreibende Befehle
+
+Agents ermitteln die exakten Flag-Formen zur Laufzeit, statt sich auf auswendig gelernte Syntax zu verlassen:
+
+```bash
+lizard --help --json                # full command tree + exit codes
+lizard <cmd> --help --json          # a specific command's schema
+```
+
+Siehe [JSON & Automatisierung](/cli/json).
+
+<span id="bootstrapping-in-an-agent" />
+
+## Bootstrapping in einem Agenten
+
+Ein typischer Agent-Ablauf:
+
+1. **Anleitung laden:** `lizard skills get core --json` → `content` lesen.
+2. **Authentifizierung optimistisch prüfen:** Führe die Aufgabe des Nutzers aus; bei Exit-Code `2` führe `lizard login` aus, gib die ausgegebene URL an den Nutzer weiter und versuche es dann erneut.
+3. **Kontext vor Änderungen auflösen:** `lizard status` (cwd-Link) und `lizard ps --json` (Services).
+4. **Handeln** mithilfe der Anleitung — `add`, `up`, `secrets`, `domain` usw., immer mit `--json`.
+
+Wenn das Binary `lizard` nicht vorhanden ist, installiere es zuerst:
+
+```bash
+npm install -g @lizard-build/cli
+```
+
+<span id="conventions-agents-should-follow" />
+
+## Konventionen, denen Agents folgen sollten
+
+- **Übergib bei nicht interaktiven Aufrufen immer `--json`**.
+- **Bestätige destruktive Aktionen** (Service löschen, Add-on entfernen, ein projektweites Secret überschreiben, Prod-Neustart) mit dem Nutzer — die eigenen Prompts der CLI werden nur in einer TTY ausgelöst.
+- **Beschränke Secrets standardmäßig auf den Service, der sie verwendet**; reserviere `--global` für nachweislich öffentliche Werte. Siehe [Variablen & Secrets](/variables#scoping).
+- **Schreibe Dockerfiles nicht ungefragt** — lizardpack erkennt die meisten Stacks automatisch. Versuche zuerst ein Deployment. Siehe [Build-Pipeline](/concepts/build-pipeline).
+- **Verwende `lizard up` nicht, um einen git-basierten Service auf Upload umzustellen** — verwende `service set` + `redeploy`.
+
+<span id="editor-integrations" />
+
+## Editor-Integrationen
+
+Lizard Skill wird als öffentliches Bootstrap verteilt, damit Agents in Editoren und Assistenten es bei Bedarf installieren und laden und dann dieselbe CLI steuern können, die in dieser Dokumentation beschrieben wird. Die CLI ist die einzige verlässliche Quelle — es gibt keine separate Agent-API, die man lernen muss.
+
+Das gilt auch für KI-IDEs: Sie schreiben und testen eine App, hosten sie aber nicht. Siehe [Deployment einer in Google Antigravity gebauten App](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-an-antigravity-app-to-production-without-typing-a-command), wo das gesamte Deployment mit zwei Prompts ausgeführt wird.
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [`lizard skills`](/cli/skills) — die vollständige Befehlsreferenz.
+- [JSON & Automatisierung](/cli/json) — Ausgabe von `--json` und Schema-Discovery.
+- [Variablen & Secrets](/variables#scoping) — Konventionen zur Secret-Begrenzung, denen Agents folgen sollten.
+- [Deploye deine App aus Claude Code](https://lizard.build/blog/deploy-from-claude-code#deploy-from-claude-code-in-3-steps) — dasselbe Bootstrap als Walkthrough, mit den Prompts, die es steuern.
+
+<span id="hosting-your-own-mcp-server" />
+
+## Eigenen MCP-Server hosten
+
+Ein Agent, der Lizard CLI verwendet, und eine Anwendung, die MCP bereitstellt, sind getrennte Workflows. Die oben genannten CLI-Befehle stellen keinen MCP-Transport bereit. Um deinen eigenen Server mit Streamable HTTP zu deployen, folge der [Remote-MCP-Anleitung](/guides/deploy-mcp-server).

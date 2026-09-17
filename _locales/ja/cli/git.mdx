@@ -1,0 +1,72 @@
+---
+description: "lizard git は GitHub App を接続し、リポジトリのステータスを報告し、再デプロイでサービスを別のブランチに切り替えます。"
+---
+
+# lizard git
+
+リンクされたプロジェクトとそのサービスの GitHub 接続を管理します。
+
+## Usage
+
+```bash
+lizard git connect
+lizard git status
+lizard git checkout <service> <branch> [flags]
+```
+
+## Subcommands
+
+### `lizard git connect`
+
+GitHub App を接続してプライベートリポジトリにアクセスします。
+
+### `lizard git status`
+
+GitHub 接続とリポジトリのステータスを表示します。
+
+### `lizard git checkout <service> <branch>`
+
+サービスを別のブランチに切り替えて再デプロイします。
+
+| Flag | Description |
+|------|-------------|
+| `--detach` | ログのストリーミングをスキップ |
+
+## Examples
+
+<span id="connect-the-github-app" />
+
+### GitHub App を接続する
+
+```bash
+lizard git connect
+```
+
+<span id="check-connection-and-repository-status" />
+
+### 接続とリポジトリのステータスを確認する
+
+```bash
+lizard git status
+```
+
+<span id="switch-a-service-to-a-different-branch" />
+
+### サービスを別のブランチに切り替える
+
+```bash
+lizard git checkout api staging
+```
+
+<span id="switch-branches-without-streaming-logs" />
+
+### ログをストリーミングせずにブランチを切り替える
+
+```bash
+lizard git checkout api staging --detach
+```
+
+## See also
+
+- [GitHub からデプロイ](/deploy/github) — リポジトリの接続、push 時の自動再デプロイ、モノレポの設定
+- [lizard add](/cli/add) — GitHub リポジトリからサービスを作成

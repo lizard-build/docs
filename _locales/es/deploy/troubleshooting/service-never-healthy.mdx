@@ -1,0 +1,59 @@
+---
+description: "La compilación se completa, pero el despliegue sigue sin estar healthy. Vinculación de puertos, modo worker accidental y otras causas de una verificación de estado fallida."
+---
+
+<span id="my-service-deploys-but-never-becomes-healthy" />
+
+# Mi servicio se despliega pero nunca pasa a healthy
+
+La compilación se completa, las réplicas se inician, pero el despliegue sigue pendiente, se marca como unhealthy o nunca recibe tráfico.
+
+<span id="what-this-means" />
+
+## Qué significa esto
+
+La verificación de estado de la plataforma —que comprueba que se puede acceder al puerto de tu app— nunca se completa correctamente, así que el tráfico nunca se redirige a las nuevas réplicas.
+
+<span id="why-this-can-happen" />
+
+## Por qué puede pasar esto
+
+- **Tu app no está escuchando en el puerto esperado.** Lizard inyecta una variable de entorno `PORT` (puerto de contenedor predeterminado `3000`) y comprueba que se pueda acceder a tu app ahí. Si tu app tiene otro puerto fijado en el código, o nunca se enlaza a ninguno, la verificación de estado falla indefinidamente. Una app de Python es el caso más habitual: `gunicorn` y `uvicorn` se enlazan a `127.0.0.1` a menos que les indiques otra cosa, y la sonda viene desde fuera del proceso. [Hosting de apps Python](https://lizard.build/blog/python-app-hosting#what-a-python-app-actually-needs-from-a-host) tiene la línea `--bind 0.0.0.0:$PORT` que necesita cada framework.
+- **El servicio está accidentalmente en modo worker.** Configurar `containerPort=0` pone un servicio en [modo worker](/deploy/workers), lo que **omite por completo la verificación de estado y el registro en el balanceador de carga**. Un servicio que debería servir HTTP pero se cambió a `containerPort=0` se desplegará "correctamente" y simplemente nunca servirá nada: el modo worker oculta el problema subyacente de arranque en lugar de mostrarlo.
+
+<span id="possible-solutions" />
+
+## Posibles soluciones
+
+<span id="check-the-current-port" />
+
+### Comprueba el puerto actual
+
+```bash
+lizard port --service api
+```
+
+Si esto muestra `worker mode`, el servicio tiene `containerPort=0`. Vuelve a configurarlo con un puerto real si este servicio debe servir HTTP:
+
+```bash
+lizard port 3000 --service api
+lizard redeploy --service api
+```
+
+<span id="confirm-your-app-is-listening-where-lizard-expects" />
+
+### Confirma que tu app está escuchando donde Lizard espera
+
+Revisa los logs de ejecución para detectar errores de arranque y verifica el puerto al que la app realmente se enlazó frente al que Lizard inyectó:
+
+```bash
+lizard logs --service api
+lizard ssh --service api -- env | grep PORT
+```
+
+<span id="see-also" />
+
+## Ver también
+
+- [Background Workers](/deploy/workers) — cuándo `containerPort=0` es (y no es) la opción correcta.
+- [Deployments → lifecycle](/concepts/deployments#lifecycle) — dónde se sitúa la verificación de estado dentro de un despliegue.

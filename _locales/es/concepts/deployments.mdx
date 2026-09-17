@@ -1,0 +1,95 @@
+---
+description: "El ciclo de despliegue en Lizard: qué desencadena una compilación, cómo el tráfico cambia a réplicas en buen estado y en qué se diferencian los reinicios de los redespliegues."
+---
+
+<span id="deployments" />
+
+# Despliegues
+
+Un **despliegue** es una compilación y publicación de un servicio. La ruta de publicación depende del entorno de ejecución del servicio. Una compilación correcta no demuestra por sí sola que la aplicación se haya iniciado o pueda atender solicitudes.
+
+<span id="how-a-deploy-happens" />
+
+## Cómo ocurre un despliegue
+
+Un despliegue se desencadena por cualquiera de estos casos:
+
+- Un **`git push`** a la rama seguida (para servicios con código fuente `github`).
+- **`lizard redeploy`** — recompila desde el commit más reciente (git) o la última carga, con las variables actuales.
+- **`lizard up`** — carga el directorio actual y lo despliega.
+- Un **`service set`** que cambia un campo que afecta a la compilación.
+
+```bash
+lizard redeploy --service api      # rebuild + redeploy from current source
+lizard up                          # upload cwd and deploy
+```
+
+<span id="lifecycle" />
+
+## Ciclo de vida
+
+1. **Compilación** — la plataforma ejecuta tu compilación (consulta [Build Pipeline](/concepts/build-pipeline)).
+2. **Predeploy** — si `preDeployCommand` está configurado, se ejecuta una vez (por ejemplo, migraciones).
+3. **Inicio** — Lizard inicia la aplicación para su entorno de ejecución configurado.
+4. **Comprobación de estado** — la plataforma verifica que se pueda acceder al puerto de la app (se omite para [workers](/deploy/workers)).
+5. **Verificación** — inspecciona el estado de la publicación y llama a la URL de la aplicación. La accesibilidad del puerto no es una comprobación completa del estado de la aplicación.
+
+<span id="streaming-output" />
+
+## Salida en streaming
+
+Cuando ejecutas un `lizard up` no desacoplado (o `redeploy`), los registros de compilación se transmiten en vivo. Con `--json`, obtienes un evento JSON por línea:
+
+```json
+{ "event": "log", "line": "..." }
+{ "event": "deployed", "status": "...", "url": "https://..." }
+```
+
+que termina en `deployed`, `failed` o `deploying`. Usa `--detach` para iniciar el despliegue y volver inmediatamente sin transmitir la salida.
+
+<span id="inspecting-history" />
+
+## Inspección del historial
+
+```bash
+lizard events                  # deploy history + per-replica status
+lizard events --limit 25       # show more
+lizard ps                      # current services, status, and URLs
+```
+
+En el [panel](/dashboard), la vista de **Deployments** muestra la cronología completa, los registros de compilación de cada despliegue y un panel de detalles para cada publicación.
+
+<span id="restarts-vs-redeploys" />
+
+## Reinicios vs. redespliegues
+
+| Command | Qué hace |
+|---------|--------------|
+| `lizard restart --service <svc>` | Reinicio de la compilación **actual** — sin recompilar |
+| `lizard redeploy --service <svc>` | **Compilación** nueva desde el último commit/carga, y luego publicación |
+
+Usa `restart` para reciclar réplicas (por ejemplo, para aplicar un secreto de ejecución que no se recargó en caliente); usa `redeploy` cuando necesites una nueva compilación.
+
+<span id="recovering-from-a-crash" />
+
+## Recuperación tras un fallo
+
+Inspecciona los registros del fallo o reinicio más reciente:
+
+```bash
+lizard logs --restart latest       # log tail around the latest restart
+lizard logs --restart <id>         # a specific restart
+lizard events                      # see replica status
+```
+
+<span id="config-changes-no-rebuild" />
+
+## Cambios de configuración (sin recompilar)
+
+La mayoría de los cambios en variables de entorno y secretos se aplican sin recompilar: Lizard actualiza la configuración del servicio y lo reinicia, lo que tarda unos segundos. Los valores de tiempo de compilación (`VITE_*`, `NEXT_PUBLIC_*`) y los cambios en campos de compilación sí fuerzan una recompilación — consulta la [tabla de desencadenantes de recompilación](/concepts/build-pipeline#what-triggers-a-rebuild).
+
+<span id="failed-releases-and-recovery" />
+
+## Publicaciones fallidas y recuperación
+
+Una compilación fallida y un inicio fallido de la aplicación son casos distintos. No asumas que una publicación anterior sigue atendiendo tráfico en todos los entornos de ejecución. Inspecciona el servicio activo, los registros de compilación y los registros de ejecución. `lizard redeploy` vuelve a compilar el origen seleccionado; no es un comando para restaurar una compilación anterior. Revierte el commit del código fuente cuando sea necesario, desplíegalo y comprueba el resultado. Consulta [problemas conocidos](/platform/known-issues).

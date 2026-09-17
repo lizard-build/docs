@@ -1,0 +1,72 @@
+---
+description: "2026年9月9日に行った 16 件の実際の Lizard CLI デプロイによるフレームワークガイド結果: テストしたバージョン、ルート、フォーム、マイグレーション、canonical URL、制限事項。"
+---
+
+<span id="framework-guide-test-results" />
+
+# フレームワークガイドのテスト結果
+
+2026年9月9日時点で、11 個のフレームワークにまたがる 16 件すべてのレシピが、Lizard CLI 0.3.95 でローカルビルドと新規クラウドデプロイに合格しました。公開されているセットアップに従い、各レシピごとに新しいプロジェクトとサービスを作成し、`lizard up` でソースをアップロードしました。これらの結果は、以下のバージョンと小規模テストアプリを対象としています。
+
+クラウド実行では、ルート、API、フォームの 100 件のチェックに加え、リンクされた JavaScript と CSS ファイルの 45 件のチェックにも合格しました。Django のマイグレーション、データベースへの書き込みと読み取り、最終的な Docusaurus と Hugo サイトの URL も合格しました。
+
+<span id="tested-recipes" />
+
+## テストしたレシピ
+
+| レシピ | テストしたバージョン | ポート | クラウドチェック |
+|---|---|---|---|
+| Next.js server | Next.js 16.3.4, React 19.2.8 | `3000` | 合格 |
+| Next.js static export | Next.js 16.3.4, React 19.2.8 | `80` | 合格 |
+| React with Vite | React 19.2.8, Vite 8.2.2 | `80` | 合格 |
+| Vue with Vite | Vue 3.5.42, Vue Router 5.3.1, Vite 8.2.2 | `80` | 合格 |
+| Astro static | Astro 7.3.1 | `80` | 合格 |
+| Astro Node server | Astro 7.3.1, Node adapter 11.1.5 | `3000` | 合格 |
+| Nuxt Node server | Nuxt 4.5.2 | `3000` | 合格 |
+| Nuxt generate | Nuxt 4.5.2 | `80` | 合格 |
+| SvelteKit Node server | SvelteKit 2.70.3, Svelte 5.57.0, adapter-node 5.5.7 | `3000` | 合格 |
+| SvelteKit static | SvelteKit 2.70.3, Svelte 5.57.0, adapter-static 3.0.10 | `80` | 合格 |
+| Docusaurus | Docusaurus 3.10.2 | `80` | 合格 |
+| VitePress, docs root | VitePress 1.6.4 | `80` | 合格 |
+| VitePress, project root | VitePress 1.6.4 | `80` | 合格 |
+| FastAPI | FastAPI 0.141.1, Uvicorn 0.52.4 | `8000` | 合格 |
+| Django | Django 6.1.1, Gunicorn 26.2.0, WhiteNoise 6.12.0, psycopg 3.3.5 | `8000` | 合格 |
+| Hugo | Hugo 0.165.0 (extended) | `80` | 合格 |
+
+JavaScript ビルドでは Node 22 を使用し、Python ビルドでは Python 3.13 を使用しました。アップロードは macOS から `COPYFILE_DISABLE` なしで実行しました。パッケージマニフェストと lockfile は上記のバージョンを固定しています。コンテナイメージのタグは、パッケージ lockfile とは独立して変わる場合があります。
+
+<span id="what-we-checked-on-september-9" />
+
+## 9月9日に確認した内容
+
+- Linux コンテナ内でドキュメント記載のローカルビルドおよびサーバーコマンドを実行し、その後、各レシピに対して `lizard init`、`lizard add`、`lizard up` を実行しました。クラウドのビルドログとランタイムログを読み、最終的なサービスの状態とポートを確認しました。
+- 公開ホームページ、内部ルート、実在するアセット、存在しないページ、存在しない JavaScript パスをリクエストしました。静的コンテンツサイトは実際の 404 を返し、React と Vue はドキュメントどおり SPA フォールバックを維持しました。両方の VitePress レイアウトは clean URL で正しいコンテンツを返しました。
+- リクエスト時の API レスポンス、POST ハンドラー、SvelteKit フォーム結果、信頼されていないオリジンからのフォーム拒否を確認しました。デプロイされた Next.js Server Action フォームを、その生成された action ID を使って HTTP 経由で送信し、リダイレクトと返された値を確認しました。
+- 生成されたホスト名を config に設定した後、Docusaurus と Hugo を再ビルドしました。Docusaurus の canonical URL と両方の sitemap は公開ホストを使用していました。
+- Managed Postgres に対して Django マイグレーションを 2 回実行し、テスト行の書き込みと読み取りを行い、収集済み静的ファイルを配信し、有効な CSRF フォームを受け入れ、トークンのないフォームを拒否しました。
+
+各レシピでは、実行を分離するために異なる名前の個別テストプロジェクトを使用しました。workspace、region、JSON フラグにより、テストコンテキストを明示しました。build、start、および Dockerfile path のサービスオーバーライドは未設定のままにしました。ガイドに記載された Dockerfile を指定したのは、Next.js static export、Nuxt generate、Django の各レシピのみです。Docusaurus、VitePress、Hugo、および SvelteKit Node のテストには、[公開されているソース例](https://github.com/lizard-build/docs/tree/main/_examples) が含まれていました。
+
+<span id="browser-checks" />
+
+## ブラウザチェック
+
+9月9日の実行では、ブラウザ内で React ボタンのクリックを確認しました。その後、ナビゲーションおよびページ読み取り中にブラウザ接続でタイムアウトが繰り返し発生したため、この実行は 16 件すべてのレシピについて新たなブラウザ合格を**主張しません**。HTTP ルートおよびフォームのチェックは独立して合格しました。
+
+9月7日の実行には、ブラウザでのダイレクトルート再読み込み、React の操作、Vue Router ナビゲーション、Next.js Server Actions、SvelteKit フォーム送信が含まれていました。これらは引き続き、その以前の実行による結果です。
+
+<span id="fixes-since-the-first-run" />
+
+## 初回実行以降の修正
+
+9月7日の実行では、サービス作成手順の欠落、Nuxt static preset の不一致、静的ルーティングの不具合、macOS のアーカイブメタデータ、failed-build の終了コード、ポート変更エラーが見つかりました。ガイドには現在、`lizard add` と修正済みの Nuxt static セットアップが含まれています。
+
+9月8日の静的ルーティング再確認では、Astro static、SvelteKit static、Docusaurus、Hugo、および両方の VitePress レイアウトについて、カスタム Dockerfile なしで合格しました。新しいビルドにはそれらのルーティングルールが含まれています。既存のイメージでは再ビルドが必要です。
+
+Lizard CLI 0.3.95 には、アーカイブおよび failed-build 終了コードの修正が含まれています。9月9日の本番チェックでは、サービスのポート変更と、アップロードおよび再ビルド中に明示的なポートが維持されることも検証しました。リリースノートと残っている制限事項については、[既知の問題](/platform/known-issues) を参照してください。
+
+<span id="limits-of-these-results" />
+
+## これらの結果の制限事項
+
+これらのチェックは、ソースアップロードとドキュメント記載のモードを対象としています。すべてのプラグイン、adapter、theme、framework バージョン、GitHub デプロイパス、データベース復旧手順、または複数レプリカのワークロードへの対応を確立するものではありません。Django の小規模テストアプリは、`check --deploy` によるセキュリティ警告を引き続き報告します。これは完全な本番セキュリティ設定ではありません。これらのテストは、検索順位や AI citations を測定するものではありません。リリース前に、アプリ固有のルートとデータ操作を確認してください。

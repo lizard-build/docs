@@ -1,0 +1,58 @@
+---
+description: "lizard init erstellt oder wählt ein Projekt aus und verknüpft es mit dem aktuellen Verzeichnis, einschließlich der expliziten Form, die Sie in CI benötigen."
+---
+
+# lizard init
+
+Erstellen oder wählen Sie ein Projekt aus und verknüpfen Sie es mit dem aktuellen Verzeichnis.
+
+## Usage
+
+```bash
+lizard init [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-n, --name <name>` | Projektname (wird erstellt, falls nicht vorhanden) |
+| `-w, --workspace <ws>` | Workspace-ID, Slug oder Name |
+| `--force` | Erneut verknüpfen, auch wenn bereits verknüpft |
+
+## Examples
+
+<span id="link-the-current-directory-interactively" />
+
+### Das aktuelle Verzeichnis interaktiv verknüpfen
+
+```bash
+lizard init
+```
+
+<span id="link-explicitly-in-ci" />
+
+### In CI explizit verknüpfen
+
+`lizard up` führt `init` für Sie in einem TTY aus, aber in einer Nicht-TTY-Umgebung (CI) gibt es einen Fehler aus, statt stillschweigend ein Projekt zu erstellen. Verknüpfen Sie es zuerst explizit:
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+lizard init --name my-project
+lizard up --ci --service api
+```
+
+<span id="relink-a-directory-thats-already-linked" />
+
+### Ein Verzeichnis erneut verknüpfen, das bereits verknüpft ist
+
+```bash
+lizard init --name my-project --force
+```
+
+## See also
+
+- [lizard link](/cli/link) — das aktuelle Verzeichnis mit einem vorhandenen Projekt verknüpfen, statt eines zu erstellen
+- [lizard status](/cli/status) — den verknüpften Workspace, das Projekt und den Service für das aktuelle Verzeichnis anzeigen
+- [lizard up](/cli/up) — das aktuelle Verzeichnis hochladen und bereitstellen
+- [Core Concepts](/concepts/architecture) — Projekte, Services und die Build-Pipeline

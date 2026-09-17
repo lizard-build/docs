@@ -1,0 +1,45 @@
+---
+description: "Lee la línea de tiempo de despliegue de un servicio y el estado en vivo de las réplicas con lizard events, y encuentra el mismo historial en la vista Deployments del dashboard."
+---
+
+<span id="events--history" />
+
+# Eventos e historial
+
+`lizard events` muestra el historial de despliegues de un servicio y el estado en vivo de sus réplicas: la línea de tiempo de lo que se desplegó y de lo que se está ejecutando ahora mismo.
+
+<span id="view-events" />
+
+## Ver eventos
+
+```bash
+lizard events                     # deploy history + replica status
+lizard events --service api       # a specific service
+lizard events --limit 25          # show more entries (default 10)
+```
+
+Cada entrada cubre una acción de despliegue o escalado y el estado resultante de las réplicas, para que puedas responder de un vistazo "qué cambió y si está saludable".
+
+<span id="quick-status" />
+
+## Estado rápido
+
+Para una vista rápida de todos los servicios del proyecto — estado y URL — usa:
+
+```bash
+lizard ps
+lizard status        # the current directory's workspace/project/service link
+```
+
+## Dashboard
+
+La vista **Deployments** del dashboard (`lizard open`) muestra el mismo historial como una línea de tiempo, con un panel de detalles por despliegue (logs de compilación, commit, estado) y el estado de salud de cada réplica.
+
+<span id="see-also" />
+
+## Ver también
+
+- [Deployments](/concepts/deployments) — el ciclo de vida del despliegue.
+- [Logs](/observability/logs) — logs de ejecución, compilación y reinicio.
+- [Metrics & Cost](/observability/metrics) — uso de recursos y facturación.
+- [`lizard events`](/cli/events) — la referencia completa de comandos.

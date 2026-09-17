@@ -1,0 +1,53 @@
+---
+description: "アプリケーションデータと sandbox ファイルのためのストレージを選択します。リソースを削除または置き換える前に、アタッチ、ホスト障害、エクスポート、復旧について理解してください。"
+---
+
+<span id="storage-and-recovery" />
+
+# ストレージと復旧
+
+プロセスの再起動、新しいデプロイ、またはホスト障害をまたいで保持する必要があるデータに応じてストレージを選択してください。これらはそれぞれ異なるイベントです。永続ストレージ自体は、バックアップ、復元ポイント、高可用性を提供しません。
+
+| Data | Where to keep it | Boundary |
+|---|---|---|
+| アプリケーションレコード | Managed Postgres または別のデータベース | 再起動と、削除または破損したデータの復元は別です。別個のエクスポートおよび復元経路をテストしてください。 |
+| キャッシュおよびキューデータ | Managed Redis | ワークロードが状態を再構築できるのか、独自の復旧計画が必要なのかを判断してください。 |
+| アプリケーション間で共有されるファイル | Managed Object Storage | 非公開データをアップロードする前に、bucket のアクセス ポリシーを設定してください。自動作成される `default` bucket は public-read です。 |
+| 後続の Sandboxes で必要なファイル | Persistent Volumes、`/data` にマウント | 一度にアタッチできる sandbox は 1 つだけです。volume はその node 上に残ります。 |
+| 一時的な sandbox ファイル | `/data` の外側にある guest filesystem | sandbox の終了後や guest の置き換え後に残っていることを期待しないでください。 |
+| 一時停止したプロセス状態 | ホストメモリ | 一時停止は永続的なスナップショットではありません。ホスト障害が発生するとその状態は失われます。 |
+
+<span id="keep-files-after-a-sandbox-ends" />
+
+## sandbox の終了後もファイルを保持する
+
+同じ project に Persistent Volume を作成し、sandbox の作成時にアタッチして、`/data` の配下に書き込んでください。volume を次の sandbox にアタッチする前に、最初の sandbox を終了してください。[完全な例](/sandboxes/volumes)を参照してください。
+
+<span id="plan-a-database-restore" />
+
+## データベースの復元を計画する
+
+データを変更する移行またはリリースの前に:
+
+1. 使用中のデータベースとバージョンに対するエクスポート方法を選択します。
+2. 変更対象のリソースとは別の場所にエクスポートを保存します。
+3. 別個のテスト用データベースに復元し、アプリケーションがそれを読み取れることを確認します。
+4. 復元にかかる時間と、エクスポートに含まれる最新データを記録します。
+
+データベースがマネージドであることを理由に、定期バックアップ、ポイントインタイムリカバリ、マルチノード レプリケーション、または復元時間の保証を想定しないでください。現在のサービス契約と、そのリソースで利用できる制御を確認してください。
+
+<span id="environment-references" />
+
+## 環境参照
+
+アプリケーションは、環境参照からデータベース接続を読み取るべきです。接続文字列は認証情報です。更新を確認するためにそれを出力するのは避けてください。`SELECT 1` のような接続確認は、shell 内で変数を見るよりも多くを証明します。
+
+<span id="related-guides" />
+
+## 関連ガイド
+
+- [Managed Postgres](/addons/postgres)
+- [Managed Redis](/addons/redis)
+- [Managed Object Storage](/addons/storage)
+- [Persistent Volumes](/sandboxes/volumes)
+- [デプロイの復旧](/concepts/deployments#failed-releases-and-recovery)

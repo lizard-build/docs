@@ -1,0 +1,61 @@
+---
+description: "lizard redeploy は、現在の変数を使用して最新のコミットまたはアップロードから新しいビルドを開始し、--detach を渡さない限りログをストリーミングします。"
+---
+
+# lizard redeploy
+
+現在の変数を使用して新しいビルド（最新のコミット / 最後のアップロード）を開始します。
+
+## Usage
+
+```bash
+lizard redeploy [nameOrId] [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|--------------|
+| `-s, --service <name>` | サービス |
+| `--detach` | ビルドが受け付けられたら戻る |
+| `--wait` | ビルドとデプロイの準備完了を待機します。`--json` と一緒に動作します |
+| `--timeout <seconds>` | ビルド後の準備完了待機時間の上限。デフォルトは `120` |
+| `--json` | スクリプト用に JSON を返します |
+
+## Examples
+
+<span id="rebuild-and-redeploy-a-service" />
+
+### サービスを再ビルドして再デプロイする
+
+```bash
+lizard redeploy --service api
+```
+
+<span id="redeploy-without-streaming-logs" />
+
+### ログをストリーミングせずに再デプロイする
+
+```bash
+lizard redeploy --service api --detach
+```
+
+<span id="wait-in-a-script" />
+
+### スクリプト内で待機する
+
+CLI 0.3.94 以降が必要です。HTTP を使わない worker では 0.3.95 以降を使用してください。
+
+```bash
+lizard --json redeploy --service api --wait --timeout 120
+```
+
+`--wait` がない場合、JSON モードはビルドリクエストが受け付けられた時点で返ります。`--wait` がある場合、CLI はそのビルドを追跡し、その後デプロイの準備完了を待機します。JSON の結果には `buildId`、`ok`、`status` が含まれます。ビルドの失敗、準備完了チェックの失敗、またはタイムアウトでは、非ゼロの終了コードが返されます。
+
+タイムアウトはビルド完了後の準備完了に適用されます。ビルド時間を制限したり、デプロイをキャンセルしたりはしません。`containerPort=0` を持つ worker は、HTTP チェックなしでバックエンドの準備完了ステータスを使用します。コマンドが正常に完了した後は、ワークフローでアプリケーションの動作確認が必要な場合、アプリケーションのエンドポイントまたは保存済みデータを確認してください。
+
+## See also
+
+- [lizard restart](/cli/restart) — 現在のビルドをローリング再起動、再ビルドなし
+- [lizard up](/cli/up) — 現在のディレクトリをアップロードしてデプロイします
+- [Deployments](/concepts/deployments) — デプロイ、再起動、再ビルドの仕組み

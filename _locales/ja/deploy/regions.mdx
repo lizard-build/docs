@@ -1,0 +1,40 @@
+---
+description: "サービスとアドオンをどこで実行するかを選び、ステートフルなリソースを同じ場所に配置してレイテンシを下げ、リージョンが生成ドメインにどう影響するかを確認します。"
+---
+
+<span id="regions" />
+
+# リージョン
+
+サービスとアドオンはリージョンにプロビジョニングされます。アカウントで利用可能なリージョンを一覧し、作成時に 1 つ選択します。
+
+<span id="list-regions" />
+
+## リージョンを一覧する
+
+```bash
+lizard regions
+lizard regions --json
+```
+
+<span id="choose-a-region" />
+
+## リージョンを選ぶ
+
+サービスまたはアドオンの作成時に `--region <code>` を渡します:
+
+```bash
+lizard add -r your-org/your-app --region <code>
+lizard add postgres --region <code>
+lizard up --region <code>
+```
+
+リージョンを指定しない場合、プラットフォームはプロジェクトのデフォルトを使用します。
+
+> **ステートフルなリソースは同じ場所に配置してください。** サービスと、それが通信するアドオン（Postgres、Redis、S3）は、レイテンシを低く保ち、リージョン間のデータ転送料金を避けるために、**同じリージョン** に配置してください。
+
+<span id="generated-domains" />
+
+## 生成ドメイン
+
+各サービスには、リージョンに関係なく、自動 TLS 付きで `*.onlizard.com` 上の生成ドメインが割り当てられます。[S3 addon](/addons/storage) から配信されるオブジェクトストレージは、リージョンごとのゲートウェイホスト（`s3-<region>.onlizard.com`）を使用します。独自のホスト名を接続するには、[Networking](/networking) を参照してください。

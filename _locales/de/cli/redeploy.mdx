@@ -1,0 +1,61 @@
+---
+description: "lizard redeploy löst einen frischen Build aus dem neuesten Commit oder Upload mit den aktuellen Variablen aus und streamt Logs, außer wenn du --detach übergibst."
+---
+
+# lizard redeploy
+
+Löst einen frischen Build aus (neuester Commit / letzter Upload) mit den aktuellen Variablen.
+
+## Usage
+
+```bash
+lizard redeploy [nameOrId] [flags]
+```
+
+## Flags
+
+| Flag | Description |
+|------|--------------|
+| `-s, --service <name>` | Service |
+| `--detach` | Gibt zurück, nachdem der Build akzeptiert wurde |
+| `--wait` | Wartet auf den Build und die Bereitstellung der Deployment-Readiness; funktioniert mit `--json` |
+| `--timeout <seconds>` | Zeitbudget für das Warten auf Readiness nach dem Build; Standard `120` |
+| `--json` | Gibt JSON für Skripte zurück |
+
+## Examples
+
+<span id="rebuild-and-redeploy-a-service" />
+
+### Service neu bauen und erneut deployen
+
+```bash
+lizard redeploy --service api
+```
+
+<span id="redeploy-without-streaming-logs" />
+
+### Erneut deployen, ohne Logs zu streamen
+
+```bash
+lizard redeploy --service api --detach
+```
+
+<span id="wait-in-a-script" />
+
+### In einem Skript warten
+
+Erfordert CLI 0.3.94 oder neuer. Verwende 0.3.95 oder neuer für Worker ohne HTTP.
+
+```bash
+lizard --json redeploy --service api --wait --timeout 120
+```
+
+Ohne `--wait` gibt der JSON-Modus zurück, nachdem die Build-Anfrage akzeptiert wurde. Mit `--wait` verfolgt die CLI diesen Build und wartet dann auf die Deployment-Readiness. Das JSON-Ergebnis enthält `buildId`, `ok` und `status`. Ein fehlgeschlagener Build, eine fehlgeschlagene Readiness-Prüfung oder ein Timeout liefern einen Exit-Code ungleich null zurück.
+
+Das Timeout gilt für die Readiness, nachdem der Build abgeschlossen ist; es begrenzt nicht die Build-Dauer und bricht das Deployment nicht ab. Worker mit `containerPort=0` verwenden den Readiness-Status aus dem Backend ohne HTTP-Prüfung. Prüfe nach einem erfolgreichen Befehl einen Anwendungsendpunkt oder gespeicherte Daten, wenn dein Workflow das Anwendungsverhalten verifizieren muss.
+
+## See also
+
+- [lizard restart](/cli/restart) — Rolling-Restart des aktuellen Builds, kein Neubau
+- [lizard up](/cli/up) — lädt das aktuelle Verzeichnis hoch und deployt es
+- [Deployments](/concepts/deployments) — wie Deploys, Neustarts und Rebuilds funktionieren

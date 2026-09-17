@@ -1,0 +1,49 @@
+---
+description: "デプロイ前に、アプリのレプリカ上限、Sandboxes のリソースとタイムアウト、リージョン、アカウントクォータの適用範囲を確認してください。"
+---
+
+<span id="limits" />
+
+# 制限
+
+制限は、リソース、プラン、アカウントによって異なります。レプリカごとの設定は、サービスまたはアカウント全体で利用可能な合計ではありません。ワークロードのサイズを決める前に、現在のプランと、作成またはスケールリクエストの結果を確認してください。
+
+<span id="applications" />
+
+## アプリケーション
+
+| Setting | Scope | What to check |
+|---|---|---|
+| CPU and memory | 各レプリカ | 上限が 2 vCPU / 2 GiB のレプリカが 3 つある場合、設定上の合計上限は 6 vCPU / 6 GiB です。これは使用量の予測ではありません。 |
+| Replica count | サービスとプラン | API は 1–10 を受け付けますが、プランの制限によりこの範囲が狭まることがあります。Standard プランのチェックでは 1、Pro/Enterprise では 5 までで、アカウントごとの上書きが適用される場合があります。 |
+| Account resource cap | アカウント所有者 | 2 つ目のプロジェクトを作成しても、必ずしも 2 つ目のクォータが作成されるわけではありません。大規模なデプロイを計画する前に、実効アカウント上限を確認してください。 |
+| Worker mode | サービス | `containerPort=0` は、HTTP リスナーや公開ロードバランサールートなしで実行されます。 |
+| Custom domain | ホスト名 | ワイルドカードカスタムドメインは受け付けられません。特定のホスト名を使用し、所有権確認と DNS チェックを完了してください。 |
+
+アプリケーションでは異なるランタイムを使用できます。すべてのアプリケーションが Sandboxes と同じ Firecracker micro-VM 境界を持つとは限りません。
+
+## Sandboxes
+
+| Setting | Current create API |
+|---|---|
+| CPU and memory | 4 vCPU / 4096 MiB |
+| Templates | `base`, `code-interpreter-v1` |
+| Raw API default lifetime | `timeoutMs: 0`, 有効期限なし |
+| Lizard SDK default lifetime | 300000 ms、5 分 |
+| Explicit lifetime range | 0 から 2147483647 までの整数ミリ秒 |
+| Updating a lifetime | 少なくとも 1000 ms。アイドルタイマーではありません |
+| Persistent volume attachment | 一度に 1 つの sandbox、ボリュームのノード上 |
+
+スクリプトからは明示的な lifetime を渡してください。たとえば、`--timeout 300000` を使うと、Lizard CLI のリリースをまたいでも意図した上限が明確になります。セッションを待機状態にする前に、[一時停止と有効期限](/platform/known-issues#sandbox-pause-and-expiration)を参照してください。
+
+<span id="regions" />
+
+## リージョン
+
+現在設定されているリージョンには、US East (Virginia)、`us-east-1`、EU West (Limburg)、`eu-west-lim-a` が含まれます。カタログにリージョンがあっても、すべてのリソースで利用可能な容量が保証されるわけではありません。リソース作成時にリージョンの選択肢を確認してください。既存のボリュームを使用する sandbox は、そのボリュームのノード上で実行する必要があります。
+
+<span id="before-increasing-scale" />
+
+## スケールを増やす前に
+
+アクティブなプラン、レプリカごとの設定、アカウント上限、データベース接続上限、ストレージ増加をあわせて確認してください。[スケーリング](/deploy/scaling)、[メトリクス](/observability/metrics)、[料金](https://lizard.build/pricing)を使って、設定済み容量と実測使用量を比較してください。

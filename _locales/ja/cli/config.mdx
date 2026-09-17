@@ -1,0 +1,55 @@
+---
+description: "lizard config apply は lizard-config.json ファイルをプロジェクトに反映し、変更を先に確認するための --dry-run フラグも利用できます。"
+---
+
+# lizard config
+
+`lizard-config.json` ファイルをプロジェクトに反映します。
+
+## Usage
+
+```bash
+lizard config apply [flags]
+```
+
+## Subcommands
+
+### `lizard config apply`
+
+`lizard-config.json` ファイルをプロジェクトに反映します。
+
+| Flag | Description |
+|------|-------------|
+| `-f, --file <path>` | 設定ファイル（デフォルト: `lizard-config.json`） |
+| `--dry-run` | 反映せずに何が変更されるかを表示 |
+
+## Examples
+
+<span id="apply-the-default-config-file" />
+
+### デフォルトの設定ファイルを反映する
+
+```bash
+lizard config apply
+```
+
+<span id="apply-a-config-file-from-a-custom-path" />
+
+### カスタムパスの設定ファイルを反映する
+
+```bash
+lizard config apply -f ./configs/prod.json
+```
+
+<span id="preview-changes-without-applying-them" />
+
+### 反映せずに変更をプレビューする
+
+```bash
+lizard config apply --dry-run
+```
+
+## See also
+
+- [lizard service](/cli/service) — 個別のサービスを管理
+- [Architecture](/concepts/architecture) — ワークスペース、プロジェクト、サービスの関係

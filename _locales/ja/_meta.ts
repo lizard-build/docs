@@ -1,0 +1,18 @@
+export default {
+  index: "はじめに",
+  'getting-started': "アプリ クイックスタート",
+  studio: "Lizard Studio",
+  'framework-guides': "フレームワーク ガイド",
+  guides: "ガイド",
+  platform: "制限と運用",
+  concepts: "コアコンセプト",
+  deploy: "デプロイ",
+  variables: "変数",
+  networking: "ネットワーキング",
+  addons: "Managed Addons",
+  sandboxes: "Sandboxes",
+  observability: "オブザーバビリティ",
+  cli: "CLI リファレンス",
+  dashboard: "アプリ ダッシュボード",
+  agents: "コーディングエージェント",
+};

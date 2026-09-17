@@ -1,0 +1,57 @@
+---
+description: "ビルド手順のないリポジトリの Dockerfile を Lizard が置き換える理由、不完全な Dockerfile ルールの仕組み、そのまま使用させる方法。"
+---
+
+<span id="my-dockerfile-changes-dont-seem-to-apply" />
+
+# Dockerfile の変更が反映されていないようです
+
+リポジトリに `Dockerfile` があり、それを編集したにもかかわらず、Lizard が実行するビルドがあなたの記述と一致しません。
+
+<span id="what-this-means" />
+
+## これは何を意味するのか
+
+プラットフォームは、リポジトリの Dockerfile が**不完全**だと判断し、あなたのものをそのまま使う代わりに [lizardpack](/concepts/build-pipeline) で再生成しました。
+
+<span id="why-this-can-happen" />
+
+## なぜこれが起こるのか
+
+Lizard が lizardpack の自動検出パスでリポジトリの Dockerfile を**そのまま**使うのは、それに実際のビルド手順、つまり `RUN <package-manager>` 行がある場合だけです。ビルド済みアーティファクトをコピーするだけの Dockerfile（`COPY dist/`、`build/`、`out/`、`.next/`、`public/`）で、`RUN` 手順がないものは、それらのアーティファクトがイメージの外部でビルドされたと見なされ、不完全として扱われます。その場合、lizardpack が不足しているビルド手順を含む置き換え用 Dockerfile を生成します。
+
+これは lizardpack の自動検出パスでのみ適用されます。サービスに `buildCommand` または `startCommand` が設定されている場合、Lizard はそれらのコマンドから Dockerfile を合成し、リポジトリの Dockerfile はまったく参照しません。
+
+<span id="possible-solutions" />
+
+## 考えられる解決策
+
+<span id="add-a-real-build-step" />
+
+### 実際のビルド手順を追加する
+
+Dockerfile をそのまま使いたい場合は、ビルド済み出力をコピーするのではなく、実際のビルド手順を追加してください。
+
+```dockerfile
+RUN npm ci && npm run build
+```
+
+<span id="or-force-verbatim-use" />
+
+### またはそのまま使用するよう強制する
+
+ビルドと起動のオーバーライドをクリアしてから、同じ更新で `dockerfilePath` を設定してください。オーバーライドはファイルパスよりも優先されます。
+
+```bash
+lizard service set api --set buildCommand=null --set startCommand=null --set dockerfilePath=Dockerfile
+```
+
+<span id="see-also" />
+
+## 関連情報
+
+- [Build Pipeline](/concepts/build-pipeline) — ビルドの判断順序の全体像。
+- [ビルド設定リファレンス](/concepts/build-pipeline#build-configuration-reference)
+- [Lizard で任意の Python アプリをデプロイする](https://lizard.build/blog/python-app-hosting#deploying-any-python-app-on-lizard) — Dockerfile を lizardpack に書かせるべき場合と、自前のものを持ち込むべき場合。
+
+これらのビルド項目を変更すると、ビルドが開始されることがあります。2 回目のビルドを開始しないよう、別の `redeploy` を送信する前に `lizard events` を確認してください。

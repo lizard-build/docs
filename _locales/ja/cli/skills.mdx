@@ -1,0 +1,61 @@
+---
+description: "lizard skills は、このCLIバージョンに同梱されたエージェントガイドを読み取るため、AIエージェントは常にバイナリに一致する手順を取得できます。"
+---
+
+# lizard skills
+
+このCLIバージョンに同梱された埋め込みエージェントスキルを読み取ります。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard skills list
+lizard skills get core
+lizard skills path
+```
+
+<span id="subcommands" />
+
+## サブコマンド
+
+### `lizard skills list`
+
+利用可能な埋め込みスキルを一覧表示します。
+
+### `lizard skills get core`
+
+コアガイドを読み取ります。これはプラットフォームの正式な使い方ガイドで、CLIとともにバージョン管理されています。`{ name, frontmatter, content, … }` を返します。ここで、`content` は完全なガイド（ビルドパイプライン、env の優先順位、アドオン、検出、終了コード）です。
+
+### `lizard skills path`
+
+スキルがディスク上のどこに保存されているかを表示します。
+
+<span id="examples" />
+
+## 例
+
+<span id="load-the-core-guide-as-an-agent" />
+
+### コアガイドをエージェントとして読み込む
+
+```bash
+lizard skills get core --json
+```
+
+<span id="list-available-embedded-skills" />
+
+### 利用可能な埋め込みスキルを一覧表示する
+
+```bash
+lizard skills list
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [AI agents & MCP](/agents) — エージェントが埋め込みスキルと自己記述型コマンドでブートストラップする方法
+- [JSON & automation](/cli/json) — `lizard skills get core --json` で使用される `--json` 出力形式
+- [Deploy from Claude Code](https://lizard.build/blog/deploy-from-claude-code) — スキルのインストールと、デプロイをエージェントに渡すまでのエンドツーエンド

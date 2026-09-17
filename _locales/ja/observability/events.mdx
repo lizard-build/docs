@@ -1,0 +1,45 @@
+---
+description: "lizard events でサービスのデプロイタイムラインと稼働中レプリカのライブステータスを確認し、ダッシュボードの Deployments ビューでも同じ履歴を見つけます。"
+---
+
+# Events & History
+
+`lizard events` は、サービスのデプロイ履歴とレプリカのライブステータス、つまりデプロイされた内容と現在実行中のもののタイムラインを表示します。
+
+<span id="view-events" />
+
+## イベントを表示する
+
+```bash
+lizard events                     # deploy history + replica status
+lizard events --service api       # a specific service
+lizard events --limit 25          # show more entries (default 10)
+```
+
+各エントリは、デプロイまたはスケーリング操作と、その結果のレプリカ状態を扱うため、"何が変わったのか、そして正常か？" をひと目で確認できます。
+
+<span id="quick-status" />
+
+## クイックステータス
+
+プロジェクト内のすべてのサービスのスナップショットをすばやく確認するには — ステータスと URL を含めて — 次を使用します:
+
+```bash
+lizard ps
+lizard status        # the current directory's workspace/project/service link
+```
+
+<span id="dashboard" />
+
+## ダッシュボード
+
+ダッシュボードの **Deployments** ビュー（`lizard open`）は、同じ履歴をタイムラインとして表示し、デプロイごとの詳細ドロワー（ビルドログ、コミット、ステータス）とレプリカごとのヘルスを確認できます。
+
+<span id="see-also" />
+
+## 関連項目
+
+- [Deployments](/concepts/deployments) — デプロイのライフサイクル。
+- [Logs](/observability/logs) — ランタイム、ビルド、再起動のログ。
+- [Metrics & Cost](/observability/metrics) — リソース使用量と請求。
+- [`lizard events`](/cli/events) — 完全なコマンドリファレンス。

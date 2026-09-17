@@ -1,0 +1,87 @@
+---
+description: "lizard service lee y edita la configuración de compilación, inicio, origen y variables de un servicio, y gestiona el cambio de nombre, la eliminación, los registros y la vinculación."
+---
+
+# lizard service
+
+Administra la configuración, el origen y el ciclo de vida de un servicio individual.
+
+## Usage
+
+```bash
+lizard service set [flags]
+lizard service show [flags]
+lizard service rename
+lizard service delete [flags]
+lizard service logs
+lizard service link
+```
+
+## Subcommands
+
+### `lizard service set`
+
+Aplica cambios de compilación/inicio/origen/variables/cambio de nombre a un servicio.
+
+| Flag | Description |
+|------|-------------|
+| `--set <path>=<value>` | Establece un campo (repetible) |
+| `-f, --file <path>` | Archivo de configuración JSON para aplicar |
+| `--force` | Sobrescribe incluso si cambió de forma remota |
+
+Los campos comunes son planos y se asignan 1:1 al esquema wire: `sourceType`, `repoUrl`, `branch`, `rootDirectory`, `dockerfilePath`, `buildCommand`, `startCommand`, `preDeployCommand`, `watchPatterns`, `containerPort`, `name`.
+
+`service set` usa concurrencia optimista mediante `configRevision`. Ante un `409`, vuelve a leer la configuración con `lizard service show`, reconcilia y reintenta, o pasa `--force`.
+
+### `lizard service show`
+
+Muestra la configuración actual del servicio como JSON. Usa `-s` para limitarlo a un servicio.
+
+### `lizard service rename`
+
+Cambia el nombre de un servicio o addon. Las referencias a este (`${{name.KEY}}`) permanecen estables.
+
+### `lizard service delete`
+
+Elimina un servicio. `-y, --yes` omite la confirmación.
+
+### `lizard service logs`
+
+Transmite los registros de un servicio (consulta también [lizard logs](/cli/logs)).
+
+### `lizard service link`
+
+Vincula un servicio al directorio actual.
+
+## Examples
+
+<span id="update-a-services-build-and-start-commands" />
+
+### Actualizar los comandos de compilación e inicio de un servicio
+
+```bash
+lizard service set api --set branch=main --set buildCommand="npm run build"
+```
+
+<span id="inspect-a-services-full-configuration" />
+
+### Inspeccionar la configuración completa de un servicio
+
+```bash
+lizard service show -s api
+```
+
+<span id="delete-a-service-without-a-confirmation-prompt" />
+
+### Eliminar un servicio sin un aviso de confirmación
+
+```bash
+lizard service delete -y
+```
+
+## See also
+
+- [lizard port](/cli/port) — muestra o cambia el puerto del contenedor de un servicio
+- [lizard scale](/cli/scale) — escala las réplicas, CPU, memoria o almacenamiento de un servicio
+- [Architecture](/concepts/architecture) — cómo se relacionan los servicios con los proyectos y los addons
+- [Build pipeline](/concepts/build-pipeline) — cómo se usan `buildCommand`, `startCommand` y la configuración de origen en tiempo de compilación

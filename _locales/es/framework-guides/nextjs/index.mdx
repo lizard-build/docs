@@ -1,0 +1,95 @@
+---
+description: "Implementa Next.js en Lizard como un servidor Node.js. Configura next build, next start, el puerto 3000, variables de entorno y comprobaciones para páginas, APIs y Server Actions."
+---
+
+<span id="deploy-nextjs-on-lizard" />
+
+# Implementar Next.js en Lizard
+
+Ejecuta Next.js en Lizard como un servidor Node.js con `next build` y `next start`. Esta opción mantiene un servidor disponible para el renderizado en tiempo de solicitud, Route Handlers y Server Actions. Si todas las rutas se pueden compilar por adelantado, sigue [Next.js static export](/framework-guides/nextjs/static-export) en su lugar.
+
+<span id="build-settings" />
+
+## Configuración de compilación
+
+| Setting | Value |
+|---|---|
+| Raíz del proyecto | Directorio que contiene `package.json` y la configuración de Next.js |
+| Script de compilación | `next build` |
+| Script de inicio | `next start --hostname 0.0.0.0 --port 3000` |
+| Salida de compilación | `.next/` |
+| Puerto del servicio | `3000` |
+| Runtime | Node.js |
+
+<span id="prepare-the-app" />
+
+## Prepara la app
+
+Mantén `next`, `react` y `react-dom` en tus dependencias y confirma tu lockfile. Integra estos scripts en `package.json`:
+
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0 --port 3000"
+  }
+}
+```
+
+Usa la salida estándar de Next.js para esta guía. `output: 'export'` necesita un servidor estático, y `output: 'standalone'` necesita su propio inicio `server.js` y diseño de recursos. Ninguno usa esta receta de `next start` sin cambios.
+
+Selecciona una versión major de Node compatible en `.nvmrc`, como `22`. Excluye `.next/`, `node_modules/` y `.env*` del código fuente subido; mantén un archivo de entorno de ejemplo sin secretos si hace falta.
+
+<span id="test-the-production-build-locally" />
+
+## Prueba la compilación de producción localmente
+
+```bash
+npm ci
+npm run build
+npm run start
+```
+
+En otra terminal, abre `http://localhost:3000` y prueba una ruta interna. Si la app tiene una API o una Server Action, pruébala también. Superar solo la comprobación del servidor de desarrollo no demuestra que la compilación de producción funcione.
+
+<span id="deploy" />
+
+## Implementar
+
+Después de [instalar Lizard CLI e iniciar sesión](/framework-guides#prepare-the-project), ejecuta desde el directorio de la app:
+
+```bash
+lizard init --name nextjs-app
+lizard add --service web
+lizard up --service web --port 3000
+lizard logs --build --service web --json
+lizard logs --service web --json
+lizard ps --json
+```
+
+Lizard detecta la dependencia `next` y ejecuta los scripts de compilación e inicio. Estos comandos asumen que el servicio no tiene reemplazos existentes para compilación o inicio. Usa la URL en la salida de implementación para repetir las comprobaciones locales.
+
+<span id="environment-variables-and-data" />
+
+## Variables de entorno y datos
+
+Los valores de `NEXT_PUBLIC_*` pasan a formar parte del paquete del navegador durante la compilación. Mantén las credenciales en variables solo del servidor y configúralas para el servicio mediante [variables y secretos](/variables). El código que obtiene datos durante la compilación también necesita acceso a esos datos en el momento de compilar. Un reinicio en tiempo de ejecución no cambia el HTML o JavaScript ya generados.
+
+Los archivos de caché locales y los archivos subidos no forman un almacenamiento compartido entre réplicas. Revisa los requisitos de caché y de Server Action de Next.js antes de escalar más allá de una réplica. Coloca los datos persistentes de la app en una base de datos o en almacenamiento de objetos, y consulta [almacenamiento y recuperación](/platform/storage-and-recovery).
+
+<span id="troubleshooting" />
+
+## Solución de problemas
+
+| Symptom | Check |
+|---|---|
+| `Missing script: start` | Agrega el script de inicio de producción anterior; `next dev` es para desarrollo local. |
+| La app nunca pasa a estado healthy | Haz coincidir `--port 3000` con el comando de inicio y enlaza a `0.0.0.0`. |
+| La URL pública de la API sigue teniendo su valor anterior | Vuelve a compilar con el nuevo valor de `NEXT_PUBLIC_*`. |
+| La compilación no puede alcanzar una base de datos | Comprueba si una ruta obtiene datos en tiempo de compilación y si esa dependencia es accesible en ese momento. |
+| La exportación estática falla con `next start` | Sigue la guía separada de exportación estática. |
+
+La [guía de self-hosting de Next.js](https://nextjs.org/docs/app/guides/self-hosting) cubre el comportamiento del caché, las imágenes y múltiples instancias a nivel del framework. Para errores de implementación, consulta [service never healthy](/deploy/troubleshooting/service-never-healthy).
+
+Consulta [versiones probadas y resultados en la nube](/framework-guides/validation) para las comprobaciones de implementación del 9 de septiembre de 2026 y sus límites.

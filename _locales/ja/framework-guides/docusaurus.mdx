@@ -1,0 +1,88 @@
+---
+description: "Docusaurus を Lizard 上の静的ドキュメントサイトとしてデプロイします。build ディレクトリをビルドし、URL と baseUrl を設定し、port 80 を使い、直接ルートと実際の 404 を確認します。"
+---
+
+<span id="deploy-docusaurus-on-lizard" />
+
+# Lizard で Docusaurus をデプロイする
+
+Lizard で Docusaurus をビルドし、生成された `build/` ディレクトリを nginx 経由で port `80` で配信します。本番デプロイは静的ファイルを配信します。`docusaurus start` 開発サーバーは実行しません。
+
+このレシピで使う設定とファイルを含む[完全なソース例](https://github.com/lizard-build/docs/tree/main/_examples/docusaurus)から始めてください。
+
+<span id="prepare-the-site" />
+
+## サイトを準備する
+
+`package.json`、その lockfile、および `docusaurus.config.*` を含む Docusaurus ディレクトリから実行します。依存関係には `@docusaurus/core` を残し、`docusaurus build` を実行する build スクリプトを用意してください。
+
+| Setting | Value |
+|---|---|
+| Build | `npm run build` |
+| Output | `build/` |
+| Runtime | nginx |
+| Service port | `80` |
+
+Docusaurus の設定で、`url` にはサイトが公開される想定の origin を、`baseUrl` には実行されるパスを設定します。ドメインのルートにあるサイトでは、`baseUrl` は `/` です。最終的なホスト名が決まったら、そのホスト名で再ビルドし、生成される canonical URL と sitemap のエントリがそれを使うようにしてください。
+
+末尾スラッシュの方針を一貫させ、生成されるファイルを確認してください。カスタムディレクトリをコピーする Dockerfile を用意しない限り、デフォルトの出力ディレクトリを維持してください。[Docusaurus deployment guide](https://docusaurus.io/docs/deployment) では、これらのフレームワーク設定を説明しています。
+
+<span id="build-and-check-locally" />
+
+## ローカルでビルドして確認する
+
+```bash
+npm ci
+npm run build
+npm run serve
+```
+
+最後のコマンドは、プロジェクトに scaffold の `serve` スクリプトがあることを前提にしています。トップページ、ネストされたドキュメントページ、画像、および docs のバージョンを使っている場合はバージョン付きページを確認してください。デプロイ前に、ビルドで報告された壊れたリンクを修正してください。
+
+<span id="deploy" />
+
+## デプロイ
+
+[CLI setup](/framework-guides#prepare-the-project) の後:
+
+```bash
+lizard init --name docusaurus-docs
+lizard add --service web
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+生成されたホスト名を使う場合は、最初のデプロイ後にそれを読み取ります:
+
+```bash
+lizard service show web --json
+```
+
+そのホスト名を使うように、`docusaurus.config.js` で `url` を設定します:
+
+```js
+url: 'https://YOUR_PUBLIC_HOST',
+```
+
+build が公開 URL を使うように、変更した設定をアップロードします:
+
+```bash
+lizard up --service web --port 80
+```
+
+
+ソース、プラグイン、設定、および lockfile をコミットしてください。`node_modules/`、`build/`、`.docusaurus/`、および `.env` ファイルはアップロード対象から除外してください。Docusaurus の検出パスを使うために、service command override は未設定のままにしてください。
+
+<span id="serve-inner-routes-and-missing-pages" />
+
+## 内部ルートと存在しないページを配信する
+
+新しい Docusaurus の build は生成されたルートファイルを配信し、不明なパスには HTTP 404 を返します。このルーティング方針のためにカスタム Dockerfile は不要です。サービスがまだ 2026 年 9 月のルーティング修正前にビルドされたイメージを使っている場合は、再ビルドしてください。nginx の動作をカスタマイズする必要がある場合にのみ、[static routes and 404s](/framework-guides/static-routing) を使ってください。
+
+デプロイ後、ネストされた docs URL に直接リクエストし、再読み込みし、でっち上げた URL のステータスを確認してください。あわせて、最終的なホスト名で canonical URL と sitemap も確認してください。HTTP 200 のまま表示されるエラーページは、依然として soft 404 です。
+
+アセットが見つからない場合は、その URL を `baseUrl` と比較してください。内部ルートがトップページを返す場合は、生成されたファイルレイアウトと nginx ルールを確認してください。環境値または Markdown ファイルを編集した後も古い内容が残る場合は、新しい build が実際に完了したことを確認してください。静的 HTML は build でのみ変更されます。
+
+2026 年 9 月 9 日のデプロイ確認とその制限については、[tested versions and cloud results](/framework-guides/validation) を参照してください。
+

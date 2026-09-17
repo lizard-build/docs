@@ -1,0 +1,91 @@
+---
+description: "Lizard でマネージド PostgreSQL データベースをプロビジョニングし、参照でサービスに接続し、デプロイ時にマイグレーションを実行し、ストレージを拡張します。"
+---
+
+# Managed Postgres
+
+1 つのコマンドでプロビジョニングされ、参照によってサービスに接続されるマネージド PostgreSQL データベースです。
+
+## Provision
+
+```bash
+lizard add postgres
+```
+
+最初の Postgres アドオンの名前は `postgres` なので、`${{postgres.DATABASE_URL}}` はすぐに使えます。
+
+## Environment variables
+
+このアドオンは、標準的な接続変数一式を公開します:
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | 完全な接続文字列 (`postgres://…`) |
+| `PGHOST` | ホスト |
+| `PGPORT` | ポート |
+| `PGUSER` | ユーザー |
+| `PGPASSWORD` | パスワード |
+| `PGDATABASE` | データベース名 |
+| `POSTGRES_USER` | ユーザーのエイリアス |
+| `POSTGRES_DB` | データベースのエイリアス |
+| `POSTGRES_PASSWORD` | パスワードのエイリアス |
+
+## Connect a service
+
+コンシューマーサービスから接続文字列を参照し、再デプロイします:
+
+```bash
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+lizard redeploy --service api
+```
+
+参照はデプロイ時に解決され、アドオンの認証情報が変更された場合は自動的にローテーションされます。すべてのコンシューマーは次回のデプロイ時に新しい値を取得します。
+
+接続文字列を表示せずに接続性を確認します:
+
+```bash
+lizard run --service api -- sh -c 'psql "$DATABASE_URL" -c "SELECT 1"'
+```
+
+## Run migrations on deploy
+
+マイグレーションには pre-deploy コマンドを使用します。マイグレーションは安全に再試行でき、古いアプリケーション バージョンと新しいアプリケーション バージョンの両方に互換性があるようにしてください:
+
+```bash
+lizard service set api --set preDeployCommand="npm run migrate"
+lizard redeploy --service api
+```
+
+Django アプリの場合、コマンドは `python manage.py migrate` です。[Python app hosting](https://lizard.build/blog/python-app-hosting#deploying-django) には Flask と FastAPI で同等の方法があります。
+
+## Browse and query data
+
+ダッシュボードの **Postgres editor** (`lizard open`) を開いて、SQL を実行し、テーブルを直接参照できます。一時的なローカル作業には、サービスに注入された環境でコマンドを実行します:
+
+```bash
+lizard run --service api -- sh -c 'exec psql "$DATABASE_URL"'
+```
+
+## Grow storage
+
+データボリュームは拡張のみ可能です:
+
+```bash
+lizard scale --service postgres --storage 8192
+```
+
+## Multiple databases
+
+2 つ目の Postgres を追加すると、自動生成された名前が付きます（例: `postgres-autumn-bear`）。明示的に参照してください:
+
+```bash
+lizard add postgres
+lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_URL}}' --service api
+```
+
+## See also
+
+- [Managed Addons](/addons) — 命名、参照、ダッシュボードのブラウザー。
+- [Cross-Service References](/variables/references) — 参照構文と解決方法。
+
+バックアップとリストアの計画については、[storage and recovery](/platform/storage-and-recovery) を参照してください。ローカルの `lizard run` には `psql` と到達可能なデータベース エンドポイントが必要です。これはデプロイされたサービス内では実行されません。

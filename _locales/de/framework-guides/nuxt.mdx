@@ -1,0 +1,109 @@
+---
+description: "Stelle Nuxt auf Lizard mit Nitros node-server-Preset bereit. Füge ein Produktions-Startskript hinzu, starte den generierten Server auf Port 3000 und prüfe Routen sowie Runtime-Konfiguration."
+---
+
+<span id="deploy-nuxt-on-lizard" />
+
+# Nuxt auf Lizard bereitstellen
+
+Führe Nuxt auf Lizard mit Nitros `node-server`-Preset aus. Der Build erzeugt `.output/server/index.mjs`, und ein Node.js-Prozess stellt Seiten und Server-Routen auf Port `3000` bereit. Für eine generierte Website auf Port `80` verwende das statische Rezept unten.
+
+<span id="configure-the-production-build" />
+
+## Produktions-Build konfigurieren
+
+Verwende die aktuelle Lizard CLI aus [Projekt vorbereiten](/framework-guides#prepare-the-project). Version 0.3.95 schließt macOS-Archivmetadaten beim Hochladen aus. Wenn eine ältere CLI einen `._*.ts`-Routenfehler meldet, aktualisiere die CLI und lade erneut hoch.
+
+Setze das Preset in `nuxt.config.ts`:
+
+```ts
+export default defineNuxtConfig({
+  nitro: { preset: 'node-server' },
+});
+```
+
+Füge diese Skripte in `package.json` zusammen und behalte alle weiteren Skripte bei, die deine App benötigt:
+
+```json
+{
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "start": "HOST=0.0.0.0 PORT=3000 node .output/server/index.mjs"
+  }
+}
+```
+
+Das Startskript verwendet die Linux-Shell im Deployment-Container. lizardpack erkennt die Abhängigkeit `nuxt` und führt die Build- und Startskripte aus. Ein frisches Nuxt-Projekt enthält `start` möglicherweise nicht; füge es hinzu, statt davon auszugehen, dass `nuxt dev` den Produktions-Build bereitstellt.
+
+| Setting | Value |
+|---|---|
+| Build | `npm run build` |
+| Server entry | `.output/server/index.mjs` |
+| Start | `npm run start` |
+| Service port | `3000` |
+
+<span id="test-the-built-app" />
+
+## Gebaute App testen
+
+```bash
+npm ci
+npm run build
+npm run start
+```
+
+Öffne `http://localhost:3000`, rufe direkt eine Unterseite auf und rufe eine deiner `server/api`-Routen auf, falls vorhanden. Prüfe, dass der Build das Node-Server-Preset meldet. Ein anbieterspezifisches Nitro-Preset kann einen anderen Einstiegspunkt erzeugen.
+
+<span id="deploy" />
+
+## Bereitstellen
+
+Führe nach der [CLI-Einrichtung](/framework-guides#prepare-the-project) im Verzeichnis der Nuxt-App aus:
+
+```bash
+lizard init --name nuxt-app
+lizard add --service web
+lizard up --service web --port 3000
+lizard logs --build --service web --json
+lizard logs --service web --json
+lizard ps --json
+```
+
+Halte `.nuxt/`-, `.output/`-, `node_modules/`- und `.env`-Dateien aus dem Upload heraus. Schließe Quellcode, Konfiguration und die Lockfile ein. Vorhandene Build-/Start-Überschreibungen des Services umgehen die hier verwendete Erkennung; siehe [Reihenfolge der Build-Entscheidung](/concepts/build-pipeline#build-decision-order).
+
+<span id="runtime-configuration" />
+
+## Runtime-Konfiguration
+
+Deklariere Runtime-Einstellungen in `runtimeConfig` und konfiguriere die passenden `NUXT_*`-Werte für den Service. Bewahre Geheimnisse außerhalb von `runtimeConfig.public` auf; der öffentliche Teil gelangt in den Browser. Werte, die zum Prerendern von Seiten verwendet werden, beeinflussen weiterhin den generierten Build, also prüfe nach einer Änderung sowohl Routen zur Anfragezeit als auch vorgenerierte Routen.
+
+Verwende [Variablen und Secrets](/variables), um den Service zu konfigurieren, und [Speicherung und Wiederherstellung](/platform/storage-and-recovery) für dauerhafte Daten. Behandle einen lokalen Cache oder eine Session-Datei nicht als gemeinsam genutzten Speicher über Replikate hinweg.
+
+<span id="troubleshooting" />
+
+## Fehlerbehebung
+
+Wenn der Prozess ein fehlendes `.output/server/index.mjs` meldet, prüfe das Preset und die Build-Ausgabe. Wenn ein fehlendes Startskript gemeldet wird, füge das oben genannte hinzu. Wenn die Website nie healthy wird, prüfe Host und Port.
+
+Für eine rein generierte Nuxt-Website stelle `.output/public/` mit einem statischen Dockerfile und korrekter Routenbehandlung bereit. Starte diese Ausgabe nicht mit dem obigen Node-Befehl. Der [Nuxt-Deployment-Leitfaden](https://nuxt.com/docs/4.x/getting-started/deployment) erklärt die Node- und generierten Ausgaben; [statische Routen und 404-Seiten](/framework-guides/static-routing) behandelt die Einrichtung des statischen Lizard-Servers.
+
+<span id="generate-a-static-site" />
+
+## Statische Website generieren
+
+Ersetze für generiertes HTML das Node-Preset durch explizite Prerender-Einstellungen und ändere das Build-Skript zu `nuxt generate`:
+
+```ts
+export default defineNuxtConfig({
+  nitro: {
+    prerender: { crawlLinks: true, routes: ['/'] },
+  },
+});
+```
+
+Füge nicht verlinkte oder dynamische Routen zu `routes` hinzu, wenn der Crawler sie nicht erkennen kann. Führe `npm run build` aus und prüfe, dass `.output/public/index.html` und deine Dateien für Unterrouten vorhanden sind. Im Test mit Nuxt 4.5.2 führte das Beibehalten von `preset: 'node-server'` bei einem Wechsel nur zu `nuxt generate` zu den Fallback-Seiten ohne die Routen der Website. Ein erfolgreicher Build allein zeigte nicht, dass der Export die Website enthielt.
+
+Verwende das Dockerfile und die nginx-Konfiguration aus [statische Routen und 404-Seiten](/framework-guides/static-routing), mit dem Build-Skript `build`, dem Ausgabeverzeichnis `.output/public` und dem Service-Port `80`. Der statische Container führt keine Nuxt-Server-Routen aus und liest keine Runtime-Konfiguration für bereits generierte Seiten.
+
+Siehe [getestete Versionen und Cloud-Ergebnisse](/framework-guides/validation) für die Deployment-Prüfungen vom 9. September 2026 und ihre Grenzen.

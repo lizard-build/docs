@@ -1,0 +1,94 @@
+---
+description: "Qué añade el panel de Lizard al CLI: estado de servicios, cronología de despliegues, logs en streaming, métricas, exploradores de datos, equipo y facturación."
+---
+
+<span id="app-dashboard" />
+
+# Panel de la app
+
+El panel de Lizard es el complemento visual del CLI. Todo lo que haces con `lizard …` se refleja aquí, además de lo que es más fácil con una interfaz — logs en streaming, gráficos, los exploradores de datos y la gestión de equipo/facturación.
+
+Si prefieres no abrir un terminal en absoluto, deja que el agente ejecute los comandos y observa el resultado aquí — la ruta de [desplegar una app Antigravity en producción](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-an-antigravity-app-to-production-without-typing-a-command), que requiere dos prompts y nada escrito en un terminal.
+
+Ábrelo desde el CLI:
+
+```bash
+lizard open          # open the current project
+lizard docs          # open this documentation
+```
+
+<span id="whats-in-the-dashboard" />
+
+## Qué hay en el panel
+
+<span id="services" />
+
+### Servicios
+
+La vista principal del proyecto muestra cada servicio con su indicador de estado, dominio generado y un acceso rápido a logs, métricas, secretos y ajustes. Crea nuevos servicios (desde un repositorio de GitHub o vacío) directamente desde aquí.
+
+<span id="deployments" />
+
+### Despliegues
+
+Una cronología de cada despliegue, con logs de compilación por despliegue y un panel de detalles (commit, estado, réplicas). Este es el equivalente visual de `lizard events` + `lizard logs --build`.
+
+### Logs
+
+Streaming en vivo de logs de ejecución y compilación con búsqueda y filtros por nivel — la contraparte en la interfaz de [`lizard logs`](/observability/logs).
+
+<span id="metrics--usage" />
+
+### Métricas y uso
+
+Gráficos de CPU, memoria, red y disco por servicio, además de una vista de **Uso** que desglosa el consumo y el coste en todo el proyecto. Refleja [`lizard metrics --cost`](/observability/metrics).
+
+<span id="variables--secrets" />
+
+### Variables y secretos
+
+Gestiona secretos con alcance de servicio y de proyecto, con valores ocultos y compatibilidad con referencias (`${{…}}`). Consulta [Variables y secretos](/variables).
+
+<span id="domains" />
+
+### Dominios
+
+Añade dominios personalizados, consulta registros DNS y sigue el estado de verificación y TLS. Consulta [Redes](/networking).
+
+<span id="managed-addon-browsers" />
+
+### Exploradores de addons gestionados
+
+Cada addon incluye un explorador de datos:
+
+- **Postgres** — un editor SQL/de tablas para consultar y editar datos.
+- **Redis** — un explorador de clave/valor.
+- **S3** — un explorador de buckets y objetos con subida/descarga.
+
+<span id="github-integration" />
+
+### Integración con GitHub
+
+Conecta la GitHub App, elige repositorios y gestiona qué repositorios puede compilar Lizard. Consulta [Desplegar desde GitHub](/deploy/github).
+
+<span id="settings-team--billing" />
+
+### Ajustes, equipo y facturación
+
+Ajustes del proyecto y del workspace, invitaciones de miembros y roles, uso de recursos, créditos de la cuenta y recarga automática opcional. Las cuentas estándar usan [pay as you go](/platform/billing) sin suscripción mensual.
+
+<span id="cli--dashboard" />
+
+## CLI ↔ Panel
+
+| Tarea | CLI | Vista del panel |
+|------|-----|----------------|
+| Historial de despliegues | `lizard events` | Despliegues |
+| Streaming de logs | `lizard logs` | Logs |
+| Gráficos de recursos | `lizard metrics` | Métricas / Uso |
+| Gestionar secretos | `lizard secrets` | Variables |
+| Dominios personalizados | `lizard domain` | Dominios |
+| Explorar Postgres/Redis/S3 | `lizard run` / `lizard ssh` | Exploradores de addons |
+| Invitar a compañeros de equipo | — | Equipo / Ajustes |
+
+Usa lo que mejor se adapte al momento — operan sobre los mismos proyectos y servicios.

@@ -1,0 +1,88 @@
+---
+description: "Stelle Docusaurus auf Lizard als statische Dokumentations-Website bereit. Erstelle das build-Verzeichnis, setze URL und baseUrl, verwende Port 80 und prüfe direkte Routen sowie echte 404-Fehler."
+---
+
+<span id="deploy-docusaurus-on-lizard" />
+
+# Docusaurus auf Lizard bereitstellen
+
+Erstelle Docusaurus auf Lizard und liefere das erzeugte Verzeichnis `build/` über nginx auf Port `80` aus. Die Produktionsbereitstellung liefert statische Dateien aus; sie führt nicht den Entwicklungsserver `docusaurus start` aus.
+
+Beginne mit dem [vollständigen Quellcodebeispiel](https://github.com/lizard-build/docs/tree/main/_examples/docusaurus), das die Konfiguration und Dateien enthält, die in dieser Anleitung verwendet werden.
+
+<span id="prepare-the-site" />
+
+## Website vorbereiten
+
+Führe den Befehl im Docusaurus-Verzeichnis aus, das `package.json`, die zugehörige Lockfile und `docusaurus.config.*` enthält. Belasse `@docusaurus/core` in den Abhängigkeiten sowie ein Build-Skript, das `docusaurus build` ausführt.
+
+| Setting | Value |
+|---|---|
+| Build | `npm run build` |
+| Output | `build/` |
+| Runtime | nginx |
+| Service port | `80` |
+
+Setze `url` in der Docusaurus-Konfiguration auf den vorgesehenen öffentlichen Ursprung der Website und `baseUrl` auf den Pfad, unter dem sie ausgeführt wird. Für eine Website an der Domain-Wurzel ist `baseUrl` gleich `/`. Sobald du den endgültigen Hostnamen kennst, erstelle die Website mit diesem Hostnamen neu, damit erzeugte kanonische URLs und Sitemap-Einträge ihn verwenden.
+
+Wähle eine konsistente Trailing-Slash-Richtlinie und prüfe die erzeugten Dateien. Behalte das Standard-Ausgabeverzeichnis bei, sofern du kein Dockerfile bereitstellst, das dein benutzerdefiniertes Verzeichnis kopiert. Der [Docusaurus-Bereitstellungsleitfaden](https://docusaurus.io/docs/deployment) erklärt diese Framework-Einstellungen.
+
+<span id="build-and-check-locally" />
+
+## Lokal erstellen und prüfen
+
+```bash
+npm ci
+npm run build
+npm run serve
+```
+
+Der letzte Befehl setzt voraus, dass dein Projekt das Skript `serve` aus dem Scaffold enthält. Prüfe die Startseite, eine verschachtelte Dokumentationsseite, ein Bild und eine versionierte Seite, falls du Dokumentationsversionen verwendest. Behebe defekte Links, die beim Build gemeldet werden, vor der Bereitstellung.
+
+<span id="deploy" />
+
+## Bereitstellen
+
+Nach dem [CLI-Setup](/framework-guides#prepare-the-project):
+
+```bash
+lizard init --name docusaurus-docs
+lizard add --service web
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+Wenn du den erzeugten Hostnamen verwendest, lies ihn nach der ersten Bereitstellung aus:
+
+```bash
+lizard service show web --json
+```
+
+Setze `url` in `docusaurus.config.js` auf diesen Hostnamen:
+
+```js
+url: 'https://YOUR_PUBLIC_HOST',
+```
+
+Lade die geänderte Konfiguration hoch, damit der Build die öffentliche URL verwendet:
+
+```bash
+lizard up --service web --port 80
+```
+
+
+Committe Quellcode, Plugins, Konfiguration und die Lockfile. Schließe `node_modules/`-, `build/`-, `.docusaurus/`- und `.env`-Dateien von Uploads aus. Lasse Überschreibungen für den Service-Befehl ungesetzt, um den Docusaurus-Erkennungspfad zu verwenden.
+
+<span id="serve-inner-routes-and-missing-pages" />
+
+## Innere Routen und fehlende Seiten ausliefern
+
+Neue Docusaurus-Builds liefern erzeugte Routendateien aus und geben für unbekannte Pfade HTTP 404 zurück. Für diese Routing-Richtlinie ist kein benutzerdefiniertes Dockerfile erforderlich. Wenn dein Service noch ein Image verwendet, das vor dem Routing-Fix vom September 2026 erstellt wurde, erstelle es neu. Verwende [statische Routen und 404-Fehler](/framework-guides/static-routing) nur, wenn du benutzerdefiniertes nginx-Verhalten brauchst.
+
+Fordere nach der Bereitstellung direkt eine verschachtelte Docs-URL an, aktualisiere sie und prüfe den Status einer erfundenen URL. Prüfe außerdem die kanonische URL und die Sitemap auf dem endgültigen Hostnamen. Eine sichtbare Fehlerseite mit HTTP 200 ist weiterhin ein Soft-404.
+
+Wenn Assets fehlen, vergleiche ihre URLs mit `baseUrl`. Wenn eine innere Route die Startseite zurückgibt, prüfe das erzeugte Dateilayout und die nginx-Regeln. Wenn nach dem Bearbeiten eines Umgebungswerts oder einer Markdown-Datei weiterhin alter Inhalt angezeigt wird, verifiziere, dass tatsächlich ein neuer Build abgeschlossen wurde; statisches HTML ändert sich nur mit einem Build.
+
+Siehe [getestete Versionen und Cloud-Ergebnisse](/framework-guides/validation) für die Bereitstellungsprüfungen vom 9. September 2026 und deren Grenzen.
+

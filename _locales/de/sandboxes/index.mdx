@@ -1,0 +1,88 @@
+---
+description: "Eine Sandbox ist eine isolierte Firecracker-Mikro-VM, die in Millisekunden startet, Code ausführt und wieder verworfen wird. Die Recheneinheit hinter KI-Agenten."
+---
+
+# Sandboxes
+
+Eine **Sandbox** ist eine isolierte Firecracker-Mikro-VM, die Sie bei Bedarf starten, darin Code ausführen und nach Abschluss wieder beenden. Jede davon ist eine vollständige Linux-Umgebung mit eigenem Dateisystem, Netzwerk und Prozess-Namespace — gestartet in Millisekunden statt in Minuten.
+
+Sandboxes sind die Recheneinheit hinter KI-Agenten, Code-Interpretern, Evals und CI-ähnlichen Jobs auf Lizard. Während ein [Service](/concepts/architecture) eine langlebige Bereitstellung ist, die an ein Repo gebunden ist, ist eine Sandbox **ephemer, programmatisch und wegwerfbar** — erstellen Sie für jede Aufgabe eine Sandbox innerhalb der für Ihr Konto verfügbaren Kapazität.
+
+```ts
+import { Sandbox } from '@lizard-build/sdk';
+
+const sandbox = await Sandbox.create('base', { project: 'my-project' });
+const { stdout } = await sandbox.process.exec('echo "hello from Lizard"');
+console.log(stdout);            // hello from Lizard
+await sandbox.kill();
+```
+
+<span id="when-to-use-a-sandbox" />
+
+## Wann Sie eine Sandbox verwenden sollten
+
+| Verwenden Sie eine **Sandbox**, wenn… | Verwenden Sie einen **Service**, wenn… |
+|---|---|
+| Ein Agent nicht vertrauenswürdigen oder generierten Code ausführen muss | Sie eine App bereitstellen, die dauerhaft läuft |
+| Sie pro Aufgabe eine frische, wegwerfbare Linux-Umgebung möchten | Sie eine stabile `<name>.<region>.onlizard.com`-URL und TLS möchten |
+| Sie viele isolierte Jobs gleichzeitig auffächern müssen | Sie einen einzelnen, ständig laufenden Prozess haben |
+| Die Workload nur kurz lebt oder pausiert wird | Die Workload git-basiert ist und automatisch neu bereitgestellt wird |
+
+Sobald ein Agent innerhalb einer Sandbox eine funktionierende App erstellt hat, können Sie sie mit [`lizard up`](/deploy/upload) zu einem persistenten Service hochstufen — ganz ohne Dockerfile.
+
+<span id="what-makes-them-fast" />
+
+## Was sie schnell macht
+
+- **Firecracker-Mikro-VMs** — für jede Sandbox ein separater Linux-Gast. App-Laufzeiten haben unterschiedliche Isolationsregeln. Hardwarevirtualisierung trennt den Gast vom Host. Kontrollieren Sie Anmeldedaten und Netzwerkzugriff für Code, dem Sie nicht vertrauen.
+- **Pausieren und fortsetzen** — beim Pausieren werden die vCPUs der Mikro-VM eingefroren. Arbeitsspeicher, Dateisystem und laufende Prozesse bleiben erhalten, sodass beim Fortsetzen genau dort weitergemacht wird, wo zuvor aufgehört wurde — ohne Pakete neu zu installieren oder Caches erneut aufzuwärmen. So überstehen lang laufende Agent-Sitzungen mehrere getrennte Aufrufe. Der Zustand wird im Arbeitsspeicher des Hosts gehalten statt auf die Festplatte geschrieben, daher übersteht er keinen Host-Ausfall. Siehe [pause & resume](/sandboxes/quickstart#pause-and-resume).
+- **Von einer Vorlage starten** — jeder Node erstellt pro Vorlage vorab einen Golden Snapshot, sodass `create` eine Wiederherstellung und kein Kaltstart ist.
+
+<span id="templates" />
+
+## Vorlagen
+
+Eine Sandbox startet aus einer **Vorlage** (im Dashboard auch *Snapshot* genannt). Zwei sind integriert:
+
+| Vorlage | Inhalt | Am besten geeignet für |
+|---|---|---|
+| `base` | Debian Linux, Node.js 26 und die Lizard CLI | Allzweck-Shell- und Build-Umgebungen |
+| `code-interpreter-v1` | Python 3.14 + Node.js 26, mit einer HTTP-API zur Codeausführung auf Port 8080 | KI-Code-Interpreter — steuern Sie sie mit [`CodeSandbox`](/sandboxes/code-interpreter) |
+
+`base` ist die Standardvorlage. Die öffentliche Create-API akzeptiert diese beiden Vorlagennamen. Sie bietet keinen Ablauf zum Hochladen benutzerdefinierter Vorlagen.
+
+<span id="lifecycle" />
+
+## Lebenszyklus
+
+Eine Sandbox wechselt zwischen drei Zuständen:
+
+```
+create ──▶ running ⇄ paused ──▶ stopped
+                              (killed or expired)
+```
+
+- **running** — der Gast kann Befehle ausführen, mit Dateien arbeiten und freigegebene Ports bereitstellen.
+- **paused** — vCPUs stoppen. Arbeitsspeicher des Gasts und Prozesszustand bleiben auf dem Host erhalten; das ist weder ein dauerhaftes Snapshot noch ein Backup.
+- **stopped** — die Sandbox wurde durch Löschung oder Ablauf beendet. Ihr lokales Dateisystem ist nicht mehr verfügbar.
+
+Das SDK setzt standardmäßig eine Laufzeit von fünf Minuten. Die rohe Create-API akzeptiert `timeoutMs: 0` für kein Ablaufdatum. Übergeben Sie ein explizites Timeout, wenn sich ein Skript in allen Clients gleich verhalten muss, und geben Sie die Sandbox frei, wenn die Aufgabe beendet ist. Befehle setzen die Laufzeit nicht zurück.
+
+Das Pausieren soll die verbleibende Laufzeit erhalten. Prüfen Sie das [aktuelle Lifecycle-Problem](/platform/known-issues#sandbox-pause-and-expiration), bevor Sie sich auf eine Pause verlassen, die länger als die ursprüngliche Frist dauert. Persistente Dateien gehören in ein [Volume](/sandboxes/volumes); ein pausierter Gast übersteht keinen Host-Ausfall.
+
+<span id="resources--limits" />
+
+## Ressourcen und Limits
+
+Jede Sandbox läuft mit festen **4 vCPU / 4096 MiB RAM**. Die öffentliche Create-API bietet keine Einstellung für die Größe pro Sandbox. Jede Sandbox übernimmt die Ressourcen ihrer Vorlage.
+
+Die Region wird automatisch anhand der verfügbaren Kapazität gewählt; im Dashboard können Sie eine festlegen. Gehen Sie nicht davon aus, dass für App-Kontingente und Sandbox-Kapazität dieselben Durchsetzungsregeln gelten. Siehe [Limits](/platform/limits).
+
+<span id="ways-to-drive-sandboxes" />
+
+## So können Sie Sandboxes steuern
+
+| Oberfläche | Am besten geeignet für | Hier starten |
+|---|---|---|
+| **SDK** (JS / Python) | Agenten, Apps und Skripte — einschließlich zustandsbehafteter, mehrsprachiger Ausführung über [`CodeSandbox`](/sandboxes/code-interpreter) | [Quickstart](/sandboxes/quickstart) · [SDK Reference](/sandboxes/sdk-reference) |
+| **Dashboard** | Manuelles Erstellen, Terminal, SSH, Monitoring | [Dashboard](/sandboxes/dashboard) |

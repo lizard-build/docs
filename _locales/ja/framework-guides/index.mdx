@@ -1,0 +1,69 @@
+---
+description: "Next.js、React、Vue、Astro、Nuxt、SvelteKit、FastAPI、Django、Docusaurus、VitePress、Hugo を Lizard にデプロイします。ビルドコマンド、アダプター、ポート、確認項目を確認できます。"
+---
+
+<span id="framework-guides" />
+
+# フレームワークガイド
+
+ソースからフレームワークアプリを Lizard にデプロイします。以下でフレームワークとレンダリングモードを選択し、本番ビルドを準備してから、Lizard CLI でデプロイするか GitHub リポジトリを接続してください。サーバーアプリはプロセスを実行します。静的サイトは生成されたファイルを nginx 経由で配信します。
+
+<span id="choose-your-framework" />
+
+## フレームワークを選ぶ
+
+これらの設定は、リンク先のガイドにある標準的なプロジェクト構成を説明しています。コマンドは JavaScript プロジェクトでは npm を前提としています。カスタム出力パス、アダプター、ビルドのオーバーライドによって結果が変わる場合があります。
+
+| Framework | Build | Runtime or output | Service port |
+|---|---|---|---|
+| [Next.js](/framework-guides/nextjs) | `npm run build` | start スクリプト経由の `next start` | `3000` |
+| [Next.js static export](/framework-guides/nextjs/static-export) | `npm run build` | Dockerfile 経由の `out/` | `80` |
+| [React with Vite](/framework-guides/react) | `npm run build` | `dist/` | `80` |
+| [Vue with Vite](/framework-guides/vue) | `npm run build` | `dist/` | `80` |
+| [Astro](/framework-guides/astro) | `npm run build` | `dist/`、または standalone Node アダプター | `80` static; `3000` server |
+| [Nuxt](/framework-guides/nuxt) | `npm run build` | `node .output/server/index.mjs` | `3000` |
+| [SvelteKit](/framework-guides/sveltekit) | `npm run build` | adapter-node を使った `node build` | `3000` |
+| [FastAPI](/framework-guides/fastapi) | Python 依存関係をインストール | `uvicorn main:app --host 0.0.0.0 --port 8000` | `8000` |
+| [Django](/framework-guides/django) | Python 依存関係をインストール | 使用する WSGI モジュールで Gunicorn | `8000` |
+| [Docusaurus](/framework-guides/docusaurus) | `npm run build` | `build/` | `80` |
+| [VitePress](/framework-guides/vitepress) | `npm run docs:build` | このガイドの `docs/.vitepress/dist/` | `80` |
+| [Hugo](/framework-guides/hugo) | `hugo --minify` | `public/` | `80` |
+
+<span id="prepare-the-project" />
+
+## プロジェクトを準備する
+
+コマンドはアプリケーションディレクトリから実行します。ソースファイル、設定、package lockfile をコミットしてください。アップロードには `.env`、ローカル依存関係、ローカルのビルド出力を含めないでください。Node プロジェクトでは `.nvmrc` で Node のメジャーバージョンを選択できます。現在のデフォルトは `22` です。これは正確なパッチリリースではなく、メジャーバージョンを選択します。
+
+Lizard CLI をインストールし、一度サインインします:
+
+```bash
+npm install -g @lizard-build/cli
+lizard login
+```
+
+各ガイドでは、新しいプロジェクトと `web` または `api` という名前のサービスを使用します。最初の `lizard up --service` 呼び出しの前に、`lizard add --service web`（または `api`）でそのサービスを作成してください。`up --service` は既存のサービスを選択します。存在しない名前付きサービスは作成しません。既存のプロジェクトでは、デプロイ前に `lizard status --json` と `lizard ps --json` を確認してください。ポートはコンテナ内のプロセスと一致している必要があり、そのプロセスは `0.0.0.0` で待ち受ける必要があります。
+
+Lizard CLI 0.3.95 は、アップロード時に macOS のアーカイブメタデータを除外します。`COPYFILE_DISABLE` の設定は不要です。これらのガイドに従う前に、古い CLI バージョンを更新してください。
+
+<span id="choose-github-or-local-source" />
+
+## GitHub またはローカルソースを選ぶ
+
+ガイドのコマンドでは、現在のフォルダーをアップロードするために `lizard up` を使います。このコマンドは、既存のサービスをソースアップロードに変更します。git push to deploy を維持したい場合は、代わりに [GitHub を接続](/deploy/github) し、リポジトリでガイドのビルド設定を使用してください。テーブルの内容に従ってサービスのポートを設定します。
+
+<span id="keep-build-settings-consistent" />
+
+## ビルド設定の整合性を保つ
+
+これらのガイドでは、Dockerfile が必要な場合を除き、lizardpack の検出を使います。既存の `buildCommand` または `startCommand` のオーバーライドは、検出とリポジトリの Dockerfile より優先されます。ビルド方法を切り替える前に、[ビルド決定順序](/concepts/build-pipeline#build-decision-order) を確認してください。ガイドで指示された場合は `package.json` にスクリプトを設定してください。CLI オーバーライドを追加するのは別のビルドパスです。
+
+<span id="check-a-release" />
+
+## リリースを確認する
+
+ビルドログ、ランタイムログ、アクティブな URL を確認します。内部ルート、不足しているルート、API やフォームアクションがあればそれもテストしてください。ポートを開くプロセスでも、壊れたページを返すことがあります。生成サイトでは、未知の URL すべてに対して HTTP 200 でホームページを返さないよう、[静的ルートと 404](/framework-guides/static-routing) を使用してください。
+
+ランタイムのサポートは、共有キャッシュ、永続的なローカルファイル、またはすべてのフレームワークバージョンを意味するものではありません。アプリがそれらの機能に依存している場合は、[制限](/platform/limits)、[ストレージと復旧](/platform/storage-and-recovery)、[既知の問題](/platform/known-issues) を確認してください。
+
+September 9, 2026 のデプロイ確認とその制限については、[テスト済みバージョンとクラウド結果](/framework-guides/validation) を参照してください。

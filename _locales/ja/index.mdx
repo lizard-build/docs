@@ -1,0 +1,57 @@
+---
+description: "アプリをデプロイし、ワーカーを実行し、Managed Postgres を接続し、または Sandboxes でコードを実行します。タスクを選び、ガイドに従い、制限を確認してください。"
+---
+
+<span id="lizard-documentation" />
+
+# Lizard ドキュメント
+
+Lizard は GitHub リポジトリまたはローカルフォルダからアプリケーションをビルドして実行します。Lizard CLI またはダッシュボードを使って、Web サービスをデプロイし、バックグラウンドワーカーを実行し、Managed Postgres または Managed Redis を接続し、ログを確認できます。Lizard SDK を使うと、コード実行用の Sandboxes を作成できます。
+
+<span id="choose-a-task" />
+
+## タスクを選ぶ
+
+| やりたいこと | ここから開始 |
+|---|---|
+| 最初のアプリをデプロイする | [App quickstart](/getting-started) |
+| Next.js、React、Vue、または Python アプリをデプロイする | [Framework guides](/framework-guides) |
+| Claude Code または別のコーディングエージェントからデプロイする | [Coding agent guide](/guides/deploy-from-coding-agent) |
+| リモート MCP サーバーをホストする | [Remote MCP guide](/guides/deploy-mcp-server) |
+| Telegram bot を動かし続ける | [Telegram worker guide](/guides/telegram-bot) |
+| データベースを接続する | [Managed Postgres](/addons/postgres) |
+| 生成されたコードを別環境で実行する | [Sandboxes quickstart](/sandboxes/quickstart) |
+| sandbox 終了後もファイルを保持する | [Persistent Volumes](/sandboxes/volumes) |
+
+<span id="deploy-an-app" />
+
+## アプリをデプロイする
+
+Lizard CLI をインストールしてサインインし、アクセス可能なリポジトリをデプロイします:
+
+```bash
+npm install -g @lizard-build/cli
+lizard login
+lizard add -r your-org/your-app
+```
+
+Lizard はサーバー上でイメージをビルドするため、この方法ではローカルの Docker は不要です。[lizardpack](/concepts/build-pipeline) がサポート対象のプロジェクトを検出します。特別なビルド要件があるプロジェクトでは、明示的なコマンドまたは Dockerfile を使用できます。ビルドログを確認し、デプロイ後にアプリケーション URL を検証してください。
+
+<span id="understand-your-resources" />
+
+## リソースを理解する
+
+**workspace** はメンバーとプロジェクトをまとめる単位です。**project** はサービス、データベース、Sandboxes をまとめる単位です。**service** はアプリケーションまたはワーカーを実行します。Managed Postgres、Managed Redis、Managed Object Storage は、アプリケーションが環境参照を通じて接続するデータサービスを提供します。
+
+アプリと Sandboxes では、ランタイムとストレージのルールが異なります。リソースのサイズ、有効期間、またはデータ保持に依存する前に、[limits](/platform/limits) と [storage and recovery](/platform/storage-and-recovery) を確認してください。
+
+<span id="find-the-right-level-of-detail" />
+
+## 適切な詳細レベルを見つける
+
+- [Guides](/guides) は、セットアップから結果確認までタスク全体を扱います。
+- [Framework guides](/framework-guides) は、各スタック向けのビルドコマンド、アダプター、ポート、確認項目を示します。
+- [Core concepts](/concepts/architecture) は、プロジェクト、ビルド、デプロイについて説明します。
+- [Lizard CLI reference](/cli) は、コマンド、フラグ、終了コードを一覧表示します。
+- [Troubleshooting](/deploy/troubleshooting/service-never-healthy) は、起動失敗の診断に役立ちます。
+- [Known issues](/platform/known-issues) は、リリース前に確認すべき制限事項と復旧ケースを記録しています。

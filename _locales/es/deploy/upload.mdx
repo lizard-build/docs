@@ -1,0 +1,84 @@
+---
+description: "Publica el directorio actual con lizard up, sin necesidad de Git. Cubre el manejo de gitignore, las anulaciones de compilación y arranque, y el uso sin interfaz en CI."
+---
+
+<span id="deploy-from-local-code" />
+
+# Desplegar desde código local
+
+Cuando tu código no está en GitHub — o simplemente quieres iterar rápido — sube el directorio actual directamente con `lizard up`. Empaqueta tu árbol de trabajo como un tarball, lo envía a los nodos de compilación y lo despliega.
+
+<span id="deploy-the-current-directory" />
+
+## Desplegar el directorio actual
+
+```bash
+lizard up
+```
+
+- Sube el directorio actual como un tarball, respetando `.gitignore` (desactívalo con `--no-gitignore`).
+- Fuerza `sourceType=upload`.
+- Transmite los logs de compilación por SSE y muestra la URL en vivo al finalizar.
+
+Si el directorio todavía no está vinculado a un proyecto, `up` ejecuta primero `init`. En un TTY eso es interactivo; en un entorno no TTY (CI) **no** creará un proyecto silenciosamente: devuelve un error y te pide que ejecutes `lizard init --name <project>` (o que pases `--name`). Esto evita que un error tipográfico genere un proyecto vacío.
+
+<span id="common-flags" />
+
+## Flags comunes
+
+| Flag | Propósito |
+|------|---------|
+| `-s, --service <name>` | Apuntar a un servicio específico o crearlo |
+| `--build-command <cmd>` | Anular el comando de compilación |
+| `--start-command <cmd>` | Anular el comando de arranque |
+| `--pre-deploy-command <cmd>` | Ejecutar una vez antes de cada despliegue (p. ej., migraciones) |
+| `--port <number>` | Puerto del contenedor (`0` = [modo worker](/deploy/workers)) |
+| `--region <code>` | Región donde desplegar |
+| `-d, --detach` | Iniciar el despliegue y salir sin transmitir logs |
+| `-c, --ci` | Salida amigable para CI |
+| `--no-gitignore` | Subir todo, ignorando `.gitignore` |
+
+```bash
+lizard up --service api --start-command "node server.js" --port 8080
+```
+
+<span id="setting-buildstart-commands" />
+
+## Configurar comandos de compilación/arranque
+
+Pasar `--build-command` o `--start-command` cambia el servicio a la ruta de **Dockerfile sintetizado**. En esa ruta, `Procfile` y `package.json` `scripts.start` **no** se leen — establece el comando de arranque explícitamente (o incluye un `CMD` en tu propio Dockerfile). Consulta [Build Pipeline](/concepts/build-pipeline). Python es donde esto más suele afectar: [Django, Flask and FastAPI](https://lizard.build/blog/python-app-hosting#deploying-django) necesitan cada uno una línea distinta de `gunicorn` o `uvicorn`.
+
+<span id="re-deploying-an-upload-service" />
+
+## Volver a desplegar un servicio subido
+
+`lizard up` vuelve a subir y recompilar. Para recompilar la **última** subida con las variables actuales sin volver a subir:
+
+```bash
+lizard redeploy --service api
+```
+
+<span id="headless--ci" />
+
+## Sin interfaz / CI
+
+Para flujos no interactivos, vincula el proyecto explícitamente antes de desplegar:
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+lizard init --name my-project
+lizard up --ci --service api
+```
+
+<span id="when-to-prefer-github-instead" />
+
+## Cuándo conviene usar GitHub en su lugar
+
+La subida es excelente para iterar rápido y para situaciones sin remoto. Para cualquier cosa de larga duración, conviene preferir una [fuente de GitHub](/deploy/github) para que los pushes vuelvan a desplegar automáticamente y tengas un historial de despliegues limpio.
+
+<span id="see-also" />
+
+## Ver también
+
+- [`lizard up`](/cli/up) — la referencia completa del comando.
+- [Build Pipeline](/concepts/build-pipeline) — cómo se detecta y compila tu stack.

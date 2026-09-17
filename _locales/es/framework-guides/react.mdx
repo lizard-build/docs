@@ -1,0 +1,83 @@
+---
+description: "Implementa una app de React creada con Vite en Lizard. Compila dist, sírvela en el puerto 80, configura las rutas del cliente y las variables públicas de la API, y comprueba la app implementada."
+---
+
+<span id="deploy-react-with-vite-on-lizard" />
+
+# Implementar React con Vite en Lizard
+
+Lizard compila una app de React que usa Vite y sirve su directorio `dist/` mediante nginx en el puerto `80`. Esta guía cubre una app renderizada en el navegador. Para páginas de React que necesitan un servidor, sigue la [guía de Next.js](/framework-guides/nextjs) o proporciona un servidor de producción para el framework de React que hayas elegido.
+
+<span id="prepare-the-build" />
+
+## Preparar la compilación
+
+Usa un proyecto existente de React y Vite con un lockfile confirmado en el repositorio. Su archivo `package.json` necesita un script de compilación de producción:
+
+```json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
+```
+
+Si tu plantilla ejecuta comprobaciones de TypeScript antes de `vite build`, mantén esas comprobaciones. Conserva el directorio de salida predeterminado de Vite, `dist`. Un `build.outDir` personalizado necesita un Dockerfile correspondiente porque la ruta de detección estándar copia `dist`.
+
+| Setting | Value |
+|---|---|
+| Detección | `vite` en dependencies o dev dependencies |
+| Compilación | `npm run build` |
+| Salida | `dist/` |
+| Servidor de producción | nginx; no se necesita script de inicio de Node |
+| Puerto del servicio | `80` |
+
+<span id="test-locally" />
+
+## Probar localmente
+
+```bash
+npm ci
+npm run build
+npm run preview
+```
+
+Abre la URL de vista previa local y prueba una página que llame a tu API. El comando de vista previa comprueba la compilación localmente; no configures `vite preview` como comando de inicio de producción. Consulta [despliegue de Vite](https://vite.dev/guide/static-deploy.html).
+
+<span id="deploy-the-source" />
+
+## Implementar el código fuente
+
+Después de la [configuración de CLI](/framework-guides#prepare-the-project), ejecuta esto desde el directorio que contiene `package.json`:
+
+```bash
+lizard init --name react-app
+lizard add --service web
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+Sube el código fuente y el lockfile, excluyendo `node_modules/`, `dist/` y los secretos. Deja sin configurar las anulaciones de compilación/inicio del servicio para usar la ruta de detección estática. El contenedor de nginx escucha en el puerto 80 aunque los servidores de desarrollo y vista previa usen otros puertos.
+
+<span id="connect-an-api" />
+
+## Conectar una API
+
+Usa una variable pública como `VITE_API_URL` para la dirección HTTPS de la API accesible desde el navegador. Léela como `import.meta.env.VITE_API_URL`. Configura ese valor mediante [variables y secretos](/variables) y vuelve a compilar cuando cambie. Nunca expongas una URL de base de datos, una credencial de API ni una dirección de servicio solo interna mediante una variable `VITE_*`.
+
+Para una API en otro origen, configura sus orígenes permitidos para que incluyan la URL del frontend. Un hostname de servicio privado que funciona entre servicios de backend no se resolverá en el navegador de un visitante.
+
+<span id="verify-routing" />
+
+## Verificar el enrutamiento
+
+Abre la app en vivo, sigue una ruta del cliente y luego recarga esa URL directamente. El servidor estático predeterminado vuelve a `index.html` para que el router del cliente pueda renderizar una ruta interna. Añade también una ruta para rutas desconocidas en la app de React. Ese fallback sigue devolviendo HTTP 200; usa [rutas estáticas y 404](/framework-guides/static-routing) para elegir una política del servidor para páginas que necesitan respuestas HTTP 404 reales.
+
+Si un recurso devuelve HTML o la página queda en blanco, revisa el `base` de Vite, la URL del recurso solicitada y el directorio de salida. Si la app nunca llega a estar healthy, comprueba que el puerto del servicio sea `80` y que una anulación antigua del comando de inicio no haya seleccionado una ruta de compilación diferente.
+
+Para páginas destinadas a aparecer en búsquedas, inspecciona la respuesta HTML inicial. Es posible que un shell renderizado en el navegador no contenga el texto que esperas que lea un motor de búsqueda o un motor de respuestas. Elige prerenderizado o un framework con servidor cuando necesites ese texto en la respuesta.
+
+Consulta [versiones probadas y resultados en la nube](/framework-guides/validation) para las comprobaciones de despliegue del 9 de septiembre de 2026 y sus límites.

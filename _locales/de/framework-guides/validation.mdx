@@ -1,0 +1,72 @@
+---
+description: "Ergebnisse des Framework-Leitfadens aus 16 echten Lizard CLI-Bereitstellungen am 9. September 2026: getestete Versionen, Routen, Formulare, Migrationen, kanonische URLs und Grenzen."
+---
+
+<span id="framework-guide-test-results" />
+
+# Testergebnisse des Framework-Leitfadens
+
+Am 9. September 2026 haben alle 16 Rezepte in 11 Frameworks einen lokalen Build und eine neue Cloud-Bereitstellung mit Lizard CLI 0.3.95 bestanden. Wir haben die veröffentlichte Einrichtung befolgt, für jedes Rezept ein neues Projekt und einen neuen Service erstellt und den Quellcode mit `lizard up` hochgeladen. Diese Ergebnisse decken die unten aufgeführten Versionen und kleinen Test-Apps ab.
+
+Der Cloud-Durchlauf bestand 100 Prüfungen von Routen, APIs und Formularen sowie 45 Prüfungen verknüpfter JavaScript- und CSS-Dateien. Django-Migrationen, ein Datenbankschreib- und -lesevorgang sowie die finalen Site-URLs von Docusaurus und Hugo wurden ebenfalls bestanden.
+
+<span id="tested-recipes" />
+
+## Getestete Rezepte
+
+| Recipe | Tested versions | Port | Cloud check |
+|---|---|---|---|
+| Next.js server | Next.js 16.3.4, React 19.2.8 | `3000` | Bestanden |
+| Next.js static export | Next.js 16.3.4, React 19.2.8 | `80` | Bestanden |
+| React with Vite | React 19.2.8, Vite 8.2.2 | `80` | Bestanden |
+| Vue with Vite | Vue 3.5.42, Vue Router 5.3.1, Vite 8.2.2 | `80` | Bestanden |
+| Astro static | Astro 7.3.1 | `80` | Bestanden |
+| Astro Node server | Astro 7.3.1, Node adapter 11.1.5 | `3000` | Bestanden |
+| Nuxt Node server | Nuxt 4.5.2 | `3000` | Bestanden |
+| Nuxt generate | Nuxt 4.5.2 | `80` | Bestanden |
+| SvelteKit Node server | SvelteKit 2.70.3, Svelte 5.57.0, adapter-node 5.5.7 | `3000` | Bestanden |
+| SvelteKit static | SvelteKit 2.70.3, Svelte 5.57.0, adapter-static 3.0.10 | `80` | Bestanden |
+| Docusaurus | Docusaurus 3.10.2 | `80` | Bestanden |
+| VitePress, docs root | VitePress 1.6.4 | `80` | Bestanden |
+| VitePress, project root | VitePress 1.6.4 | `80` | Bestanden |
+| FastAPI | FastAPI 0.141.1, Uvicorn 0.52.4 | `8000` | Bestanden |
+| Django | Django 6.1.1, Gunicorn 26.2.0, WhiteNoise 6.12.0, psycopg 3.3.5 | `8000` | Bestanden |
+| Hugo | Hugo 0.165.0 (extended) | `80` | Bestanden |
+
+JavaScript-Builds verwendeten Node 22; Python-Builds verwendeten Python 3.13. Uploads liefen unter macOS ohne `COPYFILE_DISABLE`. Paketmanifeste und Lockfiles pinnen die oben genannten Versionen. Tags von Container-Images können sich unabhängig von einem Package-Lockfile ändern.
+
+<span id="what-we-checked-on-september-9" />
+
+## Was wir am 9. September geprüft haben
+
+- Wir haben die dokumentierten lokalen Build- und Server-Befehle in Linux-Containern ausgeführt und dann `lizard init`, `lizard add` und `lizard up` für jedes Rezept ausgeführt. Wir haben die Cloud-Build- und Laufzeit-Logs gelesen und den finalen Service-Status und Port geprüft.
+- Wir haben die öffentliche Startseite, eine innere Route, ein echtes Asset, eine fehlende Seite und einen fehlenden JavaScript-Pfad angefordert. Statische Content-Sites lieferten echte 404-Antworten; React und Vue behielten ihr dokumentiertes SPA-Fallback bei. Beide VitePress-Layouts lieferten den richtigen Inhalt unter sauberen URLs.
+- Wir haben API-Antworten zur Anfragezeit, POST-Handler, SvelteKit-Formularergebnisse und die Ablehnung eines Formulars von einer nicht vertrauenswürdigen Herkunft geprüft. Wir haben das bereitgestellte Next.js-Server-Action-Formular per HTTP mit seiner generierten action ID übermittelt und die Weiterleitung sowie den zurückgegebenen Wert geprüft.
+- Wir haben Docusaurus und Hugo nach dem Setzen des generierten Hostnamens in der Konfiguration neu gebaut. Kanonische Docusaurus-URLs und beide Sitemaps verwendeten den öffentlichen Host.
+- Wir haben Django-Migrationen zweimal gegen Managed Postgres ausgeführt, eine Testzeile geschrieben und gelesen, gesammelte statische Dateien ausgeliefert, ein gültiges CSRF-Formular akzeptiert und ein Formular ohne sein Token abgelehnt.
+
+Jedes Rezept verwendete ein separates Testprojekt mit unterschiedlichen Namen, um den Durchlauf isoliert zu halten. Workspace-, Region- und JSON-Flags machten den Testkontext explizit. Service-Overrides für Build, Start und Dockerfile-Pfad blieben ungesetzt. Nur die Rezepte Next.js static export, Nuxt generate und Django lieferten die in ihren Leitfäden dokumentierten Dockerfiles mit. Die Tests für Docusaurus, VitePress, Hugo und SvelteKit Node enthielten die [veröffentlichten Quellcodebeispiele](https://github.com/lizard-build/docs/tree/main/_examples).
+
+<span id="browser-checks" />
+
+## Browser-Prüfungen
+
+Der Durchlauf vom 9. September bestätigte einen React-Button-Klick im Browser. Die Browser-Verbindung lieferte danach wiederholte Timeouts bei Navigation und Seitenlesevorgängen zurück, daher beansprucht dieser Durchlauf **keinen** erneuten erfolgreichen Browser-Test für alle 16 Rezepte. HTTP-Routen- und Formularprüfungen wurden unabhängig bestanden.
+
+Der Durchlauf vom 7. September umfasste Reloads direkter Routen, React-Interaktion, Vue-Router-Navigation, Next.js Server Actions und SvelteKit-Formularübermittlungen in einem Browser. Diese bleiben Ergebnisse dieses früheren Durchlaufs.
+
+<span id="fixes-since-the-first-run" />
+
+## Korrekturen seit dem ersten Durchlauf
+
+Der Durchlauf vom 7. September fand fehlende Schritte zur Service-Erstellung, einen Nuxt-Static-Preset-Mismatch, Defekte im statischen Routing, macOS-Archivmetadaten, Exit-Codes bei fehlgeschlagenen Builds und Fehler bei Port-Änderungen. Die Leitfäden enthalten jetzt `lizard add` und die korrigierte statische Nuxt-Einrichtung.
+
+Die erneute Prüfung des statischen Routings vom 8. September wurde ohne benutzerdefinierte Dockerfiles für Astro static, SvelteKit static, Docusaurus, Hugo und beide VitePress-Layouts bestanden. Neue Builds enthalten diese Routing-Regeln; vorhandene Images benötigen einen Neubau.
+
+Lizard CLI 0.3.95 enthält die Korrekturen für Archive und Exit-Codes bei fehlgeschlagenen Builds. Die Produktionsprüfungen vom 9. September verifizierten außerdem Service-Port-Änderungen und den Erhalt eines expliziten Ports während Upload und Neubau. Siehe [known issues](/platform/known-issues) für die Release Notes und verbleibenden Grenzen.
+
+<span id="limits-of-these-results" />
+
+## Grenzen dieser Ergebnisse
+
+Diese Prüfungen decken Quellcode-Uploads und die dokumentierten Modi ab. Sie belegen keine Unterstützung für jedes Plugin, jeden Adapter, jedes Theme, jede Framework-Version, jeden GitHub-Bereitstellungspfad, jedes Datenbank-Recovery-Verfahren oder Workloads mit mehreren Replikaten. Djangos kleine Test-App meldet weiterhin Sicherheitswarnungen von `check --deploy`; sie ist keine vollständige Sicherheitskonfiguration für die Produktion. Diese Tests messen weder Suchrankings noch AI-Zitationen. Prüfen Sie vor dem Release die Routen und Datenoperationen Ihrer eigenen App.

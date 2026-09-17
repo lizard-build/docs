@@ -1,0 +1,165 @@
+---
+description: "Implementa Flowise con PostgreSQL, conserva su clave de cifrado de credenciales y comprueba los flujos guardados después de reinicios y actualizaciones."
+---
+
+<span id="run-flowise-with-postgresql" />
+
+# Ejecutar Flowise con PostgreSQL
+
+Esta guía ejecuta un servicio de Flowise en Lizard, con PostgreSQL para flujos, cuentas y credenciales cifradas. Compila una versión exacta de npm y establece la clave de cifrado como un secreto del servicio.
+
+La configuración básica cubre flujos que usan APIs. Los archivos subidos y los almacenes vectoriales locales necesitan almacenamiento persistente aparte; consulta [Almacenamiento de archivos](#file-storage) antes de usar esas funciones.
+
+<span id="prerequisites" />
+
+## Requisitos previos
+
+- Una cuenta de Lizard con acceso a alojamiento de aplicaciones y Managed Postgres.
+- Node.js, npm y OpenSSL en tu computadora.
+- Memoria suficiente para tu carga de trabajo de Flowise; el servicio de prueba usa 4 GiB.
+
+Instala Lizard CLI y completa el inicio de sesión en el navegador:
+
+```bash
+npm install -g @lizard-build/cli
+lizard login
+```
+
+<span id="create-the-project" />
+
+## Crear el proyecto
+
+```bash
+mkdir flowise-on-lizard
+cd flowise-on-lizard
+lizard init --name flowise-on-lizard
+lizard add postgres --name flowise-db
+lizard add --service flowise
+```
+
+Usa `--workspace <workspace>` con `lizard init` si necesitas seleccionar un espacio de trabajo. Espera hasta que la base de datos esté en ejecución.
+
+<span id="build-a-fixed-flowise-version" />
+
+## Compilar una versión fija de Flowise
+
+Crea `Dockerfile` con el contenido de abajo. Esto sigue la compilación de Docker de Flowise y fija el paquete npm en `3.1.4`:
+
+```dockerfile
+FROM node:24-alpine AS build
+RUN apk add --no-cache git python3 py3-pip py3-setuptools make g++ build-base cairo-dev pango-dev
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+RUN npm install -g flowise@3.1.4 --legacy-peer-deps
+
+FROM node:24-alpine
+RUN apk add --no-cache chromium git python3 py3-pip py3-setuptools make g++ build-base cairo-dev pango-dev curl
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+COPY --from=build /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=build /usr/local/bin /usr/local/bin
+RUN chown -R node:node /usr/local/lib/node_modules /usr/local/bin
+USER node
+EXPOSE 3000
+ENTRYPOINT ["flowise", "start"]
+```
+
+`--legacy-peer-deps` evita instalar integraciones de pares opcionales, incluida una antigua dependencia nativa de SQLite. Esta receta está orientada a PostgreSQL y flujos basados en API; instala y prueba las dependencias adicionales por separado para los nodos que las necesiten.
+
+Selecciona el Dockerfile explícitamente:
+
+```bash
+lizard service set flowise --set dockerfilePath=Dockerfile
+```
+
+<span id="configure-postgresql-and-encryption" />
+
+## Configurar PostgreSQL y el cifrado
+
+Haz referencia a las variables de la base de datos en el servicio de Flowise:
+
+```bash
+lizard secrets set \
+  DATABASE_TYPE=postgres \
+  DATABASE_HOST='${{flowise-db.PGHOST}}' \
+  DATABASE_PORT='${{flowise-db.PGPORT}}' \
+  DATABASE_USER='${{flowise-db.PGUSER}}' \
+  DATABASE_PASSWORD='${{flowise-db.PGPASSWORD}}' \
+  DATABASE_NAME='${{flowise-db.PGDATABASE}}' \
+  --service flowise
+```
+
+Mantén las comillas simples para que tu shell no expanda las referencias. Lizard las resuelve cuando el servicio se inicia.
+
+Genera los siguientes secretos una sola vez durante la configuración:
+
+```bash
+lizard secrets set \
+  FLOWISE_SECRETKEY_OVERWRITE="$(openssl rand -hex 32)" \
+  JWT_AUTH_TOKEN_SECRET="$(openssl rand -hex 32)" \
+  JWT_REFRESH_TOKEN_SECRET="$(openssl rand -hex 32)" \
+  EXPRESS_SESSION_SECRET="$(openssl rand -hex 32)" \
+  TOKEN_HASH_SECRET="$(openssl rand -hex 32)" \
+  SECURE_COOKIES=true \
+  --service flowise
+```
+
+Guarda una copia segura de estos valores. En particular, conserva `FLOWISE_SECRETKEY_OVERWRITE`: Flowise necesita la misma clave para descifrar las credenciales ya almacenadas en PostgreSQL. No regeneres los secretos al reiniciar, volver a implementar o actualizar.
+
+<span id="deploy-and-create-your-account" />
+
+## Implementar y crear tu cuenta
+
+```bash
+lizard up --service flowise --port 3000
+```
+
+La primera compilación instala Flowise y sus dependencias, por lo que puede tardar varios minutos. Abre la URL HTTPS que devuelve la implementación y crea la primera cuenta de propietario antes de compartir la URL. Inicia sesión en el editor.
+
+Establece la URL pública para los enlaces que genera Flowise, reemplazando el ejemplo por tu URL HTTPS real:
+
+```bash
+lizard secrets set APP_URL=https://YOUR-SERVICE.onlizard.com --service flowise
+```
+
+Este cambio reinicia el servicio. Configura SMTP por separado si necesitas correos de restablecimiento de contraseña o invitaciones.
+
+<span id="verify-persistence" />
+
+## Verificar la persistencia
+
+Crea y guarda un flujo. Añade una credencial de prueba y luego reinicia Flowise:
+
+```bash
+lizard restart --service flowise
+```
+
+Espera hasta que el servicio esté en ejecución, vuelve a iniciar sesión y comprueba que el flujo y la credencial siguen ahí. Ejecuta un flujo que use la credencial para confirmar que Flowise todavía puede descifrarla. Repite la comprobación después de volver a implementar:
+
+```bash
+lizard redeploy --service flowise
+```
+
+Haz una copia de seguridad tanto de PostgreSQL como de la clave de cifrado. Una copia de seguridad de la base de datos sin la clave no puede recuperar las credenciales guardadas.
+
+<span id="file-storage" />
+
+## Almacenamiento de archivos
+
+PostgreSQL no almacena todos los archivos que escribe Flowise. Esta configuración no monta un volumen de archivos persistente, así que las subidas locales, las bases de datos vectoriales locales y los registros de archivos pueden desaparecer cuando se reemplaza el contenedor.
+
+Antes de usar subidas o flujos de trabajo con documentos, configura un bucket S3 privado usando las [variables de almacenamiento](https://docs.flowiseai.com/configuration/environment-variables) de Flowise. Establece `STORAGE_TYPE=s3`, `S3_STORAGE_BUCKET_NAME`, `S3_STORAGE_ACCESS_KEY_ID`, `S3_STORAGE_SECRET_ACCESS_KEY` y `S3_STORAGE_REGION`. Para un proveedor compatible con S3, establece también `S3_ENDPOINT_URL` y `S3_FORCE_PATH_STYLE=true`.
+
+Managed Object Storage de Lizard crea un bucket `default` de lectura pública. No coloques documentos privados de Flowise en ese bucket sin antes cambiar su configuración de acceso. La configuración de PostgreSQL anterior no aprovisiona ni prueba almacenamiento de archivos, almacenes vectoriales locales ni workers de cola.
+
+<span id="troubleshooting-and-updates" />
+
+## Solución de problemas y actualizaciones
+
+```bash
+lizard events --service flowise
+lizard logs --build --service flowise
+lizard logs --service flowise
+```
+
+Si una primera implementación agota el tiempo mientras la imagen todavía se está descargando, inspecciona `lizard events`. Una vez que el contenedor haya arrancado, vuelve a intentar `lizard up --service flowise --port 3000`. Un servicio sin ninguna compilación previa correcta todavía no puede usar `lizard redeploy`.
+
+Para las actualizaciones, haz una copia de seguridad de la base de datos, lee las notas de versión de Flowise, cambia la versión de npm en el Dockerfile y súbelo de nuevo con `lizard up`. Verifica la nueva versión y ejecuta las comprobaciones de persistencia antes de depender de la actualización.

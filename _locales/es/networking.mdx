@@ -1,0 +1,85 @@
+---
+description: "Cada servicio recibe un dominio onlizard.com con TLS automático. Asocia un hostname personalizado, verifica DNS, expón un puerto o elimina un dominio."
+---
+
+<span id="networking" />
+
+# Redes
+
+Cada servicio recibe un dominio generado `*.onlizard.com` con TLS automático en el momento en que se despliega, sin importar la región. Asocia tu propio hostname cuando estés listo para salir a producción.
+
+<span id="generated-domains" />
+
+## Dominios generados
+
+El dominio predeterminado de un servicio se crea para ti. Muéstralo (o genera uno nuevo):
+
+```bash
+lizard domain                    # show the service's current domain
+lizard domain generate           # generate a new *.onlizard.com subdomain
+```
+
+El object storage servido desde un [addon S3](/addons/storage) usa en su lugar un host de gateway con alcance regional (`s3-<region>.onlizard.com`).
+
+<span id="attach-a-custom-domain" />
+
+## Asociar un dominio personalizado
+
+El hostname es un **argumento posicional** — no existe un subcomando `add`:
+
+```bash
+lizard domain app.example.com --service web
+```
+
+Lizard devuelve los registros DNS que debes crear (un `CNAME` para el hostname y un registro `TXT` para la verificación). Agrégalos en tu proveedor de DNS.
+
+<span id="verify" />
+
+## Verificar
+
+Una vez que el DNS se haya propagado, activa el dominio:
+
+```bash
+lizard domain verify app.example.com
+```
+
+Esto comprueba el registro `TXT` y activa el dominio. El TLS se aprovisiona automáticamente.
+
+<span id="remove-a-domain" />
+
+## Eliminar un dominio
+
+```bash
+lizard domain delete app.example.com
+lizard domain rm app.example.com --yes   # alias, skip confirmation
+```
+
+<span id="exposing-a-specific-port" />
+
+## Exponer un puerto específico
+
+Si tu servicio sirve en un puerto no predeterminado, asocia el dominio a ese puerto:
+
+```bash
+lizard domain app.example.com --service web --port 8080
+```
+
+<span id="worker-services" />
+
+## Servicios worker
+
+Un [servicio en modo worker](/deploy/workers) (`containerPort=0`) puede seguir mostrando un dominio generado, pero no sirve nada — no hay listener ni ruta de load balancer. No asocies un dominio personalizado a un worker.
+
+<span id="manage-in-the-dashboard" />
+
+## Gestionar en el dashboard
+
+La vista **Domains** en el dashboard (`lizard open`) muestra el estado de verificación y TLS de cada dominio y te permite agregar o eliminar hostnames visualmente.
+
+<span id="see-also" />
+
+## Ver también
+
+- [`lizard domain`](/cli/domain) — la referencia completa de comandos.
+- [Regions](/deploy/regions) — co-ubicar servicios y addons para reducir la latencia.
+- [From prototype to a SaaS people pay for](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#from-vibe-coded-prototype-to-a-saas-people-pay-for) — dónde encaja un dominio personalizado entre las demás cosas que una app generada todavía necesita.

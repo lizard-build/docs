@@ -1,0 +1,69 @@
+---
+description: "Stelle Next.js, React, Vue, Astro, Nuxt, SvelteKit, FastAPI, Django, Docusaurus, VitePress und Hugo auf Lizard bereit. Finde Build-Befehle, Adapter, Ports und Prüfungen."
+---
+
+<span id="framework-guides" />
+
+# Framework-Anleitungen
+
+Stelle eine Framework-App aus dem Quellcode auf Lizard bereit. Wähle unten dein Framework und den Rendering-Modus, bereite den Produktions-Build vor und stelle dann mit Lizard CLI bereit oder verbinde ein GitHub-Repository. Server-Apps führen einen Prozess aus; statische Websites liefern die generierten Dateien über nginx aus.
+
+<span id="choose-your-framework" />
+
+## Wähle dein Framework
+
+Diese Einstellungen beschreiben die Standard-Projektlayouts in den verlinkten Anleitungen. Die Befehle gehen bei JavaScript-Projekten von npm aus. Benutzerdefinierte Ausgabepfade, Adapter und Build-Überschreibungen können das Ergebnis ändern.
+
+| Framework | Build | Laufzeit oder Ausgabe | Service-Port |
+|---|---|---|---|
+| [Next.js](/framework-guides/nextjs) | `npm run build` | `next start` über das Start-Skript | `3000` |
+| [Next.js static export](/framework-guides/nextjs/static-export) | `npm run build` | `out/` über ein Dockerfile | `80` |
+| [React with Vite](/framework-guides/react) | `npm run build` | `dist/` | `80` |
+| [Vue with Vite](/framework-guides/vue) | `npm run build` | `dist/` | `80` |
+| [Astro](/framework-guides/astro) | `npm run build` | `dist/` oder der eigenständige Node-Adapter | `80` statisch; `3000` Server |
+| [Nuxt](/framework-guides/nuxt) | `npm run build` | `node .output/server/index.mjs` | `3000` |
+| [SvelteKit](/framework-guides/sveltekit) | `npm run build` | `node build` mit adapter-node | `3000` |
+| [FastAPI](/framework-guides/fastapi) | Python-Abhängigkeiten installieren | `uvicorn main:app --host 0.0.0.0 --port 8000` | `8000` |
+| [Django](/framework-guides/django) | Python-Abhängigkeiten installieren | Gunicorn mit deinem WSGI-Modul | `8000` |
+| [Docusaurus](/framework-guides/docusaurus) | `npm run build` | `build/` | `80` |
+| [VitePress](/framework-guides/vitepress) | `npm run docs:build` | `docs/.vitepress/dist/` in dieser Anleitung | `80` |
+| [Hugo](/framework-guides/hugo) | `hugo --minify` | `public/` | `80` |
+
+<span id="prepare-the-project" />
+
+## Projekt vorbereiten
+
+Führe die Befehle im Anwendungsverzeichnis aus. Übertrage Quellcodedateien, Konfiguration und die Package-Lockdatei ins Commit. Schließe `.env`, lokale Abhängigkeiten und lokale Build-Ausgabe von Uploads aus. Node-Projekte können die Node-Hauptversion in `.nvmrc` auswählen; der aktuelle Standard ist `22`. Damit wird eine Hauptversion ausgewählt, keine genaue Patch-Version.
+
+Installiere Lizard CLI und melde dich einmal an:
+
+```bash
+npm install -g @lizard-build/cli
+lizard login
+```
+
+Jede Anleitung verwendet ein neues Projekt und einen Service mit dem Namen `web` oder `api`. Erstelle diesen Service mit `lizard add --service web` (oder `api`) vor dem ersten Aufruf von `lizard up --service`. `up --service` wählt einen vorhandenen Service aus; ein fehlender benannter Service wird dadurch nicht erstellt. Prüfe bei einem bestehenden Projekt vor der Bereitstellung `lizard status --json` und `lizard ps --json`. Der Port muss zum Prozess im Container passen, der auf `0.0.0.0` lauschen muss.
+
+Lizard CLI 0.3.95 schließt macOS-Archivmetadaten bei Uploads aus. Eine Einstellung für `COPYFILE_DISABLE` ist nicht erforderlich. Aktualisiere ältere CLI-Versionen, bevor du diesen Anleitungen folgst.
+
+<span id="choose-github-or-local-source" />
+
+## GitHub oder lokalen Quellcode wählen
+
+Die Befehle in dieser Anleitung verwenden `lizard up`, um den aktuellen Ordner hochzuladen. Dieser Befehl stellt einen bestehenden Service auf Quellcode-Upload um. Wenn du git push to deploy beibehalten möchtest, [verbinde GitHub](/deploy/github) stattdessen und verwende die Build-Einstellungen der Anleitung im Repository. Konfiguriere den Service-Port anhand der Tabelle.
+
+<span id="keep-build-settings-consistent" />
+
+## Build-Einstellungen konsistent halten
+
+Diese Anleitungen verwenden lizardpack-Erkennung, sofern nicht ein Dockerfile verlangt wird. Bestehende Überschreibungen in `buildCommand` oder `startCommand` haben Vorrang vor der Erkennung und dem Dockerfile im Repository. Prüfe die [Reihenfolge der Build-Entscheidung](/concepts/build-pipeline#build-decision-order), bevor du die Build-Methode wechselst. Setze Skripte in `package.json`, wenn eine Anleitung dich dazu auffordert; das Hinzufügen einer CLI-Überschreibung ist ein anderer Build-Pfad.
+
+<span id="check-a-release" />
+
+## Ein Release prüfen
+
+Lies die Build-Logs, Laufzeit-Logs und die aktive URL. Teste eine interne Route, eine fehlende Route und jede API oder Formularaktion. Ein Prozess, der seinen Port öffnet, kann trotzdem eine fehlerhafte Seite ausliefern. Verwende für generierte Websites [statische Routen und 404-Seiten](/framework-guides/static-routing), damit nicht für jede unbekannte URL die Startseite mit HTTP 200 zurückgegeben wird.
+
+Laufzeitunterstützung bedeutet nicht gemeinsam genutzte Caches, persistente lokale Dateien oder jede Framework-Version. Sieh unter [Limits](/platform/limits), [Storage und Wiederherstellung](/platform/storage-and-recovery) und [bekannte Probleme](/platform/known-issues) nach, wenn deine App auf diese Funktionen angewiesen ist.
+
+Sieh unter [getestete Versionen und Cloud-Ergebnisse](/framework-guides/validation) nach für die Bereitstellungsprüfungen vom 9. September 2026 und ihre Limits.

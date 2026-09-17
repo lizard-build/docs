@@ -1,0 +1,50 @@
+---
+description: "サービスの CPU、メモリ、ネットワーク、ディスクを追跡し、現在のスケールのコストを確認して、表示された数値に基づいて対応します。"
+---
+
+<span id="metrics--cost" />
+
+# メトリクスとコスト
+
+CLI またはダッシュボードから、サービスの CPU、メモリ、ネットワーク、ディスクを追跡し、何にいくらかかっているかを確認できます。
+
+<span id="view-metrics" />
+
+## メトリクスを表示
+
+```bash
+lizard metrics                    # CPU / memory / network / disk
+lizard metrics --service api      # a specific service
+lizard metrics --range <range>    # time window
+lizard metrics --watch            # live-updating view
+```
+
+<span id="include-cost" />
+
+## コストを含める
+
+```bash
+lizard metrics --cost
+```
+
+リソース使用量とあわせてコストの数値を追加し、現在のスケールの料金を確認できるようにします。
+
+<span id="dashboard" />
+
+## ダッシュボード
+
+ダッシュボード（`lizard open`）では、これらが **Metrics / Observability** ビューにチャートとして表示され、**Usage** ビューではプロジェクト全体の使用量と請求の内訳を確認できます。次のコマンドで開きます:
+
+```bash
+lizard open
+```
+
+<span id="acting-on-what-you-see" />
+
+## 表示内容に基づいて対応する
+
+- CPU/メモリ使用率が高い → スケールアップ: `lizard scale --service api --cpu 2 --memory 2048`.
+- 負荷が継続している → レプリカを追加: `lizard scale --service api --replicas 3`.
+- アドオンのディスク逼迫 → ストレージを拡張: `lizard scale --service postgres --storage 8192`.
+
+[スケーリング](/deploy/scaling) を参照してください。

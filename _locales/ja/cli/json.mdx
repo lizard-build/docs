@@ -1,0 +1,90 @@
+---
+description: "lizard CLI をスクリプト化: すべてのコマンドで --json、ストリーミングビルドでは行区切りイベント、スキーマ検出、CI でのトークン認証。"
+---
+
+<span id="json--automation" />
+
+# JSON と自動化
+
+CLI はスクリプト化できるように作られています。機械可読な出力には `--json` を渡し、CI からはトークンで操作し、任意のコマンドのスキーマをランタイム時に検出できます。
+
+この出力のもう 1 つの読み手は AI コーディングエージェントです — [Claude Code からのデプロイ](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) では、ビルド失敗時の JSON をどう扱うかを示しています。
+
+<span id="--json-everywhere" />
+
+## どこでも `--json`
+
+構造化出力のために、任意のコマンドに `--json` を追加します。stdout が TTY でない場合、CLI は自動的に JSON に切り替わります。
+
+```bash
+lizard ps --json
+lizard secrets list --json
+lizard metrics --json
+```
+
+<span id="streaming-commands" />
+
+### ストリーミングコマンド
+
+ストリーミングコマンドでは（`--detach` を付けない `lizard up`）、`--json` は **1 行につき 1 つの JSON オブジェクト** を出力します:
+
+```json
+{ "event": "log", "line": "Step 1/8 : FROM node:20" }
+{ "event": "log", "line": "..." }
+{ "event": "deployed", "status": "running", "url": "https://app.onlizard.com" }
+```
+
+ストリームは `done`、または `error` / `failed` で終了します。`lizard up` はさらに、`status` と `url`（`null` の場合があります）を含む最終的な `deployed` / `failed` / `deploying` イベントを出力します。
+
+<span id="logs---json-is-a-snapshot-not-a-stream" />
+
+### `logs --json` はストリームではなくスナップショットです
+
+`lizard logs --json` は **直近 200 行** を返し（`--tail N` で上書き可能、最大 1000）、終了します。さらに出力があることを期待して待機しないでください。特定のインシデントについては、`--restart latest` または `--restart <id>` を使用します。
+
+<span id="schema-discovery" />
+
+## スキーマ検出
+
+任意のコマンドの正確な引数、オプション、終了コードを出力します:
+
+```bash
+lizard --help --json                 # whole tree + global flags + exit codes
+lizard service set --help --json     # one command
+```
+
+レスポンスの形式は `{ cli, version, command: { arguments, options, subcommands }, globalOptions, exitCodes }` です。これはインストール済みのバイナリから生成されるため、常に使用中のバージョンと一致します — フラグをハードコードするよりこちらを優先してください。
+
+<span id="ci--headless-usage" />
+
+## CI / ヘッドレス利用
+
+トークンで認証し、プロジェクトを明示的にリンクします（ヘッドレスな `up` ではプロジェクトは自動作成されません）:
+
+```bash
+# Set LIZARD_TOKEN through your CI secret store.
+lizard init --name my-project
+lizard up --ci --service api --detach
+```
+
+終了コードを確認してパイプラインを分岐してください:
+
+| Code | Meaning |
+|------|---------|
+| `0` | 成功 |
+| `1` | 一般的なエラー |
+| `2` | 認証 — トークンがない / 期限切れ |
+| `3` | 見つからない |
+| `4` | タイムアウト |
+| `5` | キャンセル済み |
+
+```bash
+if lizard redeploy --service api --json; then
+  echo "Deploy succeeded"
+else
+  status=$?
+  echo "Deploy failed with code $status" >&2
+  lizard logs --build --json || true
+  exit "$status"
+fi
+```

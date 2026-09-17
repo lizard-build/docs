@@ -1,0 +1,98 @@
+---
+description: "Conecta un repositorio de GitHub para que cada push a la rama seguida haga build y redespliegue, incluyendo repositorios privados, cambio de ramas y monorepos."
+---
+
+<span id="deploy-from-github" />
+
+# Desplegar desde GitHub
+
+Conectar un repositorio de GitHub es la forma recomendada de ejecutar una app en Lizard: cada push a la rama seguida hace build y redespliega automáticamente.
+
+<span id="create-a-service-from-a-repo" />
+
+## Crear un servicio desde un repositorio
+
+```bash
+lizard add -r your-org/your-app
+```
+
+Esto crea un servicio con origen `github`, clona el repositorio, detecta automáticamente el stack ([lizardpack](/concepts/build-pipeline)), hace el build y devuelve una URL activa. Flags útiles:
+
+| Flag | Propósito |
+|------|---------|
+| `-r, --repo <owner/repo>` | Repositorio de origen |
+| `-n, --name <name>` | Nombre del servicio (se usa en las referencias `${{name.KEY}}` y en el panel) |
+| `-v, --variables <K=V>` | Inicializar una variable de entorno; repetible |
+| `--region <code>` | Región donde desplegar |
+| `--no-deploy` | Adjunta el repositorio pero omite el primer build |
+
+<span id="private-repositories" />
+
+## Repositorios privados
+
+Conecta la GitHub App de Lizard una vez por cuenta para conceder acceso a repositorios privados:
+
+```bash
+lizard git connect
+lizard git status        # show connection + repo status
+```
+
+También puedes conectar y gestionar el acceso a repositorios desde la página de **integración de GitHub** en el panel (`lizard open`).
+
+<span id="point-an-existing-service-at-a-repo" />
+
+## Apuntar un servicio existente a un repositorio
+
+Para cambiar un servicio a un origen git (o cambiar el repositorio/rama):
+
+```bash
+lizard service set api \
+  --set sourceType=github \
+  --set repoUrl=https://github.com/your-org/your-app \
+  --set branch=main
+```
+
+Cambiar un campo de build activa automáticamente un rebuild — **no** encadenes un `redeploy` después.
+
+> **Nota:** `lizard up` siempre fuerza `sourceType=upload`. No lo uses para actualizar un servicio respaldado por git — haz push al remoto o usa `lizard redeploy` en su lugar.
+
+<span id="auto-redeploy-on-push" />
+
+## Redespliegue automático en push
+
+Una vez que `repoUrl` está configurado, los push a la `branch` correspondiente redespliegan automáticamente mediante el webhook de GitHub. Para limitar qué push activan un redespliegue:
+
+- **`rootDirectory`** — solo hace build de un subdirectorio (monorepos).
+- **`watchPatterns`** — solo redespliega cuando cambian rutas coincidentes.
+
+```bash
+lizard service set api --set watchPatterns='apps/api/**,packages/**'
+```
+
+<span id="switch-branches" />
+
+## Cambiar de rama
+
+```bash
+lizard git checkout api staging      # move the `api` service to the `staging` branch and redeploy
+```
+
+## Monorepos
+
+Para un repositorio que contiene varias apps, crea un servicio por app y configura su `rootDirectory` con la subruta:
+
+```bash
+lizard add -r your-org/monorepo -n api
+lizard service set api --set rootDirectory=apps/api
+```
+
+Si tu directorio actual es una subapp dentro de un repositorio cuyo directorio padre ya está vinculado, añade el servicio en el proyecto del padre y configura `rootDirectory` con la subruta del cwd.
+
+<span id="see-also" />
+
+## Ver también
+
+- [Build Pipeline](/concepts/build-pipeline) — cómo se detecta y se hace build de tu stack.
+- [Deploy from Local Code](/deploy/upload) — cuando no tienes un remoto.
+- [`lizard git`](/cli/git) — la referencia completa de comandos para `connect`, `status` y `checkout`.
+- [Where to deploy an app your AI IDE built](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#where-to-deploy-an-app-your-ai-ide-built) — cómo apuntar esto a un repositorio que escribió un agente, y cuánto cuesta.

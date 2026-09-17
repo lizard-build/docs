@@ -1,0 +1,110 @@
+---
+description: "adapter-node を使って Lizard で SvelteKit をデプロイします。本番ビルド、port 3000、ORIGIN、form actions、および別個の adapter-static の経路を設定します。"
+---
+
+<span id="deploy-sveltekit-on-lizard" />
+
+# Lizard で SvelteKit をデプロイする
+
+Lizard 向けの SvelteKit サーバーをビルドするには、`@sveltejs/adapter-node` を使用します。これにより `build/` が生成され、port `3000` で `node build` によって起動されます。adapter は明示的にインストールして設定してください。`adapter-auto` をまだ使用している scaffold では、Node のデプロイ先は確立されません。
+
+まずは、このレシピで使用する設定とファイルを含む[完全なソース例](https://github.com/lizard-build/docs/tree/main/_examples/sveltekit)から始めてください。
+
+<span id="configure-the-adapter" />
+
+## adapter を設定する
+
+```bash
+npm install --save-dev @sveltejs/adapter-node
+```
+
+`svelte.config.js` では、既存の preprocess やその他の設定はそのままにしつつ、`kit.adapter` を Node adapter に設定します。
+
+```js
+import adapter from '@sveltejs/adapter-node';
+
+export default {
+  kit: { adapter: adapter() },
+};
+```
+
+使用する予定のデプロイ adapter だけを残してください。特に、未使用の `@sveltejs/adapter-static` 依存関係があると、設定で adapter-node を import していても、現在の detector では static の経路が選ばれることがあります。
+
+| Setting | Value |
+|---|---|
+| Build | `npm run build`、通常は `vite build` |
+| Output | `build/` |
+| Runtime | `node build` |
+| Host and port | `HOST=0.0.0.0`、`PORT=3000` |
+| Service port | `3000` |
+
+<span id="test-the-production-server" />
+
+## 本番サーバーをテストする
+
+```bash
+npm ci
+npm run build
+HOST=0.0.0.0 PORT=3000 ORIGIN=http://localhost:3000 node build
+```
+
+サーバーレンダリングされたページを開き、アプリに form action がある場合は送信してください。このガイドで使用する検出では、adapter のデフォルト出力パスをそのまま維持してください。
+
+<span id="deploy-and-set-the-public-origin" />
+
+## デプロイして公開 origin を設定する
+
+[CLI setup](/framework-guides#prepare-the-project) の後:
+
+```bash
+lizard init --name sveltekit-app
+lizard add --service web
+lizard up --service web --port 3000
+lizard ps --json
+```
+
+`ORIGIN` には、デプロイ出力にある正確な公開 HTTPS origin を、パスなしで設定します。たとえば、このプレースホルダーを実際の URL に置き換えます。
+
+```bash
+lizard secrets set ORIGIN=https://YOUR_PUBLIC_HOST --service web
+```
+
+訪問者が使用する origin がカスタムドメインであれば、代わりにそちらを使用してください。変数変更後に forms を再確認してください。複数の許可された origins や proxy 由来の URL を使う場合は、[SvelteKit Node server guide](https://svelte.dev/docs/kit/adapter-node) を読み、信頼する proxy headers を意図的に設定してください。
+
+<span id="verify-and-troubleshoot" />
+
+## 検証とトラブルシュート
+
+`lizard logs --build --service web --json` と `lizard logs --service web --json` で build と runtime のログを確認します。内部ルートを直接開き、form を送信し、存在しないルートをリクエストしてください。
+
+forms で cross-site submission error が報告される場合は、セキュリティチェックを無効にする前に `ORIGIN` を確認してください。`node build` がサーバーを見つけられない場合は、有効な adapter と出力パスを確認してください。lizardpack の経路を使うには、service command overrides は未設定のままにしてください。
+
+<span id="static-sveltekit-sites" />
+
+## Static SvelteKit サイト
+
+必要なすべてのページを prerender できるアプリでは、`@sveltejs/adapter-static`、そのデフォルトの `build/` 出力、および service port `80` を使用できます。その出力では server actions や request-time endpoints は実行できません。必要な routes に対して prerendering を設定してください。パッケージをインストールするだけでは不十分です。
+
+`@sveltejs/adapter-static` をインストールし、`svelte.config.js` の adapter import を置き換えます。
+
+```js
+import adapter from '@sveltejs/adapter-static';
+
+export default {
+  kit: { adapter: adapter() },
+};
+```
+
+すべての routes を生成できるサイトでは、これを `src/routes/+layout.js` に追加します。
+
+```js
+export const prerender = true;
+export const trailingSlash = 'always';
+```
+
+未使用のデプロイ adapter は dependencies から削除してください。`npm run build` を実行し、`build/` に必要な各ページが含まれていることを確認します。デフォルト出力では、service command overrides は未設定のままにし、port `80` で新しい service をデプロイしてください。新しい build は生成された HTML を配信し、存在しないページには HTTP 404 を返します。nginx に server レシピの port `3000` を再利用しないでください。
+
+生成された HTML routes と SPA fallback のどちらを選ぶかは、[static routes and 404s](/framework-guides/static-routing) を参照してください。フレームワークのオプションと制限については、[SvelteKit static adapter](https://svelte.dev/docs/kit/adapter-static) を参照してください。
+
+2026年9月9日のデプロイ確認とその制限については、[tested versions and cloud results](/framework-guides/validation) を参照してください。
+

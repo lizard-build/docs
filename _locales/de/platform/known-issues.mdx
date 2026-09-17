@@ -1,0 +1,51 @@
+---
+description: "Aktuelle Hinweise zum Lebenszyklus von Sandboxes, Grenzen bei der Wiederherstellung von Deployments und Vorrangregeln für Build-Einstellungen, die Sie prüfen sollten, bevor Sie sich auf einen Workflow verlassen."
+---
+
+<span id="known-issues" />
+
+# Bekannte Probleme
+
+Diese Seite dokumentiert Verhalten, das besondere Vorsicht oder eine verifizierte Freigabe erfordert. Ein zur Prüfung eingereichter Code-Fix ist keine Garantie für einen laufenden Dienst.
+
+<span id="sandbox-pause-and-expiration" />
+
+## Pause und Ablauf von Sandboxen
+
+Die Pause soll die verbleibende Laufzeit einfrieren. Ein Konflikt zwischen der Uhr des Knotens und einem separaten Bereinigungsprozess kann dazu führen, dass eine pausierte Sandbox nach ihrer ursprünglichen Frist beendet wird. Auch der Neustart des Node-Agent und das Fortsetzen einer Sandbox ohne Ablaufzeit benötigen den Lifecycle-Fix.
+
+Bis dieser Fix einen Live-Test bestanden hat und Ihre Region erreicht hat, sollten Sie sich für langfristigen Zustand nicht allein auf Pause verlassen. Speichern Sie Dateien unter `/data` auf einem Persistent Volume, oder speichern Sie den Anwendungszustand in einer Datenbank oder einem Object Storage. Host-Arbeitsspeicher ist kein Backup. Verwenden Sie eine explizite Laufzeit und geben Sie die Sandbox frei, wenn die Aufgabe beendet ist.
+
+<span id="redeploy-is-not-rollback" />
+
+## Redeploy ist kein Rollback
+
+`lizard redeploy` baut die ausgewählte Quelle mit der aktuellen Konfiguration erneut. Dabei wird kein vorheriger Build ausgewählt. Ein fehlgeschlagener Build und ein fehlgeschlagener Start haben unterschiedliche Auswirkungen; prüfen Sie den aktiven Dienst und seine Logs, bevor Sie einen Wiederherstellungsschritt wählen. Gehen Sie nicht davon aus, dass jede Runtime bei einem fehlgeschlagenen Start weiterhin das alte Release ausliefert.
+
+<span id="dockerfile-precedence" />
+
+## Vorrang des Dockerfile
+
+Explizite Build- oder Start-Befehle haben Vorrang vor einem Dockerfile im Repository. Entfernen Sie diese Überschreibungen, wenn Sie `dockerfilePath` auswählen. Schon eine Aktualisierung der Einstellungen kann einen Build starten, prüfen Sie daher die Ereignisse, bevor Sie ein weiteres Redeploy auslösen. Siehe [Fehlerbehebung für Dockerfile](/deploy/troubleshooting/incomplete-dockerfile).
+
+<span id="templates-and-mcp" />
+
+## Templates und MCP
+
+Die aktuelle API zum Erstellen von Sandboxes akzeptiert die zwei integrierten Templates. Anleitungen, die `lizard push` für benutzerdefinierte Templates verwenden, entsprechen nicht der aktuellen öffentlichen CLI.
+
+Lizard Skill verwendet Lizard CLI. Dieser Workflow stellt keinen MCP-Transport bereit. Das Hosting eines eigenen entfernten MCP-Servers ist ein separates Application-Deployment; siehe den [Leitfaden](/guides/deploy-mcp-server).
+
+<span id="service-port-changes-fixed-and-verified-on-2026-09-09" />
+
+## Änderungen am Service-Port: behoben und verifiziert am 2026-09-09
+
+Die Prüfung vom 7. September ergab HTTP 503, nachdem ein Upload-Dienst von Port `3000` auf `80` geändert wurde, obwohl ein bereiter Prozess vorhanden war. Der Fix in Produktion wendet den gewählten Port jetzt auf den laufenden Dienst an und behält einen expliziten Port beim Upload und beim Rebuild bei. Eine Live-Prüfung der Portänderung war am 9. September erfolgreich. Prüfen Sie nach einem Deployment sowohl die öffentliche URL als auch den Zustand des Dienstes.
+
+<span id="upload-archives-and-failed-build-exit-codes-fixed" />
+
+## Upload-Archive und Exit-Codes bei fehlgeschlagenen Builds: behoben
+
+Lizard CLI 0.3.95 schließt macOS-`._*`-Metadateneinträge aus Source-Uploads aus und gibt bei fehlgeschlagenen Cloud-Builds einen Exit-Code ungleich null zurück. Aktualisieren Sie ältere CLI-Versionen; `COPYFILE_DISABLE` wird nicht mehr benötigt. Die [Framework-Prüfungen](/framework-guides/validation) decken Uploads von macOS mit der aktuellen CLI ab.
+
+Ein erfolgreicher Build allein beweist noch nicht, dass die App funktioniert. Prüfen Sie nach dem Deployment die öffentliche URL, Routen, Formulare und Datenoperationen.

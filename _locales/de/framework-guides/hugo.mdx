@@ -1,0 +1,89 @@
+---
+description: "Stelle Hugo auf Lizard bereit, indem du public mit hugo --minify baust und es auf Port 80 auslieferst. Prüfe Erkennung, Themes, baseURL, generierte Routen und den Status fehlender Seiten."
+---
+
+<span id="deploy-hugo-on-lizard" />
+
+# Hugo auf Lizard bereitstellen
+
+Lizard kann eine Hugo-Quellseite mit `hugo --minify` bauen und `public/` über nginx auf Port `80` ausliefern. Starte im Hugo-Quellverzeichnis mit einer Hugo-Konfiguration und `content/`, statt nur das generierte HTML hochzuladen.
+
+Beginne mit dem [vollständigen Quellbeispiel](https://github.com/lizard-build/docs/tree/main/_examples/hugo), das die Konfiguration und Dateien enthält, die in dieser Anleitung verwendet werden.
+
+<span id="prepare-the-source" />
+
+## Quelle vorbereiten
+
+Füge deine Hugo-Konfiguration, Inhalte, Layouts, Assets und alle Theme-Dateien ein, die der Build benötigt. Die Hugo-Erkennung sucht nach einer Konfiguration wie `hugo.toml`, `hugo.yaml` oder `config/_default/` sowie nach einem Verzeichnis `content/`.
+
+| Setting | Value |
+|---|---|
+| Build | `hugo --minify` |
+| Output | `public/` |
+| Produktionsserver | nginx |
+| Service-Port | `80` |
+
+Setze `baseURL` auf die vorgesehene öffentliche Site-URL einschließlich des abschließenden Schrägstrichs. Baue nach der Zuweisung eines anderen Hostnamens neu, damit Links und generierte Sitemap-Einträge ihn verwenden. Siehe [Hugos Anleitung zu Build und Output](https://gohugo.io/getting-started/usage/).
+
+<span id="check-build-dependencies" />
+
+## Build-Abhängigkeiten prüfen
+
+Das Standard-Build-Image für Hugo ist `hugomods/hugo:base`; es legt für dein Projekt keine Hugo-Version fest. Wenn ein Theme eine bestimmte Hugo-Version, die Extended Edition oder Node-Tooling benötigt, verwende ein vollständiges Dockerfile mit diesen Abhängigkeiten und der Version, die du getestet hast.
+
+Eine Hugo-Konfiguration und `content/` wählen den Hugo-Builder vor der Erkennung von Go oder Node aus. Projekte mit Hugo Modules und `go.mod` verwenden ein Build-Image mit Go-Unterstützung. Eine `package.json` beendet den Build mit der Aufforderung, ein Dockerfile bereitzustellen: Installiere die Node-Abhängigkeiten, baue die Assets und führe dann `hugo --minify` aus. Siehe [Reihenfolge der Build-Entscheidung](/concepts/build-pipeline#build-decision-order).
+
+<span id="build-locally-and-deploy" />
+
+## Lokal bauen und bereitstellen
+
+```bash
+hugo --minify
+hugo server
+```
+
+Prüfe `public/` nach dem ersten Befehl. Nutze den lokalen Server, um Inhalte und Theme-Rendering zu prüfen; `hugo server` ist nicht der Produktions-Startbefehl.
+
+Stelle nach dem [CLI-Setup](/framework-guides#prepare-the-project) das Quellverzeichnis bereit:
+
+```bash
+lizard init --name hugo-site
+lizard add --service web
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+Wenn du den generierten Hostnamen verwendest, lies ihn nach dem ersten Deploy aus:
+
+```bash
+lizard service show web --json
+```
+
+Setze `baseURL` in `hugo.toml` auf diesen Hostnamen:
+
+```toml
+baseURL = "https://YOUR_PUBLIC_HOST/"
+```
+
+Lade die geänderte Konfiguration hoch, damit der Build die öffentliche URL verwendet:
+
+```bash
+lizard up --service web --port 80
+```
+
+
+Schließe lokal generierten Output und Secrets aus. Stelle bei einem Upload sicher, dass die Theme-Quelldateien tatsächlich in dem Verzeichnis vorhanden sind, das du sendest; ein entfernter Submodule-Verweis allein ist nicht der Theme-Inhalt.
+
+<span id="verify-the-deployed-site" />
+
+## Die bereitgestellte Site prüfen
+
+Öffne die Live-Startseite, einen internen Artikel und ein Bild. Prüfe die generierten kanonischen URLs und `sitemap.xml`. Teste den HTTP-Status eines erfundenen Pfads. Neue Hugo-Builds liefern das generierte HTML aus und geben für fehlende Seiten HTTP 404 zurück. Für das einfache Quelllayout in dieser Anleitung ist kein eigenes Dockerfile erforderlich. Baue ältere Images neu, um die aktuellen Routing-Regeln zu übernehmen.
+
+Verwende [statische Routen und 404er](/framework-guides/static-routing), wenn du eine benutzerdefinierte nginx-Richtlinie benötigst. Eine benutzerdefinierte Hugo-Build-Stage muss die vom Theme benötigte Hugo-Version und Tools enthalten, `hugo --minify` ausführen und `public/` in das ausliefernde Image kopieren.
+
+Wenn Theme-Assets fehlen, prüfe die Build-Logs, die Theme-Quelle und `baseURL`. Wenn der falsche Builder startet, prüfe, ob die Hugo-Konfiguration und `content/` im Upload-Root liegen, und überprüfe vorhandene Service-Overrides. Hugo erzeugt statische Dateien, daher erfordern Inhaltsänderungen einen neuen Build.
+
+Siehe [getestete Versionen und Cloud-Ergebnisse](/framework-guides/validation) für die Deploy-Prüfungen vom 9. September 2026 und ihre Grenzen.
+
