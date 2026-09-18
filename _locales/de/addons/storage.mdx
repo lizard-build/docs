@@ -1,0 +1,108 @@
+---
+description: "S3-kompatibler Objektspeicher für Uploads, Assets und Backups. Erhalten Sie einen öffentlich lesbaren Bucket und Verbindungsvariablen mit einem einzigen lizard add s3."
+---
+
+# Object Storage (S3)
+
+S3-kompatibler Objektspeicher für Uploads, Assets und Backups. Die Bereitstellung eines `s3`-Add-ons erstellt außerdem einen **öffentlich lesbaren Bucket namens `default`**, sodass Sie Dateien ohne zusätzlichen Einrichtungsaufwand bereitstellen können.
+
+<span id="provision" />
+
+## Bereitstellen
+
+```bash
+lizard add s3
+```
+
+Das erste S3-Add-on heißt `s3`, daher funktionieren `${{s3.S3_ENDPOINT}}` und ähnliche sofort.
+
+<span id="environment-variables" />
+
+## Umgebungsvariablen
+
+| Variable | Beschreibung |
+|----------|-------------|
+| `S3_ENDPOINT` | S3-kompatible Endpoint-URL |
+| `S3_DEFAULT_BUCKET` | Der automatisch erstellte Bucket-Name (`default`) |
+| `S3_ACCESS_KEY_ID` | Access Key |
+| `S3_SECRET_ACCESS_KEY` | Secret Key |
+| `S3_REGION` | Region |
+
+<span id="connect-a-service" />
+
+## Einen Service verbinden
+
+```bash
+lizard secrets set \
+  S3_ENDPOINT='${{s3.S3_ENDPOINT}}' \
+  S3_DEFAULT_BUCKET='${{s3.S3_DEFAULT_BUCKET}}' \
+  S3_ACCESS_KEY_ID='${{s3.S3_ACCESS_KEY_ID}}' \
+  S3_SECRET_ACCESS_KEY='${{s3.S3_SECRET_ACCESS_KEY}}' \
+  S3_REGION='${{s3.S3_REGION}}' \
+  --service api
+lizard redeploy --service api
+```
+
+<span id="using-an-aws-sdk" />
+
+## Verwendung mit einem AWS SDK
+
+Der Endpoint ist S3-kompatibel. Setzen Sie **path-style**-Adressierung:
+
+```ts
+import { S3Client } from "@aws-sdk/client-s3";
+
+const s3 = new S3Client({
+  endpoint: process.env.S3_ENDPOINT,
+  region: process.env.S3_REGION,
+  forcePathStyle: true, // required
+  credentials: {
+    accessKeyId: process.env.S3_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
+  },
+});
+```
+
+<span id="public-files" />
+
+## Öffentliche Dateien
+
+Objekte in jedem **öffentlichen** Bucket werden ohne Authentifizierung auf zwei Arten bereitgestellt:
+
+1. **Gateway-URL** (im Dashboard angezeigt):
+   ```
+   https://s3-<region>.onlizard.com/<addonId>/<bucket>/<key>
+   ```
+2. **Plattform-Proxy** (der Dashboard-Host, mit langlebigen unveränderlichen Cache-Headern):
+   ```
+   <dashboard-host>/api/s3/<addonId>/public/<bucket>/<key>
+   ```
+
+Alles, was in den Bucket `default` hochgeladen wird, ist sofort öffentlich verfügbar unter:
+
+```
+<dashboard-host>/api/s3/<addonId>/public/default/<key>
+```
+
+<span id="browse-objects" />
+
+## Objekte durchsuchen
+
+Öffnen Sie den **S3-Browser** im Dashboard (`lizard open`), um Objekte und Buckets hochzuladen, herunterzuladen und zu verwalten.
+
+> **Bucket-ACL-Änderungen** (einen Bucket öffentlich/privat machen) sind in der CLI noch nicht verfügbar — verwalten Sie sie im Dashboard.
+
+<span id="grow-storage" />
+
+## Speicher erweitern
+
+```bash
+lizard scale --service s3 --storage 16384
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Managed Addons](/addons) — Benennung, Referenzen und die Dashboard-Browser.
+- [Service-übergreifende Referenzen](/variables/references) — Referenzsyntax und Auflösung.

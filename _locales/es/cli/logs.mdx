@@ -1,0 +1,93 @@
+---
+description: "lizard logs transmite los logs de ejecución de un servicio, o recupera logs de compilación, logs de reinicio e historial filtrado con --build, --tail y --level."
+---
+
+# lizard logs
+
+Transmite los logs de ejecución de un servicio, las últimas 200 líneas seguidas de una cola en vivo.
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard logs [flags]
+```
+
+<span id="flags" />
+
+## Banderas
+
+| Bandera | Descripción |
+|------|-------------|
+| `--build` | Mostrar los logs de compilación en su lugar |
+| `--tail <n>` | Últimas N líneas (máx. 1000) |
+| `-l, --level <level>` | Filtrar por nivel |
+| `--restarts [n]` | Listar reinicios recientes |
+| `--restart <id>` | Logs alrededor de un reinicio específico (`latest` para el más reciente) |
+| `-s, --service <id>` | Servicio |
+
+Con `--json`, `lizard logs` no es un flujo: devuelve las últimas 200 líneas (anúlalo con `--tail N`, máximo 1000) y sale. Úsalo para capturas y scripts; transmite en vivo solo sin `--json`.
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="tail-runtime-logs" />
+
+### Ver logs de ejecución en tiempo real
+
+```bash
+lizard logs
+```
+
+<span id="tail-logs-for-a-specific-service" />
+
+### Ver logs de un servicio específico en tiempo real
+
+```bash
+lizard logs --service api
+```
+
+<span id="get-more-history" />
+
+### Obtener más historial
+
+```bash
+lizard logs --tail 1000
+```
+
+<span id="filter-by-log-level" />
+
+### Filtrar por nivel de log
+
+```bash
+lizard logs --level error
+```
+
+<span id="check-the-most-recent-build" />
+
+### Revisar la compilación más reciente
+
+```bash
+lizard logs --build
+```
+
+<span id="inspect-a-crash-or-restart" />
+
+### Inspeccionar un fallo o reinicio
+
+```bash
+lizard logs --restarts
+lizard logs --restart latest
+lizard logs --restart <id>
+```
+
+<span id="see-also" />
+
+## Véase también
+
+- [Logs](/observability/logs) — comportamiento de los logs de ejecución, compilación y reinicio, además de la paginación por el historial con `lizard service logs`
+- [Incomplete Dockerfile](/deploy/troubleshooting/incomplete-dockerfile) — diagnosticar una compilación fallida desde `lizard logs --build`
+- [lizard events](/cli/events) — historial de despliegues y estado de las réplicas
+- [Desplegar desde Claude Code](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) — el ciclo de leer logs, corregir y volver a desplegar que ejecuta un agente en una compilación fallida

@@ -1,0 +1,62 @@
+---
+description: "lizard link asocia el directorio actual con un proyecto existente y, opcionalmente, con un servicio o espacio de trabajo específico."
+---
+
+# lizard link
+
+Asocia el directorio actual con un proyecto existente (y opcionalmente con un servicio).
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard link [service] [flags]
+```
+
+<span id="flags" />
+
+## Indicadores
+
+| Bandera | Descripción |
+|------|-------------|
+| `-p, --project <id>` | Nombre del proyecto, slug o ID |
+| `-s, --service <name>` | Servicio para vincular |
+| `-w, --workspace <ws>` | Espacio de trabajo |
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="link-to-an-existing-project" />
+
+### Vincular a un proyecto existente
+
+```bash
+lizard link --project my-project
+```
+
+<span id="link-to-a-project-and-a-specific-service" />
+
+### Vincular a un proyecto y a un servicio específico
+
+```bash
+lizard link my-service --project my-project
+```
+
+<span id="link-within-a-specific-workspace" />
+
+### Vincular dentro de un espacio de trabajo específico
+
+```bash
+lizard link --project my-project --workspace my-workspace
+```
+
+<span id="see-also" />
+
+## Ver también
+
+- [lizard init](/cli/init) — crea o selecciona un proyecto y lo vincula en un solo paso
+- [lizard unlink](/cli/unlink) — elimina el vínculo del directorio actual
+- [lizard status](/cli/status) — muestra el espacio de trabajo, proyecto y servicio vinculados
+- [Architecture: Proyecto](/concepts/architecture) — cómo funciona el vínculo entre directorio y proyecto

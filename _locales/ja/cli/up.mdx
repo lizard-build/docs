@@ -1,0 +1,88 @@
+---
+description: "lizard up は現在のディレクトリをパッケージ化し、Lizard のビルドノード上でビルドして、稼働中の URL を返します。フラグ、CI での挙動、使用例。"
+---
+
+# lizard up
+
+現在のディレクトリをアップロードしてデプロイします。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard up [flags]
+```
+
+`up` は作業ツリーを tarball としてパッケージ化し、ビルドノードに送信してデプロイします。対象サービスで `sourceType=upload` を強制し、SSE 経由でビルドログをストリーミングし、完了時に稼働中の URL を表示します。
+
+現在のディレクトリがまだプロジェクトにリンクされていない場合、`up` は最初に `init` を実行します。TTY では対話的に動作します。非 TTY（CI）環境では、無言でプロジェクトを作成することは**ありません**。代わりにエラーになり、`lizard init --name <project>` を実行するよう求めます（または `--name` を渡します）。これは、タイプミスによって空のプロジェクトが作成されるのを防ぐためです。
+
+<span id="flags" />
+
+## フラグ
+
+| フラグ | 説明 |
+|------|-------------|
+| `-s, --service <name>` | 既存のサービスを対象にします |
+| `--build-command <cmd>` | ビルドコマンドを上書きします |
+| `--start-command <cmd>` | 起動コマンドを上書きします |
+| `--pre-deploy-command <cmd>` | 各デプロイの前に 1 回実行します |
+| `--port <number>` | コンテナポート（`0` = worker mode） |
+| `--region <code>` | デプロイ先のリージョン |
+| `-d, --detach` | デプロイを開始し、ログをストリーミングせずに終了します |
+| `-c, --ci` | CI 向けの出力 |
+| `--no-gitignore` | `.gitignore` を無視して、すべてをアップロードします |
+
+<span id="subcommands" />
+
+## サブコマンド
+
+### `lizard up status`
+
+進行中のアップロードデプロイの状態を報告します。
+
+<span id="examples" />
+
+## 例
+
+<span id="deploy-the-current-directory" />
+
+### 現在のディレクトリをデプロイする
+
+```bash
+lizard up
+```
+
+<span id="deploy-to-a-specific-service-with-a-custom-start-command-and-port" />
+
+### カスタム起動コマンドとポートを指定して特定のサービスにデプロイする
+
+指定した名前のサービスが存在しない場合は、先に `lizard add --service api` で作成してください。
+
+```bash
+lizard up --service api --start-command "node server.js" --port 8080
+```
+
+<span id="deploy-headlessly-in-ci" />
+
+### CI でヘッドレスにデプロイする
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+lizard init --name my-project
+lizard add --service api
+lizard up --ci --service api
+```
+
+サービスがすでに存在する場合は `lizard add` を省略してください。Lizard CLI 0.3.92 では、ビルドが失敗しても終了コード `0` で終了することがあります。CI リリースを成功と判断する前に、ビルドステータスとデプロイされた URL を確認してください。修正はリリース待ちです。macOS では、アーカイブに余分な `._*` メタデータファイルが入るのを避けるため、アップロード前に `COPYFILE_DISABLE=1` も設定してください。[framework setup](/framework-guides#prepare-the-project) を参照してください。
+
+<span id="see-also" />
+
+## 関連項目
+
+- [ローカルコードからデプロイ](/deploy/upload) — アップロードベースのデプロイの完全な手順
+- [lizard redeploy](/cli/redeploy) — 再アップロードせずに最後のアップロードを再ビルドします
+- [lizard init](/cli/init) — デプロイ前に明示的にプロジェクトを作成またはリンクします
+- [Worker services](/deploy/workers) — `--port 0` の意味
+- [設定せずにコンテナをデプロイする](https://lizard.build/blog/container-as-a-service#deploy-a-container-without-configuring-one) — container-as-a-service プラットフォームの中でこのコマンドがどこに位置するか

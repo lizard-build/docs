@@ -1,0 +1,101 @@
+---
+description: "Ejecuta un bot de Telegram con long polling como un worker de Lizard. Configura su token, desactiva el enrutamiento HTTP, mantén una réplica y revisa los mensajes y reintentos."
+---
+
+<span id="run-a-telegram-bot" />
+
+# Ejecutar un bot de Telegram
+
+Un bot con long polling es un worker en segundo plano: solicita actualizaciones a Telegram y no necesita un endpoint HTTP público. Ejecútalo con `containerPort=0` y una réplica por token de bot.
+
+**Estado de las pruebas:** pasan siete pruebas locales con respuestas de Telegram simuladas. No hemos comprobado esta guía con un bot real en la nube. Usa un bot de prueba independiente y completa las comprobaciones de mensajes y reinicios que aparecen abajo antes de confiar en él. Consulta los [resultados de las pruebas de escenario](/guides/validation).
+
+<span id="before-you-start" />
+
+## Antes de empezar
+
+Crea un bot con BotFather y mantén su token en privado. Necesitas Python 3.13, Lizard CLI y un proyecto que puedas desplegar. Un bot que usa long polling no debe tener un webhook activo; revisa su configuración actual antes de cambiar la forma en que recibe actualizaciones.
+
+Los [archivos de ejemplo](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/telegram-worker) incluyen `worker.py`, un Dockerfile y pruebas unitarias locales. Las pruebas no llaman a Telegram. El controlador de eco guarda su offset en memoria; no es un sistema de procesamiento exactamente una vez.
+
+<span id="check-locally" />
+
+## Comprobar localmente
+
+Desde el directorio del ejemplo:
+
+```bash
+python3 -m unittest -v
+```
+
+Las comprobaciones cubren respuestas de texto, actualizaciones ignoradas, sondeos vacíos y envíos fallidos. Ejecuta el bot localmente con `TELEGRAM_BOT_TOKEN` configurado solo si tienes intención de enviar respuestas. Detén ese proceso local antes de iniciar el worker alojado.
+
+<span id="deploy-as-a-worker" />
+
+## Desplegar como worker
+
+```bash
+lizard init --name telegram-bot
+lizard add --service bot
+```
+
+Inicia sesión con `lizard login` si un comando informa que se requiere autenticación. Configura `TELEGRAM_BOT_TOKEN` en el **servicio del bot** antes de desplegar. Puedes usar el editor de variables del panel o poner el valor en un archivo local `.env` e importarlo:
+
+```bash
+lizard secrets import --service bot < .env
+lizard run --service bot -- python3 check_bot.py
+lizard up --service bot --port 0
+```
+
+La comprobación previa valida el token con `getMe` y rechaza un bot con un webhook activo. No elimina ni cambia ese webhook. Un segundo proceso de polling aún puede entrar en conflicto: detén cualquier copia local antes del despliegue.
+
+El ejemplo excluye `.env*` de las cargas. Mantén el token fuera de los archivos fuente y las capturas de pantalla. En macOS con Lizard CLI 0.3.92, añade el prefijo `COPYFILE_DISABLE=1` al comando de carga. Lee el evento final del despliegue y los logs incluso si el comando termina correctamente.
+
+Para un servicio existente, configura explícitamente el modo worker:
+
+```bash
+lizard service set bot --set containerPort=0
+```
+
+Después de cambiar el modo worker en un servicio en ejecución, aplícalo con `lizard redeploy --service bot`. Revisa los eventos del despliegue antes de solicitar otra compilación. El modo worker omite las comprobaciones de puerto HTTP y la ruta del balanceador de carga; no añadas un servidor web ficticio solo para que este proceso parezca una aplicación HTTP.
+
+<span id="verify-the-result" />
+
+## Verificar el resultado
+
+```bash
+lizard ps --json
+lizard logs --service bot --json
+lizard events --json
+```
+
+El log debe mostrar `Telegram worker started`. Envía un mensaje a tu bot y comprueba que haya una única respuesta de eco. Luego detén y reinicia el worker durante una ventana de pruebas aprobada y confirma que se vuelve a conectar. Un worker marcado como en ejecución igualmente necesita esta comprobación a nivel de aplicación.
+
+<span id="common-failures" />
+
+## Fallos comunes
+
+| Síntoma | Comprobación |
+|---|---|
+| El proceso termina inmediatamente | Configura `TELEGRAM_BOT_TOKEN` en el servicio que lo consume. |
+| La comprobación de estado HTTP nunca se aprueba | El modo worker debe usar `containerPort=0`. |
+| Las actualizaciones se detienen o aparecen errores de conflicto | Solo un proceso de polling debe usar este token; comprueba si hay un proceso local, otra réplica o un webhook activo. |
+| Respuestas repetidas después de un fallo | La demo no persiste offsets ni elimina duplicados de IDs de actualizaciones. Añade idempotencia duradera antes de manejar acciones irreversibles. |
+| Reintentos frecuentes | Comprueba el acceso de red, la validez del token, los límites de Telegram y tu controlador. No imprimas las URL de solicitud: contienen el token. |
+
+<span id="state-and-cost" />
+
+## Estado y costo
+
+Para un estado duradero del bot, conecta [Managed Postgres](/addons/postgres). Guarda los IDs de actualizaciones procesadas y haz que los controladores sean seguros para reintentar. El long polling puede mantener activo el worker entre mensajes; calcula el presupuesto a partir de [pricing](https://lizard.build/pricing) y del uso observado de recursos, no solo del número de mensajes.
+
+<span id="related-guides" />
+
+## Guías relacionadas
+
+- [Workers en segundo plano](/deploy/workers)
+- [Logs](/observability/logs)
+- [Límites](/platform/limits)
+- [Referencia de Telegram getUpdates](https://core.telegram.org/bots/api#getupdates)
+
+Consulta los [resultados de las pruebas de escenario](/guides/validation) para ver las versiones comprobadas, los resultados en la nube y las limitaciones restantes.

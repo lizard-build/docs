@@ -1,0 +1,92 @@
+---
+description: "Programa el lizard CLI: --json en cada comando, eventos delimitados por líneas para compilaciones en streaming, descubrimiento de esquemas y autenticación por token en CI."
+---
+
+<span id="json--automation" />
+
+# JSON y automatización
+
+La CLI está hecha para automatizarse con scripts. Pasa `--json` para obtener salida legible por máquinas, contrólala desde CI con un token y descubre el esquema de cualquier comando en tiempo de ejecución.
+
+El otro lector de esta salida es un agente de programación con IA: [despliegue desde Claude Code](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) muestra qué hace con el JSON de una compilación fallida.
+
+<span id="--json-everywhere" />
+
+## `--json` en todas partes
+
+Añade `--json` a cualquier comando para obtener salida estructurada. La CLI también cambia a JSON automáticamente cuando stdout no es un TTY.
+
+```bash
+lizard ps --json
+lizard secrets list --json
+lizard metrics --json
+```
+
+<span id="streaming-commands" />
+
+### Comandos en streaming
+
+Para los comandos en streaming (`lizard up` sin `--detach`), `--json` emite **un objeto JSON por línea**:
+
+```json
+{ "event": "log", "line": "Step 1/8 : FROM node:20" }
+{ "event": "log", "line": "..." }
+{ "event": "deployed", "status": "running", "url": "https://app.onlizard.com" }
+```
+
+El stream termina con `done`, o `error` / `failed`. `lizard up` además emite un evento final `deployed` / `failed` / `deploying` con `status` y `url` (que puede ser `null`).
+
+<span id="logs---json-is-a-snapshot-not-a-stream" />
+
+### `logs --json` es una instantánea, no un stream
+
+`lizard logs --json` devuelve las **últimas 200 líneas** (se puede cambiar con `--tail N`, máximo 1000) y sale. No esperes más salida de él.
+
+Para un incidente específico, usa `--restart latest` o `--restart <id>`.
+
+<span id="schema-discovery" />
+
+## Descubrimiento de esquemas
+
+Muestra los argumentos, opciones y códigos de salida exactos de cualquier comando:
+
+```bash
+lizard --help --json                 # whole tree + global flags + exit codes
+lizard service set --help --json     # one command
+```
+
+La forma de la respuesta es `{ cli, version, command: { arguments, options, subcommands }, globalOptions, exitCodes }`. Como se genera a partir del binario instalado, siempre coincide con tu versión; úsala de preferencia en lugar de fijar flags manualmente.
+
+<span id="ci--headless-usage" />
+
+## Uso en CI / sin interfaz
+
+Autentícate con un token y vincula el proyecto explícitamente (`up` sin interfaz no creará un proyecto automáticamente):
+
+```bash
+# Set LIZARD_TOKEN through your CI secret store.
+lizard init --name my-project
+lizard up --ci --service api --detach
+```
+
+Comprueba los códigos de salida para decidir el flujo de tu pipeline:
+
+| Código | Significado |
+|------|---------|
+| `0` | éxito |
+| `1` | error genérico |
+| `2` | auth — token ausente/caducado |
+| `3` | no encontrado |
+| `4` | tiempo de espera agotado |
+| `5` | cancelado |
+
+```bash
+if lizard redeploy --service api --json; then
+  echo "Deploy succeeded"
+else
+  status=$?
+  echo "Deploy failed with code $status" >&2
+  lizard logs --build --json || true
+  exit "$status"
+fi
+```

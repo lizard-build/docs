@@ -1,0 +1,78 @@
+---
+description: "Lizard で VitePress を docs:build、正しい .vitepress/dist ディレクトリ、nginx、ポート 80 でデプロイします。クリーン URL を設定し、ドキュメントのルートと 404 を確認します。"
+---
+
+<span id="deploy-vitepress-on-lizard" />
+
+# Lizard で VitePress をデプロイする
+
+Lizard は VitePress のドキュメントサイトをビルドし、生成された HTML を nginx を通じてポート `80` で配信できます。npm スクリプトと出力ディレクトリを docs ルートに合わせてください: `vitepress build docs` は `docs/.vitepress/dist` を書き出し、`vitepress build` は `.vitepress/dist` を書き出します。
+
+この手順で使用する設定とファイルを含む、[完全なソース例](https://github.com/lizard-build/docs/tree/main/_examples/vitepress) から始めてください。
+
+<span id="set-the-build-script" />
+
+## ビルドスクリプトを設定する
+
+`docs/` 内の Markdown ファイルでは、`package.json` に次のスクリプトを保持します:
+
+```json
+{
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  }
+}
+```
+
+| 設定 | このガイドでの値 |
+|---|---|
+| ビルド | `npm run docs:build` |
+| Docs root | `docs/` |
+| Output | `docs/.vitepress/dist/` |
+| Production server | nginx |
+| サービスポート | `80` |
+
+検出機能は `vitepress build` を含むスクリプトを見つけ、その root 引数を使用します。そのスクリプトは直接的で曖昧さのないものにしてください。シェルラッパー、複数の一致するスクリプト、またはカスタムの `outDir` では、明示的なビルド設定または Dockerfile が必要です。
+
+<span id="check-the-site-locally" />
+
+## サイトをローカルで確認する
+
+```bash
+npm ci
+npm run docs:build
+npm run docs:preview
+```
+
+内部の Markdown ページとアセットを確認してください。`cleanUrls: true` では、VitePress は拡張子のないルートへリンクします。本番サーバーは、それらの URL を生成された HTML ファイルに解決する必要があります。`base` は実際のパスプレフィックスに設定するか、ドメインルートの場合は `/` に設定してください。[VitePress deployment](https://vitepress.dev/guide/deploy) を参照してください。
+
+<span id="deploy" />
+
+## デプロイする
+
+[CLI setup](/framework-guides#prepare-the-project) の後、`docs/` の中からではなく、`package.json` を含むディレクトリから実行します:
+
+```bash
+lizard init --name vitepress-docs
+lizard add --service web
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+VitePress の設定、Markdown、ソースアセット、package manifest、lockfile を含めてください。ローカル依存関係、生成済み出力、キャッシュ、シークレットは除外します。サービスの開始コマンドとして `vitepress dev` または `vitepress preview` は設定しないでください。
+
+<span id="check-clean-routes-and-http-status" />
+
+## クリーンルートと HTTP ステータスを確認する
+
+新しい VitePress ビルドは、拡張子のないルートを生成された `.html` ファイルに解決し、存在しない URL には HTTP 404 を返します。この検出経路を使うため、コマンドオーバーライドは未設定のままにしてください。標準出力にはカスタム Dockerfile は不要です。カスタムルーティングについては、[静的ルートと404エラー](/framework-guides/static-routing) を参照してください。
+
+クリーン URL に直接アクセスして再読み込みしてください。存在しないパスをリクエストし、HTTP 404 を確認します。古いイメージが存在しないパスに対してホームページを返す場合は、現在のルーティングルールを反映するためにサービスを再ビルドしてください。
+
+ビルドで `Missing script: build` と報告される場合は、選択したパスが VitePress detector を使用していること、およびサービスコマンドのオーバーライドがそれを置き換えていないことを確認してください。ビルドが成功しても nginx がドキュメントを配信しない場合は、スクリプトの docs root とコピーされた出力ディレクトリを比較してください。コンテンツまたは設定を変更した後は再ビルドしてください。
+
+2026 年 9 月 9 日のデプロイ確認とその制限については、[テスト済みバージョンとクラウド結果](/framework-guides/validation) を参照してください。
+

@@ -1,0 +1,72 @@
+---
+description: "lizard ssh は稼働中のサービスコンテナ内でコマンドを実行し、その終了コードを返します。コンテナが実際に見ている内容を確認するための信頼できる方法です。"
+---
+
+# lizard ssh
+
+稼働中のサービスのコンテナ内でコマンドを実行し、その出力をストリーミングし、リモートの終了コードを返します。
+
+<span id="run-vs-ssh" />
+
+## run と ssh
+
+`lizard run` と `lizard ssh` はどちらもサービスのコンテキストでコマンドを実行しますが、実行される場所が異なります。どちらが必要かを理解して選んでください。
+
+| コマンド | 実行場所 | 用途 |
+|---------|-----------|---------|
+| `lizard run` | **ローカル**, サービスの project + service secrets が注入された状態 | マイグレーション、シードスクリプト、本番設定が必要なローカルツール |
+| `lizard ssh` | **稼働中のサービスコンテナ内** | 稼働中コンテナの調査、単発のリモートコマンド、デバッグ |
+
+`lizard run` ではローカルに注入された環境のコピーが表示されます。これは通常本番環境と同じですが、稼働中コンテナが実際に見ている内容については `lizard ssh` が信頼できる基準です。
+
+<span id="usage" />
+
+## 使用量
+
+```bash
+lizard ssh --service <name> -- <command>
+```
+
+<span id="examples" />
+
+## 例
+
+<span id="inspect-the-environment-the-running-app-sees" />
+
+### 稼働中アプリが見ている環境を確認する
+
+```bash
+lizard ssh --service api -- env
+```
+
+<span id="list-files-in-the-deployed-image" />
+
+### デプロイ済みイメージ内のファイルを一覧表示する
+
+```bash
+lizard ssh --service api -- ls -la /app
+```
+
+<span id="check-the-os-in-the-container" />
+
+### コンテナ内の OS を確認する
+
+```bash
+lizard ssh --service api -- cat /etc/os-release
+```
+
+<span id="confirm-a-secret-landed-in-the-live-container" />
+
+### シークレットが稼働中コンテナに反映されていることを確認する
+
+```bash
+lizard ssh --service api -- env | grep DATABASE_URL
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [lizard run](/cli/run) — 代わりにサービスの env を注入した状態でローカルでコマンドを実行する
+- [変数](/variables) — シークレットや参照がサービスに渡る仕組み
+- [Claude Codeからデプロイする](https://lizard.build/blog/deploy-from-claude-code#claude-code-deployment-compared-with-the-alternatives) — エージェントがなぜ稼働中コンテナへのシェルを必要とするのか、またそれを提供しないプラットフォームはどれか

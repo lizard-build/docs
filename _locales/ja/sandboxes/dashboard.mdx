@@ -1,0 +1,63 @@
+---
+description: "プロジェクトの Sandboxes ページから手動でサンドボックスを作成・確認します: API キー、ライブシェル、ライフサイクル制御、スナップショット、ボリューム。"
+---
+
+<span id="sandboxes-dashboard" />
+
+# Sandboxes ダッシュボード
+
+すべてのプロジェクトには、手動でサンドボックスを作成・確認するための **Sandboxes** ページがあります。これは、エージェントの環境のデバッグ、対話型シェルの取得、生成されたコードのスポットチェックに便利です。プロジェクトを開き、サイドバーで **Sandboxes** を選択します (`/<workspace>/<project>/sandboxes`)。
+
+このページには、**Sandboxes**、**ボリューム**、**スナップショット** の 3 つのタブがあります。
+
+<span id="getting-an-api-key" />
+
+## API キーを取得する
+
+まだサンドボックスを使ったことがない場合、空の状態画面で SDK 用の **API キー** を作成する手順が表示されます。キーは **1 回だけ** 表示されます。すぐにコピーしてください。後から再取得はできません。これを `LIZARD_API_KEY` として保存します（[Quickstart](/sandboxes/quickstart#authenticate) を参照）。
+
+<span id="create-a-sandbox" />
+
+## サンドボックスを作成する
+
+**New サンドボックス** をクリックして、次を設定します:
+
+- **Snapshot** — 起動元となる[テンプレート](/sandboxes#templates)（`base` または `code-interpreter-v1`）。
+- **Location** — 実行するリージョン（デフォルトでは利用可能な最寄り）。
+- **Resources** — 現在のテンプレートは 4 vCPU と 4096 MiB RAM を使用します。これらは作成ごとに選べるサイズオプションではありません。
+
+ここで作成したサンドボックスにはタイムアウトがありません。終了するまで実行され続けます。
+
+<span id="inspect-a-running-sandbox" />
+
+## 実行中のサンドボックスを確認する
+
+サンドボックスを選択すると、2 つのタブがある詳細ドロワーが開きます。
+
+**Overview** には、ID、テンプレート、ステータス、リージョン、CPU / メモリに加えて、次が表示されます:
+
+- **Exposed ports** — [`getHost`](/sandboxes/quickstart#exposing-a-port) で開いたすべてのポート。それぞれに、直接開けるコピー可能な公開 `https://…onlizard.com` URL が付きます。
+- **SSH access** — 利用可能な場合は、そのまま貼り付けられる `ssh root@<node-ip> -p <port>` コマンドと生成されたパスワード。
+
+**Terminal** では、ブラウザ内シェルから micro-VM に直接入れます（SSH ベース）。そのため、ダッシュボードを離れずに中を確認できます。
+
+ライブのサンドボックスは、一覧で CPU とメモリのリアルタイム使用量を表示します。paused および stopped のものは 0 を表示します。
+
+<span id="lifecycle" />
+
+## ライフサイクル
+
+- **Kill サンドボックス**（詳細ドロワー内）は、サンドボックスを即座に終了し、そのリソースを解放します。これには、接続されている [volume](/sandboxes/volumes) の切り離しも含まれます。
+- **Pause / resume** は [SDK](/sandboxes/quickstart#pause-and-resume) から実行します。一時停止したサンドボックスはここでは **Paused** と表示され、オンデマンドのコンピュートは消費しません。
+
+<span id="snapshots" />
+
+## スナップショット
+
+**スナップショット** タブには、サンドボックスが起動元にできるテンプレート、つまり組み込みの `base` と `code-interpreter-v1` が一覧表示されます。カスタムテンプレートのアップロードコマンドは、現在の公開 CLI には含まれていません。各項目には、デフォルトの vCPU / メモリと説明が表示されます。
+
+<span id="volumes" />
+
+## ボリューム
+
+**ボリューム** タブでは、[永続ストレージ](/sandboxes/volumes) を管理します: 名前とサイズを指定してボリュームを作成し、それぞれがどのサンドボックスに接続されているかを確認できます。

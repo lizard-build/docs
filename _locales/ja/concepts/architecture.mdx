@@ -1,0 +1,126 @@
+---
+description: "Lizard が作業を workspace、project、service にどのように整理するかに加えて、managed addons、cross-resource references、injected variables について説明します。"
+---
+
+<span id="architecture" />
+
+# アーキテクチャ
+
+Lizard は、デプロイするすべてのものを 3 層の階層に整理し、さらに project に紐づく managed addons を提供します。
+
+```
+workspace
+└── project
+    ├── service (app)          ← built from GitHub or an upload
+    ├── service (worker)       ← background job, no HTTP port
+    └── addons
+        ├── postgres
+        ├── redis
+        └── s3
+```
+
+<span id="workspace" />
+
+## ワークスペース
+
+**workspace** はアカウントまたは organization のレベルです。少なくとも 1 つの workspace に所属し、課金、メンバー、project はその配下にあります。アクセスできるものを一覧表示するには、次を実行します:
+
+```bash
+lizard workspace list
+lizard whoami        # shows your active workspace
+```
+
+同じ project 名が複数の workspace に存在する場合に区別できるよう、多くのコマンドは `-w, --workspace <ws>` を受け付けます。
+
+<span id="project" />
+
+## プロジェクト
+
+**project** は、workspace 内で関連する service と addons をまとめる単位です。作業ディレクトリは project に *link* され、その link（`~/.lizard/config.json` に保存されます）によって CLI は対象を判別します。
+
+```bash
+lizard init --name my-project   # create or select a project, link the cwd
+lizard link --project my-project  # link to an existing project
+lizard status                   # show the current directory's link
+lizard unlink                   # remove the link
+lizard project list             # all projects in the workspace
+```
+
+> **ヒント:** project には repo 名またはディレクトリ名を使い、service にはアプリらしい名前（`api`、`worker`、`web`）を使ってください。
+
+<span id="service" />
+
+## サービス
+
+**service** は単一のデプロイ可能な unit です。その source は次のいずれかです:
+
+- **`github`** — 接続された GitHub repo。追跡対象ブランチへの push により自動で再デプロイされます。
+- **`upload`** — `lizard up` でアップロードされた tarball。
+
+実行中の各 service は、それぞれ独立した **isolated pod** として動作し、default-deny の network policy、生成された `<name>.<region>.onlizard.com` domain、自動 TLS を備えます。この分担、つまりコンテナはあなたが用意し、platform がそれを実行するという形は [container as a service](https://lizard.build/blog/container-as-a-service) であり、blog ではそれでもなお利用者側に残る責任について説明しています。service の確認と管理には次を使います:
+
+```bash
+lizard ps                       # list services with status + URL
+lizard service show             # full config as JSON
+lizard service set <svc> --set <field>=<value>
+lizard service rename --service <svc>
+lizard service delete --service <svc>
+```
+
+サービス configuration fields は **flat** で、wire schema に 1:1 で対応しています（例: `repoUrl`、`branch`、`buildCommand`、`startCommand`、`containerPort`、`rootDirectory`）。`build.*` / `deploy.*` のようなネストはありません。完全な一覧は [`lizard service`](/cli/service) を参照してください。
+
+<span id="app-vs-worker-services" />
+
+### App と worker service
+
+デフォルトでは、service はポート（デフォルトは `3000`）で待ち受けし、その domain で提供される **HTTP app** です。ポートで待ち受けしない service、たとえば queue consumer、reconciler、polling loop は、`containerPort=0` を設定して [**worker mode**](/deploy/workers) で実行する必要があります。worker はポートの注入、到達性の health check、load-balancer への登録をスキップします。
+
+<span id="managed-addons" />
+
+## マネージドアドオン
+
+**addons** は、project ごとにプロビジョニングする managed Postgres、Redis、および S3 互換 storage です:
+
+```bash
+lizard add postgres redis s3
+```
+
+各 addon は固定された一連の環境変数を公開し、service はそれらを **reference**（`${{<addon-name>.KEY}}`）によって利用します。[Managed Addons](/addons) を参照してください。
+
+<span id="cross-resource-references" />
+
+## リソース間参照
+
+任意の service または addon の値は、別の resource の環境変数から次の形式で参照できます:
+
+```
+${{<name>.<KEY>}}
+```
+
+reference はデプロイ時に、対象のマージ済み環境に対して解決されます。ID で保存されるため、後で対象の名前を変更しても reference は壊れません。存在しない対象または key への reference は空文字列に解決されます（デプロイは**失敗しません**）。失敗するのは circular references の場合だけです。
+
+```bash
+# Wire a service to the project's Postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+```
+
+実際に consumer がその値を受け取ったことを確認するには、次を実行します:
+
+```bash
+lizard ssh --service api -- env | grep DATABASE_URL
+```
+
+<span id="platform-injected-variables" />
+
+## プラットフォーム注入変数
+
+すべての service は自動的に次の変数を受け取ります（これらは上書きできません）:
+
+| 変数 | 説明 |
+|----------|-------------|
+| `PORT` | アプリが待ち受けるべきポート（worker mode では省略） |
+| `LIZARD_SERVICE_NAME` | service の名前 |
+| `LIZARD_PROJECT_ID` | project ID |
+| `LIZARD_PUBLIC_DOMAIN` | service の public domain |
+
+これらが独自の変数とどのように相互作用するか、および完全な優先順位については [変数 & Secrets](/variables) を参照してください。

@@ -1,0 +1,84 @@
+---
+description: "Git は不要で、lizard up を使って現在のディレクトリをデプロイします。.gitignore の扱い、build と start の上書き、ヘッドレス CI での利用について説明します。"
+---
+
+<span id="deploy-from-local-code" />
+
+# ローカルコードからデプロイ
+
+コードが GitHub にない場合、または単にすばやく反復したい場合は、`lizard up` を使って現在のディレクトリを直接アップロードできます。作業ツリーを tarball としてパッケージ化し、ビルドノードに送信してデプロイします。
+
+<span id="deploy-the-current-directory" />
+
+## 現在のディレクトリをデプロイ
+
+```bash
+lizard up
+```
+
+- 現在のディレクトリを tarball としてアップロードし、`.gitignore` を尊重します（`--no-gitignore` で無効化）。
+- `sourceType=upload` を強制します。
+- SSE 経由でビルドログをストリーミングし、完了時にライブ URL を表示します。
+
+ディレクトリがまだプロジェクトにリンクされていない場合、`up` は最初に `init` を実行します。TTY では対話的に動作しますが、非 TTY（CI）では空のプロジェクトを暗黙的に作成することは**ありません**。代わりにエラーになり、`lizard init --name <project>` を実行するよう求めます（または `--name` を渡します）。これは、タイプミスによって空のプロジェクトが作成されるのを防ぐためです。
+
+<span id="common-flags" />
+
+## よく使うフラグ
+
+| フラグ | 目的 |
+|------|---------|
+| `-s, --service <name>` | 特定のサービスを対象にする／作成する |
+| `--build-command <cmd>` | build コマンドを上書きする |
+| `--start-command <cmd>` | start コマンドを上書きする |
+| `--pre-deploy-command <cmd>` | 各デプロイ前に 1 回実行する（例: マイグレーション） |
+| `--port <number>` | コンテナポート（`0` = [worker mode](/deploy/workers)） |
+| `--region <code>` | デプロイ先のリージョン |
+| `-d, --detach` | デプロイを開始して、ログをストリーミングせずに終了する |
+| `-c, --ci` | CI 向けの出力 |
+| `--no-gitignore` | `.gitignore` を無視してすべてをアップロードする |
+
+```bash
+lizard up --service api --start-command "node server.js" --port 8080
+```
+
+<span id="setting-buildstart-commands" />
+
+## build/start コマンドの設定
+
+`--build-command` または `--start-command` を渡すと、サービスは **synthesized Dockerfile** パスに切り替わります。このパスでは、`Procfile` と `package.json` `scripts.start` は読み取られ**ません**。start コマンドを明示的に設定してください（または独自の Dockerfile に `CMD` を含めてください）。詳しくは [ビルド Pipeline](/concepts/build-pipeline) を参照してください。特に影響を受けやすいのは Python です。[Django, Flask and FastAPI](https://lizard.build/blog/python-app-hosting#deploying-django) では、それぞれ異なる `gunicorn` または `uvicorn` の行が必要です。
+
+<span id="re-deploying-an-upload-service" />
+
+## アップロードサービスを再デプロイする
+
+`lizard up` は再アップロードして再ビルドします。再アップロードせずに、現在の変数で**前回**のアップロードを再ビルドするには:
+
+```bash
+lizard redeploy --service api
+```
+
+<span id="headless--ci" />
+
+## ヘッドレス / CI
+
+非対話フローでは、デプロイ前に明示的にプロジェクトをリンクしてください:
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+lizard init --name my-project
+lizard up --ci --service api
+```
+
+<span id="when-to-prefer-github-instead" />
+
+## 代わりに GitHub を使うべき場合
+
+アップロードは、すばやい反復やリモートがない状況に最適です。長期的に運用するものについては、プッシュ時に自動で再デプロイされ、クリーンなデプロイ履歴も得られるため、[GitHub source](/deploy/github) を使うことをおすすめします。
+
+<span id="see-also" />
+
+## 関連項目
+
+- [`lizard up`](/cli/up) — 完全なコマンドリファレンス。
+- [ビルド Pipeline](/concepts/build-pipeline) — スタックがどのように検出され、ビルドされるか。

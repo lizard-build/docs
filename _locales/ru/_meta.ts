@@ -1,0 +1,18 @@
+export default {
+  index: "Введение",
+  'getting-started': "Быстрый старт приложения",
+  studio: "Lizard Studio",
+  'framework-guides': "Руководства по фреймворкам",
+  guides: "Руководства",
+  platform: "Лимиты и операции",
+  concepts: "Основные понятия",
+  deploy: "Развертывание",
+  variables: "Переменные",
+  networking: "Сеть",
+  addons: "Управляемые аддоны",
+  sandboxes: "Sandboxes",
+  observability: "Наблюдаемость",
+  cli: "Справочник CLI",
+  dashboard: "Панель приложения",
+  agents: "Агенты для кодинга",
+};

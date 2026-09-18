@@ -1,0 +1,67 @@
+---
+description: "lizard scale cambia las réplicas, CPU y memoria de un servicio, y aumenta el almacenamiento de un addon. Valores permitidos y ejemplos para cada flag."
+---
+
+# lizard scale
+
+Escala un servicio (réplicas / CPU / memoria / almacenamiento).
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard scale [flags]
+```
+
+<span id="flags" />
+
+## Banderas
+
+| Bandera | Descripción |
+|------|-------------|
+| `--replicas <n>` | Réplicas `1`–`10` (apps) |
+| `--cpu <cores>` | `1`, `2`, `3` o `4` |
+| `--memory <mb>` | `128`–`8192` MB |
+| `--storage <mb>` | Tamaño del volumen del addon, solo ampliable |
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="scale-replicas-horizontally" />
+
+### Escalar réplicas horizontalmente
+
+```bash
+lizard scale --service api --replicas 5
+```
+
+Cada réplica es su propio pod detrás del balanceador de carga. Asegúrate de que tu app sea sin estado para que las réplicas sean intercambiables.
+
+<span id="scale-cpu-and-memory-vertically" />
+
+### Escalar CPU y memoria verticalmente
+
+```bash
+lizard scale --service api --cpu 4 --memory 8192
+```
+
+<span id="grow-addon-storage" />
+
+### Ampliar el almacenamiento del addon
+
+```bash
+lizard scale --service postgres --storage 8192
+```
+
+Los volúmenes de datos del addon son solo ampliables: puedes aumentar el almacenamiento, pero no reducirlo.
+
+<span id="see-also" />
+
+## Véase también
+
+- [Escalado](/deploy/scaling) — escalado horizontal vs. vertical y ampliación del almacenamiento del addon
+- [lizard metrics](/cli/metrics) — consulta CPU / memoria / red / disco antes y después del escalado
+- [lizard ps](/cli/ps) — comprueba el estado de las réplicas después de un cambio de escala
+- [Observabilidad → Métricas](/observability/metrics) — monitorización de recursos y costos

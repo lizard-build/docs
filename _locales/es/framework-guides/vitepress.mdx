@@ -1,0 +1,78 @@
+---
+description: "Despliega VitePress en Lizard con docs:build, el directorio correcto .vitepress/dist, nginx y el puerto 80. Configura URLs limpias y verifica las rutas de documentación y los 404."
+---
+
+<span id="deploy-vitepress-on-lizard" />
+
+# Desplegar VitePress en Lizard
+
+Lizard puede compilar un sitio de documentación de VitePress y servir el HTML generado mediante nginx en el puerto `80`. Haz coincidir el script de npm y el directorio de salida con la raíz de tu documentación: `vitepress build docs` escribe en `docs/.vitepress/dist`, mientras que `vitepress build` escribe en `.vitepress/dist`.
+
+Empieza con el [ejemplo completo del código fuente](https://github.com/lizard-build/docs/tree/main/_examples/vitepress), que incluye la configuración y los archivos usados por esta receta.
+
+<span id="set-the-build-script" />
+
+## Configurar el script de compilación
+
+Para archivos Markdown en `docs/`, conserva estos scripts en `package.json`:
+
+```json
+{
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  }
+}
+```
+
+| Ajuste | Valor en esta guía |
+|---|---|
+| Compilación | `npm run docs:build` |
+| Raíz de la documentación | `docs/` |
+| Salida | `docs/.vitepress/dist/` |
+| Servidor de producción | nginx |
+| Puerto del servicio | `80` |
+
+El detector encuentra un script que contiene `vitepress build` y usa su argumento de raíz. Mantén ese script directo y sin ambigüedades. Los envoltorios de shell, varios scripts coincidentes o un `outDir` personalizado requieren una configuración de compilación explícita o un Dockerfile.
+
+<span id="check-the-site-locally" />
+
+## Comprobar el sitio localmente
+
+```bash
+npm ci
+npm run docs:build
+npm run docs:preview
+```
+
+Comprueba una página Markdown interna y un recurso. Con `cleanUrls: true`, VitePress enlaza a rutas sin extensión; el servidor de producción debe resolver esas URLs a los archivos HTML generados. Configura `base` con el prefijo de ruta real, o `/` para la raíz del dominio. Consulta [despliegue de VitePress](https://vitepress.dev/guide/deploy).
+
+<span id="deploy" />
+
+## Desplegar
+
+Después de la [configuración de CLI](/framework-guides#prepare-the-project), ejecuta desde el directorio que contiene `package.json`, no desde dentro de `docs/`:
+
+```bash
+lizard init --name vitepress-docs
+lizard add --service web
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+Incluye la configuración de VitePress, Markdown, recursos fuente, el manifiesto del paquete y el lockfile. Excluye las dependencias locales, la salida generada, las cachés y los secretos. No establezcas `vitepress dev` ni `vitepress preview` como comando de inicio del servicio.
+
+<span id="check-clean-routes-and-http-status" />
+
+## Comprobar rutas limpias y estado HTTP
+
+Las compilaciones nuevas de VitePress resuelven las rutas sin extensión a sus archivos `.html` generados y devuelven HTTP 404 para URLs inexistentes. Mantén las anulaciones de comandos sin configurar para usar esta ruta de detección. No se necesita un Dockerfile personalizado para la salida estándar. Consulta [rutas estáticas y 404](/framework-guides/static-routing) para el enrutamiento personalizado.
+
+Comprueba directamente una URL limpia y recárgala. Solicita una ruta que no exista y confirma HTTP 404. Si una imagen anterior sirve la página de inicio para rutas inexistentes, vuelve a compilar el servicio para aplicar las reglas de enrutamiento actuales.
+
+Si la compilación informa `Missing script: build`, comprueba que la ruta seleccionada use el detector de VitePress y que ninguna anulación de comando del servicio lo reemplace. Si la compilación se completa correctamente pero nginx no sirve la documentación, compara la raíz de documentación del script con el directorio de salida copiado. Vuelve a compilar después de cambios en el contenido o la configuración.
+
+Consulta [versiones probadas y resultados en la nube](/framework-guides/validation) para las comprobaciones de despliegue del 9 de septiembre de 2026 y sus límites.
+

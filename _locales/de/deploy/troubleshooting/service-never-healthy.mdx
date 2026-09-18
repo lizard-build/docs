@@ -1,0 +1,59 @@
+---
+description: "Ein Build ist erfolgreich, aber der Bereitstellen bleibt ungesund. Port-Binding, versehentlicher Worker-Modus und weitere Ursachen für einen fehlschlagenden Health-Checks."
+---
+
+<span id="my-service-deploys-but-never-becomes-healthy" />
+
+# Mein Service wird deployt, wird aber nie healthy
+
+Der Build ist erfolgreich, Replikate starten, aber der Bereitstellen bleibt ausstehend, wird als ungesund markiert oder erhält nie Traffic.
+
+<span id="what-this-means" />
+
+## Was das bedeutet
+
+Der Health-Checks der Plattform — der prüft, ob der Port deiner App erreichbar ist — schlägt nie an, daher wird der Traffic nie auf die neuen Replikate umgeschaltet.
+
+<span id="why-this-can-happen" />
+
+## Warum das passieren kann
+
+- **Deine App lauscht nicht auf dem erwarteten Port.** Lizard setzt eine `PORT`-Umgebungsvariable (Standard-Container-Port `3000`) und prüft, ob deine App dort erreichbar ist. Wenn deine App fest auf einen anderen Port eingestellt ist oder nie einen Port bindet, schlägt der Health-Checks unbegrenzt fehl. Ein Python-App ist der übliche Fall: `gunicorn` und `uvicorn` binden an `127.0.0.1`, sofern du nichts anderes angibst, und die Probe kommt von außerhalb des Prozesses. [Python-App-Hosting](https://lizard.build/blog/python-app-hosting#what-a-python-app-actually-needs-from-a-host) enthält die Zeile `--bind 0.0.0.0:$PORT`, die jedes Framework braucht.
+- **Der Service ist versehentlich im Worker-Modus.** Das Setzen von `containerPort=0` versetzt einen Service in den [Worker-Modus](/deploy/workers), wodurch **der Health-Checks und die Registrierung beim Load Balancer vollständig übersprungen werden**. Ein Service, der eigentlich HTTP bereitstellen soll, aber auf `containerPort=0` umgestellt wurde, wird "erfolgreich" deployt und liefert dann einfach nie etwas aus — der Worker-Modus verdeckt das zugrunde liegende Startproblem, statt es sichtbar zu machen.
+
+<span id="possible-solutions" />
+
+## Mögliche Lösungen
+
+<span id="check-the-current-port" />
+
+### Den aktuellen Port prüfen
+
+```bash
+lizard port --service api
+```
+
+Wenn hier `worker mode` ausgegeben wird, hat der Service `containerPort=0`. Setze ihn wieder auf einen echten Port zurück, wenn dieser Service HTTP bereitstellen soll:
+
+```bash
+lizard port 3000 --service api
+lizard redeploy --service api
+```
+
+<span id="confirm-your-app-is-listening-where-lizard-expects" />
+
+### Bestätigen, dass deine App dort lauscht, wo Lizard es erwartet
+
+Prüfe die Runtime-Logs auf Startfehler und vergleiche den Port, an den die App tatsächlich gebunden wurde, mit dem, was Lizard gesetzt hat:
+
+```bash
+lizard logs --service api
+lizard ssh --service api -- env | grep PORT
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Background Workers](/deploy/workers) — wann `containerPort=0` sinnvoll ist (und wann nicht).
+- [Bereitstellungen → lifecycle](/concepts/deployments#lifecycle) — wo der Health-Checks innerhalb eines Deploys stattfindet.

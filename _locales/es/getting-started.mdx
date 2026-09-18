@@ -1,0 +1,134 @@
+---
+description: "Instala la Lizard CLI, inicia sesión y lanza tu primera app desde un repositorio de GitHub o una carpeta local en unos minutos; luego añade una base de datos."
+---
+
+<span id="app-quickstart" />
+
+# Inicio rápido de apps
+
+Lanza tu primera app en Lizard en unos minutos. Necesitarás Node.js 18+ y npm; se crea una cuenta de Lizard automáticamente la primera vez que `lizard login`. Instalarás la CLI, iniciarás sesión y desplegarás, ya sea directamente desde un repositorio de GitHub o desde un directorio local.
+
+<span id="1-install-the-cli" />
+
+## 1. Instala la CLI
+
+Instala globalmente desde npm el binario `lizard`:
+
+```bash
+npm install -g @lizard-build/cli
+```
+
+Verifica que esté en tu `PATH`:
+
+```bash
+lizard --version
+```
+
+> **No uses `npx`.** Usa siempre el binario `lizard` instalado globalmente. Ejecutar `npx @lizard-build/cli` descarga una copia temporal cuya versión puede diferir de la plataforma. Más adelante, actualízalo en el mismo lugar con `lizard upgrade`.
+
+> **¿Errores de permisos (EACCES)?** No uses `sudo`. Haz que npm apunte a un prefijo propiedad de tu usuario:
+> ```bash
+> mkdir -p ~/.npm-global
+> npm config set prefix ~/.npm-global
+> echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.zshrc && source ~/.zshrc
+> npm install -g @lizard-build/cli
+> ```
+
+<span id="2-log-in" />
+
+## 2. Inicia sesión
+
+```bash
+lizard login
+```
+
+Esto abre tu navegador para autenticarte y luego vuelve a tu terminal una vez que confirmes. En CI u otros entornos no interactivos, autentícate con un token en su lugar:
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+# or
+lizard login --token lzd_xxx
+```
+
+Comprueba quién eres en cualquier momento:
+
+```bash
+lizard whoami
+```
+
+<span id="3-deploy" />
+
+## 3. Despliega
+
+Elige la ruta que coincida con dónde vive tu código.
+
+<span id="option-a--deploy-a-github-repo-recommended" />
+
+### Opción A — Desplegar un repositorio de GitHub (recomendado)
+
+Si tu código está en GitHub, crea un servicio directamente desde el repositorio. Lizard lo clona, detecta automáticamente el stack, lo compila y devuelve una URL activa:
+
+```bash
+lizard add -r your-org/your-app
+```
+
+A partir de entonces, los pushes a la rama seguida volverán a desplegar automáticamente. Para repositorios privados, conecta primero la GitHub App:
+
+```bash
+lizard git connect
+```
+
+<span id="option-b--deploy-local-code" />
+
+### Opción B — Desplegar código local
+
+Desde dentro del directorio de tu proyecto, sube y despliega la carpeta actual (respeta `.gitignore`):
+
+```bash
+lizard up
+```
+
+Si el directorio aún no está vinculado a un proyecto, `up` creará o seleccionará uno de forma interactiva. En CI, vincúlalo explícitamente primero con `lizard init --name my-project`.
+
+De cualquier forma, cuando termine la compilación obtendrás una URL generada como `https://your-app-production.onlizard.com`.
+
+<span id="4-watch-it-build-and-run" />
+
+## 4. Observa cómo compila y se ejecuta
+
+```bash
+lizard ps          # services in the project, with status + URL
+lizard logs        # last runtime log lines
+lizard logs --build  # the most recent build's logs
+lizard open        # open the project in the dashboard
+```
+
+<span id="5-add-a-database-optional" />
+
+## 5. Añade una base de datos (opcional)
+
+Aprovisiona un Managed Postgres y haz referencia a él desde tu servicio:
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service your-app
+lizard redeploy --service your-app
+```
+
+La referencia `${{postgres.DATABASE_URL}}` se resuelve en el momento del despliegue y rota automáticamente con el addon. Consulta [Managed Addons](/addons).
+
+<span id="next-steps" />
+
+## Siguientes pasos
+
+- **[Conceptos básicos](/concepts/architecture)** — entiende los proyectos, servicios y el pipeline de compilación.
+- **[Desplegar desde GitHub](/deploy/github)** — ramas, monorepos y redespliegues automáticos.
+- **[Variables y secretos](/variables)** — alcance y precedencia.
+- **[Redes](/networking)** — adjunta tu propio hostname con TLS automático.
+- **[Desplegar una app que creó tu IDE con IA](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — los mismos tres pasos, pero entregados a un agente en su lugar, para una app escrita en Google Antigravity.
+
+<span id="hosting-costs" />
+
+## Costes de hosting
+
+Lizard usa [pay as you go](/platform/billing) sin suscripción mensual. El uso de recursos se descuenta de tu saldo de cuenta. Los créditos comprados no caducan; los créditos de prueba sí. Consulta los [precios](https://lizard.build/pricing) y los límites de tu cuenta antes de desplegar.

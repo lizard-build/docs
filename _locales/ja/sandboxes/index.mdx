@@ -1,0 +1,86 @@
+---
+description: "サンドボックスは、数ミリ秒で起動し、その中でコードを実行して、破棄できる、分離された Firecracker micro-VM です。AI エージェントを支えるコンピュートの基本単位です。"
+---
+
+# Sandboxes
+
+**sandbox** は、必要に応じて起動し、その中でコードを実行し、完了したら終了できる、分離された Firecracker micro-VM です。それぞれが独自のファイルシステム、ネットワーク、プロセス名前空間を持つ完全な Linux 環境であり、起動は数分ではなく数ミリ秒です。
+
+Sandboxes は、Lizard における AI エージェント、コードインタープリタ、eval、CI スタイルのジョブを支えるコンピュートの基本単位です。[service](/concepts/architecture) がリポジトリに結び付いた長寿命のデプロイであるのに対し、sandbox は **一時的で、プログラム可能で、使い捨て** です。アカウントで利用可能なキャパシティの範囲内で、各タスクごとに sandbox を作成します。
+
+```ts
+import { Sandbox } from '@lizard-build/sdk';
+
+const sandbox = await Sandbox.create('base', { project: 'my-project' });
+const { stdout } = await sandbox.process.exec('echo "hello from Lizard"');
+console.log(stdout);            // hello from Lizard
+await sandbox.kill();
+```
+
+<span id="when-to-use-a-sandbox" />
+
+## sandbox を使うタイミング
+
+| **sandbox** を使う場合… | **service** を使う場合… |
+|---|---|
+| エージェントが信頼できないコードや生成されたコードを実行する必要がある | 常時稼働するアプリをデプロイする |
+| タスクごとに新しく使い捨ての Linux 環境が欲しい | 安定した `<name>.<region>.onlizard.com` URL と TLS が欲しい |
+| 分離された多数のジョブを一度に並列実行したい | 常時稼働する単一のプロセスがある |
+| ワークロードが短命または一時停止される | ワークロードが git 連携され、自動再デプロイされる |
+
+エージェントが sandbox 内で動作するアプリを生成した後、それを [`lizard up`](/deploy/upload) を使って永続的な service に昇格できます。Dockerfile は不要です。
+
+<span id="what-makes-them-fast" />
+
+## 高速な理由
+
+- **Firecracker micro-VMs** — 各 sandbox ごとに個別の Linux ゲストが用意されます。アプリランタイムには異なる分離ルールがあります。ハードウェア仮想化によってゲストはホストから分離されます。信頼できないコードに対しては、認証情報とネットワークアクセスを管理してください。
+- **Pause and resume** — 一時停止すると micro-VM の vCPU は停止します。メモリ、ファイルシステム、実行中のプロセスはそのまま保持されるため、再開すると中断した場所から正確に再開されます。パッケージの再インストールやキャッシュの再ウォームは不要です。これにより、長時間動作するエージェントセッションが別々の呼び出しをまたいで維持されます。状態はディスクに書き込まれるのではなくホストのメモリに保持されるため、ホスト障害は越えられません。[pause & resume](/sandboxes/quickstart#pause-and-resume) を参照してください。
+- **テンプレートから起動** — 各ノードはテンプレートごとに golden snapshot を事前構築するため、`create` はコールドブートではなく復元です。
+
+<span id="templates" />
+
+## テンプレート
+
+sandbox は **template**（ダッシュボードでは *snapshot* とも呼ばれます）から起動します。組み込みは 2 つあります。
+
+| テンプレート | 内容 | 最適な用途 |
+|---|---|---|
+| `base` | Debian Linux、Node.js 26、Lizard CLI | 汎用シェルおよびビルド環境 |
+| `code-interpreter-v1` | Python 3.14 + Node.js 26、ポート 8080 でコード実行用 HTTP API を提供 | AI コードインタープリタ — [`CodeSandbox`](/sandboxes/code-interpreter) で操作 |
+
+`base` がデフォルトです。公開 create API はこの 2 つの template 名を受け付けます。カスタム template のアップロードフローは公開されていません。
+
+<span id="lifecycle" />
+
+## ライフサイクル
+
+sandbox は 3 つの状態を移動します。
+
+```
+create ──▶ running ⇄ paused ──▶ stopped
+                              (killed or expired)
+```
+
+- **running** — ゲストはコマンドを実行し、ファイルを扱い、公開されたポートでサービスを提供できます。
+- **paused** — vCPU は停止します。ゲストのメモリとプロセス状態はホスト上に残ります。これは永続的なスナップショットでもバックアップでもありません。
+- **stopped** — sandbox は削除または期限切れによって終了しました。ローカルファイルシステムはもう利用できません。
+
+SDK はデフォルトで 5 分の有効期間を送信します。生の create API は、期限なしとして `timeoutMs: 0` を受け付けます。スクリプトがクライアント間で同じように動作する必要がある場合は明示的なタイムアウトを渡し、タスク終了時に sandbox を解放してください。コマンドを実行しても有効期間はリセットされません。
+
+Pause は、残りの実行時間を保持することを意図しています。元の期限を超える一時停止に依存する前に、[現在のライフサイクル issue](/platform/known-issues#sandbox-pause-and-expiration) を確認してください。永続化するファイルは [volume](/sandboxes/volumes) に置くべきです。一時停止中のゲストはホスト障害を越えて保持されません。
+
+## Resources & limits
+
+すべての sandbox は固定の **4 vCPU / 4096 MiB RAM** で実行されます。公開 create API には sandbox ごとのサイズ設定はありません。各 sandbox は、その template のリソースを引き継ぎます。
+
+リージョンは利用可能なキャパシティから自動選択されます。ダッシュボードでは固定できます。アプリのクォータと sandbox のキャパシティが同じ適用ルールを使うとは想定しないでください。[limits](/platform/limits) を参照してください。
+
+<span id="ways-to-drive-sandboxes" />
+
+## Sandboxes を操作する方法
+
+| 表面 | 最適な用途 | ここから開始 |
+|---|---|---|
+| **SDK** (JS / Python) | エージェント、アプリ、スクリプト — [`CodeSandbox`](/sandboxes/code-interpreter) を使ったステートフルな多言語実行を含む | [Quickstart](/sandboxes/quickstart) · [SDK Reference](/sandboxes/sdk-reference) |
+| **ダッシュボード** | 手動作成、ターミナル、SSH、モニタリング | [ダッシュボード](/sandboxes/dashboard) |

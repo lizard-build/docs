@@ -1,0 +1,80 @@
+---
+description: "lizard git подключает GitHub App, показывает статус репозитория и переключает сервис на другую ветку с повторным деплоем."
+---
+
+# lizard git
+
+Управление подключением GitHub для связанного проекта и его сервисов.
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard git connect
+lizard git status
+lizard git checkout <service> <branch> [flags]
+```
+
+<span id="subcommands" />
+
+## Подкоманды
+
+### `lizard git connect`
+
+Подключить GitHub App для доступа к приватным репозиториям.
+
+### `lizard git status`
+
+Показать подключение GitHub и статус репозитория.
+
+### `lizard git checkout <service> <branch>`
+
+Переключить сервис на другую ветку и выполнить повторный деплой.
+
+| Флаг | Описание |
+|------|-------------|
+| `--detach` | Пропустить стриминг логов |
+
+<span id="examples" />
+
+## Примеры
+
+<span id="connect-the-github-app" />
+
+### Подключить GitHub App
+
+```bash
+lizard git connect
+```
+
+<span id="check-connection-and-repository-status" />
+
+### Проверить подключение и статус репозитория
+
+```bash
+lizard git status
+```
+
+<span id="switch-a-service-to-a-different-branch" />
+
+### Переключить сервис на другую ветку
+
+```bash
+lizard git checkout api staging
+```
+
+<span id="switch-branches-without-streaming-logs" />
+
+### Переключить ветки без стриминга логов
+
+```bash
+lizard git checkout api staging --detach
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [Деплой из GitHub](/deploy/github) — подключение репозитория, авто-деплой при пуше и настройка монорепо
+- [lizard add](/cli/add) — создать сервис из репозитория GitHub

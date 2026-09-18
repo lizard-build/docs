@@ -1,0 +1,78 @@
+---
+description: "${{name.KEY}} 構文で、あるサービスやアドオンの値を別のサービスやアドオンから読み取ります。参照がデプロイ時にどのように解決されるか、そしてなぜコピーより優れているのかを説明します。"
+---
+
+<span id="cross-service-references" />
+
+# サービス間参照
+
+参照を使うと、あるサービスやアドオンが、認証情報をコピー＆ペーストせずに別のサービスやアドオンの値を読み取れます。シークレットを1か所にまとめて保持でき、自動的にローテーションされます。
+
+<span id="syntax" />
+
+## 構文
+
+```
+${{<name>.<KEY>}}
+```
+
+- `<name>` — 対象のサービスまたはアドオン名（ダッシュボードに表示され、`lizard add -n` で使われるもの）。
+- `<KEY>` — 対象のマージ済み環境内のキー。
+
+値を受け付ける場所ならどこでも使えます。最も一般的なのはシークレットです:
+
+```bash
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+```
+
+<span id="how-they-resolve" />
+
+## 解決の仕組み
+
+- 参照は、対象のマージ済み環境に対して**デプロイ時**に解決されます。
+- **ID** で保存されるため、あとで対象の名前を変更しても参照は壊れません。
+- **存在しない**対象またはキーへの参照は、**空文字列**に解決されます。デプロイは失敗しません。
+- エラーになるのは**循環**参照だけです。
+
+> 存在しないキーは黙って空になるため、参照を設定したあとは、コンシューマーが実際に値を受け取ったかを必ず確認してください:
+> ```bash
+> lizard ssh --service api -- env | grep DATABASE_URL
+> ```
+
+参照が期待どおりに反映されない場合は、[トラブルシューティング → シークレットまたは参照が表示されない](/variables/troubleshooting/reference-not-applied) を参照してください。
+
+<span id="common-patterns" />
+
+## よくあるパターン
+
+**1つのアドオンを複数のサービスに接続する** — ローテーションがどこにでも伝播するよう、各コンシューマー側でバインドします:
+
+```bash
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service api
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service worker
+```
+
+**別のサービスの値を参照する** — たとえば、計算された URL やトークンを共有する場合:
+
+```bash
+lizard secrets set UPSTREAM_URL='${{api.LIZARD_PUBLIC_DOMAIN}}' --service web
+```
+
+**同じ種類の2つ目のアドオンを参照する** — その自動生成された名前を使います:
+
+```bash
+lizard secrets set CACHE_URL='${{redis-winter-otter.REDIS_URL}}' --service api
+```
+
+<span id="why-not-just-use---global" />
+
+## なぜ `--global` を使わないのですか？
+
+共有 DSN をプロジェクト（`--global`）スコープに置くと、必要のないものも含めて*すべて*のサービスに公開されます。参照を使えば、単一の信頼できる情報源としてのローテーションという利点はそのままに、各シークレットを実際に利用するサービスだけにスコープできます。[シークレットのスコープ](/variables#scoping) を参照してください。
+
+<span id="see-also" />
+
+## 関連項目
+
+- [変数とシークレット](/variables) — スコープと優先順位。
+- [`lizard secrets`](/cli/secrets) — 完全なコマンドリファレンス。

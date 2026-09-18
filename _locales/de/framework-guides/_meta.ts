@@ -1,0 +1,16 @@
+export default {
+  index: "Überblick",
+  nextjs: { title: "Next.js", display: "children" },
+  react: "React (Vite)",
+  vue: "Vue (Vite)",
+  astro: "Astro",
+  nuxt: "Nuxt",
+  sveltekit: "SvelteKit",
+  fastapi: "FastAPI",
+  django: "Django",
+  docusaurus: "Docusaurus",
+  vitepress: "VitePress",
+  hugo: "Hugo",
+  'static-routing': "Statische Routen & 404-Seiten",
+  validation: "Getestete Versionen & Ergebnisse",
+};

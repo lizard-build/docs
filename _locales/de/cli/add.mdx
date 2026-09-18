@@ -1,0 +1,76 @@
+---
+description: "lizard add erstellt einen Service aus einem GitHub-Repo, einem leeren Service oder einem verwalteten Add-on. Vollständige Flag-Referenz mit praxisnahen Beispielen."
+---
+
+# lizard add
+
+Füge dem Projekt eine Datenbank, einen Service oder ein Repo hinzu.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard add [types...] [flags]
+```
+
+## Flags
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-r, --repo <owner/repo>` | Einen Service aus einem GitHub-Repo erstellen |
+| `-s, --service <name>` | Einen leeren Service erstellen |
+| `-a, --addon <type...>` | Verwaltete Add-ons hinzufügen (`postgres` / `redis` / `s3`) |
+| `-n, --name <name>` | Name für `${{name.KEY}}`-Referenzen |
+| `-v, --variables <K=V>` | Eine Umgebungsvariable vorbelegen (wiederholbar) |
+| `--region <code>` | Region für die Bereitstellung |
+| `--no-deploy` | Repo verknüpfen, aber den ersten Build überspringen |
+| `--list` | Verfügbare Datenbanktypen anzeigen |
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="create-a-service-from-a-github-repo" />
+
+### Einen Service aus einem GitHub-Repo erstellen
+
+```bash
+lizard add -r your-org/your-app
+```
+
+Dadurch wird ein Service aus `github`-Quelle erstellt, das Repo geklont, der Stack automatisch erkannt, gebaut und eine Live-URL zurückgegeben.
+
+<span id="provision-addons" />
+
+### Add-ons bereitstellen
+
+```bash
+lizard add postgres            # one addon
+lizard add postgres redis s3   # several at once
+lizard add --list              # show available types
+```
+
+<span id="create-an-empty-service" />
+
+### Einen leeren Service erstellen
+
+```bash
+lizard add -s worker
+```
+
+<span id="name-a-service-and-seed-variables" />
+
+### Einen Service benennen und Variablen vorbelegen
+
+```bash
+lizard add -r your-org/monorepo -n api
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Von GitHub deployen](/deploy/github) — Repos verbinden, privater Zugriff und automatische Neu-Bereitstellungen bei Push
+- [Managed Addons](/addons) — Bereitstellung, Benennung und Verwendung von postgres/redis/s3
+- [lizard up](/cli/up) — das aktuelle Verzeichnis hochladen und deployen, statt ein Repo zu verknüpfen

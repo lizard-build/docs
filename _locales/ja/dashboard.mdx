@@ -1,0 +1,96 @@
+---
+description: "LizardダッシュボードがCLIに追加するもの: サービスのステータス、デプロイのタイムライン、ストリーミングログ、メトリクス、データブラウザー、チーム、請求。"
+---
+
+<span id="app-dashboard" />
+
+# アプリダッシュボード
+
+LizardダッシュボードはCLIのビジュアルな補完機能です。`lizard …` で行うことはすべてここにも反映され、さらに UI のほうが簡単なもの — ストリーミングログ、チャート、データブラウザー、チーム/請求管理 — も利用できます。
+
+端末をまったく開きたくない場合は、エージェントにコマンドを実行させて、ここで結果を確認してください — [Antigravity アプリを本番環境にデプロイする](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-an-antigravity-app-to-production-without-typing-a-command) の手順では、2 つのプロンプトだけで、端末に何も入力する必要はありません。
+
+CLI から開く:
+
+```bash
+lizard open          # open the current project
+lizard docs          # open this documentation
+```
+
+<span id="whats-in-the-dashboard" />
+
+## ダッシュボードにあるもの
+
+<span id="services" />
+
+### サービス
+
+プロジェクトのホームビューには、すべてのサービスがステータスバッジ、生成されたドメイン、ログ・メトリクス・シークレット・設定へのクイックアクセスとともに一覧表示されます。新しいサービス（GitHub リポジトリから、または空の状態から）もここから直接作成できます。
+
+<span id="deployments" />
+
+### デプロイ
+
+すべてのデプロイのタイムラインが表示され、デプロイごとのビルドログと詳細ドロワー（コミット、ステータス、レプリカ）を確認できます。これは `lizard events` + `lizard logs --build` に相当するビジュアル版です。
+
+<span id="logs" />
+
+### ログ
+
+検索とレベルフィルターに対応した、ランタイムログとビルドログのライブストリーミング — [`lizard logs`](/observability/logs) に対応する UI です。
+
+<span id="metrics--usage" />
+
+### メトリクスと使用状況
+
+サービスごとの CPU、メモリ、ネットワーク、ディスクのチャートに加え、プロジェクト全体の消費量とコストを内訳表示する **使用量** ビューがあります。[`lizard metrics --cost`](/observability/metrics) に対応します。
+
+<span id="variables--secrets" />
+
+### 変数 & Secrets
+
+マスクされた値と参照（`${{…}}`）サポート付きで、サービススコープおよびプロジェクトスコープのシークレットを管理できます。[変数 & Secrets](/variables) を参照してください。
+
+<span id="domains" />
+
+### ドメイン
+
+カスタムドメインの追加、DNS レコードの表示、検証と TLS ステータスの追跡ができます。[Networking](/networking) を参照してください。
+
+<span id="managed-addon-browsers" />
+
+### Managed addon ブラウザー
+
+各 addon にはデータブラウザーが付属しています:
+
+- **Postgres** — データのクエリと編集ができる SQL/テーブルエディター。
+- **Redis** — キー/バリューブラウザー。
+- **S3** — アップロード/ダウンロードに対応したバケット/オブジェクトブラウザー。
+
+<span id="github-integration" />
+
+### GitHub 連携
+
+GitHub App を接続し、リポジトリを選択して、Lizard がビルドできるリポジトリを管理します。[GitHubからデプロイする](/deploy/github) を参照してください。
+
+<span id="settings-team--billing" />
+
+### 設定、チーム、請求
+
+プロジェクトとワークスペースの設定、メンバー招待とロール、リソース使用量、アカウントクレジット、任意の自動チャージに対応しています。標準アカウントは月額サブスクリプションなしの [pay as you go](/platform/billing) を利用します。
+
+<span id="cli--dashboard" />
+
+## CLI ↔ ダッシュボード
+
+| タスク | CLI | ダッシュボードビュー |
+|------|-----|----------------|
+| デプロイ履歴 | `lizard events` | デプロイメント |
+| ログをストリーミング | `lizard logs` | ログ |
+| リソースチャート | `lizard metrics` | Metrics / 使用量 |
+| シークレットを管理 | `lizard secrets` | 変数 |
+| カスタムドメイン | `lizard domain` | ドメイン |
+| Postgres/Redis/S3 を閲覧 | `lizard run` / `lizard ssh` | アドオンブラウザー |
+| チームメンバーを招待 | — | Team / Settings |
+
+そのときに合うほうを使ってください — どちらも同じプロジェクトとサービスを操作します。

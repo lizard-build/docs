@@ -1,0 +1,144 @@
+---
+description: "Jede Klasse und Methode im Lizard SDK für JavaScript und Python: Lizard, Sandbox, CodeSandbox und Volume, mit Optionen und Rückgabetypen."
+---
+
+<span id="sdk-reference" />
+
+# SDK-Referenz
+
+Die Pakete `@lizard-build/sdk` (JS/TS) und `lizard-sdk` (Python) werden von den meisten Agents, Apps und Skripten verwendet, um Sandboxes zu steuern. Diese Seite erfasst jede Klasse und Methode; eine Einführung finden Sie im [Quickstart](/sandboxes/quickstart).
+
+<span id="install--authenticate" />
+
+## Installieren & authentifizieren
+
+```bash
+npm install @lizard-build/sdk    # JavaScript / TypeScript
+pip install lizard-sdk           # Python
+```
+
+Das SDK liest `LIZARD_API_KEY` aus der Umgebung oder akzeptiert eine explizite Option `apiKey` für `Sandbox.create` / `Sandbox.connect`. Wie Sie einen Schlüssel erstellen, finden Sie unter [Quickstart → Authentifizieren](/sandboxes/quickstart#authenticate).
+
+Jede Sandbox gehört außerdem zu einem **Projekt** — die Nutzung wird pro Projekt abgerechnet, daher wird eine Erstellung ohne Projekt abgelehnt.
+
+## `Lizard`
+
+Ein Client, der an ein Projekt gebunden ist, sodass Sie das Projekt einmal angeben statt bei jedem Aufruf.
+
+| Mitglied | Beschreibung |
+|---|---|
+| `new Lizard({ project, apiKey?, apiUrl?, timeoutMs? })` | Einen Client erstellen. `project` ist erforderlich — seine ID, sein Slug oder sein Name (`Lizard(project=…)` in Python). |
+| `lizard.create(template?, options?)` | Eine Sandbox im Projekt des Clients starten. |
+| `lizard.connect(sandboxId)` | Eine Sandbox per ID anbinden und sie automatisch fortsetzen, wenn sie pausiert ist. |
+| `lizard.list()` | Alle laufenden Sandboxes für das Konto auflisten. |
+| `lizard.projectId()` | Die Projektreferenz des Clients in ihre ID auflösen (nach dem ersten Aufruf zwischengespeichert). |
+
+```ts
+const lizard = new Lizard({ project: 'my-project' });
+const sandbox = await lizard.create('base');
+```
+
+```python
+lizard = Lizard(project="my-project")
+sandbox = lizard.create("base")
+```
+
+Eine Projektreferenz, die zu nichts passt, auf das der Schlüssel zugreifen kann, löst vor dem Start irgendeiner Sandbox einen Fehler aus und listet die Projekte auf, die er sehen kann.
+
+> Python-Methodennamen mit einem nachgestellten Unterstrich (`exec_`) vermeiden Kollisionen mit reservierten Wörtern, und Eigenschaften verwenden snake_case (`sandbox_id`) statt camelCase (`sandboxId`). Die folgenden Beispiele verwenden JS/TS-Namen; prüfen Sie das installierte Python-Paket für Methodensignaturen.
+
+## `Sandbox`
+
+| Mitglied | Beschreibung |
+|---|---|
+| `Sandbox.create(template?, options?)` | Eine Sandbox starten. `template` ist standardmäßig `'base'`; `options.project` benennt das Projekt, dem die Kosten berechnet werden. |
+| `Sandbox.connect(sandboxId)` | Eine Sandbox per ID anbinden und sie automatisch fortsetzen, wenn sie pausiert ist. |
+| `Sandbox.list()` | Alle laufenden Sandboxes für das Konto auflisten. |
+| `sandbox.sandboxId` | Die ID der Sandbox (`sandbox_id` in Python). |
+| `sandbox.process.exec(cmd)` | Einen Befehl ausführen und auf seinen Abschluss warten (`process.exec_` in Python). Gibt `{ stdout, stderr, exitCode }` zurück. |
+| `sandbox.fs.write(path, data)` | Eine Datei schreiben — String oder Bytes; erstellt übergeordnete Verzeichnisse. |
+| `sandbox.fs.read(path)` | Eine Datei als UTF-8-String lesen. |
+| `sandbox.fs.list(path)` | Verzeichniseinträge auflisten → `[{ name, path, type, size }]`. |
+| `sandbox.fs.makeDir(path)` | Ein Verzeichnis und alle fehlenden übergeordneten Verzeichnisse erstellen. |
+| `sandbox.fs.remove(path)` | Eine Datei oder ein Verzeichnis löschen. |
+| `sandbox.getHost(port)` | Eine Route zu `port` registrieren und ihren öffentlichen, TLS-terminierten Hostnamen zurückgeben. |
+| `sandbox.pause()` | Guest-vCPUs stoppen und den Zustand im Host-Speicher behalten. Lesen Sie den [Lebenszyklus-Status](#lifecycle-status), bevor Sie sich auf eine Pause über die ursprüngliche Frist hinaus verlassen. |
+| `sandbox.resume()` | Eine pausierte Sandbox an Ort und Stelle fortsetzen. |
+| `sandbox.setTimeout(ms)` | Die verbleibende Lebensdauer einer laufenden Sandbox in Millisekunden setzen (mindestens 1000). |
+| `sandbox.getInfo()` | Metadaten abrufen → `{ sandboxId, template, startedAt, endAt, … }`. |
+| `sandbox.kill()` | Die Sandbox sofort beenden und ihre Ressourcen freigeben. |
+
+### `Sandbox.create(template?, options?)`
+
+| Option | Typ | Standard | Hinweise |
+|---|---|---|---|
+| `template` | string | `'base'` | `'base'` oder `'code-interpreter-v1'` — die beiden unterstützten [Vorlagen](/sandboxes#templates) |
+| `project` | string | — | **Erforderlich.** Das Projekt, dem die Kosten berechnet werden — seine ID, sein Slug oder sein Name (`project` in Python). Nicht nötig über einen Client `Lizard`. |
+| `projectId` | string | — | Exakte Projekt-ID; überspringt das Auflösen von `project` |
+| `timeoutMs` | int | SDK-Standard 5 min | Lebensdauer in ms |
+| `region` | string | auto | An eine Region anheften |
+| `volumeId` | string | — | Ein [Volume](/sandboxes/volumes) bei `/data` anhängen |
+| `apiKey` | string | `LIZARD_API_KEY` env var | Expliziter API-Schlüssel, überschreibt die Umgebung |
+
+```ts
+const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 10 * 60 * 1000 });
+```
+
+## `CodeSandbox`
+
+Erweitert `Sandbox` um einen zustandsbehafteten Kernel. Die vollständige Einführung finden Sie unter [Code Interpreter](/sandboxes/code-interpreter).
+
+| Mitglied | Beschreibung |
+|---|---|
+| `CodeSandbox.create(options?)` | Einen Code-Interpreter starten (standardmäßig mit der Vorlage `code-interpreter-v1`). Akzeptiert dieselbe Option `project` wie `Sandbox.create`. |
+| `CodeSandbox.connect(sandboxId)` | Einen vorhandenen Code-Interpreter-Sandbox anbinden (und automatisch fortsetzen). |
+| `sandbox.runCode(code, opts?)` | Code im Kernel ausführen. Gibt ein `Execution` zurück. |
+| `sandbox.createContext(opts)` | Einen isolierten Namespace erstellen — `{ language }`. |
+| `sandbox.listContexts()` | Die Kontexte der Sandbox auflisten. |
+| `sandbox.restartContext(context)` | Alle Variablen bzw. den gesamten Zustand in einem Kontext löschen. |
+| `sandbox.deleteContext(context)` | Die Ressourcen eines Kontexts freigeben. |
+
+### `runCode(code, opts?)`
+
+| Option | Beschreibung |
+|---|---|
+| `language` | Laufzeit für einen einmaligen Aufruf — `'python'` (Standard), `'javascript'` oder `'bash'`. Gegenseitig ausschließend mit `context`. |
+| `context` | Innerhalb eines bestimmten isolierten Kontexts statt des Standardkontexts ausführen. Gegenseitig ausschließend mit `language`. |
+| `onStdout` / `onStderr` | Ausgabe zeilenweise streamen, während sie erzeugt wird. |
+| `onResult` | Wird für jedes Rich Ergebnis aufgerufen (Werte, erzeugte Bilder/Diagramme). |
+| `onError` | Wird mit einem `ExecutionError` aufgerufen, wenn der Code eine Ausnahme auslöst. |
+
+Gibt ein `Execution` zurück:
+
+| Feld | Beschreibung |
+|---|---|
+| `stdout` / `stderr` | Erfasste Ausgabeströme |
+| `results` | Rich Results (Werte sowie eventuell erzeugte Bilder / Diagramme) |
+| `error` | Ein `ExecutionError` (`name`, `message`, `traceback`), wenn der Code eine Ausnahme ausgelöst hat |
+| `executionCount` | Monotoner Zähler für den Kernel |
+
+## `Volume`
+
+Die vollständige Einführung finden Sie unter [Persistent Volumes](/sandboxes/volumes).
+
+| Mitglied | Beschreibung |
+|---|---|
+| `Volume.create(projectId, name, options)` | Ein Volume erstellen. `options.sizeGb` ist standardmäßig `5`. |
+| `Volume.list(projectId)` | Volumes in einem Projekt auflisten → `[{ id, name, sizeGb, status, attachedTo, … }]`. |
+| `Volume.get(projectId, volumeId)` | Einen Handle für ein vorhandenes Volume abrufen. |
+| `volume.getInfo(projectId)` | Metadaten und Anhangsstatus abrufen. |
+| `volume.delete(projectId)` | Ein Volume löschen — es muss zuvor getrennt werden. |
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Quickstart](/sandboxes/quickstart) — installieren, authentifizieren und eine vollständige Einführung.
+- [Code Interpreter](/sandboxes/code-interpreter) — der Leitfaden zu `CodeSandbox`.
+- [Persistent Volumes](/sandboxes/volumes) — der Leitfaden zu `Volume`.
+
+<span id="lifecycle-status" />
+
+## Lebenszyklus-Status
+
+Bevor Sie sich darauf verlassen, dass eine Pause eine Sitzung über ihre ursprüngliche Frist hinaus erhält, lesen Sie die [bekannten Probleme](/platform/known-issues#sandbox-pause-and-expiration). Eine Pause hält den Guest-Zustand im Host-Speicher; sie ist kein dauerhaftes Backup.

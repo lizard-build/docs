@@ -1,0 +1,83 @@
+---
+description: "Stelle eine mit Vite erstellte React-App auf Lizard bereit. Erstelle dist, liefere sie über Port 80 aus, konfiguriere Client-Routen und öffentliche API-Variablen und prüfe die bereitgestellte App."
+---
+
+<span id="deploy-react-with-vite-on-lizard" />
+
+# React mit Vite auf Lizard bereitstellen
+
+Lizard erstellt eine React-App, die Vite verwendet, und liefert ihr Verzeichnis `dist/` über nginx auf Port `80` aus. Diese Anleitung behandelt eine im Browser gerenderte App. Für React-Seiten, die einen Server benötigen, folge der [Next.js-Anleitung](/framework-guides/nextjs) oder stelle einen Produktionsserver für dein gewähltes React-Framework bereit.
+
+<span id="prepare-the-build" />
+
+## Build vorbereiten
+
+Verwende ein bestehendes React- und Vite-Projekt mit einer eingecheckten Lockfile. Seine `package.json` benötigt ein Produktions-Build-Skript:
+
+```json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
+```
+
+Wenn dein Scaffold vor `vite build` TypeScript-Prüfungen ausführt, behalte diese Prüfungen bei. Behalte Vites Standard-Ausgabeverzeichnis `dist` bei. Ein benutzerdefiniertes `build.outDir` benötigt ein passendes Dockerfile, weil der Standard-Erkennungspfad `dist` kopiert.
+
+| Einstellung | Wert |
+|---|---|
+| Erkennung | `vite` in dependencies oder dev dependencies |
+| Build | `npm run build` |
+| Ausgabe | `dist/` |
+| Produktionsserver | nginx; kein Node-Startskript nötig |
+| Service-Port | `80` |
+
+<span id="test-locally" />
+
+## Lokal testen
+
+```bash
+npm ci
+npm run build
+npm run preview
+```
+
+Öffne die lokale Preview-URL und teste eine Seite, die deine API aufruft. Der Preview-Befehl prüft den Build lokal; setze `vite preview` nicht als Produktions-Startbefehl. Siehe [Vite deployment](https://vite.dev/guide/static-deploy.html).
+
+<span id="deploy-the-source" />
+
+## Den Quellcode bereitstellen
+
+Führe nach dem [CLI-Setup](/framework-guides#prepare-the-project) im Verzeichnis mit `package.json` Folgendes aus:
+
+```bash
+lizard init --name react-app
+lizard add --service web
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+Lade den Quellcode und die Lockfile hoch, aber schließe `node_modules/`, `dist/` und Secrets aus. Lasse Überschreibungen für Service-Build/Start deaktiviert, um den statischen Erkennungspfad zu verwenden. Der nginx-Container lauscht auf Port 80, obwohl die Entwicklungs- und Preview-Server andere Ports verwenden.
+
+<span id="connect-an-api" />
+
+## Eine API verbinden
+
+Verwende eine öffentliche Variable wie `VITE_API_URL` für die per HTTPS im Browser erreichbare Adresse der API. Lies sie als `import.meta.env.VITE_API_URL` aus. Konfiguriere diesen Wert über [Variablen und Secrets](/variables) und erstelle die App neu, wenn er sich ändert. Stelle niemals eine Datenbank-URL, API-Zugangsdaten oder eine nur intern erreichbare Service-Adresse über eine Variable vom Typ `VITE_*` bereit.
+
+Für eine API auf einer anderen Origin konfiguriere die erlaubten Origins so, dass sie die Frontend-URL einschließen. Ein privater Service-Hostname, der zwischen Backend-Services funktioniert, wird im Browser eines Besuchers nicht aufgelöst.
+
+<span id="verify-routing" />
+
+## Routing prüfen
+
+Öffne die Live-App, folge einer Client-Route und lade diese URL dann direkt neu. Der Standard-Static-Server fällt auf `index.html` zurück, damit der Client-Router eine interne Route rendern kann. Füge auch in der React-App eine Route für unbekannte Pfade hinzu. Dieser Fallback liefert weiterhin HTTP 200 zurück; verwende [statische Routen und 404s](/framework-guides/static-routing), um eine Serverrichtlinie für Seiten zu wählen, die echte HTTP-404-Antworten benötigen.
+
+Wenn ein Asset HTML zurückgibt oder die Seite leer bleibt, prüfe Vites `base`, die angeforderte Asset-URL und das Ausgabeverzeichnis. Wenn die App nie healthy wird, prüfe, ob der Service-Port `80` ist und ob keine alte Überschreibung des Startbefehls einen anderen Build-Pfad ausgewählt hat.
+
+Prüfe bei Seiten, die in der Suche erscheinen sollen, die anfängliche HTML-Antwort. Eine im Browser gerenderte Shell enthält möglicherweise nicht den Text, den eine Suchmaschine oder Answer Engine lesen soll. Wähle Prerendering oder ein Server-Framework, wenn du diesen Text in der Antwort benötigst.
+
+Siehe [getestete Versionen und Cloud-Ergebnisse](/framework-guides/validation) für die Bereitstellungsprüfungen vom 9. September 2026 und ihre Grenzen.

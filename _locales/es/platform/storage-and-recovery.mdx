@@ -1,0 +1,53 @@
+---
+description: "Elige el almacenamiento para los datos de la aplicación y los archivos del sandbox. Comprende los adjuntos, los fallos del host, las exportaciones y la recuperación antes de eliminar o reemplazar un recurso."
+---
+
+<span id="storage-and-recovery" />
+
+# Almacenamiento y recuperación
+
+Elige el almacenamiento según los datos que deben sobrevivir a un reinicio del proceso, un nuevo despliegue o un fallo del host. Son eventos diferentes. El almacenamiento persistente no proporciona por sí solo una copia de seguridad, un punto de restauración ni alta disponibilidad.
+
+| Datos | Dónde mantenerla | Límite |
+|---|---|---|
+| Registros de la aplicación | Managed Postgres u otra base de datos | Un reinicio es distinto de restaurar datos eliminados o dañados. Prueba una ruta independiente de exportación y restauración. |
+| Datos de caché y cola | Managed Redis | Decide si la carga de trabajo puede reconstruir su estado o necesita su propio plan de recuperación. |
+| Archivos compartidos por aplicaciones | Managed Object Storage | Configura la política de acceso del bucket antes de subir datos privados. El bucket `default` creado automáticamente es de lectura pública. |
+| Archivos necesarios para Sandboxes posteriores | Persistent Volumes, montado en `/data` | Un adjunto de sandbox a la vez; el volumen permanece en su nodo. |
+| Archivos temporales del sandbox | El sistema de archivos guest fuera de `/data` | No esperes que sigan ahí después de que termine el sandbox o se reemplace el guest. |
+| Estado de proceso pausado | Memoria del host | La pausa no es una instantánea duradera; un fallo del host pierde ese estado. |
+
+<span id="keep-files-after-a-sandbox-ends" />
+
+## Conservar archivos después de que termine un sandbox
+
+Crea un Persistent Volumes en el mismo proyecto, adjúntalo al crear el sandbox y escribe en `/data`. Termina el primer sandbox antes de adjuntar el volumen al siguiente. Consulta el [ejemplo completo](/sandboxes/volumes).
+
+<span id="plan-a-database-restore" />
+
+## Planificar una restauración de base de datos
+
+Antes de una migración o una versión que cambie datos:
+
+1. Elige un método de exportación para la base de datos y la versión en uso.
+2. Almacena la exportación por separado del recurso que se va a cambiar.
+3. Restaura en una base de datos de prueba independiente y verifica que la aplicación pueda leerla.
+4. Registra la duración de la restauración y los datos más recientes incluidos en la exportación.
+
+No asumas copias de seguridad programadas, recuperación a un momento dado, replicación multinodo ni una garantía de tiempo de restauración por el hecho de que la base de datos sea administrada. Confirma el acuerdo de servicio actual y los controles disponibles para tu recurso.
+
+<span id="environment-references" />
+
+## Referencias de entorno
+
+Una aplicación debe leer su conexión a la base de datos desde una referencia de entorno. Una cadena de conexión es una credencial; evita imprimirla para verificar una actualización. Una comprobación de conexión como `SELECT 1` demuestra más que ver la variable en un shell.
+
+<span id="related-guides" />
+
+## Guías relacionadas
+
+- [Managed Postgres](/addons/postgres)
+- [Managed Redis](/addons/redis)
+- [Managed Object Storage](/addons/storage)
+- [Persistent Volumes](/sandboxes/volumes)
+- [Recuperación de despliegues](/concepts/deployments#failed-releases-and-recovery)

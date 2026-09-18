@@ -1,0 +1,83 @@
+---
+description: "Lizard で Vite で構築した React アプリをデプロイします。dist をビルドし、port 80 で配信し、クライアントルートと公開 API 変数を設定して、デプロイしたアプリを確認します。"
+---
+
+<span id="deploy-react-with-vite-on-lizard" />
+
+# Lizard で React with Vite をデプロイ
+
+Lizard は Vite を使用する React アプリをビルドし、その `dist/` ディレクトリを nginx 経由で port `80` で配信します。このガイドはブラウザでレンダリングされるアプリを対象としています。サーバーが必要な React ページについては、[Next.js ガイド](/framework-guides/nextjs)に従うか、選択した React フレームワーク向けの本番サーバーを用意してください。
+
+<span id="prepare-the-build" />
+
+## ビルドを準備する
+
+コミット済みの lockfile がある既存の React と Vite のプロジェクトを使用します。その `package.json` には本番ビルドスクリプトが必要です:
+
+```json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
+```
+
+スキャフォールドが `vite build` の前に TypeScript チェックを実行する場合は、そのチェックを維持してください。Vite のデフォルトの `dist` 出力ディレクトリはそのまま使用してください。カスタムの `build.outDir` を使う場合は、標準の検出パスが `dist` をコピーするため、それに対応する Dockerfile が必要です。
+
+| 設定 | 値 |
+|---|---|
+| Detection | dependencies または dev dependencies 内の `vite` |
+| ビルド | `npm run build` |
+| Output | `dist/` |
+| Production server | nginx; Node の start スクリプトは不要 |
+| サービスポート | `80` |
+
+<span id="test-locally" />
+
+## ローカルでテストする
+
+```bash
+npm ci
+npm run build
+npm run preview
+```
+
+ローカルのプレビュー URL を開き、API を呼び出すページをテストします。preview コマンドはビルドをローカルで確認するためのものです。本番の start コマンドとして `vite preview` を設定しないでください。[Vite deployment](https://vite.dev/guide/static-deploy.html) を参照してください。
+
+<span id="deploy-the-source" />
+
+## ソースをデプロイする
+
+[CLI setup](/framework-guides#prepare-the-project) の後、`package.json` を含むディレクトリから実行します:
+
+```bash
+lizard init --name react-app
+lizard add --service web
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+ソースと lockfile をアップロードし、`node_modules/`、`dist/`、および secrets は除外します。静的検出パスを使うため、service build/start overrides は未設定のままにしてください。nginx コンテナは、development サーバーや preview サーバーが別の port を使っていても、port 80 で待ち受けます。
+
+<span id="connect-an-api" />
+
+## API を接続する
+
+API のブラウザから到達可能な HTTPS アドレスには、`VITE_API_URL` のような公開変数を使用します。これを `import.meta.env.VITE_API_URL` として読み取ります。この値は [変数とシークレット](/variables) で設定し、変更時には再ビルドしてください。データベース URL、API credential、または internal-only service address を `VITE_*` 変数で公開してはいけません。
+
+別オリジン上の API の場合は、許可する origin にフロントエンド URL を含めるよう設定してください。バックエンドサービス間で機能する private service hostname は、訪問者のブラウザでは解決されません。
+
+<span id="verify-routing" />
+
+## ルーティングを確認する
+
+公開中のアプリを開き、クライアントルートをたどってから、その URL を直接リロードします。デフォルトの静的サーバーは `index.html` にフォールバックするため、クライアントルーターが内部ルートをレンダリングできます。React アプリ側にも未知のパス用のルートを追加してください。このフォールバックは HTTP 200 を返します。実際の HTTP 404 レスポンスが必要なページでは、[静的ルートと404エラー](/framework-guides/static-routing) を使ってサーバーポリシーを選択してください。
+
+asset が HTML を返す場合やページが真っ白になる場合は、Vite の `base`、要求された asset URL、および出力ディレクトリを確認してください。アプリがいつまでも healthy にならない場合は、service port が `80` であることと、古い start-command override によって別のビルドパスが選ばれていないことを確認してください。
+
+検索に表示させたいページについては、最初の HTML レスポンスを確認してください。ブラウザレンダリングの shell には、検索エンジンや answer engine に読ませたいテキストが含まれていない場合があります。レスポンス内にそのテキストが必要な場合は、prerendering またはサーバーフレームワークを選択してください。
+
+2026 年 9 月 9 日のデプロイ確認とその制限については、[テスト済みバージョンとクラウド結果](/framework-guides/validation) を参照してください。

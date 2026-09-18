@@ -1,0 +1,78 @@
+---
+description: "lizard add crea un servicio desde un repositorio de GitHub, un servicio vacío o un addon gestionado. Referencia completa de flags con ejemplos prácticos."
+---
+
+# lizard add
+
+Añade una base de datos, servicio o repositorio al proyecto.
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard add [types...] [flags]
+```
+
+<span id="flags" />
+
+## Banderas
+
+| Bandera | Descripción |
+|------|-------------|
+| `-r, --repo <owner/repo>` | Crear un servicio desde un repositorio de GitHub |
+| `-s, --service <name>` | Crear un servicio vacío |
+| `-a, --addon <type...>` | Añadir addons gestionados (`postgres` / `redis` / `s3`) |
+| `-n, --name <name>` | Nombre usado en las referencias de `${{name.KEY}}` |
+| `-v, --variables <K=V>` | Inicializar una variable de entorno (repetible) |
+| `--region <code>` | Región en la que aprovisionar |
+| `--no-deploy` | Adjuntar repositorio pero omitir la primera compilación |
+| `--list` | Mostrar los tipos de base de datos disponibles |
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="create-a-service-from-a-github-repo" />
+
+### Crear un servicio desde un repositorio de GitHub
+
+```bash
+lizard add -r your-org/your-app
+```
+
+Esto crea un servicio con código fuente en `github`, clona el repositorio, detecta automáticamente el stack, lo compila y devuelve una URL activa.
+
+<span id="provision-addons" />
+
+### Aprovisionar addons
+
+```bash
+lizard add postgres            # one addon
+lizard add postgres redis s3   # several at once
+lizard add --list              # show available types
+```
+
+<span id="create-an-empty-service" />
+
+### Crear un servicio vacío
+
+```bash
+lizard add -s worker
+```
+
+<span id="name-a-service-and-seed-variables" />
+
+### Asignar un nombre a un servicio e inicializar variables
+
+```bash
+lizard add -r your-org/monorepo -n api
+```
+
+<span id="see-also" />
+
+## Véase también
+
+- [Desplegar desde GitHub](/deploy/github) — conectar repositorios, acceso privado y redespliegue automático al hacer push
+- [Addons gestionados](/addons) — aprovisionamiento, nombres y uso de postgres/redis/s3
+- [lizard up](/cli/up) — subir y desplegar el directorio actual en lugar de vincular un repositorio

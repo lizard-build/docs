@@ -1,0 +1,80 @@
+---
+description: "lizard git conecta la GitHub App, informa el estado del repositorio y cambia un servicio a otra rama con un redespliegue."
+---
+
+# lizard git
+
+Administra la conexión de GitHub para el proyecto vinculado y sus servicios.
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard git connect
+lizard git status
+lizard git checkout <service> <branch> [flags]
+```
+
+<span id="subcommands" />
+
+## Subcomandos
+
+### `lizard git connect`
+
+Conecta la GitHub App para acceder a repositorios privados.
+
+### `lizard git status`
+
+Muestra la conexión de GitHub y el estado del repositorio.
+
+### `lizard git checkout <service> <branch>`
+
+Cambia un servicio a una rama diferente y vuelve a desplegarlo.
+
+| Bandera | Descripción |
+|------|-------------|
+| `--detach` | Omitir la transmisión de logs |
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="connect-the-github-app" />
+
+### Conectar la GitHub App
+
+```bash
+lizard git connect
+```
+
+<span id="check-connection-and-repository-status" />
+
+### Comprobar la conexión y el estado del repositorio
+
+```bash
+lizard git status
+```
+
+<span id="switch-a-service-to-a-different-branch" />
+
+### Cambiar un servicio a una rama diferente
+
+```bash
+lizard git checkout api staging
+```
+
+<span id="switch-branches-without-streaming-logs" />
+
+### Cambiar de rama sin transmitir logs
+
+```bash
+lizard git checkout api staging --detach
+```
+
+<span id="see-also" />
+
+## Ver también
+
+- [Desplegar desde GitHub](/deploy/github) — conectar un repo, redespliegue automático al hacer push y configuración de monorepo
+- [lizard add](/cli/add) — crear un servicio desde un repo de GitHub

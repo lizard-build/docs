@@ -1,0 +1,109 @@
+---
+description: "CodeSandbox behält zwischen Aufrufen einen zustandsbehafteten Kernel bei, sodass Variablen und Importe erhalten bleiben. Führen Sie Python, JavaScript oder Bash so aus, wie es ein Agent tut."
+---
+
+# Code Interpreter
+
+`CodeSandbox` erweitert eine normale [sandbox](/sandboxes) um einen **zustandsbehafteten Kernel** — Variablen, Importe und Funktionsdefinitionen bleiben zwischen Aufrufen erhalten, genau wie in einem Jupyter-Notebook. Das ist das richtige Werkzeug, wenn ein KI-Agent Code schrittweise erzeugt und ausführt.
+
+Er startet aus dem Vorlage `code-interpreter-v1` (Python 3.14 + Node.js 26, mit einer Code-Ausführungs-API auf Port 8080) und unterstützt standardmäßig **Python, JavaScript und Bash**.
+
+<span id="run-code" />
+
+## Code ausführen
+
+```ts
+import { CodeSandbox } from '@lizard-build/sdk';
+
+// Every sandbox belongs to a project — usage is metered per project
+const sandbox = await CodeSandbox.create({ project: 'my-project' });   // defaults to 'code-interpreter-v1'
+
+await sandbox.runCode('x = 42');
+const result = await sandbox.runCode('print(x * 2)');
+console.log(result.stdout);        // "84\n"  — x survived from the previous call
+
+await sandbox.kill();
+```
+
+`runCode(code, opts?)` gibt ein `Execution` zurück:
+
+| Feld | Beschreibung |
+|---|---|
+| `stdout` / `stderr` | Erfasste Ausgabeströme |
+| `results` | Umfangreiche Ergebnisse (Werte sowie alle erzeugten Bilder / Diagramme) |
+| `error` | Ein `ExecutionError` (`name`, `message`, `traceback`), wenn der Code einen Fehler ausgelöst hat |
+| `executionCount` | Monotoner Zähler für den Kernel |
+
+<span id="choose-a-language" />
+
+## Eine Sprache auswählen
+
+Standard ist Python. Übergeben Sie `language` für einen einmaligen Aufruf in einer anderen Laufzeitumgebung:
+
+```ts
+const js = await sandbox.runCode('1 + 1', { language: 'javascript' });
+console.log(js.results[0].data);   // "2"
+
+await sandbox.runCode('echo "$(uname -s)"', { language: 'bash' });
+```
+
+<span id="streaming-output" />
+
+## Ausgabe streamen
+
+Bei Zellen mit langer Laufzeit können Sie stdout/stderr während der Erzeugung streamen, statt auf das Ergebnis zu warten:
+
+```ts
+await sandbox.runCode('for i in range(5): print(i)', {
+  onStdout: (line) => process.stdout.write(line),
+  onStderr: (line) => process.stderr.write(line),
+  onResult: (r)    => console.log('result:', r),
+  onError:  (e)    => console.error('error:', e.name, e.message),
+});
+```
+
+<span id="isolated-contexts" />
+
+## Isolierte Kontexte
+
+Ein **Kontext** ist ein unabhängiger Namespace innerhalb derselben Sandbox — verwenden Sie einen pro Agent-Sitzung oder pro Benutzer, damit ihre Variablen nie kollidieren.
+
+```ts
+const a = await sandbox.createContext({ language: 'python' });
+const b = await sandbox.createContext({ language: 'python' });
+
+await sandbox.runCode('secret = 1', { context: a });
+await sandbox.runCode('print(secret)', { context: b });   // NameError — b never saw it
+
+await sandbox.listContexts();
+await sandbox.restartContext(a);    // clear all variables/state
+await sandbox.deleteContext(b);     // free its resources
+```
+
+Übergeben Sie an `runCode` **entweder** `context` **oder** `language`, nicht beides — ein Kontext ist bereits an eine Sprache gebunden.
+
+<span id="checkpointing-a-session" />
+
+## Checkpointing einer Sitzung
+
+Da `CodeSandbox` eine Sandbox ist, funktionieren [Anhalten und Fortsetzen](/sandboxes/quickstart#pause-and-resume) genauso. Installieren Sie einen umfangreichen Abhängigkeits-Stack einmal, halten Sie an und setzen Sie später fort, wobei der Kernel-Status erhalten bleibt:
+
+```ts
+const sandbox = await CodeSandbox.create({ project: 'my-project' });
+await sandbox.runCode('import subprocess; subprocess.run(["pip", "install", "scikit-learn"])');
+const id = sandbox.sandboxId;
+await sandbox.pause();
+
+// Later — resume with packages and kernel variables already in place
+const resumed = await CodeSandbox.connect(id);
+const out = await resumed.runCode('import sklearn; print(sklearn.__version__)');
+console.log(out.stdout);
+await resumed.kill();
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [SDK-Referenz](/sandboxes/sdk-reference) — jede Methode von `CodeSandbox` und jede Option von `runCode`.
+- [Persistent Volumes](/sandboxes/volumes) — Speicher anhängen, der länger als eine einzelne Sandbox bestehen bleibt.

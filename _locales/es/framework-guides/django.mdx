@@ -1,0 +1,221 @@
+---
+description: "Despliega Django en Lizard con Gunicorn, un módulo WSGI explícito, el puerto 8000, configuración de producción, migraciones de base de datos y un plan para archivos estáticos y subidos."
+---
+
+<span id="deploy-django-on-lizard" />
+
+# Desplegar Django en Lizard
+
+Ejecuta Django en Lizard con Gunicorn y el módulo WSGI de tu proyecto en el puerto `8000`. Prepara la configuración de producción, el acceso a la base de datos y la publicación de archivos estáticos antes de depender de la app desplegada. `manage.py runserver` es un servidor de desarrollo.
+
+<span id="set-the-start-command" />
+
+## Establecer el comando de inicio
+
+Esta guía asume `manage.py`, `requirements.txt` y un paquete del proyecto llamado `config` que contiene `wsgi.py`. Reemplaza `config` por el nombre real de tu paquete.
+
+Incluye Django, Gunicorn y el controlador de base de datos que use tu app en tus requirements probados. Añade un `Procfile`:
+
+```text
+web: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+```
+
+El módulo explícito evita ambigüedades cuando la configuración vive en paquetes anidados. Una app ASGI con WebSockets necesita un servidor ASGI y un comando de arranque distinto; esta guía cubre WSGI.
+
+| Ajuste | Valor |
+|---|---|
+| Instalación | `pip install -r requirements.txt` |
+| Entorno de ejecución | Gunicorn con tu módulo WSGI |
+| Puerto del servicio | `8000` |
+| Directorio de trabajo | Directorio que contiene `manage.py` |
+
+<span id="prepare-production-settings" />
+
+## Preparar la configuración de producción
+
+Django espera un diccionario `DATABASES` en `settings.py`. Establecer `DATABASE_URL` solo en el servicio no conecta Django a PostgreSQL. Los pasos de abajo crean [Managed Postgres](/addons/postgres), pasan su URL a la app y convierten esa URL en la configuración de conexión de Django.
+
+Añade estos paquetes a `requirements.txt`, conservando cualquier otra dependencia que necesite tu app. Estas son las versiones usadas por el [ejemplo completo](https://github.com/lizard-build/docs/tree/main/_examples/django):
+
+```text
+Django==6.1.1
+gunicorn==26.2.0
+whitenoise==6.12.0
+psycopg[binary]==3.3.5
+dj-database-url==3.1.2
+```
+
+`psycopg` es el controlador de PostgreSQL. `dj-database-url` lee el nombre de la base de datos, usuario, contraseña, host y puerto desde la URL de conexión. Reemplaza la configuración correspondiente en `settings.py` de tu proyecto por este bloque; conserva tus apps, middleware, plantillas y demás configuraciones existentes:
+
+```python
+import os
+from pathlib import Path
+
+import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def required_env(name):
+    value = os.environ.get(name, "").strip()
+    if not value:
+        raise ImproperlyConfigured(f"Set the {name} environment variable.")
+    return value
+
+
+def env_list(name):
+    values = [item.strip() for item in required_env(name).split(",") if item.strip()]
+    if not values:
+        raise ImproperlyConfigured(f"Set at least one value in {name}.")
+    return values
+
+
+SECRET_KEY = required_env("SECRET_KEY")
+debug_value = os.environ.get("DEBUG", "false").strip().lower()
+if debug_value not in {"true", "false"}:
+    raise ImproperlyConfigured("DEBUG must be true or false.")
+DEBUG = debug_value == "true"
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
+DATABASES = {
+    "default": dj_database_url.parse(
+        required_env("DATABASE_URL"),
+        conn_max_age=60,
+        conn_health_checks=True,
+    )
+}
+```
+
+No dejes una asignación anterior de `DATABASES`, `SECRET_KEY` o `DEBUG` más adelante en el archivo: reemplazaría estos valores. Este ejemplo requiere valores no vacíos para `SECRET_KEY`, `DATABASE_URL`, `ALLOWED_HOSTS` y `CSRF_TRUSTED_ORIGINS`. Los valores ausentes o vacíos detienen el arranque con el nombre de la variable. `DEBUG` usa `false` por defecto; establécelo en `false` en el servicio desplegado.
+
+`ALLOWED_HOSTS` acepta nombres de host separados por comas sin esquema ni ruta, como `app.example.com,www.example.com`. `CSRF_TRUSTED_ORIGINS` acepta orígenes separados por comas con esquema, como `https://app.example.com`. Incluye un puerto para los orígenes locales que usen uno. El ejemplo requiere una lista explícita de orígenes; Django por sí mismo permite una lista vacía para apps que no necesitan orígenes de confianza adicionales. Confía solo en los orígenes que deban enviar formularios a esta app. Estas configuraciones no sustituyen los tokens CSRF.
+
+La URL proviene de un [secret o reference](/variables) del servicio, no de un valor enviado al código fuente. No uses SQLite local del contenedor como base de datos persistente para una app desplegada. Consulta [uso de dj-database-url](https://pypi.org/project/dj-database-url/) para el análisis de URL y las opciones de conexión.
+
+Con tus variables de entorno locales configuradas y PostgreSQL accesible, ejecuta:
+
+```bash
+python -m pip install -r requirements.txt
+python manage.py check --deploy
+gunicorn config.wsgi:application --bind 0.0.0.0:8000
+```
+
+Revisa la [lista de verificación de despliegue](https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/) de Django para ver las configuraciones relevantes para tu app. El ejemplo pequeño no configura todos los ajustes de seguridad de producción. Verifica el manejo de proxy y HTTPS con la URL pública real antes de habilitar cookies seguras, HSTS o redirecciones. Confía en los encabezados reenviados de HTTPS solo cuando el proxy los controle.
+
+<span id="plan-static-files-and-migrations" />
+
+## Planificar archivos estáticos y migraciones
+
+Gunicorn por sí solo no sirve los archivos estáticos de Django. Elige un middleware de archivos estáticos configurado en la app o un host estático aparte. Recoge los recursos en la ruta que sirva esa configuración. La ruta de Python basada en requirements de lizardpack no ejecuta automáticamente `collectstatic`; colócalo en una compilación completa de Dockerfile cuando la app necesite ese paso.
+
+Para WhiteNoise, mantén `django.contrib.staticfiles` en `INSTALLED_APPS` e inserta `whitenoise.middleware.WhiteNoiseMiddleware` inmediatamente después del `SecurityMiddleware` de Django. Añade o actualiza estas configuraciones:
+
+```python
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+```
+
+Conserva tu backend existente de `STORAGES["default"]` si la app ya almacena las subidas en otro lugar. WhiteNoise sirve recursos estáticos recolectados, no subidas de usuarios.
+
+Usa este Dockerfile en la raíz del proyecto:
+
+```dockerfile
+FROM python:3.13-slim
+WORKDIR /app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+RUN SECRET_KEY=build-only-placeholder \
+    DATABASE_URL=postgresql://build:build@127.0.0.1:1/build \
+    ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
+    python manage.py collectstatic --noinput
+EXPOSE 8000
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+```
+
+Los valores de la línea `RUN` existen solo para `collectstatic`. La URL de base de datos es un marcador de posición que apunta a un puerto local sin usar; no hay ninguna base de datos ejecutándose allí. Cargar la configuración analiza la URL, pero la recolección de recursos no necesita una conexión a la base de datos. No consultes la base de datos desde importaciones de módulos ni desde `AppConfig.ready()`. El ejemplo también pasa `collectstatic` con la red del contenedor deshabilitada.
+
+Estas asignaciones no se convierten en variables de entorno de runtime. Establece un `SECRET_KEY` nuevo y la referencia real de la base de datos en el servicio antes del arranque. No pases secrets de producción a la compilación de Docker.
+
+Crea `.dockerignore` y excluye las mismas rutas de las [subidas de código fuente](/cli/up):
+
+```text
+.env*
+.venv/
+venv/
+.git/
+__pycache__/
+*.pyc
+*.sqlite3
+staticfiles/
+```
+
+Mantén las subidas de usuarios en almacenamiento persistente, como [Managed Object Storage](/addons/storage), en lugar del directorio estático del contenedor. Revisa [almacenamiento y recuperación](/platform/storage-and-recovery).
+
+Trata las migraciones de base de datos como un paso de despliegue aparte. Haz copias de seguridad de los datos cuando sea necesario, procura que las migraciones se puedan reintentar de forma segura y aplícalas antes de que las solicitudes requieran el nuevo esquema. Un comando previo al despliegue no sustituye la comprobación del comportamiento ante concurrencia y fallos.
+
+<span id="deploy-and-verify" />
+
+## Desplegar y verificar
+
+Después de la [configuración de CLI](/framework-guides#prepare-the-project), conecta un [servicio de GitHub](/deploy/github), configura sus secrets y ajustes de producción, y despliega con el puerto de contenedor `8000`. Para un proyecto nuevo basado en subidas:
+
+```bash
+lizard init --name django-app
+lizard add --service web
+```
+
+Crea [Managed Postgres](/addons/postgres) en este proyecto. Si ya tienes una instancia, omite `add postgres` y usa su nombre en la referencia:
+
+```bash
+lizard add postgres --name postgres
+```
+
+Establece los [secrets del servicio](/cli/secrets) de la app. El `postgres` en `${{postgres.DATABASE_URL}}` nombra el servicio de base de datos, no un alias de base de datos de Django. Lizard resuelve la [reference](/variables/references) en el momento del despliegue e inyecta la URL resultante en el proceso `web`. Las comillas simples evitan que tu shell expanda la reference. El bloque `settings.py` de arriba convierte luego la URL en `DATABASES["default"]`.
+
+```bash
+DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
+lizard secrets set SECRET_KEY="$DJANGO_SECRET_KEY" \
+  DATABASE_URL='${{postgres.DATABASE_URL}}' DEBUG=false \
+  ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
+  --service web
+lizard up --service web --port 8000
+lizard ps --json
+```
+
+`localhost` es una configuración de host temporal que permite que el proceso arranque mientras obtienes su nombre de host público; las solicitudes públicas devolverán 400. Si ya conoces el nombre de host, establécelo antes de la primera subida. En caso contrario, reemplaza estos marcadores de posición por el nombre de host y el origen HTTPS devueltos para tu servicio:
+
+```bash
+lizard secrets set ALLOWED_HOSTS=YOUR_PUBLIC_HOST \
+  CSRF_TRUSTED_ORIGINS=https://YOUR_PUBLIC_HOST --service web
+```
+
+Un destino o clave de reference ausente puede resolverse como una cadena vacía. La comprobación de valor obligatorio entonces detiene Django con `Set the DATABASE_URL environment variable.`. Comprueba el nombre del servicio de base de datos y su clave `DATABASE_URL`; no imprimas la URL de conexión en los logs.
+
+El cambio de variable reinicia el proceso. Excluye los entornos virtuales locales, secrets y bases de datos locales de las subidas. Una vez que el proceso esté en ejecución, aplica las migraciones:
+
+```bash
+lizard ssh --service web -- python manage.py migrate --noinput
+```
+
+Ejecuta el comando de nuevo para comprobar que no quedan migraciones. No trates una comprobación correcta del puerto como prueba de que las tablas existen.
+
+Comprueba la URL de la app, una página respaldada por base de datos, el envío de un formulario y un recurso estático. Si la app usa el admin de Django, comprueba también su CSS. Lee `lizard logs --service web --json` para ver errores de importación o de configuración. Una respuesta 400 suele significar que `ALLOWED_HOSTS` es incorrecto; la falta de CSS normalmente significa que los recursos estáticos no se recolectaron o no se sirvieron. Comprueba el error real antes de cambiar configuraciones.
+
+Consulta [versiones probadas y resultados en la nube](/framework-guides/validation) para las comprobaciones de despliegue del 9 de septiembre de 2026 y sus límites.
+
+
+<span id="reproduce-this-example" />
+
+## Reproducir este ejemplo
+
+El [ejemplo de Django](https://github.com/lizard-build/docs/tree/main/_examples/django) incluye la configuración, Dockerfile, requirements, un formulario respaldado por base de datos y un ejecutor de pruebas. Cópialo en un directorio independiente y ejecuta `python3 tests/verify.py` con Docker en ejecución. Compila la imagen, inicia PostgreSQL local, comprueba migraciones y el comportamiento HTTP, y detiene sus contenedores de prueba. No crea servicios en Lizard. Consulta su README para ver las comprobaciones y los recursos de Docker conservados.
+
+La comprobación del 14 de septiembre de 2026 cubre este ejemplo revisado en contenedores locales de Linux. Los resultados anteriores en la nube enlazados arriba cubren la guía del 9 de septiembre; la configuración revisada aún no ha tenido un nuevo despliegue en la nube.

@@ -1,0 +1,18 @@
+export default {
+  index: "Introducción",
+  'getting-started': "Inicio rápido de la app",
+  studio: "Lizard Studio",
+  'framework-guides': "Guías de frameworks",
+  guides: "Guías",
+  platform: "Límites y operaciones",
+  concepts: "Conceptos básicos",
+  deploy: "Despliegue",
+  variables: "Variables",
+  networking: "Redes",
+  addons: "Addons gestionados",
+  sandboxes: "Sandboxes",
+  observability: "Observabilidad",
+  cli: "Referencia de CLI",
+  dashboard: "Panel de la app",
+  agents: "Agentes de código",
+};

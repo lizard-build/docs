@@ -1,0 +1,126 @@
+---
+description: "Cómo Lizard organiza el trabajo en workspaces, proyectos y servicios, además de addons gestionados, referencias entre recursos y variables inyectadas."
+---
+
+<span id="architecture" />
+
+# Arquitectura
+
+Lizard organiza todo lo que despliegas en una jerarquía de tres niveles, además de addons gestionados que se adjuntan a un proyecto.
+
+```
+workspace
+└── project
+    ├── service (app)          ← built from GitHub or an upload
+    ├── service (worker)       ← background job, no HTTP port
+    └── addons
+        ├── postgres
+        ├── redis
+        └── s3
+```
+
+<span id="workspace" />
+
+## Espacio de trabajo
+
+Un **workspace** es el nivel de cuenta u organización. Perteneces al menos a uno, y la facturación, los miembros y los proyectos dependen de él. Lista los que puedes acceder:
+
+```bash
+lizard workspace list
+lizard whoami        # shows your active workspace
+```
+
+Muchos comandos aceptan `-w, --workspace <ws>` para desambiguar cuando el mismo nombre de proyecto existe en más de un workspace.
+
+<span id="project" />
+
+## Proyecto
+
+Un **proyecto** agrupa servicios y addons relacionados dentro de un workspace. Tu directorio de trabajo queda *vinculado* a un proyecto, y ese vínculo (almacenado en `~/.lizard/config.json`) es como la CLI sabe a qué estás apuntando.
+
+```bash
+lizard init --name my-project   # create or select a project, link the cwd
+lizard link --project my-project  # link to an existing project
+lizard status                   # show the current directory's link
+lizard unlink                   # remove the link
+lizard project list             # all projects in the workspace
+```
+
+> **Consejo:** Usa el nombre del repositorio o del directorio para el proyecto, y nombres de tipo app (`api`, `worker`, `web`) para los servicios.
+
+<span id="service" />
+
+## Servicio
+
+Un **servicio** es una sola unidad desplegable. Su origen es uno de estos:
+
+- **`github`** — un repositorio de GitHub conectado. Los pushes a la rama seguida vuelven a desplegar automáticamente.
+- **`upload`** — un tarball subido con `lizard up`.
+
+Cada servicio en ejecución corre como su propio **pod aislado** con una política de red de denegación por defecto, un dominio `<name>.<region>.onlizard.com` generado y TLS automático. Esa separación — tú aportas el contenedor, la plataforma lo ejecuta — es [container as a service](https://lizard.build/blog/container-as-a-service), y el blog explica de qué sigues teniendo que ocuparte. Inspecciona y gestiona servicios con:
+
+```bash
+lizard ps                       # list services with status + URL
+lizard service show             # full config as JSON
+lizard service set <svc> --set <field>=<value>
+lizard service rename --service <svc>
+lizard service delete --service <svc>
+```
+
+Los campos de configuración del servicio son **planos** y se asignan 1:1 al esquema en el wire (p. ej. `repoUrl`, `branch`, `buildCommand`, `startCommand`, `containerPort`, `rootDirectory`). No existe anidamiento de `build.*` / `deploy.*`. Consulta [`lizard service`](/cli/service) para ver la lista completa.
+
+<span id="app-vs-worker-services" />
+
+### Servicios app vs. worker
+
+Por defecto, un servicio es una **app HTTP** que escucha en un puerto (`3000` por defecto) y se sirve en su dominio. Un servicio que no escucha en un puerto — un consumidor de colas, reconciliador o bucle de sondeo — debe ejecutarse en [**modo worker**](/deploy/workers) configurando `containerPort=0`. Los workers omiten la inyección de puerto, la comprobación de salud de accesibilidad y el registro en el balanceador de carga.
+
+<span id="managed-addons" />
+
+## Addons gestionados
+
+Los **addons** son Postgres, Redis y almacenamiento compatible con S3 gestionados que aprovisionas por proyecto:
+
+```bash
+lizard add postgres redis s3
+```
+
+Cada addon expone un conjunto fijo de variables de entorno que tus servicios consumen por **referencia** (`${{<addon-name>.KEY}}`). Consulta [Managed Addons](/addons).
+
+<span id="cross-resource-references" />
+
+## Referencias entre recursos
+
+Cualquier valor de un servicio o addon puede referenciarse desde el entorno de otro recurso usando:
+
+```
+${{<name>.<KEY>}}
+```
+
+Las referencias se resuelven en **tiempo de despliegue** contra el entorno combinado del destino. Se almacenan por ID, así que renombrar el destino después no rompe la referencia. Una referencia a un destino o clave inexistente se resuelve como una cadena vacía (el despliegue **no** falla por eso); solo las referencias circulares lanzan errores.
+
+```bash
+# Wire a service to the project's Postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+```
+
+Verifica que el consumidor realmente recibió el valor:
+
+```bash
+lizard ssh --service api -- env | grep DATABASE_URL
+```
+
+<span id="platform-injected-variables" />
+
+## Variables inyectadas por la plataforma
+
+Cada servicio recibe automáticamente estas variables (no se pueden sobrescribir):
+
+| Variable | Descripción |
+|----------|-------------|
+| `PORT` | Puerto en el que tu app debe escuchar (se omite en modo worker) |
+| `LIZARD_SERVICE_NAME` | El nombre del servicio |
+| `LIZARD_PROJECT_ID` | El ID del proyecto |
+| `LIZARD_PUBLIC_DOMAIN` | El dominio público del servicio |
+
+Consulta [Variables & Secrets](/variables) para ver cómo interactúan con tus propias variables y el orden completo de precedencia.

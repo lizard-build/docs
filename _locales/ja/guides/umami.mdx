@@ -1,0 +1,122 @@
+---
+description: "Managed Postgres とともに Umami をデプロイし、暗号化シークレットを設定して、再起動と再デプロイ後にアナリティクスを確認します。"
+---
+
+<span id="run-umami" />
+
+# Umami を実行する
+
+このガイドでは、公式の Umami Docker イメージを Lizard 上で、別個の PostgreSQL データベースとともに実行します。Lizard CLI を使って小さなローカル Dockerfile をデプロイし、HTTPS 経由で Umami を公開します。
+
+<span id="prerequisites" />
+
+## 前提条件
+
+- アプリホスティングと Managed Postgres にアクセスできる Lizard アカウント。
+- お使いのコンピューターに Node.js と npm、およびシークレット生成用の OpenSSL。
+
+Lizard CLI をインストールしてログインします:
+
+```bash
+npm install -g @lizard-build/cli
+lizard login
+```
+
+続行する前に、ブラウザーでログインを完了してください。以下のコマンドは Lizard CLI 0.3.95 と Umami 3.3.1 でテストされています。
+
+<span id="create-the-project-and-database" />
+
+## プロジェクトとデータベースを作成する
+
+このデプロイ用に新しいディレクトリを使用します:
+
+```bash
+mkdir umami-on-lizard
+cd umami-on-lizard
+lizard init --name umami-on-lizard
+lizard add postgres --name umami-db
+lizard add --service umami
+```
+
+複数のワークスペースに所属している場合は、1 つを選ぶために `lizard init` に `--workspace <workspace>` を渡してください。Umami をデプロイする前に、データベースが `running` になるまで待ちます。
+
+<span id="set-the-image-and-secrets" />
+
+## イメージとシークレットを設定する
+
+`Dockerfile` という名前のファイルを作成します:
+
+```dockerfile
+FROM ghcr.io/umami-software/umami:3.3.1
+EXPOSE 3000
+```
+
+このファイルを記述どおりに使うよう Lizard に指定します:
+
+```bash
+lizard service set umami --set dockerfilePath=Dockerfile
+```
+
+データベースを接続し、2 つの別々のシークレットを生成します:
+
+```bash
+lizard secrets set \
+  DATABASE_URL='${{umami-db.DATABASE_URL}}' \
+  APP_SECRET="$(openssl rand -hex 32)" \
+  TWO_FACTOR_ENCRYPTION_KEY="$(openssl rand -hex 32)" \
+  --service umami
+```
+
+データベース参照のまわりのシングルクォートはそのままにしてください: サービスの起動時に Lizard がそれを解決します。これらの値はこのサービスに属するため、プロジェクト内のほかのアプリはそれらを受け取りません。
+
+生成した両方のシークレットはパスワードマネージャーに保存してください。セットアップ時に一度だけ設定し、再起動やアップグレードの際に再生成しないでください。`TWO_FACTOR_ENCRYPTION_KEY` は二要素認証に必要です。
+
+<span id="deploy-and-sign-in" />
+
+## デプロイしてサインインする
+
+Dockerfile を含むディレクトリから、次を実行します:
+
+```bash
+lizard up --service umami --port 3000
+```
+
+Umami のイメージは起動時にデータベースのセットアップとマイグレーションを実行します。このイメージには別個のマイグレーションコマンドは不要です。
+
+デプロイで返された HTTPS URL を開きます。新しい Umami 3.3.1 データベースでは、ユーザー名 `admin` とパスワード `umami` でサインインし、URL を共有する前にプロフィールですぐにパスワードを変更してください。Web サイトを追加し、そのトラッキングスクリプトを自分が管理するページにインストールします。
+
+デプロイに失敗した場合は、そのステータスとログを確認します:
+
+```bash
+lizard events --service umami
+lizard logs --build --service umami
+lizard logs --service umami
+```
+
+最初の起動がタイムアウトする場合は、コンテナーの準備状況について `lizard events` を確認してください。コンテナーが起動したら、`lizard up --service umami --port 3000` でアップロードを再試行します。
+
+<span id="check-data-persistence" />
+
+## データの永続性を確認する
+
+トラッキング対象のページにアクセスし、Umami がページビューを記録することを確認します。アプリケーションを再起動します:
+
+```bash
+lizard restart --service umami
+```
+
+サービスが再び実行状態になるまで待ちます。新しいパスワードでサインインでき、Web サイトとページビューが残っていることを確認してください。次に、再デプロイ後にも同じ確認を繰り返します:
+
+```bash
+lizard redeploy --service umami
+```
+
+Umami はアカウント、Web サイト設定、アナリティクスを PostgreSQL に保存します。これらの記録のために、アプリケーションにファイルボリュームは必要ありません。アプリを置き換えたりアップグレードしたりするときは、データベースと暗号化シークレットを維持してください。再起動の確認は、検証済みのデータベースのバックアップおよび復元計画の代わりにはなりません。
+
+<span id="update-umami" />
+
+## Umami を更新する
+
+アップグレード前に PostgreSQL をバックアップし、リリースノートを読んでください。ローカル Dockerfile のイメージタグを変更してから、再度 `lizard up --service umami --port 3000` を実行します。このアップロードベースのセットアップでは、`lizard redeploy` は最後にアップロードしたファイルを再ビルドします。ローカルの編集内容はアップロードしません。
+
+データベースアクセスについては [Lizard の PostgreSQL ガイド](https://lizard.build/docs/addons/postgres/)、バックアップ計画については [ストレージとリカバリー](https://lizard.build/docs/platform/storage-and-recovery/) を参照してください。

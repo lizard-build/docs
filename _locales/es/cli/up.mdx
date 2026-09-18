@@ -1,0 +1,88 @@
+---
+description: "lizard up empaqueta el directorio actual, lo compila en los nodos de compilación de Lizard y devuelve una URL activa. Banderas, comportamiento en CI y ejemplos."
+---
+
+# lizard up
+
+Sube el directorio actual y lo despliega.
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard up [flags]
+```
+
+`up` empaqueta tu árbol de trabajo como un tarball, lo envía a los nodos de compilación y lo despliega. Fuerza `sourceType=upload` en el servicio de destino, transmite los logs de compilación por SSE e imprime la URL activa al terminar.
+
+Si el directorio actual todavía no está vinculado a un proyecto, `up` ejecuta primero `init`. En un TTY eso es interactivo; en un entorno sin TTY (CI) **no** creará un proyecto silenciosamente: devolverá un error y te pedirá que ejecutes `lizard init --name <project>` (o que pases `--name`), para evitar que un error tipográfico genere un proyecto vacío.
+
+<span id="flags" />
+
+## Banderas
+
+| Bandera | Descripción |
+|------|-------------|
+| `-s, --service <name>` | Apunta a un servicio existente |
+| `--build-command <cmd>` | Sobrescribe el comando de compilación |
+| `--start-command <cmd>` | Sobrescribe el comando de inicio |
+| `--pre-deploy-command <cmd>` | Se ejecuta una vez antes de cada despliegue |
+| `--port <number>` | Puerto del contenedor (`0` = modo worker) |
+| `--region <code>` | Región donde desplegar |
+| `-d, --detach` | Inicia el despliegue y sale sin transmitir logs |
+| `-c, --ci` | Salida compatible con CI |
+| `--no-gitignore` | Sube todo, ignorando `.gitignore` |
+
+<span id="subcommands" />
+
+## Subcomandos
+
+### `lizard up status`
+
+Informa el estado de un despliegue por subida en curso.
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="deploy-the-current-directory" />
+
+### Desplegar el directorio actual
+
+```bash
+lizard up
+```
+
+<span id="deploy-to-a-specific-service-with-a-custom-start-command-and-port" />
+
+### Desplegar en un servicio específico con un comando de inicio y un puerto personalizados
+
+Crea primero el servicio con nombre con `lizard add --service api` si no existe.
+
+```bash
+lizard up --service api --start-command "node server.js" --port 8080
+```
+
+<span id="deploy-headlessly-in-ci" />
+
+### Desplegar sin interacción en CI
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+lizard init --name my-project
+lizard add --service api
+lizard up --ci --service api
+```
+
+Omite `lizard add` cuando el servicio ya exista. Con Lizard CLI 0.3.92, una compilación fallida todavía puede salir con el código `0`; inspecciona el estado de la compilación y la URL desplegada antes de marcar una versión de CI como exitosa. Hay una corrección pendiente de publicación. En macOS, también configura `COPYFILE_DISABLE=1` antes de una subida para evitar archivos de metadatos adicionales de `._*` en el archivo. Consulta [framework setup](/framework-guides#prepare-the-project).
+
+<span id="see-also" />
+
+## Véase también
+
+- [Desplegar desde código local](/deploy/upload) — guía completa de los despliegues basados en subida
+- [lizard redeploy](/cli/redeploy) — vuelve a compilar la última subida sin volver a subirla
+- [lizard init](/cli/init) — crea o vincula un proyecto explícitamente antes de desplegar
+- [Worker services](/deploy/workers) — qué significa `--port 0`
+- [Desplegar un contenedor sin configurar uno](https://lizard.build/blog/container-as-a-service#deploy-a-container-without-configuring-one) — dónde se ubica este comando entre las plataformas de contenedor como servicio

@@ -1,0 +1,78 @@
+---
+description: "サービスのレプリカ追加や CPU・メモリ増強、アドオンストレージの拡張を行います。許可範囲、ロールアウトの動作、変更確認方法を説明します。"
+---
+
+<span id="scaling" />
+
+# スケーリング
+
+`lizard scale` を使って、サービスを水平スケール（レプリカ追加）または垂直スケール（CPU/メモリ増強）できます。アドオンストレージも同じ方法で拡張します。
+
+<span id="scale-a-service" />
+
+## サービスをスケールする
+
+```bash
+lizard scale --service api --replicas 3
+lizard scale --service api --cpu 2 --memory 2048
+```
+
+| フラグ | 適用対象 | 許可値 |
+|------|-----------|----------------|
+| `--replicas <n>` | apps | `1`–`10` |
+| `--cpu <cores>` | apps | whole cores: `1`, `2`, `3`, `4` |
+| `--memory <mb>` | apps | `128`–`8192` MB (1 MB 刻み) |
+| `--storage <mb>` | **addons only**, grow-only | `512`, `1024`, `2048`, `4096`, `8192`, `16384` |
+
+フラグは 1 つのコマンドで組み合わせて指定できます。レプリカの変更はリビルドなしでロールアウトされます。
+
+<span id="horizontal-scaling" />
+
+## 水平スケーリング
+
+ロードバランサーの背後で、アプリの複数レプリカを実行します:
+
+```bash
+lizard scale --service api --replicas 5
+```
+
+各レプリカはそれぞれ独立した pod です。レプリカを相互に置き換え可能にするため、アプリはステートレスにしてください（状態は [Postgres](/addons/postgres)、[Redis](/addons/redis)、または [S3](/addons/storage) に保存します）。
+
+<span id="vertical-scaling" />
+
+## 垂直スケーリング
+
+単一レプリカにより多くのリソースを割り当てます:
+
+```bash
+lizard scale --service api --cpu 4 --memory 8192
+```
+
+<span id="growing-addon-storage" />
+
+## アドオンストレージの拡張
+
+アドオンのデータボリュームは **拡張のみ可能** です。ストレージは増やせますが、縮小はできません:
+
+```bash
+lizard scale --service postgres --storage 8192
+```
+
+<span id="verifying" />
+
+## 確認
+
+```bash
+lizard ps                 # replica status + URL
+lizard events             # per-replica deploy/scale history
+lizard metrics            # live CPU / memory / network / disk
+lizard metrics --cost     # include cost
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [オブザーバビリティ → Metrics](/observability/metrics) — リソースとコストの監視。
+- [`lizard scale`](/cli/scale) — 完全なコマンドリファレンス。
+- [2026年のCaaSプロバイダーの料金](https://lizard.build/blog/container-as-a-service#what-caas-providers-charge-in-2026) — スケール前に請求額を見積もれるよう、9 つのプラットフォームにおける vCPU 単価、GB 単価、エグレス料金を比較しています。

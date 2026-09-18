@@ -1,0 +1,139 @@
+---
+description: "Despliega una app desde Claude Code, Codex o Cursor con Lizard Skill y Lizard CLI. Elige GitHub o código fuente local, conecta una base de datos y verifica el resultado."
+---
+
+<span id="deploy-from-a-coding-agent" />
+
+# Desplegar desde un agente de código
+
+Un agente de código puede usar Lizard Skill y Lizard CLI para desplegar la app que ha creado. El agente lee la guía del CLI instalado, revisa el proyecto de destino, ejecuta la compilación e inspecciona el resultado. Esto no requiere un transporte MCP independiente.
+
+<span id="before-you-start" />
+
+## Antes de empezar
+
+Ten una aplicación funcional, permiso para desplegarla y una cuenta en Lizard. La aplicación debe escuchar en `0.0.0.0` y el puerto configurado. Ejecuta sus comprobaciones locales antes de iniciar una compilación en la nube.
+
+<span id="give-the-agent-the-current-guide" />
+
+## Da al agente la guía actual
+
+```bash
+npm install -g @lizard-build/cli
+lizard skills get core --json
+lizard --help --json
+```
+
+Lizard Skill carga instrucciones que coinciden con el CLI instalado. Para un comando concreto, lee su esquema en lugar de adivinar las opciones:
+
+```bash
+lizard up --help --json
+lizard service set --help --json
+```
+
+Un prompt útil es:
+
+> Despliega esta app con Lizard. Lee la guía del CLI instalado, revisa el proyecto y el servicio vinculados, ejecuta las comprobaciones de la app y muestra el resultado de la compilación y una URL funcional. Pregunta antes de cambiar un servicio de producción existente o eliminar datos.
+
+<span id="deploy-local-source" />
+
+## Desplegar código fuente local
+
+Para una prueba completa, usa el [ejemplo agent-app](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/agent-app). Usa Node.js 22 y `pg` 8.16.3, escucha en el puerto 3000 y lee una fila de Managed Postgres. Al iniciarse, crea la tabla y la fila de demostración si no existen. Para una aplicación más grande, usa tu propio proceso de migración.
+
+Copia el ejemplo en su propio directorio y ejecuta sus comprobaciones locales:
+
+```bash
+npm ci
+npm run check
+lizard status --json
+```
+
+Esto comprueba la sintaxis de JavaScript. Las comprobaciones de la base de datos y del HTTP público vienen después del despliegue. Si este directorio ya está vinculado, revisa que sea el proyecto previsto. Para un proyecto de prueba nuevo:
+
+```bash
+lizard init --name agent-example --json
+lizard add --service api --json
+lizard add postgres --json
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api --json
+lizard up --service api --port 3000 --json
+```
+
+Usa el nombre real de la base de datos si no es `postgres`. Mantén la referencia entre comillas para que el shell local no la expanda. Configúrala antes del primer despliegue. Inicia sesión con `lizard login` solo si un comando indica que se requiere autenticación.
+
+La ruta de carga es intencional para este ejemplo copiado. Para una aplicación que ya está en GitHub, usa la siguiente sección. En macOS con Lizard CLI 0.3.92, ejecuta `COPYFILE_DISABLE=1 lizard up --service api --port 3000 --json` para excluir metadatos AppleDouble. En esa versión del CLI, una compilación fallida aún puede salir con código 0: inspecciona el evento de terminal `failed`/`deployed` y verifica la aplicación. Consulta [problemas conocidos](/platform/known-issues).
+
+<span id="deploy-from-github" />
+
+## Desplegar desde GitHub
+
+Usa esta ruta cuando la aplicación tenga un repositorio de GitHub. Revisa primero el remoto:
+
+```bash
+git remote get-url origin
+lizard status --json
+lizard ps --json
+```
+
+Usa un proyecto de prueba vinculado o crea uno con `lizard init --name YOUR_PROJECT_NAME`. Adjunta el repositorio sin iniciar una compilación para tener tiempo de configurar su entorno:
+
+```bash
+lizard add --repo YOUR_ORG/YOUR_REPO --name api-git --no-deploy --json
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api-git --json
+```
+
+Primero aprovisiona Managed Postgres si este proyecto no lo tiene. Esta secuencia usa el mismo ejemplo de Node.js de arriba. Para un repositorio con esa app en un subdirectorio o en otra rama, configúralo antes del despliegue:
+
+```bash
+lizard service set api-git --set branch=YOUR_BRANCH --set rootDirectory=YOUR_APP_DIRECTORY --set containerPort=3000 --json
+lizard redeploy --service api-git --json
+```
+
+Para una app en la raíz del repositorio en `main`, omite el comando `service set`. Define el puerto correcto si tu aplicación usa otro. Si el repositorio no está disponible para Lizard, conecta la app de GitHub; no sustituyas esta ruta por una carga de forma silenciosa.
+
+Para actualizaciones posteriores de un servicio de GitHub existente, usa `lizard redeploy --service api-git` o haz push a su rama seguida cuando el despliegue automático esté habilitado. `lizard up` cambia un servicio para cargar código fuente. Cambiar la configuración de compilación en un servicio que ya está en ejecución puede activar su propia compilación; inspecciona los eventos antes de solicitar otra.
+
+<span id="verify-the-result" />
+
+## Verificar el resultado
+
+Lee por separado los registros de compilación y de ejecución:
+
+```bash
+lizard logs --build --service api --json
+lizard logs --service api --json
+lizard ps --json
+```
+
+Usa `api-git` en lugar de `api` para la ruta de GitHub. Define `APP_URL` con la URL HTTPS informada por el CLI y luego ejecuta:
+
+```bash
+curl --fail "$APP_URL/health"
+curl --fail "$APP_URL/data"
+```
+
+La primera respuesta es `App ready`. La segunda es `{"value":"database-connected"}`. Una compilación por sí sola no demuestra que la referencia a la base de datos se haya resuelto. El ejemplo expone solo esta fila fija de demostración, no una API de administración de bases de datos.
+
+Para este servicio de prueba, verifica un reinicio en tiempo de ejecución:
+
+```bash
+lizard restart --service api --json
+```
+
+Espera a que el servicio vuelva a `running` en `lizard ps --json` y repite ambas solicitudes HTTP. El seguimiento de registros en tiempo de ejecución puede estar vacío; la respuesta HTTP es la comprobación de la aplicación. La fila se almacena en Managed Postgres; el proceso del servicio no la almacena. Para comprobar la reutilización de datos existentes, actualiza la fila de demostración a un valor distinto en el editor de base de datos antes del reinicio y confirma que `/data` devuelve ese valor después.
+
+`logs --json` devuelve un tail de logs y sale. Lee [almacenamiento y recuperación](/platform/storage-and-recovery) antes de cambiar datos reales de la aplicación.
+
+<span id="when-deployment-fails" />
+
+## Cuando el despliegue falla
+
+Usa el código de salida y el error JSON del comando fallido. Un error de compilación, un proceso que sale y un puerto inaccesible requieren soluciones distintas. Consulta [JSON y automatización](/cli/json) y [el servicio nunca está healthy](/deploy/troubleshooting/service-never-healthy). `redeploy` es una compilación nueva, no una reversión a una versión anterior.
+
+<span id="limits-and-cost" />
+
+## Límites y coste
+
+Un agente puede crear recursos facturables mediante el mismo CLI que una persona. Revisa [límites](/platform/limits) y [precios](https://lizard.build/pricing), y limita las credenciales al proyecto y a los servicios que necesita.
+
+Consulta [resultados de pruebas de escenarios](/guides/validation) para ver las versiones comprobadas, los resultados en la nube y los límites restantes.

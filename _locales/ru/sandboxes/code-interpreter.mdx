@@ -1,0 +1,111 @@
+---
+description: "CodeSandbox сохраняет состояние ядра между вызовами, поэтому переменные и импорты сохраняются. Запускайте Python, JavaScript или Bash так, как это делает агент."
+---
+
+<span id="code-interpreter" />
+
+# Интерпретатор кода
+
+`CodeSandbox` расширяет обычную [песочницу](/sandboxes) за счёт **сохраняющего состояние ядра** — переменные, импорты и определения функций сохраняются между вызовами, как в Jupyter Notebook. Это подходящий инструмент, когда ИИ-агент генерирует и запускает код пошагово.
+
+Он загружается из шаблона `code-interpreter-v1` (Python 3.14 + Node.js 26, с API выполнения кода на порту 8080) и поддерживает **Python, JavaScript и Bash** из коробки.
+
+<span id="run-code" />
+
+## Запуск кода
+
+```ts
+import { CodeSandbox } from '@lizard-build/sdk';
+
+// Every sandbox belongs to a project — usage is metered per project
+const sandbox = await CodeSandbox.create({ project: 'my-project' });   // defaults to 'code-interpreter-v1'
+
+await sandbox.runCode('x = 42');
+const result = await sandbox.runCode('print(x * 2)');
+console.log(result.stdout);        // "84\n"  — x survived from the previous call
+
+await sandbox.kill();
+```
+
+`runCode(code, opts?)` возвращает `Execution`:
+
+| Поле | Описание |
+|---|---|
+| `stdout` / `stderr` | Захваченные потоки вывода |
+| `results` | Насыщенные результаты (значения, а также сгенерированные изображения / диаграммы) |
+| `error` | `ExecutionError` (`name`, `message`, `traceback`), если код выбросил ошибку |
+| `executionCount` | Монотонный счётчик для ядра |
+
+<span id="choose-a-language" />
+
+## Выбор языка
+
+По умолчанию — Python. Передайте `language` для разового запуска в другом рантайме:
+
+```ts
+const js = await sandbox.runCode('1 + 1', { language: 'javascript' });
+console.log(js.results[0].data);   // "2"
+
+await sandbox.runCode('echo "$(uname -s)"', { language: 'bash' });
+```
+
+<span id="streaming-output" />
+
+## Потоковый вывод
+
+Для долгих ячеек выводите stdout/stderr по мере их генерации, вместо ожидания результата:
+
+```ts
+await sandbox.runCode('for i in range(5): print(i)', {
+  onStdout: (line) => process.stdout.write(line),
+  onStderr: (line) => process.stderr.write(line),
+  onResult: (r)    => console.log('result:', r),
+  onError:  (e)    => console.error('error:', e.name, e.message),
+});
+```
+
+<span id="isolated-contexts" />
+
+## Изолированные контексты
+
+**Контекст** — это независимое пространство имён внутри одной песочницы — используйте один на сессию агента или на пользователя, чтобы их переменные никогда не пересекались.
+
+```ts
+const a = await sandbox.createContext({ language: 'python' });
+const b = await sandbox.createContext({ language: 'python' });
+
+await sandbox.runCode('secret = 1', { context: a });
+await sandbox.runCode('print(secret)', { context: b });   // NameError — b never saw it
+
+await sandbox.listContexts();
+await sandbox.restartContext(a);    // clear all variables/state
+await sandbox.deleteContext(b);     // free its resources
+```
+
+Передайте **либо** `context` **либо** `language` в `runCode`, не оба сразу — у контекста уже привязан язык.
+
+<span id="checkpointing-a-session" />
+
+## Контрольная точка сессии
+
+Поскольку `CodeSandbox` — это песочница, [пауза и возобновление](/sandboxes/quickstart#pause-and-resume) работают так же. Установите тяжёлый стек зависимостей один раз, поставьте на паузу и возобновите позже с сохранённым состоянием ядра:
+
+```ts
+const sandbox = await CodeSandbox.create({ project: 'my-project' });
+await sandbox.runCode('import subprocess; subprocess.run(["pip", "install", "scikit-learn"])');
+const id = sandbox.sandboxId;
+await sandbox.pause();
+
+// Later — resume with packages and kernel variables already in place
+const resumed = await CodeSandbox.connect(id);
+const out = await resumed.runCode('import sklearn; print(sklearn.__version__)');
+console.log(out.stdout);
+await resumed.kill();
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [Справочник SDK](/sandboxes/sdk-reference) — каждый метод `CodeSandbox` и параметр `runCode`.
+- [Persistent Volumes](/sandboxes/volumes) — подключите хранилище, которое переживает одну песочницу.

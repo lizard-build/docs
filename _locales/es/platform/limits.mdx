@@ -1,0 +1,49 @@
+---
+description: "Consulta los límites de réplicas de aplicaciones, los recursos y tiempos de espera de Sandboxes, las regiones y el alcance de las cuotas de la cuenta antes del despliegue."
+---
+
+<span id="limits" />
+
+# Límites
+
+Los límites dependen del recurso, el plan y la cuenta. Una configuración por réplica no es el total disponible para un servicio o una cuenta. Consulta tu plan actual y el resultado de la solicitud de creación o escalado antes de dimensionar una carga de trabajo.
+
+<span id="applications" />
+
+## Aplicaciones
+
+| Ajuste | Ámbito | Qué comprobar |
+|---|---|---|
+| CPU and memory | Cada réplica | Tres réplicas con un límite de 2 vCPU / 2 GiB tienen un límite configurado combinado de 6 vCPU / 6 GiB. Esto no es una previsión de uso. |
+| Replica count | Servicio y plan | La API acepta 1–10; los límites del plan pueden reducir ese rango. Las comprobaciones del plan Standard permiten 1, o 5 para Pro/Enterprise, con anulaciones a nivel de cuenta. |
+| Límite de recursos de la cuenta | Titular de la cuenta | Un segundo proyecto no necesariamente crea una segunda cuota. Solicita el límite efectivo de la cuenta antes de planificar un despliegue grande. |
+| Worker mode | Servicio | `containerPort=0` se ejecuta sin un listener HTTP ni una ruta pública del balanceador de carga. |
+| Custom domain | Nombre de host | No se aceptan dominios personalizados comodín. Usa un nombre de host específico y completa las comprobaciones de propiedad y DNS. |
+
+Las aplicaciones pueden usar distintos runtimes. No asumas que todas las aplicaciones tienen el mismo aislamiento de micro-VM de Firecracker que Sandboxes.
+
+## Sandboxes
+
+| Ajuste | API de creación actual |
+|---|---|
+| CPU and memory | 4 vCPU / 4096 MiB |
+| Plantillas | `base`, `code-interpreter-v1` |
+| Duración predeterminada de la API sin procesar | `timeoutMs: 0`, sin vencimiento |
+| Duración predeterminada de Lizard SDK | 300000 ms, cinco minutos |
+| Rango de vida explícito | Milisegundos enteros de 0 a 2147483647 |
+| Actualizar una vida útil | Al menos 1000 ms; no es un temporizador de inactividad |
+| Adjuntar volumen persistente | Un sandbox a la vez, en el nodo del volumen |
+
+Pasa un tiempo de vida explícito desde los scripts. Por ejemplo, `--timeout 300000` deja claro el límite previsto en todas las versiones de Lizard CLI. Consulta [pausa y expiración](/platform/known-issues#sandbox-pause-and-expiration) antes de dejar una sesión en pausa.
+
+<span id="regions" />
+
+## Regiones
+
+Las regiones configuradas actualmente incluyen US East (Virginia), `us-east-1`, y EU West (Limburg), `eu-west-lim-a`. Que una región aparezca en el catálogo no garantiza capacidad disponible para cada recurso. Consulta las opciones de región al crear el recurso; un sandbox que use un volumen existente debe ejecutarse en el nodo de ese volumen.
+
+<span id="before-increasing-scale" />
+
+## Antes de aumentar la escala
+
+Consulta conjuntamente el plan activo, la configuración por réplica, el límite de la cuenta, el límite de conexiones de la base de datos y el crecimiento del almacenamiento. Usa [scaling](/deploy/scaling), [metrics](/observability/metrics) y [pricing](https://lizard.build/pricing) para comparar la capacidad configurada con el uso medido.

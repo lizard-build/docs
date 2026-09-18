@@ -1,0 +1,145 @@
+---
+title: "Claude Code と ChatGPT 用に Lizard Studio をインストールする"
+description: "Chrome に Lizard Studio をインストールし、Claude Code または ChatGPT をローカルプロジェクトに接続して、最初の Web サイト編集を行います。セットアップガイドに従ってください。"
+---
+
+<span id="install-lizard-studio" />
+
+# Lizard Studio をインストールする
+
+Lizard Studio は、Claude Code または ChatGPT を構築中のページに接続する無料の Chrome 拡張機能です。ページの横にチャットを開き、要素を選択して、ローカルプロジェクト内のファイルをエージェントに編集させるよう依頼できます。この拡張機能には、ページ調査、注釈、ルーラー、カラーピッカー、ブラウザデバッグツールが含まれています。
+
+このガイドでは、インストールから、ページを更新しても維持される 1 回のソース編集までを案内します。ダウンロード可能な例については、[Claude Code のビジュアル編集ガイド](https://lizard.build/blog/claude-code-visual-editor)を参照してください。
+
+<span id="what-you-need" />
+
+## 必要なもの
+
+- macOS、Windows、または Linux 上の Google Chrome。
+- Node.js と npm。ローカルホストは Node.js 18 以降を必要とします。選択したエージェントでは、より高いバージョンが必要な場合があります。両方がサポートする Node.js バージョンを使用してください。
+- Claude Code または ChatGPT 用のローカル CLI。自分のアカウントでサインインしている必要があります。
+- ローカルのプロジェクトフォルダー。ブラウザでソース編集を確認するには、そのプロジェクトの開発サーバーを起動し、その URL を開きます。
+
+拡張機能とホストは無料で、MIT ライセンスです。モデルの利用には、プロバイダーのアカウント要件、制限、料金が適用されます。Lizard Studio を使うために Lizard アカウントは不要です。
+
+<span id="1-add-the-chrome-extension" />
+
+## 1. Chrome 拡張機能を追加する
+
+[Chrome ウェブストアの Lizard Studio](https://chromewebstore.google.com/detail/kgbaeoalmkabpoglpjcdmppdmcipfdeh)を開き、**Chrome に追加** を選択します。ツールバーからすぐ開きたい場合は、拡張機能を固定してください。
+
+ツールバーにはデザインツールがあり、Chrome のサイドパネルにはチャットが表示されます。ストアからのインストールではデベロッパーモードは不要です。
+
+<span id="2-install-your-agent" />
+
+## 2. エージェントをインストールする
+
+使用したいエージェントを選んでください。もう一方は後から追加できます。
+
+Claude Code の場合は、[公式セットアップガイド](https://code.claude.com/docs/en/setup)に従ってください。ターミナルでインストールを確認します。
+
+```bash
+claude --version
+```
+
+Lizard Studio で ChatGPT を使う場合は、Codex CLI をインストールします。
+
+```bash
+npm install -g @openai/codex
+codex --version
+```
+
+Lizard Studio は、このエージェントをインターフェース上で **ChatGPT** と表示します。パッケージ名とターミナルコマンドでは **Codex** という名前を使います。これはプロジェクトに接続されたローカルのコーディングエージェントであり、chatgpt.com の Web サイトを埋め込むものではありません。
+
+続行する前に、選択したエージェントを開いてサインイン手順を完了してください。サポートされている接続方法については、[Lizard Studio README](https://github.com/lizard-build/lizard-studio#setup)を参照してください。
+
+<span id="3-install-the-local-host" />
+
+## 3. ローカルホストをインストールする
+
+ターミナルで次のコマンドを 1 回実行します。
+
+```bash
+npx @lizard-build/lizard-studio-host install
+```
+
+このホストは、Chrome 拡張機能をコンピューター上のエージェントに接続します。インストーラーはホストを `~/.lizard-studio/host` にコピーし、ブラウザに登録します。Node.js はインストールしたままにしてください。ブラウザはホストの起動にそれを使用します。
+
+インストール後、拡張機能のサイドパネルを開き直してください。既存のホストを更新した場合は、新しいチャットを開始する前にパネルを開き直してください。
+
+<span id="4-connect-the-page-to-its-project" />
+
+## 4. ページをそのプロジェクトに接続する
+
+通常使っているコマンドで、プロジェクトの開発サーバーを起動します。表示された URL を Chrome で開き、そのタブで Lizard Studio を開きます。
+
+チャットを開始し、**Claude Code** または **ChatGPT** を選び、このプロジェクトのソースコードを含むフォルダーを選択します。各チャットは、それぞれ独自のプロジェクトフォルダーと権限を保持します。正しいページを表示しているタブがあるだけでは、どのローカルリポジトリをエージェントが変更すべきかは伝わりません。
+
+編集を依頼する前に、読み取り専用のリクエストで接続を確認してください。
+
+```text
+Read this page's title and inspect its main heading. Tell me which
+local project folder you are using. Do not change any files yet.
+```
+
+エージェントが誤ったフォルダー名を示した場合は、続行する前に選択を修正してください。
+
+<span id="5-select-an-element-and-make-one-edit" />
+
+## 5. 要素を選択して 1 つ編集する
+
+ページツールバーで **Selector** を選び、変更したい要素をクリックします。選択内容がチャットにコンテキストとして追加されます。複数の要素にまたがる視覚的な問題の場合は、**Annotate** を使って範囲を示し、スクリーンショットをチャットに追加してください。
+
+結果を測定できるリクエストを試してください。
+
+```text
+Find the source for the selected card's action row. Set the gap
+between its buttons to 24px in the project files. Keep the button
+labels and colors unchanged. Show the diff, then inspect the
+rendered row to check its computed gap.
+```
+
+提案されたファイル変更を確認し、権限コントロールを使って必要な作業を承認してください。どの操作に個別のプロンプトが必要かは、権限モードによって決まります。
+
+開発サーバーがページを再読み込みしたら、結果を確認します。自動で再読み込みされない場合は、Chrome を更新してください。
+
+<span id="6-check-that-the-edit-persists" />
+
+## 6. 編集が維持されることを確認する
+
+一時的な DOM 編集は、更新するまでは正しく見えることがあります。ソース編集は、開発サーバーが配信するファイルを変更します。
+
+エディターでファイル差分を確認するか、プロジェクトフォルダーから `git diff` を実行してください。ページを更新し、同じ要素をもう一度確認します。上の例では、計算後の gap は引き続き `24px` である必要があります。変更を残す前に、デスクトップレイアウトと幅の狭いレイアウトの両方を確認してください。
+
+ローカルプロジェクトを編集しても、デプロイ済みの Web サイトは更新されません。変更を本番公開したい場合は、別途デプロイしてください。
+
+<span id="if-the-connection-fails" />
+
+## 接続に失敗する場合
+
+| 表示される内容 | 確認すること |
+|---|---|
+| サイドパネルがホストに接続できない | ホストインストーラーを実行し、Node.js が利用可能であることを確認してから、パネルを開き直してください。 |
+| エージェントを起動できない | ターミナルで `claude --version` または `codex --version` を確認し、そのエージェントのログインを完了してください。 |
+| エージェントはページを認識しているが、そのコードを見つけられない | 正しいローカルフォルダーを選択し、そのタブがそのプロジェクトの開発サーバーを使用していることを確認してください。 |
+| 編集が更新時に消える | 差分を確認してください。エージェントが live DOM だけを変更した場合は、ソース変更を依頼してください。 |
+| Chrome の設定ページでツールバーが表示されない | Chrome は `chrome://` ページ、新しいタブページ、Chrome ウェブストアではコンテンツスクリプトをブロックします。通常の Web サイトを開いてください。 |
+
+macOS では、`~/.lizard-studio/host` にあるホストの場所によって、Chrome が Desktop、Documents、Downloads 配下のホストを起動するときに遭遇する制限も回避できます。詳細は [README のホストに関する注記](https://github.com/lizard-build/lizard-studio#2-the-local-host-one-time)を参照してください。
+
+<span id="where-your-data-goes" />
+
+## データの送信先
+
+拡張機能とホストはコンピューター上で実行されます。選択したモデルプロバイダーは、そのエージェント経由で送信したリクエストを受け取ります。Lizard Studio は Lizard のチャットサーバーを使用せず、テレメトリーも収集しません。ローカルインストールであっても、クラウドモデルがプロンプトをローカルで処理することを意味するわけではありません。データ制限のあるプロジェクトで使用する前に、[Lizard Studio プライバシーポリシー](https://github.com/lizard-build/lizard-studio/blob/main/PRIVACY.md)を確認してください。
+
+<span id="related-guides" />
+
+## 関連ガイド
+
+- [要素を選択して CSS を修正する](https://lizard.build/blog/claude-code-visual-editor)
+- [ChatGPT を使ってローカル Web サイトを編集する](https://lizard.build/studio/chatgpt)
+- [Lizard Studio と Chrome 上の Claude を比較する](https://lizard.build/studio/compare/claude-in-chrome)
+- [Claude Code GUI を選ぶ](https://lizard.build/blog/claude-code-gui)
+
+セットアップは 2026 年 9 月 14 日時点の Lizard Studio ソースに対して確認されています。

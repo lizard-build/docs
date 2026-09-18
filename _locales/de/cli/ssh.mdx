@@ -1,0 +1,70 @@
+---
+description: "lizard ssh führt einen Befehl in einem laufenden Service-Container aus und gibt seinen Exit-Code zurück. Die maßgebliche Methode, um zu sehen, was der Container sieht."
+---
+
+# lizard ssh
+
+Führe einen Befehl in dem Container eines laufenden Service aus, streame seine Ausgabe und gib den Remote-Exit-Code zurück.
+
+## run vs. ssh
+
+`lizard run` und `lizard ssh` führen beide einen Befehl im Kontext eines Service aus, aber sie laufen an unterschiedlichen Orten — du solltest wissen, welchen du brauchst.
+
+| Befehl | Wird ausgeführt in | Verwenden für |
+|---------|-----------|---------|
+| `lizard run` | **Lokal**, mit injiziertem Projekt des Service + Service-Secrets | Migrationen, Seed-Skripte, lokale Tools, die Produktionskonfiguration brauchen |
+| `lizard ssh` | **Im laufenden Service-Container** | Den Live-Container inspizieren, einmalige Remote-Befehle, Debugging |
+
+`lizard run` zeigt deine lokal injizierte Kopie der Umgebung, die normalerweise mit der Produktion übereinstimmt — aber `lizard ssh` ist maßgeblich dafür, was der Live-Container tatsächlich sieht.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard ssh --service <name> -- <command>
+```
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="inspect-the-environment-the-running-app-sees" />
+
+### Die Umgebung inspizieren, die die laufende App sieht
+
+```bash
+lizard ssh --service api -- env
+```
+
+<span id="list-files-in-the-deployed-image" />
+
+### Dateien im bereitgestellten Image auflisten
+
+```bash
+lizard ssh --service api -- ls -la /app
+```
+
+<span id="check-the-os-in-the-container" />
+
+### Das Betriebssystem im Container prüfen
+
+```bash
+lizard ssh --service api -- cat /etc/os-release
+```
+
+<span id="confirm-a-secret-landed-in-the-live-container" />
+
+### Bestätigen, dass ein Secret im Live-Container angekommen ist
+
+```bash
+lizard ssh --service api -- env | grep DATABASE_URL
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [lizard run](/cli/run) — stattdessen einen Befehl lokal mit injizierter Service-Umgebung ausführen
+- [Variablen](/variables) — wie Secrets und Referenzen einen Service erreichen
+- [Von Claude Code bereitstellen](https://lizard.build/blog/deploy-from-claude-code#claude-code-deployment-compared-with-the-alternatives) — warum ein Agent eine Shell in den laufenden Container braucht und welche Plattformen keine bereitstellen

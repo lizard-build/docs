@@ -1,0 +1,101 @@
+---
+description: "Telegram のロングポーリング bot を Lizard worker として実行します。トークンを設定し、HTTP ルーティングを無効にし、レプリカを 1 つに保ち、メッセージと再試行を確認します。"
+---
+
+<span id="run-a-telegram-bot" />
+
+# Telegram bot を実行する
+
+ロングポーリング bot はバックグラウンド worker です。Telegram に更新を問い合わせるため、公開 HTTP エンドポイントは不要です。`containerPort=0` と、bot トークンごとに 1 つのレプリカで実行してください。
+
+**テスト状況:** モック化した Telegram レスポンスを使った 7 件のローカルテストは成功しています。クラウド上の実際の bot では、このガイドをまだ確認していません。実運用の前に、別のテスト用 bot を使用し、以下のメッセージ確認と再起動確認を完了してください。[シナリオテスト結果](/guides/validation)を参照してください。
+
+<span id="before-you-start" />
+
+## 始める前に
+
+BotFather で bot を作成し、そのトークンは非公開にしてください。Python 3.13、Lizard CLI、およびデプロイ可能なプロジェクトが必要です。ロングポーリングを使う bot には有効な webhook があってはいけません。更新の受信方法を変更する前に、現在の設定を確認してください。
+
+[サンプルファイル](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/telegram-worker)には、`worker.py`、Dockerfile、ローカル unit test が含まれています。テストは Telegram を呼び出しません。echo handler は offset をメモリ内に保存するため、厳密な exactly-once 処理システムではありません。
+
+<span id="check-locally" />
+
+## ローカルで確認する
+
+サンプルディレクトリで次を実行します:
+
+```bash
+python3 -m unittest -v
+```
+
+この確認では、テキスト返信、無視される更新、空のポーリング、送信失敗を対象にしています。返信を送るつもりがある場合に限り、`TELEGRAM_BOT_TOKEN` を設定して bot をローカルで実行してください。ホストされた worker を開始する前に、そのローカルプロセスを停止してください。
+
+<span id="deploy-as-a-worker" />
+
+## worker としてデプロイする
+
+```bash
+lizard init --name telegram-bot
+lizard add --service bot
+```
+
+コマンドで認証が必要と表示された場合は、`lizard login` でサインインしてください。デプロイ前に、**bot service** に `TELEGRAM_BOT_TOKEN` を設定してください。ダッシュボードの変数エディタを使うことも、値をローカルの `.env` ファイルに入れてインポートすることもできます:
+
+```bash
+lizard secrets import --service bot < .env
+lizard run --service bot -- python3 check_bot.py
+lizard up --service bot --port 0
+```
+
+事前チェックでは `getMe` でトークンを確認し、有効な webhook を持つ bot は拒否されます。その webhook は削除も変更もされません。2 つ目のポーリングプロセスも競合する可能性があります。デプロイ前に、ローカルで動いているコピーがあれば停止してください。
+
+このサンプルでは、アップロード対象から `.env*` を除外しています。トークンをソースファイルやスクリーンショットに含めないでください。macOS で Lizard CLI 0.3.92 を使う場合は、アップロードコマンドの前に `COPYFILE_DISABLE=1` を付けてください。コマンドが正常終了しても、最後のデプロイイベントとログを確認してください。
+
+既存の service の場合は、worker mode を明示的に設定してください:
+
+```bash
+lizard service set bot --set containerPort=0
+```
+
+実行中の service で worker mode を変更した後は、`lizard redeploy --service bot` で反映してください。別の build を要求する前に、デプロイイベントを確認してください。worker mode では HTTP ポートチェックとロードバランサーのルートをスキップします。このプロセスを HTTP アプリのように見せるためだけにダミーの web server を追加しないでください。
+
+<span id="verify-the-result" />
+
+## 結果を確認する
+
+```bash
+lizard ps --json
+lizard logs --service bot --json
+lizard events --json
+```
+
+ログには `Telegram worker started` が表示されるはずです。bot にメッセージを送信し、echo 返信が 1 回だけ返ることを確認してください。その後、承認されたテスト時間帯に worker を停止して再起動し、再接続することを確認してください。実行中と表示されている worker でも、このアプリケーションレベルの確認は必要です。
+
+<span id="common-failures" />
+
+## よくある失敗
+
+| 症状 | 確認事項 |
+|---|---|
+| プロセスがすぐに終了する | 使用する service に `TELEGRAM_BOT_TOKEN` を設定してください。 |
+| HTTP ヘルスチェックがいつまでも通らない | worker mode では `containerPort=0` を使う必要があります。 |
+| 更新が止まる、または競合エラーが表示される | このトークンを使うポーリングプロセスは 1 つだけにしてください。ローカルプロセス、別のレプリカ、有効な webhook がないか確認してください。 |
+| 障害後に返信が繰り返される | このデモは offset を永続化せず、update ID の重複排除も行いません。取り消し不能な操作を扱う前に、永続的な冪等性を追加してください。 |
+| 再試行が頻繁に発生する | ネットワークアクセス、トークンの有効性、Telegram の制限、handler を確認してください。リクエスト URL は出力しないでください。トークンが含まれています。 |
+
+<span id="state-and-cost" />
+
+## 状態とコスト
+
+永続的な bot 状態が必要な場合は、[Managed Postgres](/addons/postgres) に接続してください。処理済み update ID を保存し、handler を再試行しても安全になるようにしてください。ロングポーリングでは、メッセージの間も worker がアクティブなままになることがあります。見積もりはメッセージ数だけではなく、[pricing](https://lizard.build/pricing) と実際のリソース使用量に基づいて行ってください。
+
+<span id="related-guides" />
+
+## 関連ガイド
+
+- [バックグラウンド worker](/deploy/workers)
+- [ログ](/observability/logs)
+- [制限](/platform/limits)
+- [Telegram getUpdates リファレンス](https://core.telegram.org/bots/api#getupdates)
+
+確認済みバージョン、クラウド結果、残っている制限については、[シナリオテスト結果](/guides/validation)を参照してください。

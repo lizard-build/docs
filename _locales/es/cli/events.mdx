@@ -1,0 +1,60 @@
+---
+description: "lizard events muestra el historial de despliegues de un servicio y el estado actual de las réplicas, con opciones para limitar las entradas o apuntar a un servicio."
+---
+
+# lizard events
+
+Muestra el historial de despliegues y el estado de las réplicas.
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard events [flags]
+```
+
+<span id="flags" />
+
+## Banderas
+
+| Bandera | Descripción |
+|------|-------------|
+| `-n, --limit <n>` | Número de entradas que se mostrarán (por defecto 10) |
+| `-s, --service <name>` | Muestra los eventos de un servicio específico |
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="show-deploy-history-and-replica-status" />
+
+### Mostrar el historial de despliegues y el estado de las réplicas
+
+```bash
+lizard events
+```
+
+<span id="show-events-for-a-specific-service" />
+
+### Mostrar eventos de un servicio específico
+
+```bash
+lizard events --service api
+```
+
+<span id="show-more-entries" />
+
+### Mostrar más entradas
+
+```bash
+lizard events --limit 25
+```
+
+<span id="see-also" />
+
+## Véase también
+
+- [Events & History](/observability/events) — qué cubre cada entrada y cómo se corresponde con la vista Despliegues del panel
+- [lizard ps](/cli/ps) — una vista rápida del estado y la URL de todos los servicios
+- [Despliegues](/concepts/deployments) — el ciclo de vida del despliegue

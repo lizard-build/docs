@@ -1,0 +1,69 @@
+---
+description: "Implementa Next.js, React, Vue, Astro, Nuxt, SvelteKit, FastAPI, Django, Docusaurus, VitePress y Hugo en Lizard. Encuentra comandos de compilación, adaptadores, puertos y comprobaciones."
+---
+
+<span id="framework-guides" />
+
+# Guías de frameworks
+
+Implementa una aplicación de framework en Lizard desde el código fuente. Elige abajo tu framework y modo de renderizado, prepara su compilación de producción y luego impleméntalo con Lizard CLI o conecta un repositorio de GitHub. Las aplicaciones de servidor ejecutan un proceso; los sitios estáticos sirven los archivos generados mediante nginx.
+
+<span id="choose-your-framework" />
+
+## Elige tu framework
+
+Estos ajustes describen las estructuras de proyecto estándar en las guías enlazadas. Los comandos asumen npm para proyectos de JavaScript. Las rutas de salida personalizadas, los adaptadores y las anulaciones de compilación pueden cambiar el resultado.
+
+| Framework | Compilación | Entorno de ejecución o salida | Puerto del servicio |
+|---|---|---|---|
+| [Next.js](/framework-guides/nextjs) | `npm run build` | `next start` mediante el script de inicio | `3000` |
+| [Exportación estática de Next.js](/framework-guides/nextjs/static-export) | `npm run build` | `out/` mediante un Dockerfile | `80` |
+| [React con Vite](/framework-guides/react) | `npm run build` | `dist/` | `80` |
+| [Vue con Vite](/framework-guides/vue) | `npm run build` | `dist/` | `80` |
+| [Astro](/framework-guides/astro) | `npm run build` | `dist/`, o el adaptador Node standalone | `80` estático; `3000` servidor |
+| [Nuxt](/framework-guides/nuxt) | `npm run build` | `node .output/server/index.mjs` | `3000` |
+| [SvelteKit](/framework-guides/sveltekit) | `npm run build` | `node build` con adapter-node | `3000` |
+| [FastAPI](/framework-guides/fastapi) | Instala las dependencias de Python | `uvicorn main:app --host 0.0.0.0 --port 8000` | `8000` |
+| [Django](/framework-guides/django) | Instala las dependencias de Python | Gunicorn con tu módulo WSGI | `8000` |
+| [Docusaurus](/framework-guides/docusaurus) | `npm run build` | `build/` | `80` |
+| [VitePress](/framework-guides/vitepress) | `npm run docs:build` | `docs/.vitepress/dist/` en esta guía | `80` |
+| [Hugo](/framework-guides/hugo) | `hugo --minify` | `public/` | `80` |
+
+<span id="prepare-the-project" />
+
+## Prepara el proyecto
+
+Ejecuta los comandos desde el directorio de la aplicación. Haz commit de los archivos fuente, la configuración y el archivo de bloqueo del paquete. Excluye `.env`, las dependencias locales y la salida de compilación local de las cargas. Los proyectos Node pueden seleccionar la versión major de Node en `.nvmrc`; el valor predeterminado actual es `22`. Esto selecciona una versión major, no una versión exacta de parche.
+
+Instala Lizard CLI e inicia sesión una vez:
+
+```bash
+npm install -g @lizard-build/cli
+lizard login
+```
+
+Cada guía usa un proyecto nuevo y un servicio llamado `web` o `api`. Crea ese servicio con `lizard add --service web` (o `api`) antes de la primera llamada a `lizard up --service`. `up --service` selecciona un servicio existente; no crea un servicio con nombre si falta. Para un proyecto existente, comprueba `lizard status --json` y `lizard ps --json` antes de implementar. El puerto debe coincidir con el proceso dentro del contenedor, que debe escuchar en `0.0.0.0`.
+
+Lizard CLI 0.3.95 excluye los metadatos de archivo de macOS durante las cargas. No se necesita ninguna configuración `COPYFILE_DISABLE`. Actualiza las versiones anteriores de CLI antes de seguir estas guías.
+
+<span id="choose-github-or-local-source" />
+
+## Elige GitHub o código fuente local
+
+Los comandos de la guía usan `lizard up` para cargar la carpeta actual. Ese comando cambia un servicio existente para cargar código fuente. Para mantener git push to deploy, [conecta GitHub](/deploy/github) en su lugar y usa en el repositorio los ajustes de compilación de la guía. Configura el puerto del servicio según la tabla.
+
+<span id="keep-build-settings-consistent" />
+
+## Mantén consistentes los ajustes de compilación
+
+Estas guías usan la detección de lizardpack salvo cuando requieren un Dockerfile. Las anulaciones existentes de `buildCommand` o `startCommand` tienen prioridad sobre la detección y sobre el Dockerfile del repositorio. Consulta el [orden de decisión de compilación](/concepts/build-pipeline#build-decision-order) antes de cambiar de método de compilación. Configura scripts en `package.json` cuando una guía te lo indique; añadir una anulación de CLI es una ruta de compilación diferente.
+
+<span id="check-a-release" />
+
+## Comprueba una versión
+
+Lee los registros de compilación, los registros de ejecución y la URL activa. Prueba una ruta interna, una ruta inexistente y cualquier acción de API o formulario. Un proceso que abre su puerto aún puede servir una página rota. Para los sitios generados, usa [rutas estáticas y 404](/framework-guides/static-routing) para evitar devolver la página de inicio con HTTP 200 para cada URL desconocida.
+
+La compatibilidad del entorno de ejecución no implica cachés compartidas, archivos locales persistentes ni todas las versiones de cada framework. Consulta [límites](/platform/limits), [almacenamiento y recuperación](/platform/storage-and-recovery) y [problemas conocidos](/platform/known-issues) cuando tu aplicación dependa de esas funciones.
+
+Consulta [versiones probadas y resultados en la nube](/framework-guides/validation) para las comprobaciones de implementación del 9 de septiembre de 2026 y sus límites.

@@ -1,0 +1,91 @@
+---
+description: "lizard logs streamt die Laufzeit-Logs eines Service oder ruft Build-Logs, Neustart-Logs und gefilterten Verlauf mit --build, --tail und --level ab."
+---
+
+# lizard logs
+
+Streamt die Laufzeit-Logs eines Service, die letzten 200 Zeilen gefolgt von einem Live-Tail.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard logs [flags]
+```
+
+## Flags
+
+| Flag | Beschreibung |
+|------|-------------|
+| `--build` | Stattdessen Build-Logs anzeigen |
+| `--tail <n>` | Letzte N Zeilen (max. 1000) |
+| `-l, --level <level>` | Nach Level filtern |
+| `--restarts [n]` | Kürzliche Neustarts auflisten |
+| `--restart <id>` | Logs rund um einen bestimmten Neustart (`latest` für den neuesten) |
+| `-s, --service <id>` | Service |
+
+Mit `--json` ist `lizard logs` kein Stream — es gibt die letzten 200 Zeilen zurück (mit `--tail N` überschreibbar, max. 1000) und beendet sich. Verwende das für Snapshots und Skripting; live streamen nur ohne `--json`.
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="tail-runtime-logs" />
+
+### Laufzeit-Logs tailen
+
+```bash
+lizard logs
+```
+
+<span id="tail-logs-for-a-specific-service" />
+
+### Logs für einen bestimmten Service tailen
+
+```bash
+lizard logs --service api
+```
+
+<span id="get-more-history" />
+
+### Mehr Verlauf abrufen
+
+```bash
+lizard logs --tail 1000
+```
+
+<span id="filter-by-log-level" />
+
+### Nach Log-Level filtern
+
+```bash
+lizard logs --level error
+```
+
+<span id="check-the-most-recent-build" />
+
+### Den neuesten Build prüfen
+
+```bash
+lizard logs --build
+```
+
+<span id="inspect-a-crash-or-restart" />
+
+### Einen Absturz oder Neustart untersuchen
+
+```bash
+lizard logs --restarts
+lizard logs --restart latest
+lizard logs --restart <id>
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Logs](/observability/logs) — Verhalten von Laufzeit-, Build- und Neustart-Logs sowie Blättern durch den Verlauf mit `lizard service logs`
+- [Incomplete Dockerfile](/deploy/troubleshooting/incomplete-dockerfile) — Diagnose eines fehlgeschlagenen Builds aus `lizard logs --build`
+- [lizard events](/cli/events) — Bereitstellen-Verlauf und Replikat-Status
+- [Von Claude Code bereitstellen](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) — die Schleife aus Logs lesen, beheben und erneut deployen, die ein Agent bei einem fehlgeschlagenen Build ausführt

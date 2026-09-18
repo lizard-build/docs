@@ -1,0 +1,40 @@
+---
+description: "Wählen Sie aus, wo Ihre Services und Addons laufen, platzieren Sie zustandsbehaftete Ressourcen gemeinsam, um die Latenz zu verringern, und sehen Sie, wie sich die Region auf generierte Domains auswirkt."
+---
+
+<span id="regions" />
+
+# Regionen
+
+Services und Addons werden in einer Region bereitgestellt. Listen Sie die für Ihr Konto verfügbaren Regionen auf und wählen Sie beim Erstellen eine aus.
+
+<span id="list-regions" />
+
+## Regionen auflisten
+
+```bash
+lizard regions
+lizard regions --json
+```
+
+<span id="choose-a-region" />
+
+## Eine Region auswählen
+
+Übergeben Sie `--region <code>` beim Erstellen eines Service oder Add-on:
+
+```bash
+lizard add -r your-org/your-app --region <code>
+lizard add postgres --region <code>
+lizard up --region <code>
+```
+
+Wenn Sie keine Region angeben, verwendet die Plattform den Standard des Projekts.
+
+> **Zustandsbehaftete Ressourcen gemeinsam platzieren.** Platzieren Sie einen Service und die Addons, mit denen er kommuniziert (Postgres, Redis, S3), in **derselben Region**, um die Latenz niedrig zu halten und regionenübergreifende Datengebühren zu vermeiden.
+
+<span id="generated-domains" />
+
+## Generierte Domains
+
+Jeder Service erhält unabhängig von der Region eine generierte Domain auf `*.onlizard.com` mit automatischem TLS. Object Storage, das von einem [S3-Add-on](/addons/storage) bereitgestellt wird, verwendet einen regionsspezifischen Gateway-Host (`s3-<region>.onlizard.com`). Informationen zum Zuweisen Ihres eigenen Hostnamens finden Sie unter [Networking](/networking).

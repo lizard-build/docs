@@ -1,0 +1,108 @@
+---
+description: "アップロード、アセット、バックアップ向けの S3互換オブジェクトストレージ。one lizard add s3 だけで public-read バケットと接続変数を取得できます。"
+---
+
+# Object Storage (S3)
+
+アップロード、アセット、バックアップ向けの S3互換オブジェクトストレージです。`s3` アドオンをプロビジョニングすると、**`default` という名前の public-read バケット** も作成されるため、追加設定なしでファイルを配信できます。
+
+<span id="provision" />
+
+## プロビジョニング
+
+```bash
+lizard add s3
+```
+
+最初の S3 アドオンの名前は `s3` なので、`${{s3.S3_ENDPOINT}}` などもすぐに使えます。
+
+<span id="environment-variables" />
+
+## 環境変数
+
+| 変数 | 説明 |
+|----------|-------------|
+| `S3_ENDPOINT` | S3互換エンドポイント URL |
+| `S3_DEFAULT_BUCKET` | 自動作成されるバケット名 (`default`) |
+| `S3_ACCESS_KEY_ID` | アクセスキー |
+| `S3_SECRET_ACCESS_KEY` | シークレットキー |
+| `S3_REGION` | リージョン |
+
+<span id="connect-a-service" />
+
+## サービスを接続
+
+```bash
+lizard secrets set \
+  S3_ENDPOINT='${{s3.S3_ENDPOINT}}' \
+  S3_DEFAULT_BUCKET='${{s3.S3_DEFAULT_BUCKET}}' \
+  S3_ACCESS_KEY_ID='${{s3.S3_ACCESS_KEY_ID}}' \
+  S3_SECRET_ACCESS_KEY='${{s3.S3_SECRET_ACCESS_KEY}}' \
+  S3_REGION='${{s3.S3_REGION}}' \
+  --service api
+lizard redeploy --service api
+```
+
+<span id="using-an-aws-sdk" />
+
+## AWS SDKを使用する
+
+エンドポイントは S3互換です。**path-style** アドレッシングを設定してください:
+
+```ts
+import { S3Client } from "@aws-sdk/client-s3";
+
+const s3 = new S3Client({
+  endpoint: process.env.S3_ENDPOINT,
+  region: process.env.S3_REGION,
+  forcePathStyle: true, // required
+  credentials: {
+    accessKeyId: process.env.S3_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
+  },
+});
+```
+
+<span id="public-files" />
+
+## 公開ファイル
+
+任意の **public** バケット内のオブジェクトは、認証なしで次の 2 つの方法で配信されます:
+
+1. **Gateway URL** (ダッシュボードに表示):
+   ```
+   https://s3-<region>.onlizard.com/<addonId>/<bucket>/<key>
+   ```
+2. **Platform proxy** (ダッシュボードのホスト。長期間有効な immutable キャッシュヘッダー付き):
+   ```
+   <dashboard-host>/api/s3/<addonId>/public/<bucket>/<key>
+   ```
+
+`default` バケットにアップロードされたものはすべて、すぐに次の URL で公開されます:
+
+```
+<dashboard-host>/api/s3/<addonId>/public/default/<key>
+```
+
+<span id="browse-objects" />
+
+## オブジェクトの参照
+
+ダッシュボードで **S3 browser** (`lizard open`) を開くと、オブジェクトとバケットのアップロード、ダウンロード、管理を行えます。
+
+> **Bucket ACL の変更** (バケットを public/private にすること) はまだ CLI ではできません — ダッシュボードから管理してください。
+
+<span id="grow-storage" />
+
+## ストレージを拡張
+
+```bash
+lizard scale --service s3 --storage 16384
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [Managed Addons](/addons) — 命名、参照、ダッシュボードのブラウザーについて。
+- [サービス間参照](/variables/references) — 参照構文と解決方法。

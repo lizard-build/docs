@@ -1,0 +1,19 @@
+---
+description: "Lizard の中核モデル: コードがどのように整理され、どのようにビルドされ、リリースがどのように本番環境へ届くか。"
+---
+
+<span id="concepts" />
+
+# 概念
+
+Lizard の中核モデル: コードがどのように整理され、どのようにビルドされ、リリースがどのように本番環境へ届くか。これを一度読めば、残りのドキュメントが理解しやすくなります。
+
+1 つ上のレベルのモデル、つまりコンテナを代わりに実行してくれるプラットフォームが何と呼ばれるか、そしてそれが PaaS、FaaS、IaaS とどう違うかについては、ブログの [container as a service](https://lizard.build/blog/container-as-a-service) を読んでください。
+
+<span id="in-this-section" />
+
+## このセクションの内容
+
+- [アーキテクチャ](/concepts/architecture) — workspace → project → service の階層、マネージドアドオン、クロスリソース参照。
+- [ビルドパイプライン](/concepts/build-pipeline) — ソースがどのようにコンテナイメージになるか（合成された Dockerfile、リポジトリの Dockerfile、または lizardpack の自動検出）と、何が再ビルドのトリガーになるか。
+- [デプロイメント](/concepts/deployments) — ビルドとリリースのライフサイクル、再起動と再デプロイの違い、およびライブ設定変更。

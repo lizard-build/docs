@@ -1,0 +1,98 @@
+---
+description: "Implementa Astro en Lizard como un sitio estático o con el adaptador standalone de Node. Configura la salida, los comandos de compilación, los puertos y las comprobaciones para rutas del servidor y páginas faltantes."
+---
+
+<span id="deploy-astro-on-lizard" />
+
+# Implementar Astro en Lizard
+
+Astro tiene dos rutas de implementación en Lizard: servir un directorio estático `dist/` en el puerto `80`, o ejecutar el adaptador standalone de Node en el puerto `3000` para rutas bajo demanda. Elige el modo antes de implementar porque el adaptador cambia tanto la salida como el entorno de ejecución.
+
+<span id="choose-a-mode" />
+
+## Elige un modo
+
+| Modo | Configuración | Entorno de ejecución | Puerto |
+|---|---|---|---|
+| Sitio estático | Salida estática sin un adaptador de servidor | nginx sirve `dist/` | `80` |
+| Servidor Node | `@astrojs/node` en modo standalone | `node ./dist/server/entry.mjs` | `3000` |
+
+Ambas rutas usan un script `build` que ejecuta `astro build`. Haz commit del lockfile y mantén la ruta de salida predeterminada `dist`. La detección lee la configuración de Astro y las dependencias instaladas. Una dependencia de adaptador Node sin usar, por sí sola, no selecciona la ruta del servidor. Usa valores literales de `output` y de configuración del adaptador; los valores dinámicos, las rutas de salida personalizadas y el modo middleware necesitan un Dockerfile.
+
+<span id="configure-a-node-server" />
+
+## Configura un servidor Node
+
+Para páginas bajo demanda, añade una versión del adaptador Node compatible con tu versión de Astro:
+
+```bash
+npx astro add node
+```
+
+Comprueba `astro.config.mjs`:
+
+```js
+import { defineConfig } from 'astro/config';
+import node from '@astrojs/node';
+
+export default defineConfig({
+  output: 'server',
+  adapter: node({ mode: 'standalone' }),
+});
+```
+
+El modo standalone inicia su propio servidor HTTP. El modo middleware requiere un servidor independiente y no encaja con este comando de inicio. Lee la [guía del adaptador Node de Astro](https://docs.astro.build/en/guides/integrations-guide/node/) si necesitas middleware o una mezcla de rutas prerenderizadas y bajo demanda.
+
+<span id="test-locally" />
+
+## Prueba localmente
+
+```bash
+npm ci
+npm run build
+```
+
+Para el modo Node:
+
+```bash
+HOST=0.0.0.0 PORT=3000 node ./dist/server/entry.mjs
+```
+
+Solicita una ruta que realmente se ejecute en el servidor y un recurso compilado. Para un sitio estático, usa `npm run preview` localmente e inspecciona los archivos de ruta generados en `dist/`.
+
+<span id="deploy" />
+
+## Implementa
+
+Después de la [configuración de CLI](/framework-guides#prepare-the-project), crea el proyecto:
+
+```bash
+lizard init --name astro-app
+lizard add --service web
+```
+
+Para el adaptador Node:
+
+```bash
+lizard up --service web --port 3000
+```
+
+Para un sitio estático:
+
+```bash
+lizard up --service web --port 80
+```
+
+Usa solo el comando para el modo que hayas elegido. Deja sin configurar las anulaciones del comando del servicio para la detección de lizardpack. Lee `lizard logs --build --service web --json` y luego revisa los logs del entorno de ejecución y la URL en vivo.
+
+<span id="variables-sessions-and-routes" />
+
+## Variables, sesiones y rutas
+
+Los valores usados para generar HTML estático requieren una nueva compilación cuando cambian. El código del servidor puede leer variables de ejecución mediante los mecanismos compatibles con tu versión de Astro; configúralas en [variables y secretos](/variables). Los valores visibles en el navegador no deben contener credenciales.
+
+Si tu aplicación usa sesiones, elige un almacenamiento que se adapte a reinicios y múltiples réplicas. No dependas del sistema de archivos del contenedor como un almacén compartido y duradero. Consulta [almacenamiento y recuperación](/platform/storage-and-recovery).
+
+Para un sitio de contenido estático, prueba una URL inexistente y usa [rutas estáticas y 404](/framework-guides/static-routing) para devolver el estado correcto. Si una implementación SSR se detiene o no sirve rutas, verifica que `dist/server/entry.mjs` exista, que el adaptador use el modo standalone y que el puerto del servicio sea `3000`.
+
+Consulta [versiones probadas y resultados en la nube](/framework-guides/validation) para las comprobaciones de implementación del 9 de septiembre de 2026 y sus límites.

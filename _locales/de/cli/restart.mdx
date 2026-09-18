@@ -1,0 +1,73 @@
+---
+description: "lizard restart führt einen Rolling-Restart des aktuellen Builds eines Dienstes ohne Rebuild aus und ist nützlich, um sich von einem Absturz zu erholen."
+---
+
+# lizard restart
+
+Rolling-Restart des aktuellen Builds — kein Rebuild.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard restart [nameOrId] [flags]
+```
+
+## Flags
+
+| Flag | Beschreibung |
+|------|--------------|
+| `-s, --service <name>` | Dienst |
+| `--detach` | Nach Annahme des Restarts zurückkehren |
+| `--wait` | Warten, bis der neue Restart-Versuch bereit ist; funktioniert mit `--json` |
+| `--timeout <seconds>` | Wartebudget für Bereitschaft mit `--wait`; Standard `120` |
+| `--json` | JSON für Skripte zurückgeben |
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="restart-a-service" />
+
+### Einen Dienst neu starten
+
+```bash
+lizard restart --service api
+```
+
+<span id="restart-without-streaming-logs" />
+
+### Neustart ohne Streaming-Logs
+
+```bash
+lizard restart --service api --detach
+```
+
+<span id="wait-before-running-the-next-check" />
+
+### Vor der nächsten Prüfung warten
+
+Erfordert CLI 0.3.94 oder neuer. Verwende 0.3.95 oder neuer für Worker ohne HTTP.
+
+```bash
+lizard --json restart --service api --wait --timeout 120
+```
+
+Ohne `--wait` gibt der JSON-Modus nach Annahme des Restarts zurück. Mit `--wait` enthält das Ergebnis `ok`, `status`, `attemptId` und `waitedMs`. Die CLI wartet auf einen neuen Restart-Versuch, daher zählt ein unveränderter Status von vor der Anfrage nicht als Erfolg. Ein fehlgeschlagenes Warten oder ein Timeout liefert einen Exit-Code ungleich null zurück.
+
+Bei HTTP-Diensten prüft die CLI zusätzlich die Dienst-Domain zweimal. Worker mit `containerPort=0` verwenden den Bereitschaftsstatus aus dem Backend und benötigen keinen HTTP-Listener, selbst wenn sie eine generierte Domain haben.
+
+```bash
+lizard --json restart --service worker --wait --timeout 60
+```
+
+Das Timeout gilt für das Warten auf Bereitschaft nach der Restart-Anfrage. Es bricht den Restart nicht ab, und Netzwerkaufrufe können dazu führen, dass der gesamte Befehl länger dauert. Prüfe nach dem Befehl Anwendungsdaten oder einen Health-Endpunkt, wenn dein Workflow mehr als Prozessbereitschaft benötigt.
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [lizard redeploy](/cli/redeploy) — einen frischen Build auslösen, statt den aktuellen wiederzuverwenden
+- [lizard logs](/cli/logs) — Logs rund um einen Restart mit `--restart latest` oder `--restart <id>` prüfen
+- [Bereitstellungen](/concepts/deployments) — Restarts vs. Redeploys und Wiederherstellung nach einem Absturz

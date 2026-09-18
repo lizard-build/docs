@@ -1,0 +1,221 @@
+---
+description: "Развертывание Django на Lizard с Gunicorn, явным WSGI-модулем, портом 8000, продакшен-настройками, миграциями базы данных и планом для статических и загружаемых файлов."
+---
+
+<span id="deploy-django-on-lizard" />
+
+# Развертывание Django на Lizard
+
+Запустите Django на Lizard с Gunicorn и WSGI-модулем вашего проекта на порту `8000`. Подготовьте продакшен-настройки, доступ к базе данных и раздачу статических файлов перед тем, как полагаться на развернутое приложение. `manage.py runserver` — это сервер разработки.
+
+<span id="set-the-start-command" />
+
+## Задайте команду запуска
+
+В этом руководстве предполагается `manage.py`, `requirements.txt` и пакет проекта с именем `config`, содержащий `wsgi.py`. Замените `config` на фактическое имя вашего пакета.
+
+Включите Django, Gunicorn и драйвер базы данных, который использует ваше приложение, в проверенные зависимости. Добавьте `Procfile`:
+
+```text
+web: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+```
+
+Явный модуль устраняет неоднозначность, когда настройки находятся во вложенных пакетах. ASGI-приложение с WebSockets требует ASGI-сервер и другую команду запуска; это руководство охватывает WSGI.
+
+| Настройка | Значение |
+|---|---|
+| Установка | `pip install -r requirements.txt` |
+| Среда выполнения | Gunicorn с вашим WSGI-модулем |
+| Порт сервиса | `8000` |
+| Рабочая директория | Директория, содержащая `manage.py` |
+
+<span id="prepare-production-settings" />
+
+## Подготовьте продакшен-настройки
+
+Django ожидает словарь `DATABASES` в `settings.py`. Установка только `DATABASE_URL` на сервисе не подключает Django к PostgreSQL. Шаги ниже создают [Managed Postgres](/addons/postgres), передают его URL приложению и преобразуют этот URL в настройки подключения Django.
+
+Добавьте эти пакеты в `requirements.txt`, сохраняя любые другие зависимости, которые нужны вашему приложению. Это версии, используемые в [полном примере](https://github.com/lizard-build/docs/tree/main/_examples/django):
+
+```text
+Django==6.1.1
+gunicorn==26.2.0
+whitenoise==6.12.0
+psycopg[binary]==3.3.5
+dj-database-url==3.1.2
+```
+
+`psycopg` — драйвер PostgreSQL. `dj-database-url` считывает имя базы данных, пользователя, пароль, хост и порт из URL подключения. Замените соответствующие настройки в `settings.py` вашего проекта на этот блок; сохраните ваши существующие apps, middleware, шаблоны и другие настройки:
+
+```python
+import os
+from pathlib import Path
+
+import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def required_env(name):
+    value = os.environ.get(name, "").strip()
+    if not value:
+        raise ImproperlyConfigured(f"Set the {name} environment variable.")
+    return value
+
+
+def env_list(name):
+    values = [item.strip() for item in required_env(name).split(",") if item.strip()]
+    if not values:
+        raise ImproperlyConfigured(f"Set at least one value in {name}.")
+    return values
+
+
+SECRET_KEY = required_env("SECRET_KEY")
+debug_value = os.environ.get("DEBUG", "false").strip().lower()
+if debug_value not in {"true", "false"}:
+    raise ImproperlyConfigured("DEBUG must be true or false.")
+DEBUG = debug_value == "true"
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
+DATABASES = {
+    "default": dj_database_url.parse(
+        required_env("DATABASE_URL"),
+        conn_max_age=60,
+        conn_health_checks=True,
+    )
+}
+```
+
+Не оставляйте более старые назначения `DATABASES`, `SECRET_KEY` или `DEBUG` ниже в файле: они заменят эти значения. Этот пример требует непустые значения `SECRET_KEY`, `DATABASE_URL`, `ALLOWED_HOSTS` и `CSRF_TRUSTED_ORIGINS`. Отсутствующие или пустые значения останавливают запуск с именем переменной. `DEBUG` по умолчанию `false`; установите его в `false` на развернутом сервисе.
+
+`ALLOWED_HOSTS` принимает хостнеймы через запятую без схемы и пути, например `app.example.com,www.example.com`. `CSRF_TRUSTED_ORIGINS` принимает origins через запятую со схемой, например `https://app.example.com`. Укажите порт для локальных origins, которые его используют. Пример требует явный список origins; сам Django допускает пустой список для приложений, не требующих дополнительных доверенных origins. Доверяйте только тем origins, которые должны отправлять формы в это приложение. Эти настройки не заменяют CSRF-токены.
+
+URL берутся из [секрета или ссылки](/variables) сервиса, а не из значения, закоммиченного в исходники. Не используйте локальный SQLite в контейнере как долговечную базу данных для развернутого приложения. См. [использование dj-database-url](https://pypi.org/project/dj-database-url/) для разбора URL и параметров подключения.
+
+С вашими локальными переменными окружения и доступным PostgreSQL выполните:
+
+```bash
+python -m pip install -r requirements.txt
+python manage.py check --deploy
+gunicorn config.wsgi:application --bind 0.0.0.0:8000
+```
+
+Просмотрите [чек-лист развертывания](https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/) Django для настроек, актуальных для вашего приложения. Небольшой пример не настраивает каждую продакшен-настройку безопасности. Проверьте обработку прокси и HTTPS с реальным публичным URL перед включением защищённых cookie, HSTS или редиректов. Доверяйте переадресованным HTTPS-заголовкам только тогда, когда прокси ими управляет.
+
+<span id="plan-static-files-and-migrations" />
+
+## Спланируйте статические файлы и миграции
+
+Gunicorn один не раздаёт статические файлы Django. Выберите middleware для статических файлов, настроенный в приложении, или отдельный статический хост. Соберите ассеты в путь, который обслуживает эта настройка. Python-путь lizardpack на основе requirements не запускает автоматически `collectstatic`; добавьте его в полную сборку Dockerfile, когда приложению нужен этот шаг.
+
+Для WhiteNoise сохраняйте `django.contrib.staticfiles` в `INSTALLED_APPS` и вставьте `whitenoise.middleware.WhiteNoiseMiddleware` сразу после `SecurityMiddleware` Django. Добавьте или обновите эти настройки:
+
+```python
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+```
+
+Сохраняйте ваш существующий бэкенд `STORAGES["default"]`, если приложение уже хранит загрузки в другом месте. WhiteNoise раздаёт собранные статические ассеты, не загрузки пользователей.
+
+Используйте этот Dockerfile в корне проекта:
+
+```dockerfile
+FROM python:3.13-slim
+WORKDIR /app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+RUN SECRET_KEY=build-only-placeholder \
+    DATABASE_URL=postgresql://build:build@127.0.0.1:1/build \
+    ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
+    python manage.py collectstatic --noinput
+EXPOSE 8000
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+```
+
+Значения в строке `RUN` существуют только для `collectstatic`. URL базы данных — это заполнитель, указывающий на неиспользуемый локальный порт; базы данных там не запускается. Загрузка настроек разбирает URL, но сбор ассетов не требует подключения к базе. Не запрашивайте базу данных из импортов модулей или `AppConfig.ready()`. Пример также передаёт `collectstatic` с отключённой сетью контейнера.
+
+Эти назначения не становятся переменными окружения runtime. Установите свежий `SECRET_KEY` и реальную ссылку на базу данных на сервисе перед запуском. Не передавайте продакшен-секреты в Docker-сборку.
+
+Создайте `.dockerignore` и исключите те же пути из [загрузки исходников](/cli/up):
+
+```text
+.env*
+.venv/
+venv/
+.git/
+__pycache__/
+*.pyc
+*.sqlite3
+staticfiles/
+```
+
+Храните загрузки пользователей в долговечном хранилище, таком как [Managed Object Storage](/addons/storage), а не в статической директории контейнера. Ознакомьтесь с [хранилищем и восстановлением](/platform/storage-and-recovery).
+
+Относитесь к миграциям базы данных как к отдельному шагу релиза. Сделайте бэкап данных при необходимости, обеспечьте безопасность повторного запуска миграций и примените их до того, как запросы потребуют новую схему. Pre-deploy-команда не заменяет проверку поведения при конкуренции и сбоях.
+
+<span id="deploy-and-verify" />
+
+## Разверните и проверьте
+
+После [настройки CLI](/framework-guides#prepare-the-project) подключите [GitHub-сервис](/deploy/github), настройте его секреты и продакшен-настройки, и разверните с контейнерным портом `8000`. Для нового проекта на основе загрузки:
+
+```bash
+lizard init --name django-app
+lizard add --service web
+```
+
+Создайте [Managed Postgres](/addons/postgres) в этом проекте. Если у вас уже есть экземпляр, пропустите `add postgres` и используйте его имя в ссылке:
+
+```bash
+lizard add postgres --name postgres
+```
+
+Задайте [секреты сервиса](/cli/secrets) приложения. `postgres` в `${{postgres.DATABASE_URL}}` именует сервис базы данных, не псевдоним базы Django. Lizard разрешает [ссылку](/variables/references) во время деплоя и внедряет получившийся URL в процесс `web`. Одинарные кавычки не дают оболочке раскрыть ссылку. Блок `settings.py` выше затем превращает URL в `DATABASES["default"]`.
+
+```bash
+DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
+lizard secrets set SECRET_KEY="$DJANGO_SECRET_KEY" \
+  DATABASE_URL='${{postgres.DATABASE_URL}}' DEBUG=false \
+  ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
+  --service web
+lizard up --service web --port 8000
+lizard ps --json
+```
+
+`localhost` — временная настройка хоста, позволяющая процессу запуститься, пока вы получаете его публичный хостнейм; публичные запросы вернут 400. Если вы уже знаете хостнейм, задайте его перед первой загрузкой. Иначе замените эти плейсхолдеры на хостнейм и HTTPS-origin, возвращённые для вашего сервиса:
+
+```bash
+lizard secrets set ALLOWED_HOSTS=YOUR_PUBLIC_HOST \
+  CSRF_TRUSTED_ORIGINS=https://YOUR_PUBLIC_HOST --service web
+```
+
+Отсутствующая цель ссылки или ключ могут разрешиться в пустую строку. Проверка обязательного значения тогда остановит Django с `Set the DATABASE_URL environment variable.` Проверьте имя сервиса базы данных и его ключ `DATABASE_URL`; не выводите URL подключения в логи.
+
+Изменение переменной перезапускает процесс. Исключите локальные виртуальные окружения, секреты и локальные базы данных из загрузок. После запуска процесса примените миграции:
+
+```bash
+lizard ssh --service web -- python manage.py migrate --noinput
+```
+
+Запустите команду снова, чтобы убедиться, что миграций не осталось. Не считайте успешную проверку порта доказательством существования таблиц.
+
+Проверьте URL приложения, страницу с базой данных, отправку формы и статический ассет. Если приложение использует Django admin, также проверьте его CSS. Читайте `lizard logs --service web --json` для ошибок импорта или настроек. Ответ 400 часто означает, что `ALLOWED_HOSTS` неверен; отсутствующий CSS обычно означает, что статические ассеты не были собраны или не раздаются. Проверьте фактическую ошибку перед изменением настроек.
+
+См. [проверенные версии и облачные результаты](/framework-guides/validation) для проверок деплоя 9 сентября 2026 года и их ограничений.
+
+
+<span id="reproduce-this-example" />
+
+## Воспроизведите этот пример
+
+[Пример Django](https://github.com/lizard-build/docs/tree/main/_examples/django) включает настройки, Dockerfile, requirements, форму с базой данных и тест-раннер. Скопируйте его в отдельную директорию и запустите `python3 tests/verify.py` с работающим Docker. Он соберёт образ, запустит локальный PostgreSQL, проверит миграции и HTTP-поведение, и остановит свои тестовые контейнеры. Он не создаёт сервисы Lizard. См. его README для проверок и сохраняемых Docker-ресурсов.
+
+Проверка 14 сентября 2026 года охватывает этот обновлённый пример в локальных Linux-контейнерах. Ранние облачные результаты, на которые ссылаются выше, касаются руководства от 9 сентября; обновлённые настройки ещё не проходили новый облачный деплой.

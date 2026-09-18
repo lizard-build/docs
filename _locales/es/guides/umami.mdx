@@ -1,0 +1,122 @@
+---
+description: "Implementa Umami con Managed Postgres, configura sus secretos de cifrado y revisa las analíticas después de un reinicio y una nueva implementación."
+---
+
+<span id="run-umami" />
+
+# Ejecutar Umami
+
+Esta guía ejecuta la imagen oficial de Docker de Umami en Lizard con una base de datos PostgreSQL independiente. Usa Lizard CLI para implementar un Dockerfile local pequeño y exponer Umami por HTTPS.
+
+<span id="prerequisites" />
+
+## Requisitos previos
+
+- Una cuenta de Lizard con acceso al alojamiento de aplicaciones y Managed Postgres.
+- Node.js y npm en tu equipo, además de OpenSSL para generar secretos.
+
+Instala Lizard CLI e inicia sesión:
+
+```bash
+npm install -g @lizard-build/cli
+lizard login
+```
+
+Completa el inicio de sesión en tu navegador antes de continuar. Los comandos siguientes se probaron con Lizard CLI 0.3.95 y Umami 3.3.1.
+
+<span id="create-the-project-and-database" />
+
+## Crear el proyecto y la base de datos
+
+Usa un directorio nuevo para esta implementación:
+
+```bash
+mkdir umami-on-lizard
+cd umami-on-lizard
+lizard init --name umami-on-lizard
+lizard add postgres --name umami-db
+lizard add --service umami
+```
+
+Si perteneces a más de un workspace, pasa `--workspace <workspace>` a `lizard init` para elegir uno. Espera a que la base de datos llegue a `running` antes de implementar Umami.
+
+<span id="set-the-image-and-secrets" />
+
+## Configurar la imagen y los secretos
+
+Crea un archivo llamado `Dockerfile`:
+
+```dockerfile
+FROM ghcr.io/umami-software/umami:3.3.1
+EXPOSE 3000
+```
+
+Indica a Lizard que use este archivo tal como está escrito:
+
+```bash
+lizard service set umami --set dockerfilePath=Dockerfile
+```
+
+Conecta la base de datos y genera dos secretos independientes:
+
+```bash
+lizard secrets set \
+  DATABASE_URL='${{umami-db.DATABASE_URL}}' \
+  APP_SECRET="$(openssl rand -hex 32)" \
+  TWO_FACTOR_ENCRYPTION_KEY="$(openssl rand -hex 32)" \
+  --service umami
+```
+
+Mantén las comillas simples alrededor de la referencia de la base de datos: Lizard la resuelve cuando se inicia el servicio. Los valores pertenecen a este servicio, por lo que otras aplicaciones del proyecto no los reciben.
+
+Guarda ambos secretos generados en tu gestor de contraseñas. Configúralos una sola vez durante la instalación; no los regeneres al reiniciar o actualizar. `TWO_FACTOR_ENCRYPTION_KEY` es obligatorio para la autenticación de dos factores.
+
+<span id="deploy-and-sign-in" />
+
+## Implementar e iniciar sesión
+
+Desde el directorio que contiene el Dockerfile, ejecuta:
+
+```bash
+lizard up --service umami --port 3000
+```
+
+La imagen de Umami ejecuta la configuración de su base de datos y las migraciones al iniciarse. No se necesita un comando de migración independiente para esta imagen.
+
+Abre la URL HTTPS que devuelve la implementación. Para una base de datos nueva de Umami 3.3.1, inicia sesión con el nombre de usuario `admin` y la contraseña `umami`, y luego cambia inmediatamente la contraseña en tu perfil antes de compartir la URL. Añade un sitio web e instala su script de seguimiento en una página que controles.
+
+Si la implementación falla, revisa su estado y sus registros:
+
+```bash
+lizard events --service umami
+lizard logs --build --service umami
+lizard logs --service umami
+```
+
+Si el primer inicio supera el tiempo de espera, revisa `lizard events` para comprobar si el contenedor está listo. Una vez que el contenedor se haya iniciado, vuelve a intentar la carga con `lizard up --service umami --port 3000`.
+
+<span id="check-data-persistence" />
+
+## Comprobar la persistencia de los datos
+
+Visita la página rastreada y confirma que Umami registra una vista de página. Reinicia la aplicación:
+
+```bash
+lizard restart --service umami
+```
+
+Espera a que el servicio vuelva a ejecutarse. Confirma que tu nueva contraseña funciona y que el sitio web y la vista de página se mantienen. Luego repite la comprobación después de una nueva implementación:
+
+```bash
+lizard redeploy --service umami
+```
+
+Umami almacena las cuentas, la configuración del sitio web y las analíticas en PostgreSQL. La aplicación no necesita un volumen de archivos para esos registros. Conserva la base de datos y los secretos de cifrado al reemplazar o actualizar la aplicación. Una comprobación tras reiniciar no sustituye un plan probado de copia de seguridad y restauración de la base de datos.
+
+<span id="update-umami" />
+
+## Actualizar Umami
+
+Haz una copia de seguridad de PostgreSQL y lee las notas de la versión antes de actualizar. Cambia la etiqueta de la imagen en el Dockerfile local y luego ejecuta `lizard up --service umami --port 3000` de nuevo. Para esta configuración basada en cargas, `lizard redeploy` recompila los últimos archivos cargados; no carga las ediciones locales.
+
+Consulta la [guía de PostgreSQL de Lizard](https://lizard.build/docs/addons/postgres/) para el acceso a la base de datos y [almacenamiento y recuperación](https://lizard.build/docs/platform/storage-and-recovery/) para la planificación de copias de seguridad.

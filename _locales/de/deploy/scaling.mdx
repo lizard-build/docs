@@ -1,0 +1,78 @@
+---
+description: "Fügen Sie Replikate hinzu oder erhöhen Sie CPU und Arbeitsspeicher für einen Service und erweitern Sie den Add-on-Speicher. Zulässige Bereiche, Rollout-Verhalten und wie Sie eine Änderung prüfen."
+---
+
+<span id="scaling" />
+
+# Skalierung
+
+Skalieren Sie einen Service horizontal (mehr Replikate) oder vertikal (mehr CPU/Arbeitsspeicher) mit `lizard scale`. Add-on-Speicher wird auf die gleiche Weise erweitert.
+
+<span id="scale-a-service" />
+
+## Einen Service skalieren
+
+```bash
+lizard scale --service api --replicas 3
+lizard scale --service api --cpu 2 --memory 2048
+```
+
+| Flag | Gilt für | Zulässige Werte |
+|------|-----------|----------------|
+| `--replicas <n>` | Apps | `1`–`10` |
+| `--cpu <cores>` | Apps | ganze Kerne: `1`, `2`, `3`, `4` |
+| `--memory <mb>` | Apps | `128`–`8192` MB (in 1-MB-Schritten) |
+| `--storage <mb>` | **nur Addons**, nur vergrößern | `512`, `1024`, `2048`, `4096`, `8192`, `16384` |
+
+Sie können Flags in einem einzelnen Befehl kombinieren. Änderungen an Replikaten werden ohne Rebuild ausgerollt.
+
+<span id="horizontal-scaling" />
+
+## Horizontale Skalierung
+
+Führen Sie mehrere Replikate einer App hinter dem Load Balancer aus:
+
+```bash
+lizard scale --service api --replicas 5
+```
+
+Jedes Replikat ist ein eigener Pod. Stellen Sie sicher, dass Ihre App zustandslos ist (speichern Sie den Zustand in [Postgres](/addons/postgres), [Redis](/addons/redis) oder [S3](/addons/storage)), damit Replikate austauschbar sind.
+
+<span id="vertical-scaling" />
+
+## Vertikale Skalierung
+
+Geben Sie einem einzelnen Replikat mehr Ressourcen:
+
+```bash
+lizard scale --service api --cpu 4 --memory 8192
+```
+
+<span id="growing-addon-storage" />
+
+## Add-on-Speicher erweitern
+
+Add-on-Daten-Volumes können **nur vergrößert** werden — Sie können den Speicher erhöhen, aber nicht verkleinern:
+
+```bash
+lizard scale --service postgres --storage 8192
+```
+
+<span id="verifying" />
+
+## Prüfung
+
+```bash
+lizard ps                 # replica status + URL
+lizard events             # per-replica deploy/scale history
+lizard metrics            # live CPU / memory / network / disk
+lizard metrics --cost     # include cost
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Observability → Metrics](/observability/metrics) — Ressourcen- und Kostenüberwachung.
+- [`lizard scale`](/cli/scale) — die vollständige Befehlsreferenz.
+- [Was CaaS-Anbieter 2026 berechnen](https://lizard.build/blog/container-as-a-service#what-caas-providers-charge-in-2026) — Preise pro vCPU, pro GB und für Egress über neun Plattformen hinweg, um eine Rechnung abzuschätzen, bevor Sie skalieren.

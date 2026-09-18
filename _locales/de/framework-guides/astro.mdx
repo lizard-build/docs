@@ -1,0 +1,98 @@
+---
+description: "Stelle Astro auf Lizard als statische Website oder mit dem eigenständigen Node-Adapter bereit. Konfiguriere output, Build-Befehle, Ports und Prüfungen für Serverrouten und fehlende Seiten."
+---
+
+<span id="deploy-astro-on-lizard" />
+
+# Astro auf Lizard bereitstellen
+
+Astro hat auf Lizard zwei Bereitstellungswege: ein statisches Verzeichnis `dist/` auf Port `80` bereitstellen oder den eigenständigen Node-Adapter auf Port `3000` für bedarfsgesteuerte Routen ausführen. Wähle den Modus vor dem Deployment, weil der Adapter sowohl die Ausgabe als auch die Laufzeitumgebung verändert.
+
+<span id="choose-a-mode" />
+
+## Modus wählen
+
+| Modus | Konfiguration | Laufzeitumgebung | Port |
+|---|---|---|---|
+| Statische Website | Statische Ausgabe ohne Server-Adapter | nginx stellt `dist/` bereit | `80` |
+| Node-Server | `@astrojs/node` im Standalone-Modus | `node ./dist/server/entry.mjs` | `3000` |
+
+Beide Wege verwenden ein `build`-Skript, das `astro build` ausführt. Committe die Lockfile und behalte den standardmäßigen Ausgabepfad `dist` bei. Die Erkennung liest die Astro-Konfiguration und installierte Abhängigkeiten. Eine ungenutzte Node-Adapter-Abhängigkeit allein wählt den Serverpfad nicht aus. Verwende literales `output` und Adapter-Einstellungen; dynamische Werte, benutzerdefinierte Ausgabepfade und Middleware-Modus benötigen ein Dockerfile.
+
+<span id="configure-a-node-server" />
+
+## Einen Node-Server konfigurieren
+
+Für bedarfsgesteuerte Seiten füge eine Node-Adapter-Version hinzu, die mit deiner Astro-Version kompatibel ist:
+
+```bash
+npx astro add node
+```
+
+Prüfe `astro.config.mjs`:
+
+```js
+import { defineConfig } from 'astro/config';
+import node from '@astrojs/node';
+
+export default defineConfig({
+  output: 'server',
+  adapter: node({ mode: 'standalone' }),
+});
+```
+
+Der Standalone-Modus startet seinen eigenen HTTP-Server. Der Middleware-Modus erfordert einen separaten Server und passt nicht zu diesem Startbefehl. Lies den [Astro Node Adapter Anleitung](https://docs.astro.build/en/guides/integrations-guide/node/), wenn du Middleware oder eine Mischung aus vorgerenderten und bedarfsgesteuerten Routen brauchst.
+
+<span id="test-locally" />
+
+## Lokal testen
+
+```bash
+npm ci
+npm run build
+```
+
+Für den Node-Modus:
+
+```bash
+HOST=0.0.0.0 PORT=3000 node ./dist/server/entry.mjs
+```
+
+Rufe eine Route auf, die tatsächlich auf dem Server ausgeführt wird, und ein gebautes Asset. Für eine statische Website verwende lokal `npm run preview` und prüfe die generierten Routendateien in `dist/`.
+
+<span id="deploy" />
+
+## Bereitstellen
+
+Erstelle nach dem [CLI-Setup](/framework-guides#prepare-the-project) das Projekt:
+
+```bash
+lizard init --name astro-app
+lizard add --service web
+```
+
+Für den Node-Adapter:
+
+```bash
+lizard up --service web --port 3000
+```
+
+Für eine statische Website:
+
+```bash
+lizard up --service web --port 80
+```
+
+Verwende nur den Befehl für den gewählten Modus. Lass Überschreibungen des Service-Befehls für die lizardpack-Erkennung ungesetzt. Lies `lizard logs --build --service web --json` und prüfe dann die Laufzeitprotokolle und die Live-URL.
+
+<span id="variables-sessions-and-routes" />
+
+## Variablen, Sessions und Routen
+
+Werte, die zum Erzeugen von statischem HTML verwendet werden, erfordern einen neuen Build, wenn sie sich ändern. Servercode kann Laufzeitvariablen über die von deiner Astro-Version unterstützten Mechanismen lesen; konfiguriere sie unter [Variablen und Secrets](/variables). Im Browser sichtbare Werte dürfen keine Zugangsdaten enthalten.
+
+Wenn deine App Sessions verwendet, wähle einen Speicher, der zu Neustarts und mehreren Replikaten passt. Verlasse dich nicht auf das Container-Dateisystem als gemeinsamen dauerhaften Speicher. Siehe [Storage und Wiederherstellung](/platform/storage-and-recovery).
+
+Teste bei einer Website mit statischen Inhalten eine fehlende URL und verwende [statische Routen und 404-Seiten](/framework-guides/static-routing), um den korrekten Status zurückzugeben. Wenn ein SSR-Deployment beendet wird oder keine Routen bereitstellt, prüfe, dass `dist/server/entry.mjs` existiert, der Adapter den Standalone-Modus verwendet und der Service-Port `3000` ist.
+
+Siehe [getestete Versionen und Cloud-Ergebnisse](/framework-guides/validation) für die Deployment-Prüfungen vom 9. September 2026 und deren Grenzen.

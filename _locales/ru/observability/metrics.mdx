@@ -1,0 +1,50 @@
+---
+description: "Отслеживайте CPU, память, сеть и диск для сервиса, узнайте стоимость текущего масштаба и действуйте на основе метрик."
+---
+
+<span id="metrics--cost" />
+
+# Метрики и стоимость
+
+Отслеживайте CPU, память, сеть и диск для сервиса — и узнавайте, во что это обходится — из CLI или дашборда.
+
+<span id="view-metrics" />
+
+## Просмотр метрик
+
+```bash
+lizard metrics                    # CPU / memory / network / disk
+lizard metrics --service api      # a specific service
+lizard metrics --range <range>    # time window
+lizard metrics --watch            # live-updating view
+```
+
+<span id="include-cost" />
+
+## Включить стоимость
+
+```bash
+lizard metrics --cost
+```
+
+Добавляет данные о стоимости рядом с использованием ресурсов, чтобы вы видели цену текущего масштаба.
+
+<span id="dashboard" />
+
+## Дашборд
+
+На дашборде (`lizard open`) эти данные отображаются в виде графиков в разделе **Metrics / Наблюдаемость**, а в разделе **Использование** представлен разбор потребления и биллинга по проекту. Откройте его командой:
+
+```bash
+lizard open
+```
+
+<span id="acting-on-what-you-see" />
+
+## Действия на основе метрик
+
+- Высокая нагрузка на CPU/память → увеличьте масштаб: `lizard scale --service api --cpu 2 --memory 2048`.
+- Постоянная нагрузка → добавьте реплики: `lizard scale --service api --replicas 3`.
+- Нехватка диска на аддоне → увеличьте хранилище: `lizard scale --service postgres --storage 8192`.
+
+См. [Scaling](/deploy/scaling).

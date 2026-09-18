@@ -1,0 +1,112 @@
+---
+description: "Настройте секреты на уровне сервиса или проекта, узнайте порядок их слияния и какие значения попадают в сборку, а какие в запущенный контейнер."
+---
+
+<span id="variables--secrets" />
+
+# Переменные и секреты
+
+Lizard хранит конфигурацию как **секреты**. У них есть два уровня видимости — **сервис** (по умолчанию) и **проект** (`--global`) — и они объединяются в окружение приложения в строго заданном порядке приоритета. Глобального уровня рабочего пространства нет.
+
+<span id="setting-variables" />
+
+## Установка переменных
+
+`lizard secrets set` принимает переменное число аргументов — можно задать один или несколько секретов сразу. По умолчанию он пишет в **привязанный сервис**:
+
+```bash
+lizard secrets set DATABASE_URL=postgres://… LOG_LEVEL=info
+lizard secrets set API_KEY=sk_live_… --service api
+```
+
+Добавьте `--global`, чтобы записать в **область проекта** (увидит каждый сервис в проекте):
+
+```bash
+lizard secrets set NODE_ENV=production --global
+```
+
+<span id="listing-deleting-importing" />
+
+## Просмотр, удаление, импорт
+
+```bash
+lizard secrets list                       # current scope
+lizard secrets list --show                # reveal values
+lizard secrets delete OLD_KEY ANOTHER_KEY # variadic
+cat .env | lizard secrets import          # import dotenv from stdin
+```
+
+Все флаги описаны в [справке по команде `lizard secrets`](/cli/secrets).
+
+<span id="scoping" />
+
+## Область видимости
+
+| Уровень | Команда | Хранится как | Видимость для |
+|---------|---------|--------------|-----------|
+| **Сервис** (по умолчанию) | `lizard secrets set K=v --service <svc>` | `secrets.services[<svc>]` | только этот сервис |
+| **Проект** (глобальный) | `lizard secrets set K=v --global` | `secrets.shared` | все сервисы в проекте |
+
+**По умолчанию — уровень сервиса.** Скомпрометированный сервис может прочитать своё окружение — более широкая область видимости означает больше учётных данных без нужды. Используйте `--global` только для несекретных, заведомо публичных значений вроде `LOG_LEVEL`, `NODE_ENV`, флагов функций или публичного URL фронтенда `SENTRY_DSN`. Если не уверены, является ли значение секретом — считайте его секретом и ограничьте сервисом.
+
+Для общих ресурсов вроде базы данных **не кладите** DSN в `--global` — привяжите его к каждому потребителю через [ссылку](/variables/references):
+
+```bash
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service worker
+```
+
+Ротация происходит один раз в аддоне; все ссылки обновятся автоматически.
+
+<span id="precedence" />
+
+## Приоритет
+
+Когда один ключ задан в нескольких местах, **побеждает последний записавший**:
+
+```
+addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets  <  platform vars
+```
+
+Поэтому **секреты приложения перекрывают секреты проекта**, а **платформенные переменные** (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`) применяются в самом конце и их нельзя переопределить.
+
+<span id="build-time-vs-runtime" />
+
+## Время сборки и время выполнения
+
+Большинство изменений переменных вступают в силу **без пересборки** — сервис перезапускается и подхватывает их за несколько секунд. Исключения — значения времени сборки, зашиваемые в образ:
+
+- Изменения `VITE_*` и `NEXT_PUBLIC_*` **требуют пересборку** при следующем деплое.
+
+См. [Пайплайн сборки → триггеры пересборки](/concepts/build-pipeline#what-triggers-a-rebuild).
+
+<span id="verifying" />
+
+## Проверка
+
+Убедитесь, что запущенный сервис видит именно то, что вы ждёте:
+
+```bash
+lizard ssh --service api -- env
+```
+
+Если ожидаемого значения нет, см. [Устранение неполадок → секрет или ссылка не отображается](/variables/troubleshooting/reference-not-applied).
+
+<span id="local-development" />
+
+## Локальная разработка
+
+Запустите команду **локально** с внедрёнными секретами проекта и сервиса (удобно для скриптов и миграций):
+
+```bash
+lizard run --service api -- node scripts/seed.js
+```
+
+См. [`lizard run` vs. `lizard ssh`](/cli/run#run-vs-ssh).
+
+<span id="see-also" />
+
+## См. также
+
+- [Перекрёстные ссылки между сервисами](/variables/references) — читайте значения одного сервиса из другого без копирования учётных данных.
+- [`lizard secrets`](/cli/secrets) — полная справка по командам.

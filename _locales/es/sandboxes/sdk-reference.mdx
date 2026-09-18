@@ -1,0 +1,144 @@
+---
+description: "Todas las clases y métodos del Lizard SDK para JavaScript y Python: Lizard, Sandbox, CodeSandbox y Volumen, con opciones y tipos de retorno."
+---
+
+<span id="sdk-reference" />
+
+# Referencia del SDK
+
+Los paquetes `@lizard-build/sdk` (JS/TS) y `lizard-sdk` (Python) son los que usan la mayoría de agentes, apps y scripts para controlar sandboxes. Esta página cataloga cada clase y método; consulta la [Guía de inicio rápido](/sandboxes/quickstart) para ver un recorrido.
+
+<span id="install--authenticate" />
+
+## Instalar y autenticar
+
+```bash
+npm install @lizard-build/sdk    # JavaScript / TypeScript
+pip install lizard-sdk           # Python
+```
+
+El SDK lee `LIZARD_API_KEY` del entorno, o acepta una opción explícita `apiKey` en `Sandbox.create` / `Sandbox.connect`. Consulta [Guía de inicio rápido → Autenticar](/sandboxes/quickstart#authenticate) para ver cómo crear una clave.
+
+Cada sandbox también pertenece a un **proyecto**: el uso se mide por proyecto, así que se rechazará una creación sin uno.
+
+## `Lizard`
+
+Un cliente fijado a un proyecto, para que nombres el proyecto una vez en lugar de hacerlo en cada llamada.
+
+| Miembro | Descripción |
+|---|---|
+| `new Lizard({ project, apiKey?, apiUrl?, timeoutMs? })` | Crea un cliente. `project` es obligatorio: su ID, slug o nombre (`Lizard(project=…)` en Python). |
+| `lizard.create(template?, options?)` | Inicia un sandbox en el proyecto del cliente. |
+| `lizard.connect(sandboxId)` | Se conecta a un sandbox por ID, reanudándolo automáticamente si está en pausa. |
+| `lizard.list()` | Lista todos los sandboxes en ejecución de la cuenta. |
+| `lizard.projectId()` | Resuelve la referencia de proyecto del cliente a su ID (se almacena en caché después de la primera llamada). |
+
+```ts
+const lizard = new Lizard({ project: 'my-project' });
+const sandbox = await lizard.create('base');
+```
+
+```python
+lizard = Lizard(project="my-project")
+sandbox = lizard.create("base")
+```
+
+Una referencia de proyecto que no coincide con nada a lo que la clave pueda acceder genera un error antes de iniciar cualquier sandbox, enumerando los proyectos que puede ver.
+
+> Los nombres de métodos de Python con un guion bajo final (`exec_`) evitan conflictos con palabras reservadas, y las propiedades usan snake_case (`sandbox_id`) en lugar de camelCase (`sandboxId`). Los ejemplos de abajo usan nombres de JS/TS; revisa el paquete de Python instalado para ver las firmas de los métodos.
+
+## `Sandbox`
+
+| Miembro | Descripción |
+|---|---|
+| `Sandbox.create(template?, options?)` | Inicia un sandbox. `template` usa por defecto `'base'`; `options.project` indica el proyecto al que se facturará. |
+| `Sandbox.connect(sandboxId)` | Se conecta a un sandbox por ID, reanudándolo automáticamente si está en pausa. |
+| `Sandbox.list()` | Lista todos los sandboxes en ejecución de la cuenta. |
+| `sandbox.sandboxId` | El ID del sandbox (`sandbox_id` en Python). |
+| `sandbox.process.exec(cmd)` | Ejecuta un comando y espera a que termine (`process.exec_` en Python). Devuelve `{ stdout, stderr, exitCode }`. |
+| `sandbox.fs.write(path, data)` | Escribe un archivo, ya sea string o bytes; crea los directorios padre. |
+| `sandbox.fs.read(path)` | Lee un archivo como string UTF-8. |
+| `sandbox.fs.list(path)` | Lista las entradas del directorio → `[{ name, path, type, size }]`. |
+| `sandbox.fs.makeDir(path)` | Crea un directorio y cualquier padre que falte. |
+| `sandbox.fs.remove(path)` | Elimina un archivo o directorio. |
+| `sandbox.getHost(port)` | Registra una ruta en `port` y devuelve su nombre de host público con terminación TLS. |
+| `sandbox.pause()` | Detiene las vCPU invitadas y conserva el estado en la memoria del host. Consulta el [estado del ciclo de vida](#lifecycle-status) antes de depender de una pausa más allá del plazo original. |
+| `sandbox.resume()` | Reanuda un sandbox en pausa en el mismo lugar. |
+| `sandbox.setTimeout(ms)` | Establece la vida útil restante de un sandbox en ejecución en milisegundos (mínimo 1000). |
+| `sandbox.getInfo()` | Obtiene metadatos → `{ sandboxId, template, startedAt, endAt, … }`. |
+| `sandbox.kill()` | Termina el sandbox de inmediato y libera sus recursos. |
+
+### `Sandbox.create(template?, options?)`
+
+| Opción | Tipo | Predeterminado | Notas |
+|---|---|---|---|
+| `template` | string | `'base'` | `'base'` o `'code-interpreter-v1'`: las dos [plantillas](/sandboxes#templates) compatibles |
+| `project` | string | — | **Obligatorio.** El proyecto al que se facturará: su ID, slug o nombre (`project` en Python). No hace falta con un cliente `Lizard`. |
+| `projectId` | string | — | ID exacto del proyecto; omite la resolución de `project` |
+| `timeoutMs` | int | valor predeterminado del SDK 5 min | Vida útil en ms |
+| `region` | string | auto | Fijar en una región |
+| `volumeId` | string | — | Adjunta un [volume](/sandboxes/volumes) en `/data` |
+| `apiKey` | string | variable de entorno `LIZARD_API_KEY` | Clave de API explícita; anula el entorno |
+
+```ts
+const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 10 * 60 * 1000 });
+```
+
+## `CodeSandbox`
+
+Amplía `Sandbox` con un kernel con estado. Consulta [Intérprete de código](/sandboxes/code-interpreter) para ver el recorrido completo.
+
+| Miembro | Descripción |
+|---|---|
+| `CodeSandbox.create(options?)` | Inicia un intérprete de código (usa por defecto la plantilla `code-interpreter-v1`). Acepta la misma opción `project` que `Sandbox.create`. |
+| `CodeSandbox.connect(sandboxId)` | Se conecta a un sandbox existente de intérprete de código (y lo reanuda automáticamente). |
+| `sandbox.runCode(code, opts?)` | Ejecuta código en el kernel. Devuelve un `Execution`. |
+| `sandbox.createContext(opts)` | Crea un espacio de nombres aislado: `{ language }`. |
+| `sandbox.listContexts()` | Lista los contextos del sandbox. |
+| `sandbox.restartContext(context)` | Borra todas las variables y el estado de un contexto. |
+| `sandbox.deleteContext(context)` | Libera los recursos de un contexto. |
+
+### `runCode(code, opts?)`
+
+| Opción | Descripción |
+|---|---|
+| `language` | Entorno de ejecución para una llamada puntual: `'python'` (predeterminado), `'javascript'` o `'bash'`. Excluyente con `context`. |
+| `context` | Ejecuta dentro de un contexto aislado específico en lugar del predeterminado. Excluyente con `language`. |
+| `onStdout` / `onStderr` | Transmite la salida línea por línea a medida que se produce. |
+| `onResult` | Se llama para cada resultado enriquecido (valores, imágenes/gráficos generados). |
+| `onError` | Se llama con un `ExecutionError` si el código lanza una excepción. |
+
+Devuelve un `Execution`:
+
+| Campo | Descripción |
+|---|---|
+| `stdout` / `stderr` | Flujos de salida capturados |
+| `results` | Resultados enriquecidos (valores y cualquier imagen / gráfico generado) |
+| `error` | Un `ExecutionError` (`name`, `message`, `traceback`) si el código lanzó una excepción |
+| `executionCount` | Contador monotónico del kernel |
+
+## `Volume`
+
+Consulta [Persistent Volumes](/sandboxes/volumes) para ver el recorrido completo.
+
+| Miembro | Descripción |
+|---|---|
+| `Volume.create(projectId, name, options)` | Crea un volume. `options.sizeGb` usa por defecto `5`. |
+| `Volume.list(projectId)` | Lista los volúmenes de un proyecto → `[{ id, name, sizeGb, status, attachedTo, … }]`. |
+| `Volume.get(projectId, volumeId)` | Obtiene un identificador de un volume existente. |
+| `volume.getInfo(projectId)` | Obtiene metadatos y el estado del adjunto. |
+| `volume.delete(projectId)` | Elimina un volume: primero debe estar desacoplado. |
+
+<span id="see-also" />
+
+## Ver también
+
+- [Guía de inicio rápido](/sandboxes/quickstart): instalación, autenticación y un recorrido completo.
+- [Intérprete de código](/sandboxes/code-interpreter): la guía de `CodeSandbox`.
+- [Persistent Volumes](/sandboxes/volumes): la guía de `Volume`.
+
+<span id="lifecycle-status" />
+
+## Estado del ciclo de vida
+
+Antes de depender de la pausa para conservar una sesión más allá de su plazo original, consulta los [problemas conocidos](/platform/known-issues#sandbox-pause-and-expiration). La pausa mantiene el estado invitado en la memoria del host; no es una copia de seguridad duradera.

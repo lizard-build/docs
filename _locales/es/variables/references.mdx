@@ -1,0 +1,78 @@
+---
+description: "Lee los valores de un servicio o addon desde otro con la sintaxis ${{name.KEY}}. Cómo se resuelven las referencias en el momento del despliegue y por qué son mejores que copiar."
+---
+
+<span id="cross-service-references" />
+
+# Referencias entre servicios
+
+Las referencias permiten que un servicio o addon lea los valores de otro sin copiar y pegar credenciales. Mantienen los secretos en un solo lugar y rotan automáticamente.
+
+<span id="syntax" />
+
+## Sintaxis
+
+```
+${{<name>.<KEY>}}
+```
+
+- `<name>` — el nombre del servicio o addon de destino (el que se muestra en el dashboard y se usa en `lizard add -n`).
+- `<KEY>` — una clave en el entorno combinado del destino.
+
+Úsalas en cualquier lugar donde se acepte un valor; lo más habitual es en un secreto:
+
+```bash
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+```
+
+<span id="how-they-resolve" />
+
+## Cómo se resuelven
+
+- Las referencias se resuelven en el **momento del despliegue** usando el entorno combinado del destino.
+- Se almacenan por **ID**, así que cambiar el nombre del destino más adelante no rompe la referencia.
+- Una referencia a un destino o clave **inexistente** se resuelve como una **cadena vacía**: *no* hace fallar el despliegue.
+- Solo las referencias **circulares** producen un error.
+
+> Como una clave faltante pasa silenciosamente a estar vacía, verifica siempre que el consumidor realmente haya recibido el valor después de conectar una referencia:
+> ```bash
+> lizard ssh --service api -- env | grep DATABASE_URL
+> ```
+
+Si una referencia no aparece como esperas, consulta [Solución de problemas → no aparece un secreto o referencia](/variables/troubleshooting/reference-not-applied).
+
+<span id="common-patterns" />
+
+## Patrones habituales
+
+**Conecta un addon a varios servicios**: vincúlalo en cada consumidor para que la rotación se propague a todas partes:
+
+```bash
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service api
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service worker
+```
+
+**Haz referencia al valor de otro servicio**: por ejemplo, comparte una URL calculada o un token:
+
+```bash
+lizard secrets set UPSTREAM_URL='${{api.LIZARD_PUBLIC_DOMAIN}}' --service web
+```
+
+**Haz referencia a un segundo addon del mismo tipo**: usa su nombre generado:
+
+```bash
+lizard secrets set CACHE_URL='${{redis-winter-otter.REDIS_URL}}' --service api
+```
+
+<span id="why-not-just-use---global" />
+
+## ¿Por qué no usar simplemente `--global`?
+
+Poner un DSN compartido en el ámbito del proyecto (`--global`) lo expone a *todos* los servicios, incluidos los que no lo necesitan. Las referencias te dan la misma rotación con una sola fuente de verdad, pero mantienen cada secreto limitado a los servicios que realmente lo consumen. Consulta [Alcance de secretos](/variables#scoping).
+
+<span id="see-also" />
+
+## Ver también
+
+- [Variables y secretos](/variables) — ámbitos y precedencia.
+- [`lizard secrets`](/cli/secrets) — la referencia completa de comandos.

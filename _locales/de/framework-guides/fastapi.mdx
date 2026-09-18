@@ -1,0 +1,98 @@
+---
+description: "Stelle FastAPI auf Lizard mit Uvicorn, requirements.txt, einem Procfile und Port 8000 bereit. Prüfe einen Health-Endpunkt und diagnostiziere Import-, Host- und Abhängigkeitsfehler."
+---
+
+<span id="deploy-fastapi-on-lizard" />
+
+# FastAPI auf Lizard bereitstellen
+
+Führe FastAPI auf Lizard aus, wobei Uvicorn auf `0.0.0.0:8000` lauscht. Nimm sowohl FastAPI als auch Uvicorn in die Abhängigkeiten der App auf. Das Importieren einer Datei, die `app = FastAPI()` deklariert, startet nicht von selbst einen HTTP-Server.
+
+<span id="example-project" />
+
+## Beispielprojekt
+
+Das [FastAPI-Beispiel](https://github.com/lizard-build/fastapi-example) enthält eine App, ein Procfile, festgelegte Abhängigkeiten, eine MIT-Lizenz und HTTP-Tests. Seine CI führt den Uvicorn-Produktions-Einstiegspunkt unter Linux aus. Wir haben außerdem den Commit `df522c1` von GitHub bereitgestellt und am 2026-09-09 Health, OpenAPI, interaktive Docs, JSON-Echo, ungültige Eingaben und eine fehlende Route über öffentliches HTTPS geprüft.
+
+<span id="prepare-an-app" />
+
+## Eine App vorbereiten
+
+Dieses Beispiel verwendet `requirements.txt` und eine `main.py` im App-Stammverzeichnis:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+```
+
+Füge `fastapi` und `uvicorn` zu deinem Abhängigkeits-Workflow hinzu und speichere die aufgelösten, getesteten Versionen in `requirements.txt`. Wähle deine Python-Nebenversion in `.python-version`, zum Beispiel `3.13`, wenn deine Abhängigkeiten sie unterstützen.
+
+Erstelle eine `Procfile` mit einem expliziten Importziel:
+
+```text
+web: uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+`main:app` bedeutet das Objekt `app` in `main.py`. Für `src/api.py` verwende den Importpfad, der von deinem App-Stamm aus funktioniert, etwa `src.api:app`. Das explizite Procfile vermeidet, sich bei benutzerdefinierten Layouts auf die Erkennung von Quellcode-Mustern zu verlassen.
+
+| Einstellung | Wert |
+|---|---|
+| Installation | `pip install -r requirements.txt` |
+| Start | Procfile-Befehl `web:` |
+| Service-Port | `8000` |
+| Build-Ausgabe | Python-Quellcode und installierte Abhängigkeiten |
+
+<span id="test-locally" />
+
+## Lokal testen
+
+Verwende eine lokale virtuelle Umgebung:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+In einem anderen Terminal:
+
+```bash
+curl --fail http://localhost:8000/health
+```
+
+Erwarte eine erfolgreiche Antwort mit `{"status":"ok"}`. Behalte den Reload-Modus für die Entwicklung bei. Der [FastAPI-Serverleitfaden](https://fastapi.tiangolo.com/deployment/manually/) erklärt den ASGI-Server und das Importziel.
+
+<span id="deploy" />
+
+## Bereitstellen
+
+Nach dem [CLI-Setup](/framework-guides#prepare-the-project) lade aus dem App-Stammverzeichnis hoch:
+
+```bash
+lizard init --name fastapi-app
+lizard add --service api
+lizard up --service api --port 8000
+lizard logs --build --service api --json
+lizard logs --service api --json
+lizard ps --json
+```
+
+Schließe Dateien vom Typ `.venv/`, `__pycache__/` und `.env` aus. Lasse Service-Build-/Start-Overrides leer, damit lizardpack das Procfile liest. Der requirements-basierte Pfad hier benötigt keinen separaten Compile-Befehl.
+
+Rufe `/health` unter der zurückgegebenen HTTPS-URL auf und teste dann eine echte API-Aktion. Ein TCP-Health-Check stellt nur fest, dass der Prozess seinen Port öffnet; dein Health-Endpunkt kann Prüfungen ergänzen, die für die App relevant sind.
+
+<span id="data-and-common-failures" />
+
+## Daten und häufige Fehler
+
+Setze Zugangsdaten über [Variablen und Secrets](/variables). Füge [Managed Postgres](/addons/postgres) hinzu, wenn die App eine Datenbank benötigt, und verwende eine servicebezogene Verbindungsreferenz. Container-lokale Dateien sind kein dauerhaftes Anwendungsspeicher; siehe [Storage und Wiederherstellung](/platform/storage-and-recovery).
+
+Prüfe bei `No module named uvicorn` die installierten requirements. Führe bei einem ASGI-Importfehler den exakten Procfile-Befehl lokal vom selben Stammverzeichnis aus. Wenn ein Service nie healthy wird, prüfe Port `8000` und den Bind-Host. Wenn der Prozess ohne Server-Logs beendet wird, stelle sicher, dass er Uvicorn ausführt und nicht nur `python main.py`.
+
+Siehe [getestete Versionen und Cloud-Ergebnisse](/framework-guides/validation) für die Deployment-Prüfungen vom 9. September 2026 und ihre Grenzen.

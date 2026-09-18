@@ -1,0 +1,104 @@
+---
+description: "lizard domain muestra el dominio de un servicio, genera un subdominio de onlizard.com, o adjunta y verifica un hostname personalizado con TLS automático."
+---
+
+# lizard domain
+
+Muestra el dominio actual o adjunta uno personalizado.
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard domain [hostname] [flags]
+```
+
+El hostname es un argumento posicional: no existe el subcomando `add`. Ejecutar `lizard domain` sin argumentos muestra el dominio actual del servicio.
+
+<span id="flags" />
+
+## Banderas
+
+| Bandera | Descripción |
+|------|-------------|
+| `-s, --service <name>` | Servicio |
+| `--port <n>` | Puerto que se expondrá |
+
+<span id="subcommands" />
+
+## Subcomandos
+
+### `lizard domain generate`
+
+Genera un subdominio nuevo de `*.onlizard.com`.
+
+### `lizard domain verify <hostname>`
+
+Comprueba el registro TXT y activa el dominio. TLS se aprovisiona automáticamente.
+
+### `lizard domain delete <hostname>`
+
+Elimina un dominio (alias `rm`).
+
+| Bandera | Descripción |
+|------|-------------|
+| `-y, --yes` | Omitir confirmación |
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="show-the-current-domain" />
+
+### Mostrar el dominio actual
+
+```bash
+lizard domain
+```
+
+<span id="generate-a-subdomain" />
+
+### Generar un subdominio
+
+```bash
+lizard domain generate
+```
+
+<span id="attach-a-custom-domain" />
+
+### Adjuntar un dominio personalizado
+
+```bash
+lizard domain app.example.com --service web
+```
+
+Lizard devuelve los registros DNS que debes crear (un registro `CNAME` para el hostname y un registro `TXT` para la verificación). Agrégalos en tu proveedor de DNS y luego verifica:
+
+```bash
+lizard domain verify app.example.com
+```
+
+<span id="attach-a-domain-to-a-specific-port" />
+
+### Adjuntar un dominio a un puerto específico
+
+```bash
+lizard domain app.example.com --service web --port 8080
+```
+
+<span id="remove-a-domain" />
+
+### Eliminar un dominio
+
+```bash
+lizard domain delete app.example.com
+lizard domain rm app.example.com --yes
+```
+
+<span id="see-also" />
+
+## Véase también
+
+- [Networking](/networking) — dominios generados, TLS y servicios worker
+- [Desplegar a regiones](/deploy/regions) — selección de región para servicios

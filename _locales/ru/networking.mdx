@@ -1,0 +1,85 @@
+---
+description: "Каждому сервису выдается домен onlizard.com с автоматическим TLS. Подключите собственный хостнейм, верифицируйте DNS, пробросьте порт или удалите домен."
+---
+
+<span id="networking" />
+
+# Сетевое взаимодействие
+
+Каждому сервису в момент деплоя выдается сгенерированный `*.onlizard.com` домен с автоматическим TLS, независимо от региона. Подключите свой хостнейм, когда будете готовы выйти в прод.
+
+<span id="generated-domains" />
+
+## Сгенерированные домены
+
+Сервису автоматически создается домен по умолчанию. Посмотреть его (или сгенерировать новый):
+
+```bash
+lizard domain                    # show the service's current domain
+lizard domain generate           # generate a new *.onlizard.com subdomain
+```
+
+Объектное хранилище, обслуживаемое через [S3-аддон](/addons/storage), использует региональный шлюз (`s3-<region>.onlizard.com`) вместо стандартного домена.
+
+<span id="attach-a-custom-domain" />
+
+## Подключение собственного домена
+
+Хостнейм — это **позиционный аргумент**, отдельного `add` подкоманды не существует:
+
+```bash
+lizard domain app.example.com --service web
+```
+
+Lizard вернет DNS-записи, которые нужно создать (`CNAME` для хостнейма и `TXT` для верификации). Добавьте их у своего DNS-провайдера.
+
+<span id="verify" />
+
+## Верификация
+
+После распространения DNS активируйте домен:
+
+```bash
+lizard domain verify app.example.com
+```
+
+Команда проверяет `TXT` запись и активирует домен. TLS подготавливается автоматически.
+
+<span id="remove-a-domain" />
+
+## Удаление домена
+
+```bash
+lizard domain delete app.example.com
+lizard domain rm app.example.com --yes   # alias, skip confirmation
+```
+
+<span id="exposing-a-specific-port" />
+
+## Проброс конкретного порта
+
+Если сервис слушает нестандартный порт, подключите домен к этому порту:
+
+```bash
+lizard domain app.example.com --service web --port 8080
+```
+
+<span id="worker-services" />
+
+## Worker-сервисы
+
+У [сервисов в режиме worker](/deploy/workers) (`containerPort=0`) может всё равно отображаться сгенерированный домен, но он ничего не обслуживает — слушателя и маршрута балансировщика нет. Не подключайте собственный домен к worker-сервису.
+
+<span id="manage-in-the-dashboard" />
+
+## Управление в дашборде
+
+Раздел **Домены** в дашборде (`lizard open`) показывает статус верификации и TLS для каждого домена, а также позволяет визуально добавлять или удалять хостнеймы.
+
+<span id="see-also" />
+
+## См. также
+
+- [`lizard domain`](/cli/domain) — полная справка по командам.
+- [Регионы](/deploy/regions) — размещение сервисов и аддонов в одном регионе для низкой задержки.
+- [От прототипа к SaaS, за который платят](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#from-vibe-coded-prototype-to-a-saas-people-pay-for) — где собственный домен стоит среди прочих вещей, которые всё ещё нужны сгенерированному приложению.

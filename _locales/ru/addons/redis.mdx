@@ -1,0 +1,79 @@
+---
+description: "Добавьте экземпляр Managed Redis для кэширования, очередей, ограничения частоты запросов и pub/sub и подключите его к сервису с помощью одной ссылки."
+---
+
+# Managed Redis
+
+Управляемый экземпляр Redis для кэширования, очередей, ограничения частоты запросов и pub/sub.
+
+<span id="provision" />
+
+## Создание
+
+```bash
+lizard add redis
+```
+
+Первое дополнение Redis называется `redis`, поэтому `${{redis.REDIS_URL}}` работает сразу.
+
+<span id="environment-variables" />
+
+## Переменные окружения
+
+| Переменная | Описание |
+|----------|-------------|
+| `REDIS_URL` | Полная строка подключения (`redis://…`) |
+
+<span id="connect-a-service" />
+
+## Подключение сервиса
+
+```bash
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service api
+lizard redeploy --service api
+```
+
+Ссылка разрешается при развёртывании и обновляется при смене учётных данных дополнения.
+
+<span id="common-uses" />
+
+## Типовые варианты использования
+
+- **Кэширование** — сохраняйте вычисленные результаты с ключом запроса.
+- **Очередь / воркер** — используйте Redis вместе с [сервисом в режиме воркера](/deploy/workers), который обрабатывает задания.
+- **Ограничение частоты запросов / сессии** — быстрое разделяемое состояние для [реплик](/deploy/scaling).
+
+```bash
+# A worker that drains a Redis queue
+lizard add -r your-org/worker -n jobs
+lizard service set jobs --set containerPort=0
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service jobs
+lizard redeploy --service jobs
+```
+
+<span id="browse-keys" />
+
+## Просмотр ключей
+
+Откройте **Браузер Redis** в панели управления (`lizard open`), чтобы просмотреть ключи и значения. Для локального доступа:
+
+```bash
+lizard run --service api -- sh -c 'exec redis-cli -u "$REDIS_URL"'
+```
+
+<span id="grow-storage" />
+
+## Расширение хранилища
+
+```bash
+lizard scale --service redis --storage 4096
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [Управляемые дополнения](/addons) — соглашения об именах, ссылки и браузеры в панели управления.
+- [Фоновые воркеры](/deploy/workers) — использование Redis вместе с воркером, обрабатывающим очередь.
+
+`lizard run` запускает команду локально с выбранным окружением сервиса. Установите `redis-cli` локально и проверьте доступность конечной точки.

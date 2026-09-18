@@ -1,0 +1,144 @@
+---
+description: "JavaScript と Python 向け Lizard SDK のすべてのクラスとメソッド: Lizard、サンドボックス、CodeSandbox、ボリューム。オプションと戻り値の型も含みます。"
+---
+
+<span id="sdk-reference" />
+
+# SDK リファレンス
+
+`@lizard-build/sdk` (JS/TS) と `lizard-sdk` (Python) パッケージは、ほとんどのエージェント、アプリ、スクリプトが sandbox を操作するために使用します。このページではすべてのクラスとメソッドを一覧化しています。手順の説明は [クイックスタート](/sandboxes/quickstart) を参照してください。
+
+<span id="install--authenticate" />
+
+## インストールと認証
+
+```bash
+npm install @lizard-build/sdk    # JavaScript / TypeScript
+pip install lizard-sdk           # Python
+```
+
+SDK は環境変数から `LIZARD_API_KEY` を読み取るか、`Sandbox.create` / `Sandbox.connect` に明示的な `apiKey` オプションを受け取ります。キーの作成方法は [Quickstart → Authenticate](/sandboxes/quickstart#authenticate) を参照してください。
+
+すべてのサンドボックスは **プロジェクト** にも属します。使用量はプロジェクトごとに計測されるため、これを指定しない作成は拒否されます。
+
+## `Lizard`
+
+1 つのプロジェクトに固定されたクライアントです。毎回の呼び出しごとではなく、一度だけ project を指定すれば済みます。
+
+| メンバー | 説明 |
+|---|---|
+| `new Lizard({ project, apiKey?, apiUrl?, timeoutMs? })` | クライアントを作成します。`project` は必須です。プロジェクトの ID、slug、または名前を指定します（Python では `Lizard(project=…)`）。 |
+| `lizard.create(template?, options?)` | クライアントの project で サンドボックスを起動します。 |
+| `lizard.connect(sandboxId)` | ID で sandbox に接続し、一時停止中なら自動的に再開します。 |
+| `lizard.list()` | アカウントの実行中 sandbox をすべて一覧表示します。 |
+| `lizard.projectId()` | クライアントのプロジェクト参照をその ID に解決します（最初の呼び出し後はキャッシュされます）。 |
+
+```ts
+const lizard = new Lizard({ project: 'my-project' });
+const sandbox = await lizard.create('base');
+```
+
+```python
+lizard = Lizard(project="my-project")
+sandbox = lizard.create("base")
+```
+
+キーでアクセス可能なプロジェクトに一致しないプロジェクト参照は、sandbox が起動される前にエラーとなり、参照可能な project の一覧が表示されます。
+
+> 末尾にアンダースコアが付く Python のメソッド名（`exec_`）は予約語との衝突を避けるためのもので、プロパティは camelCase（`sandboxId`）ではなく snake_case（`sandbox_id`）です。以下の例では JS/TS 名を使用しています。メソッドシグネチャはインストール済みの Python パッケージを確認してください。
+
+## `Sandbox`
+
+| メンバー | 説明 |
+|---|---|
+| `Sandbox.create(template?, options?)` | サンドボックスを起動します。`template` の既定値は `'base'` です。`options.project` には課金対象のプロジェクトを指定します。 |
+| `Sandbox.connect(sandboxId)` | ID で sandbox に接続し、一時停止中なら自動的に再開します。 |
+| `Sandbox.list()` | アカウントの実行中 sandbox をすべて一覧表示します。 |
+| `sandbox.sandboxId` | sandbox の ID（Python では `sandbox_id`）。 |
+| `sandbox.process.exec(cmd)` | コマンドを実行して完了まで待機します（Python では `process.exec_`）。`{ stdout, stderr, exitCode }` を返します。 |
+| `sandbox.fs.write(path, data)` | ファイルを書き込みます。文字列または bytes に対応し、親ディレクトリも作成します。 |
+| `sandbox.fs.read(path)` | ファイルを UTF-8 文字列として読み取ります。 |
+| `sandbox.fs.list(path)` | ディレクトリエントリを一覧表示 → `[{ name, path, type, size }]`。 |
+| `sandbox.fs.makeDir(path)` | ディレクトリと不足している親ディレクトリを作成します。 |
+| `sandbox.fs.remove(path)` | ファイルまたはディレクトリを削除します。 |
+| `sandbox.getHost(port)` | `port` へのルートを登録し、TLS 終端された公開ホスト名を返します。 |
+| `sandbox.pause()` | guest vCPU を停止し、状態を host メモリに保持します。元の期限を超えて一時停止に依存する前に、[lifecycle status](#lifecycle-status) を確認してください。 |
+| `sandbox.resume()` | 一時停止した sandbox をその場で再開します。 |
+| `sandbox.setTimeout(ms)` | 実行中 sandbox の残りライフタイムをミリ秒単位で設定します（最小 1000）。 |
+| `sandbox.getInfo()` | メタデータを取得 → `{ sandboxId, template, startedAt, endAt, … }`。 |
+| `sandbox.kill()` | sandbox を即座に終了し、リソースを解放します。 |
+
+### `Sandbox.create(template?, options?)`
+
+| オプション | タイプ | デフォルト | 注記 |
+|---|---|---|---|
+| `template` | string | `'base'` | `'base'` または `'code-interpreter-v1'` — サポートされている 2 つの [templates](/sandboxes#templates) |
+| `project` | string | — | **必須。** 課金対象のプロジェクトを指定します。ID、slug、または名前を指定します（Python では `project`）。`Lizard` クライアント経由では不要です。 |
+| `projectId` | string | — | 正確な project ID。`project` の解決をスキップします |
+| `timeoutMs` | int | SDK の既定値 5 分 | ライフタイム（ms） |
+| `region` | string | auto | region に固定します |
+| `volumeId` | string | — | `/data` に [volume](/sandboxes/volumes) をアタッチします |
+| `apiKey` | string | `LIZARD_API_KEY` 環境変数 | 明示的な API キー。環境変数より優先されます |
+
+```ts
+const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 10 * 60 * 1000 });
+```
+
+## `CodeSandbox`
+
+状態を保持するカーネルで `Sandbox` を拡張したものです。完全な手順は [コード インタープリタ](/sandboxes/code-interpreter) を参照してください。
+
+| メンバー | 説明 |
+|---|---|
+| `CodeSandbox.create(options?)` | コードインタープリターを起動します（既定では `code-interpreter-v1` template を使用）。`Sandbox.create` と同じ `project` オプションを受け取ります。 |
+| `CodeSandbox.connect(sandboxId)` | 既存のコードインタープリター サンドボックスに接続し（必要なら自動再開し）ます。 |
+| `sandbox.runCode(code, opts?)` | カーネルでコードを実行します。`Execution` を返します。 |
+| `sandbox.createContext(opts)` | 分離された namespace を作成します — `{ language }`。 |
+| `sandbox.listContexts()` | サンドボックスのコンテキストを一覧表示します。 |
+| `sandbox.restartContext(context)` | コンテキスト内のすべての変数 / 状態をクリアします。 |
+| `sandbox.deleteContext(context)` | コンテキストのリソースを解放します。 |
+
+### `runCode(code, opts?)`
+
+| オプション | 説明 |
+|---|---|
+| `language` | 単発呼び出し用のランタイム — `'python'`（既定）、`'javascript'`、または `'bash'`。`context` とは同時に指定できません。 |
+| `context` | 既定のコンテキストではなく、特定の分離コンテキスト内で実行します。`language` とは同時に指定できません。 |
+| `onStdout` / `onStderr` | 生成される出力を行単位でストリーミングします。 |
+| `onResult` | 各リッチ結果（値、生成された画像 / グラフ）ごとに呼び出されます。 |
+| `onError` | コードが例外を投げた場合に `ExecutionError` を受け取って呼び出されます。 |
+
+`Execution` を返します:
+
+| フィールド | 説明 |
+|---|---|
+| `stdout` / `stderr` | キャプチャされた出力ストリーム |
+| `results` | リッチ結果（値、および生成された画像 / グラフ） |
+| `error` | コードが例外を投げた場合の `ExecutionError`（`name`、`message`、`traceback`） |
+| `executionCount` | カーネルの単調増加カウンタ |
+
+## `Volume`
+
+完全な手順は [Persistent Volumes](/sandboxes/volumes) を参照してください。
+
+| メンバー | 説明 |
+|---|---|
+| `Volume.create(projectId, name, options)` | volume を作成します。`options.sizeGb` の既定値は `5` です。 |
+| `Volume.list(projectId)` | project 内の volume を一覧表示 → `[{ id, name, sizeGb, status, attachedTo, … }]`。 |
+| `Volume.get(projectId, volumeId)` | 既存の volume へのハンドルを取得します。 |
+| `volume.getInfo(projectId)` | メタデータとアタッチ状態を取得します。 |
+| `volume.delete(projectId)` | volume を削除します — 先にデタッチされている必要があります。 |
+
+<span id="see-also" />
+
+## 関連項目
+
+- [Quickstart](/sandboxes/quickstart) — インストール、認証、完全な手順。
+- [コード インタープリタ](/sandboxes/code-interpreter) — `CodeSandbox` ガイド。
+- [Persistent Volumes](/sandboxes/volumes) — `Volume` ガイド。
+
+<span id="lifecycle-status" />
+
+## ライフサイクルステータス
+
+元の期限を超えてセッションを維持するために pause に依存する前に、[known issues](/platform/known-issues#sandbox-pause-and-expiration) を読んでください。pause は guest の状態を host メモリに保持しますが、永続的なバックアップではありません。
