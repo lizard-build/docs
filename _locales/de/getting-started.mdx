@@ -1,0 +1,134 @@
+---
+description: "Installieren Sie die lizard CLI, melden Sie sich an und stellen Sie Ihre erste App in wenigen Minuten aus einem GitHub-Repo oder einem lokalen Ordner bereit, und fügen Sie dann eine Datenbank hinzu."
+---
+
+<span id="app-quickstart" />
+
+# App-Schnellstart
+
+Stellen Sie Ihre erste App in wenigen Minuten auf Lizard bereit. Sie benötigen Node.js 18+ und npm — ein Lizard-Konto wird automatisch erstellt, wenn Sie zum ersten Mal `lizard login`. Sie installieren die CLI, melden sich an und stellen dann bereit — entweder direkt aus einem GitHub-Repo oder aus einem lokalen Verzeichnis.
+
+<span id="1-install-the-cli" />
+
+## 1. Die CLI installieren
+
+Installieren Sie die `lizard`-Binärdatei global über npm:
+
+```bash
+npm install -g @lizard-build/cli
+```
+
+Prüfen Sie, ob sie sich in Ihrem `PATH` befindet:
+
+```bash
+lizard --version
+```
+
+> **Verwenden Sie nicht `npx`.** Verwenden Sie immer die global installierte `lizard`-Binärdatei. Beim Ausführen von `npx @lizard-build/cli` wird eine Wegwerfkopie geladen, deren Version von der Plattform abweichen kann. Aktualisieren Sie sie später direkt mit `lizard upgrade`.
+
+> **Berechtigungsfehler (EACCES)?** Verwenden Sie nicht `sudo`. Setzen Sie stattdessen für npm ein Präfix in einem Verzeichnis, das Ihrem Benutzer gehört:
+> ```bash
+> mkdir -p ~/.npm-global
+> npm config set prefix ~/.npm-global
+> echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.zshrc && source ~/.zshrc
+> npm install -g @lizard-build/cli
+> ```
+
+<span id="2-log-in" />
+
+## 2. Anmelden
+
+```bash
+lizard login
+```
+
+Dadurch wird Ihr Browser zur Authentifizierung geöffnet und Sie kehren nach der Bestätigung in Ihr Terminal zurück. In CI oder anderen nicht interaktiven Umgebungen authentifizieren Sie sich stattdessen mit einem Token:
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+# or
+lizard login --token lzd_xxx
+```
+
+Sie können jederzeit prüfen, wer Sie sind:
+
+```bash
+lizard whoami
+```
+
+<span id="3-deploy" />
+
+## 3. Bereitstellen
+
+Wählen Sie den Weg, der zu dem Ort passt, an dem Ihr Code liegt.
+
+<span id="option-a--deploy-a-github-repo-recommended" />
+
+### Option A — Ein GitHub-Repo bereitstellen (empfohlen)
+
+Wenn Ihr Code auf GitHub liegt, erstellen Sie einen Service direkt aus dem Repo. Lizard klont es, erkennt den Stack automatisch, baut ihn und gibt eine Live-URL zurück:
+
+```bash
+lizard add -r your-org/your-app
+```
+
+Pushes auf den verfolgten Branch lösen ab dann automatisch eine erneute Bereitstellung aus. Bei privaten Repos verbinden Sie zuerst die GitHub App:
+
+```bash
+lizard git connect
+```
+
+<span id="option-b--deploy-local-code" />
+
+### Option B — Lokalen Code bereitstellen
+
+Laden Sie im Projektverzeichnis den aktuellen Ordner hoch und stellen Sie ihn bereit (berücksichtigt `.gitignore`):
+
+```bash
+lizard up
+```
+
+Wenn das Verzeichnis noch nicht mit einem Projekt verknüpft ist, erstellt oder wählt `up` es interaktiv aus. In CI verknüpfen Sie es vorher explizit mit `lizard init --name my-project`.
+
+In beiden Fällen erhalten Sie nach Abschluss des Builds eine generierte URL wie `https://your-app-production.onlizard.com`.
+
+<span id="4-watch-it-build-and-run" />
+
+## 4. Build und Ausführung beobachten
+
+```bash
+lizard ps          # services in the project, with status + URL
+lizard logs        # last runtime log lines
+lizard logs --build  # the most recent build's logs
+lizard open        # open the project in the dashboard
+```
+
+<span id="5-add-a-database-optional" />
+
+## 5. Eine Datenbank hinzufügen (optional)
+
+Stellen Sie ein Managed Postgres bereit und referenzieren Sie es aus Ihrem Service:
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service your-app
+lizard redeploy --service your-app
+```
+
+Die Referenz `${{postgres.DATABASE_URL}}` wird beim Bereitstellen aufgelöst und automatisch zusammen mit dem Add-on rotiert. Siehe [Managed Addons](/addons).
+
+<span id="next-steps" />
+
+## Nächste Schritte
+
+- **[Grundkonzepte](/concepts/architecture)** — Projekte, Services und die Build-Pipeline verstehen.
+- **[Bereitstellung über GitHub](/deploy/github)** — Branches, Monorepos und automatische erneute Bereitstellungen.
+- **[Variablen & Secrets](/variables)** — Geltungsbereich und Priorität.
+- **[Netzwerk](/networking)** — Ihren eigenen Hostnamen mit automatischem TLS verbinden.
+- **[Eine App bereitstellen, die Ihre AI IDE erstellt hat](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — dieselben drei Schritte, nur stattdessen an einen Agenten übergeben, für eine in Google Antigravity geschriebene App.
+
+<span id="hosting-costs" />
+
+## Hosting-Kosten
+
+Lizard verwendet [pay as you go](/platform/billing) ohne monatliches Abonnement. Die Ressourcennutzung wird mit Ihrem Kontoguthaben verrechnet. Gekaufte Guthaben verfallen nicht; Testguthaben schon. Prüfen Sie vor der Bereitstellung [die Preise](https://lizard.build/pricing) und Ihre Kontolimits.

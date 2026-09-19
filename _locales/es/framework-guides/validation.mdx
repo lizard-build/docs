@@ -1,0 +1,72 @@
+---
+description: "Resultados de la guía de frameworks de 16 despliegues reales con Lizard CLI el 9 de septiembre de 2026: versiones probadas, rutas, formularios, migraciones, URL canónicas y límites."
+---
+
+<span id="framework-guide-test-results" />
+
+# Resultados de pruebas de la guía de frameworks
+
+El 9 de septiembre de 2026, las 16 recetas de 11 frameworks superaron una compilación local y un nuevo despliegue en la nube con Lizard CLI 0.3.95. Seguimos la configuración publicada, creamos un proyecto y un servicio nuevos para cada receta y subimos el código fuente con `lizard up`. Estos resultados cubren las versiones y las pequeñas apps de prueba indicadas abajo.
+
+La ejecución en la nube superó 100 comprobaciones de rutas, API y formularios, además de 45 comprobaciones de archivos JavaScript y CSS enlazados. También superaron las migraciones de Django, una escritura y lectura en la base de datos, y las URL finales de los sitios de Docusaurus y Hugo.
+
+<span id="tested-recipes" />
+
+## Recetas probadas
+
+| Receta | Versiones probadas | Puerto | Comprobación en la nube |
+|---|---|---|---|
+| Next.js server | Next.js 16.3.4, React 19.2.8 | `3000` | Superado |
+| Exportación estática de Next.js | Next.js 16.3.4, React 19.2.8 | `80` | Superado |
+| React with Vite | React 19.2.8, Vite 8.2.2 | `80` | Superado |
+| Vue with Vite | Vue 3.5.42, Vue Router 5.3.1, Vite 8.2.2 | `80` | Superado |
+| Astro static | Astro 7.3.1 | `80` | Superado |
+| Servidor Node de Astro | Astro 7.3.1, Node adapter 11.1.5 | `3000` | Superado |
+| Nuxt Node server | Nuxt 4.5.2 | `3000` | Superado |
+| Nuxt generate | Nuxt 4.5.2 | `80` | Superado |
+| Servidor Node de SvelteKit | SvelteKit 2.70.3, Svelte 5.57.0, adapter-node 5.5.7 | `3000` | Superado |
+| SvelteKit static | SvelteKit 2.70.3, Svelte 5.57.0, adapter-static 3.0.10 | `80` | Superado |
+| Docusaurus | Docusaurus 3.10.2 | `80` | Superado |
+| VitePress, raíz de docs | VitePress 1.6.4 | `80` | Superado |
+| VitePress, raíz del proyecto | VitePress 1.6.4 | `80` | Superado |
+| FastAPI | FastAPI 0.141.1, Uvicorn 0.52.4 | `8000` | Superado |
+| Django | Django 6.1.1, Gunicorn 26.2.0, WhiteNoise 6.12.0, psycopg 3.3.5 | `8000` | Superado |
+| Hugo | Hugo 0.165.0 (extended) | `80` | Superado |
+
+Las compilaciones de JavaScript usaron Node 22; las compilaciones de Python usaron Python 3.13. Las subidas se ejecutaron desde macOS sin `COPYFILE_DISABLE`. Los manifiestos de paquetes y lockfiles fijan las versiones indicadas arriba. Las etiquetas de imagen de contenedor pueden cambiar de forma independiente de un lockfile de paquetes.
+
+<span id="what-we-checked-on-september-9" />
+
+## Qué comprobamos el 9 de septiembre
+
+- Ejecutamos los comandos documentados de compilación local y servidor en contenedores Linux, luego ejecutamos `lizard init`, `lizard add` y `lizard up` para cada receta. Leímos los logs de compilación y ejecución en la nube y comprobamos el estado final del servicio y el puerto.
+- Solicitamos la página de inicio pública, una ruta interna, un recurso real, una página inexistente y una ruta de JavaScript inexistente. Los sitios de contenido estático devolvieron 404 reales; React y Vue mantuvieron su fallback SPA documentado. Ambos diseños de VitePress devolvieron el contenido correcto en URL limpias.
+- Comprobamos respuestas de API en tiempo de solicitud, manejadores POST, resultados de formularios de SvelteKit y el rechazo de un formulario desde un origen no confiable. Enviamos el formulario desplegado de Next.js Server Acción por HTTP usando su ID de acción generado y comprobamos la redirección y el valor devuelto.
+- Volvimos a compilar Docusaurus y Hugo después de configurar el hostname generado en la configuración. Las URL canónicas de Docusaurus y ambos sitemaps usaron el host público.
+- Ejecutamos las migraciones de Django contra Managed Postgres dos veces, escribimos y leímos una fila de prueba, servimos archivos estáticos recopilados, aceptamos un formulario CSRF válido y rechazamos un formulario sin su token.
+
+Cada receta usó un proyecto de prueba independiente, con nombres distintos para mantener la ejecución aislada. Espacio de trabajo, region y las flags JSON hicieron explícito el contexto de prueba. Los overrides de servicio de compilación, inicio y ruta de Dockerfile se dejaron sin configurar. Solo las recetas de Exportación estática de Next.js, Nuxt generate y Django proporcionaron los Dockerfiles documentados en sus guías. Las pruebas de Docusaurus, VitePress, Hugo y SvelteKit Node incluyeron los [ejemplos de código publicados](https://github.com/lizard-build/docs/tree/main/_examples).
+
+<span id="browser-checks" />
+
+## Comprobaciones en navegador
+
+La ejecución del 9 de septiembre confirmó un clic en un botón de React en el navegador. Luego, la conexión del navegador devolvió timeouts repetidos durante la navegación y la lectura de páginas, por lo que esta ejecución **no** afirma una nueva validación en navegador para las 16 recetas. Las comprobaciones de rutas HTTP y formularios se superaron de forma independiente.
+
+La ejecución del 7 de septiembre incluyó recargas directas de rutas, interacción con React, navegación con Vue Router, Next.js Server Actions y envíos de formularios de SvelteKit en un navegador. Esos siguen siendo resultados de esa ejecución anterior.
+
+<span id="fixes-since-the-first-run" />
+
+## Correcciones desde la primera ejecución
+
+La ejecución del 7 de septiembre encontró pasos faltantes de creación de servicios, una incompatibilidad del preset estático de Nuxt, defectos de enrutamiento estático, metadatos de archivo macOS, códigos de salida de compilación fallida y errores de cambio de puerto. Las guías ahora incluyen `lizard add` y la configuración estática corregida de Nuxt.
+
+La reverificación del enrutamiento estático del 8 de septiembre se superó sin Dockerfiles personalizados para Astro static, SvelteKit static, Docusaurus, Hugo y ambos diseños de VitePress. Las compilaciones nuevas incluyen esas reglas de enrutamiento; las imágenes existentes necesitan una recompilación.
+
+Lizard CLI 0.3.95 incluye las correcciones del archivo y de los códigos de salida de compilación fallida. Las comprobaciones de producción del 9 de septiembre también verificaron cambios del puerto del servicio y la conservación de un puerto explícito durante la subida y la recompilación. Consulta [problemas conocidos](/platform/known-issues) para ver las notas de la versión y los límites restantes.
+
+<span id="limits-of-these-results" />
+
+## Límites de estos resultados
+
+Estas comprobaciones cubren las subidas de código fuente y los modos documentados. No establecen compatibilidad con cada plugin, adapter, tema, versión de framework, ruta de despliegue de GitHub, procedimiento de recuperación de base de datos o carga de trabajo con múltiples réplicas. La pequeña app de prueba de Django sigue mostrando advertencias de seguridad de `check --deploy`; no es una configuración de seguridad de producción completa. Estas pruebas no miden rankings de búsqueda ni citas de IA. Comprueba las rutas y operaciones de datos de tu propia app antes del lanzamiento.

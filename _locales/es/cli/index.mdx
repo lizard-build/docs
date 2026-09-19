@@ -1,0 +1,88 @@
+---
+description: "Instala y actualiza lizard CLI, autentícate y consulta las banderas globales, los códigos de salida y el descubrimiento del esquema en tiempo de ejecución para cada comando."
+---
+
+<span id="cli-reference" />
+
+# Referencia de CLI
+
+La CLI de `lizard` es la interfaz principal de la plataforma. Esta página cubre la instalación, las banderas globales, los códigos de salida y el descubrimiento en tiempo de ejecución. Cada comando tiene su propia página de referencia en la barra lateral: consulta [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets) y el resto.
+
+> Referencia generada con la CLI **v0.3.62**. Ejecuta `lizard <cmd> --help --json` para obtener el esquema exacto de cualquier comando, correspondiente a tu versión.
+
+<span id="install--upgrade" />
+
+## Instalar y actualizar
+
+```bash
+npm install -g @lizard-build/cli
+lizard --version
+lizard upgrade            # update to the latest version
+lizard upgrade --check    # check without installing
+```
+
+Usa siempre el binario `lizard` instalado globalmente, **no** `npx`. Consulta [Quickstart](/getting-started#1-install-the-cli) para corregir errores de permisos.
+
+<span id="authentication" />
+
+## Autenticación
+
+```bash
+lizard login                  # browser OAuth
+lizard login --token lzd_xxx  # token auth
+lizard logout
+lizard whoami                 # current user, workspace, linked project
+```
+
+En CI, configura `LIZARD_TOKEN` en el entorno en lugar de ejecutar `login`.
+
+<span id="global-flags" />
+
+## Banderas globales
+
+| Bandera | Descripción |
+|------|-------------|
+| `-V, --version` | Muestra la versión de la CLI |
+| `--json` | Salida legible por máquinas. Combínala con `--help` para volcar el esquema de un comando |
+
+La mayoría de los comandos también aceptan `-p, --project`, `-s, --service` y `-w, --workspace` para apuntar a un recurso específico en lugar del enlazado.
+
+<span id="exit-codes" />
+
+## Códigos de salida
+
+| Código | Significado | Qué hacer |
+|------|---------|------------|
+| `0` | éxito | continuar |
+| `1` | error genérico | lee el mensaje |
+| `2` | auth (401/403) | ejecuta `lizard login` |
+| `3` | no encontrado (404) | comprueba el nombre con `lizard ps` / `lizard project list` |
+| `4` | tiempo de espera agotado (408/504) | reintenta |
+| `5` | cancelado por el usuario | detente |
+
+<span id="runtime-discovery" />
+
+## Descubrimiento en tiempo de ejecución
+
+La CLI se autodocumenta. Para ver el árbol completo de comandos, las banderas globales y los códigos de salida:
+
+```bash
+lizard --help --json
+```
+
+Para ver los argumentos y opciones exactos de cualquier comando o subcomando:
+
+```bash
+lizard <cmd> --help --json
+lizard <cmd> <sub> --help --json     # e.g. lizard service set --help --json
+```
+
+Esto siempre refleja tu versión instalada; es preferible a adivinar la forma de las banderas. También es como un agente aprende la CLI sin haber sido entrenado con ella: consulta [despliegue desde Claude Code](https://lizard.build/blog/deploy-from-claude-code).
+
+<span id="configuration--state" />
+
+## Configuración y estado
+
+- La CLI almacena la autenticación y el enlace del proyecto del directorio actual en `~/.lizard/config.json`.
+- `lizard status` muestra el enlace de workspace/proyecto/servicio del cwd (no requiere autenticación).
+- `lizard config apply` aplica un archivo `lizard-config.json` a un proyecto (usa `--dry-run` para previsualizar).

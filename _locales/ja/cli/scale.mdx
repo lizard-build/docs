@@ -1,0 +1,67 @@
+---
+description: "lizard scale はサービスのレプリカ数、CPU、メモリを変更し、アドオンのストレージを拡張します。各フラグで許可される値と例を示します。"
+---
+
+# lizard scale
+
+サービスをスケールします（レプリカ数 / CPU / メモリ / ストレージ）。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard scale [flags]
+```
+
+<span id="flags" />
+
+## フラグ
+
+| フラグ | 説明 |
+|------|-------------|
+| `--replicas <n>` | レプリカ数 `1`–`10`（アプリ） |
+| `--cpu <cores>` | `1`、`2`、`3`、または `4` |
+| `--memory <mb>` | `128`–`8192` MB |
+| `--storage <mb>` | アドオンボリュームのサイズ、拡張のみ |
+
+<span id="examples" />
+
+## 例
+
+<span id="scale-replicas-horizontally" />
+
+### レプリカ数を水平方向にスケール
+
+```bash
+lizard scale --service api --replicas 5
+```
+
+各レプリカは、ロードバランサーの背後にある独立した pod です。レプリカを相互に置き換えられるように、アプリがステートレスであることを確認してください。
+
+<span id="scale-cpu-and-memory-vertically" />
+
+### CPU とメモリを垂直方向にスケール
+
+```bash
+lizard scale --service api --cpu 4 --memory 8192
+```
+
+<span id="grow-addon-storage" />
+
+### アドオンストレージを拡張
+
+```bash
+lizard scale --service postgres --storage 8192
+```
+
+アドオンのデータボリュームは拡張のみです — ストレージは増やせますが、縮小はできません。
+
+<span id="see-also" />
+
+## 関連項目
+
+- [Scaling](/deploy/scaling) — 水平スケーリングと垂直スケーリング、およびアドオンストレージの拡張
+- [lizard metrics](/cli/metrics) — スケール変更の前後で CPU / メモリ / ネットワーク / ディスクを確認
+- [lizard ps](/cli/ps) — スケール変更後にレプリカの状態を確認
+- [オブザーバビリティ → Metrics](/observability/metrics) — リソースとコストの監視

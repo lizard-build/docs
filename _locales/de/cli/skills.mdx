@@ -1,0 +1,61 @@
+---
+description: "lizard skills liest die mit deiner CLI-Version gebündelten Agentenleitfäden, sodass ein KI-Agent immer Anweisungen erhält, die zur Binärdatei passen."
+---
+
+# lizard skills
+
+Lies die eingebetteten Agenten-Skills, die mit dieser CLI-Version ausgeliefert werden.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard skills list
+lizard skills get core
+lizard skills path
+```
+
+<span id="subcommands" />
+
+## Unterbefehle
+
+### `lizard skills list`
+
+Liste die verfügbaren eingebetteten Skills auf.
+
+### `lizard skills get core`
+
+Lies den Core-Anleitung — den maßgeblichen Nutzungsleitfaden für die Plattform, versioniert mit der CLI. Er gibt `{ name, frontmatter, content, … }` zurück, wobei `content` der vollständige Leitfaden ist (Build-Pipeline, env-Priorität, Add-ons, Discovery, Exit-Codes).
+
+### `lizard skills path`
+
+Zeige an, wo Skills auf dem Datenträger gespeichert sind.
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="load-the-core-guide-as-an-agent" />
+
+### Den Core-Anleitung als Agent laden
+
+```bash
+lizard skills get core --json
+```
+
+<span id="list-available-embedded-skills" />
+
+### Verfügbare eingebettete Skills auflisten
+
+```bash
+lizard skills list
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [AI agents & MCP](/agents) — wie Agenten mit dem eingebetteten Skill und selbstbeschreibenden Befehlen starten
+- [JSON & automation](/cli/json) — das Ausgabeformat `--json`, das von `lizard skills get core --json` verwendet wird
+- [Von Claude Code bereitstellen](https://lizard.build/blog/deploy-from-claude-code) — den Skill installieren und das Deployment end-to-end an den Agenten übergeben

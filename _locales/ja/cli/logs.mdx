@@ -1,0 +1,93 @@
+---
+description: "lizard logs はサービスのランタイムログをストリーミングするか、--build、--tail、--level でビルドログ、再起動ログ、フィルタ済み履歴を取得します。"
+---
+
+# lizard logs
+
+サービスのランタイムログをストリーミングします。直近 200 行を表示したあと、ライブ tail を続けます。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard logs [flags]
+```
+
+<span id="flags" />
+
+## フラグ
+
+| フラグ | 説明 |
+|------|-------------|
+| `--build` | 代わりにビルドログを表示 |
+| `--tail <n>` | 直近 N 行（最大 1000） |
+| `-l, --level <level>` | レベルでフィルタ |
+| `--restarts [n]` | 最近の再起動を一覧表示 |
+| `--restart <id>` | 特定の再起動前後のログ（最新は `latest`） |
+| `-s, --service <id>` | サービス |
+
+`--json` を使うと、`lizard logs` はストリームではありません。直近 200 行を返し（`--tail N` で上書き、最大 1000）、終了します。スナップショットやスクリプトで使用してください。ライブストリームになるのは `--json` がない場合だけです。
+
+<span id="examples" />
+
+## 例
+
+<span id="tail-runtime-logs" />
+
+### ランタイムログを tail する
+
+```bash
+lizard logs
+```
+
+<span id="tail-logs-for-a-specific-service" />
+
+### 特定のサービスのログを tail する
+
+```bash
+lizard logs --service api
+```
+
+<span id="get-more-history" />
+
+### より多くの履歴を取得する
+
+```bash
+lizard logs --tail 1000
+```
+
+<span id="filter-by-log-level" />
+
+### ログレベルでフィルタする
+
+```bash
+lizard logs --level error
+```
+
+<span id="check-the-most-recent-build" />
+
+### 最新のビルドを確認する
+
+```bash
+lizard logs --build
+```
+
+<span id="inspect-a-crash-or-restart" />
+
+### クラッシュまたは再起動を調査する
+
+```bash
+lizard logs --restarts
+lizard logs --restart latest
+lizard logs --restart <id>
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [ログ](/observability/logs) — ランタイム、ビルド、再起動ログの挙動、および `lizard service logs` で履歴をページ送りする方法
+- [Incomplete Dockerfile](/deploy/troubleshooting/incomplete-dockerfile) — `lizard logs --build` から失敗したビルドを診断する
+- [lizard events](/cli/events) — デプロイ履歴とレプリカのステータス
+- [Claude Codeからデプロイする](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) — ビルド失敗時にエージェントが実行する、ログ確認、修正、再デプロイのループ

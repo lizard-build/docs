@@ -1,0 +1,116 @@
+---
+description: "Aloja un servidor MCP remoto en Lizard con Streamable HTTP, comprobaciones de token bearer, un endpoint de estado y un cliente que verifica una llamada a herramienta."
+---
+
+<span id="host-a-remote-mcp-server" />
+
+# Alojar un servidor MCP remoto
+
+Implementa un servidor MCP como una aplicación HTTP cuando los clientes necesiten una URL remota. Este ejemplo sirve una herramienta aritmética, valida un token bearer y expone un endpoint de estado. Usa Streamable HTTP; un servidor local `stdio` no puede servir por sí solo a clientes remotos.
+
+<span id="before-you-start" />
+
+## Antes de empezar
+
+Necesitas Node.js 22, Lizard CLI, un proyecto que puedas desplegar y un cliente MCP que acepte un token bearer configurado. El ejemplo usa `@modelcontextprotocol/sdk` 1.30.0 en modo stateless. No proporciona inicio de sesión OAuth, acceso desde navegador ni un proveedor de identidad.
+
+Los archivos ejecutables están en [remote-mcp-node](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/remote-mcp-node). Usa el lockfile incluido en el repositorio. La prueba local rápida comprueba la inicialización, el descubrimiento de herramientas, una llamada a herramienta y el rechazo sin un token válido. Una comprobación de despliegue también debe confirmar el proxy público y la ruta TLS.
+
+<span id="run-locally" />
+
+## Ejecutar localmente
+
+Desde el directorio del ejemplo:
+
+```bash
+npm ci
+npm test
+node issue-token.mjs
+export MCP_PUBLIC_KEY="$(cat .mcp-public-key.pem)"
+export MCP_ALLOWED_HOSTS=127.0.0.1,localhost
+npm start
+```
+
+El token generado caduca después de una hora. La clave privada de firma no se guarda. Usa tu propio emisor de tokens y proceso de rotación para un despliegue duradero; mantén su clave privada fuera del servidor.
+
+En otra terminal:
+
+```bash
+export MCP_URL=http://127.0.0.1:8000/mcp
+export MCP_TOKEN="$(cat .mcp-token)"
+node client.mjs
+```
+
+El cliente comprueba la inicialización, el descubrimiento de herramientas y el resultado `5`, y luego imprime `MCP initialize, tools/list and tools/call passed: 5`. `/health` devuelve `ok`; una solicitud a `/mcp` sin un token válido devuelve `401`.
+
+<span id="deploy-the-application" />
+
+## Desplegar la aplicación
+
+Mantén el Dockerfile y el lockfile del ejemplo. Desde el directorio que los contiene:
+
+```bash
+lizard init --name mcp-example
+lizard add --service mcp
+lizard domain --service mcp --json
+```
+
+Inicia sesión con `lizard login` si un comando informa de que se requiere autenticación. `init` vincula el proyecto; `add` crea el servicio con el nombre indicado. El comando de dominio asigna su nombre de host antes del despliegue. Usa el `hostname` devuelto abajo, sin `https://` ni una ruta:
+
+```bash
+lizard secrets set MCP_PUBLIC_KEY="$(cat .mcp-public-key.pem)" --service mcp
+lizard secrets set MCP_ALLOWED_HOSTS=YOUR_SERVICE_HOSTNAME --service mcp
+```
+
+Configura ambos valores antes del primer despliegue. Luego ejecuta:
+
+```bash
+lizard up --service mcp --port 8000
+lizard logs --build --service mcp --json
+lizard logs --service mcp --json
+lizard ps --json
+```
+
+En macOS con Lizard CLI 0.3.92, usa `COPYFILE_DISABLE=1 lizard up --service mcp --port 8000` para excluir metadatos AppleDouble del archivo. Una versión posterior de la CLI puede incluir la corrección del archivo. Comprueba el evento final del despliegue y el endpoint público; no dependas solo del código de salida de esta versión de la CLI después de una compilación fallida. `server.mjs` escucha en `0.0.0.0` y lee `PORT`, con 8000 como valor predeterminado. El comando de despliegue establece el puerto del servicio en 8000. Configura la clave pública como un valor de entorno multilínea; no subas la clave privada de firma ni el archivo del token.
+
+<span id="verify-the-public-endpoint" />
+
+## Verificar el endpoint público
+
+Configura `MCP_URL` en `https://YOUR_SERVICE_HOSTNAME/mcp`, mantén un token válido en el entorno del cliente y ejecuta `node client.mjs`. Verifica los tres resultados:
+
+1. `/health` devuelve `200` a través de HTTPS.
+2. `/mcp` rechaza a un cliente sin un token válido.
+3. El cliente autenticado lista herramientas y llama a `add`, devolviendo `5`.
+
+Un proceso en buen estado por sí solo no demuestra que el handshake de MCP o la respuesta en streaming funcionen a través del proxy público.
+
+<span id="troubleshooting" />
+
+## Solución de problemas
+
+| Resultado | Comprobar |
+|---|---|
+| El proceso se cierra durante el arranque | `MCP_PUBLIC_KEY` debe contener la clave PEM pública; `MCP_ALLOWED_HOSTS` debe contener el nombre de host del servicio. |
+| `401` | El token debe usar RS256, coincidir con el emisor y la audiencia `mcp-example`, y no haber caducado. |
+| `403` | Haz coincidir el nombre de host de la solicitud con `MCP_ALLOWED_HOSTS`. Los orígenes de navegador no están habilitados en este ejemplo. |
+| `405` con un token válido | Este endpoint MCP stateless acepta solicitudes del protocolo mediante POST. Usa un cliente MCP. Un GET desde navegador sin token devuelve primero `401`. |
+| La prueba local pasa pero la llamada remota falla | Comprueba el puerto, HTTPS, el streaming de la respuesta y los tiempos de espera del proxy. |
+
+<span id="limits-and-cost" />
+
+## Límites y coste
+
+Este ejemplo no mantiene sesiones de usuario ni archivos persistentes en la memoria del servidor. Añade una base de datos para el estado persistente de la aplicación y comprueba el acceso por usuario antes de exponer herramientas privadas. Para clientes que requieran descubrimiento OAuth o inicio de sesión interactivo, añade un proveedor de OAuth compatible en lugar de distribuir este token de prueba.
+
+Un proceso HTTP puede permanecer activo entre llamadas. Consulta [pricing](https://lizard.build/pricing), [limits](/platform/limits) y el uso medido de CPU/memoria; una cola de solicitudes vacía no implica que no haya cargos.
+
+<span id="next-steps" />
+
+## Siguientes pasos
+
+- [Referencias de entorno](/variables/references)
+- [Recuperación de despliegues](/concepts/deployments)
+- [Guía del servidor MCP TypeScript SDK](https://ts.sdk.modelcontextprotocol.io/server)
+
+Consulta [resultados de pruebas de escenario](/guides/validation) para ver las versiones comprobadas, los resultados en la nube y los límites restantes.

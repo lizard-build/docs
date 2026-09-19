@@ -1,0 +1,66 @@
+---
+description: "lizard init создаёт или выбирает проект и связывает его с текущей директорией, включая явную форму, необходимую в CI."
+---
+
+# lizard init
+
+Создаёт или выбирает проект и связывает его с текущей директорией.
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard init [flags]
+```
+
+<span id="flags" />
+
+## Флаги
+
+| Флаг | Описание |
+|------|-------------|
+| `-n, --name <name>` | Имя проекта (создастся, если отсутствует) |
+| `-w, --workspace <ws>` | ID, слаг или имя рабочей области |
+| `--force` | Пересвязать даже если уже связано |
+
+<span id="examples" />
+
+## Примеры
+
+<span id="link-the-current-directory-interactively" />
+
+### Интерактивно связать текущую директорию
+
+```bash
+lizard init
+```
+
+<span id="link-explicitly-in-ci" />
+
+### Явно связать в CI
+
+`lizard up` запустит `init` за вас в TTY, но в не-TTY среде (CI) выдаст ошибку вместо того, чтобы молча создать проект. Свяжите явно сначала:
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+lizard init --name my-project
+lizard up --ci --service api
+```
+
+<span id="relink-a-directory-thats-already-linked" />
+
+### Пересвязать директорию, которая уже связана
+
+```bash
+lizard init --name my-project --force
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [lizard link](/cli/link) — связать текущую директорию с существующим проектом вместо создания нового
+- [lizard status](/cli/status) — показать связанную рабочую область, проект и сервис для текущей директории
+- [lizard up](/cli/up) — загрузить и развернуть текущую директорию
+- [Основные понятия](/concepts/architecture) — проекты, сервисы и конвейер сборки

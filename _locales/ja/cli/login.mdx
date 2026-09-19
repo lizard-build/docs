@@ -1,0 +1,63 @@
+---
+description: "lizard login はブラウザまたは API token を使って認証します。加えて、CI で LIZARD_TOKEN を使って非対話的に認証する方法も説明します。"
+---
+
+# lizard login
+
+Lizard にログインします。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard login [flags]
+```
+
+デフォルトでは、OAuth で認証するためにブラウザが開き、確認が完了するとターミナルに戻ります。
+
+<span id="flags" />
+
+## フラグ
+
+| フラグ | 説明 |
+|------|-------------|
+| `--token <token>` | API token で認証 |
+
+<span id="examples" />
+
+## 例
+
+<span id="log-in-via-browser" />
+
+### ブラウザでログイン
+
+```bash
+lizard login
+```
+
+<span id="log-in-with-a-token" />
+
+### token でログイン
+
+```bash
+lizard login --token lzd_xxx
+```
+
+<span id="log-in-non-interactively-in-ci" />
+
+### CI で非対話的にログイン
+
+CI またはその他の非対話環境では、`login` を実行する代わりに、環境変数に `LIZARD_TOKEN` を設定します:
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [lizard logout](/cli/logout) — ログアウト
+- [lizard whoami](/cli/whoami) — 現在のユーザー、アクティブなワークスペース、リンクされたプロジェクトを表示
+- [CLI reference](/cli) — グローバルフラグ、終了コード、認証の概要

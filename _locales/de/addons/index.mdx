@@ -1,0 +1,80 @@
+---
+description: "Stellen Sie verwaltetes Postgres, Redis und S3-kompatiblen Speicher mit einem einzigen lizard add-Befehl bereit und binden Sie sie dann per Referenz in Services ein."
+---
+
+<span id="managed-addons" />
+
+# Verwaltete Addons
+
+Lizard stellt verwaltetes **Postgres**, **Redis** und **S3-kompatiblen Objektspeicher** mit einem einzigen Befehl bereit. Jedes Add-on befindet sich in Ihrem Projekt, stellt einen festen Satz von Umgebungsvariablen bereit und wird von Ihren Services über [Referenzen](/concepts/architecture#cross-resource-references) verwendet.
+
+<span id="provision-an-addon" />
+
+## Ein Add-on bereitstellen
+
+```bash
+lizard add postgres            # one addon
+lizard add postgres redis s3   # several at once
+lizard add --list              # show available types
+```
+
+<span id="naming" />
+
+## Benennung
+
+Das **erste** Add-on eines bestimmten Typs erhält den bloßen Typ als Namen — daher funktioniert `${{postgres.DATABASE_URL}}` sofort. Zusätzliche Addons desselben Typs erhalten einen generierten Namen wie `postgres-autumn-bear`.
+
+Es gibt keinen Fallback über einen Typ-Alias: Eine Referenz muss den **tatsächlichen** Namen des Addons verwenden. Da Referenzen per ID gespeichert werden, können Sie ein Add-on später umbenennen, ohne bestehende Verbraucher zu beeinträchtigen:
+
+```bash
+lizard service rename --service postgres   # addons rename through the same command
+```
+
+<span id="consuming-an-addon" />
+
+## Ein Add-on verwenden
+
+Referenzieren Sie die Variablen eines Addons aus jedem Service. Die Referenz wird beim Bereitstellen aufgelöst und automatisch rotiert, wenn sich die Zugangsdaten des Addons ändern:
+
+```bash
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+lizard redeploy --service api
+```
+
+Beschränken Sie die Referenz auf die Services, die sie tatsächlich verwenden (siehe [Secret-Scoping](/variables#scoping)).
+
+<span id="variables-by-type" />
+
+## Variablen nach Typ
+
+| Add-on | Variablen |
+|-------|-----------|
+| **postgres** | `DATABASE_URL`, `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `POSTGRES_USER`, `POSTGRES_DB`, `POSTGRES_PASSWORD` |
+| **redis** | `REDIS_URL` |
+| **s3** | `S3_ENDPOINT`, `S3_DEFAULT_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION` |
+
+<span id="dashboard-browsers" />
+
+## Browser im Dashboard
+
+Das [Dashboard](/dashboard) enthält einen Datenbrowser für jedes Add-on — einen SQL-/Tabellen-Editor für Postgres, einen Key-Browser für Redis und einen Bucket-/Objekt-Browser für S3 — sodass Sie Daten prüfen und bearbeiten können, ohne Lizard zu verlassen.
+
+<span id="storage" />
+
+## Speicher
+
+Daten-Volumes von Addons sind **nur erweiterbar**. Erhöhen Sie die Kapazität mit:
+
+```bash
+lizard scale --service postgres --storage 8192
+```
+
+<span id="per-type-guides" />
+
+## Anleitungen nach Typ
+
+- [Postgres](/addons/postgres)
+- [Redis](/addons/redis)
+- [Object Storage (S3)](/addons/storage)
+
+Warum ein Prototyp in der Regel alle drei gleichzeitig braucht, erfahren Sie unter [dem Rest des Stacks, den ein SaaS braucht](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#the-rest-of-the-stack-a-saas-needs).

@@ -1,0 +1,80 @@
+---
+description: "lizard git verbindet die GitHub App, meldet den Repository-Status und wechselt einen Service mit einer erneuten Bereitstellung auf einen anderen Branch."
+---
+
+# lizard git
+
+Verwalte die GitHub-Verbindung für das verknüpfte Projekt und seine Services.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard git connect
+lizard git status
+lizard git checkout <service> <branch> [flags]
+```
+
+<span id="subcommands" />
+
+## Unterbefehle
+
+### `lizard git connect`
+
+Verbinde die GitHub App, um auf private Repositories zuzugreifen.
+
+### `lizard git status`
+
+Zeige die GitHub-Verbindung und den Repository-Status an.
+
+### `lizard git checkout <service> <branch>`
+
+Wechsle einen Service auf einen anderen Branch und stelle ihn erneut bereit.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `--detach` | Log-Streaming überspringen |
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="connect-the-github-app" />
+
+### GitHub App verbinden
+
+```bash
+lizard git connect
+```
+
+<span id="check-connection-and-repository-status" />
+
+### Verbindungs- und Repository-Status prüfen
+
+```bash
+lizard git status
+```
+
+<span id="switch-a-service-to-a-different-branch" />
+
+### Einen Service auf einen anderen Branch umstellen
+
+```bash
+lizard git checkout api staging
+```
+
+<span id="switch-branches-without-streaming-logs" />
+
+### Branches wechseln, ohne Logs zu streamen
+
+```bash
+lizard git checkout api staging --detach
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Von GitHub bereitstellen](/deploy/github) — ein Repository verbinden, automatische erneute Bereitstellung bei Push und Monorepo-Einrichtung
+- [lizard add](/cli/add) — einen Service aus einem GitHub-Repository erstellen

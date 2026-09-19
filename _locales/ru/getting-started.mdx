@@ -1,0 +1,134 @@
+---
+description: "Установите Lizard CLI, войдите в систему и отправьте свое первое приложение из репозитория GitHub или локальной папки за несколько минут, а затем добавьте базу данных."
+---
+
+<span id="app-quickstart" />
+
+# Быстрый старт приложения
+
+Отправьте свое первое приложение на Lizard за несколько минут. Вам понадобятся Node.js 18+ и npm — аккаунт Lizard создается автоматически при первом запуске `lizard login`. Вы установите CLI, войдете в систему и выполните развертывание — прямо из репозитория GitHub или из локальной директории.
+
+<span id="1-install-the-cli" />
+
+## 1. Установите CLI
+
+Установите бинарный файл `lizard` глобально из npm:
+
+```bash
+npm install -g @lizard-build/cli
+```
+
+Проверьте, что он доступен в `PATH`:
+
+```bash
+lizard --version
+```
+
+> **Не используйте `npx`.** Всегда используйте глобально установленный бинарный файл `lizard`. Запуск `npx @lizard-build/cli` загружает временную копию, версия которой может отличаться от платформы. Обновите на месте позже с помощью `lizard upgrade`.
+
+> **Ошибки прав доступа (EACCES)?** Не используйте `sudo`. Укажите npm пользовательский префикс:
+> ```bash
+> mkdir -p ~/.npm-global
+> npm config set prefix ~/.npm-global
+> echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.zshrc && source ~/.zshrc
+> npm install -g @lizard-build/cli
+> ```
+
+<span id="2-log-in" />
+
+## 2. Войдите в систему
+
+```bash
+lizard login
+```
+
+Откроется браузер для аутентификации, затем вы вернетесь в терминал после подтверждения. В CI или других неинтерактивных средах аутентифицируйтесь с токеном:
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+# or
+lizard login --token lzd_xxx
+```
+
+Проверьте, под кем вы вошли, в любой момент:
+
+```bash
+lizard whoami
+```
+
+<span id="3-deploy" />
+
+## 3. Разверните
+
+Выберите способ в зависимости от того, где находится ваш код.
+
+<span id="option-a--deploy-a-github-repo-recommended" />
+
+### Вариант А — Развертывание репозитория GitHub (рекомендуется)
+
+Если ваш код на GitHub, создайте сервис прямо из репозитория. Lizard клонирует его, автоматически определит стек, соберет и вернет рабочий URL:
+
+```bash
+lizard add -r your-org/your-app
+```
+
+Пуши в отслеживаемую ветку будут автоматически переразвертывать приложение. Для приватных репозиториев сначала подключите GitHub App:
+
+```bash
+lizard git connect
+```
+
+<span id="option-b--deploy-local-code" />
+
+### Вариант Б — Развертывание локального кода
+
+Изнутри директории проекта загрузите и разверните текущую папку (с учетом `.gitignore`):
+
+```bash
+lizard up
+```
+
+Если директория еще не привязана к проекту, `up` создаст или выберет его интерактивно. В CI сначала привяжите явно с помощью `lizard init --name my-project`.
+
+В любом случае, когда сборка завершится, вы получите сгенерированный URL вроде `https://your-app-production.onlizard.com`.
+
+<span id="4-watch-it-build-and-run" />
+
+## 4. Следите за сборкой и работой
+
+```bash
+lizard ps          # services in the project, with status + URL
+lizard logs        # last runtime log lines
+lizard logs --build  # the most recent build's logs
+lizard open        # open the project in the dashboard
+```
+
+<span id="5-add-a-database-optional" />
+
+## 5. Добавьте базу данных (по желанию)
+
+Создайте управляемый Postgres и подключите его к сервису:
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service your-app
+lizard redeploy --service your-app
+```
+
+Ссылка `${{postgres.DATABASE_URL}}` разрешается во время развертывания и автоматически ротируется вместе с аддоном. См. [Управляемые аддоны](/addons).
+
+<span id="next-steps" />
+
+## Дальнейшие шаги
+
+- **[Основные концепции](/concepts/architecture)** — поймите проекты, сервисы и конвейер сборки.
+- **[Развертывание из GitHub](/deploy/github)** — ветки, монорепозитории и автопереразвертывание.
+- **[Переменные и секреты](/variables)** — области видимости и приоритет.
+- **[Сеть](/networking)** — подключите свой хостнейм с автоматическим TLS.
+- **[Развертывание приложения, созданного вашим AI IDE](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — те же три шага, переданные агенту, для приложения на Google Antigravity.
+
+<span id="hosting-costs" />
+
+## Стоимость хостинга
+
+Lizard использует [pay as you go](/platform/billing) без ежемесячной подписки. Использование ресурсов списывается с баланса аккаунта. Купленные средства не истекают; у пробных средств срок действия истекает. Проверьте [цены](https://lizard.build/pricing) и лимиты аккаунта перед развертыванием.

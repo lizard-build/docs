@@ -1,0 +1,63 @@
+---
+description: "lizard config apply отправляет файл lizard-config.json в ваш проект, с флагом --dry-run для предварительного просмотра изменений."
+---
+
+# lizard config
+
+Применить файл `lizard-config.json` к проекту.
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard config apply [flags]
+```
+
+<span id="subcommands" />
+
+## Подкоманды
+
+### `lizard config apply`
+
+Применить файл `lizard-config.json` к проекту.
+
+| Флаг | Описание |
+|------|-------------|
+| `-f, --file <path>` | Файл конфигурации (по умолчанию `lizard-config.json`) |
+| `--dry-run` | Показать, что изменится, без применения |
+
+<span id="examples" />
+
+## Примеры
+
+<span id="apply-the-default-config-file" />
+
+### Применить файл конфигурации по умолчанию
+
+```bash
+lizard config apply
+```
+
+<span id="apply-a-config-file-from-a-custom-path" />
+
+### Применить файл конфигурации по пользовательскому пути
+
+```bash
+lizard config apply -f ./configs/prod.json
+```
+
+<span id="preview-changes-without-applying-them" />
+
+### Предварительный просмотр изменений без применения
+
+```bash
+lizard config apply --dry-run
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [lizard service](/cli/service) — управление отдельными сервисами
+- [Architecture](/concepts/architecture) — как связаны рабочие области, проекты и сервисы

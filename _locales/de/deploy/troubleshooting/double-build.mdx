@@ -1,0 +1,53 @@
+---
+description: "Warum lizard service set, gefolgt von einem Redeploy, zwei Builds in die Warteschlange stellt, welche Felder selbstständig neu bauen und wie du den überflüssigen Build vermeidest."
+---
+
+<span id="my-change-queued-two-builds-back-to-back" />
+
+# Meine Änderung hat zwei Builds direkt hintereinander in die Warteschlange gestellt
+
+Du hast `lizard service set` ausgeführt, um ein Feld zu ändern, dann `lizard redeploy`, und am Ende wurden zwei Builds statt nur eines gestartet.
+
+<span id="what-this-means" />
+
+## Was das bedeutet
+
+Der Aufruf `service set` hat bereits selbstständig einen Rebuild ausgelöst. Das anschließende `redeploy` hat einen zweiten, überflüssigen Build in die Warteschlange gestellt.
+
+<span id="why-this-can-happen" />
+
+## Warum das passieren kann
+
+Wenn du ein **build-relevantes** Feld eines Service änderst — `repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath` oder `rootDirectory` — wird sofort automatisch ein Rebuild ausgelöst. Wenn du ein **reines Laufzeitfeld** änderst — `startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns` — wird **kein** automatischer Rebuild ausgelöst; die Änderung wird erst beim nächsten Bereitstellen wirksam.
+
+Es ist leicht, reflexartig nach jedem `service set` noch ein `redeploy` anzuhängen, aber das ist nur bei reinen Laufzeitfeldern sinnvoll.
+
+<span id="possible-solutions" />
+
+## Mögliche Lösungen
+
+<span id="check-which-kind-of-field-you-changed" />
+
+### Prüfe, welche Art von Feld du geändert hast
+
+Sieh in der [Tabelle der Rebuild-Auslöser](/concepts/build-pipeline#what-triggers-a-rebuild) nach. Wenn es ein Build-Feld ist, ist der Rebuild bereits in der Warteschlange — du musst nichts weiter tun.
+
+```bash
+lizard events   # confirm only one build is in flight
+```
+
+<span id="only-redeploy-after-runtime-only-changes" />
+
+### Nur nach Änderungen an reinen Laufzeitfeldern neu deployen
+
+```bash
+lizard service set api --set startCommand="node server.js"
+lizard redeploy --service api   # needed here — startCommand doesn't auto-rebuild
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Build-Pipeline → was einen Rebuild auslöst](/concepts/build-pipeline#what-triggers-a-rebuild)
+- [`lizard service`](/cli/service) — die vollständige Befehlsreferenz.

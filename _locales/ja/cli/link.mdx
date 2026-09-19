@@ -1,0 +1,62 @@
+---
+description: "lizard link は現在のディレクトリを既存のプロジェクトに関連付け、必要に応じて特定のサービスまたはワークスペースにも関連付けます。"
+---
+
+# lizard link
+
+現在のディレクトリを既存のプロジェクトに関連付けます（必要に応じてサービスも関連付けます）。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard link [service] [flags]
+```
+
+<span id="flags" />
+
+## フラグ
+
+| フラグ | 説明 |
+|------|-------------|
+| `-p, --project <id>` | プロジェクト名、slug、または ID |
+| `-s, --service <name>` | 関連付けるサービス |
+| `-w, --workspace <ws>` | ワークスペース |
+
+<span id="examples" />
+
+## 例
+
+<span id="link-to-an-existing-project" />
+
+### 既存のプロジェクトにリンクする
+
+```bash
+lizard link --project my-project
+```
+
+<span id="link-to-a-project-and-a-specific-service" />
+
+### プロジェクトと特定のサービスにリンクする
+
+```bash
+lizard link my-service --project my-project
+```
+
+<span id="link-within-a-specific-workspace" />
+
+### 特定のワークスペース内でリンクする
+
+```bash
+lizard link --project my-project --workspace my-workspace
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [lizard init](/cli/init) — プロジェクトを作成または選択し、1 つの手順でリンクします
+- [lizard unlink](/cli/unlink) — 現在のディレクトリからリンクを削除します
+- [lizard status](/cli/status) — リンクされているワークスペース、プロジェクト、サービスを表示します
+- [Architecture: プロジェクト](/concepts/architecture) — ディレクトリとプロジェクトのリンクの仕組み

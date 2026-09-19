@@ -1,0 +1,86 @@
+---
+description: "lizard up paketiert das aktuelle Verzeichnis, baut es auf den Build-Knoten von Lizard und gibt eine Live-URL zurück. Flags, CI-Verhalten und Beispiele."
+---
+
+# lizard up
+
+Das aktuelle Verzeichnis hochladen und bereitstellen.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard up [flags]
+```
+
+`up` paketiert Ihren Arbeitsbaum als Tarball, sendet ihn an die Build-Knoten und stellt ihn bereit. Es erzwingt `sourceType=upload` auf dem Zieldienst, streamt Build-Logs über SSE und gibt nach Abschluss die Live-URL aus.
+
+Wenn das aktuelle Verzeichnis noch nicht mit einem Projekt verknüpft ist, führt `up` zuerst `init` aus. In einem TTY ist das interaktiv; in einer Nicht-TTY-Umgebung (CI) wird **nicht** stillschweigend ein Projekt erstellt — stattdessen wird ein Fehler ausgegeben und Sie werden aufgefordert, `lizard init --name <project>` auszuführen (oder `--name` zu übergeben), damit nicht durch einen Tippfehler ein leeres Projekt erzeugt wird.
+
+## Flags
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-s, --service <name>` | Einen vorhandenen Dienst als Ziel verwenden |
+| `--build-command <cmd>` | Den Build-Befehl überschreiben |
+| `--start-command <cmd>` | Den Startbefehl überschreiben |
+| `--pre-deploy-command <cmd>` | Vor jedem Bereitstellen einmal ausführen |
+| `--port <number>` | Container-Port (`0` = Worker-Modus) |
+| `--region <code>` | Region für das Bereitstellen |
+| `-d, --detach` | Das Bereitstellen starten und beenden, ohne Logs zu streamen |
+| `-c, --ci` | CI-freundliche Ausgabe |
+| `--no-gitignore` | Alles hochladen und `.gitignore` ignorieren |
+
+<span id="subcommands" />
+
+## Unterbefehle
+
+### `lizard up status`
+
+Den Status eines laufenden Upload-Deploys melden.
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="deploy-the-current-directory" />
+
+### Das aktuelle Verzeichnis bereitstellen
+
+```bash
+lizard up
+```
+
+<span id="deploy-to-a-specific-service-with-a-custom-start-command-and-port" />
+
+### Auf einem bestimmten Dienst mit benutzerdefiniertem Startbefehl und Port bereitstellen
+
+Erstellen Sie den benannten Dienst zuerst mit `lizard add --service api`, falls er nicht existiert.
+
+```bash
+lizard up --service api --start-command "node server.js" --port 8080
+```
+
+<span id="deploy-headlessly-in-ci" />
+
+### Headless in CI bereitstellen
+
+```bash
+export LIZARD_TOKEN=lzd_xxx
+lizard init --name my-project
+lizard add --service api
+lizard up --ci --service api
+```
+
+Überspringen Sie `lizard add`, wenn der Dienst bereits existiert. Mit Lizard CLI 0.3.92 kann ein fehlgeschlagener Build trotzdem mit Exit-Code `0` enden; prüfen Sie den Build-Status und die bereitgestellte URL, bevor Sie ein CI-Release als erfolgreich markieren. Eine Korrektur steht zur Veröffentlichung aus. Setzen Sie auf macOS außerdem vor einem Upload `COPYFILE_DISABLE=1`, um zusätzliche `._*`-Metadatendateien im Archiv zu vermeiden. Siehe [Framework-Setup](/framework-guides#prepare-the-project).
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Aus lokalem Code bereitstellen](/deploy/upload) — vollständige Anleitung für Upload-basierte Deploys
+- [lizard redeploy](/cli/redeploy) — den letzten Upload neu bauen, ohne erneut hochzuladen
+- [lizard init](/cli/init) — ein Projekt vor dem Bereitstellen explizit erstellen oder verknüpfen
+- [Worker-Dienste](/deploy/workers) — was `--port 0` bedeutet
+- [Einen Container bereitstellen, ohne einen zu konfigurieren](https://lizard.build/blog/container-as-a-service#deploy-a-container-without-configuring-one) — wie sich dieser Befehl unter Container-as-a-Service-Plattformen einordnet

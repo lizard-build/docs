@@ -1,0 +1,92 @@
+---
+description: "AIコーディングエージェントから Lizard を操作: Lizard Skill を読み込み、--json でコマンドスキーマを確認し、Lizard CLI でデプロイします。"
+---
+
+<span id="coding-agents" />
+
+# コーディングエージェント
+
+Lizard は、人間と同じくらい簡単に AI コーディングエージェントから操作できるよう設計されています。CLI には、エージェントにプラットフォーム全体を教える **組み込みスキル** が含まれており、すべてのコマンドは `--json` によって **自己記述的** なので、エージェントが推測に頼る必要はありません。
+
+<span id="the-embedded-skill" />
+
+## 組み込みスキル
+
+正式な利用ガイドは CLI の内部にあり、CLI と一緒にバージョン管理されるため、常にインストール済みバージョンと一致します。エージェントは次でこれを読み取ります:
+
+```bash
+lizard skills get core --json
+```
+
+これにより `{ name, frontmatter, content, … }` が返されます — `content` には完全なガイド（ビルドパイプライン、env の優先順位、アドオン、検出、終了コード）が含まれます。関連するサブコマンド:
+
+```bash
+lizard skills list        # available embedded skills
+lizard skills get core    # the core guide
+lizard skills path        # where skills are stored
+```
+
+ガイドはバイナリに同梱されているため、`lizard upgrade` を更新するとエージェントへの指示も更新されます。
+
+<span id="self-describing-commands" />
+
+## 自己記述的なコマンド
+
+エージェントは、暗記した構文に頼る代わりに、実行時に正確なフラグの形を確認します:
+
+```bash
+lizard --help --json                # full command tree + exit codes
+lizard <cmd> --help --json          # a specific command's schema
+```
+
+[JSON と自動化](/cli/json) を参照してください。
+
+<span id="bootstrapping-in-an-agent" />
+
+## エージェントでのブートストラップ
+
+典型的なエージェントのフロー:
+
+1. **ガイドを読み込む:** `lizard skills get core --json` → `content` を読む。
+2. **認証を楽観的に確認する:** ユーザーのタスクを実行し、終了コード `2` の場合は `lizard login` を実行し、表示された URL をユーザーに渡してから再試行する。
+3. **変更前にコンテキストを解決する:** `lizard status` (cwd リンク) と `lizard ps --json` (サービス)。
+4. **ガイドに従って実行する** — `add`、`up`、`secrets`、`domain` など。常に `--json` を付けます。
+
+`lizard` バイナリが存在しない場合は、最初にインストールしてください:
+
+```bash
+npm install -g @lizard-build/cli
+```
+
+<span id="conventions-agents-should-follow" />
+
+## エージェントが従うべき慣例
+
+- 非対話呼び出しでは、**常に `--json` を付ける**。
+- **破壊的な操作を確認する**（サービスの削除、アドオンの削除、プロジェクト全体の secret の上書き、本番再起動）際はユーザーに確認する — CLI 自身のプロンプトは TTY 上でのみ動作します。
+- デフォルトでは **secret を利用するサービスのスコープに限定する**。`--global` は、公開値であることが明確に証明できる場合にのみ使います。[変数と Secrets](/variables#scoping) を参照してください。
+- **求められていないのに Dockerfile を書かない** — lizardpack はほとんどのスタックを自動検出します。まずはデプロイを試してください。[ビルドパイプライン](/concepts/build-pipeline) を参照してください。
+- **`lizard up` を使って git 連携サービスをアップロード方式へ切り替えない** — `service set` + `redeploy` を使います。
+
+<span id="editor-integrations" />
+
+## エディタ統合
+
+Lizard Skill は公開ブートストラップとして配布されているため、エディタやアシスタント内のエージェントは必要に応じてこれをインストールして読み込み、その後、このドキュメント全体で説明されているのと同じ CLI を操作できます。CLI が唯一の信頼できる情報源です — 学ぶべき別個のエージェント API はありません。
+
+これは AI IDE にも当てはまります。アプリの作成やテストは行っても、ホスティングはしません。[Google Antigravity で構築したアプリをデプロイする](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-an-antigravity-app-to-production-without-typing-a-command) を参照してください。デプロイ全体が 2 つのプロンプトで実行されます。
+
+<span id="see-also" />
+
+## 関連項目
+
+- [`lizard skills`](/cli/skills) — 完全なコマンドリファレンス。
+- [JSON と自動化](/cli/json) — `--json` の出力とスキーマ確認。
+- [変数と Secrets](/variables#scoping) — エージェントが従うべき secret のスコープ慣例。
+- [Claude Code からアプリをデプロイする](https://lizard.build/blog/deploy-from-claude-code#deploy-from-claude-code-in-3-steps) — 同じブートストラップを、動かすためのプロンプト付きのウォークスルーとして記述したものです。
+
+<span id="hosting-your-own-mcp-server" />
+
+## 独自の MCP サーバーをホストする
+
+Lizard CLI を使うエージェントと、MCP を公開するアプリケーションは別のワークフローです。上記の CLI コマンドは MCP トランスポートを提供しません。Streamable HTTP を使って独自のサーバーをデプロイするには、[リモート MCP ガイド](/guides/deploy-mcp-server) に従ってください。

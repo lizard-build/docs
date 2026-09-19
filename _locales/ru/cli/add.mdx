@@ -1,0 +1,78 @@
+---
+description: "lizard add создает сервис из GitHub-репозитория, пустой сервис или управляемый аддон. Полный справочник флагов с рабочими примерами."
+---
+
+# lizard add
+
+Добавляет базу данных, сервис или репозиторий в проект.
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard add [types...] [flags]
+```
+
+<span id="flags" />
+
+## Флаги
+
+| Флаг | Описание |
+|------|-------------|
+| `-r, --repo <owner/repo>` | Создать сервис из GitHub-репозитория |
+| `-s, --service <name>` | Создать пустой сервис |
+| `-a, --addon <type...>` | Добавить управляемые аддоны (`postgres` / `redis` / `s3`) |
+| `-n, --name <name>` | Имя, используемое в ссылках `${{name.KEY}}` |
+| `-v, --variables <K=V>` | Задать переменную окружения (можно повторять) |
+| `--region <code>` | Регион для provisioning |
+| `--no-deploy` | Привязать репозиторий, но пропустить первую сборку |
+| `--list` | Показать доступные типы баз данных |
+
+<span id="examples" />
+
+## Примеры
+
+<span id="create-a-service-from-a-github-repo" />
+
+### Создать сервис из GitHub-репозитория
+
+```bash
+lizard add -r your-org/your-app
+```
+
+Это создает `github`-source-сервис, клонирует репозиторий, автоматически определяет стек, собирает его и возвращает рабочий URL.
+
+<span id="provision-addons" />
+
+### Подготовить аддоны
+
+```bash
+lizard add postgres            # one addon
+lizard add postgres redis s3   # several at once
+lizard add --list              # show available types
+```
+
+<span id="create-an-empty-service" />
+
+### Создать пустой сервис
+
+```bash
+lizard add -s worker
+```
+
+<span id="name-a-service-and-seed-variables" />
+
+### Назвать сервис и задать переменные
+
+```bash
+lizard add -r your-org/monorepo -n api
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [Развертывание из GitHub](/deploy/github) — подключение репозиториев, приватный доступ и авто-переразвертывание при push
+- [Управляемые аддоны](/addons) — создание, именование и использование postgres/redis/s3
+- [lizard up](/cli/up) — загрузка и развертывание текущей директории вместо привязки репозитория

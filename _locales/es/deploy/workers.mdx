@@ -1,0 +1,124 @@
+---
+description: "Ejecuta consumidores de colas y bucles de sondeo sin puerto HTTP. Qué cambia con containerPort=0, cómo activar el modo worker y cuándo no usarlo."
+---
+
+<span id="background-workers" />
+
+# Workers en segundo plano
+
+No todos los servicios sirven HTTP. Los consumidores de colas, reconcilers, bucles de sondeo estilo cron y otras cargas de trabajo en segundo plano no escuchan en un puerto: ejecútalos en **modo worker** configurando el puerto del contenedor en `0`.
+
+<span id="what-worker-mode-changes" />
+
+## Qué cambia el modo worker
+
+Cuando `containerPort=0`, la plataforma:
+
+- **Omite la inyección de `PORT`** — el worker no se enlaza en ningún sitio.
+- **Omite la comprobación de accesibilidad del puerto** — sin spam de logs de `app port X unreachable` ni estado "unhealthy" por falsos positivos.
+- **Omite `EXPOSE`** en el Dockerfile sintetizado.
+- **Omite el registro de rutas del balanceador de carga** — no se sirve nada. (Puede que siga apareciendo un dominio `*.onlizard.com` generado en el servicio, pero no responderá.)
+
+<span id="enable-worker-mode" />
+
+## Activar el modo worker
+
+Tres formas equivalentes:
+
+```bash
+# New upload-source worker
+lizard up --port 0
+
+# Flip an existing service
+lizard port 0 --service worker
+
+# Via the config:apply path
+lizard service set worker --set containerPort=0
+```
+
+El modo worker es un cambio tajante: hace falta un redespliegue para que el cambio de puerto surta efecto.
+
+<span id="check-the-current-port" />
+
+## Comprobar el puerto actual
+
+```bash
+lizard port --service worker
+```
+
+Imprime el puerto actual del contenedor, o `worker mode` cuando es `0`.
+
+<span id="when-not-to-use-worker-mode" />
+
+## Cuándo *no* usar el modo worker
+
+No uses el modo worker para un servicio HTTP normal que simplemente tarda en arrancar. El modo worker desactiva por completo la comprobación de accesibilidad, así que **ocultará** errores de "el listener nunca llegó a levantarse". Si tu servicio debe servir tráfico, mantén un puerto real y corrige el arranque.
+
+<span id="run-a-queue-consumer" />
+
+## Ejecutar un consumidor de cola
+
+Usa el [ejemplo redis-worker](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/redis-worker). Mueve un trabajo de una lista pendiente a una lista de procesamiento, guarda su resultado en mayúsculas y confirma el trabajo en una transacción de Redis. Mantén una sola réplica: la recuperación al inicio asume un único consumidor. El ejemplo usa Python 3.13 y redis-py 6.4.0.
+
+Desde el directorio que contiene su Dockerfile:
+
+```bash
+lizard init --name queue-example
+lizard add --service worker
+lizard add redis
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service worker
+lizard up --service worker --port 0
+```
+
+Inicia sesión con `lizard login` si un comando indica que se requiere autenticación. Usa el nombre real de la base de datos si no es `redis`. Mantén la referencia entre comillas. Configúrala antes de subir la aplicación. En macOS con Lizard CLI 0.3.92, antepone `COPYFILE_DISABLE=1` a `lizard up` para excluir metadatos AppleDouble.
+
+Comprueba el evento final del despliegue y luego comprueba el worker:
+
+```bash
+lizard port --service worker
+lizard logs --service worker --json
+lizard ssh --service worker -- python jobs.py enqueue first-job
+lizard ssh --service worker -- python jobs.py result first-job
+```
+
+El proceso imprime `Queue worker ready`. Si el seguimiento de logs está vacío, continúa con la comprobación del trabajo más abajo; los [resultados de pruebas](/guides/validation) registran el límite de logs observado. El comando de resultado espera hasta 30 segundos e imprime `{"id": "first-job", "result": "HELLO"}`. Que el proceso esté en ejecución por sí solo no demuestra que pueda consumir un trabajo. Managed Redis se alcanza desde dentro del servicio; el comando de CLI no requiere que tu portátil alcance su dirección privada.
+
+<span id="verify-a-restart" />
+
+## Verificar un reinicio
+
+Para este servicio de prueba, reinicia el worker y envía otro trabajo:
+
+```bash
+lizard restart --service worker
+lizard ssh --service worker -- python jobs.py result first-job
+lizard ssh --service worker -- python jobs.py enqueue after-restart
+lizard ssh --service worker -- python jobs.py result after-restart
+```
+
+Espera a que el servicio vuelva a `running` en `lizard ps --json` si SSH todavía no está disponible. Ambos resultados deben ser `HELLO`. El primer resultado vive en Redis, así que reiniciar un worker no lo elimina. Al arrancar, el consumidor único devuelve las entradas de procesamiento sin terminar a la lista pendiente.
+
+Esta demo solo acepta los trabajos JSON creados por `jobs.py`. No implementa una cola de mensajes fallidos, validación para productores no confiables ni efectos externos exactamente una vez. Usa una biblioteca de colas consolidada y handlers idempotentes para pagos, correo u otros efectos. La durabilidad y las copias de seguridad de Redis son independientes del comportamiento de reinicio del worker; consulta [almacenamiento y recuperación](/platform/storage-and-recovery).
+
+<span id="troubleshooting" />
+
+## Solución de problemas
+
+| Síntoma | Comprobar |
+|---|---|
+| Falta el servicio | Ejecuta `lizard add --service worker` después de crear el proyecto. |
+| No aparece `Queue worker ready` | Comprueba `REDIS_URL` con alcance de servicio, la disponibilidad del addon y los errores de conexión. No imprimas nunca la cadena de conexión. |
+| El worker espera un puerto HTTP | Configura `containerPort=0`; cambiarlo en un servicio en ejecución requiere un redespliegue. |
+| No hay resultado después de 30 segundos | Lee los logs del worker y verifica el ID del trabajo. Este ejemplo solo acepta trabajos de su propio `jobs.py`. |
+| Efectos duplicados | Un reintento puede ejecutar el trabajo otra vez. Este ejemplo guarda un resultado por ID de trabajo; los efectos externos requieren su propia idempotencia. |
+
+<span id="see-also" />
+
+## Ver también
+
+- [`lizard port`](/cli/port) — muestra o cambia el puerto del contenedor de un servicio.
+- [El servicio nunca llega a healthy](/deploy/troubleshooting/service-never-healthy) — la configuración incorrecta del modo worker más común.
+- [Managed Addons](/addons) — Redis, Postgres y S3 para cargas de trabajo con estado.
+- [Hosting de apps Python](https://lizard.build/blog/python-app-hosting#deploying-django) — un worker de Celery es la misma imagen con un comando distinto y sin puerto HTTP.
+
+Consulta los [resultados de pruebas del escenario](/guides/validation) para ver versiones comprobadas, resultados en la nube y limitaciones restantes.

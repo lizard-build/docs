@@ -1,0 +1,73 @@
+---
+description: "CLI またはダッシュボードから、ランタイムログをストリーミングし、デプロイ失敗後にビルドログを確認し、再起動前後のログ末尾を取得します。"
+---
+
+<span id="logs" />
+
+# ログ
+
+Lizard は、**ランタイム**ログ、**ビルド**ログ、そして**再起動**前後のログ末尾を収集します。ターミナルでライブストリーミングすることも、ダッシュボードで閲覧することもできます。
+
+<span id="runtime-logs" />
+
+## ランタイムログ
+
+```bash
+lizard logs                       # last 200 runtime lines, then live tail
+lizard logs --service api         # a specific service
+lizard logs --tail 1000           # more history (max 1000)
+lizard logs --level error         # filter by level
+```
+
+<span id="behavior-with---json" />
+
+### `--json` を使った場合の動作
+
+`lizard logs --json` は**ストリームではありません**。直近 200 行を返し（`--tail N` で上書き可能、最大 1000）、終了します。スナップショットやスクリプトで使用してください。ライブストリーミングは、対話的に末尾を追いたいときに限り、`--json` を付けずに使用してください。
+
+<span id="build-logs" />
+
+## ビルドログ
+
+```bash
+lizard logs --build               # the most recent build's logs
+```
+
+デプロイが失敗したときは、まず最初にここを確認してください。内容を読み、原因を修正してから、`lizard redeploy` を実行します。[ビルド Pipeline](/concepts/build-pipeline) を参照してください。
+
+<span id="restart--crash-logs" />
+
+## 再起動 / クラッシュログ
+
+レプリカがクラッシュまたは再起動した場合は、その前後のログ末尾を取得します。
+
+```bash
+lizard logs --restart latest      # the most recent restart
+lizard logs --restart <id>        # a specific restart
+lizard logs --restarts            # list recent restarts
+```
+
+<span id="paging-through-history" />
+
+## 履歴をページングしてたどる
+
+`lizard service logs` は、さらに古い期間をページングして取得できます。
+
+```bash
+lizard service logs --service api --tail all     # full history (no follow)
+lizard service logs --service api --page 2       # older window (implies --tail 200)
+```
+
+<span id="dashboard" />
+
+## ダッシュボード
+
+ダッシュボード（`lizard open`）では、検索とレベルフィルター付きでランタイムログとビルドログをストリーミングでき、**デプロイメント** ビューではデプロイごとのビルド出力を表示します。
+
+<span id="see-also" />
+
+## 関連項目
+
+- [`lizard logs`](/cli/logs) — 完全なコマンドリファレンス。
+- [Events & History](/observability/events) — デプロイ履歴とレプリカのステータス。
+- [Claude Codeからデプロイする](https://lizard.build/blog/deploy-from-claude-code) — あなただけでなく、エージェントにも読まれることを想定して書かれたログ。

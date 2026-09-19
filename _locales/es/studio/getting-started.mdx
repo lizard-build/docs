@@ -1,0 +1,145 @@
+---
+title: "Instala Lizard Studio para Claude Code y ChatGPT"
+description: "Instala Lizard Studio en Chrome, conecta Claude Code o ChatGPT a un proyecto local y haz tu primera edición de sitio web. Sigue la guía de configuración."
+---
+
+<span id="install-lizard-studio" />
+
+# Instala Lizard Studio
+
+Lizard Studio es una extensión gratuita de Chrome que conecta Claude Code o ChatGPT con la página que estás construyendo. Abre un chat junto a la página, selecciona un elemento y pídele al agente que edite los archivos de tu proyecto local. La extensión incluye inspección de páginas, anotaciones, reglas, un selector de color y herramientas de depuración del navegador.
+
+Esta guía te lleva desde la instalación hasta una edición de código fuente que sobrevive a una actualización de la página. Para ver un ejemplo que puedes descargar, consulta [la guía de edición visual de Claude Code](https://lizard.build/blog/claude-code-visual-editor).
+
+<span id="what-you-need" />
+
+## Lo que necesitas
+
+- Google Chrome en macOS, Windows o Linux.
+- Node.js y npm. El host local declara Node.js 18 o posterior; el agente que elijas puede tener un requisito superior. Usa una versión de Node.js compatible con ambos.
+- La CLI local de Claude Code o ChatGPT, con sesión iniciada en tu propia cuenta.
+- Una carpeta de proyecto local. Para ver las ediciones de código fuente en el navegador, ejecuta el servidor de desarrollo de ese proyecto y abre su URL.
+
+La extensión y el host son gratuitos y tienen licencia MIT. El uso del modelo sigue los requisitos, límites y cargos de la cuenta de tu proveedor. No necesitas una cuenta de Lizard para usar Lizard Studio.
+
+<span id="1-add-the-chrome-extension" />
+
+## 1. Añade la extensión de Chrome
+
+Abre [Lizard Studio en Chrome Web Store](https://chromewebstore.google.com/detail/kgbaeoalmkabpoglpjcdmppdmcipfdeh) y elige **Add to Chrome**. Fija la extensión si quieres acceder a ella desde la barra de herramientas.
+
+La barra de herramientas ofrece las herramientas de diseño; el panel lateral de Chrome contiene tus chats. La instalación desde la tienda no requiere el modo de desarrollador.
+
+<span id="2-install-your-agent" />
+
+## 2. Instala tu agente
+
+Elige el agente que quieres usar. Puedes añadir el otro más tarde.
+
+Para Claude Code, sigue la [guía oficial de configuración](https://code.claude.com/docs/en/setup). Comprueba la instalación en una terminal:
+
+```bash
+claude --version
+```
+
+Para ChatGPT en Lizard Studio, instala la Codex CLI:
+
+```bash
+npm install -g @openai/codex
+codex --version
+```
+
+Lizard Studio llama a este agente **ChatGPT** en su interfaz. El paquete y el comando de terminal usan el nombre **Codex**. Este es un agente de programación local conectado a tu proyecto; no integra el sitio web chatgpt.com.
+
+Abre el agente que hayas elegido y completa su flujo de inicio de sesión antes de continuar. Consulta [el README de Lizard Studio](https://github.com/lizard-build/lizard-studio#setup) para ver las rutas de conexión compatibles.
+
+<span id="3-install-the-local-host" />
+
+## 3. Instala el host local
+
+Ejecuta este comando una vez en una terminal:
+
+```bash
+npx @lizard-build/lizard-studio-host install
+```
+
+El host conecta la extensión de Chrome con el agente en tu equipo. El instalador copia el host en `~/.lizard-studio/host` y lo registra en el navegador. Mantén Node.js instalado: el navegador lo usa para iniciar el host.
+
+Vuelve a abrir el panel lateral de la extensión después de la instalación. Si actualizaste un host existente, vuelve a abrir el panel antes de iniciar un chat nuevo.
+
+<span id="4-connect-the-page-to-its-project" />
+
+## 4. Conecta la página con su proyecto
+
+Inicia el servidor de desarrollo de tu proyecto con su comando habitual. Abre en Chrome la URL que muestre y luego abre Lizard Studio en esa pestaña.
+
+Inicia un chat, elige **Claude Code** o **ChatGPT**, y elige la carpeta que contiene el código fuente de este proyecto. Cada chat mantiene su propia carpeta de proyecto y permisos. Una pestaña que muestra la página correcta no le indica por sí sola al agente qué repositorio local debe cambiar.
+
+Antes de pedir una edición, comprueba la conexión con una solicitud de solo lectura:
+
+```text
+Read this page's title and inspect its main heading. Tell me which
+local project folder you are using. Do not change any files yet.
+```
+
+Si el agente nombra la carpeta equivocada, corrige la selección antes de continuar.
+
+<span id="5-select-an-element-and-make-one-edit" />
+
+## 5. Selecciona un elemento y haz una edición
+
+Elige **Selector** en la barra de herramientas de la página y haz clic en el elemento que quieres cambiar. La selección añade contexto al chat. Para un problema visual que abarca varios elementos, usa **Annotate** para marcar el área y añadir la captura de pantalla al chat.
+
+Prueba una solicitud con un resultado medible:
+
+```text
+Find the source for the selected card's action row. Set the gap
+between its buttons to 24px in the project files. Keep the button
+labels and colors unchanged. Show the diff, then inspect the
+rendered row to check its computed gap.
+```
+
+Lee los cambios de archivo propuestos y usa los controles de permisos para aprobar el trabajo que quieras. Tu modo de permisos determina qué acciones necesitan una solicitud independiente.
+
+Cuando el servidor de desarrollo vuelva a cargar la página, inspecciona el resultado. Si no se recarga automáticamente, actualiza Chrome.
+
+<span id="6-check-that-the-edit-persists" />
+
+## 6. Comprueba que la edición persiste
+
+Una edición temporal del DOM puede verse correcta hasta que actualices. Una edición del código fuente cambia los archivos que sirve tu servidor de desarrollo.
+
+Comprueba el diff del archivo en tu editor o ejecuta `git diff` desde la carpeta del proyecto. Actualiza la página e inspecciona de nuevo el mismo elemento. En el ejemplo anterior, su gap calculado debería seguir siendo `24px`. Revisa tanto la versión de escritorio como los diseños estrechos antes de conservar el cambio.
+
+Editar un proyecto local no actualiza un sitio web desplegado. Haz el despliegue por separado cuando quieras que el cambio entre en producción.
+
+<span id="if-the-connection-fails" />
+
+## Si la conexión falla
+
+| Lo que ves | Qué comprobar |
+|---|---|
+| El panel lateral no puede conectarse con el host | Ejecuta el instalador del host, confirma que Node.js está disponible y luego vuelve a abrir el panel. |
+| El agente no puede iniciarse | Comprueba `claude --version` o `codex --version` en una terminal y completa el inicio de sesión de ese agente. |
+| El agente ve la página pero no puede encontrar su código | Elige la carpeta local correcta y confirma que la pestaña usa el servidor de desarrollo de ese proyecto. |
+| Una edición desaparece al actualizar | Comprueba el diff. Pide un cambio en el código fuente si el agente solo cambió el DOM en vivo. |
+| La barra de herramientas no aparece en una página de configuración de Chrome | Chrome bloquea los scripts de contenido en páginas `chrome://`, en la página Nueva pestaña y en Chrome Web Store. Abre un sitio web normal. |
+
+En macOS, la ubicación del host en `~/.lizard-studio/host` también evita las restricciones que Chrome puede encontrar al iniciar un host dentro de Desktop, Documents o Downloads. Consulta [las notas del host en el README](https://github.com/lizard-build/lizard-studio#2-the-local-host-one-time) para más detalles.
+
+<span id="where-your-data-goes" />
+
+## Adónde van tus datos
+
+La extensión y el host se ejecutan en tu equipo. El proveedor del modelo seleccionado recibe las solicitudes que envías a través de su agente. Lizard Studio no usa un servidor de chat de Lizard ni recopila telemetría. Una instalación local no significa que un modelo en la nube procese tus prompts de forma local. Lee la [política de privacidad de Lizard Studio](https://github.com/lizard-build/lizard-studio/blob/main/PRIVACY.md) antes de usarlo con un proyecto que tenga restricciones de datos.
+
+<span id="related-guides" />
+
+## Guías relacionadas
+
+- [Selecciona un elemento y corrige su CSS](https://lizard.build/blog/claude-code-visual-editor)
+- [Usa ChatGPT para editar un sitio web local](https://lizard.build/studio/chatgpt)
+- [Compara Lizard Studio y Claude en Chrome](https://lizard.build/studio/compare/claude-in-chrome)
+- [Elige una GUI para Claude Code](https://lizard.build/blog/claude-code-gui)
+
+Configuración verificada con el código fuente de Lizard Studio el 14 de septiembre de 2026.

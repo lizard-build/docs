@@ -1,0 +1,57 @@
+---
+description: "Почему Lizard заменяет Dockerfile репозитория, в котором нет шага сборки, как работает правило неполного Dockerfile и как заставить использовать ваш файл как есть."
+---
+
+<span id="my-dockerfile-changes-dont-seem-to-apply" />
+
+# Мои изменения в Dockerfile не применяются
+
+В вашем репозитории есть `Dockerfile`, вы его отредактировали, но сборка, которую запускает Lizard, не соответствует вашему файлу.
+
+<span id="what-this-means" />
+
+## Что это значит
+
+Платформа сочла Dockerfile репозитория **неполным** и сгенерировала новый с помощью [lizardpack](/concepts/build-pipeline), вместо того чтобы использовать ваш файл в исходном виде.
+
+<span id="why-this-can-happen" />
+
+## Почему это может произойти
+
+Lizard использует Dockerfile репозитория **как есть** только на пути автоопределения lizardpack, если в нём есть настоящий шаг сборки — строка `RUN <package-manager>`. Dockerfile, который лишь копирует предварительно собранные артефакты (`COPY dist/`, `build/`, `out/`, `.next/`, `public/`) без шага `RUN`, считается неполным — подразумевается, что эти артефакты собраны вне образа. В таком случае lizardpack создаёт заменяющий Dockerfile, включающий недостающий шаг сборки.
+
+Это касается только пути автоопределения lizardpack. Если для сервиса заданы `buildCommand` или `startCommand`, Lizard синтезирует Dockerfile из этих команд и вообще не смотрит на Dockerfile в репозитории.
+
+<span id="possible-solutions" />
+
+## Возможные решения
+
+<span id="add-a-real-build-step" />
+
+### Добавьте настоящий шаг сборки
+
+Если хотите, чтобы ваш Dockerfile использовался как есть, добавьте в него реальный шаг сборки вместо копирования готового результата:
+
+```dockerfile
+RUN npm ci && npm run build
+```
+
+<span id="or-force-verbatim-use" />
+
+### Или заставьте использовать файл дословно
+
+Очистите переопределения сборки и запуска, затем задайте `dockerfilePath` в том же обновлении. Переопределения имеют приоритет над путем к файлу:
+
+```bash
+lizard service set api --set buildCommand=null --set startCommand=null --set dockerfilePath=Dockerfile
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [Конвейер сборки](/concepts/build-pipeline) — полный порядок принятия решений о сборке.
+- [Справочник по настройке сборки](/concepts/build-pipeline#build-configuration-reference)
+- [Развёртывание любого Python-приложения на Lizard](https://lizard.build/blog/python-app-hosting#deploying-any-python-app-on-lizard) — когда позволить lizardpack написать Dockerfile и когда принести свой.
+
+Изменение этих полей сборки может запустить сборку. Проверьте `lizard events` перед отправкой очередного `redeploy`, чтобы не запустить вторую сборку случайно.

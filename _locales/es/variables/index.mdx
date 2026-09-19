@@ -1,0 +1,112 @@
+---
+description: "Configura secrets con alcance de servicio o de proyecto, conoce la precedencia de combinación y ve qué valores llegan a una compilación frente al contenedor en ejecución."
+---
+
+<span id="variables--secrets" />
+
+# Variables y secrets
+
+Lizard almacena la configuración como **secrets**. Vienen en dos alcances: **servicio** (el predeterminado) y **proyecto** (`--global`), y se combinan en el entorno de tu app con un orden de precedencia definido. No hay un alcance global a nivel de workspace.
+
+<span id="setting-variables" />
+
+## Configurar variables
+
+`lizard secrets set` es variádico: configura una o varias a la vez. De forma predeterminada escribe en el **servicio vinculado**:
+
+```bash
+lizard secrets set DATABASE_URL=postgres://… LOG_LEVEL=info
+lizard secrets set API_KEY=sk_live_… --service api
+```
+
+Añade `--global` para escribir en el alcance de **proyecto** (todos los servicios del proyecto lo verán):
+
+```bash
+lizard secrets set NODE_ENV=production --global
+```
+
+<span id="listing-deleting-importing" />
+
+## Listar, eliminar, importar
+
+```bash
+lizard secrets list                       # current scope
+lizard secrets list --show                # reveal values
+lizard secrets delete OLD_KEY ANOTHER_KEY # variadic
+cat .env | lizard secrets import          # import dotenv from stdin
+```
+
+Consulta la [referencia de comandos de `lizard secrets`](/cli/secrets) para ver todas las opciones.
+
+<span id="scoping" />
+
+## Alcances
+
+| Ámbito | Comando | Almacenado como | Visible para |
+|-------|---------|-----------|------------|
+| **Servicio** (predeterminado) | `lizard secrets set K=v --service <svc>` | `secrets.services[<svc>]` | solo ese servicio |
+| **Proyecto** (global) | `lizard secrets set K=v --global` | `secrets.shared` | todos los servicios del proyecto |
+
+**Usa por defecto el alcance de servicio.** Un servicio comprometido puede leer su propio entorno; un alcance más amplio significa más credenciales expuestas sin necesidad. Reserva `--global` para valores no secretos y demostrablemente públicos como `LOG_LEVEL`, `NODE_ENV`, feature flags o un frontend `SENTRY_DSN`. Si no estás seguro de si un valor es un secret, trátalo como tal y asígnalo al servicio.
+
+Para recursos compartidos como una base de datos, **no** pongas el DSN en `--global`; vincúlalo por consumidor con una [referencia](/variables/references):
+
+```bash
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service worker
+```
+
+La rotación sigue ocurriendo una sola vez en el addon; todas las referencias se actualizan.
+
+<span id="precedence" />
+
+## Precedencia
+
+Cuando la misma clave se define en varios lugares, **la última escritura prevalece**:
+
+```
+addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets  <  platform vars
+```
+
+Así que **los secrets de la app anulan los secrets del proyecto**, y **las variables de la plataforma** (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`) se aplican al final y no se pueden sobrescribir.
+
+<span id="build-time-vs-runtime" />
+
+## Tiempo de compilación vs. tiempo de ejecución
+
+La mayoría de los cambios de variables se aplican **sin recompilar**: el servicio se reinicia para recogerlos, lo que tarda unos segundos. Las excepciones son los valores de compilación integrados en la imagen:
+
+- Los cambios en `VITE_*` y `NEXT_PUBLIC_*` **fuerzan una recompilación** en el siguiente deploy.
+
+Consulta [Pipeline de compilación → desencadenantes de recompilación](/concepts/build-pipeline#what-triggers-a-rebuild).
+
+<span id="verifying" />
+
+## Verificación
+
+Confirma qué ve realmente un servicio en ejecución:
+
+```bash
+lizard ssh --service api -- env
+```
+
+Si un valor que esperabas no está ahí, consulta [Resolución de problemas → un secret o una referencia no aparece](/variables/troubleshooting/reference-not-applied).
+
+<span id="local-development" />
+
+## Desarrollo local
+
+Ejecuta un comando **localmente** con los secrets de proyecto + servicio del servicio inyectados (útil para scripts y migraciones):
+
+```bash
+lizard run --service api -- node scripts/seed.js
+```
+
+Consulta [`lizard run` vs. `lizard ssh`](/cli/run#run-vs-ssh).
+
+<span id="see-also" />
+
+## Ver también
+
+- [Referencias entre servicios](/variables/references): lee los valores de un servicio desde otro sin copiar y pegar credenciales.
+- [`lizard secrets`](/cli/secrets): la referencia completa de comandos.

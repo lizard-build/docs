@@ -1,0 +1,48 @@
+---
+description: "CPU, Arbeitsspeicher, Netzwerk und Festplatte für einen Service verfolgen, sehen, was die aktuelle Skalierung kostet, und anhand der Zahlen handeln."
+---
+
+<span id="metrics--cost" />
+
+# Metriken & Kosten
+
+Verfolge CPU, Arbeitsspeicher, Netzwerk und Festplatte für einen Service — und sieh, was es kostet — über die CLI oder das Dashboard.
+
+<span id="view-metrics" />
+
+## Metriken anzeigen
+
+```bash
+lizard metrics                    # CPU / memory / network / disk
+lizard metrics --service api      # a specific service
+lizard metrics --range <range>    # time window
+lizard metrics --watch            # live-updating view
+```
+
+<span id="include-cost" />
+
+## Kosten einbeziehen
+
+```bash
+lizard metrics --cost
+```
+
+Fügt Kostenangaben neben der Ressourcennutzung hinzu, damit du den Preis der aktuellen Skalierung sehen kannst.
+
+## Dashboard
+
+Das Dashboard (`lizard open`) stellt diese als Diagramme in der Ansicht **Metriken / Observability** dar, und die Ansicht **Nutzung** schlüsselt Verbrauch und Abrechnung im gesamten Projekt auf. Öffne es mit:
+
+```bash
+lizard open
+```
+
+<span id="acting-on-what-you-see" />
+
+## Auf Basis der Werte handeln
+
+- Hohe CPU-/Arbeitsspeicherauslastung → hochskalieren: `lizard scale --service api --cpu 2 --memory 2048`.
+- Anhaltende Last → Replikate hinzufügen: `lizard scale --service api --replicas 3`.
+- Speicherengpass bei einem Add-on → Speicher erweitern: `lizard scale --service postgres --storage 8192`.
+
+Siehe [Scaling](/deploy/scaling).

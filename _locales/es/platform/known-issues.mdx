@@ -1,0 +1,51 @@
+---
+description: "Limitaciones actuales del ciclo de vida de Sandboxes, límites de recuperación de despliegues y precedencia de la configuración de compilación que debes revisar antes de depender de un flujo de trabajo."
+---
+
+<span id="known-issues" />
+
+# Problemas conocidos
+
+Esta página registra comportamientos que requieren precaución o una versión verificada. Una corrección de código en revisión no es una garantía sobre un servicio en ejecución.
+
+<span id="sandbox-pause-and-expiration" />
+
+## Pausa y vencimiento del sandbox
+
+La pausa está pensada para congelar el tiempo de vida restante. Un conflicto entre el reloj del nodo y un proceso de limpieza independiente puede finalizar un sandbox en pausa después de su fecha límite original. El reinicio del node-agent y la reanudación de un sandbox sin vencimiento también necesitan la corrección del ciclo de vida.
+
+Hasta que esa corrección haya superado una prueba en vivo y haya llegado a tu región, no dependas solo de la pausa para conservar el estado a largo plazo. Guarda los archivos en `/data` en un Persistent Volumes, o almacena el estado de la aplicación en una base de datos o en object storage. La memoria del host no es una copia de seguridad. Usa un tiempo de vida explícito y libera el sandbox cuando termine la tarea.
+
+<span id="redeploy-is-not-rollback" />
+
+## Redeploy no es rollback
+
+`lizard redeploy` vuelve a compilar el código fuente seleccionado con la configuración actual. No selecciona una compilación anterior. Una compilación fallida y un inicio fallido tienen efectos distintos; inspecciona el servicio activo y sus logs antes de elegir un paso de recuperación. No asumas que todos los runtimes mantienen la versión anterior sirviendo tráfico tras un inicio fallido.
+
+<span id="dockerfile-precedence" />
+
+## Precedencia de Dockerfile
+
+Los comandos explícitos de compilación o inicio tienen prioridad sobre un Dockerfile del repositorio. Borra esas anulaciones al seleccionar `dockerfilePath`. Una actualización de la configuración puede iniciar por sí misma una compilación, así que revisa los eventos antes de enviar otro redeploy. Consulta la [solución de problemas de Dockerfile](/deploy/troubleshooting/incomplete-dockerfile).
+
+<span id="templates-and-mcp" />
+
+## Plantillas y MCP
+
+La API actual de creación de Sandboxes acepta las dos plantillas integradas. Las instrucciones que usan `lizard push` para plantillas personalizadas no coinciden con la CLI pública actual.
+
+Lizard Skill usa Lizard CLI. Ese flujo de trabajo no expone un transporte MCP. Alojar tu propio servidor MCP remoto es un despliegue de aplicación independiente; consulta la [guía](/guides/deploy-mcp-server).
+
+<span id="service-port-changes-fixed-and-verified-on-2026-09-09" />
+
+## Cambios de puerto del servicio: corregido y verificado el 2026-09-09
+
+La comprobación del 7 de septiembre detectó HTTP 503 después de cambiar un servicio subido del puerto `3000` al `80`, a pesar de que el proceso estaba listo. La corrección en producción ahora aplica el puerto elegido al servicio en ejecución y conserva un puerto explícito durante la subida y la recompilación. Una comprobación en vivo del cambio de puerto se aprobó el 9 de septiembre. Revisa la URL pública después de un despliegue, además del estado del servicio.
+
+<span id="upload-archives-and-failed-build-exit-codes-fixed" />
+
+## Archivos subidos y códigos de salida de compilaciones fallidas: corregido
+
+Lizard CLI 0.3.95 excluye las entradas de metadatos `._*` de macOS de las subidas de código fuente y devuelve un código de salida distinto de cero para compilaciones fallidas en la nube. Actualiza las versiones anteriores de la CLI; `COPYFILE_DISABLE` ya no es necesario. Las [comprobaciones de frameworks](/framework-guides/validation) cubren subidas desde macOS con la CLI actual.
+
+Una compilación exitosa por sí sola no demuestra que la aplicación funcione. Revisa la URL pública, las rutas, los formularios y las operaciones de datos después del despliegue.

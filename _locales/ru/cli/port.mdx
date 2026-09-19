@@ -1,0 +1,59 @@
+---
+description: "lizard port показывает или меняет контейнерный порт сервиса. Установка в 0 переводит сервис в рабочий режим без входящей маршрутизации."
+---
+
+# lizard port
+
+Показать или изменить контейнерный порт для сервиса. Без аргументов выводит текущий порт (`worker mode`, когда он `0`).
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard port [value] [flags]
+```
+
+<span id="flags" />
+
+## Флаги
+
+| Флаг | Описание |
+|------|-------------|
+| `-s, --service <name>` | Сервис для управления |
+
+<span id="examples" />
+
+## Примеры
+
+<span id="show-the-current-port" />
+
+### Показать текущий порт
+
+```bash
+lizard port
+```
+
+<span id="set-the-port-for-a-specific-service" />
+
+### Установить порт для конкретного сервиса
+
+```bash
+lizard port 0 -s worker
+```
+
+<span id="check-the-port-on-a-worker-service" />
+
+### Проверить порт рабочего сервиса
+
+```bash
+lizard port --service worker
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [Фоновые рабочие процессы](/deploy/workers) — установите порт в `0`, чтобы запустить сервис без входящей маршрутизации
+- [lizard service](/cli/service) — управляйте остальной конфигурацией сервиса
+- [Что нужно Python-приложению от хостинга](https://lizard.build/blog/python-app-hosting#what-a-python-app-actually-needs-from-a-host) — почему `gunicorn` или `uvicorn` процесс должен привязываться к `$PORT` на `0.0.0.0`

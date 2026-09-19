@@ -1,0 +1,95 @@
+---
+description: "Команда lizard service читает и редактирует настройки сборки, запуска, источника и переменных сервиса, а также обрабатывает переименование, удаление, логи и связывание."
+---
+
+# lizard service
+
+Управление конфигурацией, источником и жизненным циклом отдельного сервиса.
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard service set [flags]
+lizard service show [flags]
+lizard service rename
+lizard service delete [flags]
+lizard service logs
+lizard service link
+```
+
+<span id="subcommands" />
+
+## Подкоманды
+
+### `lizard service set`
+
+Применяет изменения параметров сборки, запуска, источника, переменных или переименования к сервису.
+
+| Флаг | Описание |
+|------|-------------|
+| `--set <path>=<value>` | Установить поле (можно указывать несколько раз) |
+| `-f, --file <path>` | JSON-файл конфигурации для применения |
+| `--force` | Перезаписать даже при наличии удалённых изменений |
+
+Общие поля плоские и отображаются 1:1 в схему API: `sourceType`, `repoUrl`, `branch`, `rootDirectory`, `dockerfilePath`, `buildCommand`, `startCommand`, `preDeployCommand`, `watchPatterns`, `containerPort`, `name`.
+
+`service set` использует оптимистичную блокировку через `configRevision`. При `409` перечитайте конфигурацию с помощью `lizard service show`, приведите в соответствие и повторите попытку — или передайте `--force`.
+
+### `lizard service show`
+
+Показывает текущую конфигурацию сервиса в JSON. Используйте `-s`, чтобы ограничить вывод одним сервисом.
+
+### `lizard service rename`
+
+Переименовывает сервис или аддон. Ссылки на него (`${{name.KEY}}`) остаются стабильными.
+
+### `lizard service delete`
+
+Удаляет сервис. `-y, --yes` пропускает запрос подтверждения.
+
+### `lizard service logs`
+
+Выводит логи сервиса в потоке (см. также [lizard logs](/cli/logs)).
+
+### `lizard service link`
+
+Связывает сервис с текущей директорией.
+
+<span id="examples" />
+
+## Примеры
+
+<span id="update-a-services-build-and-start-commands" />
+
+### Обновление команд сборки и запуска сервиса
+
+```bash
+lizard service set api --set branch=main --set buildCommand="npm run build"
+```
+
+<span id="inspect-a-services-full-configuration" />
+
+### Просмотр полной конфигурации сервиса
+
+```bash
+lizard service show -s api
+```
+
+<span id="delete-a-service-without-a-confirmation-prompt" />
+
+### Удаление сервиса без запроса подтверждения
+
+```bash
+lizard service delete -y
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [lizard port](/cli/port) — показать или изменить порт контейнера сервиса
+- [lizard scale](/cli/scale) — масштабировать реплики, CPU, память или хранилище сервиса
+- [Архитектура](/concepts/architecture) — как сервисы связаны с проектами и аддонами
+- [Конвейер сборки](/concepts/build-pipeline) — как `buildCommand`, `startCommand` и настройки источника используются при сборке

@@ -1,0 +1,53 @@
+---
+description: "Почему команда изменения сервиса с последующим переразвёртыванием ставит в очередь две сборки, какие поля инициируют пересборку самостоятельно, и как избежать лишней."
+---
+
+<span id="my-change-queued-two-builds-back-to-back" />
+
+# Моё изменение поставило в очередь две сборки подряд
+
+Вы выполнили `lizard service set` для изменения поля, затем `lizard redeploy`, и в итоге получили две сборки вместо одной.
+
+<span id="what-this-means" />
+
+## Что это значит
+
+Вызов `service set` уже запустил пересборку сам по себе. Последующий вызов `redeploy` поставил в очередь вторую, лишнюю.
+
+<span id="why-this-can-happen" />
+
+## Почему так происходит
+
+Изменение поля, **влияющего на сборку** — `repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath` или `rootDirectory` — немедленно запускает автопересборку. Изменение поля **только для рантайма** — `startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns` — **не** запускает автопересборку; оно вступает в силу только при следующем деплое.
+
+Легко инстинктивно цеплять `redeploy` после каждого `service set`, но это имеет смысл только для полей только для рантайма.
+
+<span id="possible-solutions" />
+
+## Возможные решения
+
+<span id="check-which-kind-of-field-you-changed" />
+
+### Проверьте, поле какого типа вы изменили
+
+См. [таблицу триггеров пересборки](/concepts/build-pipeline#what-triggers-a-rebuild). Если это поле сборки, пересборка уже в очереди — больше ничего делать не нужно.
+
+```bash
+lizard events   # confirm only one build is in flight
+```
+
+<span id="only-redeploy-after-runtime-only-changes" />
+
+### Переразвёртывайте только после изменений полей только для рантайма
+
+```bash
+lizard service set api --set startCommand="node server.js"
+lizard redeploy --service api   # needed here — startCommand doesn't auto-rebuild
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [Сборка Pipeline → что запускает пересборку](/concepts/build-pipeline#what-triggers-a-rebuild)
+- [`lizard service`](/cli/service) — полный справочник команд.

@@ -1,0 +1,45 @@
+---
+description: "Read a service's deploy timeline and live replica status with lizard events, and find the same history in the dashboard's Развертывания view."
+---
+
+# Events & History
+
+`lizard events` показывает историю развёртываний сервиса и текущий статус его реплик — хронологию того, что было выпущено, и что работает прямо сейчас.
+
+<span id="view-events" />
+
+## Просмотреть события
+
+```bash
+lizard events                     # deploy history + replica status
+lizard events --service api       # a specific service
+lizard events --limit 25          # show more entries (default 10)
+```
+
+Каждая запись охватывает действие развёртывания или масштабирования и получившийся статус реплик, чтобы вы могли мгновенно ответить на вопрос «что изменилось и здорово ли это?».
+
+<span id="quick-status" />
+
+## Быстрый статус
+
+Для быстрого обзора всех сервисов в проекте — статус и URL — используйте:
+
+```bash
+lizard ps
+lizard status        # the current directory's workspace/project/service link
+```
+
+<span id="dashboard" />
+
+## Панель управления
+
+Представление **Развертывания** в дашборде (`lizard open`) отображает ту же историю в виде таймлайна, с панелью деталей для каждого развёртывания (логи сборки, коммит, статус) и здоровьем по репликам.
+
+<span id="see-also" />
+
+## См. также
+
+- [Развертывания](/concepts/deployments) — жизненный цикл развёртывания.
+- [Логи](/observability/logs) — логи рантайма, сборки и перезапусков.
+- [Metrics & Cost](/observability/metrics) — использование ресурсов и биллинг.
+- [`lizard events`](/cli/events) — полная справочная по командам.

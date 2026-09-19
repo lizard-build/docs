@@ -1,0 +1,109 @@
+---
+description: "Nitro の node-server プリセットで Nuxt を Lizard にデプロイします。本番用 start スクリプトを追加し、生成されたサーバーをポート 3000 で実行して、ルートと runtime config を確認します。"
+---
+
+<span id="deploy-nuxt-on-lizard" />
+
+# Nuxt を Lizard にデプロイする
+
+Nitro の `node-server` プリセットで Nuxt を Lizard 上で実行します。ビルドでは `.output/server/index.mjs` が生成され、Node.js プロセスがポート `3000` でページとサーバールートを配信します。ポート `80` の生成サイトについては、以下の静的レシピを使用してください。
+
+<span id="configure-the-production-build" />
+
+## 本番ビルドを設定する
+
+[プロジェクトの準備](/framework-guides#prepare-the-project) の最新の Lizard CLI を使用してください。Version 0.3.95 では、アップロード時に macOS のアーカイブメタデータが除外されます。古い CLI が `._*.ts` のルートエラーを報告する場合は、CLI を更新してから再度アップロードしてください。
+
+`nuxt.config.ts` でプリセットを設定します:
+
+```ts
+export default defineNuxtConfig({
+  nitro: { preset: 'node-server' },
+});
+```
+
+これらのスクリプトを `package.json` にマージし、アプリに必要な他のスクリプトはそのまま残してください:
+
+```json
+{
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "start": "HOST=0.0.0.0 PORT=3000 node .output/server/index.mjs"
+  }
+}
+```
+
+start スクリプトは、デプロイコンテナ内の Linux シェルを使用します。lizardpack は `nuxt` 依存関係を検出し、build スクリプトと start スクリプトを実行します。新規の Nuxt プロジェクトには `start` が含まれていない場合があります。その場合は、`nuxt dev` が本番ビルドを配信すると想定せず、これを追加してください。
+
+| 設定 | 値 |
+|---|---|
+| ビルド | `npm run build` |
+| Server entry | `.output/server/index.mjs` |
+| Start | `npm run start` |
+| サービスポート | `3000` |
+
+<span id="test-the-built-app" />
+
+## ビルドしたアプリをテストする
+
+```bash
+npm ci
+npm run build
+npm run start
+```
+
+`http://localhost:3000` を開き、内部ページを直接リクエストし、存在する場合は `server/api` ルートのいずれかを呼び出してください。ビルドが Node server プリセットを報告していることを確認します。プロバイダー固有の Nitro プリセットでは、異なるエントリーポイントが生成されることがあります。
+
+<span id="deploy" />
+
+## デプロイ
+
+[CLI のセットアップ](/framework-guides#prepare-the-project) の後、Nuxt アプリのディレクトリで次を実行します:
+
+```bash
+lizard init --name nuxt-app
+lizard add --service web
+lizard up --service web --port 3000
+lizard logs --build --service web --json
+lizard logs --service web --json
+lizard ps --json
+```
+
+`.nuxt/`、`.output/`、`node_modules/`、`.env` ファイルはアップロード対象から除外してください。ソース、設定、lockfile は含めてください。既存のサービスの build/start 上書き設定は、ここで使用される検出をバイパスします。[ビルドの決定順序](/concepts/build-pipeline#build-decision-order) を参照してください。
+
+<span id="runtime-configuration" />
+
+## ランタイム設定
+
+runtime 設定は `runtimeConfig` で宣言し、サービスには対応する `NUXT_*` 値を設定してください。シークレットは `runtimeConfig.public` の外に置いてください。public 部分はブラウザに届きます。ページの prerender に使用される値は生成済みビルドにも影響するため、変更後はリクエスト時のルートと prerender 済みルートの両方を確認してください。
+
+サービスの設定には [変数とシークレット](/variables) を、永続データには [ストレージとリカバリ](/platform/storage-and-recovery) を使用してください。ローカルキャッシュやセッションファイルを、レプリカ間で共有されるストレージとして扱わないでください。
+
+<span id="troubleshooting" />
+
+## トラブルシューティング
+
+プロセスが `.output/server/index.mjs` の不足を報告する場合は、プリセットとビルド出力を確認してください。start スクリプトがないと報告される場合は、上記のものを追加してください。サイトがいつまでも healthy にならない場合は、host と port を確認してください。
+
+完全に生成された Nuxt サイトでは、静的 Dockerfile と正しいルート処理で `.output/public/` を配信してください。その出力を上記の Node コマンドで起動しないでください。[Nuxtデプロイガイド](https://nuxt.com/docs/4.x/getting-started/deployment) では Node 出力と生成出力が説明されています。[静的ルートと404エラー](/framework-guides/static-routing) では Lizard の静的サーバー設定を扱っています。
+
+<span id="generate-a-static-site" />
+
+## 静的サイトを生成する
+
+生成 HTML の場合は、Node プリセットを明示的な prerender 設定に置き換え、build スクリプトを `nuxt generate` に変更します:
+
+```ts
+export default defineNuxtConfig({
+  nitro: {
+    prerender: { crawlLinks: true, routes: ['/'] },
+  },
+});
+```
+
+クローラーが発見できない未リンクまたは動的ルートは、`routes` に追加してください。`npm run build` を実行し、`.output/public/index.html` と内部ルートファイルが存在することを確認してください。Nuxt 4.5.2 でのテストでは、`preset: 'node-server'` を残したまま `nuxt generate` のみに切り替えると、サイトのルートがないフォールバックページが生成されました。ビルドが成功しただけでは、エクスポートにサイトが含まれていることは確認できませんでした。
+
+[静的ルートと404エラー](/framework-guides/static-routing) の Dockerfile と nginx 設定を使用し、build スクリプトは `build`、出力ディレクトリは `.output/public`、service port は `80` にしてください。静的コンテナは Nuxt server routes を実行せず、すでに生成済みのページについて runtime config も読み取りません。
+
+2026年9月9日のデプロイ確認とその制限については、[テスト済みバージョンとクラウド結果](/framework-guides/validation) を参照してください。

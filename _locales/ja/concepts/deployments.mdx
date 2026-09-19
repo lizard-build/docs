@@ -1,0 +1,95 @@
+---
+description: "Lizard におけるデプロイのライフサイクル: 何がビルドをトリガーするのか、トラフィックが正常なレプリカへどのように切り替わるのか、そして再起動と再デプロイの違い。"
+---
+
+<span id="deployments" />
+
+# デプロイの仕組み
+
+**deployment** とは、サービスの 1 回のビルドとリリースのことです。リリース経路はサービスのランタイムによって異なります。ビルドが成功しただけでは、アプリケーションが起動したことやリクエストを処理できることは証明されません。
+
+<span id="how-a-deploy-happens" />
+
+## デプロイが行われる仕組み
+
+デプロイは、次のいずれかによってトリガーされます:
+
+- 追跡対象ブランチへの **`git push`**（`github`-source サービスの場合）。
+- **`lizard redeploy`** — 最新のコミット（git）または最後のアップロードから、現在の変数を使って再ビルドします。
+- **`lizard up`** — 現在のディレクトリをアップロードしてデプロイします。
+- ビルドに影響するフィールドを変更する **`service set`**。
+
+```bash
+lizard redeploy --service api      # rebuild + redeploy from current source
+lizard up                          # upload cwd and deploy
+```
+
+<span id="lifecycle" />
+
+## ライフサイクル
+
+1. **ビルド** — プラットフォームがビルドを実行します（[ビルド Pipeline](/concepts/build-pipeline) を参照）。
+2. **Pre-deploy** — `preDeployCommand` が設定されている場合、1 回だけ実行されます（例: マイグレーション）。
+3. **Start** — Lizard が設定されたランタイムでアプリケーションを起動します。
+4. **Health check** — プラットフォームがアプリのポートに到達可能かを確認します（[workers](/deploy/workers) ではスキップされます）。
+5. **Verify** — リリースのステータスを確認し、アプリケーション URL を呼び出します。ポート到達性は完全なアプリケーションヘルスチェックではありません。
+
+<span id="streaming-output" />
+
+## ストリーミング出力
+
+非デタッチの `lizard up`（または `redeploy`）を実行すると、ビルドログがライブでストリーミングされます。`--json` を使うと、1 行ごとに 1 つの JSON イベントを受け取れます:
+
+```json
+{ "event": "log", "line": "..." }
+{ "event": "deployed", "status": "...", "url": "https://..." }
+```
+
+最後は `deployed`、`failed`、または `deploying` で終了します。`--detach` を使うと、ストリーミングせずにデプロイを開始してすぐに戻れます。
+
+<span id="inspecting-history" />
+
+## 履歴の確認
+
+```bash
+lizard events                  # deploy history + per-replica status
+lizard events --limit 25       # show more
+lizard ps                      # current services, status, and URLs
+```
+
+[ダッシュボード](/dashboard) では、**デプロイメント** ビューに完全なタイムライン、デプロイごとのビルドログ、各リリースの詳細ドロワーが表示されます。
+
+<span id="restarts-vs-redeploys" />
+
+## 再起動と再デプロイ
+
+| コマンド | 何をするか |
+|---------|--------------|
+| `lizard restart --service <svc>` | **現在の** ビルドを再起動 — 再ビルドなし |
+| `lizard redeploy --service <svc>` | 最新のコミット/アップロードから新しく **ビルド** し、その後リリース |
+
+`restart` はレプリカを再循環させるために使います（例: ホットリロードされなかったランタイムシークレットを反映するため）。新しいビルドが必要な場合は `redeploy` を使ってください。
+
+<span id="recovering-from-a-crash" />
+
+## クラッシュからの復旧
+
+直近のクラッシュまたは再起動のログを確認します:
+
+```bash
+lizard logs --restart latest       # log tail around the latest restart
+lizard logs --restart <id>         # a specific restart
+lizard events                      # see replica status
+```
+
+<span id="config-changes-no-rebuild" />
+
+## 設定変更（再ビルドなし）
+
+ほとんどの環境変数とシークレットの変更は、再ビルドなしで適用されます。Lizard はサービスの設定を更新して再起動し、これには数秒かかります。ビルド時の値（`VITE_*`、`NEXT_PUBLIC_*`）とビルドフィールドの変更は再ビルドを強制します — [再ビルドトリガー表](/concepts/build-pipeline#what-triggers-a-rebuild) を参照してください。
+
+<span id="failed-releases-and-recovery" />
+
+## 失敗したリリースと復旧
+
+ビルドの失敗とアプリケーション起動の失敗は別のケースです。どのランタイムでも古いリリースが引き続き配信されるとは想定しないでください。アクティブなサービス、ビルドログ、ランタイムログを確認してください。`lizard redeploy` は選択したソースを再度ビルドします。以前のビルドを復元するためのコマンドではありません。必要に応じてソースコミットを元に戻し、それをデプロイして結果を確認してください。[既知の問題](/platform/known-issues) を参照してください。

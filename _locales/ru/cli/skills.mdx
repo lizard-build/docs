@@ -1,0 +1,61 @@
+---
+description: "lizard skills считывает руководства агентов, поставляемые с вашей версией CLI, поэтому ИИ-агент всегда получает инструкции, соответствующие бинарному файлу."
+---
+
+# lizard skills
+
+Чтение встроенных навыков агентов, поставляемых с данной версией CLI.
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard skills list
+lizard skills get core
+lizard skills path
+```
+
+<span id="subcommands" />
+
+## Подкоманды
+
+### `lizard skills list`
+
+Выводит список доступных встроенных навыков.
+
+### `lizard skills get core`
+
+Читает основное руководство — авторитетное руководство по использованию платформы, версионируемое вместе с CLI. Возвращает `{ name, frontmatter, content, … }`, где `content` — это полное руководство (конвейер сборки, приоритет переменных окружения, аддоны, обнаружение, коды выхода).
+
+### `lizard skills path`
+
+Показывает, где навыки хранятся на диске.
+
+<span id="examples" />
+
+## Примеры
+
+<span id="load-the-core-guide-as-an-agent" />
+
+### Загрузка основного руководства агентом
+
+```bash
+lizard skills get core --json
+```
+
+<span id="list-available-embedded-skills" />
+
+### Вывод списка доступных встроенных навыков
+
+```bash
+lizard skills list
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [AI agents & MCP](/agents) — как агенты выполняют бутстрап с встроенным навыком и самодокументируемыми командами
+- [JSON & automation](/cli/json) — формат вывода `--json`, используемый `lizard skills get core --json`
+- [Развернуть из Claude Code](https://lizard.build/blog/deploy-from-claude-code) — установка навыка и передача деплоя агенту, сквозной процесс

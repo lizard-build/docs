@@ -1,0 +1,59 @@
+---
+description: "ビルドは成功するのに、デプロイが不健全なままです。ポートのバインド、意図しない worker mode、そのほかヘルスチェック失敗の原因。"
+---
+
+<span id="my-service-deploys-but-never-becomes-healthy" />
+
+# サービスはデプロイされるのに、正常状態になりません
+
+ビルドは成功し、レプリカは起動しますが、デプロイは pending のままになるか、unhealthy とマークされるか、いつまでもトラフィックを受け取りません。
+
+<span id="what-this-means" />
+
+## これは何を意味するのか
+
+アプリのポートに到達できることを確認するプラットフォームのヘルスチェックが一度も通らないため、トラフィックが新しいレプリカに切り替わりません。
+
+<span id="why-this-can-happen" />
+
+## なぜ起こるのか
+
+- **アプリが想定されたポートで listen していません。** Lizard は `PORT` 環境変数（デフォルトのコンテナポートは `3000`）を注入し、アプリがそこで到達可能かどうかを確認します。アプリが別のポートにハードコードされているか、まったくバインドしていない場合、ヘルスチェックは無期限に失敗します。よくあるのは Python アプリです: `gunicorn` と `uvicorn` は、特に指定しない限り `127.0.0.1` にバインドし、プローブはプロセスの外側から来ます。[Pythonアプリホスティング](https://lizard.build/blog/python-app-hosting#what-a-python-app-actually-needs-from-a-host) には、各フレームワークで必要な `--bind 0.0.0.0:$PORT` の行があります。
+- **サービスが誤って worker mode になっています。** `containerPort=0` を設定すると、サービスは [worker mode](/deploy/workers) になり、**ヘルスチェックとロードバランサー登録の両方が完全にスキップされます**。HTTP を提供するはずのサービスが誤って `containerPort=0` に切り替えられると、デプロイは「成功」するものの何も配信せず、worker mode によって本来の起動問題が表面化せずに隠れてしまいます。
+
+<span id="possible-solutions" />
+
+## 考えられる解決策
+
+<span id="check-the-current-port" />
+
+### 現在のポートを確認する
+
+```bash
+lizard port --service api
+```
+
+これが `worker mode` を表示する場合、そのサービスには `containerPort=0` が設定されています。このサービスが HTTP を提供する想定なら、実際のポートに戻してください:
+
+```bash
+lizard port 3000 --service api
+lizard redeploy --service api
+```
+
+<span id="confirm-your-app-is-listening-where-lizard-expects" />
+
+### アプリが Lizard の想定どおりの場所で listen していることを確認する
+
+起動エラーがないかランタイムログを確認し、アプリが実際にバインドしたポートと、Lizard が注入したポートが一致しているかを検証してください:
+
+```bash
+lizard logs --service api
+lizard ssh --service api -- env | grep PORT
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [Background Workers](/deploy/workers) — `containerPort=0` が適切な場合と、そうでない場合。
+- [デプロイメント → lifecycle](/concepts/deployments#lifecycle) — デプロイの中でヘルスチェックがどこに位置するか。

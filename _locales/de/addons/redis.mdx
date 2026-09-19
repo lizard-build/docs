@@ -1,0 +1,79 @@
+---
+description: "Fügen Sie eine Managed Redis-Instanz für Caching, Warteschlangen, Rate Limiting und Pub/Sub hinzu und verbinden Sie sie mit einem einzigen Verweis mit einem Service."
+---
+
+# Managed Redis
+
+Eine Managed Redis-Instanz für Caching, Warteschlangen, Rate Limiting und Pub/Sub.
+
+<span id="provision" />
+
+## Bereitstellen
+
+```bash
+lizard add redis
+```
+
+Das erste Redis-Add-on heißt `redis`, daher funktioniert `${{redis.REDIS_URL}}` sofort.
+
+<span id="environment-variables" />
+
+## Umgebungsvariablen
+
+| Variable | Beschreibung |
+|----------|-------------|
+| `REDIS_URL` | Vollständige Verbindungszeichenfolge (`redis://…`) |
+
+<span id="connect-a-service" />
+
+## Einen Service verbinden
+
+```bash
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service api
+lizard redeploy --service api
+```
+
+Der Verweis wird beim Bereitstellen aufgelöst und mit den Zugangsdaten des Addons rotiert.
+
+<span id="common-uses" />
+
+## Häufige Anwendungsfälle
+
+- **Cache** — speichert berechnete Ergebnisse anhand der Anfrage.
+- **Warteschlange / Worker** — kombinieren Sie Redis mit einem [Service im Worker-Modus](/deploy/workers), der Jobs verarbeitet.
+- **Rate Limiting / Sitzungen** — schneller gemeinsam genutzter Status über [Replikate](/deploy/scaling) hinweg.
+
+```bash
+# A worker that drains a Redis queue
+lizard add -r your-org/worker -n jobs
+lizard service set jobs --set containerPort=0
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service jobs
+lizard redeploy --service jobs
+```
+
+<span id="browse-keys" />
+
+## Schlüssel durchsuchen
+
+Öffnen Sie den **Redis-Browser** im Dashboard (`lizard open`), um Schlüssel und Werte zu prüfen. Für lokalen Zugriff:
+
+```bash
+lizard run --service api -- sh -c 'exec redis-cli -u "$REDIS_URL"'
+```
+
+<span id="grow-storage" />
+
+## Speicher erweitern
+
+```bash
+lizard scale --service redis --storage 4096
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Managed Addons](/addons) — Benennung, Verweise und die Browser im Dashboard.
+- [Background Workers](/deploy/workers) — Redis mit einem Worker kombinieren, der eine Warteschlange verarbeitet.
+
+`lizard run` startet den Befehl lokal mit der ausgewählten Service-Umgebung. Installieren Sie `redis-cli` lokal und prüfen Sie, dass der Endpunkt erreichbar ist.

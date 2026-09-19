@@ -1,0 +1,95 @@
+---
+description: "Stelle Next.js auf Lizard als Node.js-Server bereit. Konfiguriere next build, next start, Port 3000, Umgebungsvariablen und Prüfungen für Seiten, APIs und Server Actions."
+---
+
+<span id="deploy-nextjs-on-lizard" />
+
+# Next.js auf Lizard bereitstellen
+
+Führe Next.js auf Lizard als Node.js-Server mit `next build` und `next start` aus. Dieser Weg hält einen Server für Rendering zur Anfragezeit, Route Handlers und Server Actions verfügbar. Wenn jede Route vorab gebaut werden kann, folge stattdessen [Next.js statischer Export](/framework-guides/nextjs/static-export).
+
+<span id="build-settings" />
+
+## Build-Einstellungen
+
+| Einstellung | Wert |
+|---|---|
+| Projektstamm | Verzeichnis mit `package.json` und der Next.js-Konfiguration |
+| Build-Skript | `next build` |
+| Start-Skript | `next start --hostname 0.0.0.0 --port 3000` |
+| Build-Ausgabe | `.next/` |
+| Service-Port | `3000` |
+| Laufzeit | Node.js |
+
+<span id="prepare-the-app" />
+
+## App vorbereiten
+
+Behalte `next`, `react` und `react-dom` in deinen Abhängigkeiten und committe deine Lockfile. Füge diese Skripte in `package.json` zusammen:
+
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0 --port 3000"
+  }
+}
+```
+
+Verwende für diesen Leitfaden die Standardausgabe von Next.js. `output: 'export'` benötigt einen statischen Server, und `output: 'standalone'` benötigt einen eigenen Start mit `server.js` und ein eigenes Asset-Layout. Keines von beiden verwendet dieses `next start`-Rezept unverändert.
+
+Wähle in `.nvmrc` eine unterstützte Node-Hauptversion aus, zum Beispiel `22`. Schließe `.next/`, `node_modules/` und `.env*` aus dem hochgeladenen Quellcode aus; behalte bei Bedarf eine Beispiel-Umgebungsdatei ohne Geheimnisse.
+
+<span id="test-the-production-build-locally" />
+
+## Den Produktions-Build lokal testen
+
+```bash
+npm ci
+npm run build
+npm run start
+```
+
+Öffne in einem anderen Terminal `http://localhost:3000` und teste eine innere Route. Wenn die App eine API oder Server Aktion hat, führe auch dafür einen Test aus. Nur weil die Prüfung des Entwicklungsservers erfolgreich ist, ist nicht bewiesen, dass der Produktions-Build funktioniert.
+
+<span id="deploy" />
+
+## Bereitstellen
+
+Führe nach dem [Installieren von Lizard CLI und der Anmeldung](/framework-guides#prepare-the-project) aus dem App-Verzeichnis Folgendes aus:
+
+```bash
+lizard init --name nextjs-app
+lizard add --service web
+lizard up --service web --port 3000
+lizard logs --build --service web --json
+lizard logs --service web --json
+lizard ps --json
+```
+
+Lizard erkennt die Abhängigkeit `next` und führt die Build- und Start-Skripte aus. Diese Befehle setzen voraus, dass der Service noch keine bestehenden Build- oder Start-Overrides hat. Verwende die URL in der Bereitstellen-Ausgabe, um die lokalen Prüfungen zu wiederholen.
+
+<span id="environment-variables-and-data" />
+
+## Umgebungsvariablen und Daten
+
+Werte aus `NEXT_PUBLIC_*` werden während des Builds Teil des Browser-Bundles. Bewahre Zugangsdaten in rein serverseitigen Variablen auf und konfiguriere sie für den Service über [Variablen und Secrets](/variables). Code, der während des Builds Daten abruft, benötigt auch zu diesem Zeitpunkt Zugriff auf diese Daten. Ein Neustart zur Laufzeit ändert kein bereits generiertes HTML oder JavaScript.
+
+Lokale Cache-Dateien und hochgeladene Dateien bilden keinen gemeinsamen Speicher über Replikate hinweg. Prüfe die Anforderungen von Next.js für Cache und Server Actions, bevor du auf mehr als ein Replikat skalierst. Lege dauerhafte App-Daten in einer Datenbank oder einem Objektspeicher ab und lies [Storage und Recovery](/platform/storage-and-recovery).
+
+<span id="troubleshooting" />
+
+## Fehlerbehebung
+
+| Symptom | Prüfen |
+|---|---|
+| `Missing script: start` | Füge das Produktions-Start-Skript oben hinzu; `next dev` ist für die lokale Entwicklung. |
+| App wird nie healthy | Stimme `--port 3000` auf den Startbefehl ab und binde an `0.0.0.0`. |
+| Die öffentliche API-URL hat noch ihren alten Wert | Erstelle mit dem neuen Wert für `NEXT_PUBLIC_*` einen neuen Build. |
+| Der Build kann keine Datenbank erreichen | Prüfe, ob eine Route Daten zur Build-Zeit abruft und ob diese Abhängigkeit dann erreichbar ist. |
+| Static export schlägt unter `next start` fehl | Folge dem separaten Leitfaden für static export. |
+
+Der [Next.js Self-Hosting-Anleitung](https://nextjs.org/docs/app/guides/self-hosting) behandelt das Verhalten von Framework-Cache, Bildern und mehreren Instanzen. Bei Bereitstellungsfehlern siehe [Service wird nie gesund](/deploy/troubleshooting/service-never-healthy).
+
+Siehe [getestete Versionen und Cloud-Ergebnisse](/framework-guides/validation) für die Bereitstellungsprüfungen vom 9. September 2026 und ihre Grenzen.

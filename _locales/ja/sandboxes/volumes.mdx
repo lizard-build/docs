@@ -1,0 +1,79 @@
+---
+description: "サンドボックスの再起動後もチェックポイント、weights、または作業ディレクトリを保持するために、/data にボリュームをアタッチします。ボリュームの作成、アタッチ、管理を行います。"
+---
+
+# Persistent Volumes
+
+Sandboxes は一時的です — 停止または期限切れになると、そのファイルシステムは失われます。**volume** は、単一のサンドボックスより長く存続する永続的なブロックストレージです。サンドボックスの再起動後もデータ（チェックポイント、モデルの weights、作業ディレクトリ）を保持するには、これをアタッチします。
+
+ボリュームは**同時に 1 つのサンドボックス**にアタッチされ、micro-VM 内の **`/data`** にマウントされます。ボリュームは存在するノードに固定されるため、それをアタッチするサンドボックスも同じノードにスケジュールされます。
+
+<span id="create-and-attach" />
+
+## 作成とアタッチ
+
+ボリュームをアタッチするには、サンドボックスの請求先プロジェクトとあわせて、その ID を `Sandbox.create` に渡します。`/data` 配下に書き込まれたものは、サンドボックスが終了した後も保持されます。
+
+```ts
+import { Sandbox, Volume } from '@lizard-build/sdk';
+
+// Create a 10 GB volume in a project (default size: 5 GB)
+const volume = await Volume.create('proj_123', 'agent-workdir', { sizeGb: 10 });
+
+// Attach it to a sandbox — mounted at /data
+const sandbox = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+try {
+  await sandbox.fs.write('/data/state.json', JSON.stringify({ step: 1 }));
+} finally {
+  await sandbox.kill();            // the volume persists
+}
+
+// A later sandbox re-attaches and sees the data
+const next = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+try {
+  console.log(await next.fs.read('/data/state.json'));   // {"step":1}
+} finally {
+  await next.kill();
+}
+```
+
+<span id="manage-volumes" />
+
+## ボリュームの管理
+
+```ts
+await Volume.list('proj_123');                 // [{ id, name, sizeGb, status, attachedTo, … }]
+const v = await Volume.get('proj_123', 'vol_abc');
+await v.getInfo('proj_123');
+await v.delete('proj_123');                     // must be detached first
+```
+
+| メソッド | 説明 |
+|---|---|
+| `Volume.create(projectId, name, { sizeGb })` | ボリュームを作成します（デフォルト 5 GB） |
+| `Volume.list(projectId)` | プロジェクト内のボリュームを一覧表示します |
+| `Volume.get(projectId, volumeId)` | 既存のボリュームへのハンドルを取得します |
+| `volume.getInfo(projectId)` | メタデータとアタッチ状態を取得します |
+| `volume.delete(projectId)` | ボリュームを削除します（未アタッチである必要があります） |
+
+<span id="in-the-dashboard" />
+
+## ダッシュボード内
+
+ボリュームは、プロジェクトの **Sandboxes → ボリューム** タブにあります。名前とサイズを指定して作成できます。テーブルには各ボリュームのサイズ、ステータス（`available` / `attached`）、およびそれを保持しているサンドボックスが表示されます。サンドボックスが停止または期限切れになると、ボリュームは自動的に `available` に戻されます。[ダッシュボード](/sandboxes/dashboard) ガイドを参照してください。
+
+<span id="notes" />
+
+## 注意
+
+- ボリュームは同時に **1 つのサンドボックス**にしかアタッチできません。すでにアタッチされているボリュームをアタッチしようとすると、競合が返されます。
+- サンドボックスを削除する（または期限切れにする）と、ボリュームは**デタッチ**されます — 削除はされません。データは次回のアタッチに備えて保持されます。
+- ストレージを解放するには、ボリューム自体を削除してください。
+- 一時停止中のサンドボックスもアタッチを保持します。Persistent Volumes はノードローカルストレージを使用します。ノード障害後に復旧する必要があるデータはエクスポートしてください。[ストレージとリカバリ](/platform/storage-and-recovery) を参照してください。
+
+<span id="see-also" />
+
+## 関連項目
+
+- [SDK Reference](/sandboxes/sdk-reference) — すべての `Volume` メソッド。
+- [Quickstart](/sandboxes/quickstart) — サンドボックス作成時にボリュームをアタッチします。

@@ -1,0 +1,57 @@
+---
+description: "Stellen Sie eine App bereit, führen Sie einen Worker aus, verbinden Sie Managed Postgres oder führen Sie Code in Sandboxes aus. Wählen Sie eine Aufgabe, folgen Sie einer Anleitung und prüfen Sie die Limits."
+---
+
+<span id="lizard-documentation" />
+
+# Lizard-Dokumentation
+
+Lizard erstellt und betreibt Anwendungen aus einem GitHub-Repository oder einem lokalen Ordner. Verwenden Sie Lizard CLI oder das Dashboard, um einen Webservice bereitzustellen, einen Hintergrund-Worker auszuführen, Managed Postgres oder Managed Redis zu verbinden und Logs zu prüfen. Verwenden Sie Lizard SDK, um Sandboxes für die Codeausführung zu erstellen.
+
+<span id="choose-a-task" />
+
+## Aufgabe auswählen
+
+| Ich möchte… | Hier starten |
+|---|---|
+| Meine erste App bereitstellen | [App-Schnellstart](/getting-started) |
+| Next.js, React, Vue oder eine Python-App bereitstellen | [Framework-Anleitungen](/framework-guides) |
+| Über Claude Code oder einen anderen Coding-Agenten bereitstellen | [Anleitung für Coding-Agenten](/guides/deploy-from-coding-agent) |
+| Einen Remote-MCP-Server hosten | [Remote-MCP-Anleitung](/guides/deploy-mcp-server) |
+| Einen Telegram-Bot dauerhaft ausführen | [Telegram-Worker-Anleitung](/guides/telegram-bot) |
+| Eine Datenbank verbinden | [Managed Postgres](/addons/postgres) |
+| Generierten Code in einer separaten Umgebung ausführen | [Sandboxes-Schnellstart](/sandboxes/quickstart) |
+| Dateien nach dem Ende einer Sandbox behalten | [Persistent Volumes](/sandboxes/volumes) |
+
+<span id="deploy-an-app" />
+
+## Eine App bereitstellen
+
+Installieren Sie Lizard CLI und melden Sie sich an. Stellen Sie dann ein Repository bereit, auf das Sie zugreifen können:
+
+```bash
+npm install -g @lizard-build/cli
+lizard login
+lizard add -r your-org/your-app
+```
+
+Lizard erstellt das Image auf seinen Servern, daher ist auf diesem Weg kein lokales Docker erforderlich. [lizardpack](/concepts/build-pipeline) erkennt unterstützte Projekte; Projekte mit speziellen Build-Anforderungen können explizite Befehle oder ein Dockerfile verwenden. Prüfen Sie die Build-Logs und verifizieren Sie nach der Bereitstellung die URL der Anwendung.
+
+<span id="understand-your-resources" />
+
+## Ihre Ressourcen verstehen
+
+Ein **Workspace** gruppiert Mitglieder und Projekte. Ein **Projekt** gruppiert Services, Datenbanken und Sandboxes. Ein **Service** führt eine Anwendung oder einen Worker aus. Managed Postgres, Managed Redis und Managed Object Storage stellen Datendienste bereit, mit denen sich Anwendungen über Umgebungsreferenzen verbinden.
+
+Für Apps und Sandboxes gelten unterschiedliche Regeln für Laufzeit und Speicher. Lesen Sie [Limits](/platform/limits) und [Speicher und Wiederherstellung](/platform/storage-and-recovery), bevor Sie sich auf Größe, Lebensdauer oder Datenaufbewahrung einer Ressource verlassen.
+
+<span id="find-the-right-level-of-detail" />
+
+## Die passende Detailtiefe finden
+
+- [Anleitungen](/guides) behandeln eine Aufgabe von der Einrichtung bis zur Prüfung des Ergebnisses.
+- [Framework-Anleitungen](/framework-guides) enthalten Build-Befehle, Adapter, Ports und Prüfungen für jeden Stack.
+- [Kernkonzepte](/concepts/architecture) erklären Projekte, Builds und Bereitstellungen.
+- [Lizard CLI-Referenz](/cli) listet Befehle, Flags und Exit-Codes auf.
+- [Fehlerbehebung](/deploy/troubleshooting/service-never-healthy) hilft dabei, einen fehlgeschlagenen Start zu diagnostizieren.
+- [Bekannte Probleme](/platform/known-issues) dokumentiert Limits und Wiederherstellungsfälle, die Sie vor einem Release prüfen sollten.

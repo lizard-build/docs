@@ -1,0 +1,116 @@
+---
+description: "Streamable HTTP、bearer token の検証、ヘルスエンドポイント、ツール呼び出しを検証するクライアントを備えたリモート MCP サーバーを Lizard でホストします。"
+---
+
+<span id="host-a-remote-mcp-server" />
+
+# リモート MCP サーバーをホストする
+
+クライアントがリモート URL を必要とする場合は、MCP サーバーを HTTP アプリケーションとしてデプロイします。この例では、1 つの算術ツールを提供し、bearer token を検証し、ヘルスエンドポイントを公開します。Streamable HTTP を使用します。ローカルの `stdio` サーバーだけでは、リモートクライアントに提供できません。
+
+<span id="before-you-start" />
+
+## 開始する前に
+
+Node.js 22、Lizard CLI、デプロイ可能なプロジェクト、設定済み bearer token を受け付ける MCP クライアントが必要です。この例では、ステートレスモードで `@modelcontextprotocol/sdk` 1.30.0 を使用します。OAuth ログイン、ブラウザーアクセス、または ID プロバイダーは提供しません。
+
+実行可能なファイルは [remote-mcp-node](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/remote-mcp-node) にあります。チェックイン済みの lockfile を使用してください。ローカルのスモークテストでは、初期化、ツールの検出、ツール呼び出し、有効な token がない場合の拒否を確認します。デプロイの確認では、公開プロキシと TLS の経路も確認する必要があります。
+
+<span id="run-locally" />
+
+## ローカルで実行する
+
+サンプルディレクトリから:
+
+```bash
+npm ci
+npm test
+node issue-token.mjs
+export MCP_PUBLIC_KEY="$(cat .mcp-public-key.pem)"
+export MCP_ALLOWED_HOSTS=127.0.0.1,localhost
+npm start
+```
+
+生成された token は 1 時間後に期限切れになります。秘密署名鍵は保存されません。継続的なデプロイには、独自の token 発行およびローテーションの仕組みを使用し、その秘密鍵はサーバーの外部で管理してください。
+
+別のターミナルで:
+
+```bash
+export MCP_URL=http://127.0.0.1:8000/mcp
+export MCP_TOKEN="$(cat .mcp-token)"
+node client.mjs
+```
+
+クライアントは初期化、ツールの検出、結果 `5` を確認し、その後 `MCP initialize, tools/list and tools/call passed: 5` を出力します。`/health` は `ok` を返します。`/mcp` への、有効な token なしのリクエストは `401` を返します。
+
+<span id="deploy-the-application" />
+
+## アプリケーションをデプロイする
+
+サンプルの Dockerfile と lockfile はそのまま使ってください。それらを含むディレクトリから:
+
+```bash
+lizard init --name mcp-example
+lizard add --service mcp
+lizard domain --service mcp --json
+```
+
+認証が必要だとコマンドに表示された場合は、`lizard login` でサインインしてください。`init` はプロジェクトをリンクし、`add` は指定した名前のサービスを作成します。domain コマンドは、デプロイ前にそのホスト名を割り当てます。返された `hostname` を以下で使用してください。`https://` やパスは付けないでください:
+
+```bash
+lizard secrets set MCP_PUBLIC_KEY="$(cat .mcp-public-key.pem)" --service mcp
+lizard secrets set MCP_ALLOWED_HOSTS=YOUR_SERVICE_HOSTNAME --service mcp
+```
+
+最初のデプロイ前に両方の値を設定してください。その後、次を実行します:
+
+```bash
+lizard up --service mcp --port 8000
+lizard logs --build --service mcp --json
+lizard logs --service mcp --json
+lizard ps --json
+```
+
+macOS で Lizard CLI 0.3.92 を使う場合は、アーカイブから AppleDouble メタデータを除外するために `COPYFILE_DISABLE=1 lizard up --service mcp --port 8000` を使用してください。後の CLI リリースでは、このアーカイブ修正が含まれている可能性があります。最終的なデプロイイベントと公開エンドポイントを確認してください。ビルド失敗後は、この CLI バージョンの終了コードだけに依存しないでください。`server.mjs` は `0.0.0.0` で待ち受け、`PORT` を読み取ります。デフォルトは 8000 です。deploy コマンドはサービスのポートを 8000 に設定します。公開鍵は複数行の環境変数値として設定してください。秘密署名鍵や token ファイルはアップロードしないでください。
+
+<span id="verify-the-public-endpoint" />
+
+## 公開エンドポイントを検証する
+
+`MCP_URL` を `https://YOUR_SERVICE_HOSTNAME/mcp` に設定し、クライアント環境に有効な token を保持したまま、`node client.mjs` を実行します。次の 3 つの結果をすべて確認してください:
+
+1. `/health` は HTTPS 経由で `200` を返す。
+2. `/mcp` は、有効な token を持たないクライアントを拒否する。
+3. 認証済みクライアントはツール一覧を取得し、`add` を呼び出して `5` を返す。
+
+プロセスが正常であるだけでは、MCP ハンドシェイクやストリーミングされたレスポンスが公開プロキシ経由で機能していることの証明にはなりません。
+
+<span id="troubleshooting" />
+
+## トラブルシューティング
+
+| 結果 | 確認 |
+|---|---|
+| 起動中にプロセスが終了する | `MCP_PUBLIC_KEY` には公開 PEM 鍵が含まれている必要があります。`MCP_ALLOWED_HOSTS` にはサービスのホスト名が含まれている必要があります。 |
+| `401` | token は RS256 を使用し、issuer と audience `mcp-example` が一致し、期限切れであってはいけません。 |
+| `403` | リクエストのホスト名を `MCP_ALLOWED_HOSTS` と一致させてください。この例ではブラウザーの origin は有効化されていません。 |
+| 有効な token で `405` | このステートレス MCP エンドポイントは、POST を通じてプロトコルリクエストを受け付けます。MCP クライアントを使用してください。token なしのブラウザー GET は、まず `401` を返します。 |
+| ローカルテストは成功するがリモート呼び出しが失敗する | port、HTTPS、レスポンスストリーミング、プロキシのタイムアウトを確認してください。 |
+
+<span id="limits-and-cost" />
+
+## 制限とコスト
+
+この例では、ユーザーセッションや永続ファイルをサーバーメモリに保持しません。長期的なアプリケーション状態にはデータベースを追加し、非公開ツールを公開する前にユーザーごとのアクセスを確認してください。OAuth ディスカバリーや対話的ログインを必要とするクライアントには、このテスト token を配布する代わりに、サポートされている OAuth プロバイダーを追加してください。
+
+HTTP プロセスは呼び出しの間もアクティブなままの場合があります。[pricing](https://lizard.build/pricing)、[limits](/platform/limits)、測定された CPU/メモリを確認してください。リクエストキューが空でも、料金が発生していないことを意味しません。
+
+<span id="next-steps" />
+
+## 次のステップ
+
+- [環境変数リファレンス](/variables/references)
+- [デプロイの復旧](/concepts/deployments)
+- [MCP TypeScript SDK サーバーガイド](https://ts.sdk.modelcontextprotocol.io/server)
+
+確認済みバージョン、クラウドでの結果、残っている制限については、[シナリオテスト結果](/guides/validation) を参照してください。

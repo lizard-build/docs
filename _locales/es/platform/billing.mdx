@@ -1,0 +1,63 @@
+---
+description: "Lizard pay as you go: tarifas de recursos, créditos de la cuenta, recarga automática opcional, comisiones de pago y qué ocurre cuando tu saldo se agota."
+---
+
+<span id="pay-as-you-go" />
+
+# Pago por uso
+
+Lizard no tiene suscripción mensual ni costo por usuario para las cuentas estándar. Añade créditos a tu cuenta y paga por los recursos que usas. Los créditos comprados que no uses permanecen en tu saldo, así que un mes tranquilo no requiere comprar otro paquete.
+
+<span id="resource-rates" />
+
+## Tarifas de recursos
+
+Los precios están en dólares estadounidenses.
+
+| Recurso | Tarifa |
+| --- | ---: |
+| CPU | $0.000006948 por vCPU-segundo |
+| Memory | $0.000003474 por GB-segundo |
+| Persistent Volumes | $0.000000054 por GB-segundo |
+| Managed Object Storage | $0.0135 por GB-mes |
+| Outgoing traffic | $0.045 por GB, desde el primer byte |
+
+El tráfico entrante no tiene costo. Las apps, Managed Postgres, Managed Redis y Sandboxes usan las mismas tarifas de recursos aplicables. Los límites de recursos de la cuenta siguen aplicándose; añadir créditos no aumenta esos límites.
+
+Por ejemplo, un vCPU y 1 GB de memoria usados durante una hora cuestan $0.0375192 en cómputo. El almacenamiento, el tráfico saliente y las comisiones de pago pueden sumarse a ese importe. Este es un ejemplo de costo de recursos, no del importe cobrado por una recarga.
+
+Consulta los [precios actuales](https://lizard.build/pricing) para ver la oferta completa. La facturación Enterprise sigue tu contrato.
+
+<span id="account-balance" />
+
+## Saldo de la cuenta
+
+El uso en un espacio de trabajo se descuenta del saldo de la cuenta de su propietario. Añadir miembros no tiene costo por usuario. La página Credits muestra tu saldo, compras y cualquier crédito que venza.
+
+- **Los créditos comprados no vencen.** No se restablecen cada mes.
+- **Los créditos de prueba vencen.** Las cuentas nuevas reciben $10 en créditos de prueba, válidos durante 31 días.
+- **Los créditos promocionales pueden vencer.** Revisa los términos y la fecha de vencimiento que se muestran para la concesión.
+
+Un saldo comprado paga el uso; no es un descuento sobre la tarifa del recurso. No lo restes otra vez al comparar costos con otro proveedor.
+
+<span id="top-ups-and-fees" />
+
+## Recargas y comisiones
+
+Abre **Credits** en la configuración de la cuenta para añadir fondos. Antes de confirmar, la pantalla de recarga muestra el importe mínimo, el importe de crédito, la comisión de pago y el cargo total. Una recarga mínima no es un cargo mensual.
+
+La recarga automática es opcional. Elige el umbral de saldo y el importe en tu configuración de Credits. Puedes desactivarla allí. Desactivar la recarga automática no detiene los recursos ni termina los cargos por su uso.
+
+<span id="low-or-empty-balance" />
+
+## Saldo bajo o agotado
+
+Lizard te avisa cuando tu saldo es bajo. Si tu saldo se agota y un pago no lo restablece, la creación de recursos puede quedar restringida y los servicios en ejecución pueden pausarse después del período de gracia aplicable. Revisa tu página Credits para ver las condiciones de la cuenta y restablece el saldo antes de que termine el período de gracia para evitar una pausa.
+
+<span id="idle-apps-and-stored-data" />
+
+## Apps inactivas y datos almacenados
+
+Una app puede usar memoria y CPU incluso cuando no tiene solicitudes. Detén la app para detener el uso de cómputo. Persistent Volumes y Managed Object Storage siguen acumulando cargos de almacenamiento mientras conserves datos, incluso cuando la app está detenida.
+
+Consulta [almacenamiento y recuperación](/platform/storage-and-recovery) antes de eliminar datos. Lee [métricas](/observability/metrics) para comparar los límites configurados con el uso medido.

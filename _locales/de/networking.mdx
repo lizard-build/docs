@@ -1,0 +1,83 @@
+---
+description: "Jeder Service erhält eine onlizard.com-Domain mit automatischem TLS. Füge einen benutzerdefinierten Hostnamen hinzu, verifiziere DNS, stelle einen Port bereit oder entferne eine Domain."
+---
+
+<span id="networking" />
+
+# Netzwerk
+
+Jeder Service erhält beim Deployment sofort eine generierte `*.onlizard.com`-Domain mit automatischem TLS, unabhängig von der Region. Füge deinen eigenen Hostnamen hinzu, wenn du live gehen willst.
+
+<span id="generated-domains" />
+
+## Generierte Domains
+
+Die Standarddomain eines Service wird automatisch für dich erstellt. Zeige sie an (oder generiere eine neue):
+
+```bash
+lizard domain                    # show the service's current domain
+lizard domain generate           # generate a new *.onlizard.com subdomain
+```
+
+Object Storage, das über ein [S3-Add-on](/addons/storage) bereitgestellt wird, verwendet stattdessen einen regionsspezifischen Gateway-Host (`s3-<region>.onlizard.com`).
+
+<span id="attach-a-custom-domain" />
+
+## Eine benutzerdefinierte Domain hinzufügen
+
+Der Hostname ist ein **Positionsargument** — es gibt kein `add`-Subcommand:
+
+```bash
+lizard domain app.example.com --service web
+```
+
+Lizard gibt die zu erstellenden DNS-Einträge zurück (einen `CNAME` für den Hostnamen und einen `TXT`-Eintrag zur Verifizierung). Füge sie bei deinem DNS-Anbieter hinzu.
+
+<span id="verify" />
+
+## Verifizieren
+
+Sobald DNS propagiert wurde, aktiviere die Domain:
+
+```bash
+lizard domain verify app.example.com
+```
+
+Dabei wird der `TXT`-Eintrag geprüft und die Domain aktiviert. TLS wird automatisch bereitgestellt.
+
+<span id="remove-a-domain" />
+
+## Eine Domain entfernen
+
+```bash
+lizard domain delete app.example.com
+lizard domain rm app.example.com --yes   # alias, skip confirmation
+```
+
+<span id="exposing-a-specific-port" />
+
+## Einen bestimmten Port bereitstellen
+
+Wenn dein Service auf einem nicht standardmäßigen Port bereitstellt, ordne die Domain diesem Port zu:
+
+```bash
+lizard domain app.example.com --service web --port 8080
+```
+
+## Worker-Services
+
+Ein [Service im Worker-Modus](/deploy/workers) (`containerPort=0`) kann weiterhin eine generierte Domain anzeigen, stellt aber nichts bereit — es gibt keinen Listener und keine Load-Balancer-Route. Füge einem Worker keine benutzerdefinierte Domain hinzu.
+
+<span id="manage-in-the-dashboard" />
+
+## Im Dashboard verwalten
+
+Die Ansicht **Domains** im Dashboard (`lizard open`) zeigt den Verifizierungs- und TLS-Status jeder Domain und ermöglicht es dir, Hostnamen visuell hinzuzufügen oder zu entfernen.
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [`lizard domain`](/cli/domain) — die vollständige Befehlsreferenz.
+- [Regionen](/deploy/regions) — Services und Addons zur Verringerung der Latenz gemeinsam platzieren.
+- [Vom Prototyp zu einem SaaS, für das Leute zahlen](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#from-vibe-coded-prototype-to-a-saas-people-pay-for) — wo eine benutzerdefinierte Domain zwischen all den anderen Dingen steht, die eine generierte App noch braucht.

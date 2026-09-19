@@ -1,0 +1,53 @@
+---
+description: "Wählen Sie Speicher für Anwendungsdaten und Sandbox-Dateien. Verstehen Sie Anhänge, Host-Ausfälle, Exporte und Wiederherstellung, bevor Sie eine Ressource löschen oder ersetzen."
+---
+
+<span id="storage-and-recovery" />
+
+# Speicher und Wiederherstellung
+
+Wählen Sie den Speicher danach aus, welche Daten einen Prozessneustart, ein neues Deployment oder einen Host-Ausfall überstehen müssen. Das sind unterschiedliche Ereignisse. Persistenter Speicher bietet für sich allein weder ein Backup noch einen Wiederherstellungspunkt oder Hochverfügbarkeit.
+
+| Daten | Wo sie gespeichert werden sollten | Grenze |
+|---|---|---|
+| Anwendungsdaten | Managed Postgres oder eine andere Datenbank | Ein Neustart ist etwas anderes als das Wiederherstellen gelöschter oder beschädigter Daten. Testen Sie einen separaten Export- und Wiederherstellungsweg. |
+| Cache- und Queue-Daten | Managed Redis | Entscheiden Sie, ob die Workload ihren Zustand neu aufbauen kann oder einen eigenen Wiederherstellungsplan braucht. |
+| Von Anwendungen gemeinsam genutzte Dateien | Managed Object Storage | Legen Sie die Zugriffsrichtlinie des Buckets fest, bevor Sie private Daten hochladen. Der automatisch erstellte Bucket `default` ist öffentlich lesbar. |
+| Dateien, die von späteren Sandboxes benötigt werden | Persistent Volumes, eingehängt unter `/data` | Jeweils nur ein Sandbox-Anhang; das Volume bleibt auf seinem Node. |
+| Temporäre Sandbox-Dateien | Das Gast-Dateisystem außerhalb von `/data` | Erwarten Sie nicht, dass sie nach dem Ende der Sandbox oder nach dem Ersetzen des Gasts noch vorhanden sind. |
+| Angehaltener Prozesszustand | Host-Arbeitsspeicher | Pausieren ist kein dauerhaftes Snapshot; bei einem Host-Ausfall geht dieser Zustand verloren. |
+
+<span id="keep-files-after-a-sandbox-ends" />
+
+## Dateien nach dem Ende einer Sandbox behalten
+
+Erstellen Sie ein Persistent Volume im selben Projekt, hängen Sie es beim Erstellen der Sandbox an und schreiben Sie unter `/data`. Beenden Sie die erste Sandbox, bevor Sie das Volume an die nächste anhängen. Siehe das [vollständige Beispiel](/sandboxes/volumes).
+
+<span id="plan-a-database-restore" />
+
+## Wiederherstellung einer Datenbank planen
+
+Vor einer Migration oder einem Release, das Daten verändert:
+
+1. Wählen Sie eine Exportmethode für die verwendete Datenbank und Version.
+2. Speichern Sie den Export getrennt von der Ressource, die geändert wird.
+3. Stellen Sie ihn in einer separaten Testdatenbank wieder her und prüfen Sie, ob die Anwendung ihn lesen kann.
+4. Halten Sie die Dauer der Wiederherstellung und die neuesten im Export enthaltenen Daten fest.
+
+Gehen Sie nicht davon aus, dass es geplante Backups, Point-in-Time-Recovery, Multi-Node-Replikation oder eine Garantie für die Wiederherstellungszeit gibt, nur weil eine Datenbank verwaltet wird. Prüfen Sie die aktuelle Servicevereinbarung und die verfügbaren Steuerungsmöglichkeiten für Ihre Ressource.
+
+<span id="environment-references" />
+
+## Umgebungsreferenzen
+
+Eine Anwendung sollte ihre Datenbankverbindung aus einer Umgebungsreferenz lesen. Ein Connection String ist ein Zugangsdatengeheimnis; geben Sie ihn nicht aus, um eine Aktualisierung zu prüfen. Eine Verbindungsprüfung wie `SELECT 1` belegt mehr, als die Variable nur in einer Shell zu sehen.
+
+<span id="related-guides" />
+
+## Verwandte Anleitungen
+
+- [Managed Postgres](/addons/postgres)
+- [Managed Redis](/addons/redis)
+- [Managed Object Storage](/addons/storage)
+- [Persistent Volumes](/sandboxes/volumes)
+- [Deployment-Wiederherstellung](/concepts/deployments#failed-releases-and-recovery)

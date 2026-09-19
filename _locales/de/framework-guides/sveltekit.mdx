@@ -1,0 +1,110 @@
+---
+description: "Stelle SvelteKit mit adapter-node auf Lizard bereit. Konfiguriere den Produktions-Build, Port 3000, ORIGIN, Formularaktionen und den separaten Pfad für adapter-static."
+---
+
+<span id="deploy-sveltekit-on-lizard" />
+
+# SvelteKit auf Lizard bereitstellen
+
+Verwende `@sveltejs/adapter-node`, um einen SvelteKit-Server für Lizard zu bauen. Dabei entsteht `build/`, das mit `node build` auf Port `3000` startet. Installiere und konfiguriere den Adapter ausdrücklich; ein Scaffold, das noch `adapter-auto` verwendet, richtet kein Node-Bereitstellungsziel ein.
+
+Beginne mit dem [vollständigen Quellcode-Beispiel](https://github.com/lizard-build/docs/tree/main/_examples/sveltekit), das die Konfiguration und Dateien enthält, die in dieser Anleitung verwendet werden.
+
+<span id="configure-the-adapter" />
+
+## Adapter konfigurieren
+
+```bash
+npm install --save-dev @sveltejs/adapter-node
+```
+
+Behalte in `svelte.config.js` dein bestehendes Preprocess und andere Einstellungen bei, setze aber `kit.adapter` auf den Node-Adapter:
+
+```js
+import adapter from '@sveltejs/adapter-node';
+
+export default {
+  kit: { adapter: adapter() },
+};
+```
+
+Behalte nur den Bereitstellungs-Adapter, den du tatsächlich verwenden willst. Insbesondere kann eine ungenutzte Abhängigkeit `@sveltejs/adapter-static` im aktuellen Detektor den statischen Pfad auswählen, selbst wenn deine Konfiguration adapter-node importiert.
+
+| Einstellung | Wert |
+|---|---|
+| Build | `npm run build`, normalerweise `vite build` |
+| Ausgabe | `build/` |
+| Laufzeit | `node build` |
+| Host und Port | `HOST=0.0.0.0`, `PORT=3000` |
+| Service-Port | `3000` |
+
+<span id="test-the-production-server" />
+
+## Produktionsserver testen
+
+```bash
+npm ci
+npm run build
+HOST=0.0.0.0 PORT=3000 ORIGIN=http://localhost:3000 node build
+```
+
+Öffne eine servergerenderte Seite und sende eine Formularaktion ab, falls die App eine hat. Behalte den Standard-Ausgabepfad des Adapters für die in dieser Anleitung verwendete Erkennung bei.
+
+<span id="deploy-and-set-the-public-origin" />
+
+## Bereitstellen und die öffentliche Origin setzen
+
+Nach dem [CLI-Setup](/framework-guides#prepare-the-project):
+
+```bash
+lizard init --name sveltekit-app
+lizard add --service web
+lizard up --service web --port 3000
+lizard ps --json
+```
+
+Setze `ORIGIN` auf die genaue öffentliche HTTPS-Origin aus der Bereitstellungsausgabe, ohne Pfad. Ersetze zum Beispiel diesen Platzhalter durch deine tatsächliche URL:
+
+```bash
+lizard secrets set ORIGIN=https://YOUR_PUBLIC_HOST --service web
+```
+
+Verwende stattdessen die benutzerdefinierte Domain, wenn Besucher diese Origin verwenden werden. Prüfe Formulare nach der Variablenänderung erneut. Für mehrere erlaubte Origins oder Proxy-abgeleitete URLs lies die [Anleitung zum SvelteKit Node-Server](https://svelte.dev/docs/kit/adapter-node) und konfiguriere vertrauenswürdige Proxy-Header bewusst.
+
+<span id="verify-and-troubleshoot" />
+
+## Verifizieren und Fehler beheben
+
+Lies Build- und Laufzeit-Logs mit `lizard logs --build --service web --json` und `lizard logs --service web --json`. Öffne direkt eine innere Route, sende ein Formular ab und rufe eine fehlende Route an.
+
+Wenn Formulare einen Fehler wegen einer Cross-Website-Übermittlung melden, prüfe `ORIGIN`, bevor du eine Sicherheitsprüfung deaktivierst. Wenn `node build` den Server nicht finden kann, prüfe den aktiven Adapter und den Ausgabepfad. Lasse Überschreibungen des Service-Befehls ungesetzt, um den lizardpack-Pfad zu verwenden.
+
+<span id="static-sveltekit-sites" />
+
+## Statische SvelteKit-Sites
+
+Eine App, die alle benötigten Seiten prerendern kann, kann `@sveltejs/adapter-static`, die Standard-Ausgabe `build/` und Service-Port `80` verwenden. Diese Ausgabe kann keine Server-Aktionen oder Endpunkte zur Request-Zeit ausführen. Konfiguriere Prerendering für die benötigten Routen; das Paket allein zu installieren reicht nicht aus.
+
+Installiere `@sveltejs/adapter-static` und ersetze den Adapter-Import in `svelte.config.js`:
+
+```js
+import adapter from '@sveltejs/adapter-static';
+
+export default {
+  kit: { adapter: adapter() },
+};
+```
+
+Für eine Website, deren Routen vollständig generiert werden können, füge dies zu `src/routes/+layout.js` hinzu:
+
+```js
+export const prerender = true;
+export const trailingSlash = 'always';
+```
+
+Entferne ungenutzte Bereitstellungs-Adapter aus den Abhängigkeiten. Führe `npm run build` aus und prüfe, dass `build/` jede benötigte Seite enthält. Für die Standard-Ausgabe lasse Überschreibungen des Service-Befehls ungesetzt und stelle einen neuen Service auf Port `80` bereit. Neue Builds liefern das generierte HTML aus und geben HTTP 404 für fehlende Seiten zurück. Verwende für nginx nicht erneut den Port `3000` aus dem Server-Rezept.
+
+Verwende [statische Routen und 404-Seiten](/framework-guides/static-routing), um zwischen generierten HTML-Routen und einem SPA-Fallback zu wählen. Sieh dir den [SvelteKit Static Adapter](https://svelte.dev/docs/kit/adapter-static) für Framework-Optionen und Einschränkungen an.
+
+Siehe [getestete Versionen und Cloud-Ergebnisse](/framework-guides/validation) für die Bereitstellungsprüfungen vom 9. September 2026 und ihre Grenzen.
+

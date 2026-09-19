@@ -1,0 +1,79 @@
+---
+description: "Подключите том к /data, чтобы сохранять чекпоинты, веса или рабочую директорию между перезапусками песочниц. Создавайте, подключайте и управляйте томами."
+---
+
+# Persistent Volumes
+
+Песочницы эфемерны — когда песочница убивается или истекает срок её действия, её файловая система исчезает. **Том** — это постоянное блочное хранилище, которое переживает любую отдельную песочницу. Подключите его, чтобы сохранять данные (чекпоинты, веса моделей, рабочую директорию) между перезапусками песочниц.
+
+Том подключается к **одной песочнице за раз** и монтируется в **`/data`** внутри микро-VM. Поскольку том привязан к узлу, на котором он находится, песочница, подключающая его, планируется на том же узле.
+
+<span id="create-and-attach" />
+
+## Создание и подключение
+
+Подключите том, передав его ID в `Sandbox.create` наряду с проектом, на который списывается песочница. Всё, что записано в `/data`, сохраняется после удаления песочницы.
+
+```ts
+import { Sandbox, Volume } from '@lizard-build/sdk';
+
+// Create a 10 GB volume in a project (default size: 5 GB)
+const volume = await Volume.create('proj_123', 'agent-workdir', { sizeGb: 10 });
+
+// Attach it to a sandbox — mounted at /data
+const sandbox = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+try {
+  await sandbox.fs.write('/data/state.json', JSON.stringify({ step: 1 }));
+} finally {
+  await sandbox.kill();            // the volume persists
+}
+
+// A later sandbox re-attaches and sees the data
+const next = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+try {
+  console.log(await next.fs.read('/data/state.json'));   // {"step":1}
+} finally {
+  await next.kill();
+}
+```
+
+<span id="manage-volumes" />
+
+## Управление томами
+
+```ts
+await Volume.list('proj_123');                 // [{ id, name, sizeGb, status, attachedTo, … }]
+const v = await Volume.get('proj_123', 'vol_abc');
+await v.getInfo('proj_123');
+await v.delete('proj_123');                     // must be detached first
+```
+
+| Метод | Описание |
+|---|---|
+| `Volume.create(projectId, name, { sizeGb })` | Создать том (по умолчанию 5 ГБ) |
+| `Volume.list(projectId)` | Получить список томов в проекте |
+| `Volume.get(projectId, volumeId)` | Получить дескриптор существующего тома |
+| `volume.getInfo(projectId)` | Получить метаданные и статус подключения |
+| `volume.delete(projectId)` | Удалить том (должен быть отключен) |
+
+<span id="in-the-dashboard" />
+
+## В дашборде
+
+Тома находятся на вкладке **Sandboxes → Тома** проекта. Создайте том, задав имя и размер; таблица показывает размер каждого тома, статус (`available` / `attached`) и какая песочница его держит. Том автоматически возвращается в `available`, когда его песочница убивается или истекает. См. руководство по [Панель управления](/sandboxes/dashboard).
+
+<span id="notes" />
+
+## Примечания
+
+- Том может быть подключен только к **одной песочнице** за раз. Попытка подключить уже подключённый том вернёт конфликт.
+- Удаление песочницы (или истечение её срока) **отключает** том — не удаляет его. Данные сохраняются для следующего подключения.
+- Удалите сам том, чтобы освободить хранилище.
+- Приостановленная песочница всё равно удерживает подключение. Persistent Volumes используют локальное хранилище узла; экспортируйте данные, которые нужны для восстановления после сбоя узла. См. [хранилище и восстановление](/platform/storage-and-recovery).
+
+<span id="see-also" />
+
+## См. также
+
+- [SDK Reference](/sandboxes/sdk-reference) — каждый метод `Volume`.
+- [Quickstart](/sandboxes/quickstart) — подключение тома при создании песочницы.

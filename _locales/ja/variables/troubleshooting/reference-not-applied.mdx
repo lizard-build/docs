@@ -1,0 +1,71 @@
+---
+description: "シークレットまたは参照は設定されていますが、サービスからは見えていません。存在しないターゲットは空文字列として解決され、優先順位によって値が隠されることがあります。"
+---
+
+<span id="a-secret-or-reference-isnt-showing-up-in-my-service" />
+
+# シークレットまたは参照がサービスに反映されない
+
+シークレットまたは `${{name.KEY}}` 参照を設定して再デプロイしても、実行中のサービスでは期待した値が確認できないことがあります。
+
+<span id="what-this-means" />
+
+## これは何を意味するのか
+
+設定した値がサービスのマージ後の環境に一度も入っていないか、アプリの起動前にマージ処理で別の値に上書きされたことを意味します。
+
+<span id="why-this-can-happen" />
+
+## なぜ起こるのか
+
+- **参照先のターゲットまたはキーが存在しません。** 存在しない service / addon 名への参照、またはその addon が公開していないキーへの参照は、デプロイを失敗させる代わりに **空文字列** として解決されます。通知するエラーは出ないため、サービスは空の値のまま起動します。
+- **より高い優先順位のものに上書きされました。** 値は固定順序でマージされます — `addon-issued env < project secrets < project env < app env < app secrets < platform vars` — そのため、project スコープの (`--global`) シークレットは、同じキーを持つ service スコープのシークレットに静かに隠されることがあります。また、プラットフォーム変数 (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`) は常に優先され、まったく上書きできません。
+- **ビルド時の値を変更したのに再ビルドしていません。** ほとんどの変数変更は再ビルド不要で適用され、サービスはそれらを取り込むために再起動されます。例外は `VITE_*` と `NEXT_PUBLIC_*` の値で、これらはビルド済みアセットに埋め込まれるため、単なる再起動では新しい値は反映されません。サービスには新しいビルドが必要です。
+
+<span id="possible-solutions" />
+
+## 考えられる解決策
+
+<span id="confirm-what-the-running-service-actually-sees" />
+
+### 実行中のサービスが実際に何を見ているか確認する
+
+これは信頼できる確認方法です。設定したつもりの値ではなく、稼働中コンテナの実際の環境を表示します。
+
+```bash
+lizard ssh --service api -- env | grep DATABASE_URL
+```
+
+キーが見つからない、または空の場合、参照先のターゲット / キーが誤っているか、そのスコープには何も設定されていません。`lizard ps` で addon または service 名を再確認し、キーについては addon の[ドキュメント化された変数](/addons)を確認してください。
+
+<span id="check-for-a-scope-collision" />
+
+### スコープの衝突を確認する
+
+両方のスコープのシークレットを一覧し、比較してください。
+
+```bash
+lizard secrets list --service api --show
+lizard secrets list --global --show
+```
+
+**app secrets は project secrets を上書きする** ことに注意してください。同じキーに service スコープの値が存在する場合、`--global` で設定したものよりそちらが優先されます。
+
+<span id="rebuild-after-a-build-time-change" />
+
+### ビルド時の変更後は再ビルドする
+
+変更したキーが `VITE_*` または `NEXT_PUBLIC_*` の場合、再起動ではなく実際の再ビルドを実行してください。
+
+```bash
+lizard redeploy --service api
+```
+
+[ビルド時と実行時](/variables#build-time-vs-runtime) および [ビルド パイプライン → 再ビルドをトリガーするもの](/concepts/build-pipeline#what-triggers-a-rebuild) も参照してください。
+
+<span id="see-also" />
+
+## 関連項目
+
+- [変数 & Secrets](/variables) — スコープと優先順位。
+- [サービス間参照](/variables/references) — 参照構文と解決方法。

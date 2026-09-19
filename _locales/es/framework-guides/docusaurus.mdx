@@ -1,0 +1,88 @@
+---
+description: "Despliega Docusaurus en Lizard como un sitio de documentación estático. Compila el directorio build, configura URL y baseUrl, usa el puerto 80 y verifica rutas directas y 404 reales."
+---
+
+<span id="deploy-docusaurus-on-lizard" />
+
+# Desplegar Docusaurus en Lizard
+
+Compila Docusaurus en Lizard y sirve su directorio generado `build/` mediante nginx en el puerto `80`. El despliegue de producción sirve archivos estáticos; no ejecuta el servidor de desarrollo `docusaurus start`.
+
+Empieza con el [ejemplo de código fuente completo](https://github.com/lizard-build/docs/tree/main/_examples/docusaurus), que incluye la configuración y los archivos usados por esta guía.
+
+<span id="prepare-the-site" />
+
+## Preparar el sitio
+
+Ejecuta desde el directorio de Docusaurus que contiene `package.json`, su lockfile y `docusaurus.config.*`. Mantén `@docusaurus/core` en las dependencias y un script de compilación que ejecute `docusaurus build`.
+
+| Ajuste | Valor |
+|---|---|
+| Compilación | `npm run build` |
+| Salida | `build/` |
+| Entorno de ejecución | nginx |
+| Puerto del servicio | `80` |
+
+Configura `url` en la configuración de Docusaurus con el origen público previsto del sitio y `baseUrl` con la ruta donde se ejecutará. Para un sitio en la raíz del dominio, `baseUrl` es `/`. Cuando ya conozcas el nombre de host final, vuelve a compilar con ese nombre de host para que las URL canónicas generadas y las entradas del sitemap lo usen.
+
+Elige una política coherente para la barra final y revisa los archivos resultantes. Mantén el directorio de salida predeterminado a menos que proporciones un Dockerfile que copie tu directorio personalizado. La [guía de despliegue de Docusaurus](https://docusaurus.io/docs/deployment) explica estas opciones del framework.
+
+<span id="build-and-check-locally" />
+
+## Compilar y comprobar localmente
+
+```bash
+npm ci
+npm run build
+npm run serve
+```
+
+El último comando supone que tu proyecto tiene el script `serve` del scaffold. Comprueba la página de inicio, una página de documentación anidada, una imagen y una página versionada si usas versiones de docs. Corrige los enlaces rotos que informe la compilación antes del despliegue.
+
+<span id="deploy" />
+
+## Desplegar
+
+Después de la [configuración de CLI](/framework-guides#prepare-the-project):
+
+```bash
+lizard init --name docusaurus-docs
+lizard add --service web
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+Si usas el nombre de host generado, léelo después del primer despliegue:
+
+```bash
+lizard service show web --json
+```
+
+Configura `url` en `docusaurus.config.js` con ese nombre de host:
+
+```js
+url: 'https://YOUR_PUBLIC_HOST',
+```
+
+Sube la configuración modificada para que la compilación use la URL pública:
+
+```bash
+lizard up --service web --port 80
+```
+
+
+Confirma el código fuente, los plugins, la configuración y el lockfile. Excluye los archivos `node_modules/`, `build/`, `.docusaurus/` y `.env` de las subidas. Deja sin configurar las anulaciones del comando del servicio para usar la ruta de detección de Docusaurus.
+
+<span id="serve-inner-routes-and-missing-pages" />
+
+## Servir rutas internas y páginas inexistentes
+
+Las compilaciones nuevas de Docusaurus sirven los archivos de rutas generados y devuelven HTTP 404 para rutas desconocidas. No se necesita un Dockerfile personalizado para esta política de enrutamiento. Si tu servicio todavía usa una imagen compilada antes de la corrección de enrutamiento de septiembre de 2026, recompílala. Usa [rutas estáticas y 404](/framework-guides/static-routing) solo cuando necesites un comportamiento personalizado de nginx.
+
+Después del despliegue, solicita directamente una URL anidada de docs, actualízala y comprueba el estado de una URL inventada. Inspecciona también la URL canónica y el sitemap en el nombre de host final. Una página de error visible con HTTP 200 sigue siendo un soft 404.
+
+Si faltan recursos, compara sus URL con `baseUrl`. Si una ruta interna devuelve la página de inicio, inspecciona la estructura de archivos generada y las reglas de nginx. Si el contenido anterior permanece después de editar un valor de entorno o un archivo Markdown, verifica que realmente se haya completado una nueva compilación; el HTML estático solo cambia con una compilación.
+
+Consulta [versiones probadas y resultados en la nube](/framework-guides/validation) para las comprobaciones de despliegue del 9 de septiembre de 2026 y sus límites.
+

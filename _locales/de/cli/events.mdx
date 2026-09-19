@@ -1,0 +1,58 @@
+---
+description: "lizard events gibt den Bereitstellen-Verlauf eines Service und den aktuellen Replikat-Status aus, mit Flags zum Begrenzen der Einträge oder zum Auswählen eines einzelnen Service."
+---
+
+# lizard events
+
+Bereitstellen-Verlauf und Replikat-Status anzeigen.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard events [flags]
+```
+
+## Flags
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-n, --limit <n>` | Anzahl der anzuzeigenden Einträge (Standard: 10) |
+| `-s, --service <name>` | Ereignisse für einen bestimmten Service anzeigen |
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="show-deploy-history-and-replica-status" />
+
+### Bereitstellen-Verlauf und Replikat-Status anzeigen
+
+```bash
+lizard events
+```
+
+<span id="show-events-for-a-specific-service" />
+
+### Ereignisse für einen bestimmten Service anzeigen
+
+```bash
+lizard events --service api
+```
+
+<span id="show-more-entries" />
+
+### Mehr Einträge anzeigen
+
+```bash
+lizard events --limit 25
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Events & History](/observability/events) — was die einzelnen Einträge enthalten und wie sie der Bereitstellungen-Ansicht im Dashboard entsprechen
+- [lizard ps](/cli/ps) — eine schnelle Übersicht über den Status und die URL aller Services
+- [Bereitstellungen](/concepts/deployments) — der Bereitstellen-Lebenszyklus

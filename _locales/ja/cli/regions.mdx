@@ -1,0 +1,64 @@
+---
+description: "lizard regions は、アカウントで利用可能なリージョンを一覧表示し、サービスまたはアドオンの作成時に --region を渡す方法を示します。"
+---
+
+# lizard regions
+
+利用可能なリージョンを一覧表示します。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard regions [flags]
+```
+
+<span id="flags" />
+
+## フラグ
+
+| フラグ | 説明 |
+|------|-------------|
+| `--json` | JSON として出力 |
+
+<span id="examples" />
+
+## 例
+
+<span id="list-available-regions" />
+
+### 利用可能なリージョンを一覧表示する
+
+```bash
+lizard regions
+```
+
+<span id="list-regions-as-json" />
+
+### リージョンを JSON として一覧表示する
+
+```bash
+lizard regions --json
+```
+
+<span id="choose-a-region-when-creating-a-service-or-addon" />
+
+### サービスまたはアドオンの作成時にリージョンを選択する
+
+`--region <code>` を `lizard add` または `lizard up` に渡します:
+
+```bash
+lizard add -r your-org/your-app --region <code>
+lizard add postgres --region <code>
+lizard up --region <code>
+```
+
+リージョンを指定しない場合、プラットフォームはプロジェクトのデフォルトを使用します。
+
+<span id="see-also" />
+
+## 関連項目
+
+- [リージョン](/deploy/regions) — リージョンの選択、コロケーション、生成されるドメイン
+- [`lizard add`](/cli/add) — `--region` でサービス、リポジトリ、またはアドオンを追加

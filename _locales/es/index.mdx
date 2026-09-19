@@ -1,0 +1,57 @@
+---
+description: "Despliega una app, ejecuta un worker, conecta Managed Postgres o ejecuta código en Sandboxes. Elige una tarea, sigue una guía y revisa los límites."
+---
+
+<span id="lizard-documentation" />
+
+# Documentación de Lizard
+
+Lizard compila y ejecuta aplicaciones desde un repositorio de GitHub o una carpeta local. Usa Lizard CLI o el panel para desplegar un servicio web, ejecutar un worker en segundo plano, conectar Managed Postgres o Managed Redis, e inspeccionar logs. Usa Lizard SDK para crear Sandboxes para la ejecución de código.
+
+<span id="choose-a-task" />
+
+## Elige una tarea
+
+| Quiero… | Empieza aquí |
+|---|---|
+| Desplegar mi primera app | [Guía rápida de apps](/getting-started) |
+| Desplegar Next.js, React, Vue o una app de Python | [Guías de frameworks](/framework-guides) |
+| Desplegar desde Claude Code u otro agente de programación | [Guía de agentes de programación](/guides/deploy-from-coding-agent) |
+| Alojar un servidor MCP remoto | [Guía de MCP remoto](/guides/deploy-mcp-server) |
+| Mantener un bot de Telegram en ejecución | [Guía de workers de Telegram](/guides/telegram-bot) |
+| Conectar una base de datos | [Managed Postgres](/addons/postgres) |
+| Ejecutar código generado en un entorno separado | [Guía rápida de Sandboxes](/sandboxes/quickstart) |
+| Conservar archivos después de que termine un sandbox | [Persistent Volumes](/sandboxes/volumes) |
+
+<span id="deploy-an-app" />
+
+## Despliega una app
+
+Instala Lizard CLI e inicia sesión; luego despliega un repositorio al que tengas acceso:
+
+```bash
+npm install -g @lizard-build/cli
+lizard login
+lizard add -r your-org/your-app
+```
+
+Lizard compila la imagen en sus servidores, así que esta ruta no necesita Docker local. [lizardpack](/concepts/build-pipeline) detecta los proyectos compatibles; los proyectos con necesidades de compilación especiales pueden usar comandos explícitos o un Dockerfile. Revisa los logs de compilación y verifica la URL de la aplicación después del despliegue.
+
+<span id="understand-your-resources" />
+
+## Entiende tus recursos
+
+Un **workspace** agrupa miembros y proyectos. Un **project** agrupa servicios, bases de datos y Sandboxes. Un **service** ejecuta una aplicación o un worker. Managed Postgres, Managed Redis y Managed Object Storage proporcionan servicios de datos a los que las aplicaciones se conectan mediante referencias de entorno.
+
+Las apps y Sandboxes tienen reglas distintas de ejecución y almacenamiento. Lee [límites](/platform/limits) y [almacenamiento y recuperación](/platform/storage-and-recovery) antes de depender del tamaño, la duración o la retención de datos de un recurso.
+
+<span id="find-the-right-level-of-detail" />
+
+## Encuentra el nivel de detalle adecuado
+
+- [Guías](/guides) cubren una tarea desde la configuración hasta la comprobación del resultado.
+- [Guías de frameworks](/framework-guides) ofrecen comandos de compilación, adaptadores, puertos y comprobaciones para cada stack.
+- [Conceptos básicos](/concepts/architecture) explican proyectos, compilaciones y despliegues.
+- [Referencia de Lizard CLI](/cli) enumera comandos, flags y códigos de salida.
+- [Solución de problemas](/deploy/troubleshooting/service-never-healthy) ayuda a diagnosticar un inicio fallido.
+- [Problemas conocidos](/platform/known-issues) registra límites y casos de recuperación que conviene revisar antes de una versión.

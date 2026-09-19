@@ -1,0 +1,110 @@
+---
+description: "Almacenamiento de objetos compatible con S3 para cargas, recursos y copias de seguridad. Obtén un bucket de lectura pública y variables de conexión con un solo lizard add s3."
+---
+
+<span id="object-storage-s3" />
+
+# Almacenamiento de objetos (S3)
+
+Almacenamiento de objetos compatible con S3 para cargas, recursos y copias de seguridad. Al aprovisionar un addon `s3` también se crea un **bucket de lectura pública llamado `default`**, para que puedas servir archivos sin configuración adicional.
+
+<span id="provision" />
+
+## Aprovisionar
+
+```bash
+lizard add s3
+```
+
+El primer addon de S3 se llama `s3`, así que `${{s3.S3_ENDPOINT}}` y similares funcionan de inmediato.
+
+<span id="environment-variables" />
+
+## Variables de entorno
+
+| Variable | Descripción |
+|----------|-------------|
+| `S3_ENDPOINT` | URL del endpoint compatible con S3 |
+| `S3_DEFAULT_BUCKET` | El nombre del bucket creado automáticamente (`default`) |
+| `S3_ACCESS_KEY_ID` | Clave de acceso |
+| `S3_SECRET_ACCESS_KEY` | Clave secreta |
+| `S3_REGION` | Región |
+
+<span id="connect-a-service" />
+
+## Conectar un servicio
+
+```bash
+lizard secrets set \
+  S3_ENDPOINT='${{s3.S3_ENDPOINT}}' \
+  S3_DEFAULT_BUCKET='${{s3.S3_DEFAULT_BUCKET}}' \
+  S3_ACCESS_KEY_ID='${{s3.S3_ACCESS_KEY_ID}}' \
+  S3_SECRET_ACCESS_KEY='${{s3.S3_SECRET_ACCESS_KEY}}' \
+  S3_REGION='${{s3.S3_REGION}}' \
+  --service api
+lizard redeploy --service api
+```
+
+<span id="using-an-aws-sdk" />
+
+## Usar un AWS SDK
+
+El endpoint es compatible con S3. Configura direccionamiento de **estilo path**:
+
+```ts
+import { S3Client } from "@aws-sdk/client-s3";
+
+const s3 = new S3Client({
+  endpoint: process.env.S3_ENDPOINT,
+  region: process.env.S3_REGION,
+  forcePathStyle: true, // required
+  credentials: {
+    accessKeyId: process.env.S3_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
+  },
+});
+```
+
+<span id="public-files" />
+
+## Archivos públicos
+
+Los objetos en cualquier bucket **público** se sirven sin autenticación de dos maneras:
+
+1. **URL del gateway** (se muestra en el panel):
+   ```
+   https://s3-<region>.onlizard.com/<addonId>/<bucket>/<key>
+   ```
+2. **Proxy de la plataforma** (el host del panel, con encabezados de caché inmutables de larga duración):
+   ```
+   <dashboard-host>/api/s3/<addonId>/public/<bucket>/<key>
+   ```
+
+Todo lo que se suba al bucket `default` es público inmediatamente en:
+
+```
+<dashboard-host>/api/s3/<addonId>/public/default/<key>
+```
+
+<span id="browse-objects" />
+
+## Explorar objetos
+
+Abre el **navegador S3** en el panel (`lizard open`) para cargar, descargar y administrar objetos y buckets.
+
+> **Los cambios de ACL del bucket** (hacer un bucket público/privado) todavía no están en la CLI; gestiónalos desde el panel.
+
+<span id="grow-storage" />
+
+## Ampliar almacenamiento
+
+```bash
+lizard scale --service s3 --storage 16384
+```
+
+<span id="see-also" />
+
+## Ver también
+
+- [Addons gestionados](/addons) — nombres, referencias y los navegadores del panel.
+- [Referencias entre servicios](/variables/references) — sintaxis de referencias y resolución.

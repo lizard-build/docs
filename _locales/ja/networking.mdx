@@ -1,0 +1,85 @@
+---
+description: "すべてのサービスには、自動 TLS 付きの onlizard.com ドメインが付与されます。カスタムホスト名を追加し、DNS を検証し、ポートを公開し、またはドメインを削除できます。"
+---
+
+<span id="networking" />
+
+# ネットワーキング
+
+すべてのサービスは、リージョンに関係なく、デプロイされた瞬間に自動 TLS 付きの生成済み `*.onlizard.com` ドメインを取得します。本番公開の準備ができたら、独自のホスト名を追加してください。
+
+<span id="generated-domains" />
+
+## 生成されるドメイン
+
+サービスのデフォルトドメインは自動的に作成されます。表示するには（または新しく生成するには）:
+
+```bash
+lizard domain                    # show the service's current domain
+lizard domain generate           # generate a new *.onlizard.com subdomain
+```
+
+[S3 addon](/addons/storage) から提供される Object Storage は、代わりにリージョンスコープのゲートウェイホスト（`s3-<region>.onlizard.com`）を使用します。
+
+<span id="attach-a-custom-domain" />
+
+## カスタムドメインを追加する
+
+ホスト名は**位置引数**です。`add` サブコマンドはありません:
+
+```bash
+lizard domain app.example.com --service web
+```
+
+Lizard は、作成すべき DNS レコード（ホスト名用の `CNAME` と、検証用の `TXT` レコード）を返します。これらを DNS プロバイダーで追加してください。
+
+<span id="verify" />
+
+## 検証
+
+DNS の伝播が完了したら、ドメインを有効化します:
+
+```bash
+lizard domain verify app.example.com
+```
+
+これにより `TXT` レコードが確認され、ドメインが有効化されます。TLS は自動的にプロビジョニングされます。
+
+<span id="remove-a-domain" />
+
+## ドメインを削除する
+
+```bash
+lizard domain delete app.example.com
+lizard domain rm app.example.com --yes   # alias, skip confirmation
+```
+
+<span id="exposing-a-specific-port" />
+
+## 特定のポートを公開する
+
+サービスがデフォルト以外のポートで提供される場合は、そのポートにドメインを追加します:
+
+```bash
+lizard domain app.example.com --service web --port 8080
+```
+
+<span id="worker-services" />
+
+## Worker サービス
+
+[workerモードのサービス](/deploy/workers)（`containerPort=0`）では、生成されたドメインが表示されることがありますが、何も提供されません。リスナーもロードバランサーのルートもないためです。worker にカスタムドメインを追加しないでください。
+
+<span id="manage-in-the-dashboard" />
+
+## ダッシュボードで管理する
+
+ダッシュボード（`lizard open`）の **ドメイン** ビューでは、各ドメインの検証状態と TLS 状態を確認でき、ホスト名の追加や削除も視覚的に行えます。
+
+<span id="see-also" />
+
+## 関連項目
+
+- [`lizard domain`](/cli/domain) — 完全なコマンドリファレンス。
+- [リージョン](/deploy/regions) — レイテンシのためにサービスと addon を同じ場所に配置する方法。
+- [プロトタイプから、人々がお金を払う SaaS へ](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#from-vibe-coded-prototype-to-a-saas-people-pay-for) — 生成されたアプリにまだ必要な他の要素の中で、カスタムドメインがどこに位置づけられるか。

@@ -1,0 +1,139 @@
+---
+description: "Lizard Skill と Lizard CLI を使って、Claude Code、Codex、または Cursor からアプリをデプロイします。GitHub またはローカルソースを選択し、データベースを接続して、結果を確認します。"
+---
+
+<span id="deploy-from-a-coding-agent" />
+
+# コーディングエージェントからデプロイする
+
+コーディングエージェントは、Lizard Skill と Lizard CLI を使って、自身が構築したアプリをデプロイできます。エージェントはインストール済み CLI のガイドを読み、対象プロジェクトを確認し、ビルドを実行して、結果を確認します。これに別途のMCPトランスポートは不要です。
+
+<span id="before-you-start" />
+
+## 始める前に
+
+動作するアプリケーション、そのデプロイ権限、および Lizard のアカウントを用意してください。アプリケーションは `0.0.0.0` と設定されたポートで待ち受ける必要があります。クラウドビルドを始める前に、ローカルチェックを実行してください。
+
+<span id="give-the-agent-the-current-guide" />
+
+## 現在のガイドをエージェントに渡す
+
+```bash
+npm install -g @lizard-build/cli
+lizard skills get core --json
+lizard --help --json
+```
+
+Lizard Skill は、インストール済み CLI に一致する手順を読み込みます。特定のコマンドについては、フラグを推測せず、そのスキーマを読んでください:
+
+```bash
+lizard up --help --json
+lizard service set --help --json
+```
+
+便利なプロンプトの例:
+
+> このアプリを Lizard でデプロイしてください。インストール済み CLI のガイドを読み、リンクされたプロジェクトとサービスを確認し、アプリのチェックを実行して、ビルド結果と動作する URL を示してください。既存の本番サービスを変更したりデータを削除したりする前には確認してください。
+
+<span id="deploy-local-source" />
+
+## ローカルソースをデプロイする
+
+完全なテストには、[agent-appの例](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/agent-app) を使ってください。これは Node.js 22 と `pg` 8.16.3 を使用し、port 3000 で待ち受け、Managed Postgres から 1 行読み取ります。起動時に、存在しない場合はデモ用のテーブルと行を作成します。より大きなアプリケーションでは、独自のマイグレーションプロセスを使用してください。
+
+例を専用ディレクトリにコピーし、ローカルチェックを実行します:
+
+```bash
+npm ci
+npm run check
+lizard status --json
+```
+
+これは JavaScript の構文をチェックします。データベースと公開 HTTP のチェックはデプロイ後に行います。このディレクトリがすでにリンクされている場合は、それが意図したプロジェクトであることを確認してください。新しいテストプロジェクトの場合:
+
+```bash
+lizard init --name agent-example --json
+lizard add --service api --json
+lizard add postgres --json
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api --json
+lizard up --service api --port 3000 --json
+```
+
+データベースの実際の名前が `postgres` でない場合は、その名前を使用してください。ローカルシェルで展開されないよう、参照は引用符で囲んだままにしてください。最初のデプロイ前に設定してください。コマンドが認証必須と報告した場合にのみ、`lizard login` でサインインしてください。
+
+このコピーした例では、アップロードパスは意図的なものです。すでに GitHub にあるアプリケーションの場合は、代わりに次のセクションを使用してください。macOS で Lizard CLI 0.3.92 を使う場合は、AppleDouble メタデータを除外するために `COPYFILE_DISABLE=1 lizard up --service api --port 3000 --json` を実行してください。その CLI バージョンでは、ビルドが失敗しても code 0 で終了することがあります: ターミナルの `failed`/`deployed` event を確認し、アプリケーションを検証してください。[既知の問題](/platform/known-issues) を参照してください。
+
+<span id="deploy-from-github" />
+
+## GitHub からデプロイする
+
+アプリケーションに GitHub リポジトリがある場合は、この方法を使用します。まず remote を確認してください:
+
+```bash
+git remote get-url origin
+lizard status --json
+lizard ps --json
+```
+
+リンク済みのテストプロジェクトを使うか、`lizard init --name YOUR_PROJECT_NAME` で作成してください。ビルドを開始せずにリポジトリを接続し、環境を設定する時間を確保します:
+
+```bash
+lizard add --repo YOUR_ORG/YOUR_REPO --name api-git --no-deploy --json
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api-git --json
+```
+
+このプロジェクトに Managed Postgres がない場合は、先に用意してください。この手順では、上と同じ Node.js の例を使用します。そのアプリがサブディレクトリにあるリポジトリ、または別ブランチのリポジトリでは、デプロイ前に設定してください:
+
+```bash
+lizard service set api-git --set branch=YOUR_BRANCH --set rootDirectory=YOUR_APP_DIRECTORY --set containerPort=3000 --json
+lizard redeploy --service api-git --json
+```
+
+リポジトリルートにあり、`main` 上にあるアプリでは、`service set` コマンドを省略してください。アプリケーションが別のポートを使う場合は、正しいポートを設定してください。リポジトリを Lizard から利用できない場合は、GitHub app を接続してください。この方法を無言でアップロードに置き換えないでください。
+
+既存の GitHub サービスに対する後続の更新では、`lizard redeploy --service api-git` を使用するか、自動デプロイが有効な場合は追跡対象ブランチに push してください。`lizard up` は、サービスをアップロードソースに切り替えます。すでに稼働中のサービスでビルド設定を変更すると、そのサービス自身のビルドが発生することがあります。別のリクエストを行う前に、event を確認してください。
+
+<span id="verify-the-result" />
+
+## 結果を確認する
+
+ビルドログとランタイムログは分けて読んでください:
+
+```bash
+lizard logs --build --service api --json
+lizard logs --service api --json
+lizard ps --json
+```
+
+GitHub の方法では、`api` の代わりに `api-git` を使ってください。`APP_URL` を CLI が報告した HTTPS URL に設定し、次を実行します:
+
+```bash
+curl --fail "$APP_URL/health"
+curl --fail "$APP_URL/data"
+```
+
+最初のレスポンスは `App ready` です。2 つ目は `{"value":"database-connected"}` です。ビルドだけでは、データベース参照が解決されたことの証明にはなりません。この例が公開するのは、この固定されたデモ行だけであり、データベース管理 API ではありません。
+
+このテストサービスでは、ランタイム再起動を確認してください:
+
+```bash
+lizard restart --service api --json
+```
+
+サービスが `lizard ps --json` で `running` に戻るまで待ち、両方の HTTP リクエストを再実行してください。ランタイムログの tail は空の場合があります。アプリケーションの確認は HTTP レスポンスです。行は Managed Postgres に保存されており、サービスプロセスはそれを保存しません。既存データの再利用を確認するには、再起動前にデータベースエディタでデモ行を識別しやすい値に更新し、その後 `/data` がその値を返すことを確認してください。
+
+`logs --json` はログの tail を返して終了します。実際のアプリケーションデータを変更する前に、[ストレージとリカバリ](/platform/storage-and-recovery) を読んでください。
+
+<span id="when-deployment-fails" />
+
+## デプロイに失敗した場合
+
+失敗したコマンドの終了 code と JSON エラーを使用してください。コンパイルエラー、終了するプロセス、到達できないポートでは、それぞれ異なる修正が必要です。[JSONと自動化](/cli/json) と [サービスが常にhealthyにならない](/deploy/troubleshooting/service-never-healthy) を参照してください。`redeploy` は新しいビルドであり、古いバージョンへのロールバックではありません。
+
+<span id="limits-and-cost" />
+
+## 制限とコスト
+
+エージェントは、人と同じ CLI を通じて課金対象リソースを作成できます。[limits](/platform/limits) と [pricing](https://lizard.build/pricing) を確認し、必要なプロジェクトとサービスに認証情報の範囲を限定してください。
+
+確認済みバージョン、クラウド結果、残っている制限については、[シナリオテストの結果](/guides/validation) を参照してください。

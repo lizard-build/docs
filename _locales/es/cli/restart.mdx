@@ -1,0 +1,75 @@
+---
+description: "lizard restart realiza un reinicio gradual de la compilación actual de un servicio sin reconstrucción, útil para recuperarse de un fallo."
+---
+
+# lizard restart
+
+Reinicio gradual de la compilación actual — sin reconstrucción.
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard restart [nameOrId] [flags]
+```
+
+<span id="flags" />
+
+## Banderas
+
+| Bandera | Descripción |
+|------|--------------|
+| `-s, --service <name>` | Servicio |
+| `--detach` | Volver después de que se acepte el reinicio |
+| `--wait` | Esperar a que el nuevo intento de reinicio esté listo; funciona con `--json` |
+| `--timeout <seconds>` | Tiempo máximo de espera de preparación con `--wait`; valor predeterminado: `120` |
+| `--json` | Devolver JSON para scripts |
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="restart-a-service" />
+
+### Reiniciar un servicio
+
+```bash
+lizard restart --service api
+```
+
+<span id="restart-without-streaming-logs" />
+
+### Reiniciar sin transmitir logs
+
+```bash
+lizard restart --service api --detach
+```
+
+<span id="wait-before-running-the-next-check" />
+
+### Esperar antes de ejecutar la siguiente comprobación
+
+Requiere CLI 0.3.94 o posterior. Usa 0.3.95 o posterior para workers sin HTTP.
+
+```bash
+lizard --json restart --service api --wait --timeout 120
+```
+
+Sin `--wait`, el modo JSON devuelve el resultado después de que se acepte el reinicio. Con `--wait`, el resultado incluye `ok`, `status`, `attemptId` y `waitedMs`. La CLI espera un nuevo intento de reinicio, por lo que un estado sin cambios desde antes de la solicitud no cuenta como éxito. Una espera fallida o un tiempo de espera agotado devuelve un código de salida distinto de cero.
+
+Para los servicios HTTP, la CLI también comprueba dos veces el dominio del servicio. Los workers con `containerPort=0` usan el estado de preparación del backend y no necesitan un listener HTTP, incluso cuando tienen un dominio generado.
+
+```bash
+lizard --json restart --service worker --wait --timeout 60
+```
+
+El tiempo de espera se aplica a la espera de preparación después de la solicitud de reinicio. No cancela el reinicio, y las llamadas de red pueden hacer que el comando tarde más en total. Comprueba los datos de la aplicación o un endpoint de estado después del comando cuando tu flujo de trabajo necesite más que la preparación del proceso.
+
+<span id="see-also" />
+
+## Véase también
+
+- [lizard redeploy](/cli/redeploy) — activar una nueva compilación en lugar de reciclar la actual
+- [lizard logs](/cli/logs) — inspeccionar los logs en torno a un reinicio con `--restart latest` o `--restart <id>`
+- [Despliegues](/concepts/deployments) — reinicios frente a redespliegues y recuperación tras un fallo

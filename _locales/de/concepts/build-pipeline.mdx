@@ -1,0 +1,87 @@
+---
+description: "Wie Lizard Quellcode in ein Container-Image verwandelt: synthetisierte Dockerfile, Dockerfile aus dem Repo oder automatische Erkennung durch lizardpack – und was einen Neuaufbau auslöst."
+---
+
+# Build-Pipeline
+
+Builds laufen auf den Build-Nodes von Lizard — **du brauchst Docker lokal nicht**. Beim Bereitstellen entscheidet die Plattform anhand einer festen Reihenfolge, wie dein Quellcode in ein Container-Image umgewandelt wird, und führt dieses Image dann in einem isolierten Pod aus. Nicht jeder [container as a service](https://lizard.build/blog/container-as-a-service) baut das Image für dich; der Blog vergleicht die drei Varianten, in denen diese Kategorie vorkommt.
+
+<span id="build-decision-order" />
+
+## Reihenfolge der Build-Entscheidung
+
+Die Plattform wählt genau eine Build-Strategie, in dieser Reihenfolge:
+
+1. **Synthetisierte Dockerfile** — wenn `buildCommand` und/oder `startCommand` im Service gesetzt sind (oder per `lizard up --build-command` / `--start-command` übergeben werden), erzeugt Lizard daraus eine Dockerfile. lizardpack wird nicht aufgerufen.
+2. **Dockerfile aus dem Repo (unverändert)** — wenn `dockerfilePath` im Service gesetzt ist, wird diese Dockerfile aus deinem Repo unverändert verwendet.
+3. **Automatische Erkennung durch lizardpack** — andernfalls klont die Plattform deinen Quellcode und führt **lizardpack** aus, den eigenen Buildpack-/Dockerfile-Generator.
+
+<span id="lizardpack-auto-detect" />
+
+### Automatische Erkennung durch lizardpack
+
+lizardpack prüft dein Repo und baut ein optimiertes Multi-Stage-Image. Unterstützte Stacks, in dieser Reihenfolge abgeglichen:
+
+**Hugo → Go → Node → Python → Rust → Ruby → PHP → Java → static**
+
+Siehe [Framework guides](/framework-guides) für Produktionsskripte, Adapter, Ausgabepfade und Ports. Die Erkennung nutzt Projektdateien und Abhängigkeiten; ein Repository, das zu mehreren Providern passt, folgt dieser Reihenfolge.
+
+Auf diesem Pfad gilt:
+
+- Wenn eine `Dockerfile` im Repo existiert **und** einen echten Build-Schritt hat (eine `RUN <package-manager>`-Zeile, nicht nur `COPY dist/`), wird sie unverändert verwendet.
+- Andernfalls erzeugt lizardpack die Dockerfile für dich.
+- Der **Startbefehl** wird automatisch erkannt: eine `Procfile`-`web:`-Zeile (Python/Ruby) oder `package.json` `scripts.start` (Node) wird automatisch übernommen. Welche genaue Zeile Django, Flask und FastAPI jeweils brauchen, steht unter [Python-App-Hosting](https://lizard.build/blog/python-app-hosting).
+- Der **Port** wird aus `EXPOSE`, Framework-Standards oder einer expliziten `PORT`-Umgebungsvariable abgeleitet.
+
+> **Wichtig:** Eine Dockerfile, die nur vorgebaute Artefakte kopiert (`COPY dist/`, `build/`, `out/`, `.next/`, `public/`) **ohne** einen `RUN`-Build-Schritt, gilt als unvollständig und wird von lizardpack neu erzeugt. Füge einen echten Build-Schritt hinzu oder setze `dockerfilePath`, um die unveränderte Verwendung zu erzwingen.
+
+<span id="what-triggers-a-rebuild" />
+
+## Was einen Neuaufbau auslöst
+
+| Aktion | Neuaufbau? |
+|--------|-----------|
+| `git push` in den verfolgten Branch | ✅ per GitHub-Webhook |
+| `lizard redeploy` / `lizard up` | ✅ explizit |
+| Ändern von Variablen für `VITE_*` oder `NEXT_PUBLIC_*` | ✅ Build-Zeit-Werte werden fest ins Image übernommen |
+| `service set` von Build-Feldern (`repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath`, `rootDirectory`) | ✅ löst automatisch einen Neuaufbau aus |
+| `service set` von reinen Laufzeitfeldern (`startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns`) | ❌ führe `lizard redeploy` aus, damit es angewendet wird |
+| Jede andere Änderung an Umgebungsvariablen / Secrets | ❌ wird bei einem schnellen Neustart angewendet (kein Neuaufbau) |
+
+> **Nicht doppelt bauen.** Nach einem `service set`, das ein Build-Feld ändert, startet der Neuaufbau automatisch — hänge nicht noch ein `lizard redeploy` direkt danach an, sonst stellst du einen zweiten, überflüssigen Build in die Warteschlange.
+
+<span id="watching-a-build" />
+
+## Einen Build beobachten
+
+Build-Logs werden während `lizard up` gestreamt. Für jeden Service:
+
+```bash
+lizard logs --build            # the most recent build's logs
+lizard events                  # deploy history + replica status
+```
+
+Wenn ein Build fehlschlägt, lies `lizard logs --build`, behebe die Ursache (in deinem Repo oder durch Anpassen von `buildCommand` / `startCommand` per `lizard service set`) und führe dann `lizard redeploy` aus.
+
+<span id="runtime-notes" />
+
+## Hinweise zur Laufzeit
+
+- **Keine Docker-`HEALTHCHECK`.** Die Laufzeit führt keine Docker-Healthcheck-Schleife aus, daher werden `HEALTHCHECK`-Direktiven ignoriert. Lizard führt stattdessen einen TCP-Probe gegen deinen Port aus (im [worker mode](/deploy/workers) übersprungen).
+- **Schreibe nicht ungefragt eine Dockerfile.** lizardpack erkennt die meisten Stacks automatisch — versuche zuerst ein Bereitstellen und füge nur dann eine Dockerfile hinzu (oder setze `dockerfilePath`), wenn der Auto-Build nicht passt.
+
+<span id="build-configuration-reference" />
+
+## Referenz der Build-Konfiguration
+
+| Feld | Beschreibung |
+|-------|-------------|
+| `buildCommand` | Befehl zum Bauen deiner App → erzwingt den Pfad **synthetisierte Dockerfile** |
+| `startCommand` | Befehl zum Starten deiner App zur Laufzeit |
+| `preDeployCommand` | Wird vor jedem Bereitstellen einmal ausgeführt (z. B. DB-Migrationen) |
+| `dockerfilePath` | Pfad zu einer Dockerfile im Repo, die **unverändert** verwendet wird |
+| `rootDirectory` | Unterverzeichnis, aus dem gebaut wird (Monorepos) |
+| `watchPatterns` | Nur neu deployen, wenn sich passende Pfade ändern |
+| `containerPort` | TCP-Port, auf dem deine App lauscht (Standard `3000`; `0` = [worker](/deploy/workers)) |
+
+Setze beliebige davon mit `lizard service set <svc> --set <field>=<value>`. Siehe [`lizard service`](/cli/service).

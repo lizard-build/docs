@@ -1,0 +1,63 @@
+---
+description: "lizard config apply überträgt eine lizard-config.json-Datei in Ihr Projekt, mit einem --dry-run-Flag, um die Änderungen zuerst in der Vorschau anzuzeigen."
+---
+
+# lizard config
+
+Eine `lizard-config.json`-Datei auf das Projekt anwenden.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard config apply [flags]
+```
+
+<span id="subcommands" />
+
+## Unterbefehle
+
+### `lizard config apply`
+
+Eine `lizard-config.json`-Datei auf das Projekt anwenden.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-f, --file <path>` | Konfigurationsdatei (Standard: `lizard-config.json`) |
+| `--dry-run` | Zeigt, was sich ändern würde, ohne die Änderungen anzuwenden |
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="apply-the-default-config-file" />
+
+### Die Standard-Konfigurationsdatei anwenden
+
+```bash
+lizard config apply
+```
+
+<span id="apply-a-config-file-from-a-custom-path" />
+
+### Eine Konfigurationsdatei aus einem benutzerdefinierten Pfad anwenden
+
+```bash
+lizard config apply -f ./configs/prod.json
+```
+
+<span id="preview-changes-without-applying-them" />
+
+### Änderungen in der Vorschau anzeigen, ohne sie anzuwenden
+
+```bash
+lizard config apply --dry-run
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [lizard service](/cli/service) — einzelne Services verwalten
+- [Architecture](/concepts/architecture) — wie Workspaces, Projekte und Services zusammenhängen

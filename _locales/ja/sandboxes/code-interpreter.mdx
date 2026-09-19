@@ -1,0 +1,111 @@
+---
+description: "CodeSandbox は呼び出し間で状態を持つカーネルを維持するため、変数や import が保持されます。Python、JavaScript、Bash を、エージェントと同じように実行できます。"
+---
+
+<span id="code-interpreter" />
+
+# コード インタープリタ
+
+`CodeSandbox` は通常の[sandbox](/sandboxes)を **stateful kernel** で拡張したものです。Jupyter notebook のように、変数、import、関数定義が呼び出し間で保持されます。AI エージェントがコードを段階的に生成して実行する場合に適したツールです。
+
+これは `code-interpreter-v1` テンプレート（Python 3.14 + Node.js 26、ポート 8080 でコード実行 API を提供）から起動し、標準で **Python、JavaScript、Bash** をサポートしています。
+
+<span id="run-code" />
+
+## コードを実行する
+
+```ts
+import { CodeSandbox } from '@lizard-build/sdk';
+
+// Every sandbox belongs to a project — usage is metered per project
+const sandbox = await CodeSandbox.create({ project: 'my-project' });   // defaults to 'code-interpreter-v1'
+
+await sandbox.runCode('x = 42');
+const result = await sandbox.runCode('print(x * 2)');
+console.log(result.stdout);        // "84\n"  — x survived from the previous call
+
+await sandbox.kill();
+```
+
+`runCode(code, opts?)` は `Execution` を返します:
+
+| フィールド | 説明 |
+|---|---|
+| `stdout` / `stderr` | 取得された出力ストリーム |
+| `results` | リッチな結果（値、および生成された画像 / グラフ） |
+| `error` | コードが例外を投げた場合の `ExecutionError`（`name`、`message`、`traceback`） |
+| `executionCount` | カーネルの単調増加カウンター |
+
+<span id="choose-a-language" />
+
+## 言語を選ぶ
+
+デフォルトは Python です。別のランタイムで 1 回だけ実行するには、`language` を渡します:
+
+```ts
+const js = await sandbox.runCode('1 + 1', { language: 'javascript' });
+console.log(js.results[0].data);   // "2"
+
+await sandbox.runCode('echo "$(uname -s)"', { language: 'bash' });
+```
+
+<span id="streaming-output" />
+
+## 出力をストリーミングする
+
+実行時間の長いセルでは、結果を待つ代わりに、生成される stdout/stderr をその場でストリーミングできます:
+
+```ts
+await sandbox.runCode('for i in range(5): print(i)', {
+  onStdout: (line) => process.stdout.write(line),
+  onStderr: (line) => process.stderr.write(line),
+  onResult: (r)    => console.log('result:', r),
+  onError:  (e)    => console.error('error:', e.name, e.message),
+});
+```
+
+<span id="isolated-contexts" />
+
+## 分離されたコンテキスト
+
+**context** は同じ sandbox 内の独立した名前空間です。変数が衝突しないよう、エージェントのセッションごと、またはユーザーごとに 1 つ使ってください。
+
+```ts
+const a = await sandbox.createContext({ language: 'python' });
+const b = await sandbox.createContext({ language: 'python' });
+
+await sandbox.runCode('secret = 1', { context: a });
+await sandbox.runCode('print(secret)', { context: b });   // NameError — b never saw it
+
+await sandbox.listContexts();
+await sandbox.restartContext(a);    // clear all variables/state
+await sandbox.deleteContext(b);     // free its resources
+```
+
+`runCode` には **`context`** と **`language`** の**どちらか一方**だけを渡し、両方は渡さないでください。context にはすでに言語が紐付いています。
+
+<span id="checkpointing-a-session" />
+
+## セッションをチェックポイントする
+
+`CodeSandbox` は sandbox なので、[一時停止と再開](/sandboxes/quickstart#pause-and-resume) は同じように機能します。重い依存関係スタックを一度だけインストールし、一時停止して、後でカーネル状態を保ったまま再開できます:
+
+```ts
+const sandbox = await CodeSandbox.create({ project: 'my-project' });
+await sandbox.runCode('import subprocess; subprocess.run(["pip", "install", "scikit-learn"])');
+const id = sandbox.sandboxId;
+await sandbox.pause();
+
+// Later — resume with packages and kernel variables already in place
+const resumed = await CodeSandbox.connect(id);
+const out = await resumed.runCode('import sklearn; print(sklearn.__version__)');
+console.log(out.stdout);
+await resumed.kill();
+```
+
+<span id="see-also" />
+
+## 関連情報
+
+- [SDK Reference](/sandboxes/sdk-reference) — すべての `CodeSandbox` メソッドと `runCode` オプション。
+- [Persistent Volumes](/sandboxes/volumes) — 単一の sandbox より長く保持されるストレージをアタッチします。

@@ -1,0 +1,47 @@
+---
+description: "Prüfen Sie vor dem Deployment die Replikatlimits von Apps, Ressourcen und Timeouts von Sandboxes, Regionen und den Geltungsbereich von Kontingenten auf Kontoebene."
+---
+
+# Limits
+
+Limits hängen von der Ressource, dem Tarif und dem Konto ab. Eine Einstellung pro Replikat entspricht nicht der insgesamt für einen Service oder ein Konto verfügbaren Kapazität. Prüfen Sie Ihren aktuellen Tarif und das Ergebnis der Erstellungs- oder Skalierungsanfrage, bevor Sie eine Workload dimensionieren.
+
+<span id="applications" />
+
+## Anwendungen
+
+| Einstellung | Geltungsbereich | Was zu prüfen ist |
+|---|---|---|
+| CPU und Arbeitsspeicher | Jedes Replikat | Drei Replikate mit einer Obergrenze von 2 vCPU / 2 GiB haben zusammen eine konfigurierte Obergrenze von 6 vCPU / 6 GiB. Das ist keine Nutzungsvorhersage. |
+| Anzahl der Replikate | Service und Tarif | Die API akzeptiert 1–10; Tariflimits können diesen Bereich einschränken. Prüfungen im Standardtarif erlauben 1, bzw. 5 für Pro/Enterprise, mit kontoabhängigen Ausnahmen. |
+| Ressourcenobergrenze des Kontos | Kontoinhaber | Ein zweites Projekt erzeugt nicht zwangsläufig ein zweites Kontingent. Fragen Sie vor der Planung eines großen Bereitstellungen nach der effektiven Kontenobergrenze. |
+| Worker-Modus | Service | `containerPort=0` läuft ohne HTTP-Listener oder öffentliche Load-Balancer-Route. |
+| Benutzerdefinierte Domain | Hostname | Benutzerdefinierte Wildcard-Domains werden nicht akzeptiert. Verwenden Sie einen spezifischen Hostnamen und schließen Sie die Prüfungen zu Eigentümerschaft und DNS ab. |
+
+Anwendungen können verschiedene Runtimes verwenden. Gehen Sie nicht davon aus, dass jede Anwendung dieselbe Firecracker-Mikro-VM-Grenze wie Sandboxes hat.
+
+## Sandboxes
+
+| Einstellung | Aktuelle Create-API |
+|---|---|
+| CPU und Arbeitsspeicher | 4 vCPU / 4096 MiB |
+| Vorlagen | `base`, `code-interpreter-v1` |
+| Standardlaufzeit der Raw API | `timeoutMs: 0`, kein Ablauf |
+| Standardlaufzeit des Lizard SDK | 300000 ms, fünf Minuten |
+| Bereich für explizite Laufzeit | Ganzzahlige Millisekunden von 0 bis 2147483647 |
+| Laufzeit aktualisieren | Mindestens 1000 ms; kein Idle-Timer |
+| Anbindung von Persistent Volumes | Jeweils nur eine Sandbox, auf dem Node des Volumes |
+
+Übergeben Sie in Skripten eine explizite Laufzeit. Zum Beispiel macht `--timeout 300000` das beabsichtigte Limit über verschiedene Versionen von Lizard CLI hinweg eindeutig. Lesen Sie vor dem Parken einer Sitzung [Pausieren und Ablauf](/platform/known-issues#sandbox-pause-and-expiration).
+
+<span id="regions" />
+
+## Regionen
+
+Die aktuell konfigurierten Regionen umfassen US East (Virginia), `us-east-1`, und EU West (Limburg), `eu-west-lim-a`. Eine Region im Katalog garantiert nicht, dass für jede Ressource Kapazität verfügbar ist. Prüfen Sie die Regionsauswahl beim Erstellen der Ressource; eine Sandbox, die ein vorhandenes Volume verwendet, muss auf dem Node dieses Volumes laufen.
+
+<span id="before-increasing-scale" />
+
+## Vor dem Erhöhen der Skalierung
+
+Prüfen Sie aktiven Tarif, Einstellungen pro Replikat, Kontenobergrenze, Datenbank-Verbindungslimit und Wachstum des Storage zusammen. Verwenden Sie [Skalierung](/deploy/scaling), [Metriken](/observability/metrics) und [Preise](https://lizard.build/pricing), um konfigurierte Kapazität mit der gemessenen Nutzung zu vergleichen.

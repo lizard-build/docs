@@ -1,0 +1,89 @@
+---
+description: "Implementa Hugo en Lizard compilando public con hugo --minify y sirviéndolo en el puerto 80. Revisa la detección, los temas, baseURL, las rutas generadas y el estado de las páginas faltantes."
+---
+
+<span id="deploy-hugo-on-lizard" />
+
+# Implementar Hugo en Lizard
+
+Lizard puede compilar un sitio fuente de Hugo con `hugo --minify` y servir `public/` mediante nginx en el puerto `80`. Empieza desde el directorio fuente de Hugo, con una configuración de Hugo y `content/`, en lugar de subir solo el HTML generado.
+
+Empieza con el [ejemplo fuente completo](https://github.com/lizard-build/docs/tree/main/_examples/hugo), que incluye la configuración y los archivos usados por esta receta.
+
+<span id="prepare-the-source" />
+
+## Preparar el código fuente
+
+Incluye tu configuración de Hugo, contenido, layouts, assets y todos los archivos del tema necesarios para la compilación. El detector de Hugo busca configuración como `hugo.toml`, `hugo.yaml` o `config/_default/`, además de un directorio `content/`.
+
+| Ajuste | Valor |
+|---|---|
+| Compilación | `hugo --minify` |
+| Salida | `public/` |
+| Servidor de producción | nginx |
+| Puerto del servicio | `80` |
+
+Configura `baseURL` con la URL pública prevista del sitio, incluida la barra final. Vuelve a compilar después de asignar un hostname diferente para que los enlaces y las entradas generadas del sitemap lo usen. Consulta la [guía de compilación y salida de Hugo](https://gohugo.io/getting-started/usage/).
+
+<span id="check-build-dependencies" />
+
+## Revisar las dependencias de compilación
+
+La imagen de compilación predeterminada de Hugo es `hugomods/hugo:base`; no fija una versión de Hugo para tu proyecto. Si un tema necesita una versión específica de Hugo, la edición extendida o herramientas de Node, usa un Dockerfile completo con esas dependencias y la versión que probaste.
+
+Una configuración de Hugo y `content/` seleccionan el compilador de Hugo antes de la detección de Go o Node. Los proyectos de Hugo Modules con `go.mod` usan una imagen de compilación con soporte para Go. Un archivo `package.json` hace que la compilación se detenga con una solicitud de Dockerfile: instala las dependencias de Node, compila los assets y luego ejecuta `hugo --minify`. Consulta el [orden de decisión de compilación](/concepts/build-pipeline#build-decision-order).
+
+<span id="build-locally-and-deploy" />
+
+## Compilar localmente e implementar
+
+```bash
+hugo --minify
+hugo server
+```
+
+Inspecciona `public/` después del primer comando. Usa el servidor local para revisar el contenido y el renderizado del tema; `hugo server` no es el comando de inicio de producción.
+
+Después de la [configuración de la CLI](/framework-guides#prepare-the-project), implementa el directorio fuente:
+
+```bash
+lizard init --name hugo-site
+lizard add --service web
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+Si usas el hostname generado, léelo después de la primera implementación:
+
+```bash
+lizard service show web --json
+```
+
+Configura `baseURL` en `hugo.toml` con ese hostname:
+
+```toml
+baseURL = "https://YOUR_PUBLIC_HOST/"
+```
+
+Sube la configuración modificada para que la compilación use la URL pública:
+
+```bash
+lizard up --service web --port 80
+```
+
+
+Excluye la salida generada localmente y los secretos. Para una subida, asegúrate de que los archivos fuente del tema realmente existan en el directorio que envías; una referencia remota a submodule por sí sola no es el contenido del tema.
+
+<span id="verify-the-deployed-site" />
+
+## Verificar el sitio implementado
+
+Abre la página principal en vivo, un artículo interno y una imagen. Revisa las URL canónicas generadas y `sitemap.xml`. Prueba el estado HTTP de una ruta inventada. Las compilaciones nuevas de Hugo sirven el HTML generado y devuelven HTTP 404 para las páginas faltantes. No se necesita un Dockerfile personalizado para el diseño simple de código fuente de esta guía. Vuelve a compilar imágenes antiguas para adoptar las reglas de enrutamiento actuales.
+
+Usa [rutas estáticas y 404](/framework-guides/static-routing) si necesitas una política personalizada de nginx. Una etapa de compilación personalizada de Hugo debe incluir la versión de Hugo y las herramientas que requiere el tema, ejecutar `hugo --minify` y copiar `public/` en la imagen de servicio.
+
+Si faltan assets del tema, inspecciona los logs de compilación, el código fuente del tema y `baseURL`. Si se inicia el compilador incorrecto, revisa que la configuración de Hugo y `content/` estén en la raíz de la subida e inspecciona las anulaciones existentes del servicio. Hugo produce archivos estáticos, así que los cambios de contenido requieren una nueva compilación.
+
+Consulta [versiones probadas y resultados en la nube](/framework-guides/validation) para las comprobaciones de implementación del 9 de septiembre de 2026 y sus límites.
+

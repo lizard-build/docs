@@ -1,0 +1,76 @@
+---
+description: "Lies die Werte eines Dienstes oder Add-ons aus einem anderen mit der Syntax ${{name.KEY}}. Wie Referenzen beim Bereitstellen aufgelöst werden und warum sie besser sind als Kopieren."
+---
+
+<span id="cross-service-references" />
+
+# Dienstübergreifende Referenzen
+
+Mit Referenzen kann ein Dienst oder Add-on die Werte eines anderen lesen, ohne Credentials per Copy-and-paste zu duplizieren. Sie halten Secrets an einer Stelle und rotieren automatisch.
+
+## Syntax
+
+```
+${{<name>.<KEY>}}
+```
+
+- `<name>` — der Name des Zieldienstes oder Add-ons (der im Dashboard angezeigt und in `lizard add -n` verwendet wird).
+- `<KEY>` — ein Schlüssel in der zusammengeführten Umgebung des Ziels.
+
+Verwende sie überall dort, wo ein Wert akzeptiert wird — am häufigsten in einem Secret:
+
+```bash
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+```
+
+<span id="how-they-resolve" />
+
+## Wie sie aufgelöst werden
+
+- Referenzen werden zur **Deploy-Zeit** anhand der zusammengeführten Umgebung des Ziels aufgelöst.
+- Sie werden per **ID** gespeichert, daher macht ein späteres Umbenennen des Ziels die Referenz nicht kaputt.
+- Eine Referenz auf ein **fehlendes** Ziel oder einen fehlenden Schlüssel wird zu einem **leeren String** aufgelöst — das Bereitstellen schlägt dadurch *nicht* fehl.
+- Nur **zirkuläre** Referenzen werfen einen Fehler.
+
+> Weil ein fehlender Schlüssel stillschweigend leer wird, prüfe nach dem Einrichten einer Referenz immer, ob der Consumer den Wert tatsächlich erhalten hat:
+> ```bash
+> lizard ssh --service api -- env | grep DATABASE_URL
+> ```
+
+Wenn eine Referenz nicht wie erwartet erscheint, siehe [Troubleshooting → ein Secret oder eine Referenz wird nicht angezeigt](/variables/troubleshooting/reference-not-applied).
+
+<span id="common-patterns" />
+
+## Häufige Muster
+
+**Ein Add-on mit mehreren Diensten verbinden** — auf jedem Consumer binden, damit die Rotation überall weitergegeben wird:
+
+```bash
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service api
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service worker
+```
+
+**Einen Wert aus einem anderen Dienst referenzieren** — z. B. eine berechnete URL oder ein Token teilen:
+
+```bash
+lizard secrets set UPSTREAM_URL='${{api.LIZARD_PUBLIC_DOMAIN}}' --service web
+```
+
+**Ein zweites Add-on desselben Typs referenzieren** — verwende seinen generierten Namen:
+
+```bash
+lizard secrets set CACHE_URL='${{redis-winter-otter.REDIS_URL}}' --service api
+```
+
+<span id="why-not-just-use---global" />
+
+## Warum nicht einfach `--global` verwenden?
+
+Wenn du eine gemeinsame DSN im Projektbereich (`--global`) ablegst, ist sie für *jeden* Dienst sichtbar, auch für solche, die sie nicht benötigen. Referenzen geben dir dieselbe Rotation mit einer Single Source of Truth und sorgen zugleich dafür, dass jedes Secret auf die Dienste beschränkt bleibt, die es tatsächlich verwenden. Siehe [Secret-Scopes](/variables#scoping).
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Variablen & Secrets](/variables) — Scopes und Priorität.
+- [`lizard secrets`](/cli/secrets) — die vollständige Befehlsreferenz.

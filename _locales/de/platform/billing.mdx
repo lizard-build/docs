@@ -1,0 +1,61 @@
+---
+description: "Lizard pay as you go: Ressourcensätze, Kontoguthaben, optionales automatisches Aufladen, Zahlungsgebühren und was passiert, wenn Ihr Guthaben aufgebraucht ist."
+---
+
+# Pay as you go
+
+Lizard hat für Standardkonten keine monatliche Grundgebühr und keine Sitzplatzgebühr. Laden Sie Guthaben auf Ihr Konto und zahlen Sie für die Ressourcen, die Sie nutzen. Ungenutztes gekauftes Guthaben bleibt in Ihrem Kontostand, sodass Sie in einem ruhigen Monat kein weiteres Paket kaufen müssen.
+
+<span id="resource-rates" />
+
+## Ressourcensätze
+
+Die Preise sind in US-Dollar angegeben.
+
+| Ressource | Rate |
+| --- | ---: |
+| CPU | $0.000006948 pro vCPU-Sekunde |
+| Memory | $0.000003474 pro GB-Sekunde |
+| Persistent Volumes | $0.000000054 pro GB-Sekunde |
+| Managed Object Storage | $0.0135 pro GB-Monat |
+| Outgoing traffic | $0.045 pro GB, ab dem ersten Byte |
+
+Für eingehenden Traffic fallen keine Gebühren an. Für Apps, Managed Postgres, Managed Redis und Sandboxes gelten dieselben jeweils anwendbaren Ressourcensätze. Die Ressourcenlimits des Kontos gelten weiterhin; das Hinzufügen von Guthaben erhöht diese Limits nicht.
+
+Zum Beispiel kosten eine vCPU und 1 GB Arbeitsspeicher, die eine Stunde lang genutzt werden, $0.0375192 an Compute-Kosten. Speicher, ausgehender Traffic und Zahlungsgebühren können diesen Betrag erhöhen. Dies ist ein Beispiel für Ressourcenkosten, nicht der berechnete Betrag für eine Aufladung.
+
+Die vollständige Preisübersicht finden Sie unter [current pricing](https://lizard.build/pricing). Für Enterprise-Abrechnung gilt Ihr Vertrag.
+
+<span id="account-balance" />
+
+## Kontoguthaben
+
+Die Nutzung in einem Workspace wird vom Kontoguthaben seines Eigentümers abgezogen. Das Hinzufügen von Mitgliedern verursacht keine Sitzplatzgebühr. Auf der Seite „Credits“ sehen Sie Ihr Guthaben, Käufe und jegliches Guthaben, das abläuft.
+
+- **Gekauftes Guthaben verfällt nicht.** Es wird nicht jeden Monat zurückgesetzt.
+- **Testguthaben verfällt.** Neue Konten erhalten $10 Testguthaben, gültig für 31 Tage.
+- **Promo-Guthaben kann verfallen.** Prüfen Sie die Bedingungen und das angezeigte Ablaufdatum für die Gutschrift.
+
+Ein gekauftes Guthaben bezahlt die Nutzung; es ist kein Rabatt auf den Ressourcensatz. Ziehen Sie es beim Kostenvergleich mit einem anderen Anbieter nicht noch einmal ab.
+
+<span id="top-ups-and-fees" />
+
+## Aufladungen und Gebühren
+
+Öffnen Sie **Credits** in den Kontoeinstellungen, um Guthaben hinzuzufügen. Bevor Sie bestätigen, zeigt der Aufladebildschirm den Mindestbetrag, den Guthabenbetrag, die Zahlungsgebühr und den Gesamtbetrag an. Eine Mindestaufladung ist keine monatliche Gebühr.
+
+Automatisches Aufladen ist optional. Wählen Sie den Guthabenschwellenwert und den Betrag in Ihren Credits-Einstellungen. Sie können es dort deaktivieren. Das Deaktivieren des automatischen Aufladens stoppt keine Ressourcen und beendet keine Gebühren für deren Nutzung.
+
+<span id="low-or-empty-balance" />
+
+## Niedriges oder leeres Guthaben
+
+Lizard warnt Sie, wenn Ihr Guthaben niedrig ist. Wenn Ihr Guthaben aufgebraucht ist und eine Zahlung es nicht wiederherstellt, kann die Erstellung von Ressourcen eingeschränkt werden und laufende Dienste können nach der jeweils geltenden Kulanzfrist pausieren. Prüfen Sie Ihre Credits-Seite auf die Kontobedingungen und stellen Sie das Guthaben vor Ablauf der Kulanzfrist wieder her, um eine Pausierung zu vermeiden.
+
+<span id="idle-apps-and-stored-data" />
+
+## Inaktive Apps und gespeicherte Daten
+
+Eine App kann Arbeitsspeicher und CPU verwenden, auch wenn sie keine Anfragen hat. Stoppen Sie die App, um die Compute-Nutzung zu beenden. Persistent Volumes und Managed Object Storage verursachen weiter Speicherkosten, solange Sie Daten gespeichert halten, auch wenn die App gestoppt ist.
+
+Lesen Sie vor dem Entfernen von Daten [Speicher und Wiederherstellung](/platform/storage-and-recovery). Lesen Sie [metrics](/observability/metrics), um konfigurierte Limits mit der gemessenen Nutzung zu vergleichen.

@@ -1,0 +1,39 @@
+---
+description: "MCP、coding-agent、Redis worker、Telegram ガイドについて、クラウド結果、再起動時の挙動、検証済みバージョン、残っている制限を確認します。"
+---
+
+<span id="scenario-guide-test-results" />
+
+# シナリオガイドのテスト結果
+
+2026-09-07 に、Lizard CLI 0.3.92 を使って、これらのガイドを別のテストプロジェクトで確認しました。アプリケーションの確認はビルドステータスとは別です。テストではガイドのコマンドを使用し、GitHub の例では別のプロジェクト名とドキュメント用テストブランチを使いました。
+
+| ガイド | 結果 | チェック |
+|---|---|---|
+| [Remote MCP](/guides/deploy-mcp-server) | ローカルおよびクラウドで合格 | Health 200; トークンなしおよび無効なトークン 401; 認証済み GET 405; 拒否された Origin 403; initialize、tools/list、tools/call; 公開 HTTPS 経由の結果 `5` |
+| [コーディング エージェント: アップロード](/guides/deploy-from-coding-agent) | 合格 | `lizard up`、health 200、データベースを使用したレスポンス 200、未知のルート 404; 更新された Postgres 行はサービス再起動後も保持された |
+| [コーディング エージェント: GitHub](/guides/deploy-from-coding-agent) | 合格 | リポジトリは `--no-deploy` で接続; ブランチ、ルートディレクトリ、環境は `redeploy` の前に設定; 公開アプリは同じ既存の Postgres 行を読み取った |
+| [Redis worker](/deploy/workers) | 合格 | ポート 0; enqueue と result; result は再起動後も保持; 再起動後の新しいジョブ; 完了していない processing エントリは起動時に復旧 |
+| [Telegram bot](/guides/telegram-bot) | ローカルテストのみ | 7 つのモックテストで updates、送信失敗、トークン確認、webhook 拒否をカバー。実際のトークン、chat、クラウドでの echo テストはまだ必要 |
+
+<span id="versions" />
+
+## バージョン
+
+MCP コンテナは Node.js 22.23.2 と MCP TypeScript SDK 1.30.0 で動作しました。coding-agent の例では `pg` 8.16.3 を使用し、PostgreSQL 18.4 で動作する Managed Postgres に接続しました。worker コンテナは Python 3.13.15 と redis-py 6.4.0 で動作しました。依存関係の lockfile または厳密な requirements は各 example にあります。
+
+<span id="scope" />
+
+## 対象範囲
+
+MCP の確認は、この example のステートレスな HTTP transport と固定 bearer token を対象にしています。OAuth 互換性、ブラウザ対応、長時間のストリーミング、負荷容量は確認していません。トークンは 1 時間後に期限切れになります。
+
+GitHub の確認では、ドキュメント用ブランチと `_examples/agent-app` ディレクトリを使用しました。明示的な redeploy はテストしましたが、すべての private-repository 権限設定や webhook event はテストしていません。
+
+Redis 復旧の確認では、単一の consumer を再起動する前に、完了していない processing エントリを事前投入しました。Redis 障害、複数 worker、外部効果の exactly-once はテストしていません。データベースの確認は、アプリケーション再起動をまたいだ永続性を示すものであり、バックアップや災害復旧を示すものではありません。
+
+テストサービスの runtime log tail は当初空でした。その後、live worker log stream で新しく処理されたジョブが配信されました。完了基準としては HTTP、MCP client、job-result の確認を使用してください。log tail が空であることだけでは、成功も失敗も示せません。
+
+Telegram の example は cloud-verified としてはマークされていません。preflight ではボットの webhook を変更せずに `getMe` と `getWebhookInfo` を読み取ります。polling loop を有効にする前に、別のテスト用 bot を使用してください。
+
+CLI アーカイブと failed-build の exit-code 制限については [フレームワークのテスト結果](/framework-guides/validation) の別の 16 レシピの framework バッチと、[known issues](/platform/known-issues) を参照してください。

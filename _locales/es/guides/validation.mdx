@@ -1,0 +1,39 @@
+---
+description: "Verifica las guías de MCP, coding-agent, worker de Redis y Telegram: resultados en la nube, comportamiento al reiniciar, versiones probadas y límites restantes."
+---
+
+<span id="scenario-guide-test-results" />
+
+# Resultados de pruebas de guías de escenarios
+
+El 2026-09-07, verificamos estas guías en un proyecto de prueba separado con Lizard CLI 0.3.92. Las verificaciones de la aplicación son independientes del estado de compilación. Las pruebas usaron los comandos de la guía, con un nombre de proyecto distinto y la rama de prueba de documentación para el ejemplo de GitHub.
+
+| Guía | Resultado | Comprobaciones |
+|---|---|---|
+| [Remote MCP](/guides/deploy-mcp-server) | Aprobado localmente y en la nube | Health 200; token faltante e inválido 401; GET autenticado 405; Origin rechazado 403; initialize, tools/list y tools/call; resultado `5` sobre HTTPS público |
+| [Agente de codificación: subida](/guides/deploy-from-coding-agent) | Aprobado | `lizard up`, health 200, respuesta con respaldo en base de datos 200, ruta desconocida 404; una fila de Postgres actualizada permaneció después de reiniciar el servicio |
+| [Agente de codificación: GitHub](/guides/deploy-from-coding-agent) | Aprobado | Repositorio adjunto con `--no-deploy`; rama, directorio raíz y entorno configurados antes de `redeploy`; la aplicación pública leyó la misma fila existente de Postgres |
+| [Redis worker](/deploy/workers) | Aprobado | Puerto 0; enqueue y resultado; resultado conservado después del reinicio; nuevo trabajo después del reinicio; una entrada de procesamiento sin finalizar se recuperó al iniciar |
+| [Telegram bot](/guides/telegram-bot) | Solo pruebas locales | Siete pruebas simuladas cubren updates, envíos fallidos, verificaciones de token y rechazo de webhook. Todavía se requiere un token real, chat y prueba de eco en la nube |
+
+<span id="versions" />
+
+## Versiones
+
+El contenedor de MCP ejecutó Node.js 22.23.2 con MCP TypeScript SDK 1.30.0. El ejemplo de coding-agent usa `pg` 8.16.3 y se conectó a Managed Postgres con PostgreSQL 18.4. El contenedor del worker ejecutó Python 3.13.15 con redis-py 6.4.0. Los lockfiles de dependencias o los requisitos exactos están en los ejemplos.
+
+<span id="scope" />
+
+## Alcance
+
+La verificación de MCP cubre el transporte HTTP sin estado del ejemplo y el token bearer fijo. No establece compatibilidad con OAuth, soporte de navegador, streaming de larga duración ni capacidad bajo carga. El token expira después de una hora.
+
+La verificación de GitHub usó la rama de documentación y el directorio `_examples/agent-app`. Probó un redeploy explícito; no probó todas las configuraciones de permisos de repositorios privados ni todos los eventos de webhook.
+
+La verificación de recuperación de Redis sembró una entrada de procesamiento sin finalizar antes de reiniciar un único consumidor. No probó fallos de Redis, múltiples workers ni efectos externos exactamente una vez. La verificación de base de datos establece persistencia tras reiniciar una aplicación, no copia de seguridad ni recuperación ante desastres.
+
+Las colas finales de logs del runtime estuvieron inicialmente vacías para los servicios de prueba. Más tarde, un stream de logs en vivo del worker mostró un trabajo recién procesado. Usa las verificaciones de HTTP, cliente MCP y resultado del trabajo como criterios de finalización; una cola de logs vacía por sí sola no establece ni éxito ni fallo.
+
+El ejemplo de Telegram no está marcado como verificado en la nube. Su preflight lee `getMe` y `getWebhookInfo` sin cambiar el webhook del bot. Usa un bot de prueba separado antes de habilitar su bucle de polling.
+
+Consulta [resultados de pruebas de frameworks](/framework-guides/validation) para el lote separado de 16 recetas de framework, y [known issues](/platform/known-issues) para los límites del archivo del CLI y los códigos de salida de compilaciones fallidas.

@@ -1,0 +1,62 @@
+---
+description: "lizard link связывает текущую директорию с существующим проектом, а также при необходимости с конкретным сервисом или рабочей областью."
+---
+
+# lizard link
+
+Связывает текущую директорию с существующим проектом (и при необходимости с сервисом).
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard link [service] [flags]
+```
+
+<span id="flags" />
+
+## Флаги
+
+| Флаг | Описание |
+|------|-------------|
+| `-p, --project <id>` | Имя проекта, слаг или ID |
+| `-s, --service <name>` | Сервис для связывания |
+| `-w, --workspace <ws>` | Рабочая область |
+
+<span id="examples" />
+
+## Примеры
+
+<span id="link-to-an-existing-project" />
+
+### Связывание с существующим проектом
+
+```bash
+lizard link --project my-project
+```
+
+<span id="link-to-a-project-and-a-specific-service" />
+
+### Связывание с проектом и конкретным сервисом
+
+```bash
+lizard link my-service --project my-project
+```
+
+<span id="link-within-a-specific-workspace" />
+
+### Связывание в конкретной рабочей области
+
+```bash
+lizard link --project my-project --workspace my-workspace
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [lizard init](/cli/init) — создать или выбрать проект и связать его за один шаг
+- [lizard unlink](/cli/unlink) — удалить связь из текущей директории
+- [lizard status](/cli/status) — показать связанную рабочую область, проект и сервис
+- [Архитектура: Проект](/concepts/architecture) — как работает связь директории с проектом

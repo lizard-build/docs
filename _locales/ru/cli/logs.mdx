@@ -1,0 +1,93 @@
+---
+description: "lizard logs выводит логи выполнения сервиса, логи сборки, логи перезапусков и отфильтрованную историю с помощью флагов --build, --tail и --level."
+---
+
+# lizard logs
+
+Выводит логи выполнения сервиса — последние 200 строк с последующим живым просмотром.
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard logs [flags]
+```
+
+<span id="flags" />
+
+## Флаги
+
+| Флаг | Описание |
+|------|-------------|
+| `--build` | Показать логи сборки |
+| `--tail <n>` | Последние N строк (максимум 1000) |
+| `-l, --level <level>` | Фильтр по уровню |
+| `--restarts [n]` | Список последних перезапусков |
+| `--restart <id>` | Логи вокруг конкретного перезапуска (`latest` для самого последнего) |
+| `-s, --service <id>` | Сервис |
+
+При `--json` `lizard logs` не является стримом — возвращает последние 200 строк (можно переопределить `--tail N`, максимум 1000) и завершается. Используйте для снапшотов и скриптов; живой стрим доступен только без `--json`.
+
+<span id="examples" />
+
+## Примеры
+
+<span id="tail-runtime-logs" />
+
+### Просмотр логов выполнения в реальном времени
+
+```bash
+lizard logs
+```
+
+<span id="tail-logs-for-a-specific-service" />
+
+### Просмотр логов конкретного сервиса в реальном времени
+
+```bash
+lizard logs --service api
+```
+
+<span id="get-more-history" />
+
+### Получить больше истории
+
+```bash
+lizard logs --tail 1000
+```
+
+<span id="filter-by-log-level" />
+
+### Фильтр по уровню лога
+
+```bash
+lizard logs --level error
+```
+
+<span id="check-the-most-recent-build" />
+
+### Проверка последней сборки
+
+```bash
+lizard logs --build
+```
+
+<span id="inspect-a-crash-or-restart" />
+
+### Исследовать сбой или перезапуск
+
+```bash
+lizard logs --restarts
+lizard logs --restart latest
+lizard logs --restart <id>
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [Логи](/observability/logs) — поведение логов выполнения, сборки и перезапусков, а также постраничная навигация по истории с `lizard service logs`
+- [Incomplete Dockerfile](/deploy/troubleshooting/incomplete-dockerfile) — диагностика неудачной сборки из `lizard logs --build`
+- [lizard events](/cli/events) — история деплоев и статус реплик
+- [Развернуть из Claude Code](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) — цикл чтения логов, исправления и повторного деплоя, который агент выполняет при неудачной сборке

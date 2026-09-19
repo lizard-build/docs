@@ -1,0 +1,71 @@
+---
+description: "Transmite logs de ejecución en tiempo real, consulta logs de compilación después de un deploy fallido y obtén la cola de logs alrededor de un reinicio, desde la CLI o el dashboard."
+---
+
+# Logs
+
+Lizard captura logs de **ejecución**, logs de **compilación** y la cola de logs alrededor de **reinicios**. Transmítelos en vivo en tu terminal o consúltalos en el dashboard.
+
+<span id="runtime-logs" />
+
+## Logs de ejecución
+
+```bash
+lizard logs                       # last 200 runtime lines, then live tail
+lizard logs --service api         # a specific service
+lizard logs --tail 1000           # more history (max 1000)
+lizard logs --level error         # filter by level
+```
+
+<span id="behavior-with---json" />
+
+### Comportamiento con `--json`
+
+`lizard logs --json` **no** es una transmisión: devuelve las últimas 200 líneas (puedes cambiarlo con `--tail N`, máximo 1000) y finaliza. Úsalo para instantáneas y scripts. Transmite en vivo solo sin `--json` cuando quieras una cola interactiva.
+
+<span id="build-logs" />
+
+## Logs de compilación
+
+```bash
+lizard logs --build               # the most recent build's logs
+```
+
+Esto es lo primero que debes revisar cuando falla un deploy: léelo, corrige la causa y luego `lizard redeploy`. Consulta [Proceso de compilación](/concepts/build-pipeline).
+
+<span id="restart--crash-logs" />
+
+## Logs de reinicio / fallo
+
+Cuando una réplica falla o se reinicia, obtén la cola de logs alrededor del evento:
+
+```bash
+lizard logs --restart latest      # the most recent restart
+lizard logs --restart <id>        # a specific restart
+lizard logs --restarts            # list recent restarts
+```
+
+<span id="paging-through-history" />
+
+## Paginación del historial
+
+`lizard service logs` permite paginar ventanas más antiguas:
+
+```bash
+lizard service logs --service api --tail all     # full history (no follow)
+lizard service logs --service api --page 2       # older window (implies --tail 200)
+```
+
+<span id="dashboard" />
+
+## Panel
+
+El dashboard (`lizard open`) transmite logs de ejecución y de compilación con filtros de búsqueda y nivel, y muestra la salida de compilación por deploy en la vista de **Despliegues**.
+
+<span id="see-also" />
+
+## Ver también
+
+- [`lizard logs`](/cli/logs) — la referencia completa de comandos.
+- [Events & History](/observability/events) — historial de deploys y estado de las réplicas.
+- [Desplegar desde Claude Code](https://lizard.build/blog/deploy-from-claude-code) — logs escritos para que los lea un agente, no solo tú.

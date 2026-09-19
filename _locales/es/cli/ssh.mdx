@@ -1,0 +1,70 @@
+---
+description: "lizard ssh ejecuta un comando dentro del contenedor de un servicio en vivo y devuelve su código de salida. La forma autorizada de ver lo que ve el contenedor."
+---
+
+# lizard ssh
+
+Ejecuta un comando dentro del contenedor de un servicio en ejecución, transmite su salida y devuelve el código de salida remoto.
+
+## run vs. ssh
+
+`lizard run` y `lizard ssh` ejecutan un comando con el contexto de un servicio, pero se ejecutan en lugares distintos — conviene saber cuál quieres.
+
+| Comando | Dónde se ejecuta | Usar para |
+|---------|-----------|---------|
+| `lizard run` | **Localmente**, con el proyecto del servicio + los secretos del servicio inyectados | Migraciones, scripts de seed, herramientas locales que necesitan configuración de prod |
+| `lizard ssh` | **Dentro del contenedor del servicio en ejecución** | Inspeccionar el contenedor en vivo, comandos remotos puntuales, depuración |
+
+`lizard run` muestra tu copia local inyectada del entorno, que normalmente es la misma que producción — pero `lizard ssh` es la referencia autorizada de lo que realmente ve el contenedor en vivo.
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard ssh --service <name> -- <command>
+```
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="inspect-the-environment-the-running-app-sees" />
+
+### Inspeccionar el entorno que ve la app en ejecución
+
+```bash
+lizard ssh --service api -- env
+```
+
+<span id="list-files-in-the-deployed-image" />
+
+### Listar archivos en la imagen desplegada
+
+```bash
+lizard ssh --service api -- ls -la /app
+```
+
+<span id="check-the-os-in-the-container" />
+
+### Comprobar el sistema operativo en el contenedor
+
+```bash
+lizard ssh --service api -- cat /etc/os-release
+```
+
+<span id="confirm-a-secret-landed-in-the-live-container" />
+
+### Confirmar que un secreto llegó al contenedor en vivo
+
+```bash
+lizard ssh --service api -- env | grep DATABASE_URL
+```
+
+<span id="see-also" />
+
+## Véase también
+
+- [lizard run](/cli/run) — ejecuta un comando localmente con el entorno del servicio inyectado en su lugar
+- [Variables](/variables) — cómo llegan los secretos y las referencias a un servicio
+- [Desplegar desde Claude Code](https://lizard.build/blog/deploy-from-claude-code#claude-code-deployment-compared-with-the-alternatives) — por qué un agente necesita una shell dentro del contenedor en ejecución, y qué plataformas no ofrecen una

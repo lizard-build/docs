@@ -1,0 +1,235 @@
+---
+description: "Starte deine erste Sandbox mit dem Lizard SDK: installieren, einen API-Schlüssel erstellen, ein Projekt auswählen, Code ausführen, Dateien verschieben, einen Port freigeben und pausieren."
+---
+
+<span id="sandboxes-quickstart" />
+
+# Sandboxes-Schnellstart
+
+Starte eine Sandbox, führe darin Code aus, gib einen Port frei und pausiere sie mit dem Lizard SDK.
+
+<span id="install" />
+
+## Installieren
+
+```bash
+# JavaScript / TypeScript
+npm install @lizard-build/sdk
+
+# Python
+pip install lizard-sdk
+```
+
+<span id="authenticate" />
+
+## Authentifizieren
+
+Sandboxes authentifizieren sich mit einem **API-Schlüssel**. Erstelle einen im Dashboard (**Sandboxes → Erste Schritte → Neuer API-Schlüssel**) — er wird nur einmal angezeigt, also kopiere ihn sofort.
+
+Lege ihn in deiner Umgebung fest, dann übernimmt das SDK ihn automatisch:
+
+```bash
+export LIZARD_API_KEY="<your-api-key>"
+```
+
+Du kannst ihn auch explizit übergeben: `Sandbox.create('base', { apiKey, project })`.
+
+<span id="pick-a-project" />
+
+## Ein Projekt auswählen
+
+Jede Sandbox gehört zu einem Projekt — die Nutzung wird pro Projekt abgerechnet, daher verweigert die API das Erstellen ohne eines. Gib das Projekt über seine ID, seinen Slug oder seinen Namen an.
+
+Der `Lizard`-Client bindet genau ein Projekt, daher musst du es nur einmal angeben:
+
+```ts
+import { Lizard } from '@lizard-build/sdk';
+
+const lizard = new Lizard({ project: 'my-project' });
+const sandbox = await lizard.create('base');
+```
+
+```python
+from lizard import Lizard
+
+lizard = Lizard(project="my-project")
+sandbox = lizard.create("base")
+```
+
+`Sandbox.create` verwendet dieselbe Option `project`, wenn du lieber keinen Client behalten möchtest. Beide Formen werden unten verwendet.
+
+<span id="your-first-sandbox" />
+
+## Deine erste Sandbox
+
+**JavaScript / TypeScript**
+
+```ts
+import { Sandbox } from '@lizard-build/sdk';
+
+// Boot from a template (default: 'base') in a project
+const sandbox = await Sandbox.create('base', { project: 'my-project' });
+
+// Run a command and wait for it to finish
+try {
+  const result = await sandbox.process.exec('node -e "console.log(2 ** 10)"');
+  console.log(result.stdout);     // 1024
+  console.log(result.exitCode);   // 0
+} finally {
+  await sandbox.kill();
+}
+```
+
+**Python**
+
+```python
+from lizard import Sandbox
+
+sandbox = Sandbox.create("base", project="my-project")
+
+# exec_ (trailing underscore) because `exec` is reserved in Python
+try:
+    result = sandbox.process.exec_("python -c 'print(2 ** 10)'")
+    print(result.stdout)     # 1024
+finally:
+    sandbox.kill()
+```
+
+`process.exec` gibt `{ stdout, stderr, exitCode }` zurück. Es wartet, bis der Befehl abgeschlossen ist — lang laufende Prozesse im Hintergrund mit einem angehängten `&` starten.
+
+<span id="working-with-files" />
+
+## Mit Dateien arbeiten
+
+`sandbox.fs` liest und schreibt direkt in das Dateisystem der Micro-VM und erstellt bei Bedarf übergeordnete Verzeichnisse.
+
+```ts
+await sandbox.fs.write('/app/server.js', `
+  const http = require('http');
+  http.createServer((_, res) => res.end('hello from Lizard')).listen(3000);
+`);
+
+const src = await sandbox.fs.read('/app/server.js');
+const entries = await sandbox.fs.list('/app');   // [{ name, path, type, size }]
+await sandbox.fs.makeDir('/app/data');
+await sandbox.fs.remove('/app/old.log');
+```
+
+| Methode | Beschreibung |
+|---|---|
+| `fs.write(path, data)` | Eine Datei schreiben — String oder Bytes; erstellt übergeordnete Verzeichnisse |
+| `fs.read(path)` | Eine Datei als UTF-8-String lesen |
+| `fs.list(path)` | Verzeichniseinträge auflisten |
+| `fs.makeDir(path)` | Ein Verzeichnis und alle fehlenden übergeordneten Verzeichnisse erstellen |
+| `fs.remove(path)` | Eine Datei oder ein Verzeichnis löschen |
+
+<span id="exposing-a-port" />
+
+## Einen Port freigeben
+
+Starte einen HTTP-Server innerhalb der Sandbox und erhalte eine öffentliche HTTPS-URL dafür — ohne Tunneling.
+
+```ts
+await sandbox.process.exec('node /app/server.js &');   // listen on :3000
+
+const host = await sandbox.getHost(3000);
+console.log(`Live at https://${host}`);
+// https://<sandboxId>-3000.sandbox.<region>.onlizard.com
+```
+
+`getHost(port)` registriert eine Route zu diesem Port und gibt den Hostnamen zurück. Die URL ist öffentlich und TLS-terminiert. Entferne sie anschließend wieder im Dashboard.
+
+<span id="pause-and-resume" />
+
+## Pausieren und fortsetzen
+
+Beim Pausieren werden die vCPUs des Gasts eingefroren und sein aktueller Zustand im Arbeitsspeicher des Hosts beibehalten. Es wird kein dauerhaftes Snapshot geschrieben. Prüfe das [Problem zu Pause und Ablauf](/platform/known-issues#sandbox-pause-and-expiration), bevor du eine Sitzung über ihre ursprüngliche Frist hinaus beibehältst.
+
+```ts
+// Set the environment up once
+const sandbox = await Sandbox.create('base', { project: 'my-project' });
+await sandbox.process.exec('npm install -g some-heavy-toolchain');
+const id = sandbox.sandboxId;
+
+await sandbox.pause();          // freeze the guest; see the lifecycle issue below
+
+// …minutes or hours later, from anywhere:
+const resumed = await Sandbox.connect(id);   // resumes guest state still held by the host
+await resumed.process.exec('some-heavy-toolchain --version');   // already installed
+await resumed.kill();
+```
+
+`Sandbox.connect(id)` setzt eine pausierte Sandbox automatisch fort. Du kannst auch `sandbox.resume()` für ein Handle aufrufen, das du bereits hältst.
+
+**Python**
+
+```python
+sandbox = Sandbox.create("base", project="my-project")
+sandbox.process.exec_("pip install numpy pandas")
+sandbox_id = sandbox.sandbox_id
+sandbox.pause()
+
+resumed = Sandbox.connect(sandbox_id)   # resumes guest state still held by the host
+resumed.process.exec_("python -c 'import numpy'")
+resumed.kill()
+```
+
+## Timeouts
+
+Eine Sandbox mit einem positiven Timeout läuft nach dieser Lebensdauer ab. Das SDK verwendet standardmäßig fünf Minuten; `timeoutMs: 0` beim Erstellen deaktiviert den Ablauf. Setze ein explizites Limit und gib die Sandbox frei, wenn die Aufgabe beendet ist. Eine laufende Sandbox passt du an mit:
+
+```ts
+const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 10 * 60 * 1000 }); // 10 min
+await sandbox.setTimeout(30 * 60 * 1000);   // extend to 30 min from now
+```
+
+Pause soll die verbleibende Laufzeit einfrieren, aber das aktuelle [Lebenszyklus-Problem](/platform/known-issues#sandbox-pause-and-expiration) erfordert ein verifiziertes Backend-Release. Verlasse dich nicht auf unbegrenztes Pausieren zur Datenaufbewahrung.
+
+<span id="managing-sandboxes" />
+
+## Sandboxes verwalten
+
+```ts
+const sandbox = await Sandbox.create('base', { project: 'my-project' });
+const info = await sandbox.getInfo();     // { sandboxId, template, startedAt, endAt, … }
+
+const all = await Sandbox.list();         // every running sandbox for this account
+await sandbox.kill();
+```
+
+<span id="full-example" />
+
+## Vollständiges Beispiel
+
+Ein Agent, der ein Skript schreibt, es ausführt, das Ergebnis bereitstellt und den Gast für einen späteren Aufruf pausiert:
+
+```ts
+import { Sandbox } from '@lizard-build/sdk';
+
+const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 15 * 60 * 1000 });
+
+try {
+  await sandbox.fs.write('/app/app.js', `
+    const http = require('http');
+    http.createServer((_, res) => res.end('ok')).listen(3000);
+  `);
+  await sandbox.process.exec('node /app/app.js &');
+
+  const host = await sandbox.getHost(3000);
+  const res = await fetch(`https://${host}`);
+  console.log(await res.text());          // ok
+
+  await sandbox.pause();                   // resume later with Sandbox.connect(sandbox.sandboxId)
+} catch (err) {
+  await sandbox.kill();
+  throw err;
+}
+```
+
+<span id="next-steps" />
+
+## Nächste Schritte
+
+- **[SDK-Referenz](/sandboxes/sdk-reference)** — jede Methode von `Sandbox`, `CodeSandbox` und `Volume`.
+- **[Code Interpreter](/sandboxes/code-interpreter)** — zustandsbehafteten, mehrsprachigen Code ausführen.
+- **[Persistent Volumes](/sandboxes/volumes)** — Speicher anhängen, der länger als eine einzelne Sandbox bestehen bleibt.

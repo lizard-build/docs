@@ -1,0 +1,79 @@
+---
+description: "Adjunta un volumen en /data para conservar checkpoints, weights o un directorio de trabajo entre reinicios del sandbox. Crea, adjunta y administra volúmenes."
+---
+
+# Persistent Volumes
+
+Los Sandboxes son efímeros: cuando uno se elimina o expira, su sistema de archivos desaparece. Un **volumen** es almacenamiento persistente por bloques que sobrevive a cualquier sandbox individual. Adjunta uno para conservar datos (checkpoints, pesos del modelo, un directorio de trabajo) entre reinicios del sandbox.
+
+Un volumen se adjunta a **un sandbox a la vez** y se monta en **`/data`** dentro de la micro-VM. Como un volumen queda fijado al nodo en el que reside, un sandbox que lo adjunta se programa en ese mismo nodo.
+
+<span id="create-and-attach" />
+
+## Crear y adjuntar
+
+Adjunta un volumen pasando su ID a `Sandbox.create`, junto con el proyecto al que se factura el sandbox. Todo lo que se escriba en `/data` se conserva después de que el sandbox desaparezca.
+
+```ts
+import { Sandbox, Volume } from '@lizard-build/sdk';
+
+// Create a 10 GB volume in a project (default size: 5 GB)
+const volume = await Volume.create('proj_123', 'agent-workdir', { sizeGb: 10 });
+
+// Attach it to a sandbox — mounted at /data
+const sandbox = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+try {
+  await sandbox.fs.write('/data/state.json', JSON.stringify({ step: 1 }));
+} finally {
+  await sandbox.kill();            // the volume persists
+}
+
+// A later sandbox re-attaches and sees the data
+const next = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+try {
+  console.log(await next.fs.read('/data/state.json'));   // {"step":1}
+} finally {
+  await next.kill();
+}
+```
+
+<span id="manage-volumes" />
+
+## Administrar volúmenes
+
+```ts
+await Volume.list('proj_123');                 // [{ id, name, sizeGb, status, attachedTo, … }]
+const v = await Volume.get('proj_123', 'vol_abc');
+await v.getInfo('proj_123');
+await v.delete('proj_123');                     // must be detached first
+```
+
+| Método | Descripción |
+|---|---|
+| `Volume.create(projectId, name, { sizeGb })` | Crear un volumen (5 GB por defecto) |
+| `Volume.list(projectId)` | Listar volúmenes en un proyecto |
+| `Volume.get(projectId, volumeId)` | Obtener un identificador de un volumen existente |
+| `volume.getInfo(projectId)` | Obtener metadatos y estado de adjunto |
+| `volume.delete(projectId)` | Eliminar un volumen (debe no estar adjunto) |
+
+<span id="in-the-dashboard" />
+
+## En el dashboard
+
+Los volúmenes se encuentran en la pestaña **Sandboxes → Volúmenes** de un proyecto. Crea uno con un nombre y un tamaño; la tabla muestra el tamaño de cada volumen, su estado (`available` / `attached`) y qué sandbox lo tiene adjunto. Un volumen se libera de vuelta a `available` automáticamente cuando su sandbox se elimina o expira. Consulta la guía de [Panel](/sandboxes/dashboard).
+
+<span id="notes" />
+
+## Notas
+
+- Un volumen solo puede adjuntarse a **un sandbox** a la vez. Intentar adjuntar un volumen que ya está adjunto devuelve un conflicto.
+- Eliminar un sandbox (o dejar que expire) **desadjunta** el volumen; no lo elimina. Los datos se conservan para el siguiente adjunto.
+- Elimina el propio volumen para recuperar el almacenamiento.
+- Un sandbox en pausa sigue manteniendo su adjunto. Persistent Volumes usan almacenamiento local al nodo; exporta los datos que necesites recuperar tras una falla del nodo. Consulta [almacenamiento y recuperación](/platform/storage-and-recovery).
+
+<span id="see-also" />
+
+## Ver también
+
+- [SDK Reference](/sandboxes/sdk-reference) — todos los métodos de `Volume`.
+- [Quickstart](/sandboxes/quickstart) — adjuntar un volumen al crear un sandbox.

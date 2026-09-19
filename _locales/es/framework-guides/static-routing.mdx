@@ -1,0 +1,107 @@
+---
+description: "Configura rutas de sitios estáticos en Lizard: sirve HTML generado, admite URLs limpias, devuelve HTTP 404 para páginas inexistentes y elige cuándo corresponde un fallback de SPA."
+---
+
+<span id="static-routes-and-404s" />
+
+# Rutas estáticas y 404
+
+Un sitio de contenido generado debe servir el HTML de cada ruta y devolver HTTP 404 para una página inexistente. Las nuevas compilaciones de lizardpack para Astro static, Docusaurus, VitePress, Hugo y SvelteKit adapter-static usan esa política. Las SPA de React y Vue mantienen el fallback `index.html` necesario para los enrutadores del navegador.
+
+La configuración personalizada de abajo es opcional. Úsala para una política de enrutamiento que el framework detectado no proporcione. Las imágenes existentes conservan sus reglas anteriores hasta que las vuelvas a compilar.
+
+<span id="choose-the-routing-policy" />
+
+## Elige la política de enrutamiento
+
+| Tipo de app | Comportamiento de ruta |
+|---|---|
+| SPA de React o Vue | Una ruta de cliente válida carga `index.html`, y luego el enrutador del cliente la renderiza. |
+| Documentación o contenido generado | Una ruta se resuelve a su HTML generado; una ruta desconocida devuelve HTTP 404. |
+| App renderizada en servidor | El servidor de la aplicación resuelve las rutas y devuelve el estado. |
+
+Una vista comodín de SPA puede mostrar un mensaje de página inexistente, pero el código del navegador no puede cambiar el estado HTTP de la respuesta HTML que ya se envió. Si necesitas un estado HTTP según la ruta para una SPA, usa un servidor o una configuración de rutas prerenderizadas que conozca qué rutas existen.
+
+<span id="configure-nginx-for-generated-pages" />
+
+## Configura nginx para páginas generadas
+
+Crea `nginx.conf` en la raíz de la aplicación:
+
+```nginx
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+
+  location / {
+    try_files $uri $uri.html $uri/ =404;
+  }
+
+  error_page 404 /404.html;
+  location = /404.html {
+    internal;
+  }
+}
+```
+
+Esto admite tanto los diseños de salida `guide.html` como `guide/index.html`. Incluye un `404.html` generado si quieres una página de error personalizada. De lo contrario, omite los bloques `error_page` y de ubicación exacta para usar el cuerpo de error predeterminado de nginx. Mantén un único estilo de URL canónica en los enlaces y el sitemap del sitio; esta regla de búsqueda no agrega redirecciones canónicas.
+
+<span id="build-the-site-with-the-config" />
+
+## Compila el sitio con la configuración
+
+Usa este Dockerfile completo para un proyecto npm con un lockfile confirmado en el repositorio. Cambia los valores predeterminados de `BUILD_SCRIPT` y `OUTPUT_DIR` para que coincidan con la tabla de abajo:
+
+```dockerfile
+FROM node:22-slim AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+ARG BUILD_SCRIPT=build
+RUN npm run "$BUILD_SCRIPT"
+
+FROM nginx:alpine
+ARG OUTPUT_DIR=dist
+COPY --from=build /app/${OUTPUT_DIR}/ /usr/share/nginx/html/
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+```
+
+| Sitio | `BUILD_SCRIPT` | `OUTPUT_DIR` |
+|---|---|---|
+| Astro static | `build` | `dist` |
+| Docusaurus | `build` | `build` |
+| VitePress con una raíz `docs/` | `docs:build` | `docs/.vitepress/dist` |
+| VitePress en la raíz del proyecto | `docs:build` o tu script real | `.vitepress/dist` |
+| SvelteKit con adapter-static | `build` | `build` |
+| Next.js export | `build` | `out` |
+| Nuxt generate | `build` con `nuxt generate` | `.output/public` |
+
+Usa la política de páginas generadas solo cuando la app tenga esos archivos de ruta. Un fallback de SPA de SvelteKit, por ejemplo, necesita su propia política de enrutamiento. [Exportación estática de Next.js](/framework-guides/nextjs/static-export) tiene una receta completa con un diseño de barra final.
+
+Excluye dependencias, salida de compilación, `.git` y `.env*` en `.dockerignore`. Si la compilación necesita variables públicas, declara sus valores de `ARG` antes del comando de compilación. No copies secretos privados en la imagen ni en la salida del navegador.
+
+Después de la [configuración de CLI](/framework-guides#prepare-the-project), crea un servicio con `lizard add --service web` y luego despliega este código fuente con `lizard up --service web --port 80`. Omite el paso de agregar cuando el servicio ya exista. En un servicio existente, revisa el [orden de decisión de compilación](/concepts/build-pipeline#build-decision-order): las anulaciones de comandos pueden tener prioridad sobre el Dockerfile. Un archivo de configuración por sí solo no reemplaza la configuración generada de nginx; el Dockerfile debe copiarlo a la imagen.
+
+<span id="verify-http-responses" />
+
+## Verifica las respuestas HTTP
+
+Establece `SITE_URL` con la URL real de prueba local o el origen desplegado, y luego reemplaza `/guide/` por una página que exista:
+
+```bash
+SITE_URL=https://YOUR_PUBLIC_HOST
+curl -sS -o /dev/null -w '%{http_code}\n' "$SITE_URL/"
+curl -sS -o /dev/null -w '%{http_code}\n' "$SITE_URL/guide/"
+curl -sS -o /dev/null -w '%{http_code}\n' "$SITE_URL/this-page-does-not-exist"
+```
+
+Espera 200 para páginas reales y 404 para la ruta inexistente. Si una ruta válida redirige a su forma canónica, inspecciona la redirección y luego verifica el destino. Prueba también un recurso real y una ruta inventada `.js`: un script inexistente no debe devolver la página de inicio como HTML con estado 200.
+
+Por último, abre la ruta interna directamente en un navegador y vuelve a cargarla. Una navegación correcta del cliente por sí sola puede ocultar un error de enrutamiento del servidor. Revisa la URL canónica y la configuración del sitemap del framework junto con el estado HTTP antes de publicar un sitio indexado.
+
+Consulta [versiones probadas y resultados en la nube](/framework-guides/validation) para las comprobaciones de despliegue del 9 de septiembre de 2026 y sus límites.
+

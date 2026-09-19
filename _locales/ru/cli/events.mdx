@@ -1,0 +1,60 @@
+---
+description: "lizard events выводит историю развёртываний сервиса и текущий статус реплик, с флагами для ограничения записей или выбора конкретного сервиса."
+---
+
+# lizard events
+
+Показать историю развёртываний и статус реплик.
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard events [flags]
+```
+
+<span id="flags" />
+
+## Флаги
+
+| Флаг | Описание |
+|------|-------------|
+| `-n, --limit <n>` | Количество записей для показа (по умолчанию 10) |
+| `-s, --service <name>` | Показать события для конкретного сервиса |
+
+<span id="examples" />
+
+## Примеры
+
+<span id="show-deploy-history-and-replica-status" />
+
+### Показать историю развёртываний и статус реплик
+
+```bash
+lizard events
+```
+
+<span id="show-events-for-a-specific-service" />
+
+### Показать события для конкретного сервиса
+
+```bash
+lizard events --service api
+```
+
+<span id="show-more-entries" />
+
+### Показать больше записей
+
+```bash
+lizard events --limit 25
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [Events & History](/observability/events) — что охватывает каждая запись и как это соотносится с представлением «Развёртывания» на панели
+- [lizard ps](/cli/ps) — быстрый снимок статуса и URL всех сервисов
+- [Развертывания](/concepts/deployments) — жизненный цикл развёртывания

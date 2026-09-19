@@ -1,0 +1,68 @@
+---
+description: "lizard metrics は、サービスの CPU、メモリ、ネットワーク、ディスクをレポートし、ライブの --watch 表示と任意のコスト数値を提供します。"
+---
+
+# lizard metrics
+
+CPU / メモリ / ネットワーク / ディスクとコストを表示します。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard metrics [flags]
+```
+
+<span id="flags" />
+
+## フラグ
+
+| フラグ | 説明 |
+|------|-------------|
+| `-r, --range <range>` | 時間範囲 |
+| `-w, --watch` | ライブ更新 |
+| `--cost` | コストを含める |
+
+<span id="examples" />
+
+## 例
+
+<span id="view-metrics-for-the-current-service" />
+
+### 現在のサービスのメトリクスを表示する
+
+```bash
+lizard metrics
+```
+
+<span id="view-metrics-for-a-specific-service" />
+
+### 特定のサービスのメトリクスを表示する
+
+```bash
+lizard metrics --service api
+```
+
+<span id="watch-metrics-live" />
+
+### メトリクスをライブで監視する
+
+```bash
+lizard metrics --watch
+```
+
+<span id="include-cost" />
+
+### コストを含める
+
+```bash
+lizard metrics --cost
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [Metrics & cost](/observability/metrics) — ダッシュボード表示と使用状況に応じた対応
+- [Scaling](/deploy/scaling) — メトリクスに応じてサイズ変更またはレプリカを追加

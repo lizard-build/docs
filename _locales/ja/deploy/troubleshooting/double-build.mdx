@@ -1,0 +1,53 @@
+---
+description: "lizard service set の後に redeploy を実行すると 2 つのビルドがキューされる理由、自動で再ビルドされるフィールド、そして冗長な 1 つを防ぐ方法。"
+---
+
+<span id="my-change-queued-two-builds-back-to-back" />
+
+# 変更によって 2 つのビルドが連続でキューされました
+
+フィールドを変更するために `lizard service set` を実行し、その後 `lizard redeploy` を実行した結果、1 つではなく 2 つのビルドになりました。
+
+<span id="what-this-means" />
+
+## これは何を意味するのか
+
+`service set` の呼び出しは、すでにそれ自体で再ビルドをトリガーしていました。続けて実行した `redeploy` により、2 つ目の冗長なビルドがキューされました。
+
+<span id="why-this-can-happen" />
+
+## なぜこれが起こるのか
+
+サービスの **ビルドに影響する** フィールド — `repoUrl`、`branch`、`sourceType`、`buildCommand`、`dockerfilePath`、または `rootDirectory` — を変更すると、すぐに自動で再ビルドされます。**ランタイムのみ** のフィールド — `startCommand`、`preDeployCommand`、`containerPort`、`watchPatterns` — を変更しても、自動で再ビルドは **されません**。これは次回のデプロイ時にのみ反映されます。
+
+`service set` のたびに反射的に `redeploy` を続けて実行しがちですが、それが意味を持つのはランタイムのみのフィールドに対してだけです。
+
+<span id="possible-solutions" />
+
+## 考えられる解決策
+
+<span id="check-which-kind-of-field-you-changed" />
+
+### 変更したフィールドの種類を確認する
+
+[再ビルドのトリガー一覧表](/concepts/build-pipeline#what-triggers-a-rebuild)を参照してください。ビルドフィールドであれば、再ビルドはすでにキューされています。追加では何もしないでください。
+
+```bash
+lizard events   # confirm only one build is in flight
+```
+
+<span id="only-redeploy-after-runtime-only-changes" />
+
+### ランタイムのみの変更後にだけ redeploy する
+
+```bash
+lizard service set api --set startCommand="node server.js"
+lizard redeploy --service api   # needed here — startCommand doesn't auto-rebuild
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [ビルド Pipeline → 再ビルドをトリガーするもの](/concepts/build-pipeline#what-triggers-a-rebuild)
+- [`lizard service`](/cli/service) — 完全なコマンドリファレンス。
