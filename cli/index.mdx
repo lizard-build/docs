@@ -72,3 +72,17 @@ This always reflects your installed version — prefer it over guessing flag sha
 - The CLI stores auth and the current directory's project link in `~/.lizard/config.json`.
 - `lizard status` shows the cwd's workspace/project/service link (no auth required).
 - `lizard config apply` applies a `lizard-config.json` file to a project (use `--dry-run` to preview).
+
+## Sandbox volumes
+
+Use names to manage [Persistent Volumes](/sandboxes/volumes) within a project:
+
+```bash
+lizard volume create agent-workdir --size 10 --project proj_123
+lizard volume list --project proj_123
+lizard sandbox create --volume agent-workdir --project proj_123
+```
+
+Names are unique per project: lowercase letters, digits and dashes, starting and ending with a letter or digit, up to 64 characters. New volumes allow whole GB from 1 to 50, default 5. The CLI reads the server's current limits before creating a volume, so it follows config changes. Existing larger volumes keep their size.
+
+After detaching a volume, `lizard volume rm agent-workdir --project proj_123` deletes it and its data. `volume list` shows names; `--json` includes generated IDs.
