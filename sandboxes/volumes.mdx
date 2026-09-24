@@ -1,69 +1,98 @@
 ---
-description: "Attach a volume at /data to keep checkpoints, weights, or a working directory across sandbox restarts. Create, attach, and manage volumes."
+description: "Create a named volume and mount it at /workspace to keep data across sandbox runs. Size limits, storage pricing, and examples for TypeScript, Python, and the CLI."
 ---
 
 # Persistent Volumes
 
-Sandboxes are ephemeral — when one is killed or expires, its filesystem is gone. A **volume** is persistent block storage that outlives any single sandbox. Attach one to keep data (checkpoints, model weights, a working directory) across sandbox restarts.
+A volume in Lizard (lizard.build) keeps data after a sandbox stops. It mounts at **`/workspace`** and attaches to **one sandbox at a time**. The sandbox runs on the same node as its volume.
 
-A volume attaches to **one sandbox at a time** and is mounted at **`/data`** inside the micro-VM. Because a volume is pinned to the node it lives on, a sandbox that attaches it is scheduled onto that same node.
+## Create and attach by name
 
-## Create and attach
+Names are unique within a project. Use lowercase letters, digits and dashes, starting and ending with a letter or digit, up to 64 characters.
 
-Attach a volume by passing its ID to `Sandbox.create`, alongside the project the sandbox is billed to. Anything written under `/data` survives after the sandbox is gone.
+Use `getOrCreate` to reuse a named volume. Its size applies only when creating a new volume; it never resizes an existing one. `Volume.create` returns a conflict if the name is taken.
 
 ```ts
 import { Sandbox, Volume } from '@lizard-build/sdk';
 
-// Create a 10 GB volume in a project (default size: 5 GB)
-const volume = await Volume.create('proj_123', 'agent-workdir', { sizeGb: 10 });
-
-// Attach it to a sandbox — mounted at /data
-const sandbox = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+await Volume.getOrCreate('proj_123', 'agent-workdir', { sizeGb: 10 });
+const sandbox = await Sandbox.create('base', {
+  projectId: 'proj_123', volumeName: 'agent-workdir',
+});
 try {
-  await sandbox.fs.write('/data/state.json', JSON.stringify({ step: 1 }));
+  await sandbox.fs.write('/workspace/state.json', JSON.stringify({ step: 1 }));
 } finally {
-  await sandbox.kill();            // the volume persists
+  await sandbox.kill();
 }
 
-// A later sandbox re-attaches and sees the data
-const next = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+// A later sandbox mounts the same data by name.
+const next = await Sandbox.create('base', {
+  projectId: 'proj_123', volumeName: 'agent-workdir',
+});
 try {
-  console.log(await next.fs.read('/data/state.json'));   // {"step":1}
+  console.log(await next.fs.read('/workspace/state.json'));
 } finally {
   await next.kill();
 }
 ```
 
+```python
+from lizard import Sandbox, Volume
+
+Volume.get_or_create("proj_123", "agent-workdir", size_gb=10)
+sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workdir")
+try:
+    sandbox.process.exec_("echo hello > /workspace/state.txt")
+finally:
+    sandbox.kill()
+```
+
+## Size and price
+
+New volumes allow **1–50 GB**, in whole GB, with **5 GB** as the default. The server can override the maximum through `VOLUME_MAX_SIZE_GB`; the dashboard and CLI read the current limits from `GET /api/projects/:projectId/volume-limits`. The dashboard also reads the storage price from that endpoint and shows it below the size slider.
+
+You pay for **used space**, not the full allocation. Existing volumes larger than the new maximum keep their size and remain accessible. Creating a new volume requires enough unreserved disk space on a healthy worker in the chosen region. If none has room, the API returns `503` with code `volume_capacity_unavailable`.
+
 ## Manage volumes
 
 ```ts
-await Volume.list('proj_123');                 // [{ id, name, sizeGb, status, attachedTo, … }]
-const v = await Volume.get('proj_123', 'vol_abc');
-await v.getInfo('proj_123');
-await v.delete('proj_123');                     // must be detached first
+await Volume.list('proj_123');
+const volume = await Volume.get('proj_123', 'agent-workdir');
+await volume.getInfo('proj_123');
+await Volume.delete('proj_123', 'agent-workdir'); // detach first
 ```
 
-| Method | Description |
-|---|---|
-| `Volume.create(projectId, name, { sizeGb })` | Create a volume (default 5 GB) |
-| `Volume.list(projectId)` | List volumes in a project |
-| `Volume.get(projectId, volumeId)` | Get a handle to an existing volume |
-| `volume.getInfo(projectId)` | Fetch metadata and attachment status |
-| `volume.delete(projectId)` | Delete a volume (must be unattached) |
+| TypeScript | Python | Purpose |
+|---|---|---|
+| `Volume.getOrCreate(projectId, name, options)` | `Volume.get_or_create(project_id, name, size_gb=5)` | Reuse a volume or create it |
+| `Volume.create(projectId, name, options)` | `Volume.create(project_id, name, size_gb=5)` | Create; fail if the name is taken |
+| `Volume.list(projectId)` | `Volume.list(project_id)` | List the project's volumes |
+| `Volume.get(projectId, nameOrId)` | `Volume.get(project_id, name_or_id)` | Look up a volume |
+| `Volume.delete(projectId, nameOrId)` | `Volume.remove(project_id, name_or_id)` | Delete a detached volume |
 
-## In the dashboard
+Generated IDs and the `volumeId` / `volume_id` fields still work for existing callers. Use names in new code.
 
-Volumes live under a project's **Sandboxes → Volumes** tab. Create one with a name and size; the table shows each volume's size, status (`available` / `attached`), and which sandbox holds it. A volume is released back to `available` automatically when its sandbox is killed or expires. See the [Dashboard](/sandboxes/dashboard) guide.
+## CLI
 
-## Notes
+```bash
+lizard volume create agent-workdir --size 10 --project proj_123
+lizard volume list --project proj_123
+lizard sandbox create --volume agent-workdir --project proj_123
+# After stopping the sandbox:
+lizard volume rm agent-workdir --project proj_123
+```
 
-- A volume can only be attached to **one sandbox** at a time. Attempting to attach an already-attached volume returns a conflict.
-- Deleting a sandbox (or letting it expire) **detaches** the volume — it does not delete it. Data is preserved for the next attachment.
-- Delete the volume itself to reclaim the storage.
-- A paused sandbox still holds its attachment. Persistent Volumes use node-local storage; export data you need to recover after a node failure. See [storage and recovery](/platform/storage-and-recovery).
+`--size` accepts whole GB and checks the current server limit before creating a volume. `volume list` shows names; use `--json` when you need IDs.
 
-## See also
+## Dashboard
 
-- [SDK Reference](/sandboxes/sdk-reference) — every `Volume` method.
-- [Quickstart](/sandboxes/quickstart) — attaching a volume at sandbox creation.
+Open **Sandboxes → Volumes** in a project. The create form checks the name and offers a size slider with the current maximum and price. The list shows used space, allocated space, status, and the attached sandbox. Copy the ID from the volume's details when needed.
+
+## Storage lifecycle
+
+- Killing or expiring a sandbox detaches its volume and keeps the data.
+- An attached volume cannot attach to another sandbox or be deleted.
+- A paused sandbox keeps its attachment.
+- Deleting a volume removes its data. Volumes use node-local storage; export data you need after a node failure. See [storage and recovery](/platform/storage-and-recovery).
+
+See the [SDK reference](/sandboxes/sdk-reference) for sandbox options.

@@ -73,7 +73,8 @@ A project reference that matches nothing the key can reach raises before any san
 | `projectId` | string | — | Exact project ID; skips resolving `project` |
 | `timeoutMs` | int | SDK default 5 min | Lifetime in ms |
 | `region` | string | auto | Pin to a region |
-| `volumeId` | string | — | Attach a [volume](/sandboxes/volumes) at `/data` |
+| `volumeName` | string | — | Attach a named [volume](/sandboxes/volumes) from the same project at `/workspace` (`volume_name` in Python) |
+| `volumeId` | string | — | Existing ID-based callers remain supported (`volume_id` in Python) |
 | `apiKey` | string | `LIZARD_API_KEY` env var | Explicit API key, overrides the environment |
 
 ```ts
@@ -115,13 +116,17 @@ Returns an `Execution`:
 
 ## `Volume`
 
-See [Persistent Volumes](/sandboxes/volumes) for the full walkthrough.
+See [Persistent Volumes](/sandboxes/volumes) for the full walkthrough. Names are unique per project and use lowercase letters, digits and dashes, up to 64 characters.
+
+New volumes accept whole GB from 1 to 50, default 5 (`sizeGb` in TypeScript, `size_gb` in Python). The server config can change the maximum. Existing larger volumes keep their size; `getOrCreate` returns them unchanged.
 
 | Member | Description |
 |---|---|
-| `Volume.create(projectId, name, options)` | Create a volume. `options.sizeGb` defaults to `5`. |
+| `Volume.create(projectId, name, options)` | Create a volume; conflict if the name is taken. `options.sizeGb` defaults to `5`. |
+| `Volume.getOrCreate(projectId, name, options)` | Reuse a volume or create it. Never resizes an existing volume. Python: `Volume.get_or_create`. |
 | `Volume.list(projectId)` | List volumes in a project → `[{ id, name, sizeGb, status, attachedTo, … }]`. |
-| `Volume.get(projectId, volumeId)` | Get a handle to an existing volume. |
+| `Volume.get(projectId, nameOrId)` | Get a volume by name or ID. |
+| `Volume.delete(projectId, nameOrId)` | Delete by name or ID after detaching. Python: `Volume.remove`. |
 | `volume.getInfo(projectId)` | Fetch metadata and attachment status. |
 | `volume.delete(projectId)` | Delete a volume — it must be detached first. |
 
