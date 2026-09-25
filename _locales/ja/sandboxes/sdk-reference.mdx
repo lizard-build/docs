@@ -77,7 +77,8 @@ sandbox = lizard.create("base")
 | `projectId` | string | — | 正確な project ID。`project` の解決をスキップします |
 | `timeoutMs` | int | SDK の既定値 5 分 | ライフタイム（ms） |
 | `region` | string | auto | region に固定します |
-| `volumeId` | string | — | `/data` に [volume](/sandboxes/volumes) をアタッチします |
+| `volumeName` | string | — | 名前で [ボリューム](/sandboxes/volumes)を `/workspace` に接続 |
+| `volumeId` | string | — | 既存コード用に ID で接続。新しいコードでは `volumeName` を使用 |
 | `apiKey` | string | `LIZARD_API_KEY` 環境変数 | 明示的な API キー。環境変数より優先されます |
 
 ```ts
@@ -119,15 +120,19 @@ const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs:
 
 ## `Volume`
 
-完全な手順は [Persistent Volumes](/sandboxes/volumes) を参照してください。
+詳しい手順は [Persistent Volumes](/sandboxes/volumes)を参照してください。名前はプロジェクト内で一意で、小文字の英字、数字、ハイフンを使った64文字以内です。
 
-| メンバー | 説明 |
+新規ボリュームは1〜50 GB の整数を受け付け、既定値は5です（TypeScript は `sizeGb`、Python は `size_gb`）。サーバー設定で上限を変更できます。既存の大きなボリュームはサイズを維持し、`getOrCreate` は変更せずに返します。
+
+| API | 用途 |
 |---|---|
-| `Volume.create(projectId, name, options)` | volume を作成します。`options.sizeGb` の既定値は `5` です。 |
-| `Volume.list(projectId)` | project 内の volume を一覧表示 → `[{ id, name, sizeGb, status, attachedTo, … }]`。 |
-| `Volume.get(projectId, volumeId)` | 既存の volume へのハンドルを取得します。 |
-| `volume.getInfo(projectId)` | メタデータとアタッチ状態を取得します。 |
-| `volume.delete(projectId)` | volume を削除します — 先にデタッチされている必要があります。 |
+| `Volume.create(projectId, name, options)` | ボリュームを作成。同名がある場合は競合エラー。`options.sizeGb` の既定値は `5`。 |
+| `Volume.getOrCreate(projectId, name, options)` | ボリュームを再利用、または作成。既存のサイズは変更しません。Python: `Volume.get_or_create`。 |
+| `Volume.list(projectId)` | プロジェクトのボリューム一覧 → `[{ id, name, sizeGb, status, attachedTo, … }]`。 |
+| `Volume.get(projectId, nameOrId)` | 名前または ID でボリュームを取得。 |
+| `Volume.delete(projectId, nameOrId)` | 切断後、名前または ID で削除。Python: `Volume.remove`。 |
+| `volume.getInfo(projectId)` | メタデータと接続状態を取得。 |
+| `volume.delete(projectId)` | ボリュームを削除。先に切断する必要があります。 |
 
 <span id="see-also" />
 

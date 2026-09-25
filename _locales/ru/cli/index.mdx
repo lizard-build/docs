@@ -86,3 +86,19 @@ lizard <cmd> <sub> --help --json     # e.g. lizard service set --help --json
 - CLI хранит аутентификацию и ссылку на проект текущей директории в `~/.lizard/config.json`.
 - `lizard status` показывает ссылку на рабочую область/проект/сервис текущей директории (аутентификация не требуется).
 - `lizard config apply` применяет файл `lizard-config.json` к проекту (используйте `--dry-run` для предварительного просмотра).
+
+<span id="sandbox-volumes" />
+
+## Тома Sandbox
+
+Управляйте [Persistent Volumes](/sandboxes/volumes) по имени в пределах проекта:
+
+```bash
+lizard volume create agent-workdir --size 10 --project proj_123
+lizard volume list --project proj_123
+lizard sandbox create --volume agent-workdir --project proj_123
+```
+
+Имена уникальны в проекте: строчные латинские буквы, цифры и дефисы, до 64 символов; первая и последняя позиция — буква или цифра. Новые тома принимают целые GB от 1 до 50, по умолчанию 5. CLI читает текущие ограничения сервера перед созданием тома и учитывает изменения настроек. Существующие тома большего размера сохраняют размер.
+
+После отключения тома команда `lizard volume rm agent-workdir --project proj_123` удаляет его и данные. `volume list` показывает имена; `--json` включает сгенерированные ID.

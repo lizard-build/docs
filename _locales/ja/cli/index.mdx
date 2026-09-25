@@ -86,3 +86,19 @@ lizard <cmd> <sub> --help --json     # e.g. lizard service set --help --json
 - CLI は認証情報と現在のディレクトリのプロジェクトリンクを `~/.lizard/config.json` に保存します。
 - `lizard status` は cwd の workspace/project/service リンクを表示します（認証不要）。
 - `lizard config apply` は `lizard-config.json` ファイルをプロジェクトに適用します（プレビューには `--dry-run` を使用）。
+
+<span id="sandbox-volumes" />
+
+## Sandbox のボリューム
+
+プロジェクト内の [Persistent Volumes](/sandboxes/volumes) を名前で管理します。
+
+```bash
+lizard volume create agent-workdir --size 10 --project proj_123
+lizard volume list --project proj_123
+lizard sandbox create --volume agent-workdir --project proj_123
+```
+
+名前はプロジェクト内で一意で、小文字の英字、数字、ハイフンを使った64文字以内です。先頭と末尾は英字または数字にします。新規ボリュームは1〜50 GB の整数を受け付け、既定値は5です。CLI は作成前にサーバーの現在の制限を取得し、設定変更に従います。既存の大きなボリュームはサイズを維持します。
+
+切断後に `lizard volume rm agent-workdir --project proj_123` を実行すると、ボリュームとデータを削除します。`volume list` は名前を表示し、`--json` は生成された ID も含めます。

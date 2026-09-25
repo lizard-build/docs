@@ -1,79 +1,112 @@
 ---
-description: "Adjunta un volumen en /data para conservar checkpoints, weights o un directorio de trabajo entre reinicios del sandbox. Crea, adjunta y administra volúmenes."
+description: "Crea un volumen con nombre y móntalo en /workspace para conservar datos entre ejecuciones de Sandbox. Límites, precios y ejemplos para TypeScript, Python y CLI."
 ---
+
+<span id="persistent-volumes" />
 
 # Persistent Volumes
 
-Los Sandboxes son efímeros: cuando uno se elimina o expira, su sistema de archivos desaparece. Un **volumen** es almacenamiento persistente por bloques que sobrevive a cualquier sandbox individual. Adjunta uno para conservar datos (checkpoints, pesos del modelo, un directorio de trabajo) entre reinicios del sandbox.
+Un volumen en Lizard (lizard.build) conserva los datos cuando una Sandbox se detiene. Se monta en **`/workspace`** y se conecta a **una sola Sandbox a la vez**. La Sandbox se ejecuta en el mismo nodo que su volumen.
 
-Un volumen se adjunta a **un sandbox a la vez** y se monta en **`/data`** dentro de la micro-VM. Como un volumen queda fijado al nodo en el que reside, un sandbox que lo adjunta se programa en ese mismo nodo.
+<span id="create-and-attach-by-name" />
 
-<span id="create-and-attach" />
+## Crear y conectar por nombre
 
-## Crear y adjuntar
+Los nombres son únicos dentro de cada proyecto. Usa letras minúsculas, números y guiones, hasta 64 caracteres. El nombre debe empezar y terminar con una letra o un número.
 
-Adjunta un volumen pasando su ID a `Sandbox.create`, junto con el proyecto al que se factura el sandbox. Todo lo que se escriba en `/data` se conserva después de que el sandbox desaparezca.
+Usa `getOrCreate` para reutilizar un volumen con nombre. El tamaño solo se aplica al crear un volumen nuevo; nunca cambia el tamaño de uno existente. `Volume.create` devuelve un conflicto si el nombre ya existe.
 
 ```ts
 import { Sandbox, Volume } from '@lizard-build/sdk';
 
-// Create a 10 GB volume in a project (default size: 5 GB)
-const volume = await Volume.create('proj_123', 'agent-workdir', { sizeGb: 10 });
-
-// Attach it to a sandbox — mounted at /data
-const sandbox = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+await Volume.getOrCreate('proj_123', 'agent-workdir', { sizeGb: 10 });
+const sandbox = await Sandbox.create('base', {
+  projectId: 'proj_123', volumeName: 'agent-workdir',
+});
 try {
-  await sandbox.fs.write('/data/state.json', JSON.stringify({ step: 1 }));
+  await sandbox.fs.write('/workspace/state.json', JSON.stringify({ step: 1 }));
 } finally {
-  await sandbox.kill();            // the volume persists
+  await sandbox.kill();
 }
 
-// A later sandbox re-attaches and sees the data
-const next = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+// A later sandbox mounts the same data by name.
+const next = await Sandbox.create('base', {
+  projectId: 'proj_123', volumeName: 'agent-workdir',
+});
 try {
-  console.log(await next.fs.read('/data/state.json'));   // {"step":1}
+  console.log(await next.fs.read('/workspace/state.json'));
 } finally {
   await next.kill();
 }
 ```
 
-<span id="manage-volumes" />
+```python
+from lizard import Sandbox, Volume
 
-## Administrar volúmenes
-
-```ts
-await Volume.list('proj_123');                 // [{ id, name, sizeGb, status, attachedTo, … }]
-const v = await Volume.get('proj_123', 'vol_abc');
-await v.getInfo('proj_123');
-await v.delete('proj_123');                     // must be detached first
+Volume.get_or_create("proj_123", "agent-workdir", size_gb=10)
+sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workdir")
+try:
+    sandbox.process.exec_("echo hello > /workspace/state.txt")
+finally:
+    sandbox.kill()
 ```
 
-| Método | Descripción |
-|---|---|
-| `Volume.create(projectId, name, { sizeGb })` | Crear un volumen (5 GB por defecto) |
-| `Volume.list(projectId)` | Listar volúmenes en un proyecto |
-| `Volume.get(projectId, volumeId)` | Obtener un identificador de un volumen existente |
-| `volume.getInfo(projectId)` | Obtener metadatos y estado de adjunto |
-| `volume.delete(projectId)` | Eliminar un volumen (debe no estar adjunto) |
+<span id="size-and-price" />
 
-<span id="in-the-dashboard" />
+## Tamaño y precio
 
-## En el dashboard
+Los volúmenes nuevos admiten **1–50 GB**, en GB enteros, con **5 GB** por defecto. El servidor puede cambiar el máximo mediante `VOLUME_MAX_SIZE_GB`; el panel y la CLI leen los límites actuales de `GET /api/projects/:projectId/volume-limits`. El panel también lee el precio de almacenamiento de ese endpoint y lo muestra bajo el control de tamaño.
 
-Los volúmenes se encuentran en la pestaña **Sandboxes → Volúmenes** de un proyecto. Crea uno con un nombre y un tamaño; la tabla muestra el tamaño de cada volumen, su estado (`available` / `attached`) y qué sandbox lo tiene adjunto. Un volumen se libera de vuelta a `available` automáticamente cuando su sandbox se elimina o expira. Consulta la guía de [Panel](/sandboxes/dashboard).
+Pagas por el **espacio usado**, no por toda la capacidad asignada. Los volúmenes que superen el nuevo máximo mantienen su tamaño y siguen disponibles. Crear un volumen requiere suficiente espacio libre sin reservar en un nodo de trabajo sano de la región elegida. Si no hay espacio, la API devuelve `503` con el código `volume_capacity_unavailable`.
 
-<span id="notes" />
+<span id="manage-volumes" />
 
-## Notas
+## Gestionar volúmenes
 
-- Un volumen solo puede adjuntarse a **un sandbox** a la vez. Intentar adjuntar un volumen que ya está adjunto devuelve un conflicto.
-- Eliminar un sandbox (o dejar que expire) **desadjunta** el volumen; no lo elimina. Los datos se conservan para el siguiente adjunto.
-- Elimina el propio volumen para recuperar el almacenamiento.
-- Un sandbox en pausa sigue manteniendo su adjunto. Persistent Volumes usan almacenamiento local al nodo; exporta los datos que necesites recuperar tras una falla del nodo. Consulta [almacenamiento y recuperación](/platform/storage-and-recovery).
+```ts
+await Volume.list('proj_123');
+const volume = await Volume.get('proj_123', 'agent-workdir');
+await volume.getInfo('proj_123');
+await Volume.delete('proj_123', 'agent-workdir'); // detach first
+```
 
-<span id="see-also" />
+| TypeScript | Python | Uso |
+|---|---|---|
+| `Volume.getOrCreate(projectId, name, options)` | `Volume.get_or_create(project_id, name, size_gb=5)` | Reutilizar un volumen o crearlo |
+| `Volume.create(projectId, name, options)` | `Volume.create(project_id, name, size_gb=5)` | Crear; fallar si el nombre ya existe |
+| `Volume.list(projectId)` | `Volume.list(project_id)` | Listar los volúmenes del proyecto |
+| `Volume.get(projectId, nameOrId)` | `Volume.get(project_id, name_or_id)` | Buscar un volumen |
+| `Volume.delete(projectId, nameOrId)` | `Volume.remove(project_id, name_or_id)` | Eliminar un volumen desconectado |
 
-## Ver también
+Los ID generados y los campos `volumeId` / `volume_id` siguen funcionando. Usa nombres en el código nuevo.
 
-- [SDK Reference](/sandboxes/sdk-reference) — todos los métodos de `Volume`.
-- [Quickstart](/sandboxes/quickstart) — adjuntar un volumen al crear un sandbox.
+<span id="cli" />
+
+## CLI
+
+```bash
+lizard volume create agent-workdir --size 10 --project proj_123
+lizard volume list --project proj_123
+lizard sandbox create --volume agent-workdir --project proj_123
+# After stopping the sandbox:
+lizard volume rm agent-workdir --project proj_123
+```
+
+`--size` acepta GB enteros y comprueba el límite actual del servidor antes de crear el volumen. `volume list` muestra nombres; usa `--json` si necesitas los ID.
+
+<span id="dashboard" />
+
+## Panel de control
+
+Abre **Sandboxes → Volumes** en un proyecto. El formulario comprueba el nombre y ofrece un control de tamaño con el máximo y el precio actuales. La lista muestra el espacio usado y asignado, el estado y la Sandbox conectada. Puedes copiar el ID desde los detalles del volumen.
+
+<span id="storage-lifecycle" />
+
+## Ciclo de vida del almacenamiento
+
+- Detener una Sandbox o dejar que caduque desconecta su volumen y conserva los datos.
+- Un volumen conectado no puede conectarse a otra Sandbox ni eliminarse.
+- Una Sandbox en pausa mantiene su conexión.
+- Eliminar un volumen borra sus datos. Los volúmenes usan almacenamiento local del nodo; exporta los datos que necesites tras un fallo del nodo. Consulta [almacenamiento y recuperación](/platform/storage-and-recovery).
+
+Consulta las opciones de Sandbox en la [referencia del SDK](/sandboxes/sdk-reference).

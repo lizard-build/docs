@@ -1,79 +1,112 @@
 ---
-description: "Hänge ein Volume unter /data ein, um Checkpoints, Weights oder ein Arbeitsverzeichnis über Sandbox-Neustarts hinweg zu behalten. Volumes erstellen, einhängen und verwalten."
+description: "Erstelle ein Volume mit Namen und binde es unter /workspace ein, um Daten zwischen Sandbox-Läufen zu behalten. Größen, Preise und Beispiele für TypeScript, Python und CLI."
 ---
+
+<span id="persistent-volumes" />
 
 # Persistent Volumes
 
-Sandboxes sind flüchtig — wenn eine beendet wird oder abläuft, ist ihr Dateisystem weg. Ein **Volume** ist persistenter Blockspeicher, der länger lebt als jede einzelne Sandbox. Hänge eines ein, um Daten (Checkpoints, Modellgewichte, ein Arbeitsverzeichnis) über Sandbox-Neustarts hinweg zu behalten.
+Ein Volume in Lizard (lizard.build) behält Daten, nachdem eine Sandbox stoppt. Es wird unter **`/workspace`** eingebunden und kann mit **einer Sandbox gleichzeitig** verbunden sein. Die Sandbox läuft auf demselben Knoten wie ihr Volume.
 
-Ein Volume kann **jeweils nur an eine Sandbox gleichzeitig** angehängt werden und wird innerhalb der Micro-VM unter **`/data`** eingehängt. Da ein Volume an den Node gebunden ist, auf dem es liegt, wird eine Sandbox, die es einhängt, auf genau diesem Node geplant.
+<span id="create-and-attach-by-name" />
 
-<span id="create-and-attach" />
+## Nach Namen erstellen und verbinden
 
-## Erstellen und einhängen
+Namen sind innerhalb eines Projekts eindeutig. Verwende Kleinbuchstaben, Ziffern und Bindestriche, bis zu 64 Zeichen. Der Name muss mit einem Buchstaben oder einer Ziffer beginnen und enden.
 
-Hänge ein Volume ein, indem du seine ID an `Sandbox.create` übergibst, zusammen mit dem Projekt, dem die Sandbox in Rechnung gestellt wird. Alles, was unter `/data` geschrieben wird, bleibt erhalten, nachdem die Sandbox verschwunden ist.
+Mit `getOrCreate` kannst du ein Volume mit Namen erneut nutzen. Die Größe gilt nur beim Erstellen eines neuen Volumes; die Größe eines bestehenden Volumes ändert sich nie. `Volume.create` meldet einen Konflikt, wenn der Name vergeben ist.
 
 ```ts
 import { Sandbox, Volume } from '@lizard-build/sdk';
 
-// Create a 10 GB volume in a project (default size: 5 GB)
-const volume = await Volume.create('proj_123', 'agent-workdir', { sizeGb: 10 });
-
-// Attach it to a sandbox — mounted at /data
-const sandbox = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+await Volume.getOrCreate('proj_123', 'agent-workdir', { sizeGb: 10 });
+const sandbox = await Sandbox.create('base', {
+  projectId: 'proj_123', volumeName: 'agent-workdir',
+});
 try {
-  await sandbox.fs.write('/data/state.json', JSON.stringify({ step: 1 }));
+  await sandbox.fs.write('/workspace/state.json', JSON.stringify({ step: 1 }));
 } finally {
-  await sandbox.kill();            // the volume persists
+  await sandbox.kill();
 }
 
-// A later sandbox re-attaches and sees the data
-const next = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+// A later sandbox mounts the same data by name.
+const next = await Sandbox.create('base', {
+  projectId: 'proj_123', volumeName: 'agent-workdir',
+});
 try {
-  console.log(await next.fs.read('/data/state.json'));   // {"step":1}
+  console.log(await next.fs.read('/workspace/state.json'));
 } finally {
   await next.kill();
 }
 ```
+
+```python
+from lizard import Sandbox, Volume
+
+Volume.get_or_create("proj_123", "agent-workdir", size_gb=10)
+sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workdir")
+try:
+    sandbox.process.exec_("echo hello > /workspace/state.txt")
+finally:
+    sandbox.kill()
+```
+
+<span id="size-and-price" />
+
+## Größe und Preis
+
+Neue Volumes erlauben **1–50 GB** in ganzen GB, mit **5 GB** als Standard. Der Server kann den Höchstwert über `VOLUME_MAX_SIZE_GB` ändern. Dashboard und CLI lesen die aktuellen Grenzen aus `GET /api/projects/:projectId/volume-limits`. Das Dashboard liest auch den Speicherpreis von diesem Endpunkt und zeigt ihn unter dem Größenregler.
+
+Du zahlst für **belegten Speicher**, nicht für die gesamte zugewiesene Kapazität. Bestehende Volumes über dem neuen Höchstwert behalten ihre Größe und bleiben erreichbar. Ein neues Volume braucht genug freien, nicht reservierten Speicher auf einem gesunden Worker der gewählten Region. Wenn kein Platz vorhanden ist, liefert die API `503` mit dem Code `volume_capacity_unavailable`.
 
 <span id="manage-volumes" />
 
 ## Volumes verwalten
 
 ```ts
-await Volume.list('proj_123');                 // [{ id, name, sizeGb, status, attachedTo, … }]
-const v = await Volume.get('proj_123', 'vol_abc');
-await v.getInfo('proj_123');
-await v.delete('proj_123');                     // must be detached first
+await Volume.list('proj_123');
+const volume = await Volume.get('proj_123', 'agent-workdir');
+await volume.getInfo('proj_123');
+await Volume.delete('proj_123', 'agent-workdir'); // detach first
 ```
 
-| Methode | Beschreibung |
-|---|---|
-| `Volume.create(projectId, name, { sizeGb })` | Ein Volume erstellen (standardmäßig 5 GB) |
-| `Volume.list(projectId)` | Volumes in einem Projekt auflisten |
-| `Volume.get(projectId, volumeId)` | Ein Handle für ein vorhandenes Volume abrufen |
-| `volume.getInfo(projectId)` | Metadaten und Anhangsstatus abrufen |
-| `volume.delete(projectId)` | Ein Volume löschen (muss ausgehängt sein) |
+| TypeScript | Python | Zweck |
+|---|---|---|
+| `Volume.getOrCreate(projectId, name, options)` | `Volume.get_or_create(project_id, name, size_gb=5)` | Volume erneut nutzen oder erstellen |
+| `Volume.create(projectId, name, options)` | `Volume.create(project_id, name, size_gb=5)` | Erstellen; Fehler bei vergebenem Namen |
+| `Volume.list(projectId)` | `Volume.list(project_id)` | Volumes des Projekts auflisten |
+| `Volume.get(projectId, nameOrId)` | `Volume.get(project_id, name_or_id)` | Volume suchen |
+| `Volume.delete(projectId, nameOrId)` | `Volume.remove(project_id, name_or_id)` | Getrenntes Volume löschen |
 
-<span id="in-the-dashboard" />
+Erzeugte IDs und die Felder `volumeId` / `volume_id` funktionieren weiterhin. Nutze Namen in neuem Code.
 
-## Im Dashboard
+<span id="cli" />
 
-Volumes befinden sich im Tab **Sandboxes → Volumes** eines Projekts. Erstelle eines mit Name und Größe; die Tabelle zeigt für jedes Volume Größe, Status (`available` / `attached`) und welche Sandbox es hält. Ein Volume wird automatisch wieder auf `available` freigegeben, wenn seine Sandbox beendet wird oder abläuft. Siehe die Anleitung zum [Dashboard](/sandboxes/dashboard).
+## CLI
 
-<span id="notes" />
+```bash
+lizard volume create agent-workdir --size 10 --project proj_123
+lizard volume list --project proj_123
+lizard sandbox create --volume agent-workdir --project proj_123
+# After stopping the sandbox:
+lizard volume rm agent-workdir --project proj_123
+```
 
-## Hinweise
+`--size` akzeptiert ganze GB und prüft vor dem Erstellen die aktuelle Servergrenze. `volume list` zeigt Namen; für IDs nutze `--json`.
 
-- Ein Volume kann jeweils nur an **eine Sandbox** gleichzeitig angehängt werden. Der Versuch, ein bereits angehängtes Volume einzuhängen, führt zu einem Konflikt.
-- Das Löschen einer Sandbox (oder ihr Ablauf) **trennt** das Volume — es löscht es nicht. Die Daten bleiben für die nächste Einhängung erhalten.
-- Lösche das Volume selbst, um den Speicherplatz freizugeben.
-- Eine pausierte Sandbox behält ihre Einhängung weiterhin. Persistent Volumes verwenden Node-lokalen Speicher; exportiere Daten, die du nach einem Node-Ausfall wiederherstellen können musst. Siehe [Speicher und Wiederherstellung](/platform/storage-and-recovery).
+<span id="dashboard" />
 
-<span id="see-also" />
+## Dashboard
 
-## Siehe auch
+Öffne **Sandboxes → Volumes** in einem Projekt. Das Formular prüft den Namen und bietet einen Größenregler mit dem aktuellen Höchstwert und Preis. Die Liste zeigt belegten und zugewiesenen Speicher, Status und verbundene Sandbox. Die ID kannst du bei Bedarf aus den Volume-Details kopieren.
 
-- [SDK Reference](/sandboxes/sdk-reference) — jede `Volume`-Methode.
-- [Quickstart](/sandboxes/quickstart) — ein Volume beim Erstellen der Sandbox einhängen.
+<span id="storage-lifecycle" />
+
+## Lebenszyklus des Speichers
+
+- Das Stoppen oder Ablaufen einer Sandbox trennt ihr Volume und behält die Daten.
+- Ein verbundenes Volume kann weder mit einer anderen Sandbox verbunden noch gelöscht werden.
+- Eine pausierte Sandbox behält ihre Verbindung.
+- Das Löschen eines Volumes entfernt seine Daten. Volumes nutzen lokalen Speicher des Knotens; exportiere Daten, die du nach einem Knotenausfall brauchst. Siehe [Speicherung und Wiederherstellung](/platform/storage-and-recovery).
+
+Sandbox-Optionen stehen in der [SDK-Referenz](/sandboxes/sdk-reference).

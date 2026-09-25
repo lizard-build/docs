@@ -1,79 +1,112 @@
 ---
-description: "Подключите том к /data, чтобы сохранять чекпоинты, веса или рабочую директорию между перезапусками песочниц. Создавайте, подключайте и управляйте томами."
+description: "Создайте том с именем и подключите его в /workspace, чтобы сохранять данные между запусками Sandbox. Размеры, цены и примеры для TypeScript, Python и CLI."
 ---
+
+<span id="persistent-volumes" />
 
 # Persistent Volumes
 
-Песочницы эфемерны — когда песочница убивается или истекает срок её действия, её файловая система исчезает. **Том** — это постоянное блочное хранилище, которое переживает любую отдельную песочницу. Подключите его, чтобы сохранять данные (чекпоинты, веса моделей, рабочую директорию) между перезапусками песочниц.
+Том в Lizard (lizard.build) хранит данные после остановки Sandbox. Он подключается в **`/workspace`**, к **одной Sandbox за раз**. Sandbox работает на том же узле, что и том.
 
-Том подключается к **одной песочнице за раз** и монтируется в **`/data`** внутри микро-VM. Поскольку том привязан к узлу, на котором он находится, песочница, подключающая его, планируется на том же узле.
+<span id="create-and-attach-by-name" />
 
-<span id="create-and-attach" />
+## Создание и подключение по имени
 
-## Создание и подключение
+Имена уникальны в пределах проекта. Используйте строчные латинские буквы, цифры и дефисы, до 64 символов. Имя должно начинаться и заканчиваться буквой или цифрой.
 
-Подключите том, передав его ID в `Sandbox.create` наряду с проектом, на который списывается песочница. Всё, что записано в `/data`, сохраняется после удаления песочницы.
+Чтобы повторно использовать том с заданным именем, вызовите `getOrCreate`. Размер действует только при создании нового тома; метод не меняет размер существующего. `Volume.create` возвращает конфликт, если имя занято.
 
 ```ts
 import { Sandbox, Volume } from '@lizard-build/sdk';
 
-// Create a 10 GB volume in a project (default size: 5 GB)
-const volume = await Volume.create('proj_123', 'agent-workdir', { sizeGb: 10 });
-
-// Attach it to a sandbox — mounted at /data
-const sandbox = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+await Volume.getOrCreate('proj_123', 'agent-workdir', { sizeGb: 10 });
+const sandbox = await Sandbox.create('base', {
+  projectId: 'proj_123', volumeName: 'agent-workdir',
+});
 try {
-  await sandbox.fs.write('/data/state.json', JSON.stringify({ step: 1 }));
+  await sandbox.fs.write('/workspace/state.json', JSON.stringify({ step: 1 }));
 } finally {
-  await sandbox.kill();            // the volume persists
+  await sandbox.kill();
 }
 
-// A later sandbox re-attaches and sees the data
-const next = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+// A later sandbox mounts the same data by name.
+const next = await Sandbox.create('base', {
+  projectId: 'proj_123', volumeName: 'agent-workdir',
+});
 try {
-  console.log(await next.fs.read('/data/state.json'));   // {"step":1}
+  console.log(await next.fs.read('/workspace/state.json'));
 } finally {
   await next.kill();
 }
 ```
+
+```python
+from lizard import Sandbox, Volume
+
+Volume.get_or_create("proj_123", "agent-workdir", size_gb=10)
+sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workdir")
+try:
+    sandbox.process.exec_("echo hello > /workspace/state.txt")
+finally:
+    sandbox.kill()
+```
+
+<span id="size-and-price" />
+
+## Размер и цена
+
+Новые тома допускают **1–50 GB**, только целые GB, по умолчанию **5 GB**. Сервер может менять предел через `VOLUME_MAX_SIZE_GB`; панель управления и CLI читают текущие ограничения из `GET /api/projects/:projectId/volume-limits`. Панель также читает цену хранения из этого запроса и показывает её под ползунком размера.
+
+Вы платите за **занятое место**, а не за весь выделенный объём. Существующие тома больше нового предела сохраняют размер и остаются доступны. Для нового тома нужно достаточно свободного, ещё не зарезервированного места на исправном рабочем узле выбранного региона. Если места нет, API возвращает `503` с кодом `volume_capacity_unavailable`.
 
 <span id="manage-volumes" />
 
 ## Управление томами
 
 ```ts
-await Volume.list('proj_123');                 // [{ id, name, sizeGb, status, attachedTo, … }]
-const v = await Volume.get('proj_123', 'vol_abc');
-await v.getInfo('proj_123');
-await v.delete('proj_123');                     // must be detached first
+await Volume.list('proj_123');
+const volume = await Volume.get('proj_123', 'agent-workdir');
+await volume.getInfo('proj_123');
+await Volume.delete('proj_123', 'agent-workdir'); // detach first
 ```
 
-| Метод | Описание |
-|---|---|
-| `Volume.create(projectId, name, { sizeGb })` | Создать том (по умолчанию 5 ГБ) |
-| `Volume.list(projectId)` | Получить список томов в проекте |
-| `Volume.get(projectId, volumeId)` | Получить дескриптор существующего тома |
-| `volume.getInfo(projectId)` | Получить метаданные и статус подключения |
-| `volume.delete(projectId)` | Удалить том (должен быть отключен) |
+| TypeScript | Python | Назначение |
+|---|---|---|
+| `Volume.getOrCreate(projectId, name, options)` | `Volume.get_or_create(project_id, name, size_gb=5)` | Использовать том или создать его |
+| `Volume.create(projectId, name, options)` | `Volume.create(project_id, name, size_gb=5)` | Создать; вернуть ошибку, если имя занято |
+| `Volume.list(projectId)` | `Volume.list(project_id)` | Список томов проекта |
+| `Volume.get(projectId, nameOrId)` | `Volume.get(project_id, name_or_id)` | Найти том |
+| `Volume.delete(projectId, nameOrId)` | `Volume.remove(project_id, name_or_id)` | Удалить отключённый том |
 
-<span id="in-the-dashboard" />
+Сгенерированные ID и поля `volumeId` / `volume_id` по-прежнему работают. В новом коде используйте имена.
 
-## В дашборде
+<span id="cli" />
 
-Тома находятся на вкладке **Sandboxes → Тома** проекта. Создайте том, задав имя и размер; таблица показывает размер каждого тома, статус (`available` / `attached`) и какая песочница его держит. Том автоматически возвращается в `available`, когда его песочница убивается или истекает. См. руководство по [Панель управления](/sandboxes/dashboard).
+## CLI
 
-<span id="notes" />
+```bash
+lizard volume create agent-workdir --size 10 --project proj_123
+lizard volume list --project proj_123
+lizard sandbox create --volume agent-workdir --project proj_123
+# After stopping the sandbox:
+lizard volume rm agent-workdir --project proj_123
+```
 
-## Примечания
+`--size` принимает целые GB и проверяет текущий предел сервера до создания тома. `volume list` показывает имена; для ID используйте `--json`.
 
-- Том может быть подключен только к **одной песочнице** за раз. Попытка подключить уже подключённый том вернёт конфликт.
-- Удаление песочницы (или истечение её срока) **отключает** том — не удаляет его. Данные сохраняются для следующего подключения.
-- Удалите сам том, чтобы освободить хранилище.
-- Приостановленная песочница всё равно удерживает подключение. Persistent Volumes используют локальное хранилище узла; экспортируйте данные, которые нужны для восстановления после сбоя узла. См. [хранилище и восстановление](/platform/storage-and-recovery).
+<span id="dashboard" />
 
-<span id="see-also" />
+## Панель управления
 
-## См. также
+Откройте **Sandboxes → Volumes** в проекте. Форма создания проверяет имя и предлагает ползунок размера с текущим пределом и ценой. Список показывает занятое и выделенное место, статус и подключённую Sandbox. При необходимости скопируйте ID из сведений о томе.
 
-- [SDK Reference](/sandboxes/sdk-reference) — каждый метод `Volume`.
-- [Quickstart](/sandboxes/quickstart) — подключение тома при создании песочницы.
+<span id="storage-lifecycle" />
+
+## Жизненный цикл хранения
+
+- Остановка Sandbox или истечение её срока отключает том и сохраняет данные.
+- Подключённый том нельзя подключить к другой Sandbox или удалить.
+- Приостановленная Sandbox сохраняет подключение.
+- Удаление тома удаляет его данные. Тома хранят данные на узле; экспортируйте данные, которые нужны после отказа узла. См. [хранение и восстановление](/platform/storage-and-recovery).
+
+Параметры Sandbox описаны в [справочнике SDK](/sandboxes/sdk-reference).
