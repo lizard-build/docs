@@ -1,79 +1,112 @@
 ---
-description: "サンドボックスの再起動後もチェックポイント、weights、または作業ディレクトリを保持するために、/data にボリュームをアタッチします。ボリュームの作成、アタッチ、管理を行います。"
+description: "名前付きボリュームを作成し、/workspace にマウントして Sandbox の実行間でデータを保持します。容量制限、料金、TypeScript・Python・CLI の例を紹介します。"
 ---
+
+<span id="persistent-volumes" />
 
 # Persistent Volumes
 
-Sandboxes は一時的です — 停止または期限切れになると、そのファイルシステムは失われます。**volume** は、単一のサンドボックスより長く存続する永続的なブロックストレージです。サンドボックスの再起動後もデータ（チェックポイント、モデルの weights、作業ディレクトリ）を保持するには、これをアタッチします。
+Lizard (lizard.build) のボリュームは、Sandbox の停止後もデータを保持します。**`/workspace`** にマウントされ、**同時に接続できる Sandbox は1つ**です。Sandbox はボリュームと同じノードで動作します。
 
-ボリュームは**同時に 1 つのサンドボックス**にアタッチされ、micro-VM 内の **`/data`** にマウントされます。ボリュームは存在するノードに固定されるため、それをアタッチするサンドボックスも同じノードにスケジュールされます。
+<span id="create-and-attach-by-name" />
 
-<span id="create-and-attach" />
+## 名前で作成して接続する
 
-## 作成とアタッチ
+名前はプロジェクト内で一意である必要があります。小文字の英字、数字、ハイフンを使い、64文字以内にします。先頭と末尾は英字または数字にしてください。
 
-ボリュームをアタッチするには、サンドボックスの請求先プロジェクトとあわせて、その ID を `Sandbox.create` に渡します。`/data` 配下に書き込まれたものは、サンドボックスが終了した後も保持されます。
+名前付きボリュームを再利用するには `getOrCreate` を使います。サイズ指定は新規作成時にのみ適用され、既存のボリュームのサイズは変更しません。名前が使用済みの場合、`Volume.create` は競合エラーを返します。
 
 ```ts
 import { Sandbox, Volume } from '@lizard-build/sdk';
 
-// Create a 10 GB volume in a project (default size: 5 GB)
-const volume = await Volume.create('proj_123', 'agent-workdir', { sizeGb: 10 });
-
-// Attach it to a sandbox — mounted at /data
-const sandbox = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+await Volume.getOrCreate('proj_123', 'agent-workdir', { sizeGb: 10 });
+const sandbox = await Sandbox.create('base', {
+  projectId: 'proj_123', volumeName: 'agent-workdir',
+});
 try {
-  await sandbox.fs.write('/data/state.json', JSON.stringify({ step: 1 }));
+  await sandbox.fs.write('/workspace/state.json', JSON.stringify({ step: 1 }));
 } finally {
-  await sandbox.kill();            // the volume persists
+  await sandbox.kill();
 }
 
-// A later sandbox re-attaches and sees the data
-const next = await Sandbox.create('base', { project: 'proj_123', volumeId: volume.volumeId });
+// A later sandbox mounts the same data by name.
+const next = await Sandbox.create('base', {
+  projectId: 'proj_123', volumeName: 'agent-workdir',
+});
 try {
-  console.log(await next.fs.read('/data/state.json'));   // {"step":1}
+  console.log(await next.fs.read('/workspace/state.json'));
 } finally {
   await next.kill();
 }
 ```
 
-<span id="manage-volumes" />
+```python
+from lizard import Sandbox, Volume
 
-## ボリュームの管理
-
-```ts
-await Volume.list('proj_123');                 // [{ id, name, sizeGb, status, attachedTo, … }]
-const v = await Volume.get('proj_123', 'vol_abc');
-await v.getInfo('proj_123');
-await v.delete('proj_123');                     // must be detached first
+Volume.get_or_create("proj_123", "agent-workdir", size_gb=10)
+sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workdir")
+try:
+    sandbox.process.exec_("echo hello > /workspace/state.txt")
+finally:
+    sandbox.kill()
 ```
 
-| メソッド | 説明 |
-|---|---|
-| `Volume.create(projectId, name, { sizeGb })` | ボリュームを作成します（デフォルト 5 GB） |
-| `Volume.list(projectId)` | プロジェクト内のボリュームを一覧表示します |
-| `Volume.get(projectId, volumeId)` | 既存のボリュームへのハンドルを取得します |
-| `volume.getInfo(projectId)` | メタデータとアタッチ状態を取得します |
-| `volume.delete(projectId)` | ボリュームを削除します（未アタッチである必要があります） |
+<span id="size-and-price" />
 
-<span id="in-the-dashboard" />
+## 容量と料金
 
-## ダッシュボード内
+新しいボリュームの容量は **1–50 GB** の整数で、既定値は **5 GB** です。サーバーは `VOLUME_MAX_SIZE_GB` で上限を変更できます。ダッシュボードと CLI は `GET /api/projects/:projectId/volume-limits` から現在の制限を取得します。ダッシュボードは同じエンドポイントから保存料金も取得し、容量スライダーの下に表示します。
 
-ボリュームは、プロジェクトの **Sandboxes → ボリューム** タブにあります。名前とサイズを指定して作成できます。テーブルには各ボリュームのサイズ、ステータス（`available` / `attached`）、およびそれを保持しているサンドボックスが表示されます。サンドボックスが停止または期限切れになると、ボリュームは自動的に `available` に戻されます。[ダッシュボード](/sandboxes/dashboard) ガイドを参照してください。
+課金対象は割り当てた容量全体ではなく、**使用中の容量**です。新しい上限を超える既存のボリュームは、サイズを維持したまま使えます。新規作成には、選んだリージョンの正常なワーカーに十分な未予約の空き容量が必要です。空き容量がない場合、API はコード `volume_capacity_unavailable` とともに `503` を返します。
 
-<span id="notes" />
+<span id="manage-volumes" />
 
-## 注意
+## ボリュームを管理する
 
-- ボリュームは同時に **1 つのサンドボックス**にしかアタッチできません。すでにアタッチされているボリュームをアタッチしようとすると、競合が返されます。
-- サンドボックスを削除する（または期限切れにする）と、ボリュームは**デタッチ**されます — 削除はされません。データは次回のアタッチに備えて保持されます。
-- ストレージを解放するには、ボリューム自体を削除してください。
-- 一時停止中のサンドボックスもアタッチを保持します。Persistent Volumes はノードローカルストレージを使用します。ノード障害後に復旧する必要があるデータはエクスポートしてください。[ストレージとリカバリ](/platform/storage-and-recovery) を参照してください。
+```ts
+await Volume.list('proj_123');
+const volume = await Volume.get('proj_123', 'agent-workdir');
+await volume.getInfo('proj_123');
+await Volume.delete('proj_123', 'agent-workdir'); // detach first
+```
 
-<span id="see-also" />
+| TypeScript | Python | 用途 |
+|---|---|---|
+| `Volume.getOrCreate(projectId, name, options)` | `Volume.get_or_create(project_id, name, size_gb=5)` | ボリュームを再利用、または作成する |
+| `Volume.create(projectId, name, options)` | `Volume.create(project_id, name, size_gb=5)` | 作成する。同名がある場合はエラー |
+| `Volume.list(projectId)` | `Volume.list(project_id)` | プロジェクトのボリューム一覧を取得する |
+| `Volume.get(projectId, nameOrId)` | `Volume.get(project_id, name_or_id)` | ボリュームを検索する |
+| `Volume.delete(projectId, nameOrId)` | `Volume.remove(project_id, name_or_id)` | 切断済みのボリュームを削除する |
 
-## 関連項目
+生成された ID と `volumeId` / `volume_id` フィールドも引き続き使えます。新しいコードでは名前を使ってください。
 
-- [SDK Reference](/sandboxes/sdk-reference) — すべての `Volume` メソッド。
-- [Quickstart](/sandboxes/quickstart) — サンドボックス作成時にボリュームをアタッチします。
+<span id="cli" />
+
+## CLI
+
+```bash
+lizard volume create agent-workdir --size 10 --project proj_123
+lizard volume list --project proj_123
+lizard sandbox create --volume agent-workdir --project proj_123
+# After stopping the sandbox:
+lizard volume rm agent-workdir --project proj_123
+```
+
+`--size` は整数の GB を受け付け、作成前にサーバーの現在の上限を確認します。`volume list` は名前を表示します。ID が必要な場合は `--json` を使ってください。
+
+<span id="dashboard" />
+
+## ダッシュボード
+
+プロジェクトで **Sandboxes → Volumes** を開きます。作成フォームは名前を検証し、現在の上限と料金を示す容量スライダーを表示します。一覧には使用量、割り当て容量、状態、接続先の Sandbox が表示されます。必要な場合はボリュームの詳細から ID をコピーできます。
+
+<span id="storage-lifecycle" />
+
+## ストレージのライフサイクル
+
+- Sandbox を停止するか有効期限が切れると、ボリュームを切断し、データを保持します。
+- 接続中のボリュームは、別の Sandbox に接続したり削除したりできません。
+- 一時停止中の Sandbox は接続を保持します。
+- ボリュームを削除するとデータも消えます。ボリュームはノードのローカルストレージを使うため、ノード障害後も必要なデータはエクスポートしてください。[保存と復旧](/platform/storage-and-recovery)を参照してください。
+
+Sandbox のオプションは [SDK リファレンス](/sandboxes/sdk-reference)を参照してください。

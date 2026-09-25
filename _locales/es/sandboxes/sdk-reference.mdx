@@ -77,7 +77,8 @@ Una referencia de proyecto que no coincide con nada a lo que la clave pueda acce
 | `projectId` | string | — | ID exacto del proyecto; omite la resolución de `project` |
 | `timeoutMs` | int | valor predeterminado del SDK 5 min | Vida útil en ms |
 | `region` | string | auto | Fijar en una región |
-| `volumeId` | string | — | Adjunta un [volume](/sandboxes/volumes) en `/data` |
+| `volumeName` | string | — | Conecta un [volumen](/sandboxes/volumes) por nombre en `/workspace` |
+| `volumeId` | string | — | Conecta por ID para mantener la compatibilidad; usa `volumeName` en código nuevo |
 | `apiKey` | string | variable de entorno `LIZARD_API_KEY` | Clave de API explícita; anula el entorno |
 
 ```ts
@@ -119,15 +120,19 @@ Devuelve un `Execution`:
 
 ## `Volume`
 
-Consulta [Persistent Volumes](/sandboxes/volumes) para ver el recorrido completo.
+Consulta [Persistent Volumes](/sandboxes/volumes) para ver los pasos. Los nombres son únicos por proyecto: letras minúsculas, números y guiones, hasta 64 caracteres.
 
-| Miembro | Descripción |
+Los volúmenes nuevos aceptan GB enteros de 1 a 50, con 5 por defecto (`sizeGb` en TypeScript, `size_gb` en Python). La configuración del servidor puede cambiar el máximo. Los volúmenes existentes más grandes mantienen su tamaño; `getOrCreate` los devuelve sin cambios.
+
+| API | Uso |
 |---|---|
-| `Volume.create(projectId, name, options)` | Crea un volume. `options.sizeGb` usa por defecto `5`. |
-| `Volume.list(projectId)` | Lista los volúmenes de un proyecto → `[{ id, name, sizeGb, status, attachedTo, … }]`. |
-| `Volume.get(projectId, volumeId)` | Obtiene un identificador de un volume existente. |
-| `volume.getInfo(projectId)` | Obtiene metadatos y el estado del adjunto. |
-| `volume.delete(projectId)` | Elimina un volume: primero debe estar desacoplado. |
+| `Volume.create(projectId, name, options)` | Crea un volumen; conflicto si el nombre ya existe. `options.sizeGb` usa `5` por defecto. |
+| `Volume.getOrCreate(projectId, name, options)` | Reutiliza un volumen o lo crea. Nunca cambia el tamaño de uno existente. Python: `Volume.get_or_create`. |
+| `Volume.list(projectId)` | Lista los volúmenes del proyecto → `[{ id, name, sizeGb, status, attachedTo, … }]`. |
+| `Volume.get(projectId, nameOrId)` | Busca un volumen por nombre o ID. |
+| `Volume.delete(projectId, nameOrId)` | Elimina por nombre o ID tras desconectar. Python: `Volume.remove`. |
+| `volume.getInfo(projectId)` | Obtiene metadatos y el estado de conexión. |
+| `volume.delete(projectId)` | Elimina un volumen; primero debe desconectarse. |
 
 <span id="see-also" />
 

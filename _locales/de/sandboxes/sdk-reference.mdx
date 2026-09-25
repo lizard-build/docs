@@ -77,7 +77,8 @@ Eine Projektreferenz, die zu nichts passt, auf das der Schlüssel zugreifen kann
 | `projectId` | string | — | Exakte Projekt-ID; überspringt das Auflösen von `project` |
 | `timeoutMs` | int | SDK-Standard 5 min | Lebensdauer in ms |
 | `region` | string | auto | An eine Region anheften |
-| `volumeId` | string | — | Ein [Volume](/sandboxes/volumes) bei `/data` anhängen |
+| `volumeName` | string | — | Ein [Volume](/sandboxes/volumes) nach Namen unter `/workspace` einbinden |
+| `volumeId` | string | — | Für bestehende Aufrufe über ID einbinden; in neuem Code `volumeName` nutzen |
 | `apiKey` | string | `LIZARD_API_KEY` env var | Expliziter API-Schlüssel, überschreibt die Umgebung |
 
 ```ts
@@ -119,15 +120,19 @@ Gibt ein `Execution` zurück:
 
 ## `Volume`
 
-Die vollständige Einführung finden Sie unter [Persistent Volumes](/sandboxes/volumes).
+Die Anleitung steht unter [Persistent Volumes](/sandboxes/volumes). Namen sind pro Projekt eindeutig: Kleinbuchstaben, Ziffern und Bindestriche, bis zu 64 Zeichen.
 
-| Mitglied | Beschreibung |
+Neue Volumes akzeptieren ganze GB von 1 bis 50, standardmäßig 5 (`sizeGb` in TypeScript, `size_gb` in Python). Die Serverkonfiguration kann den Höchstwert ändern. Bestehende größere Volumes behalten ihre Größe; `getOrCreate` gibt sie unverändert zurück.
+
+| API | Zweck |
 |---|---|
-| `Volume.create(projectId, name, options)` | Ein Volume erstellen. `options.sizeGb` ist standardmäßig `5`. |
-| `Volume.list(projectId)` | Volumes in einem Projekt auflisten → `[{ id, name, sizeGb, status, attachedTo, … }]`. |
-| `Volume.get(projectId, volumeId)` | Einen Handle für ein vorhandenes Volume abrufen. |
-| `volume.getInfo(projectId)` | Metadaten und Anhangsstatus abrufen. |
-| `volume.delete(projectId)` | Ein Volume löschen — es muss zuvor getrennt werden. |
+| `Volume.create(projectId, name, options)` | Volume erstellen; Konflikt bei vergebenem Namen. `options.sizeGb` ist standardmäßig `5`. |
+| `Volume.getOrCreate(projectId, name, options)` | Volume erneut nutzen oder erstellen. Ändert nie die Größe eines bestehenden Volumes. Python: `Volume.get_or_create`. |
+| `Volume.list(projectId)` | Volumes des Projekts auflisten → `[{ id, name, sizeGb, status, attachedTo, … }]`. |
+| `Volume.get(projectId, nameOrId)` | Volume nach Namen oder ID suchen. |
+| `Volume.delete(projectId, nameOrId)` | Nach dem Trennen über Namen oder ID löschen. Python: `Volume.remove`. |
+| `volume.getInfo(projectId)` | Metadaten und Verbindungsstatus abrufen. |
+| `volume.delete(projectId)` | Volume löschen; es muss zuvor getrennt werden. |
 
 <span id="see-also" />
 

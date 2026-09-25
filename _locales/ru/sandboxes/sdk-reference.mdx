@@ -77,7 +77,8 @@ sandbox = lizard.create("base")
 | `projectId` | string | — | Точный ID проекта; пропускает разрешение `project` |
 | `timeoutMs` | int | дефолт SDK 5 мин | Время жизни в мс |
 | `region` | string | auto | Закрепить за регионом |
-| `volumeId` | string | — | Подключить [том](/sandboxes/volumes) в `/data` |
+| `volumeName` | string | — | Подключить [том](/sandboxes/volumes) по имени в `/workspace` |
+| `volumeId` | string | — | Подключить том по ID для совместимости; для нового кода используйте `volumeName` |
 | `apiKey` | string | переменная `LIZARD_API_KEY` | Явный API-ключ, переопределяет окружение |
 
 ```ts
@@ -119,15 +120,19 @@ const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs:
 
 ## `Volume`
 
-Подробнее в [Persistent Volumes](/sandboxes/volumes).
+Подробности — в [Persistent Volumes](/sandboxes/volumes). Имена уникальны в проекте: строчные латинские буквы, цифры и дефисы, до 64 символов.
 
-| Метод | Описание |
+Новые тома принимают целые GB от 1 до 50, по умолчанию 5 (`sizeGb` в TypeScript, `size_gb` в Python). Настройки сервера могут менять предел. Существующие тома большего размера сохраняют размер; `getOrCreate` возвращает их без изменений.
+
+| API | Назначение |
 |---|---|
-| `Volume.create(projectId, name, options)` | Создать том. `options.sizeGb` по умолчанию `5`. |
-| `Volume.list(projectId)` | Список томов в проекте → `[{ id, name, sizeGb, status, attachedTo, … }]`. |
-| `Volume.get(projectId, volumeId)` | Получить хендл существующего тома. |
+| `Volume.create(projectId, name, options)` | Создать том; конфликт, если имя занято. `options.sizeGb` по умолчанию `5`. |
+| `Volume.getOrCreate(projectId, name, options)` | Использовать том или создать его. Не меняет размер существующего тома. Python: `Volume.get_or_create`. |
+| `Volume.list(projectId)` | Список томов проекта → `[{ id, name, sizeGb, status, attachedTo, … }]`. |
+| `Volume.get(projectId, nameOrId)` | Найти том по имени или ID. |
+| `Volume.delete(projectId, nameOrId)` | Удалить по имени или ID после отключения. Python: `Volume.remove`. |
 | `volume.getInfo(projectId)` | Получить метаданные и статус подключения. |
-| `volume.delete(projectId)` | Удалить том — он должен быть сначала отключён. |
+| `volume.delete(projectId)` | Удалить том; сначала его нужно отключить. |
 
 <span id="see-also" />
 
