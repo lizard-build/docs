@@ -106,7 +106,10 @@ lizard volume rm agent-workdir --project proj_123
 
 - Das Stoppen oder Ablaufen einer Sandbox trennt ihr Volume und behält die Daten.
 - Ein verbundenes Volume kann weder mit einer anderen Sandbox verbunden noch gelöscht werden.
-- Eine pausierte Sandbox behält ihre Verbindung.
 - Das Löschen eines Volumes entfernt seine Daten. Volumes nutzen lokalen Speicher des Knotens; exportiere Daten, die du nach einem Knotenausfall brauchst. Siehe [Speicherung und Wiederherstellung](/platform/storage-and-recovery).
 
 Sandbox-Optionen stehen in der [SDK-Referenz](/sandboxes/sdk-reference).
+
+Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, setzt aber keine gestoppte Sandbox fort. Pause, Resume, Fork, Snapshot, Restore und Dateiüberwachung geben derzeit HTTP 501 zurück. SSH steht in der aktuellen Laufzeit nicht bereit.
+
+Dateien und laufende Prozesse bleiben verfügbar, solange die Sandbox läuft. Nach dem Stopp kann eine spätere Sandbox nur Dateien auf einem angehängten Persistent Volume unter `/workspace` wiederverwenden. Ohne Volume ist `/workspace` temporär. Ein Volume hängt jeweils an einer Sandbox und liegt auf einem einzelnen Knoten. Exportieren Sie Dateien, die einen Knotenausfall überstehen müssen.

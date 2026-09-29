@@ -1,149 +1,78 @@
 ---
-description: "Jede Klasse und Methode im Lizard SDK für JavaScript und Python: Lizard, Sandbox, CodeSandbox und Volume, mit Optionen und Rückgabetypen."
+description: "Unterstützte Methoden des Lizard SDK und aktuelle Laufzeitlimits."
 ---
-
-<span id="sdk-reference" />
 
 # SDK-Referenz
 
-Die Pakete `@lizard-build/sdk` (JS/TS) und `lizard-sdk` (Python) werden von den meisten Agents, Apps und Skripten verwendet, um Sandboxes zu steuern. Diese Seite erfasst jede Klasse und Methode; eine Einführung finden Sie im [Quickstart](/sandboxes/quickstart).
-
+<span id="installieren--authentifizieren" />
+<span id="lizard" />
+<span id="sandbox" />
+<span id="sandboxcreatetemplate-options" />
+<span id="codesandbox" />
+<span id="runcodecode-opts" />
+<span id="volume" />
+<span id="siehe-auch" />
+<span id="lebenszyklus-status" />
+<span id="sdk-reference" />
 <span id="install--authenticate" />
-
-## Installieren & authentifizieren
-
-```bash
-npm install @lizard-build/sdk    # JavaScript / TypeScript
-pip install lizard-sdk           # Python
-```
-
-Das SDK liest `LIZARD_API_KEY` aus der Umgebung oder akzeptiert eine explizite Option `apiKey` für `Sandbox.create` / `Sandbox.connect`. Wie Sie einen Schlüssel erstellen, finden Sie unter [Quickstart → Authentifizieren](/sandboxes/quickstart#authenticate).
-
-Jede Sandbox gehört außerdem zu einem **Projekt** — die Nutzung wird pro Projekt abgerechnet, daher wird eine Erstellung ohne Projekt abgelehnt.
-
-## `Lizard`
-
-Ein Client, der an ein Projekt gebunden ist, sodass Sie das Projekt einmal angeben statt bei jedem Aufruf.
-
-| Mitglied | Beschreibung |
-|---|---|
-| `new Lizard({ project, apiKey?, apiUrl?, timeoutMs? })` | Einen Client erstellen. `project` ist erforderlich — seine ID, sein Slug oder sein Name (`Lizard(project=…)` in Python). |
-| `lizard.create(template?, options?)` | Eine Sandbox im Projekt des Clients starten. |
-| `lizard.connect(sandboxId)` | Eine Sandbox per ID anbinden und sie automatisch fortsetzen, wenn sie pausiert ist. |
-| `lizard.list()` | Alle laufenden Sandboxes für das Konto auflisten. |
-| `lizard.projectId()` | Die Projektreferenz des Clients in ihre ID auflösen (nach dem ersten Aufruf zwischengespeichert). |
-
-```ts
-const lizard = new Lizard({ project: 'my-project' });
-const sandbox = await lizard.create('base');
-```
-
-```python
-lizard = Lizard(project="my-project")
-sandbox = lizard.create("base")
-```
-
-Eine Projektreferenz, die zu nichts passt, auf das der Schlüssel zugreifen kann, löst vor dem Start irgendeiner Sandbox einen Fehler aus und listet die Projekte auf, die er sehen kann.
-
-> Python-Methodennamen mit einem nachgestellten Unterstrich (`exec_`) vermeiden Kollisionen mit reservierten Wörtern, und Eigenschaften verwenden snake_case (`sandbox_id`) statt camelCase (`sandboxId`). Die folgenden Beispiele verwenden JS/TS-Namen; prüfen Sie das installierte Python-Paket für Methodensignaturen.
-
-## `Sandbox`
-
-| Mitglied | Beschreibung |
-|---|---|
-| `Sandbox.create(template?, options?)` | Eine Sandbox starten. `template` ist standardmäßig `'base'`; `options.project` benennt das Projekt, dem die Kosten berechnet werden. |
-| `Sandbox.connect(sandboxId)` | Eine Sandbox per ID anbinden und sie automatisch fortsetzen, wenn sie pausiert ist. |
-| `Sandbox.list()` | Alle laufenden Sandboxes für das Konto auflisten. |
-| `sandbox.sandboxId` | Die ID der Sandbox (`sandbox_id` in Python). |
-| `sandbox.process.exec(cmd)` | Einen Befehl ausführen und auf seinen Abschluss warten (`process.exec_` in Python). Gibt `{ stdout, stderr, exitCode }` zurück. |
-| `sandbox.fs.write(path, data)` | Eine Datei schreiben — String oder Bytes; erstellt übergeordnete Verzeichnisse. |
-| `sandbox.fs.read(path)` | Eine Datei als UTF-8-String lesen. |
-| `sandbox.fs.list(path)` | Verzeichniseinträge auflisten → `[{ name, path, type, size }]`. |
-| `sandbox.fs.makeDir(path)` | Ein Verzeichnis und alle fehlenden übergeordneten Verzeichnisse erstellen. |
-| `sandbox.fs.remove(path)` | Eine Datei oder ein Verzeichnis löschen. |
-| `sandbox.getHost(port)` | Eine Route zu `port` registrieren und ihren öffentlichen, TLS-terminierten Hostnamen zurückgeben. |
-| `sandbox.pause()` | Guest-vCPUs stoppen und den Zustand im Host-Speicher behalten. Lesen Sie den [Lebenszyklus-Status](#lifecycle-status), bevor Sie sich auf eine Pause über die ursprüngliche Frist hinaus verlassen. |
-| `sandbox.resume()` | Eine pausierte Sandbox an Ort und Stelle fortsetzen. |
-| `sandbox.setTimeout(ms)` | Die verbleibende Lebensdauer einer laufenden Sandbox in Millisekunden setzen (mindestens 1000). |
-| `sandbox.getInfo()` | Metadaten abrufen → `{ sandboxId, template, startedAt, endAt, … }`. |
-| `sandbox.kill()` | Die Sandbox sofort beenden und ihre Ressourcen freigeben. |
-
-### `Sandbox.create(template?, options?)`
-
-| Option | Typ | Standard | Hinweise |
-|---|---|---|---|
-| `template` | string | `'base'` | `'base'` oder `'code-interpreter-v1'` — die beiden unterstützten [Vorlagen](/sandboxes#templates) |
-| `project` | string | — | **Erforderlich.** Das Projekt, dem die Kosten berechnet werden — seine ID, sein Slug oder sein Name (`project` in Python). Nicht nötig über einen Client `Lizard`. |
-| `projectId` | string | — | Exakte Projekt-ID; überspringt das Auflösen von `project` |
-| `timeoutMs` | int | SDK-Standard 5 min | Lebensdauer in ms |
-| `region` | string | auto | An eine Region anheften |
-| `volumeName` | string | — | Ein [Volume](/sandboxes/volumes) nach Namen unter `/workspace` einbinden |
-| `volumeId` | string | — | Für bestehende Aufrufe über ID einbinden; in neuem Code `volumeName` nutzen |
-| `apiKey` | string | `LIZARD_API_KEY` env var | Expliziter API-Schlüssel, überschreibt die Umgebung |
-
-```ts
-const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 10 * 60 * 1000 });
-```
-
-## `CodeSandbox`
-
-Erweitert `Sandbox` um einen zustandsbehafteten Kernel. Die vollständige Einführung finden Sie unter [Code Interpreter](/sandboxes/code-interpreter).
-
-| Mitglied | Beschreibung |
-|---|---|
-| `CodeSandbox.create(options?)` | Einen Code-Interpreter starten (standardmäßig mit der Vorlage `code-interpreter-v1`). Akzeptiert dieselbe Option `project` wie `Sandbox.create`. |
-| `CodeSandbox.connect(sandboxId)` | Einen vorhandenen Code-Interpreter-Sandbox anbinden (und automatisch fortsetzen). |
-| `sandbox.runCode(code, opts?)` | Code im Kernel ausführen. Gibt ein `Execution` zurück. |
-| `sandbox.createContext(opts)` | Einen isolierten Namespace erstellen — `{ language }`. |
-| `sandbox.listContexts()` | Die Kontexte der Sandbox auflisten. |
-| `sandbox.restartContext(context)` | Alle Variablen bzw. den gesamten Zustand in einem Kontext löschen. |
-| `sandbox.deleteContext(context)` | Die Ressourcen eines Kontexts freigeben. |
-
-### `runCode(code, opts?)`
-
-| Option | Beschreibung |
-|---|---|
-| `language` | Laufzeit für einen einmaligen Aufruf — `'python'` (Standard), `'javascript'` oder `'bash'`. Gegenseitig ausschließend mit `context`. |
-| `context` | Innerhalb eines bestimmten isolierten Kontexts statt des Standardkontexts ausführen. Gegenseitig ausschließend mit `language`. |
-| `onStdout` / `onStderr` | Ausgabe zeilenweise streamen, während sie erzeugt wird. |
-| `onResult` | Wird für jedes Rich Ergebnis aufgerufen (Werte, erzeugte Bilder/Diagramme). |
-| `onError` | Wird mit einem `ExecutionError` aufgerufen, wenn der Code eine Ausnahme auslöst. |
-
-Gibt ein `Execution` zurück:
-
-| Feld | Beschreibung |
-|---|---|
-| `stdout` / `stderr` | Erfasste Ausgabeströme |
-| `results` | Rich Results (Werte sowie eventuell erzeugte Bilder / Diagramme) |
-| `error` | Ein `ExecutionError` (`name`, `message`, `traceback`), wenn der Code eine Ausnahme ausgelöst hat |
-| `executionCount` | Monotoner Zähler für den Kernel |
-
-## `Volume`
-
-Die Anleitung steht unter [Persistent Volumes](/sandboxes/volumes). Namen sind pro Projekt eindeutig: Kleinbuchstaben, Ziffern und Bindestriche, bis zu 64 Zeichen.
-
-Neue Volumes akzeptieren ganze GB von 1 bis 50, standardmäßig 5 (`sizeGb` in TypeScript, `size_gb` in Python). Die Serverkonfiguration kann den Höchstwert ändern. Bestehende größere Volumes behalten ihre Größe; `getOrCreate` gibt sie unverändert zurück.
-
-| API | Zweck |
-|---|---|
-| `Volume.create(projectId, name, options)` | Volume erstellen; Konflikt bei vergebenem Namen. `options.sizeGb` ist standardmäßig `5`. |
-| `Volume.getOrCreate(projectId, name, options)` | Volume erneut nutzen oder erstellen. Ändert nie die Größe eines bestehenden Volumes. Python: `Volume.get_or_create`. |
-| `Volume.list(projectId)` | Volumes des Projekts auflisten → `[{ id, name, sizeGb, status, attachedTo, … }]`. |
-| `Volume.get(projectId, nameOrId)` | Volume nach Namen oder ID suchen. |
-| `Volume.delete(projectId, nameOrId)` | Nach dem Trennen über Namen oder ID löschen. Python: `Volume.remove`. |
-| `volume.getInfo(projectId)` | Metadaten und Verbindungsstatus abrufen. |
-| `volume.delete(projectId)` | Volume löschen; es muss zuvor getrennt werden. |
-
 <span id="see-also" />
-
-## Siehe auch
-
-- [Quickstart](/sandboxes/quickstart) — installieren, authentifizieren und eine vollständige Einführung.
-- [Code Interpreter](/sandboxes/code-interpreter) — der Leitfaden zu `CodeSandbox`.
-- [Persistent Volumes](/sandboxes/volumes) — der Leitfaden zu `Volume`.
-
 <span id="lifecycle-status" />
 
-## Lebenszyklus-Status
+Installieren Sie das Lizard SDK und erstellen Sie unter Settings → API keys einen API-Schlüssel. Speichern Sie ihn in `LIZARD_API_KEY`. Jede Sandbox braucht ein Projekt: übergeben Sie `projectId` (Python: `project_id`) oder ID, Slug oder Name über `project`.
 
-Bevor Sie sich darauf verlassen, dass eine Pause eine Sitzung über ihre ursprüngliche Frist hinaus erhält, lesen Sie die [bekannten Probleme](/platform/known-issues#sandbox-pause-and-expiration). Eine Pause hält den Guest-Zustand im Host-Speicher; sie ist kein dauerhaftes Backup.
+## Erstellungsoptionen
+
+| TypeScript | Python |
+|---|---|
+| `projectId / project` | `project_id / project` |
+| `timeoutMs` | `timeout_ms` |
+| `region` | `region` |
+| `volumeName / volumeId` | `volume_name / volume_id` |
+| `apiKey` | `api_key` |
+
+Wählen Sie eine Vorlage aus dem aktuellen Katalog. Aktiviert sind unter anderem `base`, `codex` und `interpreter`; die Verfügbarkeit hängt von Region und Pool-Kapazität ab. `interpreter` enthält Python und gängige Datenbibliotheken. Prüfen Sie die Werkzeugversionen in der Sandbox. Die öffentliche CLI bietet keinen Upload eigener Vorlagen.
+
+SDK und CLI setzen standardmäßig eine Laufzeit von fünf Minuten. Die direkte API und das Dashboard setzen standardmäßig kein Ablaufdatum. Geben Sie die Laufzeit ausdrücklich an: `timeoutMs: 0` bei der Erstellung deaktiviert den Ablauf; ein positiver Wert setzt eine Frist. `setTimeout` akzeptiert 1000–2147483647 ms, nicht null. Befehle verlängern die Frist nicht. Dies ist kein Leerlauf-Timer.
+
+## Methoden
+
+| API (TypeScript) | Methoden |
+|---|---|
+| `Sandbox.create(template, options)` | Aus einer Katalogvorlage in einem Projekt erstellen. |
+| `Sandbox.connect(sandboxId)` | Mit bestehender Sandbox verbinden; kein Resume. |
+| `Sandbox.list()` | Zugängliche Sandboxes auflisten; Status prüfen. |
+| `sandbox.getInfo()` | Status und Metadaten abrufen. |
+| `sandbox.process.exec(cmd)` | Shell-Befehl ausführen; stdout, stderr und exitCode liefern. |
+| `sandbox.fs.write(path, data)` | Text oder UTF-8 schreiben; Elternverzeichnisse erstellen. |
+| `sandbox.fs.read(path)` | UTF-8-Text lesen. |
+| `sandbox.fs.readBytes(path)` | Dateibytes lesen. |
+| `sandbox.fs.list(path)` | Verzeichniseinträge auflisten. |
+| `sandbox.fs.makeDir(path)` | Verzeichnis und fehlende Eltern erstellen. |
+| `sandbox.fs.remove(path)` | Datei oder Verzeichnis entfernen. |
+| `sandbox.getHost(port)` | Öffentlichen HTTPS-Hostnamen für einen Port registrieren. |
+| `sandbox.setTimeout(ms)` | Verbleibende Laufzeit setzen, mindestens 1000 ms. |
+| `sandbox.kill()` | Sandbox stoppen und Volume trennen. |
+
+Python: `exec_`, `get_info`, `get_host`, `set_timeout`, `sandbox_id`, `read_bytes`, `make_dir`.
+
+## Aktuelle Laufzeitlimits
+
+Befehlsergebnisse enthalten stdout, stderr und den Exit-Code. Befehls-Timeouts liegen zwischen 1 und 600 Sekunden. Die aktuelle Laufzeit wendet die SDK-Optionen `envs`, `workdir` und `user` nicht an; setzen Sie Verzeichnis und Umgebung im Shell-Befehl. Auch `envs` und `metadata` bei der Erstellung werden nicht angewendet.
+
+`fs.write` schreibt Text oder gültige UTF-8-Bytes; `fs.read` liest Text. Der aktuelle Schreib-Endpunkt unterstützt keine binären Uploads. Für binäre Downloads verwenden Sie `fs.readBytes` (Python: `read_bytes`).
+
+Aktuelle Sandboxes haben feste Limits von 4 vCPU und 4096 MiB RAM. Erstellungsoptionen ändern diese Limits nicht. Wählen Sie bei Bedarf eine Region; ein Katalogeintrag garantiert keine freie Kapazität.
+
+## Nicht unterstützte APIs
+
+Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, setzt aber keine gestoppte Sandbox fort. Pause, Resume, Fork, Snapshot, Restore und Dateiüberwachung geben derzeit HTTP 501 zurück. SSH steht in der aktuellen Laufzeit nicht bereit.
+
+`CodeSandbox`, `runCode` / `run_code` und Kontextmethoden bleiben im SDK, doch dem gehosteten Vorlagenkatalog fehlt der benötigte Ausführungsserver. Die alte Standardvorlage `code-interpreter-v1` ist nicht verfügbar. Ein Wechsel zu `interpreter` aktiviert diese API nicht. Nutzen Sie `Sandbox.create("interpreter")` und Prozessbefehle wie unten gezeigt.
+
+## Speicher und Abrechnung
+
+Dateien und laufende Prozesse bleiben verfügbar, solange die Sandbox läuft. Nach dem Stopp kann eine spätere Sandbox nur Dateien auf einem angehängten Persistent Volume unter `/workspace` wiederverwenden. Ohne Volume ist `/workspace` temporär. Ein Volume hängt jeweils an einer Sandbox und liegt auf einem einzelnen Knoten. Exportieren Sie Dateien, die einen Knotenausfall überstehen müssen.
+
+Die Abrechnung erfasst CPU, Arbeitsspeicher, Speicherplatz und ausgehenden Traffic. Eine inaktive Sandbox kann weiterhin Arbeitsspeicher und Speicherplatz nutzen. Stoppen Sie sie nach der Aufgabe; gespeicherte Daten verursachen weiter Kosten.
+
+[Schnellstart](/sandboxes/quickstart) · [SDK-Referenz](/sandboxes/sdk-reference) · [Python ausführen](/sandboxes/code-interpreter) · [Dashboard](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)

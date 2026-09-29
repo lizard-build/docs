@@ -20,21 +20,23 @@ description: "デプロイ前に、アプリのレプリカ上限、Sandboxes �
 | Worker mode | サービス | `containerPort=0` は、HTTP リスナーや公開ロードバランサールートなしで実行されます。 |
 | Custom domain | ホスト名 | ワイルドカードカスタムドメインは受け付けられません。特定のホスト名を使用し、所有権確認と DNS チェックを完了してください。 |
 
-アプリケーションでは異なるランタイムを使用できます。すべてのアプリケーションが Sandboxes と同じ Firecracker micro-VM 境界を持つとは限りません。
+Sandboxes は runc を使う Kubernetes Pod で短時間のコマンドやエージェントのタスクを実行します。ホストのカーネルを共有し、Firecracker 仮想マシンではありません。信頼できないコードを実行する際は、認証情報とネットワークへのアクセスを制限してください。
 
 ## Sandboxes
 
 | 設定 | 現在の作成 API |
 |---|---|
 | CPU and memory | 4 vCPU / 4096 MiB |
-| テンプレート | `base`, `code-interpreter-v1` |
+| テンプレート | `base`, `codex`, `interpreter` |
 | Raw APIデフォルト有効期間 | `timeoutMs: 0`, 有効期限なし |
 | Lizard SDKデフォルトライフタイム | 300000 ms、5 分 |
 | 明示的なライフタイム範囲 | 0 から 2147483647 までの整数ミリ秒 |
 | ライフタイムの更新 | 少なくとも 1000 ms。アイドルタイマーではありません |
 | 永続ボリュームのアタッチ | 一度に 1 つの sandbox、ボリュームのノード上 |
 
-スクリプトからは明示的な lifetime を渡してください。たとえば、`--timeout 300000` を使うと、Lizard CLI のリリースをまたいでも意図した上限が明確になります。セッションを待機状態にする前に、[一時停止と有効期限](/platform/known-issues#sandbox-pause-and-expiration)を参照してください。
+SDK と CLI の既定の有効期間は 5 分です。API の直接呼び出しとダッシュボードでは、既定で期限を設けません。有効期間を明示してください。作成時の `timeoutMs: 0` は期限を無効にし、正の値は期限を設定します。`setTimeout` は 1000～2147483647 ミリ秒を受け付け、0 は指定できません。コマンド実行で期限は延長されません。アイドル時間のタイマーではありません。
+
+sandbox を作成してコマンドを実行し、終了後に `kill` を呼び出します。`connect` は既存の sandbox に接続するもので、停止済みの sandbox を再開しません。一時停止、再開、fork、snapshot、restore、ファイル監視は現在 HTTP 501 を返します。現在のランタイムでは SSH を利用できません。
 
 <span id="regions" />
 

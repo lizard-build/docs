@@ -18,21 +18,23 @@ Limits hängen von der Ressource, dem Tarif und dem Konto ab. Eine Einstellung p
 | Worker-Modus | Service | `containerPort=0` läuft ohne HTTP-Listener oder öffentliche Load-Balancer-Route. |
 | Benutzerdefinierte Domain | Hostname | Benutzerdefinierte Wildcard-Domains werden nicht akzeptiert. Verwenden Sie einen spezifischen Hostnamen und schließen Sie die Prüfungen zu Eigentümerschaft und DNS ab. |
 
-Anwendungen können verschiedene Runtimes verwenden. Gehen Sie nicht davon aus, dass jede Anwendung dieselbe Firecracker-Mikro-VM-Grenze wie Sandboxes hat.
+Sandboxes führen kurze Befehle und Agentenaufgaben in Kubernetes-Pods mit runc aus. Sie teilen den Kernel des Hosts und sind keine Firecracker-VMs. Beschränken Sie Zugangsdaten und Netzwerkzugriff für nicht vertrauenswürdigen Code.
 
 ## Sandboxes
 
 | Einstellung | Aktuelle Create-API |
 |---|---|
 | CPU und Arbeitsspeicher | 4 vCPU / 4096 MiB |
-| Vorlagen | `base`, `code-interpreter-v1` |
+| Vorlagen | `base`, `codex`, `interpreter` |
 | Standardlaufzeit der Raw API | `timeoutMs: 0`, kein Ablauf |
 | Standardlaufzeit des Lizard SDK | 300000 ms, fünf Minuten |
 | Bereich für explizite Laufzeit | Ganzzahlige Millisekunden von 0 bis 2147483647 |
 | Laufzeit aktualisieren | Mindestens 1000 ms; kein Idle-Timer |
 | Anbindung von Persistent Volumes | Jeweils nur eine Sandbox, auf dem Node des Volumes |
 
-Übergeben Sie in Skripten eine explizite Laufzeit. Zum Beispiel macht `--timeout 300000` das beabsichtigte Limit über verschiedene Versionen von Lizard CLI hinweg eindeutig. Lesen Sie vor dem Parken einer Sitzung [Pausieren und Ablauf](/platform/known-issues#sandbox-pause-and-expiration).
+SDK und CLI setzen standardmäßig eine Laufzeit von fünf Minuten. Die direkte API und das Dashboard setzen standardmäßig kein Ablaufdatum. Geben Sie die Laufzeit ausdrücklich an: `timeoutMs: 0` bei der Erstellung deaktiviert den Ablauf; ein positiver Wert setzt eine Frist. `setTimeout` akzeptiert 1000–2147483647 ms, nicht null. Befehle verlängern die Frist nicht. Dies ist kein Leerlauf-Timer.
+
+Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, setzt aber keine gestoppte Sandbox fort. Pause, Resume, Fork, Snapshot, Restore und Dateiüberwachung geben derzeit HTTP 501 zurück. SSH steht in der aktuellen Laufzeit nicht bereit.
 
 <span id="regions" />
 

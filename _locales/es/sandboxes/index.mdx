@@ -1,88 +1,59 @@
 ---
-description: "Un sandbox es una micro-VM aislada de Firecracker que inicias en milisegundos, ejecutas código en ella y descartas. La primitiva de cómputo detrás de los agentes de IA."
+description: "Runtime, plantillas, ciclo de vida, límites, almacenamiento y facturación de Sandboxes."
 ---
 
 # Sandboxes
 
-Un **sandbox** es una micro-VM aislada de Firecracker que levantas bajo demanda, ejecutas código dentro y desmontas cuando terminas. Cada uno es un entorno Linux completo con su propio sistema de archivos, red y espacio de nombres de procesos — iniciado en milisegundos, no en minutos.
+<span id="cuándo-usar-un-sandbox" />
+<span id="qué-los-hace-rápidos" />
+<span id="plantillas" />
+<span id="recursos-y-límites" />
+<span id="formas-de-usar-sandboxes" />
+<span id="when-to-use-a-sandbox" />
+<span id="what-makes-them-fast" />
+<span id="templates" />
+<span id="lifecycle" />
+<span id="resources--limits" />
+<span id="ways-to-drive-sandboxes" />
 
-Sandboxes son la primitiva de cómputo detrás de los agentes de IA, intérpretes de código, evals y trabajos de estilo CI en Lizard. Mientras que un [service](/concepts/architecture) es un despliegue de larga duración vinculado a un repo, un sandbox es **efímero, programable y desechable** — crea un sandbox para cada tarea dentro de la capacidad disponible para tu cuenta.
+Sandboxes ejecuta comandos breves y tareas de agentes en pods de Kubernetes con runc. Comparten el kernel del host; no son máquinas virtuales Firecracker. Limita las credenciales y el acceso a la red al ejecutar código que no sea de confianza.
+
+## Runtime y plantillas
+
+Elige una plantilla del catálogo actual. Las plantillas habilitadas incluyen `base`, `codex` e `interpreter`; su disponibilidad depende de la región y de la capacidad del pool. `interpreter` incluye Python y bibliotecas de datos habituales. Comprueba las versiones dentro del sandbox. La CLI pública no permite subir plantillas propias.
+
+## Ciclo de vida
+
+Crea un sandbox, ejecuta comandos y llama a `kill`. `connect` se conecta a un sandbox existente; no reanuda uno detenido. Pausar, reanudar, fork, snapshot, restore y observar archivos devuelven HTTP 501 en el runtime actual. SSH no está disponible.
+
+```text
+create -> running -> stopped (kill / expiration)
+```
+
+## Recursos y duración
+
+Los sandboxes actuales tienen límites fijos de 4 vCPU y 4096 MiB de RAM. Las opciones de creación no cambian estos límites. Elige una región si lo necesitas; aparecer en el catálogo no garantiza capacidad libre.
+
+El SDK y la CLI fijan cinco minutos de duración por defecto. La API directa y el panel no fijan caducidad por defecto. Indica la duración: `timeoutMs: 0` al crear desactiva la caducidad; un valor positivo fija un plazo. `setTimeout` acepta 1000–2147483647 ms, no cero. Los comandos no reinician el plazo. No es un temporizador de inactividad.
+
+## Almacenamiento y facturación
+
+Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un Persistent Volume adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
+
+Se factura el consumo medido de CPU, memoria, almacenamiento y tráfico saliente. Un sandbox inactivo puede seguir usando memoria y disco. Deténlo al terminar; los datos guardados siguen generando cargos de almacenamiento.
 
 ```ts
 import { Sandbox } from '@lizard-build/sdk';
 
-const sandbox = await Sandbox.create('base', { project: 'my-project' });
-const { stdout } = await sandbox.process.exec('echo "hello from Lizard"');
-console.log(stdout);            // hello from Lizard
-await sandbox.kill();
+const sandbox = await Sandbox.create('interpreter', {
+  projectId: 'proj_123', timeoutMs: 300_000,
+});
+try {
+  const result = await sandbox.process.exec("python -c 'print(2 ** 10)'");
+  console.log(result.stdout, result.stderr, result.exitCode);
+} finally {
+  await sandbox.kill();
+}
 ```
 
-<span id="when-to-use-a-sandbox" />
-
-## Cuándo usar un sandbox
-
-| Usa un **sandbox** cuando… | Usa un **service** cuando… |
-|---|---|
-| Un agente necesita ejecutar código no confiable o generado | Estás desplegando una app que permanece activa |
-| Quieres una máquina Linux nueva y desechable por tarea | Quieres una URL `<name>.<region>.onlizard.com` estable y TLS |
-| Necesitas distribuir muchos trabajos aislados a la vez | Tienes un único proceso siempre activo |
-| La carga de trabajo es de corta duración o se pausa | La carga de trabajo está respaldada por git y se vuelve a desplegar automáticamente |
-
-Una vez que un agente ha producido una app funcional dentro de un sandbox, puedes promoverla a un service persistente con [`lizard up`](/deploy/upload) — sin necesidad de Dockerfile.
-
-<span id="what-makes-them-fast" />
-
-## Qué los hace rápidos
-
-- **Micro-VMs de Firecracker** — un invitado Linux independiente para cada sandbox. Los runtimes de aplicaciones tienen distintas reglas de aislamiento. La virtualización por hardware separa el invitado del host. Controla las credenciales y el acceso de red del código en el que no confías.
-- **Pausar y reanudar** — al pausar se congelan las vCPU de la micro-VM. La memoria, el sistema de archivos y los procesos en ejecución se mantienen tal como están, así que al reanudar se retoma exactamente donde se quedó — sin reinstalar paquetes ni recalentar cachés. Esto es lo que permite que las sesiones de agentes de larga duración sobrevivan entre invocaciones separadas. El estado se mantiene en la memoria del host en lugar de escribirse en disco, por lo que no sobrevive a un fallo del host. Consulta [pause & resume](/sandboxes/quickstart#pause-and-resume).
-- **Arranque desde una plantilla** — cada nodo preconstruye una instantánea dorada por plantilla, así que `create` es una restauración, no un arranque en frío.
-
-<span id="templates" />
-
-## Plantillas
-
-Un sandbox arranca desde una **template** (también llamada *snapshot* en el dashboard). Hay dos integradas:
-
-| Plantilla | Contenido | Ideal para |
-|---|---|---|
-| `base` | Debian Linux, Node.js 26 y Lizard CLI | Entornos de shell y compilación de uso general |
-| `code-interpreter-v1` | Python 3.14 + Node.js 26, con una API HTTP de ejecución de código en el puerto 8080 | Intérpretes de código con IA — contrólalo con [`CodeSandbox`](/sandboxes/code-interpreter) |
-
-`base` es la opción predeterminada. La API pública de creación acepta estos dos nombres de plantilla. No expone un flujo de carga de plantillas personalizadas.
-
-<span id="lifecycle" />
-
-## Ciclo de vida
-
-Un sandbox pasa por tres estados:
-
-```
-create ──▶ running ⇄ paused ──▶ stopped
-                              (killed or expired)
-```
-
-- **running** — el invitado puede ejecutar comandos, trabajar con archivos y servir puertos expuestos.
-- **paused** — las vCPU se detienen. La memoria del invitado y el estado de los procesos permanecen en el host; esto no es una instantánea duradera ni una copia de seguridad.
-- **stopped** — el sandbox terminó por eliminación o expiración. Su sistema de archivos local ya no está disponible.
-
-El SDK envía por defecto una duración de cinco minutos. La API de creación sin procesar acepta `timeoutMs: 0` para no tener expiración. Pasa un tiempo de espera explícito cuando un script deba comportarse igual en todos los clientes, y libera el sandbox cuando termine la tarea. Los comandos no reinician la duración.
-
-La pausa está pensada para preservar el tiempo de ejecución restante. Revisa el [problema actual del ciclo de vida](/platform/known-issues#sandbox-pause-and-expiration) antes de depender de una pausa más larga que la fecha límite original. Los archivos persistentes deben ir en un [volume](/sandboxes/volumes); un invitado en pausa no sobrevive a un fallo del host.
-
-<span id="resources--limits" />
-
-## Recursos y límites
-
-Cada sandbox se ejecuta con **4 vCPU / 4096 MiB RAM** fijos. La API pública de creación no tiene una configuración de tamaño por sandbox. Cada sandbox hereda los recursos de su plantilla.
-
-La región se elige automáticamente según la capacidad disponible; en el dashboard puedes fijar una. No asumas que las cuotas de app y la capacidad de sandbox usan las mismas reglas de aplicación. Consulta [limits](/platform/limits).
-
-<span id="ways-to-drive-sandboxes" />
-
-## Formas de usar Sandboxes
-
-| Superficie | Ideal para | Empieza aquí |
-|---|---|---|
-| **SDK** (JS / Python) | Agentes, apps y scripts — incluida la ejecución con estado y en varios lenguajes mediante [`CodeSandbox`](/sandboxes/code-interpreter) | [Quickstart](/sandboxes/quickstart) · [SDK Reference](/sandboxes/sdk-reference) |
-| **Panel** | Creación manual, terminal, SSH, monitoreo | [Panel](/sandboxes/dashboard) |
+[Inicio rápido](/sandboxes/quickstart) · [Referencia del SDK](/sandboxes/sdk-reference) · [Ejecutar Python](/sandboxes/code-interpreter) · [Panel](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)

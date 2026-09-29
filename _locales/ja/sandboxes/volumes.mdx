@@ -106,7 +106,10 @@ lizard volume rm agent-workdir --project proj_123
 
 - Sandbox を停止するか有効期限が切れると、ボリュームを切断し、データを保持します。
 - 接続中のボリュームは、別の Sandbox に接続したり削除したりできません。
-- 一時停止中の Sandbox は接続を保持します。
 - ボリュームを削除するとデータも消えます。ボリュームはノードのローカルストレージを使うため、ノード障害後も必要なデータはエクスポートしてください。[保存と復旧](/platform/storage-and-recovery)を参照してください。
 
 Sandbox のオプションは [SDK リファレンス](/sandboxes/sdk-reference)を参照してください。
+
+sandbox を作成してコマンドを実行し、終了後に `kill` を呼び出します。`connect` は既存の sandbox に接続するもので、停止済みの sandbox を再開しません。一時停止、再開、fork、snapshot、restore、ファイル監視は現在 HTTP 501 を返します。現在のランタイムでは SSH を利用できません。
+
+sandbox の実行中はファイルとプロセスを維持します。停止後、別の sandbox で使えるのは、接続した Persistent Volume の `/workspace` に保存したファイルだけです。ボリュームがなければ `/workspace` は一時領域です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。

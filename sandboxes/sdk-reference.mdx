@@ -1,141 +1,74 @@
 ---
-description: "Every class and method in the Lizard SDK for JavaScript and Python: Lizard, Sandbox, CodeSandbox, and Volume, with options and return types."
+description: "Supported Lizard SDK methods and current hosted runtime limits."
 ---
 
-# SDK Reference
+# SDK reference
 
-The `@lizard-build/sdk` (JS/TS) and `lizard-sdk` (Python) packages are what most agents, apps, and scripts use to drive sandboxes. This page catalogs every class and method; see the [Quickstart](/sandboxes/quickstart) for a walkthrough.
+<span id="install--authenticate" />
+<span id="lizard" />
+<span id="sandbox" />
+<span id="sandboxcreatetemplate-options" />
+<span id="codesandbox" />
+<span id="runcodecode-opts" />
+<span id="volume" />
+<span id="see-also" />
+<span id="lifecycle-status" />
 
-## Install & authenticate
+Install the Lizard SDK and create an API key in Settings → API keys. Store it in `LIZARD_API_KEY`. Each sandbox needs a project: pass `projectId` (Python: `project_id`) or resolve an ID, slug, or name with `project`.
 
-```bash
-npm install @lizard-build/sdk    # JavaScript / TypeScript
-pip install lizard-sdk           # Python
-```
+## Create options
 
-The SDK reads `LIZARD_API_KEY` from the environment, or accepts an explicit `apiKey` option on `Sandbox.create` / `Sandbox.connect`. See [Quickstart → Authenticate](/sandboxes/quickstart#authenticate) for how to create a key.
-
-Every sandbox also belongs to a **project** — usage is metered per project, so a create without one is refused.
-
-## `Lizard`
-
-A client pinned to one project, so you name the project once instead of on every call.
-
-| Member | Description |
+| TypeScript | Python |
 |---|---|
-| `new Lizard({ project, apiKey?, apiUrl?, timeoutMs? })` | Create a client. `project` is required — its ID, slug, or name (`Lizard(project=…)` in Python). |
-| `lizard.create(template?, options?)` | Boot a sandbox in the client's project. |
-| `lizard.connect(sandboxId)` | Attach to a sandbox by ID, auto-resuming it if paused. |
-| `lizard.list()` | List every running sandbox for the account. |
-| `lizard.projectId()` | Resolve the client's project reference to its ID (cached after the first call). |
+| `projectId / project` | `project_id / project` |
+| `timeoutMs` | `timeout_ms` |
+| `region` | `region` |
+| `volumeName / volumeId` | `volume_name / volume_id` |
+| `apiKey` | `api_key` |
 
-```ts
-const lizard = new Lizard({ project: 'my-project' });
-const sandbox = await lizard.create('base');
-```
+Choose a template from the current catalog. Enabled templates include `base`, `codex`, and `interpreter`; availability depends on the region and pool capacity. `interpreter` includes Python and common data libraries. Check tool versions inside your sandbox. The public CLI does not provide a custom-template upload flow.
 
-```python
-lizard = Lizard(project="my-project")
-sandbox = lizard.create("base")
-```
+The SDK and CLI default to a five-minute lifetime. The raw API and dashboard default to no expiration. Set an explicit lifetime: `timeoutMs: 0` at creation disables expiration; a positive value sets a deadline. `setTimeout` accepts 1000–2147483647 ms, not zero. Commands do not reset the deadline. This is not an idle timer.
 
-A project reference that matches nothing the key can reach raises before any sandbox is booted, listing the projects it can see.
+## Methods
 
-> Python method names with a trailing underscore (`exec_`) avoid shadowing reserved words, and properties are snake_case (`sandbox_id`) instead of camelCase (`sandboxId`). The examples below use JS/TS names; check the installed Python package for method signatures.
-
-## `Sandbox`
-
-| Member | Description |
+| API (TypeScript) | Methods |
 |---|---|
-| `Sandbox.create(template?, options?)` | Boot a sandbox. `template` defaults to `'base'`; `options.project` names the project to bill. |
-| `Sandbox.connect(sandboxId)` | Attach to a sandbox by ID, auto-resuming it if paused. |
-| `Sandbox.list()` | List every running sandbox for the account. |
-| `sandbox.sandboxId` | The sandbox's ID (`sandbox_id` in Python). |
-| `sandbox.process.exec(cmd)` | Run a command and wait for it to finish (`process.exec_` in Python). Returns `{ stdout, stderr, exitCode }`. |
-| `sandbox.fs.write(path, data)` | Write a file — string or bytes; creates parent directories. |
-| `sandbox.fs.read(path)` | Read a file as a UTF-8 string. |
-| `sandbox.fs.list(path)` | List directory entries → `[{ name, path, type, size }]`. |
-| `sandbox.fs.makeDir(path)` | Create a directory and any missing parents. |
-| `sandbox.fs.remove(path)` | Delete a file or directory. |
-| `sandbox.getHost(port)` | Register a route to `port` and return its public, TLS-terminated hostname. |
-| `sandbox.pause()` | Stop guest vCPUs and retain state in host memory. See [lifecycle status](#lifecycle-status) before relying on a pause beyond the original deadline. |
-| `sandbox.resume()` | Resume a paused sandbox in place. |
-| `sandbox.setTimeout(ms)` | Set a running sandbox's remaining lifetime in milliseconds (minimum 1000). |
-| `sandbox.getInfo()` | Fetch metadata → `{ sandboxId, template, startedAt, endAt, … }`. |
-| `sandbox.kill()` | Terminate the sandbox immediately and free its resources. |
+| `Sandbox.create(template, options)` | Create in a project from a catalog template. |
+| `Sandbox.connect(sandboxId)` | Attach to an existing sandbox; no automatic resume. |
+| `Sandbox.list()` | List accessible sandboxes; inspect their status. |
+| `sandbox.getInfo()` | Fetch status and metadata. |
+| `sandbox.process.exec(cmd)` | Run a shell command; return stdout, stderr, and exitCode. |
+| `sandbox.fs.write(path, data)` | Write text or valid UTF-8 bytes; create parent directories. |
+| `sandbox.fs.read(path)` | Read a UTF-8 text file. |
+| `sandbox.fs.readBytes(path)` | Read bytes from a file. |
+| `sandbox.fs.list(path)` | List directory entries. |
+| `sandbox.fs.makeDir(path)` | Create a directory and missing parents. |
+| `sandbox.fs.remove(path)` | Remove a file or directory. |
+| `sandbox.getHost(port)` | Register a public HTTPS hostname for a port. |
+| `sandbox.setTimeout(ms)` | Set the remaining lifetime, at least 1000 ms. |
+| `sandbox.kill()` | Stop the sandbox and detach its volume. |
 
-### `Sandbox.create(template?, options?)`
+Python: `exec_`, `get_info`, `get_host`, `set_timeout`, `sandbox_id`, `read_bytes`, `make_dir`.
 
-| Option | Type | Default | Notes |
-|---|---|---|---|
-| `template` | string | `'base'` | `'base'` or `'code-interpreter-v1'` — the two supported [templates](/sandboxes#templates) |
-| `project` | string | — | **Required.** The project to bill — its ID, slug, or name (`project` in Python). Not needed via a `Lizard` client. |
-| `projectId` | string | — | Exact project ID; skips resolving `project` |
-| `timeoutMs` | int | SDK default 5 min | Lifetime in ms |
-| `region` | string | auto | Pin to a region |
-| `volumeName` | string | — | Attach a named [volume](/sandboxes/volumes) from the same project at `/workspace` (`volume_name` in Python) |
-| `volumeId` | string | — | Existing ID-based callers remain supported (`volume_id` in Python) |
-| `apiKey` | string | `LIZARD_API_KEY` env var | Explicit API key, overrides the environment |
+## Current runtime limits
 
-```ts
-const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 10 * 60 * 1000 });
-```
+Command results contain stdout, stderr, and the exit code. Command timeouts are limited to 1–600 seconds. The current runtime does not apply the SDK command options `envs`, `workdir`, or `user`; set the directory and environment in the shell command when needed. Create-time `envs` and `metadata` are also not applied.
 
-## `CodeSandbox`
+Use `fs.write` for text or valid UTF-8 bytes and `fs.read` for text. Binary uploads are not supported by the current write endpoint. For a binary download, use `fs.readBytes` (Python: `read_bytes`).
 
-Extends `Sandbox` with a stateful kernel. See [Code Interpreter](/sandboxes/code-interpreter) for the full walkthrough.
+Current sandboxes use fixed limits of 4 vCPU and 4096 MiB RAM. Create options do not change these limits. Select a region explicitly when needed; a catalog entry does not guarantee free capacity.
 
-| Member | Description |
-|---|---|
-| `CodeSandbox.create(options?)` | Boot a code interpreter (defaults to the `code-interpreter-v1` template). Takes the same `project` option as `Sandbox.create`. |
-| `CodeSandbox.connect(sandboxId)` | Attach to (and auto-resume) an existing code interpreter sandbox. |
-| `sandbox.runCode(code, opts?)` | Execute code in the kernel. Returns an `Execution`. |
-| `sandbox.createContext(opts)` | Create an isolated namespace — `{ language }`. |
-| `sandbox.listContexts()` | List the sandbox's contexts. |
-| `sandbox.restartContext(context)` | Clear all variables/state in a context. |
-| `sandbox.deleteContext(context)` | Free a context's resources. |
+## Unsupported APIs
 
-### `runCode(code, opts?)`
+Create a sandbox, run commands, then call `kill`. `connect` attaches to an existing sandbox; it does not resume a stopped one. Pause, resume, fork, snapshot, restore, and file watching currently return HTTP 501. SSH access is not available for the current runtime.
 
-| Option | Description |
-|---|---|
-| `language` | Runtime for a one-off call — `'python'` (default), `'javascript'`, or `'bash'`. Mutually exclusive with `context`. |
-| `context` | Run inside a specific isolated context instead of the default one. Mutually exclusive with `language`. |
-| `onStdout` / `onStderr` | Stream output line-by-line as it's produced. |
-| `onResult` | Called for each rich result (values, generated images/charts). |
-| `onError` | Called with an `ExecutionError` if the code throws. |
+`CodeSandbox`, `runCode` / `run_code`, and execution-context methods remain in the SDK, but the hosted template catalog does not provide their required execution server. The legacy default `code-interpreter-v1` is unavailable. Changing its name to `interpreter` does not enable this API. Use `Sandbox.create("interpreter")` and process commands as shown below.
 
-Returns an `Execution`:
+## Storage and billing
 
-| Field | Description |
-|---|---|
-| `stdout` / `stderr` | Captured output streams |
-| `results` | Rich results (values, and any generated images / charts) |
-| `error` | An `ExecutionError` (`name`, `message`, `traceback`) if the code threw |
-| `executionCount` | Monotonic counter for the kernel |
+Files and running processes remain available while the sandbox runs. After it stops, only files written to an attached Persistent Volume at `/workspace` can be reused by a later sandbox. Without a volume, `/workspace` is temporary. Each volume attaches to one sandbox at a time and uses node-local storage; export files that must survive node loss.
 
-## `Volume`
+Billing uses measured CPU, memory, storage, and egress. An idle sandbox can still use memory and storage. Stop it when the task ends; storage charges continue while you retain data.
 
-See [Persistent Volumes](/sandboxes/volumes) for the full walkthrough. Names are unique per project and use lowercase letters, digits and dashes, up to 64 characters.
-
-New volumes accept whole GB from 1 to 50, default 5 (`sizeGb` in TypeScript, `size_gb` in Python). The server config can change the maximum. Existing larger volumes keep their size; `getOrCreate` returns them unchanged.
-
-| Member | Description |
-|---|---|
-| `Volume.create(projectId, name, options)` | Create a volume; conflict if the name is taken. `options.sizeGb` defaults to `5`. |
-| `Volume.getOrCreate(projectId, name, options)` | Reuse a volume or create it. Never resizes an existing volume. Python: `Volume.get_or_create`. |
-| `Volume.list(projectId)` | List volumes in a project → `[{ id, name, sizeGb, status, attachedTo, … }]`. |
-| `Volume.get(projectId, nameOrId)` | Get a volume by name or ID. |
-| `Volume.delete(projectId, nameOrId)` | Delete by name or ID after detaching. Python: `Volume.remove`. |
-| `volume.getInfo(projectId)` | Fetch metadata and attachment status. |
-| `volume.delete(projectId)` | Delete a volume — it must be detached first. |
-
-## See also
-
-- [Quickstart](/sandboxes/quickstart) — install, authenticate, and a full walkthrough.
-- [Code Interpreter](/sandboxes/code-interpreter) — the `CodeSandbox` guide.
-- [Persistent Volumes](/sandboxes/volumes) — the `Volume` guide.
-
-## Lifecycle status
-
-Before relying on pause to retain a session beyond its original deadline, read [known issues](/platform/known-issues#sandbox-pause-and-expiration). Pause keeps guest state in host memory; it is not a durable backup.
+[Quickstart](/sandboxes/quickstart) · [SDK reference](/sandboxes/sdk-reference) · [Run Python](/sandboxes/code-interpreter) · [Dashboard](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)

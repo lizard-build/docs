@@ -1,97 +1,50 @@
 ---
-description: "CodeSandbox keeps a stateful kernel between calls, so variables and imports persist. Run Python, JavaScript, or Bash the way an agent does."
+description: "Run Python commands in the interpreter template with the Lizard SDK."
 ---
 
-# Code Interpreter
+# Run Python
 
-`CodeSandbox` extends a regular [sandbox](/sandboxes) with a **stateful kernel** — variables, imports, and function definitions persist between calls, just like a Jupyter notebook. It's the right tool when an AI agent generates and runs code incrementally.
+<span id="code-interpreter" />
+<span id="run-code" />
+<span id="choose-a-language" />
+<span id="streaming-output" />
+<span id="isolated-contexts" />
+<span id="checkpointing-a-session" />
+<span id="see-also" />
 
-It boots from the `code-interpreter-v1` template (Python 3.14 + Node.js 26, with a code-execution API on port 8080) and supports **Python, JavaScript, and Bash** out of the box.
-
-## Run code
-
-```ts
-import { CodeSandbox } from '@lizard-build/sdk';
-
-// Every sandbox belongs to a project — usage is metered per project
-const sandbox = await CodeSandbox.create({ project: 'my-project' });   // defaults to 'code-interpreter-v1'
-
-await sandbox.runCode('x = 42');
-const result = await sandbox.runCode('print(x * 2)');
-console.log(result.stdout);        // "84\n"  — x survived from the previous call
-
-await sandbox.kill();
-```
-
-`runCode(code, opts?)` returns an `Execution`:
-
-| Field | Description |
-|---|---|
-| `stdout` / `stderr` | Captured output streams |
-| `results` | Rich results (values, and any generated images / charts) |
-| `error` | An `ExecutionError` (`name`, `message`, `traceback`) if the code threw |
-| `executionCount` | Monotonic counter for the kernel |
-
-## Choose a language
-
-Default is Python. Pass `language` for a one-off in another runtime:
+Run Python with the `interpreter` template. Each process command starts a separate Python process, so Python variables do not survive between calls. Save intermediate results to files. The API returns stdout, stderr, and an exit code; it does not return typed notebook results or chart objects.
 
 ```ts
-const js = await sandbox.runCode('1 + 1', { language: 'javascript' });
-console.log(js.results[0].data);   // "2"
+import { Sandbox } from '@lizard-build/sdk';
 
-await sandbox.runCode('echo "$(uname -s)"', { language: 'bash' });
-```
-
-## Streaming output
-
-For long-running cells, stream stdout/stderr as it's produced instead of waiting for the result:
-
-```ts
-await sandbox.runCode('for i in range(5): print(i)', {
-  onStdout: (line) => process.stdout.write(line),
-  onStderr: (line) => process.stderr.write(line),
-  onResult: (r)    => console.log('result:', r),
-  onError:  (e)    => console.error('error:', e.name, e.message),
+const sandbox = await Sandbox.create('interpreter', {
+  projectId: 'proj_123', timeoutMs: 300_000,
 });
+try {
+  const result = await sandbox.process.exec("python -c 'print(2 ** 10)'");
+  console.log(result.stdout, result.stderr, result.exitCode);
+} finally {
+  await sandbox.kill();
+}
 ```
 
-## Isolated contexts
+```python
+from lizard import Sandbox
 
-A **context** is an independent namespace inside the same sandbox — use one per agent session or per user, so their variables never collide.
-
-```ts
-const a = await sandbox.createContext({ language: 'python' });
-const b = await sandbox.createContext({ language: 'python' });
-
-await sandbox.runCode('secret = 1', { context: a });
-await sandbox.runCode('print(secret)', { context: b });   // NameError — b never saw it
-
-await sandbox.listContexts();
-await sandbox.restartContext(a);    // clear all variables/state
-await sandbox.deleteContext(b);     // free its resources
+sandbox = Sandbox.create("interpreter", project_id="proj_123", timeout_ms=300_000)
+try:
+    result = sandbox.process.exec_("python -c 'print(2 ** 10)'")
+    print(result.stdout, result.stderr, result.exit_code)
+finally:
+    sandbox.kill()
 ```
 
-Pass **either** `context` **or** `language` to `runCode`, not both — a context already has a language bound to it.
+## Unsupported APIs
 
-## Checkpointing a session
+`CodeSandbox`, `runCode` / `run_code`, and execution-context methods remain in the SDK, but the hosted template catalog does not provide their required execution server. The legacy default `code-interpreter-v1` is unavailable. Changing its name to `interpreter` does not enable this API. Use `Sandbox.create("interpreter")` and process commands as shown below.
 
-Because `CodeSandbox` is a sandbox, [pause and resume](/sandboxes/quickstart#pause-and-resume) work the same. Install a heavy dependency stack once, pause, and resume later with the kernel state intact:
+## Storage and billing
 
-```ts
-const sandbox = await CodeSandbox.create({ project: 'my-project' });
-await sandbox.runCode('import subprocess; subprocess.run(["pip", "install", "scikit-learn"])');
-const id = sandbox.sandboxId;
-await sandbox.pause();
+Files and running processes remain available while the sandbox runs. After it stops, only files written to an attached Persistent Volume at `/workspace` can be reused by a later sandbox. Without a volume, `/workspace` is temporary. Each volume attaches to one sandbox at a time and uses node-local storage; export files that must survive node loss.
 
-// Later — resume with packages and kernel variables already in place
-const resumed = await CodeSandbox.connect(id);
-const out = await resumed.runCode('import sklearn; print(sklearn.__version__)');
-console.log(out.stdout);
-await resumed.kill();
-```
-
-## See also
-
-- [SDK Reference](/sandboxes/sdk-reference) — every `CodeSandbox` method and `runCode` option.
-- [Persistent Volumes](/sandboxes/volumes) — attach storage that outlives a single sandbox.
+[Quickstart](/sandboxes/quickstart) · [SDK reference](/sandboxes/sdk-reference) · [Run Python](/sandboxes/code-interpreter) · [Dashboard](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)
