@@ -11,13 +11,14 @@ Choose storage by the data that must survive a process restart, a new deployment
 | Application records | Managed Postgres or another database | A restart is different from restoring deleted or corrupt data. Test a separate export and restore path. |
 | Cache and queue data | Managed Redis | Decide whether the workload can rebuild its state or needs its own recovery plan. |
 | Files shared by applications | Managed Object Storage | Set the bucket's access policy before uploading private data. The automatically created `default` bucket is public-read. |
-| Files needed by later Sandboxes | Persistent Volumes, mounted at `/data` | One sandbox attachment at a time; the volume stays on its node. |
-| Temporary sandbox files | The guest filesystem outside `/data` | Do not expect them after the sandbox ends or the guest is replaced. |
-| Paused process state | Host memory | Pause is not a durable snapshot; host failure loses that state. |
+
+Files and running processes remain available while the sandbox runs. After it stops, only files written to an attached Persistent Volume at `/workspace` can be reused by a later sandbox. Without a volume, `/workspace` is temporary. Each volume attaches to one sandbox at a time and uses node-local storage; export files that must survive node loss.
 
 ## Keep files after a sandbox ends
 
-Create a Persistent Volume in the same project, attach it when creating the sandbox, and write under `/data`. End the first sandbox before attaching the volume to the next one. See the [complete example](/sandboxes/volumes).
+The Persistent Volumes tab manages named volumes and their attachments. Attach a volume when creating the sandbox and write to `/workspace`. Stop the current sandbox before attaching the volume to another.
+
+[Persistent Volumes](/sandboxes/volumes)
 
 ## Plan a database restore
 

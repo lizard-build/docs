@@ -1,49 +1,25 @@
 ---
-description: "Create and inspect sandboxes by hand from a project's Sandboxes page: API keys, live shells, lifecycle controls, snapshots, and volumes."
+description: "Create and inspect Sandboxes, choose templates, and manage volumes."
 ---
 
-# Sandboxes dashboard
+# Dashboard
 
-Every project has a **Sandboxes** page for creating and inspecting sandboxes by hand — useful for debugging an agent's environment, grabbing an interactive shell, or spot-checking what code produced. Open a project and select **Sandboxes** in the sidebar (`/<workspace>/<project>/sandboxes`).
+Open a project and select Sandboxes. Create a sandbox with a template from the catalog and a region. The default region is not a nearest-region guarantee. The current resource limits are fixed. Dashboard-created sandboxes have no expiration unless you set a lifetime through the API.
 
-The page has three tabs: **Sandboxes**, **Volumes**, and **Snapshots**.
+## Install and authenticate
 
-## Getting an API key
+Install the Lizard SDK and create an API key in Settings → API keys. Store it in `LIZARD_API_KEY`. Each sandbox needs a project: pass `projectId` (Python: `project_id`) or resolve an ID, slug, or name with `project`.
 
-If you haven't used sandboxes yet, the empty state walks you through creating an **API key** for the SDK. The key is shown **once** — copy it immediately; it can't be retrieved later. Store it as `LIZARD_API_KEY` (see the [Quickstart](/sandboxes/quickstart#authenticate)).
+## Inspect and stop
 
-## Create a sandbox
+The detail view shows status, template, region, measured usage, and exposed ports. The current Kubernetes runtime does not provide SSH credentials, so the SSH-backed terminal is unavailable. Run commands through the SDK or CLI.
 
-Click **New Sandbox** and set:
+Billing uses measured CPU, memory, storage, and egress. An idle sandbox can still use memory and storage. Stop it when the task ends; storage charges continue while you retain data.
 
-- **Snapshot** — the [template](/sandboxes#templates) to boot from (`base` or `code-interpreter-v1`).
-- **Location** — the region to run in (defaults to the nearest available).
-- **Resources** — the current templates use 4 vCPU and 4096 MiB RAM; these are not per-create size options.
+## Templates and volumes
 
-Sandboxes created here have no timeout — they run until you kill them.
+The Templates tab lists platform templates for new sandboxes. It does not contain snapshots of your running sessions. Creating user snapshots, pausing, and resuming are not supported. Kill Sandbox stops the sandbox and detaches its volume.
 
-## Inspect a running sandbox
+The Persistent Volumes tab manages named volumes and their attachments. Attach a volume when creating the sandbox and write to `/workspace`. Stop the current sandbox before attaching the volume to another.
 
-Selecting a sandbox opens a detail drawer with two tabs.
-
-**Overview** shows its ID, template, status, region, and CPU/memory, plus:
-
-- **Exposed ports** — every port opened with [`getHost`](/sandboxes/quickstart#exposing-a-port), each with a copyable public `https://…onlizard.com` URL you can open directly.
-- **SSH access** — when available, a ready-to-paste `ssh root@<node-ip> -p <port>` command and the generated password.
-
-**Terminal** gives you an in-browser shell straight into the micro-VM (backed by SSH), so you can poke around without leaving the dashboard.
-
-Live sandboxes report real-time CPU and memory usage in the list; paused and stopped ones report zero.
-
-## Lifecycle
-
-- **Kill Sandbox** (in the detail drawer) terminates it immediately and frees its resources — including detaching any [volume](/sandboxes/volumes).
-- **Pause / resume** are driven from the [SDK](/sandboxes/quickstart#pause-and-resume); a paused sandbox shows as **Paused** here and consumes no on-demand compute.
-
-## Snapshots
-
-The **Snapshots** tab lists the templates a sandbox can boot from — the built-in `base` and `code-interpreter-v1`. A custom-template upload command is not part of the current public CLI. Each entry shows its default vCPU/memory and description.
-
-## Volumes
-
-The **Volumes** tab manages [persistent storage](/sandboxes/volumes): create a volume with a name and size, and see which sandbox each one is attached to.
+[Quickstart](/sandboxes/quickstart) · [SDK reference](/sandboxes/sdk-reference) · [Run Python](/sandboxes/code-interpreter) · [Dashboard](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)

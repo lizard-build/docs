@@ -12,11 +12,9 @@ Diese Seite dokumentiert Verhalten, das besondere Vorsicht oder eine verifiziert
 
 ## Pause und Ablauf von Sandboxen
 
-Die Pause soll die verbleibende Laufzeit einfrieren. Ein Konflikt zwischen der Uhr des Knotens und einem separaten Bereinigungsprozess kann dazu führen, dass eine pausierte Sandbox nach ihrer ursprünglichen Frist beendet wird. Auch der Neustart des Node-Agent und das Fortsetzen einer Sandbox ohne Ablaufzeit benötigen den Lebenszyklus-Fix.
+Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, setzt aber keine gestoppte Sandbox fort. Pause, Resume, Fork, Snapshot, Restore und Dateiüberwachung geben derzeit HTTP 501 zurück. SSH steht in der aktuellen Laufzeit nicht bereit.
 
-Bis dieser Fix einen Live-Test bestanden hat und Ihre Region erreicht hat, sollten Sie sich für langfristigen Zustand nicht allein auf Pause verlassen. Speichern Sie Dateien unter `/data` auf einem Persistent Volume, oder speichern Sie den Anwendungszustand in einer Datenbank oder einem Object Storage. Host-Arbeitsspeicher ist kein Backup. Verwenden Sie eine explizite Laufzeit und beenden Sie die Sandbox, wenn die Aufgabe erledigt ist.
-
-<span id="redeploy-is-not-rollback" />
+Dateien und laufende Prozesse bleiben verfügbar, solange die Sandbox läuft. Nach dem Stopp kann eine spätere Sandbox nur Dateien auf einem angehängten Persistent Volume unter `/workspace` wiederverwenden. Ohne Volume ist `/workspace` temporär. Ein Volume hängt jeweils an einer Sandbox und liegt auf einem einzelnen Knoten. Exportieren Sie Dateien, die einen Knotenausfall überstehen müssen.
 
 ## Redeploy ist kein Rollback
 
@@ -32,7 +30,7 @@ Explizite Build- oder Start-Befehle haben Vorrang vor einem Dockerfile im Reposi
 
 ## Vorlagen und MCP
 
-Die aktuelle API zum Erstellen von Sandboxes akzeptiert die zwei integrierten Vorlagen. Anleitungen, die `lizard push` für benutzerdefinierte Vorlagen verwenden, entsprechen nicht der aktuellen öffentlichen CLI.
+Wählen Sie eine Vorlage aus dem aktuellen Katalog. Aktiviert sind unter anderem `base`, `codex` und `interpreter`; die Verfügbarkeit hängt von Region und Pool-Kapazität ab. `interpreter` enthält Python und gängige Datenbibliotheken. Prüfen Sie die Werkzeugversionen in der Sandbox. Die öffentliche CLI bietet keinen Upload eigener Vorlagen.
 
 Lizard Skill verwendet Lizard CLI. Dieser Workflow stellt keinen MCP-Transport bereit. Das Hosting eines eigenen entfernten MCP-Servers ist ein separates Application-Deployment; siehe den [Leitfaden](/guides/deploy-mcp-server).
 

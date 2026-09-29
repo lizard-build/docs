@@ -13,17 +13,16 @@ Wählen Sie den Speicher danach aus, welche Daten einen Prozessneustart, ein neu
 | Anwendungsdaten | Managed Postgres oder eine andere Datenbank | Ein Neustart ist etwas anderes als das Wiederherstellen gelöschter oder beschädigter Daten. Testen Sie einen separaten Export- und Wiederherstellungsweg. |
 | Cache- und Queue-Daten | Managed Redis | Entscheiden Sie, ob die Workload ihren Zustand neu aufbauen kann oder einen eigenen Wiederherstellungsplan braucht. |
 | Von Anwendungen gemeinsam genutzte Dateien | Managed Object Storage | Legen Sie die Zugriffsrichtlinie des Buckets fest, bevor Sie private Daten hochladen. Der automatisch erstellte Bucket `default` ist öffentlich lesbar. |
-| Dateien, die von späteren Sandboxes benötigt werden | Persistent Volumes, eingehängt unter `/data` | Jeweils nur ein Sandbox-Anhang; das Volume bleibt auf seinem Node. |
-| Temporäre Sandbox-Dateien | Das Gast-Dateisystem außerhalb von `/data` | Erwarten Sie nicht, dass sie nach dem Ende der Sandbox oder nach dem Ersetzen des Gasts noch vorhanden sind. |
-| Angehaltener Prozesszustand | Host-Arbeitsspeicher | Pausieren ist kein dauerhaftes Snapshot; bei einem Host-Ausfall geht dieser Zustand verloren. |
 
 <span id="keep-files-after-a-sandbox-ends" />
 
+Dateien und laufende Prozesse bleiben verfügbar, solange die Sandbox läuft. Nach dem Stopp kann eine spätere Sandbox nur Dateien auf einem angehängten Persistent Volume unter `/workspace` wiederverwenden. Ohne Volume ist `/workspace` temporär. Ein Volume hängt jeweils an einer Sandbox und liegt auf einem einzelnen Knoten. Exportieren Sie Dateien, die einen Knotenausfall überstehen müssen.
+
 ## Dateien nach dem Ende einer Sandbox behalten
 
-Erstellen Sie ein Persistent Volume im selben Projekt, hängen Sie es beim Erstellen der Sandbox an und schreiben Sie unter `/data`. Beenden Sie die erste Sandbox, bevor Sie das Volume an die nächste anhängen. Siehe das [vollständige Beispiel](/sandboxes/volumes).
+Der Reiter Persistent Volumes verwaltet benannte Volumes und ihre Verbindungen. Hängen Sie ein Volume bei der Erstellung an und schreiben Sie nach `/workspace`. Stoppen Sie die aktuelle Sandbox, bevor Sie das Volume an eine andere hängen.
 
-<span id="plan-a-database-restore" />
+[Persistent Volumes](/sandboxes/volumes)
 
 ## Wiederherstellung einer Datenbank planen
 

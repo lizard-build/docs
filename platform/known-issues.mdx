@@ -8,9 +8,9 @@ This page records behavior that needs care or a verified release. A code fix und
 
 ## Sandbox pause and expiration
 
-Pause is intended to freeze the remaining lifetime. A conflict between the node's clock and a separate cleanup process can end a paused sandbox after its original deadline. Node-agent restart and resume of a sandbox with no expiration also need the lifecycle fix.
+Create a sandbox, run commands, then call `kill`. `connect` attaches to an existing sandbox; it does not resume a stopped one. Pause, resume, fork, snapshot, restore, and file watching currently return HTTP 501. SSH access is not available for the current runtime.
 
-Until that fix has passed a live test and reached your region, do not rely on pause alone for long-term state. Save files under `/data` on a Persistent Volume, or store application state in a database or object storage. Host memory is not a backup. Use an explicit lifetime and release the sandbox when the task ends.
+Files and running processes remain available while the sandbox runs. After it stops, only files written to an attached Persistent Volume at `/workspace` can be reused by a later sandbox. Without a volume, `/workspace` is temporary. Each volume attaches to one sandbox at a time and uses node-local storage; export files that must survive node loss.
 
 ## Redeploy is not rollback
 
@@ -22,7 +22,7 @@ Explicit build or start commands take priority over a repository Dockerfile. Cle
 
 ## Templates and MCP
 
-The current Sandboxes create API accepts the two built-in templates. Instructions using `lizard push` for custom templates do not match the current public CLI.
+Choose a template from the current catalog. Enabled templates include `base`, `codex`, and `interpreter`; availability depends on the region and pool capacity. `interpreter` includes Python and common data libraries. Check tool versions inside your sandbox. The public CLI does not provide a custom-template upload flow.
 
 Lizard Skill uses Lizard CLI. That workflow does not expose an MCP transport. Hosting your own remote MCP server is a separate application deployment; see the [guide](/guides/deploy-mcp-server).
 

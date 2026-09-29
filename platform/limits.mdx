@@ -16,21 +16,23 @@ Limits depend on the resource, plan, and account. A per-replica setting is not t
 | Worker mode | Service | `containerPort=0` runs without an HTTP listener or public load-balancer route. |
 | Custom domain | Hostname | Wildcard custom domains are not accepted. Use a specific hostname and complete ownership and DNS checks. |
 
-Applications can use different runtimes. Do not assume that every application has the same Firecracker micro-VM boundary as Sandboxes.
+Sandboxes run short-lived commands and agent tasks in Kubernetes pods with the runc runtime. They share the host kernel; they are not Firecracker virtual machines. Restrict credentials and network access when running code you do not trust.
 
 ## Sandboxes
 
 | Setting | Current create API |
 |---|---|
 | CPU and memory | 4 vCPU / 4096 MiB |
-| Templates | `base`, `code-interpreter-v1` |
+| Templates | `base`, `codex`, `interpreter` |
 | Raw API default lifetime | `timeoutMs: 0`, no expiration |
 | Lizard SDK default lifetime | 300000 ms, five minutes |
 | Explicit lifetime range | Integer milliseconds from 0 to 2147483647 |
 | Updating a lifetime | At least 1000 ms; it is not an idle timer |
 | Persistent volume attachment | One sandbox at a time, on the volume's node |
 
-Pass an explicit lifetime from scripts. For example, `--timeout 300000` makes the intended limit clear across Lizard CLI releases. See [pause and expiration](/platform/known-issues#sandbox-pause-and-expiration) before parking a session.
+The SDK and CLI default to a five-minute lifetime. The raw API and dashboard default to no expiration. Set an explicit lifetime: `timeoutMs: 0` at creation disables expiration; a positive value sets a deadline. `setTimeout` accepts 1000–2147483647 ms, not zero. Commands do not reset the deadline. This is not an idle timer.
+
+Create a sandbox, run commands, then call `kill`. `connect` attaches to an existing sandbox; it does not resume a stopped one. Pause, resume, fork, snapshot, restore, and file watching currently return HTTP 501. SSH access is not available for the current runtime.
 
 ## Regions
 

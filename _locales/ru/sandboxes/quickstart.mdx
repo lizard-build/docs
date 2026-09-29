@@ -1,237 +1,90 @@
 ---
-description: "Запустите свою первую песочницу с Lizard SDK: установка, создание API-ключа, выбор проекта, запуск кода, работа с файлами, проброс порта и пауза."
+description: "Создайте sandbox, запустите Python, сохраните файлы и освободите ресурсы."
 ---
 
-<span id="sandboxes-quickstart" />
+# Быстрый старт
 
-# Быстрый старт с песочницами
+<a id="authenticate" />
 
-Запустите песочницу, выполните код в ней, пробросьте порт и поставьте на паузу с помощью Lizard SDK.
 
-<span id="install" />
+## Установка и вход
 
-## Установка
+Установите Lizard SDK и создайте API-ключ в Settings → API keys. Сохраните его в `LIZARD_API_KEY`. Каждому sandbox нужен проект: передайте `projectId` (в Python — `project_id`) или ID, slug либо имя через `project`.
 
-```bash
-# JavaScript / TypeScript
+```sh
 npm install @lizard-build/sdk
-
-# Python
 pip install lizard-sdk
-```
-
-<span id="authenticate" />
-
-## Аутентификация
-
-Песочницы аутентифицируются с помощью **API-ключа**. Создайте его в дашборде (**Sandboxes → Get started → New API key**) — он показывается один раз, поэтому сразу скопируйте его.
-
-Задайте его в окружении, и SDK подхватит его автоматически:
-
-```bash
 export LIZARD_API_KEY="<your-api-key>"
 ```
 
-Можете также передать его явно: `Sandbox.create('base', { apiKey, project })`.
-
-<span id="pick-a-project" />
-
-## Выбор проекта
-
-Каждая песочница принадлежит проекту — расход учитывается по проектам, поэтому API отклонит создание без проекта. Укажите проект по его ID, слагу или имени.
-
-Клиент `Lizard` закрепляет один проект, поэтому нужно указать его только раз:
-
-```ts
-import { Lizard } from '@lizard-build/sdk';
-
-const lizard = new Lizard({ project: 'my-project' });
-const sandbox = await lizard.create('base');
-```
-
-```python
-from lizard import Lizard
-
-lizard = Lizard(project="my-project")
-sandbox = lizard.create("base")
-```
-
-`Sandbox.create` принимает тот же параметр `project`, когда не хотите держать клиент. Обе формы используются ниже.
-
-<span id="your-first-sandbox" />
-
-## Ваша первая песочница
-
-**JavaScript / TypeScript**
+## Запуск команды
 
 ```ts
 import { Sandbox } from '@lizard-build/sdk';
 
-// Boot from a template (default: 'base') in a project
-const sandbox = await Sandbox.create('base', { project: 'my-project' });
-
-// Run a command and wait for it to finish
+const sandbox = await Sandbox.create('interpreter', {
+  projectId: 'proj_123', timeoutMs: 300_000,
+});
 try {
-  const result = await sandbox.process.exec('node -e "console.log(2 ** 10)"');
-  console.log(result.stdout);     // 1024
-  console.log(result.exitCode);   // 0
+  const result = await sandbox.process.exec("python -c 'print(2 ** 10)'");
+  console.log(result.stdout, result.stderr, result.exitCode);
 } finally {
   await sandbox.kill();
 }
 ```
 
-**Python**
-
 ```python
 from lizard import Sandbox
 
-sandbox = Sandbox.create("base", project="my-project")
-
-# exec_ (trailing underscore) because `exec` is reserved in Python
+sandbox = Sandbox.create("interpreter", project_id="proj_123", timeout_ms=300_000)
 try:
     result = sandbox.process.exec_("python -c 'print(2 ** 10)'")
-    print(result.stdout)     # 1024
+    print(result.stdout, result.stderr, result.exit_code)
 finally:
     sandbox.kill()
 ```
 
-`process.exec` возвращает `{ stdout, stderr, exitCode }`. Он ждёт завершения команды — фоновые долгие процессы запускайте с завершающим `&`.
+## Файлы
 
-<span id="working-with-files" />
+`fs.write` записывает текст или корректные байты UTF-8, а `fs.read` читает текст. Текущий метод записи не поддерживает загрузку двоичных файлов. Для скачивания двоичного файла используйте `fs.readBytes` (в Python — `read_bytes`).
 
-## Работа с файлами
-
-`sandbox.fs` читает и пишет прямо в файловую систему микро-VM, создавая родительские директории при необходимости.
+Файлы и процессы доступны, пока sandbox работает. После остановки следующий sandbox может получить только файлы, записанные на подключённый Persistent Volume в `/workspace`. Без тома `/workspace` — временная папка. Том подключается только к одному sandbox и хранится на одном узле; отдельно сохраняйте файлы, которые должны пережить потерю узла.
 
 ```ts
-await sandbox.fs.write('/app/server.js', `
-  const http = require('http');
-  http.createServer((_, res) => res.end('hello from Lizard')).listen(3000);
-`);
-
-const src = await sandbox.fs.read('/app/server.js');
-const entries = await sandbox.fs.list('/app');   // [{ name, path, type, size }]
-await sandbox.fs.makeDir('/app/data');
-await sandbox.fs.remove('/app/old.log');
+await sandbox.fs.write("/tmp/task.py", "print(42)\n");
+const result = await sandbox.process.exec("python /tmp/task.py");
+console.log(result.stdout);
 ```
 
-| Метод | Описание |
-|---|---|
-| `fs.write(path, data)` | Записать файл — строка или байты; создаёт родительские директории |
-| `fs.read(path)` | Прочитать файл как строку UTF-8 |
-| `fs.list(path)` | Вывести содержимое директории |
-| `fs.makeDir(path)` | Создать директорию и недостающие родители |
-| `fs.remove(path)` | Удалить файл или директорию |
+<a id="exposing-a-port" />
 
-<span id="exposing-a-port" />
+## Публичные порты
 
-## Проброс порта
-
-Запустите HTTP-сервер внутри песочницы и получите публичный HTTPS-URL для него — без туннелей.
+Запустите сервер на `0.0.0.0`, затем вызовите `getHost(port)`, чтобы получить публичное HTTPS-имя хоста. Порт доступен извне; при необходимости добавьте вход по ключу или паролю. После остановки sandbox порт больше не обслуживается.
 
 ```ts
-await sandbox.process.exec('node /app/server.js &');   // listen on :3000
-
+await sandbox.process.exec(
+  "nohup python -m http.server 3000 --bind 0.0.0.0 --directory /tmp >/tmp/http.log 2>&1 </dev/null &",
+);
 const host = await sandbox.getHost(3000);
-console.log(`Live at https://${host}`);
-// https://<sandboxId>-3000.sandbox.<region>.onlizard.com
+console.log(`https://${host}`);
 ```
 
-`getHost(port)` регистрирует маршрут к этому порту и возвращает хостнейм. URL публичный и с TLS-терминацией. Удалить его можно снова в дашборде.
+## Подключение к работающему sandbox
 
-<span id="pause-and-resume" />
-
-## Пауза и возобновление
-
-Пауза заморозит гостевые vCPU и сохранит текущее состояние в памяти хоста. Она не создаёт устойчивый снапшот. Проверьте [проблему с паузой и истечением срока](/platform/known-issues#sandbox-pause-and-expiration) перед удержанием сессии дольше первоначального дедлайна.
+Создайте sandbox, выполните команды и вызовите `kill`. `connect` подключается к существующему sandbox, но не возобновляет остановленный. Пауза, возобновление, fork, snapshot, restore и наблюдение за файлами сейчас возвращают HTTP 501. SSH в текущем runtime недоступен.
 
 ```ts
-// Set the environment up once
-const sandbox = await Sandbox.create('base', { project: 'my-project' });
-await sandbox.process.exec('npm install -g some-heavy-toolchain');
-const id = sandbox.sandboxId;
-
-await sandbox.pause();          // freeze the guest; see the lifecycle issue below
-
-// …minutes or hours later, from anywhere:
-const resumed = await Sandbox.connect(id);   // resumes guest state still held by the host
-await resumed.process.exec('some-heavy-toolchain --version');   // already installed
-await resumed.kill();
+const connected = await Sandbox.connect(sandbox.sandboxId);
+console.log(await connected.getInfo());
 ```
 
-`Sandbox.connect(id)` автоматически возобновляет поставленную на паузу песочницу. Можно также вызвать `sandbox.resume()` на уже имеющемся хендле.
+<a id="pause-and-resume" />
 
-**Python**
+## Текущие ограничения runtime
 
-```python
-sandbox = Sandbox.create("base", project="my-project")
-sandbox.process.exec_("pip install numpy pandas")
-sandbox_id = sandbox.sandbox_id
-sandbox.pause()
+SDK и CLI по умолчанию задают срок жизни пять минут. Прямой API и кабинет по умолчанию не задают срок. Укажите его явно: `timeoutMs: 0` при создании отключает истечение срока; положительное значение задаёт срок жизни. `setTimeout` принимает 1000–2147483647 мс, но не ноль. Команды не продлевают срок. Это не таймер простоя.
 
-resumed = Sandbox.connect(sandbox_id)   # resumes guest state still held by the host
-resumed.process.exec_("python -c 'import numpy'")
-resumed.kill()
-```
+Результат команды содержит stdout, stderr и код завершения. Таймаут команды ограничен 1–600 секундами. Текущий runtime не применяет параметры SDK `envs`, `workdir` и `user`; задавайте папку и переменные среды в самой shell-команде. Параметры `envs` и `metadata` при создании также не применяются.
 
-<span id="timeouts" />
-
-## Таймауты
-
-Песочница с положительным таймаутом истекает после этого времени жизни. По умолчанию SDK ставит пять минут; `timeoutMs: 0` при создании отключает истечение. Задайте явный лимит и освободите песочницу по завершении задачи. Измените работающую песочницу так:
-
-```ts
-const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 10 * 60 * 1000 }); // 10 min
-await sandbox.setTimeout(30 * 60 * 1000);   // extend to 30 min from now
-```
-
-Пауза предназначена для заморозки оставшегося времени работы, но текущая [проблема жизненного цикла](/platform/known-issues#sandbox-pause-and-expiration) требует подтверждённого релиза бэкенда. Не полагайтесь на неограниченную паузу для сохранения данных.
-
-<span id="managing-sandboxes" />
-
-## Управление песочницами
-
-```ts
-const sandbox = await Sandbox.create('base', { project: 'my-project' });
-const info = await sandbox.getInfo();     // { sandboxId, template, startedAt, endAt, … }
-
-const all = await Sandbox.list();         // every running sandbox for this account
-await sandbox.kill();
-```
-
-<span id="full-example" />
-
-## Полный пример
-
-Агент, который пишет скрипт, запускает его, отдаёт результат и ставит гостя на паузу для последующего вызова:
-
-```ts
-import { Sandbox } from '@lizard-build/sdk';
-
-const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 15 * 60 * 1000 });
-
-try {
-  await sandbox.fs.write('/app/app.js', `
-    const http = require('http');
-    http.createServer((_, res) => res.end('ok')).listen(3000);
-  `);
-  await sandbox.process.exec('node /app/app.js &');
-
-  const host = await sandbox.getHost(3000);
-  const res = await fetch(`https://${host}`);
-  console.log(await res.text());          // ok
-
-  await sandbox.pause();                   // resume later with Sandbox.connect(sandbox.sandboxId)
-} catch (err) {
-  await sandbox.kill();
-  throw err;
-}
-```
-
-<span id="next-steps" />
-
-## Дальнейшие шаги
-
-- **[Справочник SDK](/sandboxes/sdk-reference)** — каждый метод `Sandbox`, `CodeSandbox` и `Volume`.
-- **[Интерпретатор кода](/sandboxes/code-interpreter)** — запуск стейтфулного мультиязыкового кода.
-- **[Persistent Volumes](/sandboxes/volumes)** — подключение хранилища, которое переживает отдельную песочницу.
+[Быстрый старт](/sandboxes/quickstart) · [Справочник SDK](/sandboxes/sdk-reference) · [Запуск Python](/sandboxes/code-interpreter) · [Кабинет](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)

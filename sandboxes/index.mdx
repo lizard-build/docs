@@ -1,76 +1,47 @@
 ---
-description: "A sandbox is an isolated Firecracker micro-VM you boot in milliseconds, run code in, and throw away. The compute primitive behind AI agents."
+description: "Current Sandboxes runtime, templates, lifecycle, resource limits, storage, and billing."
 ---
 
 # Sandboxes
 
-A **sandbox** is an isolated Firecracker micro-VM you spin up on demand, run code inside, and tear down when you're done. Each one is a full Linux environment with its own filesystem, network, and process namespace — booted in milliseconds, not minutes.
+Sandboxes run short-lived commands and agent tasks in Kubernetes pods with the runc runtime. They share the host kernel; they are not Firecracker virtual machines. Restrict credentials and network access when running code you do not trust.
 
-Sandboxes are the compute primitive behind AI agents, code interpreters, evals, and CI-style jobs on Lizard. Where a [service](/concepts/architecture) is a long-lived deployment tied to a repo, a sandbox is **ephemeral, programmatic, and disposable** — create a sandbox for each task within the capacity available to your account.
+## Runtime and templates
+
+Choose a template from the current catalog. Enabled templates include `base`, `codex`, and `interpreter`; availability depends on the region and pool capacity. `interpreter` includes Python and common data libraries. Check tool versions inside your sandbox. The public CLI does not provide a custom-template upload flow.
+
+## Lifecycle
+
+Create a sandbox, run commands, then call `kill`. `connect` attaches to an existing sandbox; it does not resume a stopped one. Pause, resume, fork, snapshot, restore, and file watching currently return HTTP 501. SSH access is not available for the current runtime.
+
+```text
+create -> running -> stopped (kill / expiration)
+```
+
+## Resources and timeouts
+
+Current sandboxes use fixed limits of 4 vCPU and 4096 MiB RAM. Create options do not change these limits. Select a region explicitly when needed; a catalog entry does not guarantee free capacity.
+
+The SDK and CLI default to a five-minute lifetime. The raw API and dashboard default to no expiration. Set an explicit lifetime: `timeoutMs: 0` at creation disables expiration; a positive value sets a deadline. `setTimeout` accepts 1000–2147483647 ms, not zero. Commands do not reset the deadline. This is not an idle timer.
+
+## Storage and billing
+
+Files and running processes remain available while the sandbox runs. After it stops, only files written to an attached Persistent Volume at `/workspace` can be reused by a later sandbox. Without a volume, `/workspace` is temporary. Each volume attaches to one sandbox at a time and uses node-local storage; export files that must survive node loss.
+
+Billing uses measured CPU, memory, storage, and egress. An idle sandbox can still use memory and storage. Stop it when the task ends; storage charges continue while you retain data.
 
 ```ts
 import { Sandbox } from '@lizard-build/sdk';
 
-const sandbox = await Sandbox.create('base', { project: 'my-project' });
-const { stdout } = await sandbox.process.exec('echo "hello from Lizard"');
-console.log(stdout);            // hello from Lizard
-await sandbox.kill();
+const sandbox = await Sandbox.create('interpreter', {
+  projectId: 'proj_123', timeoutMs: 300_000,
+});
+try {
+  const result = await sandbox.process.exec("python -c 'print(2 ** 10)'");
+  console.log(result.stdout, result.stderr, result.exitCode);
+} finally {
+  await sandbox.kill();
+}
 ```
 
-## When to use a sandbox
-
-| Use a **sandbox** when… | Use a **service** when… |
-|---|---|
-| An agent needs to run untrusted or generated code | You're deploying an app that stays up |
-| You want a fresh, throwaway Linux box per task | You want a stable `<name>.<region>.onlizard.com` URL and TLS |
-| You need to fan out many isolated jobs at once | You have a single always-on process |
-| The workload is short-lived or paused | The workload is git-backed and auto-redeploys |
-
-Once an agent has produced a working app inside a sandbox, you can promote it to a persistent service with [`lizard up`](/deploy/upload) — no Dockerfile required.
-
-## What makes them fast
-
-- **Firecracker micro-VMs** — a separate Linux guest for each sandbox. App runtimes have different isolation rules. Hardware virtualization separates the guest from the host. Control credentials and network access for code you do not trust.
-- **Pause and resume** — pausing freezes the micro-VM's vCPUs. Memory, filesystem, and running processes are kept as they are, so resume picks up exactly where it left off — no re-installing packages or re-warming caches. This is what makes long-running agent sessions survive across separate invocations. State is held in the host's memory rather than written to disk, so it does not survive a host failure. See [pause & resume](/sandboxes/quickstart#pause-and-resume).
-- **Boot from a template** — every node pre-builds a golden snapshot per template, so `create` is a restore, not a cold boot.
-
-## Templates
-
-A sandbox boots from a **template** (also called a *snapshot* in the dashboard). Two are built in:
-
-| Template | Contents | Best for |
-|---|---|---|
-| `base` | Debian Linux, Node.js 26, and the Lizard CLI | General-purpose shell and build environments |
-| `code-interpreter-v1` | Python 3.14 + Node.js 26, with a code-execution HTTP API on port 8080 | AI code interpreters — drive it with [`CodeSandbox`](/sandboxes/code-interpreter) |
-
-`base` is the default. The public create API accepts these two template names. It does not expose a custom-template upload flow.
-
-## Lifecycle
-
-A sandbox moves between three states:
-
-```
-create ──▶ running ⇄ paused ──▶ stopped
-                              (killed or expired)
-```
-
-- **running** — the guest can execute commands, work with files, and serve exposed ports.
-- **paused** — vCPUs stop. Guest memory and process state remain on the host; this is not a durable snapshot or a backup.
-- **stopped** — the sandbox ended through deletion or expiration. Its local filesystem is no longer available.
-
-The SDK sends a five-minute lifetime by default. The raw create API accepts `timeoutMs: 0` for no expiration. Pass an explicit timeout when a script must behave the same across clients, and release the sandbox when the task ends. Commands do not reset the lifetime.
-
-Pause is intended to preserve the remaining running time. Check the [current lifecycle issue](/platform/known-issues#sandbox-pause-and-expiration) before relying on a pause longer than the original deadline. Persistent files belong in a [volume](/sandboxes/volumes); a paused guest does not survive host failure.
-
-## Resources & limits
-
-Every sandbox runs at a fixed **4 vCPU / 4096 MiB RAM**. The public create API has no per-sandbox size setting. Each sandbox inherits its template's resources.
-
-Region is chosen automatically from available capacity; in the dashboard you can pin one. Do not assume that app quotas and sandbox capacity use the same enforcement rules. See [limits](/platform/limits).
-
-## Ways to drive sandboxes
-
-| Surface | Best for | Start here |
-|---|---|---|
-| **SDK** (JS / Python) | Agents, apps, and scripts — including stateful, multi-language execution via [`CodeSandbox`](/sandboxes/code-interpreter) | [Quickstart](/sandboxes/quickstart) · [SDK Reference](/sandboxes/sdk-reference) |
-| **Dashboard** | Manual create, terminal, SSH, monitoring | [Dashboard](/sandboxes/dashboard) |
+[Quickstart](/sandboxes/quickstart) · [SDK reference](/sandboxes/sdk-reference) · [Run Python](/sandboxes/code-interpreter) · [Dashboard](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)

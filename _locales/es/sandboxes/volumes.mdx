@@ -110,3 +110,7 @@ Abre **Sandboxes → Volumes** en un proyecto. El formulario comprueba el nombre
 - Eliminar un volumen borra sus datos. Los volúmenes usan almacenamiento local del nodo; exporta los datos que necesites tras un fallo del nodo. Consulta [almacenamiento y recuperación](/platform/storage-and-recovery).
 
 Consulta las opciones de Sandbox en la [referencia del SDK](/sandboxes/sdk-reference).
+
+Crea un sandbox, ejecuta comandos y llama a `kill`. `connect` se conecta a un sandbox existente; no reanuda uno detenido. Pausar, reanudar, fork, snapshot, restore y observar archivos devuelven HTTP 501 en el runtime actual. SSH no está disponible.
+
+Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un Persistent Volume adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.

@@ -1,149 +1,64 @@
 ---
-description: "JavaScript と Python 向け Lizard SDK のすべてのクラスとメソッド: Lizard、サンドボックス、CodeSandbox、ボリューム。オプションと戻り値の型も含みます。"
+description: "Lizard SDK の対応メソッドと現在のランタイムの制限。"
 ---
-
-<span id="sdk-reference" />
 
 # SDK リファレンス
 
-`@lizard-build/sdk` (JS/TS) と `lizard-sdk` (Python) パッケージは、ほとんどのエージェント、アプリ、スクリプトが sandbox を操作するために使用します。このページではすべてのクラスとメソッドを一覧化しています。手順の説明は [クイックスタート](/sandboxes/quickstart) を参照してください。
+Lizard SDK をインストールし、Settings → API keys で API キーを作成します。`LIZARD_API_KEY` に保存してください。各 sandbox にはプロジェクトが必要です。`projectId`（Python では `project_id`）、または `project` に ID、slug、名前を渡します。
 
-<span id="install--authenticate" />
+## 作成オプション
 
-## インストールと認証
-
-```bash
-npm install @lizard-build/sdk    # JavaScript / TypeScript
-pip install lizard-sdk           # Python
-```
-
-SDK は環境変数から `LIZARD_API_KEY` を読み取るか、`Sandbox.create` / `Sandbox.connect` に明示的な `apiKey` オプションを受け取ります。キーの作成方法は [Quickstart → Authenticate](/sandboxes/quickstart#authenticate) を参照してください。
-
-すべてのサンドボックスは **プロジェクト** にも属します。使用量はプロジェクトごとに計測されるため、これを指定しない作成は拒否されます。
-
-## `Lizard`
-
-1 つのプロジェクトに固定されたクライアントです。毎回の呼び出しごとではなく、一度だけ project を指定すれば済みます。
-
-| メンバー | 説明 |
+| TypeScript | Python |
 |---|---|
-| `new Lizard({ project, apiKey?, apiUrl?, timeoutMs? })` | クライアントを作成します。`project` は必須です。プロジェクトの ID、slug、または名前を指定します（Python では `Lizard(project=…)`）。 |
-| `lizard.create(template?, options?)` | クライアントの project で サンドボックスを起動します。 |
-| `lizard.connect(sandboxId)` | ID で sandbox に接続し、一時停止中なら自動的に再開します。 |
-| `lizard.list()` | アカウントの実行中 sandbox をすべて一覧表示します。 |
-| `lizard.projectId()` | クライアントのプロジェクト参照をその ID に解決します（最初の呼び出し後はキャッシュされます）。 |
+| `projectId / project` | `project_id / project` |
+| `timeoutMs` | `timeout_ms` |
+| `region` | `region` |
+| `volumeName / volumeId` | `volume_name / volume_id` |
+| `apiKey` | `api_key` |
 
-```ts
-const lizard = new Lizard({ project: 'my-project' });
-const sandbox = await lizard.create('base');
-```
+現在のカタログからテンプレートを選びます。有効なテンプレートには `base`、`codex`、`interpreter` があり、利用可否はリージョンとプールの空き容量によって変わります。`interpreter` には Python と一般的なデータ処理ライブラリが含まれます。ツールのバージョンは sandbox 内で確認してください。公開 CLI には独自テンプレートのアップロード機能はありません。
 
-```python
-lizard = Lizard(project="my-project")
-sandbox = lizard.create("base")
-```
+SDK と CLI の既定の有効期間は 5 分です。API の直接呼び出しとダッシュボードでは、既定で期限を設けません。有効期間を明示してください。作成時の `timeoutMs: 0` は期限を無効にし、正の値は期限を設定します。`setTimeout` は 1000～2147483647 ミリ秒を受け付け、0 は指定できません。コマンド実行で期限は延長されません。アイドル時間のタイマーではありません。
 
-キーでアクセス可能なプロジェクトに一致しないプロジェクト参照は、sandbox が起動される前にエラーとなり、参照可能な project の一覧が表示されます。
+## メソッド
 
-> 末尾にアンダースコアが付く Python のメソッド名（`exec_`）は予約語との衝突を避けるためのもので、プロパティは camelCase（`sandboxId`）ではなく snake_case（`sandbox_id`）です。以下の例では JS/TS 名を使用しています。メソッドシグネチャはインストール済みの Python パッケージを確認してください。
-
-## `Sandbox`
-
-| メンバー | 説明 |
+| API (TypeScript) | メソッド |
 |---|---|
-| `Sandbox.create(template?, options?)` | サンドボックスを起動します。`template` の既定値は `'base'` です。`options.project` には課金対象のプロジェクトを指定します。 |
-| `Sandbox.connect(sandboxId)` | ID で sandbox に接続し、一時停止中なら自動的に再開します。 |
-| `Sandbox.list()` | アカウントの実行中 sandbox をすべて一覧表示します。 |
-| `sandbox.sandboxId` | sandbox の ID（Python では `sandbox_id`）。 |
-| `sandbox.process.exec(cmd)` | コマンドを実行して完了まで待機します（Python では `process.exec_`）。`{ stdout, stderr, exitCode }` を返します。 |
-| `sandbox.fs.write(path, data)` | ファイルを書き込みます。文字列または bytes に対応し、親ディレクトリも作成します。 |
-| `sandbox.fs.read(path)` | ファイルを UTF-8 文字列として読み取ります。 |
-| `sandbox.fs.list(path)` | ディレクトリエントリを一覧表示 → `[{ name, path, type, size }]`。 |
-| `sandbox.fs.makeDir(path)` | ディレクトリと不足している親ディレクトリを作成します。 |
-| `sandbox.fs.remove(path)` | ファイルまたはディレクトリを削除します。 |
-| `sandbox.getHost(port)` | `port` へのルートを登録し、TLS 終端された公開ホスト名を返します。 |
-| `sandbox.pause()` | guest vCPU を停止し、状態を host メモリに保持します。元の期限を超えて一時停止に依存する前に、[lifecycle status](#lifecycle-status) を確認してください。 |
-| `sandbox.resume()` | 一時停止した sandbox をその場で再開します。 |
-| `sandbox.setTimeout(ms)` | 実行中 sandbox の残りライフタイムをミリ秒単位で設定します（最小 1000）。 |
-| `sandbox.getInfo()` | メタデータを取得 → `{ sandboxId, template, startedAt, endAt, … }`。 |
-| `sandbox.kill()` | sandbox を即座に終了し、リソースを解放します。 |
+| `Sandbox.create(template, options)` | カタログのテンプレートからプロジェクト内に作成。 |
+| `Sandbox.connect(sandboxId)` | 既存の sandbox に接続。自動再開はしません。 |
+| `Sandbox.list()` | アクセスできる Sandboxes を一覧表示。状態を確認してください。 |
+| `sandbox.getInfo()` | 状態とメタデータを取得。 |
+| `sandbox.process.exec(cmd)` | シェルコマンドを実行し、stdout、stderr、exitCode を返す。 |
+| `sandbox.fs.write(path, data)` | テキストまたは UTF-8 を書き込み、親ディレクトリを作成。 |
+| `sandbox.fs.read(path)` | UTF-8 テキストを読み取る。 |
+| `sandbox.fs.readBytes(path)` | ファイルのバイトを読み取る。 |
+| `sandbox.fs.list(path)` | ディレクトリの項目を一覧表示。 |
+| `sandbox.fs.makeDir(path)` | ディレクトリと不足する親を作成。 |
+| `sandbox.fs.remove(path)` | ファイルまたはディレクトリを削除。 |
+| `sandbox.getHost(port)` | ポートの公開 HTTPS ホスト名を登録。 |
+| `sandbox.setTimeout(ms)` | 残りの有効期間を設定。最小 1000 ミリ秒。 |
+| `sandbox.kill()` | sandbox を停止し、ボリュームを切り離す。 |
 
-### `Sandbox.create(template?, options?)`
+Python: `exec_`, `get_info`, `get_host`, `set_timeout`, `sandbox_id`, `read_bytes`, `make_dir`.
 
-| オプション | タイプ | デフォルト | 注記 |
-|---|---|---|---|
-| `template` | string | `'base'` | `'base'` または `'code-interpreter-v1'` — サポートされている 2 つの [templates](/sandboxes#templates) |
-| `project` | string | — | **必須。** 課金対象のプロジェクトを指定します。ID、slug、または名前を指定します（Python では `project`）。`Lizard` クライアント経由では不要です。 |
-| `projectId` | string | — | 正確な project ID。`project` の解決をスキップします |
-| `timeoutMs` | int | SDK の既定値 5 分 | ライフタイム（ms） |
-| `region` | string | auto | region に固定します |
-| `volumeName` | string | — | 名前で [ボリューム](/sandboxes/volumes)を `/workspace` に接続 |
-| `volumeId` | string | — | 既存コード用に ID で接続。新しいコードでは `volumeName` を使用 |
-| `apiKey` | string | `LIZARD_API_KEY` 環境変数 | 明示的な API キー。環境変数より優先されます |
+## 現在のランタイムの制限
 
-```ts
-const sandbox = await Sandbox.create('base', { project: 'my-project', timeoutMs: 10 * 60 * 1000 });
-```
+コマンドの結果には stdout、stderr、終了コードが含まれます。タイムアウトは 1～600 秒です。現在のランタイムは SDK の `envs`、`workdir`、`user` オプションを適用しません。ディレクトリと環境変数はシェルコマンド内で指定してください。作成時の `envs` と `metadata` も適用しません。
 
-## `CodeSandbox`
+`fs.write` はテキストまたは有効な UTF-8 バイトを書き込み、`fs.read` はテキストを読み取ります。現在の書き込み API はバイナリアップロードに対応していません。バイナリのダウンロードには `fs.readBytes`（Python では `read_bytes`）を使います。
 
-状態を保持するカーネルで `Sandbox` を拡張したものです。完全な手順は [コード インタープリタ](/sandboxes/code-interpreter) を参照してください。
+現在の sandbox の上限は 4 vCPU、4096 MiB RAM で固定です。作成時のオプションでは変更できません。必要に応じてリージョンを指定してください。カタログへの掲載は空き容量を保証しません。
 
-| メンバー | 説明 |
-|---|---|
-| `CodeSandbox.create(options?)` | コードインタープリターを起動します（既定では `code-interpreter-v1` template を使用）。`Sandbox.create` と同じ `project` オプションを受け取ります。 |
-| `CodeSandbox.connect(sandboxId)` | 既存のコードインタープリター サンドボックスに接続し（必要なら自動再開し）ます。 |
-| `sandbox.runCode(code, opts?)` | カーネルでコードを実行します。`Execution` を返します。 |
-| `sandbox.createContext(opts)` | 分離された namespace を作成します — `{ language }`。 |
-| `sandbox.listContexts()` | サンドボックスのコンテキストを一覧表示します。 |
-| `sandbox.restartContext(context)` | コンテキスト内のすべての変数 / 状態をクリアします。 |
-| `sandbox.deleteContext(context)` | コンテキストのリソースを解放します。 |
+## 未対応の API
 
-### `runCode(code, opts?)`
+sandbox を作成してコマンドを実行し、終了後に `kill` を呼び出します。`connect` は既存の sandbox に接続するもので、停止済みの sandbox を再開しません。一時停止、再開、fork、snapshot、restore、ファイル監視は現在 HTTP 501 を返します。現在のランタイムでは SSH を利用できません。
 
-| オプション | 説明 |
-|---|---|
-| `language` | 単発呼び出し用のランタイム — `'python'`（既定）、`'javascript'`、または `'bash'`。`context` とは同時に指定できません。 |
-| `context` | 既定のコンテキストではなく、特定の分離コンテキスト内で実行します。`language` とは同時に指定できません。 |
-| `onStdout` / `onStderr` | 生成される出力を行単位でストリーミングします。 |
-| `onResult` | 各リッチ結果（値、生成された画像 / グラフ）ごとに呼び出されます。 |
-| `onError` | コードが例外を投げた場合に `ExecutionError` を受け取って呼び出されます。 |
+`CodeSandbox`、`runCode` / `run_code`、実行コンテキストのメソッドは SDK に残っていますが、公開テンプレートには必要な実行サーバーがありません。旧既定テンプレート `code-interpreter-v1` は利用できません。名前を `interpreter` に変えてもこの API は使えません。以下のように `Sandbox.create("interpreter")` とプロセスのコマンドを使ってください。
 
-`Execution` を返します:
+## 保存と課金
 
-| フィールド | 説明 |
-|---|---|
-| `stdout` / `stderr` | キャプチャされた出力ストリーム |
-| `results` | リッチ結果（値、および生成された画像 / グラフ） |
-| `error` | コードが例外を投げた場合の `ExecutionError`（`name`、`message`、`traceback`） |
-| `executionCount` | カーネルの単調増加カウンタ |
+sandbox の実行中はファイルとプロセスを維持します。停止後、別の sandbox で使えるのは、接続した Persistent Volume の `/workspace` に保存したファイルだけです。ボリュームがなければ `/workspace` は一時領域です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。
 
-## `Volume`
+CPU、メモリ、ストレージ、送信トラフィックの実測使用量に応じて課金します。アイドル状態でもメモリやストレージを使う場合があります。タスク終了後は停止してください。データを保存している間はストレージ料金が続きます。
 
-詳しい手順は [Persistent Volumes](/sandboxes/volumes)を参照してください。名前はプロジェクト内で一意で、小文字の英字、数字、ハイフンを使った64文字以内です。
-
-新規ボリュームは1〜50 GB の整数を受け付け、既定値は5です（TypeScript は `sizeGb`、Python は `size_gb`）。サーバー設定で上限を変更できます。既存の大きなボリュームはサイズを維持し、`getOrCreate` は変更せずに返します。
-
-| API | 用途 |
-|---|---|
-| `Volume.create(projectId, name, options)` | ボリュームを作成。同名がある場合は競合エラー。`options.sizeGb` の既定値は `5`。 |
-| `Volume.getOrCreate(projectId, name, options)` | ボリュームを再利用、または作成。既存のサイズは変更しません。Python: `Volume.get_or_create`。 |
-| `Volume.list(projectId)` | プロジェクトのボリューム一覧 → `[{ id, name, sizeGb, status, attachedTo, … }]`。 |
-| `Volume.get(projectId, nameOrId)` | 名前または ID でボリュームを取得。 |
-| `Volume.delete(projectId, nameOrId)` | 切断後、名前または ID で削除。Python: `Volume.remove`。 |
-| `volume.getInfo(projectId)` | メタデータと接続状態を取得。 |
-| `volume.delete(projectId)` | ボリュームを削除。先に切断する必要があります。 |
-
-<span id="see-also" />
-
-## 関連項目
-
-- [Quickstart](/sandboxes/quickstart) — インストール、認証、完全な手順。
-- [コード インタープリタ](/sandboxes/code-interpreter) — `CodeSandbox` ガイド。
-- [Persistent Volumes](/sandboxes/volumes) — `Volume` ガイド。
-
-<span id="lifecycle-status" />
-
-## ライフサイクルステータス
-
-元の期限を超えてセッションを維持するために pause に依存する前に、[known issues](/platform/known-issues#sandbox-pause-and-expiration) を読んでください。pause は guest の状態を host メモリに保持しますが、永続的なバックアップではありません。
+[クイックスタート](/sandboxes/quickstart) · [SDK リファレンス](/sandboxes/sdk-reference) · [Python の実行](/sandboxes/code-interpreter) · [ダッシュボード](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)

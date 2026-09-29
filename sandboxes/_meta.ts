@@ -2,7 +2,7 @@ export default {
   index: 'Overview',
   quickstart: 'Quickstart',
   'sdk-reference': 'SDK Reference',
-  'code-interpreter': 'Code Interpreter',
+  'code-interpreter': "Run Python",
   volumes: 'Persistent Volumes',
   dashboard: 'Dashboard',
 };
