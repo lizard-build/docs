@@ -22,9 +22,49 @@ Sandboxes führen kurze Befehle und Agentenaufgaben in Kubernetes-Pods mit runc 
 
 ## Sandboxes
 
+<span id="sandbox-sizes" />
+
+### Größen
+
+| Größe | CPU und Arbeitsspeicher | Speicher (`/workspace`) | Preis während der Laufzeit |
+|---|---|---|---|
+| Small | 2 vCPU / 4 GB | 5 GB | $0.009 pro Stunde |
+| Medium (Standard) | 4 vCPU / 8 GB | 20 GB | $0.018 pro Stunde |
+| Large | 8 vCPU / 16 GB | 50 GB | $0.036 pro Stunde |
+
+CPU und Arbeitsspeicher sind im Preis enthalten. Persistent Volumes werden separat abgerechnet.
+
+<span id="sandbox-account-limits" />
+
+### Kontolimits
+
+Diese Limits begrenzen, wie viele Sandboxes ein Konto gleichzeitig ausführt und wie schnell es neue startet. Es gibt keinen Tarif zur Auswahl: Die Limits steigen automatisch mit dem Betrag, den der Kontoinhaber insgesamt bezahlt hat (Guthabenkäufe und automatische Aufladungen).
+
+| Konto | Gleichzeitig aktiv | Starts pro Minute | Pro Stunde | Pro Tag |
+|---|---|---|---|---|
+| Kostenlose Testphase: Karte hinterlegt, noch nichts bezahlt | 5 | 6 | 30 | 100 |
+| Nach einer ersten Aufladung in beliebiger Höhe | 20 | 12 | 60 | 200 |
+| Insgesamt $20 bezahlt | 100 | 24 | 120 | 400 |
+| Enterprise | Individuell | Individuell | Individuell | Individuell |
+
+- Die Limits gelten pro Kontoinhaber, über alle Workspaces des Inhabers hinweg. Ein zweiter Workspace bringt kein zweites Kontingent.
+- Aktiv bedeutet laufend oder fortsetzend. Eine pausierte Sandbox zählt nicht; um eine fortzusetzen, braucht es einen freien Platz.
+- Ein Start ist eine neue Sandbox. Ein Fortsetzen ist kein Start. Eine Erstellung, die auf Seiten von Lizard fehlschlägt, zählt nicht.
+- Bei Überschreitung geben Create und Resume HTTP 429 zurück, mit `code` gleich `SANDBOX_LIMIT_REACHED` (aktiv) oder `SANDBOX_RATE_LIMITED` (Starts). Eine Ablehnung wegen der Startrate enthält einen `Retry-After`-Header.
+- Das Dashboard zeigt neben **New Sandbox**, wie viele Sandboxes im Verhältnis zu Ihrem Limit laufen. Für mehr als 100 gleichzeitig sprechen Sie uns auf Enterprise an.
+
+<span id="sandbox-egress" />
+
+### Ausgehender Netzwerkverkehr
+
+Ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum von 30 Tagen inklusive, gezählt über alle Sandboxes des Kontos. Darüber hinaus verlieren die Sandboxes des Kontos ihren ausgehenden Netzwerkzugang, bis die 30-Tage-Summe wieder unter 2 TB liegt. Es fallen keine zusätzlichen Kosten an.
+
+<span id="sandbox-lifetime" />
+
+### Laufzeit
+
 | Einstellung | Aktuelle Create-API |
 |---|---|
-| CPU und Arbeitsspeicher | 4 vCPU / 4096 MiB |
 | Vorlagen | `base`, `codex`, `interpreter` |
 | Standardlaufzeit der Raw API | `timeoutMs: 0`, kein Ablauf |
 | Standardlaufzeit des Lizard SDK | 300000 ms, fünf Minuten |
@@ -34,7 +74,7 @@ Sandboxes führen kurze Befehle und Agentenaufgaben in Kubernetes-Pods mit runc 
 
 SDK und CLI setzen standardmäßig eine Laufzeit von fünf Minuten. Die direkte API und das Dashboard setzen standardmäßig kein Ablaufdatum. Geben Sie die Laufzeit ausdrücklich an: `timeoutMs: 0` bei der Erstellung deaktiviert den Ablauf; ein positiver Wert setzt eine Frist. `setTimeout` akzeptiert 1000–2147483647 ms, nicht null. Befehle verlängern die Frist nicht. Dies ist kein Leerlauf-Timer.
 
-Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, setzt aber keine gestoppte Sandbox fort. Pause, Resume, Fork, Snapshot, Restore und Dateiüberwachung geben derzeit HTTP 501 zurück. SSH steht in der aktuellen Laufzeit nicht bereit.
+Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, setzt aber keine gestoppte Sandbox fort. Pause und Resume sind verfügbar. Fork, Snapshot, Restore und Dateiüberwachung geben derzeit HTTP 501 zurück. SSH steht in der aktuellen Laufzeit nicht bereit.
 
 <span id="regions" />
 

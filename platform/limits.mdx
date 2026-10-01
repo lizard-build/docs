@@ -20,9 +20,49 @@ Sandboxes run short-lived commands and agent tasks in Kubernetes pods with the r
 
 ## Sandboxes
 
+<span id="sandbox-sizes" />
+
+### Sizes
+
+| Size | CPU and memory | Disk (`/workspace`) | Price while running |
+|---|---|---|---|
+| Small | 2 vCPU / 4 GB | 5 GB | $0.009 per hour |
+| Medium (default) | 4 vCPU / 8 GB | 20 GB | $0.018 per hour |
+| Large | 8 vCPU / 16 GB | 50 GB | $0.036 per hour |
+
+CPU and memory are included in the price. Persistent Volumes are billed separately.
+
+<span id="sandbox-account-limits" />
+
+### Account limits
+
+These limits cap how many sandboxes an account runs at once and how fast it starts new ones. There is no plan to choose: they rise automatically with what the account owner has paid in total (credit purchases and auto top-ups).
+
+| Account | Running at once | Starts per minute | Per hour | Per day |
+|---|---|---|---|---|
+| Free trial: card saved, nothing paid yet | 5 | 6 | 30 | 100 |
+| After a first top-up of any amount | 20 | 12 | 60 | 200 |
+| $20 paid in total | 100 | 24 | 120 | 400 |
+| Enterprise | Custom | Custom | Custom | Custom |
+
+- Limits are counted per account owner, across all of the owner's workspaces. A second workspace does not add a second allowance.
+- Running means running or resuming. A paused sandbox does not count; resuming one needs a free slot.
+- A start is a new sandbox. A resume is not a start. A create that fails on Lizard's side does not count.
+- Over a limit, create and resume return HTTP 429 with `code` set to `SANDBOX_LIMIT_REACHED` (running) or `SANDBOX_RATE_LIMITED` (starts). A start-rate refusal includes a `Retry-After` header.
+- The dashboard shows how many sandboxes are running against your limit next to **New Sandbox**. For more than 100 at once, contact us about Enterprise.
+
+<span id="sandbox-egress" />
+
+### Network egress
+
+Sandbox egress is included up to 2 TB per account over a rolling 30 days, counted across all of the account's sandboxes. Past that, the account's sandboxes lose outbound network until the 30-day total falls back under 2 TB. Nothing extra is charged.
+
+<span id="sandbox-lifetime" />
+
+### Lifetime
+
 | Setting | Current create API |
 |---|---|
-| CPU and memory | 4 vCPU / 4096 MiB |
 | Templates | `base`, `codex`, `interpreter` |
 | Raw API default lifetime | `timeoutMs: 0`, no expiration |
 | Lizard SDK default lifetime | 300000 ms, five minutes |
@@ -32,7 +72,7 @@ Sandboxes run short-lived commands and agent tasks in Kubernetes pods with the r
 
 The SDK and CLI default to a five-minute lifetime. The raw API and dashboard default to no expiration. Set an explicit lifetime: `timeoutMs: 0` at creation disables expiration; a positive value sets a deadline. `setTimeout` accepts 1000–2147483647 ms, not zero. Commands do not reset the deadline. This is not an idle timer.
 
-Create a sandbox, run commands, then call `kill`. `connect` attaches to an existing sandbox; it does not resume a stopped one. Pause, resume, fork, snapshot, restore, and file watching currently return HTTP 501. SSH access is not available for the current runtime.
+Create a sandbox, run commands, then call `kill`. `connect` attaches to an existing sandbox; it does not resume a stopped one. Pause and resume are available. Fork, snapshot, restore, and file watching currently return HTTP 501. SSH access is not available for the current runtime.
 
 ## Regions
 

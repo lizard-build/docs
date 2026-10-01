@@ -24,19 +24,59 @@ Sandboxes ejecuta comandos breves y tareas de agentes en pods de Kubernetes con 
 
 ## Sandboxes
 
+<span id="sandbox-sizes" />
+
+### Tamaños
+
+| Tamaño | CPU y memoria | Disco (`/workspace`) | Precio mientras se ejecuta |
+|---|---|---|---|
+| Small | 2 vCPU / 4 GB | 5 GB | $0.009 por hora |
+| Medium (predeterminado) | 4 vCPU / 8 GB | 20 GB | $0.018 por hora |
+| Large | 8 vCPU / 16 GB | 50 GB | $0.036 por hora |
+
+La CPU y la memoria están incluidas en el precio. Los Persistent Volumes se facturan aparte.
+
+<span id="sandbox-account-limits" />
+
+### Límites de la cuenta
+
+Estos límites fijan cuántos sandboxes ejecuta una cuenta a la vez y con qué rapidez inicia otros nuevos. No hay planes que elegir: suben automáticamente según lo que el propietario de la cuenta ha pagado en total (compras de créditos y recargas automáticas).
+
+| Cuenta | En ejecución a la vez | Inicios por minuto | Por hora | Por día |
+|---|---|---|---|---|
+| Prueba gratuita: tarjeta guardada, aún sin pagos | 5 | 6 | 30 | 100 |
+| Tras una primera recarga de cualquier importe | 20 | 12 | 60 | 200 |
+| $20 pagados en total | 100 | 24 | 120 | 400 |
+| Enterprise | Personalizado | Personalizado | Personalizado | Personalizado |
+
+- Los límites se cuentan por propietario de la cuenta, en todos sus espacios de trabajo. Un segundo espacio de trabajo no añade un segundo cupo.
+- En ejecución significa ejecutándose o reanudándose. Un sandbox en pausa no cuenta; reanudarlo necesita un hueco libre.
+- Un inicio es un sandbox nuevo. Una reanudación no es un inicio. Una creación que falla por parte de Lizard no cuenta.
+- Al superar un límite, la creación y la reanudación devuelven HTTP 429 con `code` igual a `SANDBOX_LIMIT_REACHED` (en ejecución) o `SANDBOX_RATE_LIMITED` (inicios). Un rechazo por ritmo de inicios incluye la cabecera `Retry-After`.
+- El panel muestra, junto a **New Sandbox**, cuántos sandboxes se están ejecutando frente a tu límite. Para más de 100 a la vez, contáctanos sobre Enterprise.
+
+<span id="sandbox-egress" />
+
+### Tráfico de salida
+
+El tráfico de salida de los sandboxes está incluido hasta 2 TB por cuenta en un periodo móvil de 30 días, sumando todos los sandboxes de la cuenta. Por encima de eso, los sandboxes de la cuenta pierden la red saliente hasta que el total de 30 días vuelve a quedar por debajo de 2 TB. No se cobra nada adicional.
+
+<span id="sandbox-lifetime" />
+
+### Duración
+
 | Ajuste | API de creación actual |
 |---|---|
-| CPU and memory | 4 vCPU / 4096 MiB |
 | Plantillas | `base`, `codex`, `interpreter` |
-| Duración predeterminada de la API sin procesar | `timeoutMs: 0`, sin vencimiento |
-| Duración predeterminada de Lizard SDK | 300000 ms, cinco minutos |
-| Rango de vida explícito | Milisegundos enteros de 0 a 2147483647 |
-| Actualizar una vida útil | Al menos 1000 ms; no es un temporizador de inactividad |
-| Adjuntar volumen persistente | Un sandbox a la vez, en el nodo del volumen |
+| Duración predeterminada de la API directa | `timeoutMs: 0`, sin vencimiento |
+| Duración predeterminada del Lizard SDK | 300000 ms, cinco minutos |
+| Rango de duración explícita | Milisegundos enteros de 0 a 2147483647 |
+| Actualizar una duración | Al menos 1000 ms; no es un temporizador de inactividad |
+| Conexión de un volumen persistente | Un sandbox a la vez, en el nodo del volumen |
 
-El SDK y la CLI fijan cinco minutos de duración por defecto. La API directa y el panel no fijan caducidad por defecto. Indica la duración: `timeoutMs: 0` al crear desactiva la caducidad; un valor positivo fija un plazo. `setTimeout` acepta 1000–2147483647 ms, no cero. Los comandos no reinician el plazo. No es un temporizador de inactividad.
+El SDK y la CLI usan por defecto una duración de cinco minutos. La API directa y el panel no fijan vencimiento por defecto. Indica una duración explícita: `timeoutMs: 0` al crear desactiva el vencimiento; un valor positivo fija un plazo. `setTimeout` acepta de 1000 a 2147483647 ms, no cero. Los comandos no reinician el plazo. No es un temporizador de inactividad.
 
-Crea un sandbox, ejecuta comandos y llama a `kill`. `connect` se conecta a un sandbox existente; no reanuda uno detenido. Pausar, reanudar, fork, snapshot, restore y observar archivos devuelven HTTP 501 en el runtime actual. SSH no está disponible.
+Crea un sandbox, ejecuta comandos y luego llama a `kill`. `connect` se conecta a un sandbox existente; no reanuda uno detenido. La pausa y la reanudación están disponibles. Fork, snapshot, restore y la vigilancia de archivos devuelven actualmente HTTP 501. El acceso SSH no está disponible en el runtime actual.
 
 <span id="regions" />
 
