@@ -28,6 +28,8 @@ Lizard SDK をインストールし、Settings → API keys で API キーを作
 | `timeoutMs` | `timeout_ms` |
 | `region` | `region` |
 | `volumeName / volumeId` | `volume_name / volume_id` |
+| `size` | `size` |
+| `snapshotId` | `snapshot_id` |
 | `apiKey` | `api_key` |
 
 現在のカタログからテンプレートを選びます。有効なテンプレートには `base`、`codex`、`interpreter` があり、利用可否はリージョンとプールの空き容量によって変わります。`interpreter` には Python と一般的なデータ処理ライブラリが含まれます。ツールのバージョンは sandbox 内で確認してください。公開 CLI には独自テンプレートのアップロード機能はありません。
@@ -51,9 +53,14 @@ SDK と CLI の既定の有効期間は 5 分です。API の直接呼び出し�
 | `sandbox.fs.remove(path)` | ファイルまたはディレクトリを削除。 |
 | `sandbox.getHost(port)` | ポートの公開 HTTPS ホスト名を登録。 |
 | `sandbox.setTimeout(ms)` | 残りの有効期間を設定。最小 1000 ミリ秒。 |
+| `sandbox.pause()` / `sandbox.resume()` | 一時停止または再開をキューに入れ、すぐに戻る。 |
+| `sandbox.waitForStatus(status)` | `paused` または `running` を待つ。一時停止に失敗した場合はエラーを投げる。 |
+| `sandbox.snapshot(name, { poolSize })` | メモリと `/workspace` のファイルを非公開スナップショットとして保存。 |
+| `Sandbox.waitForSnapshot(snapshotId)` | スナップショットの準備完了を待つ。 |
+| `Sandbox.restore(snapshotId)` | 待機中のコピーから新しい sandbox を起動。 |
 | `sandbox.kill()` | sandbox を停止し、ボリュームを切り離す。 |
 
-Python: `exec_`, `get_info`, `get_host`, `set_timeout`, `sandbox_id`, `read_bytes`, `make_dir`.
+Python: `exec_`, `get_info`, `get_host`, `set_timeout`, `sandbox_id`, `read_bytes`, `make_dir`, `wait_for_status`, `wait_for_snapshot`, `pool_size`.
 
 ## 現在のランタイムの制限
 
@@ -61,11 +68,11 @@ Python: `exec_`, `get_info`, `get_host`, `set_timeout`, `sandbox_id`, `read_byte
 
 `fs.write` はテキストまたは有効な UTF-8 バイトを書き込み、`fs.read` はテキストを読み取ります。現在の書き込み API はバイナリアップロードに対応していません。バイナリのダウンロードには `fs.readBytes`（Python では `read_bytes`）を使います。
 
-現在の sandbox の上限は 4 vCPU、4096 MiB RAM で固定です。作成時のオプションでは変更できません。必要に応じてリージョンを指定してください。カタログへの掲載は空き容量を保証しません。
+`size` (`'small'`、`'medium'`、`'large'`) で 2 vCPU / 4 GB、4 vCPU / 8 GB (既定)、8 vCPU / 16 GB を選べます。[サイズと料金](/platform/limits#sandbox-sizes)を参照してください。スナップショットから復元した sandbox には `size` は適用されません。必要に応じてリージョンを指定してください。カタログへの掲載は空き容量を保証しません。
 
 ## 未対応の API
 
-sandbox を作成してコマンドを実行し、終了後に `kill` を呼び出します。`connect` は既存の sandbox に接続するもので、停止済みの sandbox を再開しません。一時停止、再開、fork、snapshot、restore、ファイル監視は現在 HTTP 501 を返します。現在のランタイムでは SSH を利用できません。
+`sandbox.fork()` とファイル監視は HTTP 501 を返します。`Sandbox.connect` は一時停止中や停止済みの sandbox を再開しません。一時停止中の sandbox には `resume()` を呼び出してください。SSH プロトコルでのアクセスはできません。`lizard sandbox ssh` は CLI の認証情報で対話型シェルを開きます。
 
 `CodeSandbox`、`runCode` / `run_code`、実行コンテキストのメソッドは SDK に残っていますが、公開テンプレートには必要な実行サーバーがありません。旧既定テンプレート `code-interpreter-v1` は利用できません。名前を `interpreter` に変えてもこの API は使えません。以下のように `Sandbox.create("interpreter")` とプロセスのコマンドを使ってください。
 
@@ -73,6 +80,6 @@ sandbox を作成してコマンドを実行し、終了後に `kill` を呼び�
 
 sandbox の実行中はファイルとプロセスを維持します。停止後、別の sandbox で使えるのは、接続した Persistent Volume の `/workspace` に保存したファイルだけです。ボリュームがなければ `/workspace` は一時領域です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。
 
-CPU、メモリ、ストレージ、送信トラフィックの実測使用量に応じて課金します。アイドル状態でもメモリやストレージを使う場合があります。タスク終了後は停止してください。データを保存している間はストレージ料金が続きます。
+各サイズは固定の時間単価で、sandbox の実行中は秒単位で課金されます。アイドル時間も含みます。送信トラフィックはアカウントごとに直近 30 日間で [2 TB まで](/platform/limits#sandbox-egress)料金に含まれます。スナップショットから復元した sandbox は実測使用量で課金されます。一時停止中の sandbox は課金されません。Persistent Volumes はデータを保存している間、別途課金されます。タスクが終わったら sandbox を一時停止するか停止してください。
 
 [クイックスタート](/sandboxes/quickstart) · [SDK リファレンス](/sandboxes/sdk-reference) · [Python の実行](/sandboxes/code-interpreter) · [ダッシュボード](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)

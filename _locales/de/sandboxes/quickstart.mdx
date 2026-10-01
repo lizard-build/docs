@@ -93,7 +93,7 @@ console.log(`https://${host}`);
 
 ## Mit einer laufenden Sandbox verbinden
 
-Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, setzt aber keine gestoppte Sandbox fort. Pause, Resume, Fork, Snapshot, Restore und Dateiüberwachung geben derzeit HTTP 501 zurück. SSH steht in der aktuellen Laufzeit nicht bereit.
+Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, ohne ihren Zustand zu ändern; eine pausierte oder gestoppte Sandbox wird dadurch nicht fortgesetzt. Pause, Fortsetzen, Snapshot und Restore sind verfügbar; siehe [Pause, Fortsetzen und Snapshots](/sandboxes/quickstart#pause-and-resume). Fork und Dateiüberwachung geben HTTP 501 zurück. `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten. Zugriff über das SSH-Protokoll gibt es nicht, daher funktionieren SSH-Clients, `scp` und Portweiterleitung nicht.
 
 ```ts
 const connected = await Sandbox.connect(sandbox.sandboxId);
@@ -101,6 +101,32 @@ console.log(await connected.getInfo());
 ```
 
 <a id="pause-and-resume" />
+
+## Pause, Fortsetzen und Snapshots
+
+`pause()` speichert Arbeitsspeicher und laufende Prozesse der Sandbox, behält `/workspace` auf ihrem Node und beendet die Abrechnung. `resume()` stellt die Sandbox mit derselben ID wieder her. Beide Aufrufe reihen die Arbeit ein und kehren sofort zurück; warten Sie auf den neuen Status.
+
+```ts
+await sandbox.pause();
+await sandbox.waitForStatus('paused');
+await sandbox.resume();
+await sandbox.waitForStatus('running');
+```
+
+- Eine Pause schließt offene Netzwerkverbindungen. Programme in der Sandbox müssen sich nach dem Fortsetzen neu verbinden.
+- Lassen sich die Prozesse nicht speichern, läuft die Sandbox weiter, und `waitForStatus` löst einen Fehler mit dem Grund aus. Schlägt das Fortsetzen fehl, bleibt die Sandbox mit ihrem Checkpoint pausiert; rufen Sie `resume()` erneut auf.
+- Die Frist der Lebensdauer ruht während der Pause und läuft nach dem Fortsetzen weiter. Eine pausierte Sandbox zählt nicht zum Limit laufender Sandboxes.
+- Eine pausierte Sandbox wird auf demselben Node fortgesetzt. Fällt dieser Node aus, geht der pausierte Zustand verloren; exportieren Sie benötigte Dateien.
+
+Ein Snapshot speichert Arbeitsspeicher und `/workspace`-Dateien einer laufenden Sandbox als private Vorlage im Projekt. Jedes Restore startet eine neue Sandbox in der Region des Snapshots. Schließen Sie vor der Aufnahme Clients und Terminals und stoppen Sie Schreibvorgänge in `/workspace`. Angehängte Persistent Volumes werden nicht erfasst.
+
+```ts
+const saved = await sandbox.snapshot('my-app', { poolSize: 5 });
+await Sandbox.waitForSnapshot(saved.id);
+const copy = await Sandbox.restore(saved.id);
+```
+
+Lizard hält standardmäßig fünf Kopien bereit (eine bis zehn), sodass ein Restore von einer fertigen Kopie startet. Ist keine bereit, kann Restore HTTP 503 zurückgeben, bis der Pool nachgefüllt ist. Eine wiederhergestellte Sandbox wird nach gemessener Nutzung abgerechnet; `size` gilt nicht. In der CLI nutzen Sie `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` und `lizard sandbox restore <snapshot-id>`.
 
 ## Aktuelle Laufzeitlimits
 

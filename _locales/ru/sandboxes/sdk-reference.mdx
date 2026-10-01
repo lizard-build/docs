@@ -28,6 +28,8 @@ description: "Методы Lizard SDK и ограничения текущего
 | `timeoutMs` | `timeout_ms` |
 | `region` | `region` |
 | `volumeName / volumeId` | `volume_name / volume_id` |
+| `size` | `size` |
+| `snapshotId` | `snapshot_id` |
 | `apiKey` | `api_key` |
 
 Выбирайте шаблон из текущего каталога. В нём доступны `base`, `codex` и `interpreter`; наличие зависит от региона и свободных ресурсов пула. `interpreter` содержит Python и основные библиотеки для работы с данными. Проверяйте версии программ внутри sandbox. Публичный CLI не поддерживает загрузку своих шаблонов.
@@ -51,9 +53,14 @@ SDK и CLI по умолчанию задают срок жизни пять м�
 | `sandbox.fs.remove(path)` | Удалить файл или папку. |
 | `sandbox.getHost(port)` | Зарегистрировать публичное HTTPS-имя для порта. |
 | `sandbox.setTimeout(ms)` | Задать оставшийся срок жизни, минимум 1000 мс. |
+| `sandbox.pause()` / `sandbox.resume()` | Поставить паузу или возобновление в очередь и сразу вернуть ответ. |
+| `sandbox.waitForStatus(status)` | Дождаться `paused` или `running`; выбросить ошибку, если пауза не удалась. |
+| `sandbox.snapshot(name, { poolSize })` | Сохранить память и файлы `/workspace` в приватный снимок. |
+| `Sandbox.waitForSnapshot(snapshotId)` | Дождаться готовности снимка. |
+| `Sandbox.restore(snapshotId)` | Запустить новый sandbox из готовой копии. |
 | `sandbox.kill()` | Остановить sandbox и отключить том. |
 
-Python: `exec_`, `get_info`, `get_host`, `set_timeout`, `sandbox_id`, `read_bytes`, `make_dir`.
+Python: `exec_`, `get_info`, `get_host`, `set_timeout`, `sandbox_id`, `read_bytes`, `make_dir`, `wait_for_status`, `wait_for_snapshot`, `pool_size`.
 
 ## Текущие ограничения runtime
 
@@ -61,11 +68,11 @@ Python: `exec_`, `get_info`, `get_host`, `set_timeout`, `sandbox_id`, `read_byte
 
 `fs.write` записывает текст или корректные байты UTF-8, а `fs.read` читает текст. Текущий метод записи не поддерживает загрузку двоичных файлов. Для скачивания двоичного файла используйте `fs.readBytes` (в Python — `read_bytes`).
 
-Текущие лимиты sandbox фиксированы: 4 vCPU и 4096 MiB RAM. Параметры создания их не меняют. При необходимости укажите регион явно; наличие региона в каталоге не гарантирует свободные ресурсы.
+Передайте `size` (`'small'`, `'medium'` или `'large'`), чтобы выбрать 2 vCPU / 4 GB, 4 vCPU / 8 GB (по умолчанию) или 8 vCPU / 16 GB; см. [размеры и цены](/platform/limits#sandbox-sizes). Для sandbox, восстановленного из снимка, `size` не действует. При необходимости укажите регион явно; наличие региона в каталоге не гарантирует свободные ресурсы.
 
 ## Недоступные API
 
-Создайте sandbox, выполните команды и вызовите `kill`. `connect` подключается к существующему sandbox, но не возобновляет остановленный. Пауза, возобновление, fork, snapshot, restore и наблюдение за файлами сейчас возвращают HTTP 501. SSH в текущем runtime недоступен.
+`sandbox.fork()` и наблюдение за файлами возвращают HTTP 501. `Sandbox.connect` не возобновляет приостановленный или остановленный sandbox; для приостановленного вызовите `resume()`. Доступа по протоколу SSH нет; `lizard sandbox ssh` открывает интерактивную оболочку с учётными данными CLI.
 
 `CodeSandbox`, `runCode` / `run_code` и методы контекста исполнения остаются в SDK, но в каталоге нет шаблона с нужным им сервером исполнения. Старый шаблон по умолчанию `code-interpreter-v1` недоступен. Замена имени на `interpreter` не включает этот API. Используйте `Sandbox.create("interpreter")` и команды процессов, как в примере ниже.
 
@@ -73,6 +80,6 @@ Python: `exec_`, `get_info`, `get_host`, `set_timeout`, `sandbox_id`, `read_byte
 
 Файлы и процессы доступны, пока sandbox работает. После остановки следующий sandbox может получить только файлы, записанные на подключённый Persistent Volume в `/workspace`. Без тома `/workspace` — временная папка. Том подключается только к одному sandbox и хранится на одном узле; отдельно сохраняйте файлы, которые должны пережить потерю узла.
 
-Оплата зависит от измеренного расхода CPU, памяти, хранилища и исходящего трафика. Sandbox может расходовать память и место даже без команд. Останавливайте его после задачи; плата за хранилище продолжается, пока вы храните данные.
+У каждого размера фиксированная почасовая цена; оплата идёт посекундно, пока sandbox работает, включая простой. Исходящий трафик входит в цену до [2 TB на аккаунт](/platform/limits#sandbox-egress) за скользящие 30 дней. Sandbox, восстановленный из снимка, оплачивается по измеренному расходу. За приостановленный sandbox плата не берётся; Persistent Volumes оплачиваются отдельно, пока вы храните данные. Ставьте sandbox на паузу или останавливайте его, когда задача завершена.
 
 [Быстрый старт](/sandboxes/quickstart) · [Справочник SDK](/sandboxes/sdk-reference) · [Запуск Python](/sandboxes/code-interpreter) · [Кабинет](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)

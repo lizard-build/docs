@@ -94,7 +94,7 @@ console.log(`https://${host}`);
 
 ## 実行中の sandbox への再接続
 
-sandbox を作成してコマンドを実行し、終了後に `kill` を呼び出します。`connect` は既存の sandbox に接続するもので、停止済みの sandbox を再開しません。一時停止、再開、fork、snapshot、restore、ファイル監視は現在 HTTP 501 を返します。現在のランタイムでは SSH を利用できません。
+sandbox を作成してコマンドを実行し、終了後に `kill` を呼び出します。`connect` は既存の sandbox に接続するだけで状態を変えないため、一時停止中や停止済みの sandbox を再開しません。一時停止、再開、snapshot、restore は利用できます。[一時停止、再開、スナップショット](/sandboxes/quickstart#pause-and-resume)を参照してください。fork とファイル監視は HTTP 501 を返します。`lizard sandbox ssh` は CLI の認証情報で対話型シェルを開きます。SSH プロトコルでのアクセスはできないため、SSH クライアント、`scp`、ポートフォワーディングは使えません。
 
 ```ts
 const connected = await Sandbox.connect(sandbox.sandboxId);
@@ -102,6 +102,32 @@ console.log(await connected.getInfo());
 ```
 
 <a id="pause-and-resume" />
+
+## 一時停止、再開、スナップショット
+
+`pause()` は sandbox のメモリと実行中のプロセスを保存し、`/workspace` をそのノードに残したまま課金を止めます。`resume()` は同じ ID で sandbox を復元します。どちらも処理をキューに入れてすぐに戻るため、新しい状態になるまで待ってください。
+
+```ts
+await sandbox.pause();
+await sandbox.waitForStatus('paused');
+await sandbox.resume();
+await sandbox.waitForStatus('running');
+```
+
+- 一時停止すると、開いているネットワーク接続は閉じられます。再開後、sandbox 内のプログラムは再接続する必要があります。
+- プロセスを保存できない場合、sandbox は実行を続け、`waitForStatus` が理由付きのエラーを投げます。再開に失敗した場合、sandbox はチェックポイントを保持したまま一時停止状態に残ります。`resume()` を再度呼び出してください。
+- 一時停止中は有効期間の期限が止まり、再開後に続きから進みます。一時停止中の sandbox は実行数の上限に数えられません。
+- 一時停止中の sandbox は同じノードで再開します。そのノードが故障すると一時停止した状態は失われます。必要なファイルはエクスポートしてください。
+
+スナップショットは、実行中の sandbox のメモリと `/workspace` のファイルを、プロジェクト専用のテンプレートとして保存します。restore するたびに、スナップショットと同じリージョンで新しい sandbox が起動します。取得前にクライアントとターミナルを閉じ、`/workspace` への書き込みを止めてください。接続中の Persistent Volumes は保存されません。
+
+```ts
+const saved = await sandbox.snapshot('my-app', { poolSize: 5 });
+await Sandbox.waitForSnapshot(saved.id);
+const copy = await Sandbox.restore(saved.id);
+```
+
+Lizard は既定で 5 つのコピーを待機させ (1〜10 で変更可能)、restore は待機中のコピーから起動します。待機中のコピーがないときは、プールが補充されるまで restore が HTTP 503 を返すことがあります。復元した sandbox は実測使用量で課金され、`size` は適用されません。CLI では `lizard sandbox pause <id>`、`lizard sandbox resume <id>`、`lizard sandbox snapshot <id> --name my-app`、`lizard sandbox restore <snapshot-id>` を使います。
 
 ## 現在のランタイムの制限
 

@@ -14,7 +14,9 @@ Esta página registra comportamientos que requieren precaución o una versión v
 
 ## Pausa y vencimiento del sandbox
 
-Crea un sandbox, ejecuta comandos y llama a `kill`. `connect` se conecta a un sandbox existente; no reanuda uno detenido. Pausar, reanudar, fork, snapshot, restore y observar archivos devuelven HTTP 501 en el runtime actual. SSH no está disponible.
+Crea un sandbox, ejecuta comandos y llama a `kill`. `connect` se conecta a un sandbox existente sin cambiar su estado, así que no reanuda uno pausado ni uno detenido. Pausar, reanudar, snapshot y restore están disponibles; consulta [Pausa, reanudación y snapshots](/sandboxes/quickstart#pause-and-resume). Fork y la vigilancia de archivos devuelven HTTP 501. `lizard sandbox ssh` abre una shell interactiva con tus credenciales de la CLI. No hay acceso por el protocolo SSH, así que los clientes SSH, `scp` y el reenvío de puertos no funcionan.
+
+La pausa cierra las conexiones de red abiertas. Si no se pueden guardar los procesos, el sandbox sigue en marcha e indica el motivo en `pauseError`. Un sandbox pausado solo se reanuda en su propio nodo; si ese nodo falla, se pierde el estado pausado.
 
 Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un Persistent Volume adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
 

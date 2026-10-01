@@ -94,7 +94,7 @@ console.log(`https://${host}`);
 
 ## Подключение к работающему sandbox
 
-Создайте sandbox, выполните команды и вызовите `kill`. `connect` подключается к существующему sandbox, но не возобновляет остановленный. Пауза, возобновление, fork, snapshot, restore и наблюдение за файлами сейчас возвращают HTTP 501. SSH в текущем runtime недоступен.
+Создайте sandbox, выполните команды и вызовите `kill`. `connect` подключается к существующему sandbox и не меняет его состояние, поэтому не возобновляет приостановленный или остановленный sandbox. Пауза, возобновление, snapshot и restore доступны; см. [Пауза, возобновление и снимки](/sandboxes/quickstart#pause-and-resume). Fork и наблюдение за файлами возвращают HTTP 501. `lizard sandbox ssh` открывает интерактивную оболочку с учётными данными CLI. Доступа по протоколу SSH нет, поэтому SSH-клиенты, `scp` и проброс портов не работают.
 
 ```ts
 const connected = await Sandbox.connect(sandbox.sandboxId);
@@ -102,6 +102,32 @@ console.log(await connected.getInfo());
 ```
 
 <a id="pause-and-resume" />
+
+## Пауза, возобновление и снимки
+
+`pause()` сохраняет память и запущенные процессы sandbox, оставляет `/workspace` на его узле и останавливает оплату. `resume()` восстанавливает sandbox с тем же ID. Оба вызова ставят задачу в очередь и сразу возвращают ответ; дождитесь нового статуса.
+
+```ts
+await sandbox.pause();
+await sandbox.waitForStatus('paused');
+await sandbox.resume();
+await sandbox.waitForStatus('running');
+```
+
+- Пауза закрывает открытые сетевые соединения. После возобновления программы в sandbox должны подключиться заново.
+- Если процессы не удаётся сохранить, sandbox продолжает работать, а `waitForStatus` выбрасывает ошибку с причиной. Если возобновление не удалось, sandbox остаётся на паузе с сохранённым состоянием; вызовите `resume()` ещё раз.
+- Пока sandbox на паузе, срок жизни не расходуется; после возобновления отсчёт продолжается. Приостановленный sandbox не учитывается в лимите запущенных.
+- Приостановленный sandbox возобновляется на том же узле. Если узел выйдет из строя, сохранённое состояние пропадёт; выгрузите нужные файлы заранее.
+
+Снимок (snapshot) сохраняет память и файлы `/workspace` работающего sandbox как приватный шаблон проекта. Каждый restore запускает новый sandbox в регионе снимка. Перед снимком закройте клиенты и терминалы и остановите запись в `/workspace`. Подключённые Persistent Volumes в снимок не входят.
+
+```ts
+const saved = await sandbox.snapshot('my-app', { poolSize: 5 });
+await Sandbox.waitForSnapshot(saved.id);
+const copy = await Sandbox.restore(saved.id);
+```
+
+Lizard по умолчанию держит пять готовых копий (от одной до десяти), поэтому restore стартует из готовой копии. Если готовых копий нет, restore может вернуть HTTP 503, пока пул не пополнится. Восстановленный sandbox оплачивается по измеренному расходу; `size` к нему не применяется. В CLI используйте `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` и `lizard sandbox restore <snapshot-id>`.
 
 ## Текущие ограничения runtime
 

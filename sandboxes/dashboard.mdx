@@ -12,7 +12,7 @@ description: "Create and inspect Sandboxes, choose templates, and manage volumes
 <span id="snapshots" />
 <span id="volumes" />
 
-Open a project and select Sandboxes. Create a sandbox with a template from the catalog and a region. The default region is not a nearest-region guarantee. The current resource limits are fixed. Dashboard-created sandboxes have no expiration unless you set a lifetime through the API.
+Open a project and select Sandboxes. Create a sandbox with a template from the catalog, a region, and a size: Small, Medium (the default), or Large. The default region is not a nearest-region guarantee. Dashboard-created sandboxes have no expiration unless you set a lifetime through the API.
 
 ## Install and authenticate
 
@@ -20,13 +20,13 @@ Install the Lizard SDK and create an API key in Settings → API keys. Store it 
 
 ## Inspect and stop
 
-The detail view shows status, template, region, measured usage, and exposed ports. The current Kubernetes runtime does not provide SSH credentials, so the SSH-backed terminal is unavailable. Run commands through the SDK or CLI.
+The detail view shows status, template, region, measured usage, and exposed ports. Its header has Pause and Resume buttons, and the Terminal tab opens a shell in a running sandbox.
 
-Billing uses measured CPU, memory, storage, and egress. An idle sandbox can still use memory and storage. Stop it when the task ends; storage charges continue while you retain data.
+Each size has a flat hourly price, billed by the second while the sandbox runs, idle time included. Egress is included up to [2 TB per account](/platform/limits#sandbox-egress) over a rolling 30 days. A sandbox restored from a snapshot is billed by measured usage. A paused sandbox is not billed; Persistent Volumes bill separately while you keep the data. Pause or kill a sandbox when the task ends.
 
 ## Templates and volumes
 
-The Templates tab lists platform templates for new sandboxes. It does not contain snapshots of your running sessions. Creating user snapshots, pausing, and resuming are not supported. Kill Sandbox stops the sandbox and detaches its volume.
+The Templates tab lists platform templates and your project's private snapshots; start a new sandbox from either. Create snapshots with the SDK or CLI. Kill Sandbox stops the sandbox and detaches its volume.
 
 The Persistent Volumes tab manages named volumes and their attachments. Attach a volume when creating the sandbox and write to `/workspace`. Stop the current sandbox before attaching the volume to another.
 

@@ -28,6 +28,8 @@ Installieren Sie das Lizard SDK und erstellen Sie unter Settings → API keys ei
 | `timeoutMs` | `timeout_ms` |
 | `region` | `region` |
 | `volumeName / volumeId` | `volume_name / volume_id` |
+| `size` | `size` |
+| `snapshotId` | `snapshot_id` |
 | `apiKey` | `api_key` |
 
 Wählen Sie eine Vorlage aus dem aktuellen Katalog. Aktiviert sind unter anderem `base`, `codex` und `interpreter`; die Verfügbarkeit hängt von Region und Pool-Kapazität ab. `interpreter` enthält Python und gängige Datenbibliotheken. Prüfen Sie die Werkzeugversionen in der Sandbox. Die öffentliche CLI bietet keinen Upload eigener Vorlagen.
@@ -51,9 +53,14 @@ SDK und CLI setzen standardmäßig eine Laufzeit von fünf Minuten. Die direkte 
 | `sandbox.fs.remove(path)` | Datei oder Verzeichnis entfernen. |
 | `sandbox.getHost(port)` | Öffentlichen HTTPS-Hostnamen für einen Port registrieren. |
 | `sandbox.setTimeout(ms)` | Verbleibende Laufzeit setzen, mindestens 1000 ms. |
+| `sandbox.pause()` / `sandbox.resume()` | Pause oder Fortsetzen einreihen und sofort zurückkehren. |
+| `sandbox.waitForStatus(status)` | Auf `paused` oder `running` warten; einen Fehler auslösen, wenn die Pause scheitert. |
+| `sandbox.snapshot(name, { poolSize })` | Arbeitsspeicher und `/workspace`-Dateien als privaten Snapshot speichern. |
+| `Sandbox.waitForSnapshot(snapshotId)` | Warten, bis ein Snapshot bereit ist. |
+| `Sandbox.restore(snapshotId)` | Neue Sandbox aus einer bereiten Kopie starten. |
 | `sandbox.kill()` | Sandbox stoppen und Volume trennen. |
 
-Python: `exec_`, `get_info`, `get_host`, `set_timeout`, `sandbox_id`, `read_bytes`, `make_dir`.
+Python: `exec_`, `get_info`, `get_host`, `set_timeout`, `sandbox_id`, `read_bytes`, `make_dir`, `wait_for_status`, `wait_for_snapshot`, `pool_size`.
 
 ## Aktuelle Laufzeitlimits
 
@@ -61,11 +68,11 @@ Befehlsergebnisse enthalten stdout, stderr und den Exit-Code. Befehls-Timeouts l
 
 `fs.write` schreibt Text oder gültige UTF-8-Bytes; `fs.read` liest Text. Der aktuelle Schreib-Endpunkt unterstützt keine binären Uploads. Für binäre Downloads verwenden Sie `fs.readBytes` (Python: `read_bytes`).
 
-Aktuelle Sandboxes haben feste Limits von 4 vCPU und 4096 MiB RAM. Erstellungsoptionen ändern diese Limits nicht. Wählen Sie bei Bedarf eine Region; ein Katalogeintrag garantiert keine freie Kapazität.
+Übergeben Sie `size` (`'small'`, `'medium'` oder `'large'`) für 2 vCPU / 4 GB, 4 vCPU / 8 GB (Standard) oder 8 vCPU / 16 GB; siehe [Größen und Preise](/platform/limits#sandbox-sizes). Für eine aus einem Snapshot wiederhergestellte Sandbox gilt `size` nicht. Geben Sie bei Bedarf eine Region an; ein Katalogeintrag garantiert keine freie Kapazität.
 
 ## Nicht unterstützte APIs
 
-Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, setzt aber keine gestoppte Sandbox fort. Pause, Resume, Fork, Snapshot, Restore und Dateiüberwachung geben derzeit HTTP 501 zurück. SSH steht in der aktuellen Laufzeit nicht bereit.
+`sandbox.fork()` und Dateiüberwachung geben HTTP 501 zurück. `Sandbox.connect` setzt keine pausierte oder gestoppte Sandbox fort; rufen Sie für eine pausierte `resume()` auf. Zugriff über das SSH-Protokoll gibt es nicht; `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten.
 
 `CodeSandbox`, `runCode` / `run_code` und Kontextmethoden bleiben im SDK, doch dem gehosteten Vorlagenkatalog fehlt der benötigte Ausführungsserver. Die alte Standardvorlage `code-interpreter-v1` ist nicht verfügbar. Ein Wechsel zu `interpreter` aktiviert diese API nicht. Nutzen Sie `Sandbox.create("interpreter")` und Prozessbefehle wie unten gezeigt.
 
@@ -73,6 +80,6 @@ Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` 
 
 Dateien und laufende Prozesse bleiben verfügbar, solange die Sandbox läuft. Nach dem Stopp kann eine spätere Sandbox nur Dateien auf einem angehängten Persistent Volume unter `/workspace` wiederverwenden. Ohne Volume ist `/workspace` temporär. Ein Volume hängt jeweils an einer Sandbox und liegt auf einem einzelnen Knoten. Exportieren Sie Dateien, die einen Knotenausfall überstehen müssen.
 
-Die Abrechnung erfasst CPU, Arbeitsspeicher, Speicherplatz und ausgehenden Traffic. Eine inaktive Sandbox kann weiterhin Arbeitsspeicher und Speicherplatz nutzen. Stoppen Sie sie nach der Aufgabe; gespeicherte Daten verursachen weiter Kosten.
+Jede Größe hat einen festen Stundenpreis, sekundengenau abgerechnet, solange die Sandbox läuft, Leerlauf eingeschlossen. Ausgehender Traffic ist bis [2 TB pro Konto](/platform/limits#sandbox-egress) in rollierenden 30 Tagen enthalten. Eine aus einem Snapshot wiederhergestellte Sandbox wird nach gemessener Nutzung abgerechnet. Eine pausierte Sandbox kostet nichts; Persistent Volumes werden getrennt abgerechnet, solange Sie die Daten behalten. Pausieren oder beenden Sie eine Sandbox, wenn die Aufgabe erledigt ist.
 
 [Schnellstart](/sandboxes/quickstart) · [SDK-Referenz](/sandboxes/sdk-reference) · [Python ausführen](/sandboxes/code-interpreter) · [Dashboard](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)
