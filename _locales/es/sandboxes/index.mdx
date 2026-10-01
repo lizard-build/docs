@@ -24,15 +24,17 @@ Elige una plantilla del catálogo actual. Las plantillas habilitadas incluyen `b
 
 ## Ciclo de vida
 
-Crea un sandbox, ejecuta comandos y llama a `kill`. `connect` se conecta a un sandbox existente; no reanuda uno detenido. Pausar, reanudar, fork, snapshot, restore y observar archivos devuelven HTTP 501 en el runtime actual. SSH no está disponible.
+Crea un sandbox, ejecuta comandos y llama a `kill`. `connect` se conecta a un sandbox existente sin cambiar su estado, así que no reanuda uno pausado ni uno detenido. Pausar, reanudar, snapshot y restore están disponibles; consulta [Pausa, reanudación y snapshots](/sandboxes/quickstart#pause-and-resume). Fork y la vigilancia de archivos devuelven HTTP 501. `lizard sandbox ssh` abre una shell interactiva con tus credenciales de la CLI. No hay acceso por el protocolo SSH, así que los clientes SSH, `scp` y el reenvío de puertos no funcionan.
 
 ```text
 create -> running -> stopped (kill / expiration)
+running -> paused -> running (pause / resume)
+snapshot -> new sandbox (restore)
 ```
 
 ## Recursos y duración
 
-Los sandboxes actuales tienen límites fijos de 4 vCPU y 4096 MiB de RAM. Las opciones de creación no cambian estos límites. Elige una región si lo necesitas; aparecer en el catálogo no garantiza capacidad libre.
+Elige un tamaño al crear un sandbox: Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, el predeterminado) o Large (8 vCPU / 16 GB). Consulta [tamaños y precios](/platform/limits#sandbox-sizes). Indica la región de forma explícita si hace falta; que aparezca en el catálogo no garantiza capacidad libre.
 
 El SDK y la CLI fijan cinco minutos de duración por defecto. La API directa y el panel no fijan caducidad por defecto. Indica la duración: `timeoutMs: 0` al crear desactiva la caducidad; un valor positivo fija un plazo. `setTimeout` acepta 1000–2147483647 ms, no cero. Los comandos no reinician el plazo. No es un temporizador de inactividad.
 
@@ -40,7 +42,7 @@ El SDK y la CLI fijan cinco minutos de duración por defecto. La API directa y e
 
 Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un Persistent Volume adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
 
-Se factura el consumo medido de CPU, memoria, almacenamiento y tráfico saliente. Un sandbox inactivo puede seguir usando memoria y disco. Deténlo al terminar; los datos guardados siguen generando cargos de almacenamiento.
+Cada tamaño tiene un precio fijo por hora, facturado por segundo mientras el sandbox está en marcha, incluido el tiempo inactivo. El tráfico saliente está incluido hasta [2 TB por cuenta](/platform/limits#sandbox-egress) en una ventana móvil de 30 días. Un sandbox restaurado desde un snapshot se factura por consumo medido. Un sandbox pausado no se factura; los Persistent Volumes se facturan aparte mientras guardes los datos. Pausa o detén el sandbox cuando termine la tarea.
 
 ```ts
 import { Sandbox } from '@lizard-build/sdk';

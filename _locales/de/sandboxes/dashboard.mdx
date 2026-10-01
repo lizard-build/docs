@@ -16,7 +16,7 @@ description: "Sandboxes erstellen und prüfen, Vorlagen wählen und Volumes verw
 <span id="inspect-a-running-sandbox" />
 <span id="lifecycle" />
 
-Öffnen Sie ein Projekt und wählen Sie Sandboxes. Wählen Sie beim Erstellen eine Vorlage und eine Region. Die Standardregion ist nicht zwingend die nächste. Die Ressourcenlimits sind fest. Im Dashboard erstellte Sandboxes laufen ohne Ablaufdatum, sofern Sie keine Laufzeit über die API setzen.
+Öffnen Sie ein Projekt und wählen Sie Sandboxes. Wählen Sie beim Erstellen eine Vorlage, eine Region und eine Größe: Small, Medium (Standard) oder Large. Die Standardregion ist nicht zwingend die nächste. Im Dashboard erstellte Sandboxes laufen ohne Ablaufdatum, sofern Sie keine Laufzeit über die API setzen.
 
 ## Installation und Anmeldung
 
@@ -24,13 +24,13 @@ Installieren Sie das Lizard SDK und erstellen Sie unter Settings → API keys ei
 
 ## Prüfen und stoppen
 
-Die Detailansicht zeigt Status, Vorlage, Region, gemessene Nutzung und offene Ports. Die aktuelle Kubernetes-Laufzeit stellt keine SSH-Zugangsdaten bereit; daher ist das SSH-Terminal nicht verfügbar. Führen Sie Befehle über SDK oder CLI aus.
+Die Detailansicht zeigt Status, Vorlage, Region, gemessene Nutzung und offene Ports. Im Kopfbereich stehen die Schaltflächen Pause und Resume, und der Reiter Terminal öffnet eine Shell in einer laufenden Sandbox.
 
-Die Abrechnung erfasst CPU, Arbeitsspeicher, Speicherplatz und ausgehenden Traffic. Eine inaktive Sandbox kann weiterhin Arbeitsspeicher und Speicherplatz nutzen. Stoppen Sie sie nach der Aufgabe; gespeicherte Daten verursachen weiter Kosten.
+Jede Größe hat einen festen Stundenpreis, sekundengenau abgerechnet, solange die Sandbox läuft, Leerlauf eingeschlossen. Ausgehender Traffic ist bis [2 TB pro Konto](/platform/limits#sandbox-egress) in rollierenden 30 Tagen enthalten. Eine aus einem Snapshot wiederhergestellte Sandbox wird nach gemessener Nutzung abgerechnet. Eine pausierte Sandbox kostet nichts; Persistent Volumes werden getrennt abgerechnet, solange Sie die Daten behalten. Pausieren oder beenden Sie eine Sandbox, wenn die Aufgabe erledigt ist.
 
 ## Vorlagen und Volumes
 
-Der Reiter Templates zeigt Plattformvorlagen für neue Sandboxes, keine Snapshots laufender Sitzungen. Eigene Snapshots, Pause und Resume werden nicht unterstützt. Kill Sandbox stoppt die Sandbox und trennt ihr Volume.
+Der Reiter Templates zeigt Plattformvorlagen und die privaten Snapshots Ihres Projekts; aus beiden können Sie eine neue Sandbox starten. Snapshots erstellen Sie mit dem SDK oder der CLI. Kill Sandbox stoppt die Sandbox und trennt ihr Volume.
 
 Der Reiter Persistent Volumes verwaltet benannte Volumes und ihre Verbindungen. Hängen Sie ein Volume bei der Erstellung an und schreiben Sie nach `/workspace`. Stoppen Sie die aktuelle Sandbox, bevor Sie das Volume an eine andere hängen.
 

@@ -19,7 +19,7 @@ description: "Crea e inspecciona Sandboxes, elige plantillas y gestiona volúmen
 <span id="snapshots" />
 <span id="volumes" />
 
-Abre un proyecto y selecciona Sandboxes. Al crear, elige una plantilla y una región. La región por defecto no tiene por qué ser la más cercana. Los límites de recursos son fijos. Los Sandboxes creados en el panel no caducan salvo que fijes una duración mediante la API.
+Abre un proyecto y selecciona Sandboxes. Al crear, elige una plantilla, una región y un tamaño: Small, Medium (el predeterminado) o Large. La región por defecto no tiene por qué ser la más cercana. Los Sandboxes creados en el panel no caducan salvo que fijes una duración mediante la API.
 
 ## Instalar y autenticar
 
@@ -27,13 +27,13 @@ Instala Lizard SDK y crea una clave API en Settings → API keys. Guárdala en `
 
 ## Inspeccionar y detener
 
-La vista de detalle muestra estado, plantilla, región, consumo medido y puertos abiertos. El runtime de Kubernetes actual no proporciona credenciales SSH, así que la terminal basada en SSH no está disponible. Ejecuta comandos mediante el SDK o la CLI.
+La vista de detalle muestra estado, plantilla, región, consumo medido y puertos abiertos. Su cabecera tiene los botones Pause y Resume, y la pestaña Terminal abre una shell en un sandbox en marcha.
 
-Se factura el consumo medido de CPU, memoria, almacenamiento y tráfico saliente. Un sandbox inactivo puede seguir usando memoria y disco. Deténlo al terminar; los datos guardados siguen generando cargos de almacenamiento.
+Cada tamaño tiene un precio fijo por hora, facturado por segundo mientras el sandbox está en marcha, incluido el tiempo inactivo. El tráfico saliente está incluido hasta [2 TB por cuenta](/platform/limits#sandbox-egress) en una ventana móvil de 30 días. Un sandbox restaurado desde un snapshot se factura por consumo medido. Un sandbox pausado no se factura; los Persistent Volumes se facturan aparte mientras guardes los datos. Pausa o detén el sandbox cuando termine la tarea.
 
 ## Plantillas y volúmenes
 
-La pestaña Templates muestra plantillas de la plataforma para nuevos Sandboxes, no snapshots de sesiones en ejecución. No se admiten snapshots propios, pausa ni reanudación. Kill Sandbox detiene el sandbox y separa su volumen.
+La pestaña Templates muestra las plantillas de la plataforma y los snapshots privados de tu proyecto; puedes iniciar un sandbox nuevo desde cualquiera. Crea snapshots con el SDK o la CLI. Kill Sandbox detiene el sandbox y separa su volumen.
 
 La pestaña Persistent Volumes permite gestionar volúmenes con nombre y sus conexiones. Adjunta un volumen al crear el sandbox y escribe en `/workspace`. Detén el sandbox actual antes de adjuntar el volumen a otro.
 

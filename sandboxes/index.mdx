@@ -18,15 +18,17 @@ Choose a template from the current catalog. Enabled templates include `base`, `c
 
 ## Lifecycle
 
-Create a sandbox, run commands, then call `kill`. `connect` attaches to an existing sandbox; it does not resume a stopped one. Pause, resume, fork, snapshot, restore, and file watching currently return HTTP 501. SSH access is not available for the current runtime.
+Create a sandbox, run commands, then call `kill`. `connect` attaches to an existing sandbox without changing its state, so it does not resume a paused or stopped sandbox. Pause, resume, snapshot, and restore are available; see [Pause, resume, and snapshots](/sandboxes/quickstart#pause-and-resume). Fork and file watching return HTTP 501. `lizard sandbox ssh` opens an interactive shell with your CLI credentials. SSH protocol access is not available, so SSH clients, `scp`, and port forwarding do not work.
 
 ```text
 create -> running -> stopped (kill / expiration)
+running -> paused -> running (pause / resume)
+snapshot -> new sandbox (restore)
 ```
 
 ## Resources and timeouts
 
-Current sandboxes use fixed limits of 4 vCPU and 4096 MiB RAM. Create options do not change these limits. Select a region explicitly when needed; a catalog entry does not guarantee free capacity.
+Choose a size when you create a sandbox: Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, the default), or Large (8 vCPU / 16 GB). See [sizes and prices](/platform/limits#sandbox-sizes). Select a region explicitly when needed; a catalog entry does not guarantee free capacity.
 
 The SDK and CLI default to a five-minute lifetime. The raw API and dashboard default to no expiration. Set an explicit lifetime: `timeoutMs: 0` at creation disables expiration; a positive value sets a deadline. `setTimeout` accepts 1000–2147483647 ms, not zero. Commands do not reset the deadline. This is not an idle timer.
 
@@ -34,7 +36,7 @@ The SDK and CLI default to a five-minute lifetime. The raw API and dashboard def
 
 Files and running processes remain available while the sandbox runs. After it stops, only files written to an attached Persistent Volume at `/workspace` can be reused by a later sandbox. Without a volume, `/workspace` is temporary. Each volume attaches to one sandbox at a time and uses node-local storage; export files that must survive node loss.
 
-Billing uses measured CPU, memory, storage, and egress. An idle sandbox can still use memory and storage. Stop it when the task ends; storage charges continue while you retain data.
+Each size has a flat hourly price, billed by the second while the sandbox runs, idle time included. Egress is included up to [2 TB per account](/platform/limits#sandbox-egress) over a rolling 30 days. A sandbox restored from a snapshot is billed by measured usage. A paused sandbox is not billed; Persistent Volumes bill separately while you keep the data. Pause or kill a sandbox when the task ends.
 
 ```ts
 import { Sandbox } from '@lizard-build/sdk';

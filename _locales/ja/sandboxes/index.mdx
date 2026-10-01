@@ -23,15 +23,17 @@ Sandboxes は runc を使う Kubernetes Pod で短時間のコマンドやエー
 
 ## ライフサイクル
 
-sandbox を作成してコマンドを実行し、終了後に `kill` を呼び出します。`connect` は既存の sandbox に接続するもので、停止済みの sandbox を再開しません。一時停止、再開、fork、snapshot、restore、ファイル監視は現在 HTTP 501 を返します。現在のランタイムでは SSH を利用できません。
+sandbox を作成してコマンドを実行し、終了後に `kill` を呼び出します。`connect` は既存の sandbox に接続するだけで状態を変えないため、一時停止中や停止済みの sandbox を再開しません。一時停止、再開、snapshot、restore は利用できます。[一時停止、再開、スナップショット](/sandboxes/quickstart#pause-and-resume)を参照してください。fork とファイル監視は HTTP 501 を返します。`lizard sandbox ssh` は CLI の認証情報で対話型シェルを開きます。SSH プロトコルでのアクセスはできないため、SSH クライアント、`scp`、ポートフォワーディングは使えません。
 
 ```text
 create -> running -> stopped (kill / expiration)
+running -> paused -> running (pause / resume)
+snapshot -> new sandbox (restore)
 ```
 
 ## リソースと有効期間
 
-現在の sandbox の上限は 4 vCPU、4096 MiB RAM で固定です。作成時のオプションでは変更できません。必要に応じてリージョンを指定してください。カタログへの掲載は空き容量を保証しません。
+作成時にサイズを選びます: Small (2 vCPU / 4 GB)、Medium (4 vCPU / 8 GB、既定)、Large (8 vCPU / 16 GB)。[サイズと料金](/platform/limits#sandbox-sizes)を参照してください。必要に応じてリージョンを指定してください。カタログへの掲載は空き容量を保証しません。
 
 SDK と CLI の既定の有効期間は 5 分です。API の直接呼び出しとダッシュボードでは、既定で期限を設けません。有効期間を明示してください。作成時の `timeoutMs: 0` は期限を無効にし、正の値は期限を設定します。`setTimeout` は 1000～2147483647 ミリ秒を受け付け、0 は指定できません。コマンド実行で期限は延長されません。アイドル時間のタイマーではありません。
 
@@ -39,7 +41,7 @@ SDK と CLI の既定の有効期間は 5 分です。API の直接呼び出し�
 
 sandbox の実行中はファイルとプロセスを維持します。停止後、別の sandbox で使えるのは、接続した Persistent Volume の `/workspace` に保存したファイルだけです。ボリュームがなければ `/workspace` は一時領域です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。
 
-CPU、メモリ、ストレージ、送信トラフィックの実測使用量に応じて課金します。アイドル状態でもメモリやストレージを使う場合があります。タスク終了後は停止してください。データを保存している間はストレージ料金が続きます。
+各サイズは固定の時間単価で、sandbox の実行中は秒単位で課金されます。アイドル時間も含みます。送信トラフィックはアカウントごとに直近 30 日間で [2 TB まで](/platform/limits#sandbox-egress)料金に含まれます。スナップショットから復元した sandbox は実測使用量で課金されます。一時停止中の sandbox は課金されません。Persistent Volumes はデータを保存している間、別途課金されます。タスクが終わったら sandbox を一時停止するか停止してください。
 
 ```ts
 import { Sandbox } from '@lizard-build/sdk';

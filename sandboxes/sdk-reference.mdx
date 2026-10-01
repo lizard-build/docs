@@ -24,6 +24,8 @@ Install the Lizard SDK and create an API key in Settings → API keys. Store it 
 | `timeoutMs` | `timeout_ms` |
 | `region` | `region` |
 | `volumeName / volumeId` | `volume_name / volume_id` |
+| `size` | `size` |
+| `snapshotId` | `snapshot_id` |
 | `apiKey` | `api_key` |
 
 Choose a template from the current catalog. Enabled templates include `base`, `codex`, and `interpreter`; availability depends on the region and pool capacity. `interpreter` includes Python and common data libraries. Check tool versions inside your sandbox. The public CLI does not provide a custom-template upload flow.
@@ -47,9 +49,14 @@ The SDK and CLI default to a five-minute lifetime. The raw API and dashboard def
 | `sandbox.fs.remove(path)` | Remove a file or directory. |
 | `sandbox.getHost(port)` | Register a public HTTPS hostname for a port. |
 | `sandbox.setTimeout(ms)` | Set the remaining lifetime, at least 1000 ms. |
+| `sandbox.pause()` / `sandbox.resume()` | Queue a pause or resume and return at once. |
+| `sandbox.waitForStatus(status)` | Wait for `paused` or `running`; throw if the pause failed. |
+| `sandbox.snapshot(name, { poolSize })` | Save memory and `/workspace` files as a private snapshot. |
+| `Sandbox.waitForSnapshot(snapshotId)` | Wait until a snapshot is ready. |
+| `Sandbox.restore(snapshotId)` | Start a new sandbox from a ready copy. |
 | `sandbox.kill()` | Stop the sandbox and detach its volume. |
 
-Python: `exec_`, `get_info`, `get_host`, `set_timeout`, `sandbox_id`, `read_bytes`, `make_dir`.
+Python: `exec_`, `get_info`, `get_host`, `set_timeout`, `sandbox_id`, `read_bytes`, `make_dir`, `wait_for_status`, `wait_for_snapshot`, `pool_size`.
 
 ## Current runtime limits
 
@@ -57,11 +64,11 @@ Command results contain stdout, stderr, and the exit code. Command timeouts are 
 
 Use `fs.write` for text or valid UTF-8 bytes and `fs.read` for text. Binary uploads are not supported by the current write endpoint. For a binary download, use `fs.readBytes` (Python: `read_bytes`).
 
-Current sandboxes use fixed limits of 4 vCPU and 4096 MiB RAM. Create options do not change these limits. Select a region explicitly when needed; a catalog entry does not guarantee free capacity.
+Pass `size` (`'small'`, `'medium'`, or `'large'`) to choose 2 vCPU / 4 GB, 4 vCPU / 8 GB (the default), or 8 vCPU / 16 GB; see [sizes and prices](/platform/limits#sandbox-sizes). `size` does not apply to a sandbox restored from a snapshot. Select a region explicitly when needed; a catalog entry does not guarantee free capacity.
 
 ## Unsupported APIs
 
-Create a sandbox, run commands, then call `kill`. `connect` attaches to an existing sandbox; it does not resume a stopped one. Pause, resume, fork, snapshot, restore, and file watching currently return HTTP 501. SSH access is not available for the current runtime.
+`sandbox.fork()` and file watching return HTTP 501. `Sandbox.connect` does not resume a paused or stopped sandbox; call `resume()` on a paused one. SSH protocol access is not available; `lizard sandbox ssh` opens an interactive shell with your CLI credentials.
 
 `CodeSandbox`, `runCode` / `run_code`, and execution-context methods remain in the SDK, but the hosted template catalog does not provide their required execution server. The legacy default `code-interpreter-v1` is unavailable. Changing its name to `interpreter` does not enable this API. Use `Sandbox.create("interpreter")` and process commands as shown below.
 
@@ -69,6 +76,6 @@ Create a sandbox, run commands, then call `kill`. `connect` attaches to an exist
 
 Files and running processes remain available while the sandbox runs. After it stops, only files written to an attached Persistent Volume at `/workspace` can be reused by a later sandbox. Without a volume, `/workspace` is temporary. Each volume attaches to one sandbox at a time and uses node-local storage; export files that must survive node loss.
 
-Billing uses measured CPU, memory, storage, and egress. An idle sandbox can still use memory and storage. Stop it when the task ends; storage charges continue while you retain data.
+Each size has a flat hourly price, billed by the second while the sandbox runs, idle time included. Egress is included up to [2 TB per account](/platform/limits#sandbox-egress) over a rolling 30 days. A sandbox restored from a snapshot is billed by measured usage. A paused sandbox is not billed; Persistent Volumes bill separately while you keep the data. Pause or kill a sandbox when the task ends.
 
 [Quickstart](/sandboxes/quickstart) · [SDK reference](/sandboxes/sdk-reference) · [Run Python](/sandboxes/code-interpreter) · [Dashboard](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)

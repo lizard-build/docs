@@ -76,7 +76,7 @@ El tráfico de salida de los sandboxes está incluido hasta 2 TB por cuenta en u
 
 El SDK y la CLI usan por defecto una duración de cinco minutos. La API directa y el panel no fijan vencimiento por defecto. Indica una duración explícita: `timeoutMs: 0` al crear desactiva el vencimiento; un valor positivo fija un plazo. `setTimeout` acepta de 1000 a 2147483647 ms, no cero. Los comandos no reinician el plazo. No es un temporizador de inactividad.
 
-Crea un sandbox, ejecuta comandos y luego llama a `kill`. `connect` se conecta a un sandbox existente; no reanuda uno detenido. La pausa y la reanudación están disponibles. Fork, snapshot, restore y la vigilancia de archivos devuelven actualmente HTTP 501. El acceso SSH no está disponible en el runtime actual.
+Crea un sandbox, ejecuta comandos y llama a `kill`. `connect` se conecta a un sandbox existente sin cambiar su estado, así que no reanuda uno pausado ni uno detenido. Pausar, reanudar, snapshot y restore están disponibles; consulta [Pausa, reanudación y snapshots](/sandboxes/quickstart#pause-and-resume). Fork y la vigilancia de archivos devuelven HTTP 501. `lizard sandbox ssh` abre una shell interactiva con tus credenciales de la CLI. No hay acceso por el protocolo SSH, así que los clientes SSH, `scp` y el reenvío de puertos no funcionan.
 
 <span id="regions" />
 
