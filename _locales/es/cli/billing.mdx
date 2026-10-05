@@ -1,0 +1,98 @@
+---
+description: "lizard billing muestra tu plan Pro, la prueba y el uso, activa o cancela Pro y canjea códigos promocionales. lizard credits sigue funcionando como alias."
+---
+
+# lizard billing
+
+Muestra y gestiona tu plan de Lizard (lizard.build): la prueba, Pro, el uso de este mes y los códigos promocionales. `lizard credits` sigue siendo un alias, así que los scripts antiguos siguen funcionando.
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard billing <subcommand>
+```
+
+Estos comandos actúan sobre el plan de la cuenta con la que iniciaste sesión. Consulta [Facturación](/platform/billing) para ver cómo funcionan Pro, la prueba y el uso adicional.
+
+<span id="subcommands" />
+
+## Subcomandos
+
+### `lizard billing status`
+
+Muestra tu plan y su estado: días y créditos de prueba que quedan, cuánto de los $19 en créditos mensuales has usado, el uso adicional hasta ahora, el importe y la fecha del próximo cobro, y cualquier factura sin pagar.
+
+### `lizard billing open`
+
+Abre la página Facturación en el navegador. Allí puedes pagar una factura pendiente, cambiar la tarjeta o ver facturas anteriores.
+
+### `lizard billing start`
+
+Activa Pro con Stripe Checkout, donde añades una tarjeta. Una cuenta nueva recibe la prueba de 7 días con $5 en créditos de prueba, y no se cobra nada hasta que termina. Si la cuenta o la tarjeta ya tuvo una prueba, Pro empieza de inmediato y cobra $19.
+
+### `lizard billing start-now`
+
+Termina la prueba y empieza ya tu primer mes pagado. Lizard cobra $19 y añade $19 en créditos mensuales. Úsalo cuando se agoten los créditos de prueba. Si tu banco pide confirmar el pago, el comando te da una página para hacerlo; la prueba sigue hasta que se completa el pago.
+
+### `lizard billing cancel`
+
+Cancela al final del mes en curso o de la prueba. Pro sigue activo hasta entonces. Cancelar durante la prueba no cuesta nada.
+
+### `lizard billing resume`
+
+Deshace una cancelación antes de la fecha de fin.
+
+### `lizard billing promo <code>`
+
+Canjea un código promocional para una prueba más larga y más créditos de prueba. Antes de que empiece la prueba, Lizard guarda el código para ella. Durante la prueba, el código la amplía. Los códigos solo funcionan antes de tu primer pago, uno por cuenta.
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="check-your-plan-and-usage" />
+
+### Consulta tu plan y tu uso
+
+```bash
+lizard billing status
+lizard billing status --json
+```
+
+<span id="start-the-trial-with-a-promo-code" />
+
+### Empieza la prueba con un código promocional
+
+```bash
+lizard billing promo YOURCODE
+lizard billing start
+```
+
+<span id="cancel-then-change-your-mind" />
+
+### Cancela y luego cambia de idea
+
+```bash
+lizard billing cancel
+lizard billing resume
+```
+
+<span id="payment-required" />
+
+## Pago requerido
+
+Si creas un recurso cuando la cuenta no tiene plan, ha agotado los créditos de prueba o tiene una factura sin pagar, Lizard responde con HTTP 402. Lizard CLI muestra el motivo y un enlace a la página Facturación, por ejemplo:
+
+```text
+Start your 7-day Pro trial with $5 in credits to deploy. No charge today, then $19/month.
+```
+
+<span id="see-also" />
+
+## Véase también
+
+- [Facturación](/platform/billing) — Pro, la prueba, el uso adicional, los pagos fallidos y la cancelación
+- [Límites](/platform/limits) — límites de la prueba y de Pro para Sandboxes y réplicas
+- [lizard whoami](/cli/whoami) — muestra la cuenta con la que iniciaste sesión

@@ -1,0 +1,82 @@
+---
+description: "lizard billing shows your Pro plan, trial and usage, starts or cancels Pro, and redeems promo codes. lizard credits still works as an alias."
+---
+
+# lizard billing
+
+Show and manage your Lizard (lizard.build) plan: the trial, Pro, this month's usage and promo codes. `lizard credits` is an alias, so older scripts keep working.
+
+## Usage
+
+```bash
+lizard billing <subcommand>
+```
+
+These commands act on the plan of the account you are signed in with. See [Billing](/platform/billing) for how Pro, the trial and overage work.
+
+## Subcommands
+
+### `lizard billing status`
+
+Show your plan and where it stands: days and trial credits left, how much of the $19 in monthly credits you have used, overage so far, the next charge and its date, and any unpaid invoice.
+
+### `lizard billing open`
+
+Open the Billing page in your browser. Pay an open invoice, change your card or see past invoices there.
+
+### `lizard billing start`
+
+Start Pro through Stripe Checkout, where you add a card. A new account gets the 7-day trial with $5 in trial credits, and nothing is charged until the trial ends. If the account or the card had a trial before, Pro starts at once and charges $19.
+
+### `lizard billing start-now`
+
+End the trial and start your first paid month now. Lizard charges $19 and adds $19 in monthly credits. Use it when trial credits run out. If your bank asks you to confirm the payment, the command gives you a page to do so; the trial goes on until the payment goes through.
+
+### `lizard billing cancel`
+
+Cancel at the end of the current month or trial. Pro stays active until then. Cancelling during the trial costs nothing.
+
+### `lizard billing resume`
+
+Undo a cancel before the end date.
+
+### `lizard billing promo <code>`
+
+Redeem a promo code for a longer trial and more trial credits. Before the trial starts, Lizard saves the code for it. During the trial, the code extends it. Codes work only before your first payment, one per account.
+
+## Examples
+
+### Check your plan and usage
+
+```bash
+lizard billing status
+lizard billing status --json
+```
+
+### Start the trial with a promo code
+
+```bash
+lizard billing promo YOURCODE
+lizard billing start
+```
+
+### Cancel, then change your mind
+
+```bash
+lizard billing cancel
+lizard billing resume
+```
+
+## Payment required
+
+If you try to create a resource while the account has no plan, has used up its trial credits or has an unpaid invoice, Lizard answers with HTTP 402. Lizard CLI prints the reason and a link to the Billing page, for example:
+
+```text
+Start your 7-day Pro trial with $5 in credits to deploy. No charge today, then $19/month.
+```
+
+## See also
+
+- [Billing](/platform/billing) — Pro, the trial, overage, payment failures and cancelling
+- [Limits](/platform/limits) — trial and Pro limits for Sandboxes and replicas
+- [lizard whoami](/cli/whoami) — shows the account you are signed in with

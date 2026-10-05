@@ -1,0 +1,98 @@
+---
+description: "lizard billing は Pro プラン、トライアル、利用状況を表示し、Pro の開始や解約、プロモコードの利用を行います。lizard credits は引き続きエイリアスとして使えます。"
+---
+
+# lizard billing
+
+Lizard (lizard.build) のプランを表示・管理します。対象はトライアル、Pro、今月の利用、プロモコードです。`lizard credits` はエイリアスとして残るため、既存のスクリプトもそのまま動きます。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard billing <subcommand>
+```
+
+これらのコマンドは、サインインしているアカウントのプランに対して動作します。Pro、トライアル、超過分の仕組みは[請求](/platform/billing)を参照してください。
+
+<span id="subcommands" />
+
+## サブコマンド
+
+### `lizard billing status`
+
+プランと現在の状態を表示します。残りの日数とトライアルクレジット、毎月 $19 のクレジットのうち使った額、現時点の超過分、次回の請求額と日付、未払いの請求書があればそれも表示します。
+
+### `lizard billing open`
+
+ブラウザで請求ページを開きます。未払いの請求書の支払い、カードの変更、過去の請求書の確認はそこで行えます。
+
+### `lizard billing start`
+
+Stripe Checkout で Pro を開始します。Checkout ではカードを登録します。新しいアカウントには $5 のトライアルクレジット付きの 7 日間トライアルが付き、終了まで何も請求されません。アカウントまたはカードで以前にトライアルを使ったことがある場合、Pro はすぐに始まり、$19 が請求されます。
+
+### `lizard billing start-now`
+
+トライアルを終えて、最初の有料月をすぐに始めます。Lizard は $19 を請求し、毎月の $19 のクレジットを付与します。トライアルクレジットを使い切ったときに使ってください。銀行が支払いの確認を求めた場合、コマンドが確認用のページを示します。支払いが完了するまでトライアルは続きます。
+
+### `lizard billing cancel`
+
+今月またはトライアルの終わりに解約します。それまで Pro は有効です。トライアル中の解約に費用はかかりません。
+
+### `lizard billing resume`
+
+終了日の前に解約を取り消します。
+
+### `lizard billing promo <code>`
+
+プロモコードを使って、より長いトライアルとより多くのトライアルクレジットを受け取ります。トライアル開始前なら、Lizard がコードを保存しておきます。トライアル中なら、コードでトライアルが延長されます。コードは最初の支払いの前にのみ使え、1 つのアカウントにつき 1 つです。
+
+<span id="examples" />
+
+## 例
+
+<span id="check-your-plan-and-usage" />
+
+### プランと利用状況を確認する
+
+```bash
+lizard billing status
+lizard billing status --json
+```
+
+<span id="start-the-trial-with-a-promo-code" />
+
+### プロモコードでトライアルを始める
+
+```bash
+lizard billing promo YOURCODE
+lizard billing start
+```
+
+<span id="cancel-then-change-your-mind" />
+
+### 解約して、取り消す
+
+```bash
+lizard billing cancel
+lizard billing resume
+```
+
+<span id="payment-required" />
+
+## 支払いが必要な場合
+
+プランがない、トライアルクレジットを使い切った、または未払いの請求書があるときにリソースを作成しようとすると、Lizard は HTTP 402 を返します。Lizard CLI は理由と請求ページへのリンクを表示します。例:
+
+```text
+Start your 7-day Pro trial with $5 in credits to deploy. No charge today, then $19/month.
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [請求](/platform/billing) — Pro、トライアル、超過分、支払いの失敗、解約
+- [制限](/platform/limits) — Sandboxes とレプリカに関するトライアルと Pro の上限
+- [lizard whoami](/cli/whoami) — サインインしているアカウントを表示します

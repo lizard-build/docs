@@ -1,0 +1,98 @@
+---
+description: "lizard billing zeigt Ihren Pro-Plan, die Testphase und die Nutzung, startet oder kündigt Pro und löst Promo-Codes ein. lizard credits funktioniert weiter als Alias."
+---
+
+# lizard billing
+
+Zeigt und verwaltet Ihren Plan bei Lizard (lizard.build): Testphase, Pro, die Nutzung in diesem Monat und Promo-Codes. `lizard credits` bleibt ein Alias, daher funktionieren ältere Skripte weiter.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard billing <subcommand>
+```
+
+Diese Befehle wirken auf den Plan des Kontos, mit dem Sie angemeldet sind. Wie Pro, die Testphase und Mehrnutzung funktionieren, steht unter [Abrechnung](/platform/billing).
+
+<span id="subcommands" />
+
+## Unterbefehle
+
+### `lizard billing status`
+
+Zeigt Ihren Plan und seinen Stand: verbleibende Tage und Testguthaben, wie viel der $19 monatlichen Guthabens Sie genutzt haben, die bisherige Mehrnutzung, Betrag und Datum der nächsten Belastung und eine offene Rechnung, falls es eine gibt.
+
+### `lizard billing open`
+
+Öffnet die Seite „Abrechnung“ im Browser. Dort bezahlen Sie eine offene Rechnung, ändern Ihre Karte oder sehen frühere Rechnungen.
+
+### `lizard billing start`
+
+Startet Pro über Stripe Checkout, wo Sie eine Karte hinterlegen. Ein neues Konto bekommt die 7-tägige Testphase mit $5 Testguthaben, und bis zu ihrem Ende wird nichts berechnet. Hatte das Konto oder die Karte schon eine Testphase, beginnt Pro sofort, und $19 werden belastet.
+
+### `lizard billing start-now`
+
+Beendet die Testphase und beginnt sofort Ihren ersten bezahlten Monat. Lizard belastet $19 und gibt $19 monatliches Guthaben. Nutzen Sie den Befehl, wenn das Testguthaben aufgebraucht ist. Verlangt Ihre Bank eine Bestätigung der Zahlung, gibt der Befehl Ihnen eine Seite dafür; die Testphase läuft weiter, bis die Zahlung durch ist.
+
+### `lizard billing cancel`
+
+Kündigt zum Ende des laufenden Monats oder der Testphase. Bis dahin bleibt Pro aktiv. Eine Kündigung während der Testphase kostet nichts.
+
+### `lizard billing resume`
+
+Nimmt eine Kündigung vor dem Enddatum zurück.
+
+### `lizard billing promo <code>`
+
+Löst einen Promo-Code für eine längere Testphase und mehr Testguthaben ein. Vor dem Start der Testphase speichert Lizard den Code dafür. Während der Testphase verlängert der Code sie. Codes gelten nur vor Ihrer ersten Zahlung, einer pro Konto.
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="check-your-plan-and-usage" />
+
+### Plan und Nutzung prüfen
+
+```bash
+lizard billing status
+lizard billing status --json
+```
+
+<span id="start-the-trial-with-a-promo-code" />
+
+### Testphase mit einem Promo-Code starten
+
+```bash
+lizard billing promo YOURCODE
+lizard billing start
+```
+
+<span id="cancel-then-change-your-mind" />
+
+### Kündigen und es sich anders überlegen
+
+```bash
+lizard billing cancel
+lizard billing resume
+```
+
+<span id="payment-required" />
+
+## Zahlung erforderlich
+
+Wenn Sie eine Ressource erstellen, während das Konto keinen Plan hat, das Testguthaben aufgebraucht ist oder eine Rechnung offen ist, antwortet Lizard mit HTTP 402. Lizard CLI gibt den Grund und einen Link zur Seite „Abrechnung“ aus, zum Beispiel:
+
+```text
+Start your 7-day Pro trial with $5 in credits to deploy. No charge today, then $19/month.
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Abrechnung](/platform/billing) — Pro, Testphase, Mehrnutzung, fehlgeschlagene Zahlungen und Kündigung
+- [Limits](/platform/limits) — Limits der Testphase und von Pro für Sandboxes und Replikas
+- [lizard whoami](/cli/whoami) — zeigt das Konto, mit dem Sie angemeldet sind

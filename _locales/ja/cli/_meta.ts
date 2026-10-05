@@ -6,6 +6,7 @@ export default {
   logout: "logout",
   whoami: "whoami",
   workspace: "workspace",
+  billing: "billing",
   '-- projects': { type: "separator", title: "プロジェクトとリンク" },
   init: "init",
   link: "link",
