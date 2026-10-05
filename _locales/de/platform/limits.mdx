@@ -13,7 +13,7 @@ Limits hängen von der Ressource, dem Tarif und dem Konto ab. Eine Einstellung p
 | Einstellung | Geltungsbereich | Was zu prüfen ist |
 |---|---|---|
 | CPU und Arbeitsspeicher | Jedes Replikat | Drei Replikate mit einer Obergrenze von 2 vCPU / 2 GiB haben zusammen eine konfigurierte Obergrenze von 6 vCPU / 6 GiB. Das ist keine Nutzungsvorhersage. |
-| Anzahl der Replikate | Service und Tarif | Die API akzeptiert 1–10; Tariflimits können diesen Bereich einschränken. Prüfungen im Standardtarif erlauben 1, bzw. 5 für Pro/Enterprise, mit kontoabhängigen Ausnahmen. |
+| Anzahl der Replikate | Service und Tarif | Ihr Plan legt das Limit fest: 1 pro App in der Testphase von Pro, 5 in Pro nach der ersten bezahlten Rechnung und in Enterprise. Konten mit altem Prepaid-Guthaben erhalten 1. Die API akzeptiert höchstens 10, was nur eine Ausnahme für das Konto erreicht. |
 | Ressourcenobergrenze des Kontos | Kontoinhaber | Ein zweites Projekt erzeugt nicht zwangsläufig ein zweites Kontingent. Fragen Sie vor der Planung eines großen Bereitstellungen nach der effektiven Kontenobergrenze. |
 | Worker-Modus | Service | `containerPort=0` läuft ohne HTTP-Listener oder öffentliche Load-Balancer-Route. |
 | Benutzerdefinierte Domain | Hostname | Benutzerdefinierte Wildcard-Domains werden nicht akzeptiert. Verwenden Sie einen spezifischen Hostnamen und schließen Sie die Prüfungen zu Eigentümerschaft und DNS ab. |
@@ -38,14 +38,15 @@ CPU und Arbeitsspeicher sind im Preis enthalten. Persistent Volumes werden separ
 
 ### Kontolimits
 
-Diese Limits begrenzen, wie viele Sandboxes ein Konto gleichzeitig ausführt und wie schnell es neue startet. Es gibt keinen Tarif zur Auswahl: Die Limits steigen automatisch mit dem Betrag, den der Kontoinhaber insgesamt bezahlt hat (Guthabenkäufe und automatische Aufladungen).
+Diese Limits begrenzen, wie viele Sandboxes ein Konto gleichzeitig ausführt und wie schnell es neue startet. Sie richten sich nach dem Plan des Kontoinhabers. Die Limits der Testphase gelten bis zur ersten bezahlten Rechnung; siehe [Abrechnung](/platform/billing#limits).
 
-| Konto | Gleichzeitig aktiv | Starts pro Minute | Pro Stunde | Pro Tag |
+| Plan | Gleichzeitig aktiv | Starts pro Minute | Pro Stunde | Pro Tag |
 |---|---|---|---|---|
-| Kostenlose Testphase: Karte hinterlegt, noch nichts bezahlt | 5 | 6 | 30 | 100 |
-| Nach einer ersten Aufladung in beliebiger Höhe | 20 | 12 | 60 | 200 |
-| Insgesamt $20 bezahlt | 100 | 24 | 120 | 400 |
+| Testphase von Pro | 5 | 6 | 30 | 100 |
+| Pro | 100 | 24 | 120 | 400 |
 | Enterprise | Individuell | Individuell | Individuell | Individuell |
+
+Konten, die noch altes Prepaid-Guthaben nutzen, behalten die bisherigen Limits bis zum 1. November 2026: 5 gleichzeitig vor der ersten Aufladung, 20 nach einer ersten Aufladung und 100 nach insgesamt $20 bezahlt.
 
 - Die Limits gelten pro Kontoinhaber, über alle Workspaces des Inhabers hinweg. Ein zweiter Workspace bringt kein zweites Kontingent.
 - Aktiv bedeutet laufend oder fortsetzend. Eine pausierte Sandbox zählt nicht; um eine fortzusetzen, braucht es einen freien Platz.

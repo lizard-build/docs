@@ -11,7 +11,7 @@ Limits depend on the resource, plan, and account. A per-replica setting is not t
 | Setting | Scope | What to check |
 |---|---|---|
 | CPU and memory | Each replica | Three replicas with a 2 vCPU / 2 GiB ceiling have a combined configured ceiling of 6 vCPU / 6 GiB. This is not a usage forecast. |
-| Replica count | Service and plan | The API accepts 1–10; plan limits can reduce that range. Standard plan checks allow 1, or 5 for Pro/Enterprise, with account overrides. |
+| Replica count | Service and plan | Your plan sets the limit: 1 per app during the Pro trial, 5 on Pro after the first paid invoice and on Enterprise. Accounts on old prepaid credits get 1. The API accepts at most 10, which only an account override can reach. |
 | Account resource cap | Account owner | A second project does not necessarily create a second quota. Ask for the effective account cap before planning a large deployment. |
 | Worker mode | Service | `containerPort=0` runs without an HTTP listener or public load-balancer route. |
 | Custom domain | Hostname | Wildcard custom domains are not accepted. Use a specific hostname and complete ownership and DNS checks. |
@@ -36,14 +36,15 @@ CPU and memory are included in the price. Persistent Volumes are billed separate
 
 ### Account limits
 
-These limits cap how many sandboxes an account runs at once and how fast it starts new ones. There is no plan to choose: they rise automatically with what the account owner has paid in total (credit purchases and auto top-ups).
+These limits cap how many sandboxes an account runs at once and how fast it starts new ones. They follow the account owner's plan. Trial limits apply until the first paid invoice; see [Billing](/platform/billing#limits).
 
-| Account | Running at once | Starts per minute | Per hour | Per day |
+| Plan | Running at once | Starts per minute | Per hour | Per day |
 |---|---|---|---|---|
-| Free trial: card saved, nothing paid yet | 5 | 6 | 30 | 100 |
-| After a first top-up of any amount | 20 | 12 | 60 | 200 |
-| $20 paid in total | 100 | 24 | 120 | 400 |
+| Pro trial | 5 | 6 | 30 | 100 |
+| Pro | 100 | 24 | 120 | 400 |
 | Enterprise | Custom | Custom | Custom | Custom |
+
+Accounts still on old prepaid credits keep the earlier limits until 1 November 2026: 5 running at once before any top-up, 20 after a first top-up, and 100 after $20 paid in total.
 
 - Limits are counted per account owner, across all of the owner's workspaces. A second workspace does not add a second allowance.
 - Running means running or resuming. A paused sandbox does not count; resuming one needs a free slot.

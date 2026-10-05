@@ -15,7 +15,7 @@ Los límites dependen del recurso, el plan y la cuenta. Una configuración por r
 | Ajuste | Ámbito | Qué comprobar |
 |---|---|---|
 | CPU and memory | Cada réplica | Tres réplicas con un límite de 2 vCPU / 2 GiB tienen un límite configurado combinado de 6 vCPU / 6 GiB. Esto no es una previsión de uso. |
-| Replica count | Servicio y plan | La API acepta 1–10; los límites del plan pueden reducir ese rango. Las comprobaciones del plan Standard permiten 1, o 5 para Pro/Enterprise, con anulaciones a nivel de cuenta. |
+| Replica count | Servicio y plan | Tu plan fija el límite: 1 por app durante la prueba de Pro, 5 en Pro tras la primera factura pagada y en Enterprise. Las cuentas con créditos prepagados antiguos tienen 1. La API acepta como máximo 10, y solo una excepción para la cuenta llega a ese número. |
 | Límite de recursos de la cuenta | Titular de la cuenta | Un segundo proyecto no necesariamente crea una segunda cuota. Solicita el límite efectivo de la cuenta antes de planificar un despliegue grande. |
 | Worker mode | Servicio | `containerPort=0` se ejecuta sin un listener HTTP ni una ruta pública del balanceador de carga. |
 | Custom domain | Nombre de host | No se aceptan dominios personalizados comodín. Usa un nombre de host específico y completa las comprobaciones de propiedad y DNS. |
@@ -40,14 +40,15 @@ La CPU y la memoria están incluidas en el precio. Los Persistent Volumes se fac
 
 ### Límites de la cuenta
 
-Estos límites fijan cuántos sandboxes ejecuta una cuenta a la vez y con qué rapidez inicia otros nuevos. No hay planes que elegir: suben automáticamente según lo que el propietario de la cuenta ha pagado en total (compras de créditos y recargas automáticas).
+Estos límites fijan cuántos sandboxes ejecuta una cuenta a la vez y con qué rapidez inicia otros nuevos. Dependen del plan del propietario de la cuenta. Los límites de la prueba se aplican hasta la primera factura pagada; consulta [Facturación](/platform/billing#limits).
 
-| Cuenta | En ejecución a la vez | Inicios por minuto | Por hora | Por día |
+| Plan | En ejecución a la vez | Inicios por minuto | Por hora | Por día |
 |---|---|---|---|---|
-| Prueba gratuita: tarjeta guardada, aún sin pagos | 5 | 6 | 30 | 100 |
-| Tras una primera recarga de cualquier importe | 20 | 12 | 60 | 200 |
-| $20 pagados en total | 100 | 24 | 120 | 400 |
+| Prueba de Pro | 5 | 6 | 30 | 100 |
+| Pro | 100 | 24 | 120 | 400 |
 | Enterprise | Personalizado | Personalizado | Personalizado | Personalizado |
+
+Las cuentas que siguen con créditos prepagados antiguos conservan los límites anteriores hasta el 1 de noviembre de 2026: 5 a la vez antes de cualquier recarga, 20 tras una primera recarga y 100 tras $20 pagados en total.
 
 - Los límites se cuentan por propietario de la cuenta, en todos sus espacios de trabajo. Un segundo espacio de trabajo no añade un segundo cupo.
 - En ejecución significa ejecutándose o reanudándose. Un sandbox en pausa no cuenta; reanudarlo necesita un hueco libre.
