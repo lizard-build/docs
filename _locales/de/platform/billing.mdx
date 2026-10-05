@@ -1,61 +1,139 @@
 ---
-description: "Lizard pay as you go: Ressourcensätze, Kontoguthaben, optionales automatisches Aufladen, Zahlungsgebühren und was passiert, wenn Ihr Guthaben aufgebraucht ist."
+description: "Lizard Pro kostet $19 im Monat inklusive Steuern, mit $19 monatlichem Guthaben. So funktionieren Testphase, pay as you go über das Guthaben hinaus, Limits, fehlgeschlagene Zahlungen, Kündigung und Enterprise."
 ---
 
-# Pay as you go
+<span id="billing" />
 
-Lizard hat für Standardkonten keine monatliche Grundgebühr und keine Sitzplatzgebühr. Laden Sie Guthaben auf Ihr Konto und zahlen Sie für die Ressourcen, die Sie nutzen. Ungenutztes gekauftes Guthaben bleibt in Ihrem Kontostand, sodass Sie in einem ruhigen Monat kein weiteres Paket kaufen müssen.
+# Abrechnung
+
+Lizard (lizard.build) hat einen Plan zum Selbstbuchen: Pro. Er kostet $19 im Monat inklusive Steuern und enthält $19 monatliches Guthaben. Das Guthaben bezahlt die Nutzung auf der ganzen Plattform: Apps, Sandboxes, Managed Postgres, Managed Redis, Managed Object Storage, Persistent Volumes und ausgehenden Traffic. Ist das Guthaben aufgebraucht, zahlen Sie pay as you go zu den veröffentlichten Preisen.
+
+Verwalten Sie Ihren Plan auf der Seite **Abrechnung** in den Kontoeinstellungen oder mit [`lizard billing`](/cli/billing). Der Plan gehört dem Eigentümer des Workspace. Die Nutzung in allen Workspaces, die Ihnen gehören, zählt zu Ihrem Plan, und für Mitglieder fällt keine Sitzplatzgebühr an.
+
+## Pro
+
+| | Pro |
+| --- | --- |
+| Preis | $19 im Monat inklusive Steuern |
+| Monatliches Guthaben | $19 für die Nutzung auf der ganzen Plattform |
+| Nutzung über das Guthaben hinaus | Pay as you go zu den [Ressourcenpreisen](#resource-rates) |
+| Testphase | 7 Tage mit $5 Testguthaben |
+| Zahlung | Karte, monatlich abgerechnet |
+
+Pro verlängert sich jeden Monat, bis Sie kündigen. Nicht genutztes monatliches Guthaben wird nicht in den nächsten Monat übertragen.
+
+<span id="monthly-credits-and-overage" />
+
+## Monatliches Guthaben und Mehrnutzung
+
+Jeder Monat beginnt mit $19 Guthaben, und die Nutzung wird zuerst davon abgezogen. Nutzung über $19 ist Mehrnutzung und kostet dieselben Preise.
+
+Lizard belastet die Mehrnutzung, während sie anfällt, nicht in einer Rechnung am Monatsende. Erreicht die noch nicht berechnete Mehrnutzung $20, belastet Lizard Ihre Karte. Jede bezahlte Belastung hebt die nächste Stufe an: $100, dann $200, $400 und $1,000, danach jeweils $1,000. Jeden Monat beginnen die Stufen wieder bei $20. Am Monatsende kommt die noch nicht belastete Mehrnutzung auf eine letzte Rechnung. Es gibt keine Ausgabenobergrenze.
+
+Die Seite „Abrechnung“ zeigt, wie viel Ihrer $19 Sie in diesem Monat genutzt haben, die bisherige Mehrnutzung und die nächste Belastung.
 
 <span id="resource-rates" />
 
-## Ressourcensätze
+## Ressourcenpreise
 
-Die Preise sind in US-Dollar angegeben.
+Die Preise sind in US-Dollar und enthalten Steuern.
 
-| Ressource | Rate |
+| Ressource | Preis |
 | --- | ---: |
 | CPU | $0.000006948 pro vCPU-Sekunde |
-| Memory | $0.000003474 pro GB-Sekunde |
+| Arbeitsspeicher | $0.000003474 pro GB-Sekunde |
 | Persistent Volumes | $0.000000054 pro GB-Sekunde |
 | Managed Object Storage | $0.0135 pro GB-Monat |
-| Outgoing traffic | $0.045 pro GB, ab dem ersten Byte |
+| Ausgehender Traffic | $0.045 pro GB, ab dem ersten Byte |
 
-Für eingehenden Traffic fallen keine Gebühren an. Für Apps, Managed Postgres, Managed Redis und Sandboxes gelten dieselben jeweils anwendbaren Ressourcensätze. Die Ressourcenlimits des Kontos gelten weiterhin. Das Hinzufügen von Guthaben erhöht die Limits für Apps und Datenbanken nicht, wohl aber die [Sandbox-Limits](/platform/limits#sandbox-account-limits).
+Eingehender Traffic ist kostenlos. Apps, Managed Postgres und Managed Redis nutzen diese Preise. Sandboxes haben für jede Größe einen festen Stundenpreis; siehe [Sandbox-Größen](/platform/limits#sandbox-sizes).
 
-Zum Beispiel kosten eine vCPU und 1 GB Arbeitsspeicher, die eine Stunde lang genutzt werden, $0.0375192 an Compute-Kosten. Speicher, ausgehender Traffic und Zahlungsgebühren können diesen Betrag erhöhen. Dies ist ein Beispiel für Ressourcenkosten, nicht der berechnete Betrag für eine Aufladung.
+Zum Beispiel kosten eine vCPU und 1 GB Arbeitsspeicher eine Stunde lang $0.0375192 an Rechenleistung. Speicher und ausgehender Traffic können hinzukommen. Das vollständige Angebot finden Sie unter [Preise](https://lizard.build/pricing).
 
-Die vollständige Preisübersicht finden Sie unter [current pricing](https://lizard.build/pricing). Für Enterprise-Abrechnung gilt Ihr Vertrag.
+<span id="trial" />
 
-<span id="account-balance" />
+## Testphase
 
-## Kontoguthaben
+Mit einem neuen Konto können Sie sich umsehen, aber um Apps, Sandboxes, Datenbanken oder Volumes zu erstellen, brauchen Sie Pro. Pro beginnt mit einer 7-tägigen Testphase und $5 Testguthaben. Zum Start hinterlegen Sie eine Karte; Apple Pay funktioniert auch. Beim Start der Testphase wird nichts berechnet. Endet sie, beginnt Pro für $19 im Monat, sofern Sie nicht vorher kündigen.
 
-Die Nutzung in einem Workspace wird vom Kontoguthaben seines Eigentümers abgezogen. Das Hinzufügen von Mitgliedern verursacht keine Sitzplatzgebühr. Auf der Seite „Credits“ sehen Sie Ihr Guthaben, Käufe und jegliches Guthaben, das abläuft.
+Jedes Konto und jede Karte bekommt eine Testphase. Hatte das Konto oder die Karte schon eine, beginnt Pro sofort, und $19 werden am selben Tag belastet.
 
-- **Gekauftes Guthaben verfällt nicht.** Es wird nicht jeden Monat zurückgesetzt.
-- **Testguthaben verfällt.** Neue Konten erhalten $10 Testguthaben, gültig für 7 Tage.
-- **Promo-Guthaben kann verfallen.** Prüfen Sie die Bedingungen und das angezeigte Ablaufdatum für die Gutschrift.
+Die Testphase enthält alle Funktionen von Pro, mit niedrigeren [Limits](#limits) bis zur ersten bezahlten Rechnung.
 
-Ein gekauftes Guthaben bezahlt die Nutzung; es ist kein Rabatt auf den Ressourcensatz. Ziehen Sie es beim Kostenvergleich mit einem anderen Anbieter nicht noch einmal ab.
+<span id="when-trial-credits-run-out" />
 
-<span id="top-ups-and-fees" />
+### Wenn das Testguthaben aufgebraucht ist
 
-## Aufladungen und Gebühren
+- Bei $5 Nutzung können Sie keine neuen Ressourcen mehr erstellen. Laufende Ressourcen laufen weiter.
+- Bei $6 Nutzung pausieren laufende Ressourcen. Ihre Daten bleiben erhalten.
+- Um weiterzumachen, wählen Sie **Start Pro now** auf der Seite „Abrechnung“ oder führen `lizard billing start-now` aus. Damit endet die Testphase, $19 werden belastet, und Ihr erster bezahlter Monat beginnt mit $19 Guthaben. Pausierte Apps und Datenbanken starten wieder, sobald die Zahlung durch ist.
 
-Öffnen Sie **Credits** in den Kontoeinstellungen, um Guthaben hinzuzufügen. Bevor Sie bestätigen, zeigt der Aufladebildschirm den Mindestbetrag, den Guthabenbetrag, die Zahlungsgebühr und den Gesamtbetrag an. Eine Mindestaufladung ist keine monatliche Gebühr.
+Nicht genutztes Testguthaben endet mit der Testphase. Es geht nicht in den bezahlten Monat über.
 
-Automatisches Aufladen ist optional. Wählen Sie den Guthabenschwellenwert und den Betrag in Ihren Credits-Einstellungen. Sie können es dort deaktivieren. Das Deaktivieren des automatischen Aufladens stoppt keine Ressourcen und beendet keine Gebühren für deren Nutzung.
+<span id="promo-codes" />
 
-<span id="low-or-empty-balance" />
+## Promo-Codes
 
-## Niedriges oder leeres Guthaben
+Ein Promo-Code kann eine längere Testphase geben, bis zu 730 Tage, und mehr Testguthaben. Er ersetzt die üblichen 7 Tage und $5. Lösen Sie einen Code auf der Seite „Abrechnung“ oder mit `lizard billing promo <code>` ein.
 
-Lizard warnt Sie, wenn Ihr Guthaben niedrig ist. Wenn Ihr Guthaben aufgebraucht ist und eine Zahlung es nicht wiederherstellt, kann die Erstellung von Ressourcen eingeschränkt werden und laufende Dienste können nach der jeweils geltenden Kulanzfrist pausieren. Prüfen Sie Ihre Credits-Seite auf die Kontobedingungen und stellen Sie das Guthaben vor Ablauf der Kulanzfrist wieder her, um eine Pausierung zu vermeiden.
+- Vor dem Start der Testphase speichert Lizard den Code und wendet ihn an, wenn Sie Ihre Karte hinterlegen.
+- Während der Testphase hebt ein Code Dauer und Guthaben auf das an, was der Code gibt. Er wird nicht zu dem addiert, was Sie schon haben.
+- Codes gelten nur vor Ihrer ersten Zahlung.
+- Jedes Konto und jede Karte kann einen Code nutzen.
+
+## Limits
+
+| | Testphase, bis zur ersten bezahlten Rechnung | Pro |
+| --- | ---: | ---: |
+| Gleichzeitig laufende Sandboxes | 5 | 100 |
+| Replikas pro App | 1 | 5 |
+
+Die Limits von Pro gelten ab Ihrer ersten bezahlten Rechnung, auch nach einer Zahlung über **Start Pro now**. Startraten für Sandboxes und weitere Limits finden Sie unter [Limits](/platform/limits#sandbox-account-limits).
+
+<span id="payment-failures" />
+
+## Fehlgeschlagene Zahlungen
+
+Schlägt eine Belastung fehl, ob die monatlichen $19 oder eine Belastung für Mehrnutzung:
+
+- Ab diesem Moment können Sie keine neuen Ressourcen erstellen.
+- Laufende Ressourcen laufen noch 72 Stunden weiter und pausieren dann.
+- Pausierte Ressourcen behalten ihre Daten.
+
+Bezahlen Sie die offene Rechnung auf der Seite „Abrechnung“. Sobald sie bezahlt ist, hebt Lizard die Sperre auf und startet pausierte Apps und Datenbanken wieder. Pausierte Sandboxes setzen Sie selbst fort. Stripe versucht eine fehlgeschlagene Belastung erneut; schlägt auch der letzte Versuch fehl, endet Pro.
+
+<span id="cancelling" />
+
+## Kündigung
+
+Sie können jederzeit kündigen: auf der Seite „Abrechnung“, im Kundenportal von Stripe oder mit `lizard billing cancel`. Pro bleibt bis zum Ende des laufenden Monats oder der Testphase aktiv. Die Mehrnutzung bis zu diesem Datum kommt auf eine letzte Rechnung. Eine Kündigung während der Testphase kostet nichts.
+
+Bis zum Enddatum können Sie die Kündigung auf der Seite „Abrechnung“ oder mit `lizard billing resume` zurücknehmen.
+
+Endet Pro, können Sie keine Ressourcen mehr erstellen, und laufende pausieren. Ihre Daten bleiben erhalten. Um sie wieder zu nutzen, starten Sie Pro auf der Seite „Abrechnung“. Eine zweite Testphase gibt es nicht, daher beginnt Pro sofort für $19.
+
+## Enterprise
+
+Enterprise-Konten zahlen pay as you go und erhalten jeden Monat eine Rechnung für den Vormonat. Preise, Limits und Zahlungsbedingungen richten sich nach Ihrem Vertrag. Wenn Sie mehr brauchen, als die Limits von Pro erlauben, fragen Sie uns auf der Seite [Preise](https://lizard.build/pricing) nach Enterprise.
+
+<span id="accounts-on-prepaid-credits" />
+
+## Konten mit Prepaid-Guthaben
+
+Konten, die mit Prepaid-Guthaben begonnen haben, behalten es bis zum 1. November 2026. Bis dahin funktionieren die Seite „Credits“, Aufladungen, automatisches Aufladen und die bisherigen Limits wie gewohnt. Sie können jederzeit auf der Seite „Abrechnung“ zu Pro wechseln.
+
+Wenn das Konto zu Pro wechselt, spätestens aber am 1. November 2026:
+
+- Gekauftes Guthaben, das Sie noch nicht verbraucht haben, geht auf Ihr Stripe-Guthaben über und wird mit Ihren Pro-Rechnungen verrechnet.
+- Nicht genutztes Test- und Promo-Guthaben endet.
+- Automatisches Aufladen wird ausgeschaltet.
+
+Ab dem 1. November 2026 kann ein Konto ohne Pro oder Enterprise keine Ressourcen erstellen, und seine laufenden Ressourcen pausieren. Ihre Daten bleiben erhalten.
 
 <span id="idle-apps-and-stored-data" />
 
 ## Inaktive Apps und gespeicherte Daten
 
-Eine App kann Arbeitsspeicher und CPU verwenden, auch wenn sie keine Anfragen hat. Stoppen Sie die App, um die Compute-Nutzung zu beenden. Persistent Volumes und Managed Object Storage verursachen weiter Speicherkosten, solange Sie Daten gespeichert halten, auch wenn die App gestoppt ist.
+Eine App kann auch ohne Anfragen Arbeitsspeicher und CPU nutzen. Stoppen Sie die App, um die Rechennutzung zu beenden. Für Persistent Volumes und Managed Object Storage zahlen Sie, solange Sie Daten darin behalten, auch wenn die App gestoppt ist.
 
-Lesen Sie vor dem Entfernen von Daten [Speicher und Wiederherstellung](/platform/storage-and-recovery). Lesen Sie [metrics](/observability/metrics), um konfigurierte Limits mit der gemessenen Nutzung zu vergleichen.
+Lesen Sie [Speicher und Wiederherstellung](/platform/storage-and-recovery), bevor Sie Daten löschen. Unter [Metriken](/observability/metrics) vergleichen Sie konfigurierte Limits mit der gemessenen Nutzung.

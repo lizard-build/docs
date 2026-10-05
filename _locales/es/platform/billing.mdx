@@ -1,63 +1,141 @@
 ---
-description: "Lizard pay as you go: tarifas de recursos, créditos de la cuenta, recarga automática opcional, comisiones de pago y qué ocurre cuando tu saldo se agota."
+description: "Lizard Pro cuesta $19 al mes, impuestos incluidos, con $19 en créditos mensuales. Cómo funcionan la prueba, pay as you go por encima de los créditos, los límites, los pagos fallidos, la cancelación y Enterprise."
 ---
 
-<span id="pay-as-you-go" />
+<span id="billing" />
 
-# Pago por uso
+# Facturación
 
-Lizard no tiene suscripción mensual ni costo por usuario para las cuentas estándar. Añade créditos a tu cuenta y paga por los recursos que usas. Los créditos comprados que no uses permanecen en tu saldo, así que un mes tranquilo no requiere comprar otro paquete.
+Lizard (lizard.build) tiene un plan de alta propia: Pro. Cuesta $19 al mes, impuestos incluidos, y trae $19 en créditos mensuales. Los créditos pagan el uso en toda la plataforma: apps, Sandboxes, Managed Postgres, Managed Redis, Managed Object Storage, Persistent Volumes y tráfico saliente. Cuando gastas los créditos, pagas pay as you go a las tarifas publicadas.
+
+Gestiona tu plan en la página **Facturación** de la configuración de la cuenta o con [`lizard billing`](/cli/billing). El plan pertenece al propietario del workspace. El uso en todos los workspaces que te pertenecen cuenta para tu plan, y los miembros no tienen costo por usuario.
+
+## Pro
+
+| | Pro |
+| --- | --- |
+| Precio | $19 al mes, impuestos incluidos |
+| Créditos mensuales | $19 para el uso en toda la plataforma |
+| Uso por encima de los créditos | Pay as you go a las [tarifas de recursos](#resource-rates) |
+| Prueba | 7 días con $5 en créditos de prueba |
+| Pago | Tarjeta, cobro mensual |
+
+Pro se renueva cada mes hasta que lo canceles. Los créditos mensuales que no uses no pasan al mes siguiente.
+
+<span id="monthly-credits-and-overage" />
+
+## Créditos mensuales y uso adicional
+
+Cada mes empieza con $19 en créditos, y el uso se descuenta primero de ellos. El uso por encima de $19 es uso adicional y se cobra a las mismas tarifas.
+
+Lizard cobra el uso adicional a medida que se acumula, no en una sola factura al final del mes. Cuando el uso adicional sin facturar llega a $20, Lizard lo cobra a tu tarjeta. Cada cobro pagado sube el siguiente escalón: $100, luego $200, $400 y $1,000, y después $1,000 cada vez. Los escalones vuelven a empezar en $20 cada mes. Al terminar el mes, el uso adicional que aún no se cobró va en una factura final. No hay tope de gasto.
+
+La página Facturación muestra cuánto de tus $19 has usado este mes, el uso adicional hasta ahora y tu próximo cobro.
 
 <span id="resource-rates" />
 
 ## Tarifas de recursos
 
-Los precios están en dólares estadounidenses.
+Los precios están en dólares estadounidenses e incluyen impuestos.
 
 | Recurso | Tarifa |
 | --- | ---: |
 | CPU | $0.000006948 por vCPU-segundo |
-| Memory | $0.000003474 por GB-segundo |
+| Memoria | $0.000003474 por GB-segundo |
 | Persistent Volumes | $0.000000054 por GB-segundo |
 | Managed Object Storage | $0.0135 por GB-mes |
-| Outgoing traffic | $0.045 por GB, desde el primer byte |
+| Tráfico saliente | $0.045 por GB, desde el primer byte |
 
-El tráfico entrante no tiene costo. Las apps, Managed Postgres, Managed Redis y Sandboxes usan las mismas tarifas de recursos aplicables. Los límites de recursos de la cuenta siguen aplicándose. Añadir créditos no aumenta los límites de apps y bases de datos, pero sí los [límites de sandboxes](/platform/limits#sandbox-account-limits).
+El tráfico entrante es gratis. Las apps, Managed Postgres y Managed Redis usan estas tarifas. Los Sandboxes tienen un precio fijo por hora para cada tamaño; consulta los [tamaños de Sandboxes](/platform/limits#sandbox-sizes).
 
-Por ejemplo, un vCPU y 1 GB de memoria usados durante una hora cuestan $0.0375192 en cómputo. El almacenamiento, el tráfico saliente y las comisiones de pago pueden sumarse a ese importe. Este es un ejemplo de costo de recursos, no del importe cobrado por una recarga.
+Por ejemplo, una vCPU y 1 GB de memoria durante una hora cuestan $0.0375192 en cómputo. El almacenamiento y el tráfico saliente pueden sumar a esa cantidad. Consulta los [precios](https://lizard.build/pricing) para ver la oferta completa.
 
-Consulta los [precios actuales](https://lizard.build/pricing) para ver la oferta completa. La facturación Enterprise sigue tu contrato.
+<span id="trial" />
 
-<span id="account-balance" />
+## Prueba
 
-## Saldo de la cuenta
+Una cuenta nueva puede explorar, pero necesita Pro para crear apps, Sandboxes, bases de datos o volúmenes. Pro empieza con una prueba de 7 días y $5 en créditos de prueba. Para empezarla, añade una tarjeta; Apple Pay también sirve. No se cobra nada al empezar la prueba. Cuando termina, Pro empieza a $19 al mes, salvo que lo canceles antes.
 
-El uso en un espacio de trabajo se descuenta del saldo de la cuenta de su propietario. Añadir miembros no tiene costo por usuario. La página Credits muestra tu saldo, compras y cualquier crédito que venza.
+Cada cuenta y cada tarjeta tiene una prueba. Si la cuenta o la tarjeta ya tuvo una, Pro empieza de inmediato y cobra $19 ese mismo día.
 
-- **Los créditos comprados no vencen.** No se restablecen cada mes.
-- **Los créditos de prueba vencen.** Las cuentas nuevas reciben $10 en créditos de prueba, válidos durante 7 días.
-- **Los créditos promocionales pueden vencer.** Revisa los términos y la fecha de vencimiento que se muestran para la concesión.
+La prueba incluye todas las funciones de Pro, con [límites](#limits) más bajos hasta tu primera factura pagada.
 
-Un saldo comprado paga el uso; no es un descuento sobre la tarifa del recurso. No lo restes otra vez al comparar costos con otro proveedor.
+<span id="when-trial-credits-run-out" />
 
-<span id="top-ups-and-fees" />
+### Cuando se agotan los créditos de prueba
 
-## Recargas y comisiones
+- Con $5 usados, ya no puedes crear recursos nuevos. Los recursos en marcha siguen funcionando.
+- Con $6 usados, los recursos en marcha se pausan. Sus datos se conservan.
+- Para seguir, elige **Start Pro now** en la página Facturación o ejecuta `lizard billing start-now`. Esto termina la prueba, cobra $19 y empieza tu primer mes pagado con $19 en créditos. Las apps y bases de datos en pausa vuelven a arrancar en cuanto se completa el pago.
 
-Abre **Credits** en la configuración de la cuenta para añadir fondos. Antes de confirmar, la pantalla de recarga muestra el importe mínimo, el importe de crédito, la comisión de pago y el cargo total. Una recarga mínima no es un cargo mensual.
+Los créditos de prueba que no uses terminan con la prueba. No pasan al mes pagado.
 
-La recarga automática es opcional. Elige el umbral de saldo y el importe en tu configuración de Credits. Puedes desactivarla allí. Desactivar la recarga automática no detiene los recursos ni termina los cargos por su uso.
+<span id="promo-codes" />
 
-<span id="low-or-empty-balance" />
+## Códigos promocionales
 
-## Saldo bajo o agotado
+Un código promocional puede dar una prueba más larga, de hasta 730 días, y más créditos de prueba. Sustituye los 7 días y $5 estándar. Canjea un código en la página Facturación o con `lizard billing promo <code>`.
 
-Lizard te avisa cuando tu saldo es bajo. Si tu saldo se agota y un pago no lo restablece, la creación de recursos puede quedar restringida y los servicios en ejecución pueden pausarse después del período de gracia aplicable. Revisa tu página Credits para ver las condiciones de la cuenta y restablece el saldo antes de que termine el período de gracia para evitar una pausa.
+- Antes de que empiece la prueba, Lizard guarda el código y lo aplica cuando añades tu tarjeta.
+- Durante la prueba, un código sube su duración y sus créditos a lo que da el código. No se suma a lo que ya tienes.
+- Los códigos solo funcionan antes de tu primer pago.
+- Cada cuenta y cada tarjeta puede usar un código.
+
+<span id="limits" />
+
+## Límites
+
+| | Prueba, hasta la primera factura pagada | Pro |
+| --- | ---: | ---: |
+| Sandboxes en marcha a la vez | 5 | 100 |
+| Réplicas por app | 1 | 5 |
+
+Los límites de Pro se aplican desde tu primera factura pagada, también tras un pago con **Start Pro now**. Consulta [Límites](/platform/limits#sandbox-account-limits) para el ritmo de arranque de Sandboxes y otros límites.
+
+<span id="payment-failures" />
+
+## Pagos fallidos
+
+Si falla un cobro, ya sean los $19 mensuales o un cobro de uso adicional:
+
+- Desde ese momento no puedes crear recursos nuevos.
+- Los recursos en marcha siguen 72 horas y luego se pausan.
+- Los recursos en pausa conservan sus datos.
+
+Paga la factura pendiente en la página Facturación. En cuanto está pagada, Lizard quita el bloqueo y vuelve a arrancar las apps y bases de datos en pausa. Reanuda tú mismo los Sandboxes en pausa. Stripe reintenta un cobro fallido; si el último intento también falla, Pro termina.
+
+<span id="cancelling" />
+
+## Cancelación
+
+Cancela cuando quieras en la página Facturación, en el portal de clientes de Stripe o con `lizard billing cancel`. Pro sigue activo hasta el final del mes en curso o de la prueba. El uso adicional hasta esa fecha va en una factura final. Cancelar durante la prueba no cuesta nada.
+
+Hasta la fecha de fin, puedes deshacer la cancelación en la página Facturación o con `lizard billing resume`.
+
+Cuando Pro termina, ya no puedes crear recursos, y los que están en marcha se pausan. Sus datos se conservan. Para volver a usarlos, activa Pro en la página Facturación. No hay una segunda prueba, así que Pro empieza de inmediato a $19.
+
+## Enterprise
+
+Las cuentas Enterprise pagan pay as you go y reciben cada mes una factura del mes anterior. Las tarifas, los límites y las condiciones de pago siguen tu contrato. Si necesitas más de lo que permiten los límites de Pro, pregúntanos por Enterprise en la página de [precios](https://lizard.build/pricing).
+
+<span id="accounts-on-prepaid-credits" />
+
+## Cuentas con créditos prepagados
+
+Las cuentas que empezaron con créditos prepagados los conservan hasta el 1 de noviembre de 2026. Hasta entonces, la página Credits, las recargas, la recarga automática y los límites anteriores funcionan como antes. Puedes pasar a Pro cuando quieras desde la página Facturación.
+
+Cuando la cuenta pasa a Pro, o el 1 de noviembre de 2026 como muy tarde:
+
+- Los créditos comprados que no hayas gastado pasan a tu saldo de Stripe y pagan tus facturas de Pro.
+- Los créditos de prueba y promocionales sin usar terminan.
+- La recarga automática se apaga.
+
+Desde el 1 de noviembre de 2026, una cuenta sin Pro ni Enterprise no puede crear recursos, y sus recursos en marcha se pausan. Sus datos se conservan.
 
 <span id="idle-apps-and-stored-data" />
 
 ## Apps inactivas y datos almacenados
 
-Una app puede usar memoria y CPU incluso cuando no tiene solicitudes. Detén la app para detener el uso de cómputo. Persistent Volumes y Managed Object Storage siguen acumulando cargos de almacenamiento mientras conserves datos, incluso cuando la app está detenida.
+Una app puede usar memoria y CPU aunque no reciba solicitudes. Detén la app para detener el uso de cómputo. Pagas por Persistent Volumes y Managed Object Storage mientras guardes datos en ellos, incluso con la app detenida.
 
-Consulta [almacenamiento y recuperación](/platform/storage-and-recovery) antes de eliminar datos. Lee [métricas](/observability/metrics) para comparar los límites configurados con el uso medido.
+Consulta [almacenamiento y recuperación](/platform/storage-and-recovery) antes de borrar datos. Lee [métricas](/observability/metrics) para comparar los límites configurados con el uso medido.

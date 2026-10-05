@@ -1,14 +1,36 @@
 ---
-description: "Lizard pay as you go: resource rates, account credits, optional auto top-up, payment fees and what happens when your balance runs out."
+description: "Lizard Pro costs $19 a month, taxes included, with $19 in monthly credits. How the trial, pay as you go usage, limits, failed payments, cancelling and Enterprise work."
 ---
 
-# Pay as you go
+# Billing
 
-Lizard has no monthly subscription or seat fee for standard accounts. Add credits to your account and pay for the resources you use. Unused purchased credits stay in your balance, so a quiet month does not require buying another package.
+Lizard (lizard.build) has one self-serve plan, Pro. It costs $19 a month, taxes included, and comes with $19 in monthly credits. The credits pay for usage across the platform: apps, Sandboxes, Managed Postgres, Managed Redis, Managed Object Storage, Persistent Volumes and outgoing traffic. Once you use your credits, you pay as you go at the published rates.
+
+Manage your plan on the **Billing** page in account settings or with [`lizard billing`](/cli/billing). The plan belongs to the workspace owner. Usage in every workspace you own counts toward your plan, and members add no seat fee.
+
+## Pro
+
+| | Pro |
+| --- | --- |
+| Price | $19 a month, taxes included |
+| Monthly credits | $19, for usage across the platform |
+| Usage above the credits | Pay as you go at the [resource rates](#resource-rates) |
+| Trial | 7 days with $5 in trial credits |
+| Payment | Card, billed monthly |
+
+Pro renews each month until you cancel. Unused monthly credits do not carry over to the next month.
+
+## Monthly credits and overage
+
+Each month starts with $19 in credits, and usage draws from them first. Usage above $19 is overage, charged at the same rates.
+
+Lizard charges overage as it builds up, not in one bill at the end of the month. When unbilled overage reaches $20, Lizard charges your card. Each paid charge raises the next step: $100, then $200, $400 and $1,000, and $1,000 after that. The steps start again at $20 each month. When the month ends, any overage not yet charged goes on one final invoice. There is no spending cap.
+
+The Billing page shows how much of your $19 you have used this month, the overage so far and your next charge.
 
 ## Resource rates
 
-Prices are in US dollars.
+Prices are in US dollars and include taxes.
 
 | Resource | Rate |
 | --- | ---: |
@@ -18,34 +40,80 @@ Prices are in US dollars.
 | Managed Object Storage | $0.0135 per GB-month |
 | Outgoing traffic | $0.045 per GB, from the first byte |
 
-Incoming traffic has no charge. Apps, Managed Postgres, Managed Redis and Sandboxes use the same applicable resource rates. Account resource limits still apply. Adding credits does not raise app and database limits; it does raise [sandbox limits](/platform/limits#sandbox-account-limits).
+Incoming traffic is free. Apps, Managed Postgres and Managed Redis use these rates. Sandboxes have a flat hourly price for each size; see [Sandbox sizes](/platform/limits#sandbox-sizes).
 
-For example, one vCPU and 1 GB of memory used for one hour cost $0.0375192 in compute. Storage, outgoing traffic and payment fees can add to that amount. This is a resource-cost example, not the amount charged for a top-up.
+For example, one vCPU and 1 GB of memory used for one hour cost $0.0375192 in compute. Storage and outgoing traffic can add to that. See [pricing](https://lizard.build/pricing) for the full offer.
 
-See [current pricing](https://lizard.build/pricing) for the full offer. Enterprise billing follows your contract.
+## Trial
 
-## Account balance
+A new account can look around, but it needs Pro to create apps, Sandboxes, databases or volumes. Pro starts with a 7-day trial and $5 in trial credits. You add a card to start it; Apple Pay works too. Nothing is charged when the trial starts. When it ends, Pro begins at $19 a month unless you cancel first.
 
-Usage in a workspace draws from its owner's account balance. Adding members has no seat fee. The Credits page shows your balance, purchases and any credits that expire.
+Each account and each card gets one trial. If the account or the card had one before, Pro starts at once and charges $19 that day.
 
-- **Purchased credits do not expire.** They do not reset each month.
-- **Trial credits expire.** New accounts receive $10 in trial credits, valid for 7 days.
-- **Promo credits may expire.** Check the terms and expiry date shown for the grant.
+The trial includes every Pro feature, with lower [limits](#limits) until your first paid invoice.
 
-A purchased balance pays for usage; it is not a discount on the resource rate. Do not subtract it again when comparing costs with another provider.
+### When trial credits run out
 
-## Top-ups and fees
+- At $5 used, you can no longer create new resources. Running resources keep running.
+- At $6 used, running resources pause. Their data is kept.
+- To go on, choose **Start Pro now** on the Billing page or run `lizard billing start-now`. This ends the trial, charges $19 and starts your first paid month with $19 in credits. Paused apps and databases start again once the payment goes through.
 
-Open **Credits** in account settings to add funds. Before you confirm, the top-up screen shows the minimum amount, credit amount, payment fee and total charge. A minimum top-up is not a monthly charge.
+Unused trial credits end with the trial. They do not move to the paid month.
 
-Auto top-up is optional. Choose the balance threshold and amount in your Credits settings. You can turn it off there. Turning off auto top-up does not stop resources or end charges for their use.
+## Promo codes
 
-## Low or empty balance
+A promo code can give a longer trial, up to 730 days, and more trial credits. It replaces the standard 7 days and $5. Redeem a code on the Billing page or with `lizard billing promo <code>`.
 
-Lizard warns you when your balance is low. If your balance runs out and payment does not restore it, resource creation can be restricted and running services can pause after the applicable grace period. Check your Credits page for account terms and restore the balance before the grace period ends to avoid a pause.
+- Before the trial starts, Lizard saves the code and applies it when you add your card.
+- During the trial, a code raises its length and credits to what the code gives. It does not add to what you already have.
+- Codes work only before your first payment.
+- Each account and each card can use one code.
+
+## Limits
+
+| | Trial, until the first paid invoice | Pro |
+| --- | ---: | ---: |
+| Sandboxes running at once | 5 | 100 |
+| Replicas per app | 1 | 5 |
+
+Pro limits apply from your first paid invoice, including a **Start Pro now** payment. See [Limits](/platform/limits#sandbox-account-limits) for Sandbox start rates and other limits.
+
+## Payment failures
+
+If a charge fails, whether the monthly $19 or an overage charge:
+
+- You can no longer create new resources, from the moment the charge fails.
+- Running resources keep running for 72 hours, then pause.
+- Paused resources keep their data.
+
+Pay the open invoice on the Billing page. Once it is paid, Lizard lifts the block and starts paused apps and databases again. Resume paused Sandboxes yourself. Stripe retries a failed charge; if the last retry fails, Pro ends.
+
+## Cancelling
+
+Cancel at any time on the Billing page, in the Stripe customer portal, or with `lizard billing cancel`. Pro stays active until the end of the current month or trial. Overage up to that date goes on a final invoice. Cancelling during the trial costs nothing.
+
+Until the end date, you can undo the cancel on the Billing page or with `lizard billing resume`.
+
+When Pro ends, you can no longer create resources, and running ones pause. Their data is kept. To use them again, start Pro on the Billing page. A second trial is not available, so Pro starts at once at $19.
+
+## Enterprise
+
+Enterprise accounts pay as you go and get an invoice each month for the month before. Rates, limits and payment terms follow your contract. For more than Pro limits allow, ask us about Enterprise on the [pricing](https://lizard.build/pricing) page.
+
+## Accounts on prepaid credits
+
+Accounts that started on prepaid credits keep them until 1 November 2026. Until then, the Credits page, top-ups, auto top-up and the earlier limits work as before. You can move to Pro at any time from the Billing page.
+
+When the account moves to Pro, or on 1 November 2026 at the latest:
+
+- Purchased credits you have not spent move to your Stripe balance and pay toward your Pro invoices.
+- Unused trial and promo credits end.
+- Auto top-up turns off.
+
+From 1 November 2026, an account without Pro or Enterprise cannot create resources, and its running resources pause. Their data is kept.
 
 ## Idle apps and stored data
 
-An app can use memory and CPU even when it has no requests. Stop the app to stop compute usage. Persistent Volumes and Managed Object Storage keep accruing storage charges while you keep data, including when the app is stopped.
+An app can use memory and CPU even when it has no requests. Stop the app to stop compute usage. You pay for Persistent Volumes and Managed Object Storage while you keep data in them, even when the app is stopped.
 
 See [storage and recovery](/platform/storage-and-recovery) before removing data. Read [metrics](/observability/metrics) to compare configured limits with measured use.
