@@ -1,18 +1,20 @@
 ---
-description: "lizard billing shows your Pro plan, trial and usage, starts or cancels Pro, and redeems promo codes. lizard credits still works as an alias."
+description: "lizard billing shows your Pro plan, trial and usage, starts or cancels Pro, redeems promo codes, and lists prepaid credits history and saved cards."
 ---
 
 # lizard billing
 
-Show and manage your Lizard (lizard.build) plan: the trial, Pro, this month's usage and promo codes. `lizard credits` is an alias, so older scripts keep working.
+Show and manage your Lizard (lizard.build) plan: the trial, Pro, this month's usage and promo codes. `lizard credits` is the old name. It still works but prints a warning, and a later release will remove it.
 
 ## Usage
 
 ```bash
-lizard billing <subcommand>
+lizard billing [subcommand] [flags]
 ```
 
-These commands act on the plan of the account you are signed in with. See [Billing](/platform/billing) for how Pro, the trial and overage work.
+With no subcommand, `lizard billing` shows the same as `lizard billing status`. The commands act on the plan of the account you are signed in with. See [Billing](/platform/billing) for how Pro, the trial and overage work.
+
+Commands that charge, cancel or remove a card ask you to confirm. Without a terminal, for example in CI or an agent, pass `-y` instead. Commands that open a page always print its link, and open your browser only in an interactive terminal.
 
 ## Subcommands
 
@@ -20,21 +22,43 @@ These commands act on the plan of the account you are signed in with. See [Billi
 
 Show your plan and where it stands: days and trial credits left, how much of the $19 in monthly credits you have used, overage so far, the next charge and its date, and any unpaid invoice.
 
+| Flag | Description |
+|------|-------------|
+| `-w, --workspace <id>` | Show the plan of this workspace's owner |
+
 ### `lizard billing open`
 
-Open the Billing page in your browser. Pay an open invoice, change your card or see past invoices there.
+Open the Billing page in your browser. Pay an open invoice, add or change your card, or see past invoices there.
+
+| Flag | Description |
+|------|-------------|
+| `--no-open` | Print the link instead of opening a browser |
 
 ### `lizard billing start`
 
-Start Pro through Stripe Checkout, where you add a card. A new account gets the 7-day trial with $5 in trial credits, and nothing is charged until the trial ends. If the account or the card had a trial before, Pro starts at once and charges $19.
+Start Pro in Stripe Checkout, where you add a card. The command opens Checkout in your browser. A new account gets the 7-day trial with $5 in trial credits, and nothing is charged until the trial ends. If the account or the card had a trial before, Pro starts at once and charges $19.
+
+| Flag | Description |
+|------|-------------|
+| `--return-url <path>` | Dashboard path to come back to after Checkout, for example `/projects/abc` |
+| `--no-open` | Print the Checkout link instead of opening a browser |
 
 ### `lizard billing start-now`
 
-End the trial and start your first paid month now. Lizard charges $19 and adds $19 in monthly credits. Use it when trial credits run out. If your bank asks you to confirm the payment, the command gives you a page to do so; the trial goes on until the payment goes through.
+End the trial and start your first paid month now. Lizard charges $19 and adds $19 in monthly credits. Use it when trial credits run out. If your bank asks you to confirm the payment, the command gives you the invoice page to do so; the trial goes on until the payment goes through.
+
+| Flag | Description |
+|------|-------------|
+| `-y, --yes` | Skip confirmation |
+| `--no-open` | Print the payment link instead of opening a browser |
 
 ### `lizard billing cancel`
 
 Cancel at the end of the current month or trial. Pro stays active until then. Cancelling during the trial costs nothing.
+
+| Flag | Description |
+|------|-------------|
+| `-y, --yes` | Skip confirmation |
 
 ### `lizard billing resume`
 
@@ -43,6 +67,32 @@ Undo a cancel before the end date.
 ### `lizard billing promo <code>`
 
 Redeem a promo code for a longer trial and more trial credits. Before the trial starts, Lizard saves the code for it. During the trial, the code extends it. Codes work only before your first payment, one per account.
+
+### `lizard billing balance`
+
+Show the prepaid credits balance. For accounts on prepaid credits until 1 November 2026, and for Enterprise accounts.
+
+### `lizard billing transactions`
+
+List recent balance transactions for prepaid credits and Enterprise accounts (alias `ledger`).
+
+| Flag | Description |
+|------|-------------|
+| `-l, --limit <n>` | Max results, `1`–`100` (default `20`) |
+| `-c, --cursor <cursor>` | Page cursor from a previous call |
+| `-u, --usage` | Include daily usage rows |
+
+### `lizard billing payment-methods list`
+
+List saved cards. `pm` is short for `payment-methods`. Add a card on the Billing page.
+
+### `lizard billing payment-methods remove <id>`
+
+Remove a saved card (alias `rm`).
+
+| Flag | Description |
+|------|-------------|
+| `-y, --yes` | Skip confirmation |
 
 ## Examples
 
@@ -63,7 +113,7 @@ lizard billing start
 ### Cancel, then change your mind
 
 ```bash
-lizard billing cancel
+lizard billing cancel --yes
 lizard billing resume
 ```
 

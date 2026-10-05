@@ -1,20 +1,22 @@
 ---
-description: "lizard billing zeigt Ihren Pro-Plan, die Testphase und die Nutzung, startet oder kündigt Pro und löst Promo-Codes ein. lizard credits funktioniert weiter als Alias."
+description: "lizard billing zeigt deinen Pro-Plan, die Testphase und die Nutzung, startet oder kündigt Pro, löst Promo-Codes ein und zeigt den Verlauf des Prepaid-Guthabens und gespeicherte Karten."
 ---
 
 # lizard billing
 
-Zeigt und verwaltet Ihren Plan bei Lizard (lizard.build): Testphase, Pro, die Nutzung in diesem Monat und Promo-Codes. `lizard credits` bleibt ein Alias, daher funktionieren ältere Skripte weiter.
+Zeigt und verwaltet deinen Plan bei Lizard (lizard.build): Testphase, Pro, die Nutzung in diesem Monat und Promo-Codes. `lizard credits` ist der alte Name. Er funktioniert noch, gibt aber eine Warnung aus, und ein späteres Release entfernt ihn.
 
 <span id="usage" />
 
 ## Verwendung
 
 ```bash
-lizard billing <subcommand>
+lizard billing [subcommand] [flags]
 ```
 
-Diese Befehle wirken auf den Plan des Kontos, mit dem Sie angemeldet sind. Wie Pro, die Testphase und Mehrnutzung funktionieren, steht unter [Abrechnung](/platform/billing).
+Ohne Unterbefehl zeigt `lizard billing` dasselbe wie `lizard billing status`. Die Befehle wirken auf den Plan des Kontos, mit dem du angemeldet bist. Wie Pro, die Testphase und Mehrnutzung funktionieren, steht unter [Abrechnung](/platform/billing).
+
+Befehle, die belasten, kündigen oder eine Karte entfernen, fragen nach einer Bestätigung. Ohne Terminal, etwa in CI oder bei einem Agenten, übergibst du stattdessen `-y`. Befehle, die eine Seite öffnen, geben immer ihren Link aus und öffnen den Browser nur in einem interaktiven Terminal.
 
 <span id="subcommands" />
 
@@ -22,23 +24,45 @@ Diese Befehle wirken auf den Plan des Kontos, mit dem Sie angemeldet sind. Wie P
 
 ### `lizard billing status`
 
-Zeigt Ihren Plan und seinen Stand: verbleibende Tage und Testguthaben, wie viel der $19 monatlichen Guthabens Sie genutzt haben, die bisherige Mehrnutzung, Betrag und Datum der nächsten Belastung und eine offene Rechnung, falls es eine gibt.
+Zeigt deinen Plan und seinen Stand: verbleibende Tage und Testguthaben, wie viel der $19 monatlichen Guthabens du genutzt hast, die bisherige Mehrnutzung, Betrag und Datum der nächsten Belastung und eine offene Rechnung, falls es eine gibt.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-w, --workspace <id>` | Plan des Eigentümers dieses Workspace anzeigen |
 
 ### `lizard billing open`
 
-Öffnet die Seite „Abrechnung“ im Browser. Dort bezahlen Sie eine offene Rechnung, ändern Ihre Karte oder sehen frühere Rechnungen.
+Öffnet die Seite „Abrechnung“ im Browser. Dort bezahlst du eine offene Rechnung, fügst eine Karte hinzu oder änderst sie und siehst frühere Rechnungen.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `--no-open` | Link ausgeben, statt den Browser zu öffnen |
 
 ### `lizard billing start`
 
-Startet Pro über Stripe Checkout, wo Sie eine Karte hinterlegen. Ein neues Konto bekommt die 7-tägige Testphase mit $5 Testguthaben, und bis zu ihrem Ende wird nichts berechnet. Hatte das Konto oder die Karte schon eine Testphase, beginnt Pro sofort, und $19 werden belastet.
+Startet Pro in Stripe Checkout, wo du eine Karte hinterlegst. Der Befehl öffnet Checkout in deinem Browser. Ein neues Konto bekommt die 7-tägige Testphase mit $5 Testguthaben, und bis zu ihrem Ende wird nichts berechnet. Hatte das Konto oder die Karte schon eine Testphase, beginnt Pro sofort, und $19 werden belastet.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `--return-url <path>` | Pfad im Dashboard, zu dem du nach Checkout zurückkehrst, zum Beispiel `/projects/abc` |
+| `--no-open` | Checkout-Link ausgeben, statt den Browser zu öffnen |
 
 ### `lizard billing start-now`
 
-Beendet die Testphase und beginnt sofort Ihren ersten bezahlten Monat. Lizard belastet $19 und gibt $19 monatliches Guthaben. Nutzen Sie den Befehl, wenn das Testguthaben aufgebraucht ist. Verlangt Ihre Bank eine Bestätigung der Zahlung, gibt der Befehl Ihnen eine Seite dafür; die Testphase läuft weiter, bis die Zahlung durch ist.
+Beendet die Testphase und beginnt sofort deinen ersten bezahlten Monat. Lizard belastet $19 und gibt $19 monatliches Guthaben. Nutze den Befehl, wenn das Testguthaben aufgebraucht ist. Verlangt deine Bank eine Bestätigung der Zahlung, gibt der Befehl dir die Rechnungsseite dafür; die Testphase läuft weiter, bis die Zahlung durch ist.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-y, --yes` | Bestätigung überspringen |
+| `--no-open` | Zahlungslink ausgeben, statt den Browser zu öffnen |
 
 ### `lizard billing cancel`
 
 Kündigt zum Ende des laufenden Monats oder der Testphase. Bis dahin bleibt Pro aktiv. Eine Kündigung während der Testphase kostet nichts.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-y, --yes` | Bestätigung überspringen |
 
 ### `lizard billing resume`
 
@@ -46,7 +70,33 @@ Nimmt eine Kündigung vor dem Enddatum zurück.
 
 ### `lizard billing promo <code>`
 
-Löst einen Promo-Code für eine längere Testphase und mehr Testguthaben ein. Vor dem Start der Testphase speichert Lizard den Code dafür. Während der Testphase verlängert der Code sie. Codes gelten nur vor Ihrer ersten Zahlung, einer pro Konto.
+Löst einen Promo-Code für eine längere Testphase und mehr Testguthaben ein. Vor dem Start der Testphase speichert Lizard den Code dafür. Während der Testphase verlängert der Code sie. Codes gelten nur vor deiner ersten Zahlung, einer pro Konto.
+
+### `lizard billing balance`
+
+Zeigt das Prepaid-Guthaben. Für Konten mit Prepaid-Guthaben bis zum 1. November 2026 und für Enterprise-Konten.
+
+### `lizard billing transactions`
+
+Listet die letzten Buchungen auf dem Guthaben für Konten mit Prepaid-Guthaben und Enterprise-Konten auf (Alias `ledger`).
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-l, --limit <n>` | Maximale Anzahl, `1`–`100` (Standard `20`) |
+| `-c, --cursor <cursor>` | Seiten-Cursor aus einem früheren Aufruf |
+| `-u, --usage` | Tägliche Nutzungszeilen einschließen |
+
+### `lizard billing payment-methods list`
+
+Listet gespeicherte Karten auf. `pm` ist die Kurzform von `payment-methods`. Eine Karte fügst du auf der Seite „Abrechnung“ hinzu.
+
+### `lizard billing payment-methods remove <id>`
+
+Entfernt eine gespeicherte Karte (Alias `rm`).
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-y, --yes` | Bestätigung überspringen |
 
 <span id="examples" />
 
@@ -75,7 +125,7 @@ lizard billing start
 ### Kündigen und es sich anders überlegen
 
 ```bash
-lizard billing cancel
+lizard billing cancel --yes
 lizard billing resume
 ```
 
@@ -83,7 +133,7 @@ lizard billing resume
 
 ## Zahlung erforderlich
 
-Wenn Sie eine Ressource erstellen, während das Konto keinen Plan hat, das Testguthaben aufgebraucht ist oder eine Rechnung offen ist, antwortet Lizard mit HTTP 402. Lizard CLI gibt den Grund und einen Link zur Seite „Abrechnung“ aus, zum Beispiel:
+Wenn du eine Ressource erstellst, während das Konto keinen Plan hat, das Testguthaben aufgebraucht ist oder eine Rechnung offen ist, antwortet Lizard mit HTTP 402. Lizard CLI gibt den Grund und einen Link zur Seite „Abrechnung“ aus, zum Beispiel:
 
 ```text
 Start your 7-day Pro trial with $5 in credits to deploy. No charge today, then $19/month.
@@ -95,4 +145,4 @@ Start your 7-day Pro trial with $5 in credits to deploy. No charge today, then $
 
 - [Abrechnung](/platform/billing) — Pro, Testphase, Mehrnutzung, fehlgeschlagene Zahlungen und Kündigung
 - [Limits](/platform/limits) — Limits der Testphase und von Pro für Sandboxes und Replikas
-- [lizard whoami](/cli/whoami) — zeigt das Konto, mit dem Sie angemeldet sind
+- [lizard whoami](/cli/whoami) — zeigt das Konto, mit dem du angemeldet bist
