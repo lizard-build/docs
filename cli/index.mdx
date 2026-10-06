@@ -11,11 +11,15 @@ The `lizard` CLI is the primary interface to the platform. This page covers inst
 ## Install & upgrade
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash   # macOS and Linux
 lizard --version
 lizard upgrade            # update to the latest version
 lizard upgrade --check    # check without installing
 ```
+
+On Windows, run `irm https://lizard.build/api/cli/install.ps1 | iex` in PowerShell. With Node.js you can install from npm instead: `npm install -g @lizard-build/cli`.
+
+The binary from the install script also updates itself in the background, at most once every 6 hours; set `LIZARD_NO_UPDATE=1` to turn that off. An npm install updates through npm: `lizard upgrade` prints the command.
 
 Always use the globally installed `lizard` binary — **not** `npx`. See [Quickstart](/getting-started#1-install-the-cli) for permission-error fixes.
 

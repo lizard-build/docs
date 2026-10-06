@@ -15,13 +15,14 @@ Das grundlegende Setup deckt Flows ab, die APIs verwenden. Hochgeladene Dateien 
 ## Voraussetzungen
 
 - Ein Lizard-Konto mit Zugriff auf App-Hosting und Managed Postgres.
-- Node.js, npm und OpenSSL auf deinem Computer.
+- OpenSSL auf deinem Computer.
 - Genügend Arbeitsspeicher für deine Flowise-Workload; der Test-Service verwendet 4 GiB.
 
 Installiere Lizard CLI und schließe die Browser-Anmeldung ab:
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH"
 lizard login
 ```
 

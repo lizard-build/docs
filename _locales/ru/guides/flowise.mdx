@@ -15,13 +15,14 @@ description: "Развернуть Flowise with PostgreSQL, preserve its credent
 ## Предварительные требования
 
 - Учетная запись Lizard с доступом к хостингу приложений и Managed Postgres.
-- Node.js, npm и OpenSSL на вашем компьютере.
+- OpenSSL на вашем компьютере.
 - Достаточно памяти для вашей рабочей нагрузки Flowise; тестовый сервис использует 4 ГиБ.
 
 Установите Lizard CLI и завершите вход через браузер:
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH"
 lizard login
 ```
 

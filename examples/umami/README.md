@@ -5,12 +5,13 @@ This guide runs the official Umami Docker image on [Lizard (lizard.build)](https
 ## Prerequisites
 
 - A Lizard account with access to app hosting and Managed Postgres.
-- Node.js and npm on your computer, plus OpenSSL to generate secrets.
+- OpenSSL on your computer to generate secrets.
 
 Install Lizard CLI and log in:
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH"
 lizard login
 ```
 

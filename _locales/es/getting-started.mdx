@@ -6,27 +6,39 @@ description: "Instala la Lizard CLI, inicia sesión y lanza tu primera app desde
 
 # Inicio rápido de apps
 
-Lanza tu primera app en Lizard en unos minutos. Necesitarás Node.js 18+ y npm; se crea una cuenta de Lizard automáticamente la primera vez que `lizard login`. Instalarás la CLI, iniciarás sesión y desplegarás, ya sea directamente desde un repositorio de GitHub o desde un directorio local.
+Lanza tu primera app en Lizard en unos minutos. Se crea una cuenta de Lizard automáticamente la primera vez que `lizard login`. Instalarás la CLI, iniciarás sesión y desplegarás, ya sea directamente desde un repositorio de GitHub o desde un directorio local.
 
 <span id="1-install-the-cli" />
 
 ## 1. Instala la CLI
 
-Instala globalmente desde npm el binario `lizard`:
+En macOS o Linux, ejecuta el script de instalación:
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
 ```
 
-Verifica que esté en tu `PATH`:
+Instala el binario `lizard` en `~/.lizard/bin`, añade esa carpeta a tu `PATH` en `~/.zshrc` o `~/.bashrc`, y desde entonces el binario se actualiza solo. Abre una terminal nueva y comprueba la versión:
 
 ```bash
 lizard --version
 ```
 
-> **No uses `npx`.** Usa siempre el binario `lizard` instalado globalmente. Ejecutar `npx @lizard-build/cli` descarga una copia temporal cuya versión puede diferir de la plataforma. Más adelante, actualízalo en el mismo lugar con `lizard upgrade`.
+En Windows, ejecuta esto en PowerShell:
 
-> **¿Errores de permisos (EACCES)?** No uses `sudo`. Haz que npm apunte a un prefijo propiedad de tu usuario:
+```powershell
+irm https://lizard.build/api/cli/install.ps1 | iex
+```
+
+**O instala desde npm** (requiere Node.js 18+):
+
+```bash
+npm install -g @lizard-build/cli
+```
+
+> **No uses `npx`.** Usa siempre el binario `lizard` instalado globalmente. Ejecutar `npx @lizard-build/cli` descarga una copia temporal cuya versión puede diferir de la plataforma. Para actualizar más adelante una instalación de npm, ejecuta `npm install -g @lizard-build/cli@latest`.
+
+> **¿Errores de permisos (EACCES)?** No uses `sudo`. Usa el script de instalación de arriba, que no necesita permisos de administrador, o haz que npm apunte a un prefijo propiedad de tu usuario:
 > ```bash
 > mkdir -p ~/.npm-global
 > npm config set prefix ~/.npm-global

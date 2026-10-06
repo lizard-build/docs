@@ -15,11 +15,15 @@ description: "lizard CLI をインストールおよびアップグレードし�
 ## インストールとアップグレード
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash   # macOS and Linux
 lizard --version
 lizard upgrade            # update to the latest version
 lizard upgrade --check    # check without installing
 ```
+
+Windows では、PowerShell で `irm https://lizard.build/api/cli/install.ps1 | iex` を実行します。Node.js があれば、代わりに `npm install -g @lizard-build/cli` で npm からインストールすることもできます。
+
+インストールスクリプトで入れたバイナリは、バックグラウンドで自動更新もされます（最大で 6 時間に 1 回）。無効にするには `LIZARD_NO_UPDATE=1` を設定してください。npm でインストールした場合は npm で更新します。そのコマンドは `lizard upgrade` が表示します。
 
 必ずグローバルにインストールされた `lizard` バイナリを使用してください — `npx` ではありません。権限エラーの修正については [Quickstart](/getting-started#1-install-the-cli) を参照してください。
 

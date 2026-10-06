@@ -13,12 +13,13 @@ description: "Развертывание Umami с Managed Postgres, настро
 ## Предварительные требования
 
 - Аккаунт Lizard с доступом к хостингу приложений и Managed Postgres.
-- Node.js и npm на вашем компьютере, а также OpenSSL для генерации секретов.
+- OpenSSL на вашем компьютере для генерации секретов.
 
 Установите Lizard CLI и выполните вход:
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH"
 lizard login
 ```
 

@@ -30,10 +30,13 @@ Lizard erstellt und betreibt Anwendungen aus einem GitHub-Repository oder einem 
 Installieren Sie Lizard CLI und melden Sie sich an. Stellen Sie dann ein Repository bereit, auf das Sie zugreifen können:
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH"
 lizard login
 lizard add -r your-org/your-app
 ```
+
+Für Windows oder npm siehe [weitere Installationswege](/getting-started#1-install-the-cli).
 
 Lizard erstellt das Image auf seinen Servern, daher ist auf diesem Weg kein lokales Docker erforderlich. [lizardpack](/concepts/build-pipeline) erkennt unterstützte Projekte; Projekte mit speziellen Build-Anforderungen können explizite Befehle oder ein Dockerfile verwenden. Prüfen Sie die Build-Logs und verifizieren Sie nach der Bereitstellung die URL der Anwendung.
 
