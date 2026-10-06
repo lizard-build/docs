@@ -14,7 +14,7 @@ Set `baseURL` in `hugo.toml` to your public HTTPS URL, including the trailing sl
 
 ## Deploy a local copy
 
-Download or copy this directory into a standalone local folder. Install the CLI with `curl -fsSL https://lizard.build/install.sh | bash` (then open a new terminal) or `npm install -g @lizard-build/cli`, run `lizard login` and complete sign-in. Run these commands from that local folder:
+Download or copy this directory into a standalone local folder. Install the CLI with `curl -fsSL https://lizard.build/install.sh | bash` or `npm install -g @lizard-build/cli`, then run `lizard login` and complete sign-in. Run these commands from that local folder:
 
 ```sh
 lizard init --name hugo-example
