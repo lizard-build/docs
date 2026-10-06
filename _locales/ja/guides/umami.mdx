@@ -13,12 +13,13 @@ description: "Managed Postgres とともに Umami をデプロイし、暗号化
 ## 前提条件
 
 - アプリホスティングと Managed Postgres にアクセスできる Lizard アカウント。
-- お使いのコンピューターに Node.js と npm、およびシークレット生成用の OpenSSL。
+- お使いのコンピューターにシークレット生成用の OpenSSL。
 
 Lizard CLI をインストールしてログインします:
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH"
 lizard login
 ```
 

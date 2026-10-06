@@ -19,10 +19,13 @@ Ten una aplicación funcional, permiso para desplegarla y una cuenta en Lizard. 
 ## Da al agente la guía actual
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH"
 lizard skills get core --json
 lizard --help --json
 ```
+
+Con Node.js, `npm install -g @lizard-build/cli` instala el mismo CLI.
 
 Lizard Skill carga instrucciones que coinciden con el CLI instalado. Para un comando concreto, lee su esquema en lugar de adivinar las opciones:
 

@@ -50,10 +50,17 @@ Ein typischer Agent-Ablauf:
 3. **Kontext vor Änderungen auflösen:** `lizard status` (cwd-Link) und `lizard ps --json` (Services).
 4. **Handeln** mithilfe der Anleitung — `add`, `up`, `secrets`, `domain` usw., immer mit `--json`.
 
-Wenn das Binary `lizard` nicht vorhanden ist, installiere es zuerst:
+Wenn das Binary `lizard` nicht vorhanden ist, installiere es zuerst. Mit Node.js verwende npm, das `lizard` sofort im `PATH` verfügbar macht:
 
 ```bash
 npm install -g @lizard-build/cli
+```
+
+Ohne Node.js verwende unter macOS oder Linux das Installationsskript. Es nimmt `~/.lizard/bin` erst in neuen Shells in den `PATH` auf. Bis dahin ergänze den Pfad im selben Befehl:
+
+```bash
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH" && lizard --version
 ```
 
 <span id="conventions-agents-should-follow" />

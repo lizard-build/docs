@@ -19,10 +19,13 @@ description: "Lizard Skill と Lizard CLI を使って、Claude Code、Codex、�
 ## 現在のガイドをエージェントに渡す
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH"
 lizard skills get core --json
 lizard --help --json
 ```
+
+Node.js がある場合は、`npm install -g @lizard-build/cli` でも同じ CLI をインストールできます。
 
 Lizard Skill は、インストール済み CLI に一致する手順を読み込みます。特定のコマンドについては、フラグを推測せず、そのスキーマを読んでください:
 

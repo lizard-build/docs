@@ -30,10 +30,13 @@ Lizard compila y ejecuta aplicaciones desde un repositorio de GitHub o una carpe
 Instala Lizard CLI e inicia sesión; luego despliega un repositorio al que tengas acceso:
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH"
 lizard login
 lizard add -r your-org/your-app
 ```
+
+En Windows o con npm, consulta [otras formas de instalación](/getting-started#1-install-the-cli).
 
 Lizard compila la imagen en sus servidores, así que esta ruta no necesita Docker local. [lizardpack](/concepts/build-pipeline) detecta los proyectos compatibles; los proyectos con necesidades de compilación especiales pueden usar comandos explícitos o un Dockerfile. Revisa los logs de compilación y verifica la URL de la aplicación después del despliegue.
 

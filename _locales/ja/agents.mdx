@@ -52,10 +52,17 @@ lizard <cmd> --help --json          # a specific command's schema
 3. **変更前にコンテキストを解決する:** `lizard status` (cwd リンク) と `lizard ps --json` (サービス)。
 4. **ガイドに従って実行する** — `add`、`up`、`secrets`、`domain` など。常に `--json` を付けます。
 
-`lizard` バイナリが存在しない場合は、最初にインストールしてください:
+`lizard` バイナリが存在しない場合は、最初にインストールしてください。Node.js がある場合は npm を使います。`lizard` がすぐに `PATH` に入ります:
 
 ```bash
 npm install -g @lizard-build/cli
+```
+
+Node.js がない場合、macOS または Linux ではインストールスクリプトを使います。スクリプトが `~/.lizard/bin` を `PATH` に追加するのは新しいシェルだけなので、それまでは同じコマンド内で追加してください:
+
+```bash
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH" && lizard --version
 ```
 
 <span id="conventions-agents-should-follow" />

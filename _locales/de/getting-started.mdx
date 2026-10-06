@@ -6,27 +6,39 @@ description: "Installieren Sie die lizard CLI, melden Sie sich an und stellen Si
 
 # App-Schnellstart
 
-Stellen Sie Ihre erste App in wenigen Minuten auf Lizard bereit. Sie benötigen Node.js 18+ und npm — ein Lizard-Konto wird automatisch erstellt, wenn Sie zum ersten Mal `lizard login`. Sie installieren die CLI, melden sich an und stellen dann bereit — entweder direkt aus einem GitHub-Repo oder aus einem lokalen Verzeichnis.
+Stellen Sie Ihre erste App in wenigen Minuten auf Lizard bereit. Ein Lizard-Konto wird automatisch erstellt, wenn Sie zum ersten Mal `lizard login`. Sie installieren die CLI, melden sich an und stellen dann bereit — entweder direkt aus einem GitHub-Repo oder aus einem lokalen Verzeichnis.
 
 <span id="1-install-the-cli" />
 
 ## 1. Die CLI installieren
 
-Installieren Sie die `lizard`-Binärdatei global über npm:
+Führen Sie unter macOS oder Linux das Installationsskript aus:
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
 ```
 
-Prüfen Sie, ob sie sich in Ihrem `PATH` befindet:
+Das Skript legt die `lizard`-Binärdatei in `~/.lizard/bin` ab und fügt diesen Ordner in `~/.zshrc` oder `~/.bashrc` zu Ihrem `PATH` hinzu. Danach aktualisiert sich die Binärdatei selbst. Öffnen Sie ein neues Terminal und prüfen Sie die Version:
 
 ```bash
 lizard --version
 ```
 
-> **Verwenden Sie nicht `npx`.** Verwenden Sie immer die global installierte `lizard`-Binärdatei. Beim Ausführen von `npx @lizard-build/cli` wird eine Wegwerfkopie geladen, deren Version von der Plattform abweichen kann. Aktualisieren Sie sie später direkt mit `lizard upgrade`.
+Unter Windows führen Sie in PowerShell diesen Befehl aus:
 
-> **Berechtigungsfehler (EACCES)?** Verwenden Sie nicht `sudo`. Setzen Sie stattdessen für npm ein Präfix in einem Verzeichnis, das Ihrem Benutzer gehört:
+```powershell
+irm https://lizard.build/api/cli/install.ps1 | iex
+```
+
+**Oder installieren Sie über npm** (benötigt Node.js 18+):
+
+```bash
+npm install -g @lizard-build/cli
+```
+
+> **Verwenden Sie nicht `npx`.** Verwenden Sie immer die global installierte `lizard`-Binärdatei. Beim Ausführen von `npx @lizard-build/cli` wird eine Wegwerfkopie geladen, deren Version von der Plattform abweichen kann. Eine npm-Installation aktualisieren Sie später mit `npm install -g @lizard-build/cli@latest`.
+
+> **Berechtigungsfehler (EACCES)?** Verwenden Sie nicht `sudo`. Nutzen Sie das Installationsskript oben, das keine Administratorrechte benötigt, oder setzen Sie für npm ein Präfix in einem Verzeichnis, das Ihrem Benutzer gehört:
 > ```bash
 > mkdir -p ~/.npm-global
 > npm config set prefix ~/.npm-global
