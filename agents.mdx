@@ -44,17 +44,16 @@ A typical agent flow:
 3. **Resolve context before mutating:** `lizard status` (cwd link) and `lizard ps --json` (services).
 4. **Act** using the guide — `add`, `up`, `secrets`, `domain`, etc., always with `--json`.
 
-If the `lizard` binary isn't present, install it first. With Node.js, use npm, which puts `lizard` on the `PATH` right away:
-
-```bash
-npm install -g @lizard-build/cli
-```
-
-Without Node.js, on macOS or Linux, use the install script. It adds `~/.lizard/bin` to the `PATH` only for new shells, so add it in the same command until then:
+If the `lizard` binary isn't present, install it first. On macOS or Linux, use the install script:
 
 ```bash
 curl -fsSL https://lizard.build/install.sh | bash
-export PATH="$HOME/.lizard/bin:$PATH" && lizard --version
+```
+
+It needs no Node.js or `sudo`, and it links `lizard` into a folder that is already on the `PATH`, so the agent can call it in the same session. If the script says `lizard` may not be found, call `~/.lizard/bin/lizard` instead. On Windows, use npm:
+
+```bash
+npm install -g @lizard-build/cli
 ```
 
 ## Conventions agents should follow

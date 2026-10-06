@@ -14,7 +14,6 @@ Install Lizard CLI and finish the browser login:
 
 ```bash
 curl -fsSL https://lizard.build/install.sh | bash
-export PATH="$HOME/.lizard/bin:$PATH"
 lizard login
 ```
 
