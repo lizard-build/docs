@@ -13,10 +13,13 @@ Have a working application, permission to deploy it, and an account on Lizard. T
 ## Give the agent the current guide
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH"
 lizard skills get core --json
 lizard --help --json
 ```
+
+With Node.js, `npm install -g @lizard-build/cli` installs the same CLI.
 
 Lizard Skill loads instructions that match the installed CLI. For a specific command, read its schema rather than guessing flags:
 

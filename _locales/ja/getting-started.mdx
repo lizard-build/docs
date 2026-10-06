@@ -6,27 +6,39 @@ description: "lizard CLI をインストールし、ログインして、GitHub 
 
 # アプリ クイックスタート
 
-数分で最初のアプリを Lizard に公開できます。Node.js 18+ と npm が必要です。`lizard login` した最初のタイミングで、Lizard アカウントは自動的に作成されます。CLI をインストールしてログインし、デプロイします。方法は GitHub リポジトリから直接行うか、ローカルディレクトリから行うかのどちらかです。
+数分で最初のアプリを Lizard に公開できます。`lizard login` した最初のタイミングで、Lizard アカウントは自動的に作成されます。CLI をインストールしてログインし、デプロイします。方法は GitHub リポジトリから直接行うか、ローカルディレクトリから行うかのどちらかです。
 
 <span id="1-install-the-cli" />
 
 ## 1. CLI をインストールする
 
-npm から `lizard` バイナリをグローバルにインストールします:
+macOS または Linux では、インストールスクリプトを実行します:
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
 ```
 
-`PATH` 上にあることを確認します:
+スクリプトは `lizard` バイナリを `~/.lizard/bin` に置き、`~/.zshrc` または `~/.bashrc` でそのフォルダを `PATH` に追加します。以後、バイナリは自動で更新されます。新しいターミナルを開いて、バージョンを確認します:
 
 ```bash
 lizard --version
 ```
 
-> **`npx` は使わないでください。** 必ずグローバルにインストールされた `lizard` バイナリを使ってください。`npx @lizard-build/cli` を実行すると、その場限りのコピーが取得され、バージョンがプラットフォームとずれる可能性があります。後で `lizard upgrade` を使ってその場でアップグレードしてください。
+Windows では、PowerShell で次を実行します:
 
-> **権限エラー (EACCES)?** `sudo` は使わないでください。代わりに npm の保存先をユーザー所有の prefix に向けてください:
+```powershell
+irm https://lizard.build/api/cli/install.ps1 | iex
+```
+
+**npm からインストールすることもできます**（Node.js 18+ が必要です）:
+
+```bash
+npm install -g @lizard-build/cli
+```
+
+> **`npx` は使わないでください。** 必ずグローバルにインストールされた `lizard` バイナリを使ってください。`npx @lizard-build/cli` を実行すると、その場限りのコピーが取得され、バージョンがプラットフォームとずれる可能性があります。npm でインストールした場合、後でアップグレードするには `npm install -g @lizard-build/cli@latest` を実行してください。
+
+> **権限エラー (EACCES)?** `sudo` は使わないでください。管理者権限が不要な上記のインストールスクリプトを使うか、npm の保存先をユーザー所有の prefix に向けてください:
 > ```bash
 > mkdir -p ~/.npm-global
 > npm config set prefix ~/.npm-global

@@ -30,10 +30,13 @@ Lizard собирает и запускает приложения из репо
 Установите Lizard CLI и войдите, затем разверните репозиторий, к которому у вас есть доступ:
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH"
 lizard login
 lizard add -r your-org/your-app
 ```
+
+Для Windows или установки из npm см. [другие способы установки](/getting-started#1-install-the-cli).
 
 Lizard собирает образ на своих серверах, поэтому локальный Docker не нужен. [lizardpack](/concepts/build-pipeline) обнаруживает поддерживаемые проекты; проектам со специфическими требованиями к сборке можно использовать явные команды или Dockerfile. Проверьте логи сборки и убедитесь, что URL приложения работает после деплоя.
 

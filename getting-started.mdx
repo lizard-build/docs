@@ -4,25 +4,37 @@ description: "Install the lizard CLI, log in, and ship your first app from a Git
 
 # App quickstart
 
-Ship your first app to Lizard in a few minutes. You'll need Node.js 18+ and npm — a Lizard account is created automatically the first time you `lizard login`. You'll install the CLI, log in, and deploy — either straight from a GitHub repo or from a local directory.
+Ship your first app to Lizard in a few minutes. A Lizard account is created automatically the first time you `lizard login`. You'll install the CLI, log in, and deploy — either straight from a GitHub repo or from a local directory.
 
 ## 1. Install the CLI
 
-Install the `lizard` binary globally from npm:
+On macOS or Linux, run the install script:
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
 ```
 
-Verify it's on your `PATH`:
+It puts the `lizard` binary in `~/.lizard/bin`, adds that folder to your `PATH` in `~/.zshrc` or `~/.bashrc`, and the binary updates itself from then on. Open a new terminal and check the version:
 
 ```bash
 lizard --version
 ```
 
-> **Don't use `npx`.** Always use the globally installed `lizard` binary. Running `npx @lizard-build/cli` pulls a throwaway copy whose version may drift from the platform. Upgrade in place later with `lizard upgrade`.
+On Windows, run this in PowerShell:
 
-> **Permission errors (EACCES)?** Don't use `sudo`. Point npm at a user-owned prefix instead:
+```powershell
+irm https://lizard.build/api/cli/install.ps1 | iex
+```
+
+**Or install from npm** (needs Node.js 18+):
+
+```bash
+npm install -g @lizard-build/cli
+```
+
+> **Don't use `npx`.** Always use the globally installed `lizard` binary. Running `npx @lizard-build/cli` pulls a throwaway copy whose version may drift from the platform. To upgrade an npm install later, run `npm install -g @lizard-build/cli@latest`.
+
+> **Permission errors (EACCES)?** Don't use `sudo`. Use the install script above, which needs no admin rights, or point npm at a user-owned prefix:
 > ```bash
 > mkdir -p ~/.npm-global
 > npm config set prefix ~/.npm-global

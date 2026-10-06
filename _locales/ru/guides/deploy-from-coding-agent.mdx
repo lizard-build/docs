@@ -19,10 +19,13 @@ description: "Разверните приложение из Claude Code, Codex 
 ## Передайте агенту актуальное руководство
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH"
 lizard skills get core --json
 lizard --help --json
 ```
+
+Если есть Node.js, тот же CLI можно установить командой `npm install -g @lizard-build/cli`.
 
 Lizard Skill загружает инструкции, соответствующие установленному CLI. Для конкретной команды читайте её схему вместо угадывания флагов:
 

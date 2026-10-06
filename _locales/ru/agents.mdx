@@ -52,10 +52,17 @@ lizard <cmd> --help --json          # a specific command's schema
 3. **Определите контекст перед мутацией:** `lizard status` (связка cwd) и `lizard ps --json` (сервисы).
 4. **Действуйте** с помощью руководства — `add`, `up`, `secrets`, `domain` и т.д., всегда с `--json`.
 
-Если бинарник `lizard` отсутствует, сначала установите его:
+Если бинарник `lizard` отсутствует, сначала установите его. Если есть Node.js, используйте npm: он сразу добавляет `lizard` в `PATH`:
 
 ```bash
 npm install -g @lizard-build/cli
+```
+
+Без Node.js на macOS или Linux используйте скрипт установки. Он добавляет `~/.lizard/bin` в `PATH` только для новых оболочек, поэтому до тех пор добавляйте его в той же команде:
+
+```bash
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH" && lizard --version
 ```
 
 <span id="conventions-agents-should-follow" />

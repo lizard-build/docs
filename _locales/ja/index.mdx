@@ -30,10 +30,13 @@ Lizard は GitHub リポジトリまたはローカルフォルダからアプ�
 Lizard CLI をインストールしてサインインし、アクセス可能なリポジトリをデプロイします:
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH"
 lizard login
 lizard add -r your-org/your-app
 ```
+
+Windows の場合や npm を使う場合は、[その他のインストール方法](/getting-started#1-install-the-cli) を参照してください。
 
 Lizard はサーバー上でイメージをビルドするため、この方法ではローカルの Docker は不要です。[lizardpack](/concepts/build-pipeline) がサポート対象のプロジェクトを検出します。特別なビルド要件があるプロジェクトでは、明示的なコマンドまたは Dockerfile を使用できます。ビルドログを確認し、デプロイ後にアプリケーション URL を検証してください。
 

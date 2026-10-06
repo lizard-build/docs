@@ -15,11 +15,15 @@ description: "Установите и обновите Lizard CLI, выполн�
 ## Установка и обновление
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash   # macOS and Linux
 lizard --version
 lizard upgrade            # update to the latest version
 lizard upgrade --check    # check without installing
 ```
+
+На Windows выполните `irm https://lizard.build/api/cli/install.ps1 | iex` в PowerShell. С Node.js можно установить CLI из npm: `npm install -g @lizard-build/cli`.
+
+Бинарный файл из скрипта установки также сам обновляется в фоне, не чаще раза в 6 часов; чтобы это отключить, задайте `LIZARD_NO_UPDATE=1`. Установка из npm обновляется через npm: `lizard upgrade` выведет нужную команду.
 
 Всегда используйте глобально установленный бинарный файл `lizard` — **не** `npx`. См. [Быстрый старт](/getting-started#1-install-the-cli) для исправления ошибок доступа.
 

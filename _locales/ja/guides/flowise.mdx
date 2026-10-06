@@ -15,13 +15,14 @@ description: "PostgreSQL で Flowise をデプロイし、その認証情報の�
 ## 前提条件
 
 - アプリホスティングと Managed Postgres を利用できる Lizard アカウント。
-- お使いのコンピューターに Node.js、npm、OpenSSL がインストールされていること。
+- お使いのコンピューターに OpenSSL がインストールされていること。
 - Flowise のワークロードに十分なメモリ。テストサービスでは 4 GiB を使用します。
 
 Lizard CLI をインストールし、ブラウザログインを完了します:
 
 ```bash
-npm install -g @lizard-build/cli
+curl -fsSL https://lizard.build/install.sh | bash
+export PATH="$HOME/.lizard/bin:$PATH"
 lizard login
 ```
 
