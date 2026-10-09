@@ -44,13 +44,13 @@ lizard service set api \
   --set branch=main
 ```
 
-Changing a build field auto-rebuilds — **don't** chain a `redeploy` after it.
+Changing a build field auto-rebuilds a running service — **don't** chain a `redeploy` after it. A crashed or never-deployed service needs `lizard redeploy`.
 
 > **Note:** `lizard up` always forces `sourceType=upload`. Don't use it to update a git-backed service — push to the remote or use `lizard redeploy` instead.
 
 ## Auto-redeploy on push
 
-Once `repoUrl` is set, pushes to the matching `branch` redeploy automatically via the GitHub webhook. To scope which pushes trigger a redeploy:
+Once `repoUrl` is set, pushes to the matching `branch` redeploy automatically via the GitHub webhook. Connect the Lizard GitHub App (`lizard git connect`) so Lizard receives push events for the repository. To scope which pushes trigger a redeploy:
 
 - **`rootDirectory`** — only build a subdirectory (monorepos).
 - **`watchPatterns`** — only redeploy when matching paths change.
@@ -70,8 +70,9 @@ lizard git checkout api staging      # move the `api` service to the `staging` b
 For a repo that holds several apps, create one service per app and set its `rootDirectory` to the subpath:
 
 ```bash
-lizard add -r your-org/monorepo -n api
+lizard add -r your-org/monorepo -n api --no-deploy
 lizard service set api --set rootDirectory=apps/api
+lizard redeploy --service api
 ```
 
 If your current directory is a sub-app inside a repo whose parent is already linked, add the service in the parent's project and set `rootDirectory` to the cwd subpath.
@@ -81,4 +82,4 @@ If your current directory is a sub-app inside a repo whose parent is already lin
 - [Build Pipeline](/concepts/build-pipeline) — how your stack is detected and built.
 - [Deploy from Local Code](/deploy/upload) — when you don't have a remote.
 - [`lizard git`](/cli/git) — the full command reference for `connect`, `status`, and `checkout`.
-- [Where to deploy an app your AI IDE built](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#where-to-deploy-an-app-your-ai-ide-built) — pointing this at a repo an agent wrote, and what it costs.
+- [Choose the host by the application](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#choose-the-host-by-the-application) — pointing this at a repo an agent wrote.

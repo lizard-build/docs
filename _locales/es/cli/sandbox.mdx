@@ -1,0 +1,241 @@
+---
+description: "lizard sandbox crea, lista y elimina Sandboxes, ejecuta comandos y agentes de programación en ellos, abre shells y escritorios, y gestiona snapshots y archivos."
+---
+
+# lizard sandbox
+
+Crea y gestiona [Sandboxes](/sandboxes) desde la terminal. Alias: `lizard sb`.
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard sandbox create [flags]
+lizard sandbox list [flags]
+lizard sandbox exec <id> -- <command>
+lizard sandbox ssh <id>
+lizard sandbox rm <id> [flags]
+```
+
+Cada sandbox pertenece a un proyecto: el vinculado al directorio actual o el que indiques con `-p`.
+
+<span id="subcommands" />
+
+## Subcomandos
+
+### `lizard sandbox create`
+
+Crea un sandbox y muestra su ID.
+
+| Bandera | Descripción |
+|------|-------------|
+| `-t, --template <name>` | Plantilla (por defecto `base`). Plantillas habilitadas: `base`, `interpreter`, `codex`, `desktop`, `opencode`, `pi`, `prime`, `claude`. El servidor comprueba la lista de la región |
+| `-s, --size <size>` | `small`, `medium` (por defecto) o `large` |
+| `--timeout <ms>` | Duración en milisegundos (por defecto `300000`, cinco minutos); `0` desactiva la caducidad |
+| `--region <code>` | Región donde crear el sandbox |
+| `--snapshot <id>` | Partir de un snapshot guardado; no se puede combinar con `--size` |
+| `--volume <name-or-id>` | Conectar un [Persistent Volume](/cli/volume) |
+| `--with-token [key]` | Instalar una clave de API `liz_` en el sandbox para que `lizard` funcione allí. Sin valor, reutiliza la clave `liz_` con la que ejecutas el comando; un inicio de sesión desde el navegador no tiene ninguna |
+| `-p, --project <id>` | Proyecto (por defecto, el vinculado) |
+
+Lizard factura cada tamaño por segundo con una tarifa fija. El precio incluye el disco y hasta 2 TB de tráfico saliente por cuenta en una ventana móvil de 30 días. Un sandbox en pausa no cuesta nada; un volumen conectado se cobra según la [tarifa de volúmenes](/cli/volume).
+
+| Tamaño | vCPU | Memoria | Disco | Precio |
+|------|------|--------|------|-------|
+| `small` | 2 | 4 GiB | 5 GB | $0.0162/h |
+| `medium` | 4 | 8 GiB | 20 GB | $0.0324/h |
+| `large` | 8 | 16 GiB | 50 GB | $0.0648/h |
+
+Cualquier proceso dentro del sandbox puede leer una clave instalada con `--with-token`. Usa una clave limitada a un espacio de trabajo o a un proyecto: `lizard keys create sandbox-key -w my-team`.
+
+Hasta que empiece tu prueba o tu plan Pro, `create` devuelve HTTP 402 con un enlace de Checkout; ejecuta `lizard billing start`. Durante la prueba puedes ejecutar 5 sandboxes a la vez, y 100 después de la primera factura pagada. Los sandboxes en pausa no cuentan. Consulta [Límites](/platform/limits#sandbox-account-limits).
+
+### `lizard sandbox list`
+
+Lista los sandboxes del proyecto vinculado (alias `ls`).
+
+| Bandera | Descripción |
+|------|-------------|
+| `-p, --project <id>` | Listar este proyecto en su lugar |
+| `--all` | Listar todos los sandboxes de todos tus espacios de trabajo |
+
+### `lizard sandbox rm <id>`
+
+Elimina un sandbox (alias `delete`).
+
+| Bandera | Descripción |
+|------|-------------|
+| `-y, --yes` | Omitir la confirmación |
+
+### `lizard sandbox timeout <id> <ms>`
+
+Fija una nueva duración, contada desde ahora, en milisegundos (al menos `1000`). No es un temporizador de inactividad: ejecutar comandos no lo reinicia.
+
+### `lizard sandbox exec <id> -- <command>`
+
+Ejecuta un comando dentro del sandbox mediante `sh -c`, transmite su salida y termina con su código de salida.
+
+<span id="sandbox-ssh" />
+
+### `lizard sandbox ssh <id>`
+
+Abre una shell interactiva en un sandbox en ejecución (alias `shell`). Usa tu sesión de Lizard, así que no hay claves SSH que configurar; una clave de API con ámbito solo llega a los sandboxes de su ámbito. Ctrl-C, las flechas y el autocompletado con tabulador van al sandbox. Escribe `exit` o pulsa Ctrl-D para salir.
+
+Necesita una terminal interactiva; en un script, usa `lizard sandbox exec`. No es el protocolo SSH, así que los clientes SSH, `scp` y el reenvío de puertos no funcionan.
+
+### `lizard sandbox expose <id> <port>`
+
+Asigna una URL HTTPS a un puerto del sandbox. El puerto es privado: las solicitudes necesitan el token de acceso del sandbox, ya sea en la cabecera `X-Lizard-Access-Token` o como el parámetro de consulta `lizard_token`, que la URL mostrada ya incluye. Las solicitudes sin él reciben HTTP 401. Con `--json`, el resultado también incluye `hostname` y `accessToken`.
+
+`lizard sandbox unexpose <id> <port>` elimina la URL.
+
+### `lizard sandbox desktop <id>`
+
+Inicia el escritorio gráfico de un sandbox creado con `-t desktop` y muestra su URL para el navegador y una URL de solo visualización. Trata ambos enlaces como contraseñas.
+
+| Bandera | Descripción |
+|------|-------------|
+| `--view-only` | Mostrar o abrir únicamente la URL de solo visualización |
+| `--resolution <WxH>` | Tamaño de pantalla, de 640x480 a 3840x2160 |
+| `--open` | Abrir el escritorio en el navegador |
+| `--status` | Mostrar el estado y las URL del escritorio sin iniciarlo |
+| `--stop` | Detener el escritorio y eliminar su URL |
+
+<span id="sandbox-vnc" />
+
+### `lizard sandbox vnc <id>`
+
+Conecta una app VNC (Compartir Pantalla de macOS, TigerVNC, RealVNC) al escritorio de un sandbox creado con `-t desktop`. El escritorio no tiene un puerto VNC público, así que la CLI escucha en `localhost` y lleva cada conexión al sandbox a través de un WebSocket seguro. Inicia el escritorio si hace falta, muestra la dirección y la contraseña VNC, y sigue en marcha hasta que pulses Ctrl-C.
+
+| Bandera | Descripción |
+|------|-------------|
+| `--port <port>` | Puerto local (por defecto `5900`; si está ocupado, el siguiente libre) |
+| `--view-only` | Usar la contraseña de solo visualización: ver, sin controlar |
+| `--open` | Abrir la dirección en tu app VNC (`vnc://`, Compartir Pantalla en macOS) |
+
+<span id="pause-resume-and-snapshots" />
+
+### Pausa, reanudación y snapshots
+
+| Comando | Qué hace |
+|---------|--------------|
+| `lizard sandbox pause <id>` | Guarda la memoria y los procesos del sandbox y luego lo detiene. Un sandbox en pausa es gratis |
+| `lizard sandbox resume <id>` | Vuelve a iniciar un sandbox en pausa con su memoria y sus archivos guardados |
+| `lizard sandbox snapshot <id> --name <name>` | Guarda un sandbox en ejecución como snapshot privado en su proyecto y mantiene copias en caliente listas (`--warm`, de 1 a 10, por defecto 5) |
+| `lizard sandbox restore <snapshot-id>` | Inicia un sandbox nuevo desde un snapshot (`--timeout <ms>`, por defecto `300000`) |
+| `lizard sandbox snapshots` | Lista los snapshots del proyecto (`-p` para otro proyecto) |
+| `lizard sandbox snapshot-pause <snapshot-id>` | Libera las copias en caliente de un snapshot y conserva su estado guardado |
+| `lizard sandbox snapshot-resume <snapshot-id>` | Vuelve a crear las copias en caliente de un snapshot en pausa |
+| `lizard sandbox snapshot-warm <snapshot-id> <count>` | Cambia cuántas copias se mantienen en caliente (de 1 a 10) |
+| `lizard sandbox snapshot-rm <snapshot-id>` | Elimina un snapshot (alias `snapshot-delete`; `-y` omite la confirmación) |
+
+`pause`, `resume` y `snapshot` esperan hasta que termina el trabajo; pasa `--no-wait` para volver en cuanto quede en cola. Consulta [Pausa, reanudación y snapshots](/sandboxes/quickstart#pause-and-resume) para ver qué conserva cada paso.
+
+### `lizard sandbox files`
+
+| Comando | Qué hace |
+|---------|--------------|
+| `lizard sandbox files ls <id> [path]` | Lista un directorio (por defecto `/`) |
+| `lizard sandbox files cat <id> <path>` | Muestra un archivo |
+| `lizard sandbox files put <id> <local> <remote>` | Sube un archivo local |
+| `lizard sandbox files get <id> <remote> <local>` | Descarga un archivo |
+| `lizard sandbox files rm <id> <path>` | Elimina un archivo o un directorio |
+
+<span id="coding-agents" />
+
+### Agentes de programación
+
+Ejecuta un agente de programación dentro de un sandbox con tus propias credenciales. Conéctalas antes con [`lizard agents`](/cli/agents). Crea el sandbox desde una plantilla de agente (`codex`, `claude`, `opencode`, `pi` o `prime`); la plantilla `base` no tiene Node.js y no puede ejecutar agentes.
+
+`lizard sandbox prompt <id> <prompt...>` envía un prompt y transmite lo que hace el agente.
+
+| Bandera | Descripción |
+|------|-------------|
+| `--agent <name>` | `codex` (por defecto), `claude`, `pi`, `opencode` o `prime` |
+| `-c, --conversation <id>` | Continuar esta conversación |
+| `--new` | Iniciar una conversación nueva |
+| `-m, --model <model>` | Modelo que se usará |
+| `--effort <level>` | Esfuerzo de razonamiento: `minimal`, `low`, `medium`, `high` o `xhigh` |
+| `--cwd <dir>` | Directorio de trabajo en el sandbox (por defecto `/workspace`) |
+| `-v, --verbose` | Mostrar también la salida de los comandos |
+| `--no-wait` | Volver en cuanto se acepte el prompt |
+
+Ctrl-C deja de mostrar la actividad; el agente sigue trabajando. `lizard sandbox interrupt <id> [-c <conversation>]` detiene su turno en curso. `lizard sandbox conversations <id>` lista las conversaciones, de la más reciente a la más antigua.
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="create-a-sandbox-and-run-a-command" />
+
+### Crear un sandbox y ejecutar un comando
+
+```bash
+lizard sandbox create --size small --timeout 600000
+lizard sandbox exec sb_abc123 -- python3 -c "print(1 + 1)"
+```
+
+<span id="open-a-shell" />
+
+### Abrir una shell
+
+```bash
+lizard sandbox ssh sb_abc123
+```
+
+<span id="attach-a-persistent-volume" />
+
+### Conectar un Persistent Volume
+
+```bash
+lizard volume create agent-workdir --size 10
+lizard sandbox create --volume agent-workdir
+```
+
+<span id="serve-a-port" />
+
+### Servir un puerto
+
+```bash
+lizard sandbox exec sb_abc123 -- sh -c "nohup python3 -m http.server 3000 --bind 0.0.0.0 >/tmp/http.log 2>&1 &"
+lizard sandbox expose sb_abc123 3000
+```
+
+<span id="use-a-desktop-from-a-vnc-app" />
+
+### Usar un escritorio desde una app VNC
+
+```bash
+lizard sandbox create -t desktop
+lizard sandbox vnc sb_abc123 --open
+```
+
+<span id="run-codex-in-a-sandbox" />
+
+### Ejecutar Codex en un sandbox
+
+```bash
+lizard agents login chatgpt
+lizard sandbox create -t codex
+lizard sandbox prompt sb_abc123 "add a health check endpoint and test it"
+```
+
+<span id="save-and-restore-a-sandbox" />
+
+### Guardar y restaurar un sandbox
+
+```bash
+lizard sandbox snapshot sb_abc123 --name my-app
+lizard sandbox restore <snapshot-id>   # ID from `lizard sandbox snapshots`
+```
+
+<span id="see-also" />
+
+## Véase también
+
+- [Sandboxes](/sandboxes) — runtime, plantillas y ciclo de vida
+- [Inicio rápido de Sandboxes](/sandboxes/quickstart) — los mismos pasos desde Lizard SDK
+- [lizard volume](/cli/volume) — Persistent Volumes para conectar con `--volume`
+- [lizard agents](/cli/agents) — credenciales para `sandbox prompt`
+- [Límites](/platform/limits#sandbox-lifetime) — tamaños, límites de ejecución, tráfico saliente y duración

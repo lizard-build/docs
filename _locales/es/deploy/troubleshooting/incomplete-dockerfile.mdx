@@ -18,9 +18,16 @@ La plataforma decidió que el Dockerfile de tu repositorio estaba **incompleto**
 
 ## Por qué puede pasar esto
 
-Lizard solo usa un Dockerfile del repositorio **literalmente** en la ruta de autodetección de lizardpack si tiene un paso de compilación real: una línea `RUN <package-manager>`. Un Dockerfile que solo copia artefactos precompilados (`COPY dist/`, `build/`, `out/`, `.next/`, `public/`) sin un paso `RUN` se trata como incompleto, asumiendo que esos artefactos se compilaron fuera de la imagen. En ese caso, lizardpack genera un Dockerfile de reemplazo que incluye el paso de compilación faltante.
+Esta comprobación se ejecuta solo para servicios con origen GitHub. Las cargas (`lizard up`) siempre usan un `Dockerfile` en la raíz tal como está escrito.
 
-Esto solo se aplica en la ruta de autodetección de lizardpack. Si `buildCommand` o `startCommand` está configurado en el servicio, Lizard sintetiza un Dockerfile a partir de esos comandos y no mira en absoluto el Dockerfile de tu repositorio.
+Con origen GitHub, Lizard trata un Dockerfile en la raíz como incompleto cuando se cumplen ambas condiciones:
+
+- tiene un `COPY` de `build`, `dist`, `out`, `.next` o `public` escrito sin barra final, como `COPY dist /usr/share/nginx/html`;
+- no tiene ninguna línea `RUN` que empiece con `npm`, `yarn`, `pnpm`, `bun`, `pip`, `pip3`, `bundle`, `cargo`, `go build`, `mvn` o `gradle`.
+
+Lizard asume que esos artefactos se compilaron fuera de la imagen, y lizardpack genera un Dockerfile de reemplazo que incluye el paso de compilación faltante.
+
+Otras dos configuraciones también omiten el Dockerfile de la raíz de tu repositorio. Si `dockerfilePath` está configurado, Lizard usa ese archivo tal como está escrito. Si no lo está, un `buildCommand` o `startCommand` configurado hace que Lizard sintetice un Dockerfile a partir de esos comandos.
 
 <span id="possible-solutions" />
 
@@ -40,10 +47,10 @@ RUN npm ci && npm run build
 
 ### O fuerza el uso literal
 
-Borra las anulaciones de compilación e inicio, y luego configura `dockerfilePath` en la misma actualización. Las anulaciones tienen prioridad sobre la ruta del archivo:
+Configura `dockerfilePath`. Tiene prioridad sobre los comandos de compilación e inicio para la compilación de la imagen, pero un `startCommand` configurado sigue reemplazando el `CMD` de tu Dockerfile en tiempo de ejecución, así que borra ambos en la misma actualización. Un valor vacío borra un campo:
 
 ```bash
-lizard service set api --set buildCommand=null --set startCommand=null --set dockerfilePath=Dockerfile
+lizard service set api --set buildCommand= --set startCommand= --set dockerfilePath=Dockerfile
 ```
 
 <span id="see-also" />
@@ -52,6 +59,6 @@ lizard service set api --set buildCommand=null --set startCommand=null --set doc
 
 - [Proceso de compilación](/concepts/build-pipeline) — el orden completo de decisión de compilación.
 - [Referencia de configuración de compilación](/concepts/build-pipeline#build-configuration-reference)
-- [Implementar cualquier aplicación Python en Lizard](https://lizard.build/blog/python-app-hosting#deploying-any-python-app-on-lizard) — cuándo dejar que lizardpack escriba el Dockerfile y cuándo aportar el tuyo.
+- [Un contenedor mínimo de FastAPI](https://lizard.build/blog/python-app-hosting#a-minimal-fastapi-container) — un Dockerfile completo de Python, y cuándo aportar el tuyo en lugar de la compilación desde el código fuente.
 
 Cambiar estos campos de compilación puede iniciar una compilación. Revisa `lizard events` antes de enviar otro `redeploy`, para evitar iniciar una segunda compilación.

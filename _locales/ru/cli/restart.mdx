@@ -21,7 +21,7 @@ lizard restart [nameOrId] [flags]
 | Флаг | Описание |
 |------|--------------|
 | `-s, --service <name>` | Сервис |
-| `--detach` | Вернуться после принятия перезапуска |
+| `--detach` | Вернуться после принятия перезапуска, не опрашивая его статус |
 | `--wait` | Ждать готовности новой попытки перезапуска; работает с `--json` |
 | `--timeout <seconds>` | Бюджет ожидания готовности с `--wait`; по умолчанию `120` |
 | `--json` | Вернуть JSON для скриптов |
@@ -40,7 +40,9 @@ lizard restart --service api
 
 <span id="restart-without-streaming-logs" />
 
-### Перезапуск без потоковой передачи логов
+<span id="return-without-waiting" />
+
+### Вернуться, не дожидаясь
 
 ```bash
 lizard restart --service api --detach
@@ -49,8 +51,6 @@ lizard restart --service api --detach
 <span id="wait-before-running-the-next-check" />
 
 ### Подождать перед запуском следующей проверки
-
-Требуется CLI 0.3.94 или новее. Используйте 0.3.95 или новее для рабочих процессов без HTTP.
 
 ```bash
 lizard --json restart --service api --wait --timeout 120

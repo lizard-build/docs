@@ -12,7 +12,7 @@ Ein Coding-Agent kann Lizard Skill und Lizard CLI verwenden, um die von ihm erst
 
 ## Bevor du beginnst
 
-Du brauchst eine funktionsfähige Anwendung, die Berechtigung, sie bereitzustellen, und ein Konto bei Lizard. Die Anwendung muss auf `0.0.0.0` und dem konfigurierten Port lauschen. Führe ihre lokalen Prüfungen aus, bevor du einen Cloud-Build startest.
+Du brauchst eine funktionsfähige Anwendung, die Berechtigung, sie bereitzustellen, und ein Lizard-Konto mit Pro oder der 7-tägigen Pro-Testphase (Karte erforderlich). Bis die Testphase beginnt, geben `lizard add` und `lizard up` HTTP 402 mit einem Checkout-Link zurück; `lizard billing start` öffnet ihn. Die Anwendung muss auf `0.0.0.0` und dem konfigurierten Port lauschen. Führe ihre lokalen Prüfungen aus, bevor du einen Cloud-Build startest.
 
 <span id="give-the-agent-the-current-guide" />
 
@@ -24,7 +24,7 @@ lizard skills get core --json
 lizard --help --json
 ```
 
-Unter Windows installiert `npm install -g @lizard-build/cli` dieselbe CLI.
+Führe unter Windows `irm https://lizard.build/api/cli/install.ps1 | iex` in PowerShell aus oder installiere über npm mit `npm install -g @lizard-build/cli`.
 
 Lizard Skill lädt Anweisungen, die zur installierten CLI passen. Lies für einen bestimmten Befehl dessen Schema, statt Flags zu raten:
 
@@ -63,7 +63,7 @@ lizard up --service api --port 3000 --json
 
 Verwende den tatsächlichen Namen der Datenbank, falls er nicht `postgres` ist. Lass die Referenz in Anführungszeichen, damit die lokale Shell sie nicht expandiert. Konfiguriere sie vor der ersten Bereitstellung. Melde dich nur mit `lizard login` an, wenn ein Befehl meldet, dass eine Authentifizierung erforderlich ist.
 
-Der Upload-Pfad ist für dieses kopierte Beispiel beabsichtigt. Für eine Anwendung, die bereits in GitHub liegt, verwende stattdessen den nächsten Abschnitt. Unter macOS mit Lizard CLI 0.3.92 führe `COPYFILE_DISABLE=1 lizard up --service api --port 3000 --json` aus, um AppleDouble-Metadaten auszuschließen. In dieser CLI-Version kann ein fehlgeschlagener Build trotzdem mit Code 0 enden: Prüfe das Ereignis `failed`/`deployed` im Terminal und verifiziere die Anwendung. Siehe [bekannte Probleme](/platform/known-issues).
+Der Upload-Pfad ist für dieses kopierte Beispiel beabsichtigt. Für eine Anwendung, die bereits in GitHub liegt, verwende stattdessen den nächsten Abschnitt. Ein fehlgeschlagener Build endet mit Code 1; prüfe trotzdem das Ereignis `failed`/`deployed` im Terminal und verifiziere die Anwendung. Siehe [bekannte Probleme](/platform/known-issues).
 
 <span id="deploy-from-github" />
 

@@ -1,10 +1,10 @@
 ---
-description: "lizard workspace list muestra todos los workspaces a los que tu cuenta puede acceder y cómo los workspaces se relacionan con los proyectos y los servicios."
+description: "lizard workspace crea, lista y elimina workspaces, y muestra cómo los workspaces se relacionan con los proyectos y los servicios."
 ---
 
 # lizard workspace
 
-Lista los workspaces a los que puedes acceder.
+Crea, lista y elimina workspaces.
 
 <span id="usage" />
 
@@ -12,7 +12,35 @@ Lista los workspaces a los que puedes acceder.
 
 ```bash
 lizard workspace list
+lizard workspace create <name>
+lizard workspace rm <name-or-id> [flags]
 ```
+
+<span id="subcommands" />
+
+## Subcomandos
+
+<span id="lizard-workspace-list" />
+
+### `lizard workspace list`
+
+Lista los workspaces a los que perteneces, con tu rol y el número de proyectos (alias `ls`).
+
+<span id="lizard-workspace-create-name" />
+
+### `lizard workspace create <name>`
+
+Crea un workspace. Añade proyectos con `lizard project create <name> --workspace <slug>`.
+
+<span id="lizard-workspace-rm-name-or-id" />
+
+### `lizard workspace rm <name-or-id>`
+
+Elimina un workspace (alias `delete`). Solo el propietario puede eliminarlo, y solo cuando ya no tiene proyectos ni sandboxes. No puedes eliminar tu workspace personal.
+
+| Flag | Descripción |
+|------|-------------|
+| `-y, --yes` | Omite la confirmación |
 
 <span id="examples" />
 
@@ -26,9 +54,26 @@ lizard workspace list
 lizard workspace list
 ```
 
+<span id="create-a-workspace" />
+
+### Crea un workspace
+
+```bash
+lizard workspace create my-team
+```
+
+<span id="delete-an-empty-workspace" />
+
+### Elimina un workspace vacío
+
+```bash
+lizard workspace rm my-team --yes
+```
+
 <span id="see-also" />
 
 ## Véase también
 
 - [lizard whoami](/cli/whoami) — muestra tu workspace activo
+- [lizard project](/cli/project) — lista y crea proyectos en un workspace
 - [Architecture: Espacio de trabajo](/concepts/architecture) — cómo los workspaces se relacionan con los proyectos y los servicios

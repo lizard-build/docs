@@ -8,7 +8,7 @@ A coding agent can use Lizard Skill and Lizard CLI to deploy the app it has buil
 
 ## Before you start
 
-Have a working application, permission to deploy it, and an account on Lizard. The application must listen on `0.0.0.0` and the configured port. Run its local checks before starting a cloud build.
+Have a working application, permission to deploy it, and a Lizard account on Pro or the 7-day Pro trial (card required). Until the trial starts, `lizard add` and `lizard up` return HTTP 402 with a Checkout link; `lizard billing start` opens it. The application must listen on `0.0.0.0` and the configured port. Run its local checks before starting a cloud build.
 
 ## Give the agent the current guide
 
@@ -18,7 +18,7 @@ lizard skills get core --json
 lizard --help --json
 ```
 
-On Windows, `npm install -g @lizard-build/cli` installs the same CLI.
+On Windows, run `irm https://lizard.build/api/cli/install.ps1 | iex` in PowerShell, or install from npm with `npm install -g @lizard-build/cli`.
 
 Lizard Skill loads instructions that match the installed CLI. For a specific command, read its schema rather than guessing flags:
 
@@ -55,7 +55,7 @@ lizard up --service api --port 3000 --json
 
 Use the database's actual name if it is not `postgres`. Keep the reference quoted so the local shell does not expand it. Configure it before the first deployment. Sign in with `lizard login` only if a command reports that authentication is required.
 
-The upload path is intentional for this copied example. For an application already in GitHub, use the next section instead. On macOS with Lizard CLI 0.3.92, run `COPYFILE_DISABLE=1 lizard up --service api --port 3000 --json` to exclude AppleDouble metadata. In that CLI version a failed build may still exit with code 0: inspect the terminal `failed`/`deployed` event and verify the application. See [known issues](/platform/known-issues).
+The upload path is intentional for this copied example. For an application already in GitHub, use the next section instead. A failed build exits with code 1; still inspect the terminal `failed`/`deployed` event and verify the application. See [known issues](/platform/known-issues).
 
 ## Deploy from GitHub
 

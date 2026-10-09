@@ -13,10 +13,10 @@ description: "Read a service's deploy timeline and live replica status with liza
 ```bash
 lizard events                     # deploy history + replica status
 lizard events --service api       # a specific service
-lizard events --limit 25          # show more entries (default 10)
+lizard events --limit 5           # fewer entries (default and maximum 10)
 ```
 
-Каждая запись охватывает действие развёртывания или масштабирования и получившийся статус реплик, чтобы вы могли мгновенно ответить на вопрос «что изменилось и здорово ли это?».
+Каждая запись — это развёртывание: статус, триггер, коммит и количество перезапусков. Таблица Replicas ниже показывает текущее состояние каждого пода, чтобы вы могли мгновенно ответить на вопрос «что изменилось и здорово ли это?».
 
 <span id="quick-status" />
 
@@ -33,7 +33,7 @@ lizard status        # the current directory's workspace/project/service link
 
 ## Панель управления
 
-Представление **Развертывания** в дашборде (`lizard open`) отображает ту же историю в виде таймлайна, с панелью деталей для каждого развёртывания (логи сборки, коммит, статус) и здоровьем по репликам.
+Откройте сервис в дашборде (`lizard open`), чтобы увидеть историю его развёртываний. Нажмите на развёртывание, чтобы увидеть логи сборки, коммит и события сбоев. Панель сервиса показывает запущенные и желаемые реплики.
 
 <span id="see-also" />
 

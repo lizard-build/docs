@@ -8,7 +8,7 @@ description: "Скриптируйте Lizard CLI: --json для каждой к
 
 CLI создан для скриптинга. Передавайте `--json` для машиночитаемого вывода, управляйте из CI с помощью токена и обнаруживайте схему любой команды в рантайме.
 
-Другой читатель этого вывода — ИИ-агент для кодинга — [деплой из Claude Code](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) показывает, что он делает с JSON неудачной сборки.
+Другой читатель этого вывода — ИИ-агент для кодинга — [деплой из Claude Code](https://lizard.build/blog/deploy-from-claude-code#check-the-result-from-the-outside) показывает JSON-команды для логов, которые он запускает, чтобы проверить деплой.
 
 <span id="--json-everywhere" />
 
@@ -34,7 +34,7 @@ lizard metrics --json
 { "event": "deployed", "status": "running", "url": "https://app.onlizard.com" }
 ```
 
-Поток завершается `done`, или `error` / `failed`. `lizard up` дополнительно выдаёт финальное событие `deployed` / `failed` / `deploying` с `status` и `url` (которые могут быть `null`).
+Поток сборки завершается событием `done` или `error`. Без `--ci` `lizard up` затем выдаёт финальное событие `deployed`, `failed` или `deploying` с `status`. Только `deployed` содержит `url` (который может быть `null`).
 
 <span id="logs---json-is-a-snapshot-not-a-stream" />
 
@@ -53,7 +53,7 @@ lizard --help --json                 # whole tree + global flags + exit codes
 lizard service set --help --json     # one command
 ```
 
-Формат ответа — `{ cli, version, command: { arguments, options, subcommands }, globalOptions, exitCodes }`. Поскольку он генерируется из вашего установленного бинарника, он всегда соответствует вашей версии — лучше полагаться на него, чем хардкодить флаги.
+Формат ответа — `{ cli, version, agents, command: { arguments, options, subcommands }, globalOptions, exitCodes }`. Поскольку он генерируется из вашего установленного бинарника, он всегда соответствует вашей версии — лучше полагаться на него, чем хардкодить флаги.
 
 <span id="ci--headless-usage" />
 
@@ -64,6 +64,7 @@ lizard service set --help --json     # one command
 ```bash
 # Set LIZARD_TOKEN through your CI secret store.
 lizard init --name my-project
+lizard add --service api   # first run only; skip when the service exists
 lizard up --ci --service api --detach
 ```
 
@@ -78,8 +79,10 @@ lizard up --ci --service api --detach
 | `4` | таймаут |
 | `5` | отменено |
 
+`--wait` заставляет `redeploy` дождаться завершения сборки и готовности нового деплоя. Без него в режиме JSON команда завершается с кодом `0`, как только Lizard принимает запрос на сборку.
+
 ```bash
-if lizard redeploy --service api --json; then
+if lizard redeploy --service api --wait --json; then
   echo "Deploy succeeded"
 else
   status=$?

@@ -1,0 +1,75 @@
+---
+description: "lizard volume creates, lists, resizes, and deletes Persistent Volumes that sandboxes attach by name."
+---
+
+# lizard volume
+
+Manage [Persistent Volumes](/sandboxes/volumes) for sandboxes. Alias: `lizard vol`.
+
+## Usage
+
+```bash
+lizard volume list [flags]
+lizard volume create <name> [flags]
+lizard volume resize <volume> --size <gb> [flags]
+lizard volume rm <volume> [flags]
+```
+
+A volume's name is its key within the project. Every command takes a name or an ID, and `-p, --project` to target a project other than the linked one.
+
+## Subcommands
+
+### `lizard volume list`
+
+List the project's volumes with size, status, and the sandbox they're attached to (alias `ls`). `--json` also includes the generated IDs.
+
+### `lizard volume create <name>`
+
+Create a volume. Names use lowercase letters, digits, and dashes, start and end with a letter or digit, are up to 64 characters, and are unique in the project.
+
+| Flag | Description |
+|------|-------------|
+| `--size <gb>` | Size in whole GB, 1 to 50 (default 5). The CLI reads the server's current limits first |
+| `--region <code>` | Region for the volume; it must match the sandbox that will attach it |
+| `-p, --project <id>` | Project name, slug, or ID |
+
+### `lizard volume resize <volume> --size <gb>`
+
+Change a volume's size in place. An attached sandbox keeps running and sees the new size. A Firecracker volume (the default) can only grow. A pod-backed volume can also shrink if at least 10% of the new size stays free.
+
+### `lizard volume rm <volume>`
+
+Delete a volume and its data (alias `delete`). It fails while the volume is attached; delete the sandbox first.
+
+| Flag | Description |
+|------|-------------|
+| `-y, --yes` | Skip confirmation |
+
+Volume storage costs $0.14 per GB-month of used space. See [Size and price](/sandboxes/volumes#size-and-price).
+
+## Examples
+
+### Create a volume and attach it
+
+```bash
+lizard volume create agent-workdir --size 10
+lizard sandbox create --volume agent-workdir
+```
+
+### Grow a volume
+
+```bash
+lizard volume resize agent-workdir --size 20
+```
+
+### Delete a volume
+
+```bash
+lizard volume rm agent-workdir --yes
+```
+
+## See also
+
+- [Persistent Volumes](/sandboxes/volumes) — lifecycle, SDK methods, and the dashboard view
+- [lizard sandbox](/cli/sandbox) — attach a volume with `sandbox create --volume`
+- [Storage and recovery](/platform/storage-and-recovery) — what happens to volume data when a node fails

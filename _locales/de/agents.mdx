@@ -1,10 +1,10 @@
 ---
-description: "Steuere Lizard über einen KI-Coding-Agenten: Lies Lizard Skill, ermittle Befehlsschemata mit --json und deploye über Lizard CLI."
+description: "Steuere Lizard über einen KI-Coding-Agenten: Lies Lizard Skill, ermittle Befehlsschemata mit --json, deploye über Lizard CLI oder verbinde einen MCP-Client mit Lizard MCP."
 ---
 
 # Coding-Agents
 
-Lizard ist so konzipiert, dass es sich von KI-Coding-Agents genauso einfach steuern lässt wie von Menschen. Die CLI enthält ein **eingebettetes Skill**, das einem Agenten die gesamte Plattform vermittelt, und jeder Befehl ist über `--json` **selbstbeschreibend**, sodass Agents nie raten müssen.
+Lizard ist so konzipiert, dass es sich von KI-Coding-Agents genauso einfach steuern lässt wie von Menschen. Lizard CLI enthält ein **eingebettetes Skill**, das einem Agenten die gesamte Plattform vermittelt, und jeder Befehl ist über `--json` **selbstbeschreibend**, sodass Agents nie raten müssen.
 
 <span id="the-embedded-skill" />
 
@@ -47,8 +47,9 @@ Ein typischer Agent-Ablauf:
 
 1. **Anleitung laden:** `lizard skills get core --json` → `content` lesen.
 2. **Authentifizierung optimistisch prüfen:** Führe die Aufgabe des Nutzers aus; bei Exit-Code `2` führe `lizard login` aus, gib die ausgegebene URL an den Nutzer weiter und versuche es dann erneut.
-3. **Kontext vor Änderungen auflösen:** `lizard status` (cwd-Link) und `lizard ps --json` (Services).
-4. **Handeln** mithilfe der Anleitung — `add`, `up`, `secrets`, `domain` usw., immer mit `--json`.
+3. **Testphase starten, wenn gewünscht:** Ein neues Konto hat keinen Plan, daher schlägt das erste Erstellen mit HTTP 402 fehl (`code: "PAYMENT_REQUIRED"`, Exit-Code `1`). Führe `lizard billing start --json` aus, gib die Checkout-`url` an den Nutzer weiter und versuche es erneut, sobald eine Karte hinzugefügt wurde.
+4. **Kontext vor Änderungen auflösen:** `lizard status` (cwd-Link) und `lizard ps --json` (Services).
+5. **Handeln** mithilfe der Anleitung — `add`, `up`, `secrets`, `domain` usw., immer mit `--json`.
 
 Wenn das Binary `lizard` nicht vorhanden ist, installiere es zuerst. Verwende unter macOS oder Linux das Installationsskript:
 
@@ -56,7 +57,13 @@ Wenn das Binary `lizard` nicht vorhanden ist, installiere es zuerst. Verwende un
 curl -fsSL https://lizard.build/install.sh | bash
 ```
 
-Es braucht weder Node.js noch `sudo` und verlinkt `lizard` in einen Ordner, der bereits im `PATH` liegt. So kann der Agent es in derselben Sitzung aufrufen. Meldet das Skript, dass `lizard` eventuell nicht gefunden wird, rufe stattdessen `~/.lizard/bin/lizard` auf. Unter Windows verwende npm:
+Es braucht weder Node.js noch `sudo` und verlinkt `lizard` in einen Ordner, der bereits im `PATH` liegt. So kann der Agent es in derselben Sitzung aufrufen. Meldet das Skript, dass `lizard` eventuell nicht gefunden wird, rufe stattdessen `~/.lizard/bin/lizard` auf. Führe unter Windows Folgendes in PowerShell aus:
+
+```powershell
+irm https://lizard.build/api/cli/install.ps1 | iex
+```
+
+Oder installiere es auf jedem System über npm:
 
 ```bash
 npm install -g @lizard-build/cli
@@ -76,9 +83,54 @@ npm install -g @lizard-build/cli
 
 ## Editor-Integrationen
 
-Lizard Skill wird als öffentliches Bootstrap verteilt, damit Agents in Editoren und Assistenten es bei Bedarf installieren und laden und dann dieselbe CLI steuern können, die in dieser Dokumentation beschrieben wird. Die CLI ist die einzige verlässliche Quelle — es gibt keine separate Agent-API, die man lernen muss.
+Lizard Skill wird als öffentliches Bootstrap verteilt, damit Agents in Editoren und Assistenten es bei Bedarf installieren und laden und dann dieselbe CLI steuern können, die in dieser Dokumentation beschrieben wird. Installiere es einmal für alle deine Agents:
 
-Das gilt auch für KI-IDEs: Sie schreiben und testen eine App, hosten sie aber nicht. Siehe [Deployment einer in Google Antigravity gebauten App](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-an-antigravity-app-to-production-without-typing-a-command), wo das gesamte Deployment mit zwei Prompts ausgeführt wird.
+```bash
+npx skills add lizard-build/skill -g
+```
+
+Es funktioniert mit Claude Code, Cursor, Codex, Copilot, Gemini CLI und anderen Agents, die das Agent-Skills-Format lesen. Für Clients, die MCP sprechen, statt Shell-Befehle auszuführen, verwende [Lizard MCP](#lizard-mcp).
+
+Das gilt auch für KI-IDEs: Sie schreiben und testen eine App, hosten sie aber nicht. Siehe [Deployment einer in Google Antigravity gebauten App](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat), wo ein einziger Prompt das gesamte Deployment steuert.
+
+<span id="lizard-mcp" />
+
+## Lizard MCP
+
+Mit Lizard MCP können ChatGPT, Claude und andere MCP-Clients deine Lizard-Projekte verwalten: Services und Add-ons erstellen, neu deployen, Logs und Metriken lesen, Secrets setzen, Replicas skalieren und Domains anhängen. Es ist ein gehosteter Server, der Streamable HTTP spricht unter:
+
+```text
+https://employ-woman-g1q2.us-east-1.onlizard.com/mcp
+```
+
+Ein Client, der OAuth unterstützt, meldet dich bei der ersten Nutzung an. Andere Clients senden einen `liz_`-API-Key im Header `Authorization: Bearer`; erstelle einen mit `lizard keys create <name>`.
+
+Füge es zu Claude Code hinzu:
+
+```bash
+claude mcp add --transport http lizard https://employ-woman-g1q2.us-east-1.onlizard.com/mcp
+```
+
+Für Cursor und andere Clients, die per JSON konfiguriert werden:
+
+```json
+{
+  "mcpServers": {
+    "lizard": {
+      "url": "https://employ-woman-g1q2.us-east-1.onlizard.com/mcp",
+      "headers": { "Authorization": "Bearer liz_your_key" }
+    }
+  }
+}
+```
+
+Das Starten der Testphase, das Bezahlen und das Kündigen von Pro erfolgen auf der Billing-Seite. Muss das Konto zahlen, bevor etwas erstellt werden kann, enthält der Tool-Fehler `PAYMENT_REQUIRED` und den Link, der geöffnet werden muss.
+
+<span id="hosting-your-own-mcp-server" />
+
+## Eigenen MCP-Server hosten
+
+Ein Agent, der Lizard CLI verwendet, und eine Anwendung, die MCP bereitstellt, sind getrennte Workflows. Die oben genannten CLI-Befehle stellen keinen MCP-Transport bereit. Um deinen eigenen Server mit Streamable HTTP zu deployen, folge der [Remote-MCP-Anleitung](/guides/deploy-mcp-server).
 
 <span id="see-also" />
 
@@ -87,10 +139,4 @@ Das gilt auch für KI-IDEs: Sie schreiben und testen eine App, hosten sie aber n
 - [`lizard skills`](/cli/skills) — die vollständige Befehlsreferenz.
 - [JSON & Automatisierung](/cli/json) — Ausgabe von `--json` und Schema-Discovery.
 - [Variablen & Secrets](/variables#scoping) — Konventionen zur Secret-Begrenzung, denen Agents folgen sollten.
-- [Deploye deine App aus Claude Code](https://lizard.build/blog/deploy-from-claude-code#deploy-from-claude-code-in-3-steps) — dasselbe Bootstrap als Walkthrough, mit den Prompts, die es steuern.
-
-<span id="hosting-your-own-mcp-server" />
-
-## Eigenen MCP-Server hosten
-
-Ein Agent, der Lizard CLI verwendet, und eine Anwendung, die MCP bereitstellt, sind getrennte Workflows. Die oben genannten CLI-Befehle stellen keinen MCP-Transport bereit. Um deinen eigenen Server mit Streamable HTTP zu deployen, folge der [Remote-MCP-Anleitung](/guides/deploy-mcp-server).
+- [Deploye deine App aus Claude Code](https://lizard.build/blog/deploy-from-claude-code#a-prompt-that-defines-the-deployment-task) — dasselbe Bootstrap als Walkthrough, mit dem Prompt, der es steuert.

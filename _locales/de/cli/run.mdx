@@ -1,21 +1,29 @@
 ---
-description: "lizard run führt einen Befehl auf deinem Rechner mit eingefügten Projekt- und Service-Geheimnissen eines Service aus. Enthält auch, wann du stattdessen ssh verwenden solltest."
+description: "lizard run führt einen Befehl auf deinem Rechner mit eingefügten Projekt- und Service-Geheimnissen eines Service aus. Was eingefügt wird und wie du prüfst, was die laufende App sieht."
 ---
 
 # lizard run
 
 Führe einen Befehl lokal mit eingefügten Projekt- und Service-Geheimnissen aus.
 
-## run vs. ssh
+<span id="what-run-injects" />
 
-Mit zwei Befehlen kannst du Befehle im Kontext eines Service ausführen. Sie laufen an unterschiedlichen Orten — du solltest wissen, welchen du brauchst.
+## Was `run` einfügt
 
-| Befehl | Wird ausgeführt in | Verwenden für |
-|---------|-----------|---------|
-| `lizard run` | Lokal, mit eingefügten Projekt- und Service-Geheimnissen des Service | Migrationen, Seed-Skripte, lokale Tools, die eine Produktionskonfiguration brauchen |
-| `lizard ssh` | Innerhalb des laufenden Service-Containers | Den Live-Container untersuchen, einmalige Remote-Befehle, Debugging |
+`lizard run` lädt die Geheimnisse des Projekts, legt die Geheimnisse des Service darüber und führt deinen Befehl auf deinem Rechner mit diesen in seiner Umgebung aus.
 
-`lizard run` zeigt deine lokal eingefügte Kopie der Umgebung an, die normalerweise mit dem übereinstimmt, was die laufende App sieht — aber `lizard ssh` ist für den Live-Container maßgeblich. Um zu prüfen, was die laufende App tatsächlich sieht, verwende stattdessen `lizard ssh`.
+- Bei einem App-Service fügt es die gespeicherten Werte ein. Referenzen wie `${{postgres.DATABASE_URL}}` kommen als dieser literale Text an, nicht als aufgelöster Wert. Plattformvariablen wie `PORT` und `LIZARD_*` werden nicht eingefügt.
+- Bei einem Addon (`--service postgres`, `--service redis`, `--service s3`) fügt es die echten Verbindungswerte des Addons ein, etwa `DATABASE_URL`.
+
+Um also eine Migration oder einen Datenbank-Client lokal auszuführen, richte `--service` auf das Addon, nicht auf die App, die darauf verweist.
+
+`lizard ssh` in einen laufenden Service ist deaktiviert (die API antwortet mit 403 „Shell access to services is disabled"). Um zu prüfen, was die laufende App erhält, verwende:
+
+| Prüfung | Befehl |
+|-------|---------|
+| Leere Referenzen | `lizard logs --build --service api` (das Build-Log warnt vor jeder `${{…}}`-Referenz, die zu einem leeren Wert aufgelöst wurde) |
+| Gespeicherte Werte | `lizard secrets list --service api --show` |
+| Die echten Verbindungswerte eines Addons | `lizard run --service postgres -- printenv DATABASE_URL` |
 
 <span id="usage" />
 
@@ -29,8 +37,9 @@ lizard run [flags] -- <command>
 
 | Flag | Beschreibung |
 |------|-------------|
-| `-s, --service <name>` | Service, dessen env eingefügt werden soll |
-| `--no-service` | Service-env nicht einfügen |
+| `-s, --service <name>` | Service, dessen env eingefügt werden soll (standardmäßig der verknüpfte Service) |
+| `--no-service` | Service-env nicht einfügen, nur Projekt-Geheimnisse |
+| `-p, --project <id>` | Projekt (standardmäßig das verknüpfte) |
 
 <span id="examples" />
 
@@ -38,10 +47,12 @@ lizard run [flags] -- <command>
 
 <span id="run-a-migration-with-service-secrets-injected" />
 
-### Eine Migration mit eingefügten Service-Geheimnissen ausführen
+<span id="run-a-migration-against-managed-postgres" />
+
+### Eine Migration gegen Managed Postgres ausführen
 
 ```bash
-lizard run --service api -- node scripts/migrate.js
+lizard run --service postgres -- node scripts/migrate.js
 ```
 
 <span id="print-an-injected-environment-variable" />
@@ -49,13 +60,22 @@ lizard run --service api -- node scripts/migrate.js
 ### Eine eingefügte Umgebungsvariable ausgeben
 
 ```bash
-lizard run --service api -- printenv DATABASE_URL
+lizard run --service postgres -- printenv DATABASE_URL
+```
+
+<span id="run-a-local-tool-with-an-apps-stored-secrets" />
+
+### Ein lokales Tool mit den gespeicherten Geheimnissen einer App ausführen
+
+```bash
+lizard run --service api -- node scripts/report.js
 ```
 
 <span id="see-also" />
 
 ## Siehe auch
 
-- [lizard ssh](/cli/ssh) — einen Befehl innerhalb des laufenden Service-Containers statt lokal ausführen
+- [lizard ssh](/cli/ssh) — warum der Shell-Zugriff auf Services deaktiviert ist und was du stattdessen verwenden kannst
+- [lizard secrets](/cli/secrets) — die Werte auflisten und setzen, die `run` einfügt
 - [Variablen](/variables) — wie Projekt- und Service-Variablen definiert und referenziert werden
 - [Python-App-Hosting](https://lizard.build/blog/python-app-hosting) — `manage.py` und andere Framework-Tools gegen eine bereitgestellte Datenbank ausführen

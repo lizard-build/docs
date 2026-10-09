@@ -14,6 +14,8 @@ description: "lizard add создает сервис из GitHub-репозит�
 lizard add [types...] [flags]
 ```
 
+`add` работает с проектом, привязанным к текущей директории. Сначала выполните [`lizard init`](/cli/init) или [`lizard link`](/cli/link).
+
 <span id="flags" />
 
 ## Флаги
@@ -25,7 +27,7 @@ lizard add [types...] [flags]
 | `-a, --addon <type...>` | Добавить управляемые аддоны (`postgres` / `redis` / `s3`) |
 | `-n, --name <name>` | Имя, используемое в ссылках `${{name.KEY}}` |
 | `-v, --variables <K=V>` | Задать переменную окружения (можно повторять) |
-| `--region <code>` | Регион для provisioning |
+| `--region <code>` | Регион для provisioning (по умолчанию `us-east-1`) |
 | `--no-deploy` | Привязать репозиторий, но пропустить первую сборку |
 | `--list` | Показать доступные типы баз данных |
 
@@ -41,7 +43,7 @@ lizard add [types...] [flags]
 lizard add -r your-org/your-app
 ```
 
-Это создает `github`-source-сервис, клонирует репозиторий, автоматически определяет стек, собирает его и возвращает рабочий URL.
+Это создает `github`-source-сервис и запускает первую сборку, которая клонирует репозиторий и автоматически определяет стек. Команда завершается, как только сервис создан; следить за сборкой можно с помощью `lizard logs --build`.
 
 <span id="provision-addons" />
 
@@ -66,7 +68,7 @@ lizard add -s worker
 ### Назвать сервис и задать переменные
 
 ```bash
-lizard add -r your-org/monorepo -n api
+lizard add -r your-org/monorepo -n api -v NODE_ENV=production -v LOG_LEVEL=info
 ```
 
 <span id="see-also" />
@@ -74,5 +76,5 @@ lizard add -r your-org/monorepo -n api
 ## См. также
 
 - [Развертывание из GitHub](/deploy/github) — подключение репозиториев, приватный доступ и авто-переразвертывание при push
-- [Управляемые аддоны](/addons) — создание, именование и использование postgres/redis/s3
+- [Управляемые аддоны](/addons) — создание, именование и использование Managed Postgres, Managed Redis и Managed Object Storage
 - [lizard up](/cli/up) — загрузка и развертывание текущей директории вместо привязки репозитория

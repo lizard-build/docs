@@ -18,16 +18,21 @@ The first Redis addon is named `redis`, so `${{redis.REDIS_URL}}` works immediat
 
 | Variable | Description |
 |----------|-------------|
-| `REDIS_URL` | Full connection string (`redis://…`) |
+| `REDIS_URL` | Full connection string over the public endpoint (`redis://…`) |
+| `REDIS_PRIVATE_URL` | Connection string over the project's private network (`<name>.lizard.internal:6379`) |
 
 ## Connect a service
 
 ```bash
-lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service api
+lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-The reference resolves at deploy time and rotates with the addon's credentials.
+The reference resolves at deploy time; consumers pick up the addon's current values on their next deploy. Use `REDIS_URL` for clients outside the project. Every service in the project also gets the addon's public `REDIS_URL` at the lowest precedence; an explicit reference overrides it.
+
+## Memory and durability
+
+Managed Redis has no eviction policy and no append-only file. If it runs out of memory, the instance restarts and recent writes can be lost. Use it for data you can rebuild, and keep data you cannot lose in [Managed Postgres](/addons/postgres).
 
 ## Common uses
 
@@ -37,18 +42,18 @@ The reference resolves at deploy time and rotates with the addon's credentials.
 
 ```bash
 # A worker that drains a Redis queue
-lizard add -r your-org/worker -n jobs
+lizard add -r your-org/worker -n jobs --no-deploy
 lizard service set jobs --set containerPort=0
-lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service jobs
+lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service jobs
 lizard redeploy --service jobs
 ```
 
 ## Browse keys
 
-Open the **Redis browser** in the dashboard (`lizard open`) to inspect keys and values. For local access:
+Open the **Redis browser** in the dashboard (`lizard open`) to inspect keys and values. For local access with the addon's connection values:
 
 ```bash
-lizard run --service api -- sh -c 'exec redis-cli -u "$REDIS_URL"'
+lizard run --service redis -- sh -c 'exec redis-cli -u "$REDIS_URL"'
 ```
 
 ## Grow storage
@@ -62,4 +67,4 @@ lizard scale --service redis --storage 4096
 - [Managed Addons](/addons) — naming, references, and the dashboard browsers.
 - [Background Workers](/deploy/workers) — pairing Redis with a queue-consuming worker.
 
-`lizard run` starts the command locally with the selected service environment. Install `redis-cli` locally and check that the endpoint is reachable.
+`lizard run --service redis` starts the command on your machine with the addon's public connection values. Install `redis-cli` locally.

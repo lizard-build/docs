@@ -101,6 +101,6 @@ lizard ps --json
 
 公開中のホームページ、export された内部ルート、JavaScript アセット、そして存在しない適当なパスをリクエストしてください。存在しないパスは、HTTP 200 のホームページではなく、HTTP 404 を返す必要があります。[静的ルートと404エラー](/framework-guides/static-routing#verify-http-responses) の確認手順を使ってください。
 
-&#101;xport されたコンテンツの変更はすべて、新しいビルドが必要です。ランタイム環境変数では、`out/` にすでに書き込まれた値は変更できません。カスタム Dockerfile で公開用の build 変数を使う場合は、必要な `ARG` を `RUN npm run build` の前に宣言してください。秘密の認証情報を export 済みバンドルに入れないでください。
+&#101;xport されたコンテンツの変更はすべて、新しいビルドが必要です。ランタイム環境変数では、`out/` にすでに書き込まれた値は変更できません。公開用の build 変数は、build ステージで `RUN npm run build` の前に `ENV` 行として書いてください。Lizard は `COMMIT_SHA` 以外の build 引数を渡さないため、`ARG` は空のままになります。秘密の認証情報を export 済みバンドルに入れないでください。
 
 2026年9月9日のデプロイ確認とその制限については、[テスト済みバージョンとクラウド結果](/framework-guides/validation) を参照してください。

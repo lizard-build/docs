@@ -27,11 +27,12 @@ Lizard は GitHub リポジトリまたはローカルフォルダからアプ�
 
 ## アプリをデプロイする
 
-Lizard CLI をインストールしてサインインし、アクセス可能なリポジトリをデプロイします:
+Lizard CLI をインストールしてサインインし、7 日間の Pro トライアルを開始してから、アクセス可能なリポジトリをデプロイします:
 
 ```bash
 curl -fsSL https://lizard.build/install.sh | bash
 lizard login
+lizard billing start   # opens Stripe Checkout; add a card, nothing is charged during the trial
 lizard add -r your-org/your-app
 ```
 

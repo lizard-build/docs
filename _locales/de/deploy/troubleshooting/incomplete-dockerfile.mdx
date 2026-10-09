@@ -18,9 +18,16 @@ Die Plattform hat entschieden, dass das Dockerfile Ihres Repos **unvollständig*
 
 ## Warum das passieren kann
 
-Lizard verwendet ein Dockerfile aus dem Repo im lizardpack-Autoerkennungspfad nur dann **unverändert**, wenn es einen echten Build-Schritt hat — eine Zeile `RUN <package-manager>`. Ein Dockerfile, das nur vorab gebaute Artefakte kopiert (`COPY dist/`, `build/`, `out/`, `.next/`, `public/`) und keinen Schritt `RUN` enthält, wird als unvollständig behandelt, in der Annahme, dass diese Artefakte außerhalb des Images gebaut wurden. In diesem Fall erzeugt lizardpack ein Ersatz-Dockerfile, das den fehlenden Build-Schritt enthält.
+Diese Prüfung läuft nur für Services mit GitHub-Quelle. Uploads (`lizard up`) verwenden ein `Dockerfile` im Root-Verzeichnis immer so, wie es geschrieben ist.
 
-Das gilt nur auf dem lizardpack-Autoerkennungspfad. Wenn `buildCommand` oder `startCommand` für den Service gesetzt ist, erzeugt Lizard stattdessen aus diesen Befehlen ein Dockerfile und berücksichtigt das Dockerfile Ihres Repos überhaupt nicht.
+Bei GitHub-Quelle behandelt Lizard ein Dockerfile im Root-Verzeichnis als unvollständig, wenn beides zutrifft:
+
+- es enthält ein `COPY` von `build`, `dist`, `out`, `.next` oder `public` ohne abschließenden Schrägstrich, etwa `COPY dist /usr/share/nginx/html`;
+- es enthält keine `RUN`-Zeile, die mit `npm`, `yarn`, `pnpm`, `bun`, `pip`, `pip3`, `bundle`, `cargo`, `go build`, `mvn` oder `gradle` beginnt.
+
+Lizard geht davon aus, dass diese Artefakte außerhalb des Images gebaut wurden, und lizardpack erzeugt ein Ersatz-Dockerfile, das den fehlenden Build-Schritt enthält.
+
+Zwei weitere Einstellungen umgehen ebenfalls das Dockerfile im Root-Verzeichnis Ihres Repos. Ist `dockerfilePath` gesetzt, verwendet Lizard diese Datei unverändert. Ohne diese Einstellung sorgt ein gesetztes `buildCommand` oder `startCommand` dafür, dass Lizard aus diesen Befehlen ein Dockerfile erzeugt.
 
 <span id="possible-solutions" />
 
@@ -40,10 +47,10 @@ RUN npm ci && npm run build
 
 ### Oder die unveränderte Verwendung erzwingen
 
-Entfernen Sie Build- und Start-Overrides und setzen Sie dann im selben Update `dockerfilePath`. Overrides haben Vorrang vor dem Dateipfad:
+Setzen Sie `dockerfilePath`. Es hat beim Image-Build Vorrang vor Build- und Start-Befehlen, aber ein gesetztes `startCommand` ersetzt zur Laufzeit trotzdem das `CMD` Ihres Dockerfiles. Setzen Sie daher beide im selben Update zurück. Ein leerer Wert setzt ein Feld zurück:
 
 ```bash
-lizard service set api --set buildCommand=null --set startCommand=null --set dockerfilePath=Dockerfile
+lizard service set api --set buildCommand= --set startCommand= --set dockerfilePath=Dockerfile
 ```
 
 <span id="see-also" />
@@ -52,6 +59,6 @@ lizard service set api --set buildCommand=null --set startCommand=null --set doc
 
 - [Build-Pipeline](/concepts/build-pipeline) — die vollständige Reihenfolge der Build-Entscheidungen.
 - [Referenz zur Build-Konfiguration](/concepts/build-pipeline#build-configuration-reference)
-- [Beliebige Python-App auf Lizard deployen](https://lizard.build/blog/python-app-hosting#deploying-any-python-app-on-lizard) — wann Sie lizardpack das Dockerfile schreiben lassen sollten und wann Sie Ihr eigenes mitbringen.
+- [Ein minimaler FastAPI-Container](https://lizard.build/blog/python-app-hosting#a-minimal-fastapi-container) — ein vollständiges Python-Dockerfile und wann Sie stattdessen Ihr eigenes mitbringen sollten, statt den Source-Build zu verwenden.
 
 Das Ändern dieser Build-Felder kann einen Build starten. Prüfen Sie `lizard events`, bevor Sie ein weiteres `redeploy` senden, um zu vermeiden, einen zweiten Build zu starten.

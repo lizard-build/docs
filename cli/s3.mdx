@@ -1,0 +1,68 @@
+---
+description: "lizard s3 uploads a local file to a Managed Object Storage bucket and lists the objects in a bucket, without an AWS SDK."
+---
+
+# lizard s3
+
+Upload and list objects in a [Managed Object Storage](/addons/storage) bucket.
+
+## Usage
+
+```bash
+lizard s3 upload <file> [flags]
+lizard s3 list [flags]
+```
+
+Both commands work on the project's only S3 addon and its `default` bucket unless you pass `--addon` and `--bucket`. Add the addon first with `lizard add s3`.
+
+## Subcommands
+
+### `lizard s3 upload <file>`
+
+Upload a local file. Prints the key, ETag, size, and a URL when the bucket is public. The `default` bucket is private; make a bucket public from the S3 browser in the dashboard.
+
+| Flag | Description |
+|------|-------------|
+| `--addon <name>` | S3 addon name or ID (default: the project's only S3 addon) |
+| `--bucket <name>` | Target bucket (default `default`) |
+| `--key <key>` | Object key (default: the file's name) |
+| `--content-type <type>` | Content-Type header (default: guessed from the file extension) |
+| `-p, --project <id>` | Project name, slug, or ID |
+
+### `lizard s3 list`
+
+List objects in a bucket (alias `ls`).
+
+| Flag | Description |
+|------|-------------|
+| `--addon <name>` | S3 addon name or ID |
+| `--bucket <name>` | Bucket to list (default `default`) |
+| `--prefix <prefix>` | Only keys under this prefix |
+| `-p, --project <id>` | Project name, slug, or ID |
+
+Each account can store up to 16 GiB across its addons. Storage is billed by stored bytes at $0.0135 per GB-month.
+
+## Examples
+
+### Upload a file
+
+```bash
+lizard s3 upload ./logo.png --key assets/logo.png
+```
+
+### List objects under a prefix
+
+```bash
+lizard s3 list --prefix assets/
+```
+
+### Use a second S3 addon
+
+```bash
+lizard s3 upload ./backup.tar.gz --addon s3-autumn-bear
+```
+
+## See also
+
+- [Managed Object Storage](/addons/storage) — environment variables, AWS SDK setup, and public files
+- [lizard add](/cli/add) — add an S3 addon with `lizard add s3`

@@ -68,7 +68,7 @@ finally:
 
 ## Archivos
 
-`fs.write` escribe texto o bytes UTF-8 válidos; `fs.read` lee texto. El endpoint de escritura actual no admite subidas binarias. Para descargar un archivo binario usa `fs.readBytes` (Python: `read_bytes`).
+`fs.write` escribe texto o bytes; `fs.read` lee texto. Para archivos binarios, escribe bytes y vuelve a leerlos con `fs.readBytes` (Python: `read_bytes`).
 
 Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un Persistent Volume adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
 
@@ -82,19 +82,22 @@ console.log(result.stdout);
 
 ## Puertos públicos
 
-Inicia un servidor que escuche en `0.0.0.0` y llama a `getHost(port)` para registrar su nombre HTTPS público. El puerto es público; añade autenticación si hace falta. El sandbox deja de atender el puerto cuando se detiene.
+Inicia un servidor que escuche en `0.0.0.0` y llama a `exposePort(port)` (Python: `expose_port`). Devuelve `url`, `hostname` y `accessToken`. El puerto es privado: abre `url` en un navegador (lleva `?lizard_token=`) o envía el token en la cabecera `X-Lizard-Access-Token`. Las solicitudes sin el token reciben 401. El sandbox deja de atender el puerto cuando se detiene.
 
 ```ts
 await sandbox.process.exec(
   "nohup python -m http.server 3000 --bind 0.0.0.0 --directory /tmp >/tmp/http.log 2>&1 </dev/null &",
 );
-const host = await sandbox.getHost(3000);
-console.log(`https://${host}`);
+const { url, hostname, accessToken } = await sandbox.exposePort(3000);
+console.log(url); // open in a browser
+const res = await fetch(`https://${hostname}/`, {
+  headers: { 'X-Lizard-Access-Token': accessToken },
+});
 ```
 
 ## Conectar a un sandbox en ejecución
 
-Crea un sandbox, ejecuta comandos y llama a `kill`. `connect` se conecta a un sandbox existente sin cambiar su estado, así que no reanuda uno pausado ni uno detenido. Pausar, reanudar, snapshot y restore están disponibles; consulta [Pausa, reanudación y snapshots](/sandboxes/quickstart#pause-and-resume). Fork y la vigilancia de archivos devuelven HTTP 501. `lizard sandbox ssh` abre una shell interactiva con tus credenciales de la CLI. No hay acceso por el protocolo SSH, así que los clientes SSH, `scp` y el reenvío de puertos no funcionan.
+Crea un sandbox, ejecuta comandos y llama a `kill`. `connect` se conecta a un sandbox existente sin cambiar su estado, así que no reanuda uno pausado ni uno detenido. Pausar, reanudar, snapshot y restore están disponibles; consulta [Pausa, reanudación y snapshots](/sandboxes/quickstart#pause-and-resume). `fork` copia un sandbox en marcha, incluidos la memoria y los procesos; devuelve 409 cuando hay un volumen adjunto y 501 en un sandbox que se ejecuta como pod. La vigilancia de archivos aún no está disponible. `lizard sandbox ssh` abre una shell interactiva con tus credenciales de la CLI. No hay acceso por el protocolo SSH, así que los clientes SSH, `scp` y el reenvío de puertos no funcionan.
 
 ```ts
 const connected = await Sandbox.connect(sandbox.sandboxId);
@@ -127,12 +130,12 @@ await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-Lizard mantiene cinco copias listas por defecto (de una a diez), así que un restore arranca desde una copia lista. Si no hay ninguna, restore puede devolver HTTP 503 hasta que el pool se rellene. Un sandbox restaurado se factura por consumo medido; `size` no se aplica. En la CLI, usa `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` y `lizard sandbox restore <snapshot-id>`.
+Un snapshot de un sandbox Firecracker está listo cuando la llamada termina y se restaura desde disco, así que `poolSize` no se aplica. Cada restore se ejecuta con el tamaño del origen y se factura al precio por hora de ese tamaño. Un snapshot de un sandbox de pod mantiene copias listas, cinco por defecto (de una a diez); si no hay ninguna, restore puede devolver HTTP 503 hasta que el pool se rellene, y el sandbox restaurado se factura por consumo medido. En ambos casos `size` no se aplica a un restore. En la CLI, usa `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` y `lizard sandbox restore <snapshot-id>`.
 
 ## Límites actuales del runtime
 
 El SDK y la CLI fijan cinco minutos de duración por defecto. La API directa y el panel no fijan caducidad por defecto. Indica la duración: `timeoutMs: 0` al crear desactiva la caducidad; un valor positivo fija un plazo. `setTimeout` acepta 1000–2147483647 ms, no cero. Los comandos no reinician el plazo. No es un temporizador de inactividad.
 
-Los resultados incluyen stdout, stderr y el código de salida. El tiempo máximo de un comando está entre 1 y 600 segundos. El runtime actual no aplica las opciones `envs`, `workdir` ni `user`; fija el directorio y las variables en el comando de shell. Tampoco aplica `envs` ni `metadata` al crear.
+Los resultados incluyen stdout, stderr y el código de salida. El tiempo máximo de un comando está entre 1 y 600 segundos. `process.exec` acepta `envs`, `workdir` y `user`. Las `envs` de creación llegan a todos los comandos en un sandbox Firecracker; un sandbox de pod las ignora, así que allí pásalas en cada comando. `getInfo()` y `list()` devuelven la `metadata` de creación.
 
 [Inicio rápido](/sandboxes/quickstart) · [Referencia del SDK](/sandboxes/sdk-reference) · [Ejecutar Python](/sandboxes/code-interpreter) · [Panel](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)

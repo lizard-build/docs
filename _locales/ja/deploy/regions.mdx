@@ -1,5 +1,5 @@
 ---
-description: "サービスとアドオンをどこで実行するかを選び、ステートフルなリソースを同じ場所に配置してレイテンシを下げ、リージョンが生成ドメインにどう影響するかを確認します。"
+description: "サービスとアドオンをどこで実行するかを選び、ステートフルなリソースを同じ場所に配置してレイテンシを下げ、サービスとオブジェクトストレージにどのホスト名が割り当てられるかを確認します。"
 ---
 
 <span id="regions" />
@@ -26,15 +26,15 @@ lizard regions --json
 ```bash
 lizard add -r your-org/your-app --region <code>
 lizard add postgres --region <code>
-lizard up --region <code>
+lizard up --region <code>          # new services only
 ```
 
-リージョンを指定しない場合、プラットフォームはプロジェクトのデフォルトを使用します。
+プロジェクトにはデフォルトのリージョンがありません。`--region` を指定しない場合、`lizard add` は `us-east-1` に作成し、`lizard up` はリクエストを処理した API サーバーのリージョンに新しいサービスを作成します。リージョンを選ぶには `--region` を渡してください。
 
-> **ステートフルなリソースは同じ場所に配置してください。** サービスと、それが通信するアドオン（Postgres、Redis、S3）は、レイテンシを低く保ち、リージョン間のデータ転送料金を避けるために、**同じリージョン** に配置してください。
+> **ステートフルなリソースは同じ場所に配置してください。** サービスと、それが通信するアドオン（Managed Postgres、Managed Redis、Managed Object Storage）は、レイテンシを低く保ち、リージョン間のデータ転送料金を避けるために、**同じリージョン** に配置してください。
 
 <span id="generated-domains" />
 
 ## 生成ドメイン
 
-各サービスには、リージョンに関係なく、自動 TLS 付きで `*.onlizard.com` 上の生成ドメインが割り当てられます。[S3 addon](/addons/storage) から配信されるオブジェクトストレージは、リージョンごとのゲートウェイホスト（`s3-<region>.onlizard.com`）を使用します。独自のホスト名を接続するには、[Networking](/networking) を参照してください。
+各サービスには、自動 TLS 付きの生成ドメインが割り当てられます。新しいサービスは `<name>-<suffix>.onlizard.com`、古いサービスは `<words>.<region>.onlizard.com` のままです。[Managed Object Storage](/addons/storage) はリージョンごとのゲートウェイホストを使用します。`us-east-1` では `s3-us-east-1.onlizard.com`、`eu-west-lim-a` では `s3-eu-west-1.onlizard.com` です。独自のホスト名を接続するには、[Networking](/networking) を参照してください。

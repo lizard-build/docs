@@ -12,9 +12,10 @@ Builds laufen auf den Build-Nodes von Lizard — **du brauchst Docker lokal nich
 
 Die Plattform wählt genau eine Build-Strategie, in dieser Reihenfolge:
 
-1. **Synthetisierte Dockerfile** — wenn `buildCommand` und/oder `startCommand` im Service gesetzt sind (oder per `lizard up --build-command` / `--start-command` übergeben werden), erzeugt Lizard daraus eine Dockerfile. lizardpack wird nicht aufgerufen.
-2. **Dockerfile aus dem Repo (unverändert)** — wenn `dockerfilePath` im Service gesetzt ist, wird diese Dockerfile aus deinem Repo unverändert verwendet.
-3. **Automatische Erkennung durch lizardpack** — andernfalls klont die Plattform deinen Quellcode und führt **lizardpack** aus, den eigenen Buildpack-/Dockerfile-Generator.
+1. **Dockerfile aus dem Repo unter `dockerfilePath`** — wenn `dockerfilePath` im Service gesetzt ist, wird diese Dockerfile unverändert verwendet, auch wenn zusätzlich Build- oder Startbefehle gesetzt sind. Ein gesetztes `startCommand` ersetzt zur Laufzeit weiterhin das `CMD` der Dockerfile.
+2. **Synthetisierte Dockerfile** — andernfalls, wenn `buildCommand` und/oder `startCommand` im Service gesetzt sind (oder per `lizard up --build-command` / `--start-command` übergeben werden), erzeugt Lizard daraus eine Dockerfile. lizardpack wird nicht aufgerufen.
+3. **Dockerfile im Quellcode** — andernfalls wird eine `Dockerfile` im Stammverzeichnis des Build-Verzeichnisses verwendet (siehe die GitHub-Ausnahme unten).
+4. **Automatische Erkennung durch lizardpack** — andernfalls führt die Plattform **lizardpack** aus, den eigenen Buildpack-/Dockerfile-Generator.
 
 <span id="lizardpack-auto-detect" />
 
@@ -28,12 +29,13 @@ Siehe [Framework guides](/framework-guides) für Produktionsskripte, Adapter, Au
 
 Auf diesem Pfad gilt:
 
-- Wenn eine `Dockerfile` im Repo existiert **und** einen echten Build-Schritt hat (eine `RUN <package-manager>`-Zeile, nicht nur `COPY dist/`), wird sie unverändert verwendet.
-- Andernfalls erzeugt lizardpack die Dockerfile für dich.
+- Hochgeladener Quellcode (`lizard up`) verwendet eine `Dockerfile` im Stammverzeichnis immer so, wie sie geschrieben ist.
+- GitHub-Quellcode verwendet eine `Dockerfile` im Stammverzeichnis so, wie sie geschrieben ist, es sei denn, sie wirkt unvollständig: Sie enthält ein `COPY` von `build`, `dist`, `out`, `.next` oder `public` ohne abschließenden Schrägstrich (`COPY dist /usr/share/nginx/html`) und keine `RUN`-Zeile, die mit `npm`, `yarn`, `pnpm`, `bun`, `pip`, `pip3`, `bundle`, `cargo`, `go build`, `mvn` oder `gradle` beginnt. lizardpack erzeugt dann einen Ersatz.
+- Ohne Dockerfile erzeugt lizardpack eine für dich.
 - Der **Startbefehl** wird automatisch erkannt: eine `Procfile`-`web:`-Zeile (Python/Ruby) oder `package.json` `scripts.start` (Node) wird automatisch übernommen. Welche genaue Zeile Django, Flask und FastAPI jeweils brauchen, steht unter [Python-App-Hosting](https://lizard.build/blog/python-app-hosting).
 - Der **Port** wird aus `EXPOSE`, Framework-Standards oder einer expliziten `PORT`-Umgebungsvariable abgeleitet.
 
-> **Wichtig:** Eine Dockerfile, die nur vorgebaute Artefakte kopiert (`COPY dist/`, `build/`, `out/`, `.next/`, `public/`) **ohne** einen `RUN`-Build-Schritt, gilt als unvollständig und wird von lizardpack neu erzeugt. Füge einen echten Build-Schritt hinzu oder setze `dockerfilePath`, um die unveränderte Verwendung zu erzwingen.
+> **Wichtig:** Bei GitHub-Quellcode gilt eine Dockerfile, die vorgebaute Ausgabe kopiert (`COPY dist /dest`) und keinen `RUN`-Schritt mit einem Paketmanager hat, als unvollständig und wird von lizardpack neu erzeugt. Füge einen echten Build-Schritt hinzu oder setze `dockerfilePath`, um die unveränderte Verwendung zu erzwingen. Siehe [Dockerfile-Änderungen werden nicht übernommen](/deploy/troubleshooting/incomplete-dockerfile).
 
 <span id="what-triggers-a-rebuild" />
 
@@ -43,12 +45,23 @@ Auf diesem Pfad gilt:
 |--------|-----------|
 | `git push` in den verfolgten Branch | ✅ per GitHub-Webhook |
 | `lizard redeploy` / `lizard up` | ✅ explizit |
-| Ändern von Variablen für `VITE_*` oder `NEXT_PUBLIC_*` | ✅ Build-Zeit-Werte werden fest ins Image übernommen |
-| `service set` von Build-Feldern (`repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath`, `rootDirectory`) | ✅ löst automatisch einen Neuaufbau aus |
+| Ändern von Variablen für `VITE_*` oder `NEXT_PUBLIC_*` | ✅ baut einen laufenden Service neu; wann die Werte den Build erreichen, steht unter [Build-Zeit-Variablen](#build-time-variables) |
+| `service set` von Build-Feldern (`repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath`, `rootDirectory`) | ✅ löst bei einem laufenden Service automatisch einen Neuaufbau aus; andernfalls führe `lizard redeploy` aus |
 | `service set` von reinen Laufzeitfeldern (`startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns`) | ❌ führe `lizard redeploy` aus, damit es angewendet wird |
 | Jede andere Änderung an Umgebungsvariablen / Secrets | ❌ wird bei einem schnellen Neustart angewendet (kein Neuaufbau) |
 
-> **Nicht doppelt bauen.** Nach einem `service set`, das ein Build-Feld ändert, startet der Neuaufbau automatisch — hänge nicht noch ein `lizard redeploy` direkt danach an, sonst stellst du einen zweiten, überflüssigen Build in die Warteschlange.
+> **Nicht doppelt bauen.** Nach einem `service set`, das bei einem laufenden Service ein Build-Feld ändert, startet der Neuaufbau automatisch — hänge nicht noch ein `lizard redeploy` direkt danach an, sonst stellst du einen zweiten, überflüssigen Build in die Warteschlange. Ein abgestürzter oder noch nie bereitgestellter Service wird nicht von selbst neu gebaut; führe `lizard redeploy` aus.
+
+<span id="build-time-variables" />
+
+## Build-Zeit-Variablen
+
+Lizard schreibt `VITE_*`- und `NEXT_PUBLIC_*`-Variablen in zwei Fällen als `ENV`-Zeilen in die Dockerfile:
+
+- GitHub-Services ohne `dockerfilePath`: Die lizardpack-Dockerfile oder die `Dockerfile` im Stammverzeichnis des Repos erhält sie.
+- Services mit `buildCommand` oder `startCommand`, deren synthetisierte Dockerfile ein Node-Build ist.
+
+Services, die mit `lizard up` und ohne Build- oder Startbefehl bereitgestellt werden, erhalten zur Build-Zeit keine Lizard-Variablen. Kein Service erhält andere Build-Argumente als `COMMIT_SHA`, daher bleibt ein `ARG` in deiner Dockerfile leer. Für öffentliche Werte mit `lizard up` committe sie in `.env.production` (prüfe, dass `.gitignore` die Datei nicht ausschließt), schreibe sie in deine Dockerfile oder setze bei einer Node-Server-App sowohl `buildCommand` als auch `startCommand`.
 
 <span id="watching-a-build" />
 
@@ -76,12 +89,12 @@ Wenn ein Build fehlschlägt, lies `lizard logs --build`, behebe die Ursache (in 
 
 | Feld | Beschreibung |
 |-------|-------------|
-| `buildCommand` | Befehl zum Bauen deiner App → erzwingt den Pfad **synthetisierte Dockerfile** |
-| `startCommand` | Befehl zum Starten deiner App zur Laufzeit |
-| `preDeployCommand` | Wird vor jedem Bereitstellen einmal ausgeführt (z. B. DB-Migrationen) |
-| `dockerfilePath` | Pfad zu einer Dockerfile im Repo, die **unverändert** verwendet wird |
+| `buildCommand` | Befehl zum Bauen deiner App → wählt den Pfad **synthetisierte Dockerfile**, sofern `dockerfilePath` nicht gesetzt ist |
+| `startCommand` | Befehl zum Starten deiner App zur Laufzeit; ersetzt das `CMD` des Images |
+| `preDeployCommand` | Wird zu Beginn jedes Containers ausgeführt (jedes Replikat, jeder Neustart), vor `startCommand`; läuft nur, wenn `startCommand` gesetzt ist. Sorge dafür, dass er sich mehrfach und gleichzeitig sicher ausführen lässt |
+| `dockerfilePath` | Pfad zu einer Dockerfile im Repo, die **unverändert** verwendet wird; hat beim Image-Build Vorrang vor `buildCommand` / `startCommand` |
 | `rootDirectory` | Unterverzeichnis, aus dem gebaut wird (Monorepos) |
 | `watchPatterns` | Nur neu deployen, wenn sich passende Pfade ändern |
 | `containerPort` | TCP-Port, auf dem deine App lauscht (Standard `3000`; `0` = [worker](/deploy/workers)) |
 
-Setze beliebige davon mit `lizard service set <svc> --set <field>=<value>`. Siehe [`lizard service`](/cli/service).
+Setze beliebige davon mit `lizard service set <svc> --set <field>=<value>`. Leere ein Feld mit einem leeren Wert, etwa `--set buildCommand=`. Siehe [`lizard service`](/cli/service).

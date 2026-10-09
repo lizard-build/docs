@@ -49,7 +49,7 @@ finally:
 
 ## Size and price
 
-New volumes allow **1–50 GB**, in whole GB, with **5 GB** as the default. The server can override the maximum through `VOLUME_MAX_SIZE_GB`; the dashboard and CLI read the current limits from `GET /api/projects/:projectId/volume-limits`. The dashboard also reads the storage price from that endpoint and shows it below the size slider.
+New volumes allow **1–50 GB**, in whole GB, with **5 GB** as the default. The server can override the maximum through `VOLUME_MAX_SIZE_GB`; the dashboard and CLI read the current limits and storage price from `GET /api/projects/:projectId/volume-limits`.
 
 You pay for **used space**, not the full allocation. Existing volumes larger than the new maximum keep their size and remain accessible. Creating a new volume requires enough unreserved disk space on a healthy worker in the chosen region. If none has room, the API returns `503` with code `volume_capacity_unavailable`.
 
@@ -59,6 +59,7 @@ You pay for **used space**, not the full allocation. Existing volumes larger tha
 await Volume.list('proj_123');
 const volume = await Volume.get('proj_123', 'agent-workdir');
 await volume.getInfo('proj_123');
+await Volume.resize('proj_123', 'agent-workdir', 20);
 await Volume.delete('proj_123', 'agent-workdir'); // detach first
 ```
 
@@ -68,9 +69,12 @@ await Volume.delete('proj_123', 'agent-workdir'); // detach first
 | `Volume.create(projectId, name, options)` | `Volume.create(project_id, name, size_gb=5)` | Create; fail if the name is taken |
 | `Volume.list(projectId)` | `Volume.list(project_id)` | List the project's volumes |
 | `Volume.get(projectId, nameOrId)` | `Volume.get(project_id, name_or_id)` | Look up a volume |
+| `Volume.resize(projectId, nameOrId, sizeGb)` | `Volume.resize(project_id, name_or_id, size_gb)` | Change the size |
 | `Volume.delete(projectId, nameOrId)` | `Volume.remove(project_id, name_or_id)` | Delete a detached volume |
 
 Generated IDs and the `volumeId` / `volume_id` fields still work for existing callers. Use names in new code.
+
+Resizing works in place, also while the volume is attached. A Firecracker volume can only grow. A pod-backed volume can also shrink if at least 10% of the new size stays free.
 
 ## CLI
 
@@ -78,6 +82,7 @@ Generated IDs and the `volumeId` / `volume_id` fields still work for existing ca
 lizard volume create agent-workdir --size 10 --project proj_123
 lizard volume list --project proj_123
 lizard sandbox create --volume agent-workdir --project proj_123
+lizard volume resize agent-workdir --size 20 --project proj_123
 # After stopping the sandbox:
 lizard volume rm agent-workdir --project proj_123
 ```
@@ -86,7 +91,7 @@ lizard volume rm agent-workdir --project proj_123
 
 ## Dashboard
 
-Open **Sandboxes → Volumes** in a project. The create form checks the name and offers a size slider with the current maximum and price. The list shows used space, allocated space, status, and the attached sandbox. Copy the ID from the volume's details when needed.
+Create and attach volumes with the SDK or CLI. Once a project has a volume, **Sandboxes → Persistent Volumes** lists used and allocated space, status, and the attached sandbox. From there you can browse files, resize, or delete a volume.
 
 ## Storage lifecycle
 
@@ -96,6 +101,6 @@ Open **Sandboxes → Volumes** in a project. The create form checks the name and
 
 See the [SDK reference](/sandboxes/sdk-reference) for sandbox options.
 
-Create a sandbox, run commands, then call `kill`. `connect` attaches to an existing sandbox without changing its state, so it does not resume a paused or stopped sandbox. Pause, resume, snapshot, and restore are available; see [Pause, resume, and snapshots](/sandboxes/quickstart#pause-and-resume). Fork and file watching return HTTP 501. `lizard sandbox ssh` opens an interactive shell with your CLI credentials. SSH protocol access is not available, so SSH clients, `scp`, and port forwarding do not work.
+Create a sandbox, run commands, then call `kill`. `connect` attaches to an existing sandbox without changing its state, so it does not resume a paused or stopped sandbox. Pause, resume, snapshot, and restore are available; see [Pause, resume, and snapshots](/sandboxes/quickstart#pause-and-resume). `fork` copies a running sandbox, memory and processes included; it returns 409 when a volume is attached and 501 for a sandbox that runs as a pod. File watching is not available yet. `lizard sandbox ssh` opens an interactive shell with your CLI credentials. SSH protocol access is not available, so SSH clients, `scp`, and port forwarding do not work.
 
 Files and running processes remain available while the sandbox runs. After it stops, only files written to an attached Persistent Volume at `/workspace` can be reused by a later sandbox. Without a volume, `/workspace` is temporary. Each volume attaches to one sandbox at a time and uses node-local storage; export files that must survive node loss.

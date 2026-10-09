@@ -1,10 +1,10 @@
 ---
-description: "S3-kompatibler Objektspeicher für Uploads, Assets und Backups. Erhalten Sie einen öffentlich lesbaren Bucket und Verbindungsvariablen mit einem einzigen lizard add s3."
+description: "S3-kompatibler Objektspeicher für Uploads, Assets und Backups. Erhalten Sie einen privaten Standard-Bucket und Verbindungsvariablen mit einem einzigen lizard add s3."
 ---
 
-# Object Storage (S3)
+# Managed Object Storage
 
-S3-kompatibler Objektspeicher für Uploads, Assets und Backups. Die Bereitstellung eines `s3`-Add-ons erstellt außerdem einen **öffentlich lesbaren Bucket namens `default`**, sodass Sie Dateien ohne zusätzlichen Einrichtungsaufwand bereitstellen können.
+Managed Object Storage ist S3-kompatibler Speicher für Uploads, Assets und Backups. Die Bereitstellung eines `s3`-Add-ons erstellt außerdem einen **privaten Bucket namens `default`**. Um Dateien ohne Authentifizierung bereitzustellen, machen Sie ihn im S3-Browser des Dashboards öffentlich.
 
 <span id="provision" />
 
@@ -67,18 +67,19 @@ const s3 = new S3Client({
 
 ## Öffentliche Dateien
 
-Objekte in jedem **öffentlichen** Bucket werden ohne Authentifizierung auf zwei Arten bereitgestellt:
+Buckets sind standardmäßig privat. Objekte in einem Bucket, den Sie **öffentlich** machen, werden ohne Authentifizierung auf zwei Arten bereitgestellt:
 
 1. **Gateway-URL** (im Dashboard angezeigt):
    ```
    https://s3-<region>.onlizard.com/<addonId>/<bucket>/<key>
    ```
+   `<region>` ist der Wert von `S3_REGION` (`eu-west-1` oder `us-east-1`).
 2. **Plattform-Proxy** (der Dashboard-Host, mit langlebigen unveränderlichen Cache-Headern):
    ```
    <dashboard-host>/api/s3/<addonId>/public/<bucket>/<key>
    ```
 
-Alles, was in den Bucket `default` hochgeladen wird, ist sofort öffentlich verfügbar unter:
+Sobald Sie den Bucket `default` öffentlich machen, werden seine Objekte bereitgestellt unter:
 
 ```
 <dashboard-host>/api/s3/<addonId>/public/default/<key>
@@ -88,17 +89,15 @@ Alles, was in den Bucket `default` hochgeladen wird, ist sofort öffentlich verf
 
 ## Objekte durchsuchen
 
-Öffnen Sie den **S3-Browser** im Dashboard (`lizard open`), um Objekte und Buckets hochzuladen, herunterzuladen und zu verwalten.
+Öffnen Sie den **S3-Browser** im Dashboard (`lizard open`), um Objekte hochzuladen und zu löschen, Ordner zu erstellen und Buckets öffentlich oder privat zu machen. In der CLI lädt `lizard s3 upload <file>` eine Datei hoch und `lizard s3 list` listet Objekte auf.
 
 > **Bucket-ACL-Änderungen** (einen Bucket öffentlich/privat machen) sind in der CLI noch nicht verfügbar — verwalten Sie sie im Dashboard.
 
-<span id="grow-storage" />
+<span id="storage-limit" />
 
-## Speicher erweitern
+## Speicherlimit
 
-```bash
-lizard scale --service s3 --storage 16384
-```
+Jedes Konto kann über seine Managed Object Storage-Add-ons hinweg bis zu 16 GiB an Objekten speichern. Sie zahlen für gespeicherte Bytes, nicht für eine reservierte Größe; `lizard scale --storage` ändert dieses Limit nicht.
 
 <span id="see-also" />
 

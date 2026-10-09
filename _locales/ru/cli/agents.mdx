@@ -1,0 +1,114 @@
+---
+description: "lizard agents подключает ваши учётные данные ChatGPT, Claude или API-ключи для кодинг-агентов, работающих в песочницах, и задаёт модель по умолчанию для каждого агента."
+---
+
+# lizard agents
+
+Подключайте учётные данные, которые кодинг-агенты используют в песочницах, и задавайте настройки по умолчанию для каждого агента. Запускайте агентов с помощью [`lizard sandbox prompt`](/cli/sandbox#coding-agents).
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard agents status
+lizard agents login [chatgpt] [flags]
+lizard agents add <credential> [flags]
+lizard agents remove <credential>
+lizard agents use <agent> [flags]
+```
+
+Учётные данные принадлежат вашему аккаунту: подключите их один раз, и любая песочница сможет запускать агентов с ними. Платформа хранит долгоживущий токен и выдаёт песочнице короткоживущий токен доступа для каждого запуска. Эти команды принимают `-p, --project`, но игнорируют его.
+
+<span id="agents-and-credentials" />
+
+## Агенты и учётные данные
+
+| Агент | Имя | Принимает |
+|-------|------|---------|
+| Codex | `codex` | одно из: `chatgpt`, `openai`, `deepseek`, `openrouter` |
+| Claude Code | `claude` | одно из: `claude`, `anthropic`, `openrouter` |
+| pi | `pi` | любые из: `claude`, `chatgpt`, `anthropic`, `openai`, `openrouter`, `llmgateway` |
+| OpenCode | `opencode` | любые из: `chatgpt`, `anthropic`, `openai`, `openrouter`, `llmgateway` |
+| Prime Agent | `prime` | любые из: `claude`, `chatgpt`, `anthropic`, `openai`, `openrouter`, `llmgateway` |
+
+Kimi Code (`kimi`, с учётными данными `kimi` или `moonshot`) присутствует в списке, но пока не может запускаться.
+
+<span id="subcommands" />
+
+## Подкоманды
+
+### `lizard agents status`
+
+Показывает, какие учётные данные подключены и какие агенты могут запускаться. Просто `lizard agents` делает то же самое.
+
+### `lizard agents login [chatgpt]`
+
+Подключает вашу подписку ChatGPT с помощью кода устройства. CLI выводит URL и код; откройте URL, войдите и введите код в течение 15 минут. Команда ждёт, пока вы подтвердите вход.
+
+| Флаг | Описание |
+|------|-------------|
+| `--open` | Открыть страницу входа в браузере |
+
+### `lizard agents add <credential>`
+
+Добавляет API-ключ: `anthropic`, `openai`, `openrouter`, `llmgateway`, `deepseek` или `moonshot`. Для подписки Claude выполните `claude setup-token` на своей машине и добавьте полученный токен как `claude`.
+
+| Флаг | Описание |
+|------|-------------|
+| `--key <value>` | Ключ или токен. Без этого флага CLI читает stdin или запрашивает значение |
+
+### `lizard agents remove <credential>`
+
+Удаляет подключённые учётные данные (псевдоним `logout`).
+
+### `lizard agents use <agent>`
+
+Задаёт учётные данные и настройки по умолчанию для агента.
+
+| Флаг | Описание |
+|------|-------------|
+| `--credential <name>` | Для Codex и Claude Code: какие учётные данные использовать |
+| `-m, --model <model>` | Модель по умолчанию (`none` сбрасывает её) |
+| `--effort <level>` | Уровень рассуждений по умолчанию (`none` сбрасывает его) |
+
+<span id="examples" />
+
+## Примеры
+
+<span id="connect-chatgpt-and-run-codex" />
+
+### Подключение ChatGPT и запуск Codex
+
+```bash
+lizard agents login chatgpt --open
+lizard sandbox create -t codex
+lizard sandbox prompt sb_abc123 "add a health check endpoint and test it"
+```
+
+<span id="add-a-claude-subscription-for-claude-code" />
+
+### Добавление подписки Claude для Claude Code
+
+```bash
+claude setup-token
+lizard agents add claude
+lizard sandbox create -t claude
+lizard sandbox prompt sb_abc123 --agent claude "fix the failing tests"
+```
+
+<span id="run-codex-on-an-openai-api-key" />
+
+### Запуск Codex с API-ключом OpenAI
+
+```bash
+lizard agents add openai < openai.key
+lizard agents use codex --credential openai --effort high
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [lizard sandbox](/cli/sandbox#coding-agents) — `sandbox prompt`, `conversations` и `interrupt`
+- [Sandboxes](/sandboxes) — шаблоны и жизненный цикл

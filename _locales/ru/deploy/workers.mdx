@@ -15,7 +15,7 @@ description: "Запуск потребителей очередей и опро
 Когда `containerPort=0`, платформа:
 
 - **Пропускает внедрение `PORT`** — обработчик не привязывается нигде.
-- **Пропускает проверку доступности порта** — нет спама `app port X unreachable` в логах и ложноположительного статуса "unhealthy".
+- **Пропускает TCP-проверку готовности** — нет ложноположительного статуса "unhealthy". Старый под останавливается до запуска нового.
 - **Пропускает `EXPOSE`** в синтезируемом Dockerfile.
 - **Пропускает регистрацию маршрута балансировщика** — ничего не обслуживается. (Сгенерированный домен `*.onlizard.com` может всё ещё отображаться в сервисе, но он не будет отвечать.)
 
@@ -70,18 +70,25 @@ lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service worker
 lizard up --service worker --port 0
 ```
 
-Выполните вход с помощью `lizard login`, если команда сообщает, что требуется аутентификация. Используйте фактическое имя базы данных, если оно не `redis`. Держите ссылку в кавычках. Установите её перед загрузкой приложения. В macOS с Lizard CLI 0.3.92 добавьте префикс `lizard up` с `COPYFILE_DISABLE=1`, чтобы исключить метаданные AppleDouble.
+Выполните вход с помощью `lizard login`, если команда сообщает, что требуется аутентификация. Используйте фактическое имя базы данных, если оно не `redis`. Держите ссылку в кавычках. Установите её перед загрузкой приложения.
 
 Проверьте финальное событие деплоя, затем проверьте обработчик:
 
 ```bash
 lizard port --service worker
 lizard logs --service worker --json
-lizard ssh --service worker -- python jobs.py enqueue first-job
-lizard ssh --service worker -- python jobs.py result first-job
 ```
 
-Процесс выводит `Queue worker ready`. Если хвост лога пуст, переходите к проверке задания ниже; в [результатах тестов](/guides/validation) зафиксирован наблюдаемый лимит логирования. Команда результата ждёт до 30 секунд и выводит `{"id": "first-job", "result": "HELLO"}`. Само по себе запущенный процесс не доказывает, что он может потреблять задания. Managed Redis доступен изнутри сервиса; CLI-команде не требуется, чтобы ваш ноутбук достигал его приватного адреса.
+Отправьте задание со своего компьютера. `lizard run --service redis` запускает локальную команду со значениями подключения аддона Redis, включая его публичный `REDIS_URL`:
+
+```bash
+python3 -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+lizard run --service redis -- python jobs.py enqueue first-job
+lizard run --service redis -- python jobs.py result first-job
+```
+
+Процесс выводит `Queue worker ready`, а после выполнения задания — `Processed first-job`. Если хвост лога пуст, опирайтесь на проверку задания; в [результатах тестов](/guides/validation) зафиксирован наблюдаемый лимит логирования. Команда результата ждёт до 30 секунд и выводит `{"id": "first-job", "result": "HELLO"}`. Само по себе запущенный процесс не доказывает, что он может потреблять задания.
 
 <span id="verify-a-restart" />
 
@@ -91,12 +98,12 @@ lizard ssh --service worker -- python jobs.py result first-job
 
 ```bash
 lizard restart --service worker
-lizard ssh --service worker -- python jobs.py result first-job
-lizard ssh --service worker -- python jobs.py enqueue after-restart
-lizard ssh --service worker -- python jobs.py result after-restart
+lizard run --service redis -- python jobs.py result first-job
+lizard run --service redis -- python jobs.py enqueue after-restart
+lizard run --service redis -- python jobs.py result after-restart
 ```
 
-Дождитесь возвращения сервиса в `running` в `lizard ps --json`, если SSH ещё недоступен. Оба результата должны быть `HELLO`. Первый результат живёт в Redis, поэтому перезапуск обработчика не удаляет его. При запуске единственный потребитель возвращает незавершённые записи обработки в список ожидающих.
+Если у `after-restart` нет результата через 30 секунд, дождитесь возвращения сервиса в `running` в `lizard ps --json` и снова выполните команду результата. Оба результата должны быть `HELLO`. Первый результат живёт в Redis, поэтому перезапуск обработчика не удаляет его. При запуске единственный потребитель возвращает незавершённые записи обработки в список ожидающих.
 
 Этот демо принимает только JSON-задания, созданные `jobs.py`. Он не реализует очередь мёртвых писем, валидацию для недоверенных производителей или exactly-once внешние побочные эффекты. Для платежей, email или других эффектов используйте проверенную библиотеку очередей и идемпотентные обработчики. Надёжность и бэкап Redis отделены от поведения перезапуска обработчика; см. [хранилище и восстановление](/platform/storage-and-recovery).
 
@@ -119,6 +126,6 @@ lizard ssh --service worker -- python jobs.py result after-restart
 - [`lizard port`](/cli/port) — показать или изменить порт контейнера сервиса.
 - [Сервис никогда не становится здоровым](/deploy/troubleshooting/service-never-healthy) — самая частая ошибка конфигурации рабочего режима.
 - [Управляемые аддоны](/addons) — Redis, Postgres и S3 для стейтфул-нагрузок.
-- [Хостинг Python-приложений](https://lizard.build/blog/python-app-hosting#deploying-django) — Celery-обработчик — тот же образ с другой командой и без HTTP-порта.
+- [Хостинг Python-приложений](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks) — Celery-обработчик — тот же образ с другой командой и без HTTP-порта.
 
 См. [результаты сценарийных тестов](/guides/validation) для проверенных версий, облачных результатов и оставшихся ограничений.

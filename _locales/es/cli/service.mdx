@@ -11,12 +11,12 @@ Administra la configuración, el origen y el ciclo de vida de un servicio indivi
 ## Uso
 
 ```bash
-lizard service set [flags]
-lizard service show [flags]
-lizard service rename
-lizard service delete [flags]
-lizard service logs
-lizard service link
+lizard service set [service] [flags]
+lizard service show [service] [flags]
+lizard service rename <new-name> [flags]
+lizard service delete [service] [flags]
+lizard service logs [service] [flags]
+lizard service link [name]
 ```
 
 <span id="subcommands" />
@@ -29,11 +29,11 @@ Aplica cambios de compilación/inicio/origen/variables/cambio de nombre a un ser
 
 | Bandera | Descripción |
 |------|-------------|
-| `--set <path>=<value>` | Establece un campo (repetible) |
+| `--set <path>=<value>` | Establece un campo (repetible; requiere el argumento `service`) |
 | `-f, --file <path>` | Archivo de configuración JSON para aplicar |
 | `--force` | Sobrescribe incluso si cambió de forma remota |
 
-Los campos comunes son planos y se asignan 1:1 al esquema wire: `sourceType`, `repoUrl`, `branch`, `rootDirectory`, `dockerfilePath`, `buildCommand`, `startCommand`, `preDeployCommand`, `watchPatterns`, `containerPort`, `name`.
+Los campos comunes son planos y se asignan 1:1 al esquema wire: `sourceType`, `repoUrl`, `branch`, `rootDirectory`, `dockerfilePath`, `buildCommand`, `startCommand`, `preDeployCommand`, `watchPatterns`, `containerPort`, `cpuLimit` (por ejemplo `2000m`), `memoryLimit` (por ejemplo `2Gi`), `name`. `variables.<KEY>=<value>` establece un secreto del servicio, igual que `lizard secrets set --service`.
 
 `service set` usa concurrencia optimista mediante `configRevision`. Ante un `409`, vuelve a leer la configuración con `lizard service show`, reconcilia y reintenta, o pasa `--force`.
 
@@ -41,17 +41,23 @@ Los campos comunes son planos y se asignan 1:1 al esquema wire: `sourceType`, `r
 
 Muestra la configuración actual del servicio como JSON. Usa `-s` para limitarlo a un servicio.
 
-### `lizard service rename`
+### `lizard service rename <new-name>`
 
-Cambia el nombre de un servicio o addon. Las referencias a este (`${{name.KEY}}`) permanecen estables.
+Cambia el nombre de un servicio o addon: el vinculado, o el que indiques con `-s`. Las referencias usan el nombre actual del destino, así que después de cambiar el nombre actualiza cada `${{old-name.KEY}}` al nuevo nombre.
 
 ### `lizard service delete`
 
-Elimina un servicio. `-y, --yes` omite la confirmación.
+Elimina un servicio (alias `rm`). `-y, --yes` omite la confirmación; sin un TTY es obligatorio.
 
 ### `lizard service logs`
 
 Transmite los registros de un servicio (consulta también [lizard logs](/cli/logs)).
+
+| Bandera | Descripción |
+|------|-------------|
+| `--build` | Muestra los registros de la última compilación |
+| `-n, --tail <n>` | Imprime las últimas N líneas (hasta 2000) y termina; `--tail all` imprime 2000 |
+| `--page <n>` | Recorre los registros más antiguos, 200 líneas por página (1 = la más reciente) |
 
 ### `lizard service link`
 

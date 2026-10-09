@@ -12,22 +12,22 @@ When your code isn't on GitHub — or you just want to iterate quickly — uploa
 lizard up
 ```
 
-- Uploads the current directory as a tarball, respecting `.gitignore` (disable with `--no-gitignore`).
+- Uploads the current directory as a tarball. Inside a git repository it respects `.gitignore` (disable with `--no-gitignore`). Outside git it skips only a fixed list of build and dependency folders (`node_modules`, `.git`, `dist`, `.next`, `build`, `__pycache__`, `.venv`, `venv`, `.cache`, `coverage`, `.turbo`, `.vercel`) plus `.DS_Store`, `*.pyc`, `*.pyo` and `*.log`, so `.env` files are uploaded. Run `git init` or move secrets out first.
 - Forces `sourceType=upload`.
 - Streams build logs over SSE and prints the live URL when finished.
 
-If the directory isn't linked to a project yet, `up` runs `init` first. On a TTY that's interactive; in a non-TTY (CI) it will **not** silently create a project — it errors and asks you to run `lizard init --name <project>` (or pass `--name`). This guards against a typo spawning an empty project.
+If the directory isn't linked to a project yet, `up` runs `init` first. On a TTY that's interactive; in a non-TTY (CI) it will **not** silently create a project — it errors and asks you to run `lizard init --name <project>` (or pass `--project <name>` to `up`). This guards against a typo spawning an empty project.
 
 ## Common flags
 
 | Flag | Purpose |
 |------|---------|
-| `-s, --service <name>` | Target/create a specific service |
+| `-s, --service <name>` | Target an existing service |
 | `--build-command <cmd>` | Override the build command |
 | `--start-command <cmd>` | Override the start command |
-| `--pre-deploy-command <cmd>` | Run once before each deploy (e.g. migrations) |
+| `--pre-deploy-command <cmd>` | Run at the start of every container, before the start command; needs `--start-command` (see [build configuration](/concepts/build-pipeline#build-configuration-reference)) |
 | `--port <number>` | Container port (`0` = [worker mode](/deploy/workers)) |
-| `--region <code>` | Region to deploy in |
+| `--region <code>` | Region for a new service (ignored for existing services) |
 | `-d, --detach` | Start the deploy and exit without streaming logs |
 | `-c, --ci` | CI-friendly output |
 | `--no-gitignore` | Upload everything, ignoring `.gitignore` |
@@ -38,7 +38,7 @@ lizard up --service api --start-command "node server.js" --port 8080
 
 ## Setting build/start commands
 
-Passing `--build-command` or `--start-command` switches the service to the **synthesized Dockerfile** path. On that path, `Procfile` and `package.json` `scripts.start` are **not** read — set the start command explicitly (or include a `CMD` in your own Dockerfile). See [Build Pipeline](/concepts/build-pipeline). Python is where this bites most often: [Django, Flask and FastAPI](https://lizard.build/blog/python-app-hosting#deploying-django) each need a different `gunicorn` or `uvicorn` line.
+Passing `--build-command` or `--start-command` saves it on the service and switches the service to the **synthesized Dockerfile** path, unless `dockerfilePath` is set. On that path, `Procfile` and `package.json` `scripts.start` are **not** read — set the start command explicitly. See [Build Pipeline](/concepts/build-pipeline). Python is where this bites most often: [Django, Flask and FastAPI](https://lizard.build/blog/python-app-hosting#build-and-start-commands) each need a different `gunicorn` or `uvicorn` line.
 
 ## Re-deploying an upload service
 
@@ -53,7 +53,7 @@ lizard redeploy --service api
 For non-interactive flows, link the project explicitly before deploying:
 
 ```bash
-export LIZARD_TOKEN=lzd_xxx
+export LIZARD_TOKEN=liz_xxx   # create one with: lizard keys create <name>
 lizard init --name my-project
 lizard up --ci --service api
 ```

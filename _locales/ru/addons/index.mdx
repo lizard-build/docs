@@ -6,7 +6,7 @@ description: "Создайте управляемые Postgres, Redis и S3-со
 
 # Управляемые дополнения
 
-Lizard создаёт управляемые **Postgres**, **Redis** и **S3-совместимое объектное хранилище** одной командой. Каждое дополнение существует в рамках вашего проекта, предоставляет фиксированный набор переменных окружения и подключается к сервисам через [ссылки](/concepts/architecture#cross-resource-references).
+Lizard создаёт **Managed Postgres**, **Managed Redis** и S3-совместимое **Managed Object Storage** одной командой. Каждое дополнение существует в рамках вашего проекта, предоставляет фиксированный набор переменных окружения и подключается к сервисам через [ссылки](/concepts/architecture#cross-resource-references).
 
 <span id="provision-an-addon" />
 
@@ -22,26 +22,33 @@ lizard add --list              # show available types
 
 ## Имена
 
-**Первое** дополнение каждого типа получает в качестве имени само название типа — поэтому `${{postgres.DATABASE_URL}}` работает сразу после создания. Дополнительные дополнения того же типа получают сгенерированное имя, например `postgres-autumn-bear`.
+**Первое** дополнение каждого типа получает в качестве имени само название типа — поэтому `${{postgres.DATABASE_URL}}` работает сразу после создания. Дополнительные дополнения того же типа получают сгенерированное имя, например `postgres-autumn-bear`. Удалённое дополнение сохраняет своё имя в корзине в течение 3 дней, поэтому новое дополнение, добавленное в этот период, получит сгенерированное имя; восстановите старое дополнение или направьте ссылки на новое имя.
 
-Псевдонимы типов не поддерживаются: ссылка должна содержать **фактическое** имя дополнения. Поскольку ссылки хранятся по идентификатору, имя дополнения можно изменить позже, не нарушая работу уже использующих его сервисов:
+Псевдонимы типов не поддерживаются: ссылка должна содержать **текущее** имя дополнения. Переименование дополнения нарушает ссылки на старое имя, поэтому после переименования обновите их:
 
 ```bash
-lizard service rename --service postgres   # addons rename through the same command
+lizard service rename main-db --service postgres   # addons rename through the same command
+lizard secrets set DATABASE_URL='${{main-db.DATABASE_URL}}' --service api
 ```
 
 <span id="consuming-an-addon" />
 
 ## Использование дополнения
 
-Ссылки на переменные дополнения можно использовать из любого сервиса. Ссылка разрешается во время развёртывания и автоматически обновляется при изменении учётных данных дополнения:
+Ссылки на переменные дополнения можно использовать из любого сервиса. Ссылка разрешается во время развёртывания, поэтому сервис получает актуальные значения дополнения при следующем развёртывании:
 
 ```bash
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-Настройте область действия ссылки только для тех сервисов, которые её используют (см. [Ограничение области действия секретов](/variables#scoping)).
+Lizard также передаёт `DATABASE_URL` и `REDIS_URL` от каждого запущенного дополнения Postgres и Redis во все сервисы проекта с наименьшим приоритетом. Явная ссылка переопределяет их и позволяет выбрать конкретное дополнение. Для сервисов в одном проекте лучше использовать приватный URL:
+
+```bash
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
+```
+
+См. [Ограничение области действия секретов](/variables#scoping).
 
 <span id="variables-by-type" />
 
@@ -49,9 +56,11 @@ lizard redeploy --service api
 
 | Дополнение | Переменные |
 |-------|-----------|
-| **postgres** | `DATABASE_URL`, `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `POSTGRES_USER`, `POSTGRES_DB`, `POSTGRES_PASSWORD` |
-| **redis** | `REDIS_URL` |
+| **postgres** | `DATABASE_URL`, `DATABASE_PRIVATE_URL`, `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `POSTGRES_USER`, `POSTGRES_DB`, `POSTGRES_PASSWORD` |
+| **redis** | `REDIS_URL`, `REDIS_PRIVATE_URL` |
 | **s3** | `S3_ENDPOINT`, `S3_DEFAULT_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION` |
+
+`DATABASE_URL` и `REDIS_URL` используют публичную конечную точку. `DATABASE_PRIVATE_URL` и `REDIS_PRIVATE_URL` используют `<name>.lizard.internal` в [приватной сети](/networking#private-networking) и работают только из сервисов того же проекта.
 
 <span id="dashboard-browsers" />
 
@@ -63,7 +72,7 @@ lizard redeploy --service api
 
 ## Хранилище
 
-Объём томов данных дополнений можно только увеличивать. Чтобы увеличить ёмкость, используйте:
+Объём томов данных Postgres и Redis можно только увеличивать. Чтобы увеличить ёмкость, используйте:
 
 ```bash
 lizard scale --service postgres --storage 8192
@@ -73,8 +82,8 @@ lizard scale --service postgres --storage 8192
 
 ## Руководства по типам
 
-- [Postgres](/addons/postgres)
-- [Redis](/addons/redis)
-- [Object Storage (S3)](/addons/storage)
+- [Managed Postgres](/addons/postgres)
+- [Managed Redis](/addons/redis)
+- [Managed Object Storage](/addons/storage)
 
-О том, зачем прототипу обычно нужны все три компонента сразу, см. [остальную часть стека, необходимого SaaS](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#the-rest-of-the-stack-a-saas-needs).
+О том, зачем прототипу обычно нужны все три компонента сразу, см. [явное описание данных и конфигурации](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#make-data-and-configuration-explicit).

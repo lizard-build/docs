@@ -1,0 +1,89 @@
+---
+description: "lizard volume は、Sandboxes が名前で接続する Persistent Volumes を作成、一覧表示、サイズ変更、削除します。"
+---
+
+# lizard volume
+
+Sandboxes 用の [Persistent Volumes](/sandboxes/volumes) を管理します。エイリアス: `lizard vol`。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard volume list [flags]
+lizard volume create <name> [flags]
+lizard volume resize <volume> --size <gb> [flags]
+lizard volume rm <volume> [flags]
+```
+
+ボリュームの名前は、プロジェクト内でのキーになります。どのコマンドも名前または ID を受け付け、リンク済みのプロジェクト以外を対象にするには `-p, --project` を使います。
+
+<span id="subcommands" />
+
+## サブコマンド
+
+### `lizard volume list`
+
+プロジェクトのボリュームを、サイズ、状態、接続先の sandbox とともに一覧表示します（エイリアス `ls`）。`--json` では生成された ID も含まれます。
+
+### `lizard volume create <name>`
+
+ボリュームを作成します。名前には小文字、数字、ダッシュを使い、先頭と末尾は文字か数字にします。最大 64 文字で、プロジェクト内で一意である必要があります。
+
+| フラグ | 説明 |
+|------|-------------|
+| `--size <gb>` | サイズ（GB 単位の整数）。1～50（デフォルトは 5）。CLI は先にサーバーの現在の上限を読み取ります |
+| `--region <code>` | ボリュームのリージョン。接続する sandbox と一致している必要があります |
+| `-p, --project <id>` | プロジェクト名、スラッグ、または ID |
+
+### `lizard volume resize <volume> --size <gb>`
+
+ボリュームのサイズをその場で変更します。接続中の sandbox は動作を続け、新しいサイズが反映されます。Firecracker のボリューム（デフォルト）は拡張のみできます。pod ベースのボリュームは、新しいサイズの 10% 以上が空いたままであれば縮小もできます。
+
+### `lizard volume rm <volume>`
+
+ボリュームとそのデータを削除します（エイリアス `delete`）。ボリュームが接続されている間は失敗するため、先に sandbox を削除してください。
+
+| フラグ | 説明 |
+|------|-------------|
+| `-y, --yes` | 確認をスキップ |
+
+ボリュームのストレージ料金は、使用容量 1 GB あたり月額 $0.14 です。[サイズと料金](/sandboxes/volumes#size-and-price)を参照してください。
+
+<span id="examples" />
+
+## 例
+
+<span id="create-a-volume-and-attach-it" />
+
+### ボリュームを作成して接続する
+
+```bash
+lizard volume create agent-workdir --size 10
+lizard sandbox create --volume agent-workdir
+```
+
+<span id="grow-a-volume" />
+
+### ボリュームを拡張する
+
+```bash
+lizard volume resize agent-workdir --size 20
+```
+
+<span id="delete-a-volume" />
+
+### ボリュームを削除する
+
+```bash
+lizard volume rm agent-workdir --yes
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [Persistent Volumes](/sandboxes/volumes) — ライフサイクル、SDK のメソッド、ダッシュボードの表示
+- [lizard sandbox](/cli/sandbox) — `sandbox create --volume` でボリュームを接続
+- [ストレージとリカバリ](/platform/storage-and-recovery) — ノード障害時にボリュームのデータがどうなるか

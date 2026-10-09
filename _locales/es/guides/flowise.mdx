@@ -14,7 +14,7 @@ La configuración básica cubre flujos que usan APIs. Los archivos subidos y los
 
 ## Requisitos previos
 
-- Una cuenta de Lizard con acceso a alojamiento de aplicaciones y Managed Postgres.
+- Una cuenta de Lizard en Pro o en la prueba de Pro de 7 días (requiere tarjeta). Hasta que empiece la prueba, `lizard add` y `lizard up` devuelven un enlace de Checkout; `lizard billing start` lo abre.
 - OpenSSL en tu computadora.
 - Memoria suficiente para tu carga de trabajo de Flowise; el servicio de prueba usa 4 GiB.
 
@@ -148,7 +148,7 @@ PostgreSQL no almacena todos los archivos que escribe Flowise. Esta configuraci�
 
 Antes de usar subidas o flujos de trabajo con documentos, configura un bucket S3 privado usando las [variables de almacenamiento](https://docs.flowiseai.com/configuration/environment-variables) de Flowise. Establece `STORAGE_TYPE=s3`, `S3_STORAGE_BUCKET_NAME`, `S3_STORAGE_ACCESS_KEY_ID`, `S3_STORAGE_SECRET_ACCESS_KEY` y `S3_STORAGE_REGION`. Para un proveedor compatible con S3, establece también `S3_ENDPOINT_URL` y `S3_FORCE_PATH_STYLE=true`.
 
-Managed Object Storage de Lizard crea un bucket `default` de lectura pública. No coloques documentos privados de Flowise en ese bucket sin antes cambiar su configuración de acceso. La configuración de PostgreSQL anterior no aprovisiona ni prueba almacenamiento de archivos, almacenes vectoriales locales ni workers de cola.
+Managed Object Storage de Lizard crea un bucket `default` privado, adecuado para los documentos de Flowise. Mantenlo privado: hacerlo público desde el navegador S3 del dashboard expone todos los archivos que contiene. La configuración de PostgreSQL anterior no aprovisiona ni prueba almacenamiento de archivos, almacenes vectoriales locales ni workers de cola.
 
 <span id="troubleshooting-and-updates" />
 
@@ -160,6 +160,6 @@ lizard logs --build --service flowise
 lizard logs --service flowise
 ```
 
-Si una primera implementación agota el tiempo mientras la imagen todavía se está descargando, inspecciona `lizard events`. Una vez que el contenedor haya arrancado, vuelve a intentar `lizard up --service flowise --port 3000`. Un servicio sin ninguna compilación previa correcta todavía no puede usar `lizard redeploy`.
+Si una primera implementación agota el tiempo mientras la imagen todavía se está descargando, inspecciona `lizard events`. Una vez que el contenedor haya arrancado, vuelve a intentar `lizard up --service flowise --port 3000`, o ejecuta `lizard redeploy --service flowise` para recompilar la última carga, incluso después de una primera compilación fallida.
 
 Para las actualizaciones, haz una copia de seguridad de la base de datos, lee las notas de versión de Flowise, cambia la versión de npm en el Dockerfile y súbelo de nuevo con `lizard up`. Verifica la nueva versión y ejecuta las comprobaciones de persistencia antes de depender de la actualización.

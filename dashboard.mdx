@@ -4,9 +4,9 @@ description: "What the Lizard dashboard adds to the CLI: service status, deploy 
 
 # App dashboard
 
-The Lizard dashboard is the visual companion to the CLI. Everything you do with `lizard …` is reflected here, plus things that are easier with a UI — streaming logs, charts, the data browsers, and team/billing management.
+The Lizard dashboard is the visual companion to Lizard CLI. Everything you do with `lizard …` is reflected here, plus things that are easier with a UI — streaming logs, charts, the data browsers, Sandboxes, and team/billing management.
 
-If you would rather not open a terminal at all, let the agent run the commands and watch the result here — the route in [deploying an Antigravity app to production](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-an-antigravity-app-to-production-without-typing-a-command), which takes two prompts and nothing typed into a terminal.
+If you would rather not open a terminal at all, let the agent run the commands and watch the result here — the route in [deploying an Antigravity app to production](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat), where one prompt drives the deploy.
 
 Open it from the CLI:
 
@@ -41,13 +41,17 @@ Manage service- and project-scoped secrets, with masked values and reference (`$
 
 Add custom domains, view DNS records, and track verification and TLS status. See [Networking](/networking).
 
-### Managed addon browsers
+### Data browsers
 
-Each addon ships a data browser:
+Each managed addon ships a data browser:
 
-- **Postgres** — a SQL/table editor to query and edit data.
-- **Redis** — a key/value browser.
-- **S3** — a bucket and object browser with upload/download.
+- **Managed Postgres** — a SQL/table editor to query and edit data.
+- **Managed Redis** — a key/value browser.
+- **Managed Object Storage** — a bucket and object browser with upload/download and bucket access settings.
+
+### Sandboxes
+
+The **Sandboxes** page has tabs for sandboxes, Persistent Volumes, templates and agents. Create a sandbox with **New Sandbox**; the count next to it shows how many run against your limit. See [Sandboxes quickstart](/sandboxes/quickstart).
 
 ### GitHub integration
 
@@ -66,7 +70,7 @@ Project and workspace settings, member invites and roles, and resource usage. Th
 | Resource charts | `lizard metrics` | Metrics / Usage |
 | Manage secrets | `lizard secrets` | Variables |
 | Custom domains | `lizard domain` | Domains |
-| Browse Postgres/Redis/S3 | `lizard run` / `lizard ssh` | Addon browsers |
+| Query Managed Postgres, Managed Redis or Managed Object Storage | `lizard run --service <addon> -- <cmd>` | Data browsers |
 | Invite teammates | — | Team / Settings |
 
 Use whichever fits the moment — they operate on the same projects and services.

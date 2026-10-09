@@ -16,7 +16,7 @@ description: "Sandboxes erstellen und prüfen, Vorlagen wählen und Volumes verw
 <span id="inspect-a-running-sandbox" />
 <span id="lifecycle" />
 
-Öffnen Sie ein Projekt und wählen Sie Sandboxes. Wählen Sie beim Erstellen eine Vorlage, eine Region und eine Größe: Small, Medium (Standard) oder Large. Die Standardregion ist nicht zwingend die nächste. Im Dashboard erstellte Sandboxes laufen ohne Ablaufdatum, sofern Sie keine Laufzeit über die API setzen.
+Öffnen Sie ein Projekt und wählen Sie Sandboxes. Wählen Sie beim Erstellen eine Vorlage, eine Region und eine Größe: Small, Medium (Standard) oder Large. Die Standardregion ist nicht zwingend die nächste. Wählen Sie unter **Delete after** eine Laufzeit: 15 Minuten, 1 Stunde, 4 Stunden, 1 Tag, 7 Tage oder Never (Standard).
 
 ## Installation und Anmeldung
 
@@ -26,12 +26,12 @@ Installieren Sie das Lizard SDK und erstellen Sie unter Settings → API keys ei
 
 Die Detailansicht zeigt Status, Vorlage, Region, gemessene Nutzung und offene Ports. Im Kopfbereich stehen die Schaltflächen Pause und Resume, und der Reiter Terminal öffnet eine Shell in einer laufenden Sandbox.
 
-Jede Größe hat einen festen Stundenpreis, sekundengenau abgerechnet, solange die Sandbox läuft, Leerlauf eingeschlossen. Ausgehender Traffic ist bis [2 TB pro Konto](/platform/limits#sandbox-egress) in rollierenden 30 Tagen enthalten. Eine aus einem Snapshot wiederhergestellte Sandbox wird nach gemessener Nutzung abgerechnet. Eine pausierte Sandbox kostet nichts; Persistent Volumes werden getrennt abgerechnet, solange Sie die Daten behalten. Pausieren oder beenden Sie eine Sandbox, wenn die Aufgabe erledigt ist.
+Jede Größe hat einen festen Stundenpreis, sekundengenau abgerechnet, solange die Sandbox läuft, Leerlauf eingeschlossen. Ausgehender Traffic ist bis [2 TB pro Konto](/platform/limits#sandbox-egress) in rollierenden 30 Tagen enthalten. Eine aus einem Snapshot wiederhergestellte Sandbox läuft mit Größe und Preis ihrer Quelle; eine aus einem Pod-Snapshot wiederhergestellte wird nach gemessener Nutzung abgerechnet. Eine pausierte Sandbox kostet nichts; Persistent Volumes werden getrennt abgerechnet, solange Sie die Daten behalten. Pausieren oder beenden Sie eine Sandbox, wenn die Aufgabe erledigt ist.
 
 ## Vorlagen und Volumes
 
 Der Reiter Templates zeigt Plattformvorlagen und die privaten Snapshots Ihres Projekts; aus beiden können Sie eine neue Sandbox starten. Snapshots erstellen Sie mit dem SDK oder der CLI. Kill Sandbox stoppt die Sandbox und trennt ihr Volume.
 
-Der Reiter Persistent Volumes verwaltet benannte Volumes und ihre Verbindungen. Hängen Sie ein Volume bei der Erstellung an und schreiben Sie nach `/workspace`. Stoppen Sie die aktuelle Sandbox, bevor Sie das Volume an eine andere hängen.
+Volumes erstellen und hängen Sie mit dem SDK oder der CLI an; das Erstellungsformular bietet keine Volume-Option. Der Reiter Persistent Volumes erscheint, sobald ein Projekt ein Volume hat. Er zeigt Größe und angehängte Sandbox jedes Volumes und erlaubt es, Dateien zu durchsuchen, die Größe zu ändern oder das Volume zu löschen. Stoppen Sie die aktuelle Sandbox, bevor Sie das Volume an eine andere hängen.
 
 [Schnellstart](/sandboxes/quickstart) · [SDK-Referenz](/sandboxes/sdk-reference) · [Python ausführen](/sandboxes/code-interpreter) · [Dashboard](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)

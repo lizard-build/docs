@@ -82,7 +82,7 @@ EXPOSE 80
 
 生成ページのポリシーは、アプリにそれらのルートファイルがある場合にのみ使用してください。たとえば、SvelteKit の SPA フォールバックには、その専用のルーティングポリシーが必要です。[Next.js静的エクスポート](/framework-guides/nextjs/static-export) には、trailing-slash レイアウトを含む完全な手順があります。
 
-依存関係、ビルド出力、`.git`、`.env*` は `.dockerignore` で除外してください。ビルドに公開変数が必要な場合は、ビルドコマンドの前にその `ARG` 値を宣言してください。秘密のシークレットをイメージやブラウザ出力にコピーしないでください。
+依存関係、ビルド出力、`.git`、`.env*` は `.dockerignore` で除外してください。ビルドに公開変数が必要な場合は、ビルドコマンドの前に `ENV` 行として書いてください。Lizard は `COMMIT_SHA` 以外のビルド引数を渡さないため、`ARG` は空のままになります。秘密のシークレットをイメージやブラウザ出力にコピーしないでください。
 
 [CLI setup](/framework-guides#prepare-the-project) の後、`lizard add --service web` でサービスを作成し、次に `lizard up --service web --port 80` でこのソースをデプロイします。サービスがすでに存在する場合は、add ステップをスキップしてください。既存のサービスでは、[ビルドの決定順序](/concepts/build-pipeline#build-decision-order) を確認してください。コマンドのオーバーライドが Dockerfile より優先される場合があります。設定ファイルだけでは生成済みの nginx 設定は置き換えられません。Dockerfile でそれをイメージにコピーする必要があります。
 

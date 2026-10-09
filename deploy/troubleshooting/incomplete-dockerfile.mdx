@@ -12,9 +12,16 @@ The platform decided your repo's Dockerfile was **incomplete** and regenerated o
 
 ## Why this can happen
 
-Lizard only uses a repo Dockerfile **verbatim** on the lizardpack auto-detect path if it has a real build step — a `RUN <package-manager>` line. A Dockerfile that only copies pre-built artifacts (`COPY dist/`, `build/`, `out/`, `.next/`, `public/`) with no `RUN` step is treated as incomplete, on the assumption those artifacts were built outside the image. In that case lizardpack generates a replacement Dockerfile that includes the missing build step.
+This check runs only for GitHub-source services. Uploads (`lizard up`) always use a root `Dockerfile` as written.
 
-This only applies on the lizardpack auto-detect path. If `buildCommand` or `startCommand` is set on the service, Lizard synthesizes a Dockerfile from those commands instead and never looks at your repo's Dockerfile at all.
+On GitHub source, Lizard treats a root Dockerfile as incomplete when both are true:
+
+- it has a `COPY` of `build`, `dist`, `out`, `.next` or `public` written without a trailing slash, such as `COPY dist /usr/share/nginx/html`;
+- it has no `RUN` line that starts with `npm`, `yarn`, `pnpm`, `bun`, `pip`, `pip3`, `bundle`, `cargo`, `go build`, `mvn` or `gradle`.
+
+Lizard assumes those artifacts were built outside the image, and lizardpack generates a replacement Dockerfile that includes the missing build step.
+
+Two other settings also bypass your repo's root Dockerfile. With `dockerfilePath` set, Lizard uses that file as written. Without it, a set `buildCommand` or `startCommand` makes Lizard synthesize a Dockerfile from those commands.
 
 ## Possible solutions
 
@@ -28,16 +35,16 @@ RUN npm ci && npm run build
 
 ### Or force verbatim use
 
-Clear build and start overrides, then set `dockerfilePath` in the same update. Overrides take priority over the file path:
+Set `dockerfilePath`. It takes priority over build and start commands for the image build, but a set `startCommand` still replaces your Dockerfile's `CMD` at run time, so clear both in the same update. An empty value clears a field:
 
 ```bash
-lizard service set api --set buildCommand=null --set startCommand=null --set dockerfilePath=Dockerfile
+lizard service set api --set buildCommand= --set startCommand= --set dockerfilePath=Dockerfile
 ```
 
 ## See also
 
 - [Build Pipeline](/concepts/build-pipeline) — the full build decision order.
 - [Build configuration reference](/concepts/build-pipeline#build-configuration-reference)
-- [Deploying any Python app on Lizard](https://lizard.build/blog/python-app-hosting#deploying-any-python-app-on-lizard) — when to let lizardpack write the Dockerfile and when to bring your own.
+- [A minimal FastAPI container](https://lizard.build/blog/python-app-hosting#a-minimal-fastapi-container) — a complete Python Dockerfile, and when to bring your own instead of the source build.
 
 Changing these build fields can start a build. Check `lizard events` before sending another `redeploy`, to avoid starting a second build.

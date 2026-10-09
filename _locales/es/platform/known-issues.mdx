@@ -14,11 +14,11 @@ Esta página registra comportamientos que requieren precaución o una versión v
 
 ## Pausa y vencimiento del sandbox
 
-Crea un sandbox, ejecuta comandos y llama a `kill`. `connect` se conecta a un sandbox existente sin cambiar su estado, así que no reanuda uno pausado ni uno detenido. Pausar, reanudar, snapshot y restore están disponibles; consulta [Pausa, reanudación y snapshots](/sandboxes/quickstart#pause-and-resume). Fork y la vigilancia de archivos devuelven HTTP 501. `lizard sandbox ssh` abre una shell interactiva con tus credenciales de la CLI. No hay acceso por el protocolo SSH, así que los clientes SSH, `scp` y el reenvío de puertos no funcionan.
+Crea un sandbox, ejecuta comandos y llama a `kill`. `connect` se conecta a un sandbox existente sin cambiar su estado, así que no reanuda uno pausado ni uno detenido. Pausar, reanudar, snapshot y restore están disponibles; consulta [Pausa, reanudación y snapshots](/sandboxes/quickstart#pause-and-resume). Fork (`sandbox.fork({ count })`) funciona en sandboxes Firecracker; devuelve HTTP 409 cuando hay un volumen adjunto y HTTP 501 en un sandbox de pod. `lizard sandbox ssh` abre una shell interactiva con tus credenciales de la CLI. No hay acceso por el protocolo SSH, así que los clientes SSH, `scp` y el reenvío de puertos no funcionan.
 
 La pausa cierra las conexiones de red abiertas. Si no se pueden guardar los procesos, el sandbox sigue en marcha e indica el motivo en `pauseError`. Un sandbox pausado solo se reanuda en su propio nodo; si ese nodo falla, se pierde el estado pausado.
 
-Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un Persistent Volume adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
+Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un volumen persistente adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
 
 ## Redeploy no es rollback
 
@@ -34,9 +34,9 @@ Los comandos explícitos de compilación o inicio tienen prioridad sobre un Dock
 
 ## Plantillas y MCP
 
-Elige una plantilla del catálogo actual. Las plantillas habilitadas incluyen `base`, `codex` e `interpreter`; su disponibilidad depende de la región y de la capacidad del pool. `interpreter` incluye Python y bibliotecas de datos habituales. Comprueba las versiones dentro del sandbox. La CLI pública no permite subir plantillas propias.
+Elige una plantilla del catálogo actual. Las plantillas habilitadas son `base`, `interpreter`, `codex`, `desktop`, `opencode`, `pi`, `prime` y `claude`; su disponibilidad depende de la región y de la capacidad del pool. `interpreter` incluye Python y bibliotecas de datos habituales. Comprueba las versiones dentro del sandbox. La CLI pública no permite subir plantillas propias.
 
-Lizard Skill usa Lizard CLI. Ese flujo de trabajo no expone un transporte MCP. Alojar tu propio servidor MCP remoto es un despliegue de aplicación independiente; consulta la [guía](/guides/deploy-mcp-server).
+Lizard Skill usa Lizard CLI y no expone un transporte MCP. Para clientes MCP, usa el servidor alojado de Lizard MCP; consulta [Lizard MCP](/agents#lizard-mcp). Alojar tu propio servidor MCP remoto es un despliegue de aplicación independiente; consulta la [guía](/guides/deploy-mcp-server).
 
 <span id="service-port-changes-fixed-and-verified-on-2026-09-09" />
 

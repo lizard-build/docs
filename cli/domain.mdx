@@ -12,14 +12,18 @@ Show the current domain, or attach a custom one.
 lizard domain [hostname] [flags]
 ```
 
-The hostname is a positional argument — there is no `add` subcommand. Running `lizard domain` with no arguments shows the service's current domain.
+The hostname is a positional argument — there is no `add` subcommand. Running `lizard domain` with no arguments shows the service's current domain, or generates one if it has none. Alias: `lizard domains`.
 
 ## Flags
 
 | Flag | Description |
 |------|-------------|
 | `-s, --service <name>` | Service |
+| `-p, --project <id>` | Project name, slug, or ID |
 | `--port <n>` | Port to expose |
+| `-f, --force` | Move the domain here if it's attached to another of your services |
+
+The subcommands use the same `-s` and `-p` flags. Verify and delete a domain on the service you attached it to.
 
 ## Subcommands
 
@@ -59,10 +63,10 @@ lizard domain generate
 lizard domain app.example.com --service web
 ```
 
-Lizard returns the DNS records to create (a `CNAME` for the hostname and a `TXT` record for verification). Add them at your DNS provider, then verify:
+Lizard returns the DNS records to create: a `CNAME` for the hostname and, unless you already verified the domain, a `TXT` record at `_lizard-verify.<apex domain>` (for `app.example.com`, that is `_lizard-verify.example.com`). Add them at your DNS provider, then verify on the same service:
 
 ```bash
-lizard domain verify app.example.com
+lizard domain verify app.example.com --service web
 ```
 
 ### Attach a domain to a specific port
@@ -71,11 +75,17 @@ lizard domain verify app.example.com
 lizard domain app.example.com --service web --port 8080
 ```
 
+### Move a domain from another of your services
+
+```bash
+lizard domain app.example.com --service web --force
+```
+
 ### Remove a domain
 
 ```bash
-lizard domain delete app.example.com
-lizard domain rm app.example.com --yes
+lizard domain delete app.example.com --service web
+lizard domain rm app.example.com --service web --yes
 ```
 
 ## See also

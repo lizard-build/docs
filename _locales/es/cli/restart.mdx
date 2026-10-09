@@ -21,7 +21,7 @@ lizard restart [nameOrId] [flags]
 | Bandera | Descripción |
 |------|--------------|
 | `-s, --service <name>` | Servicio |
-| `--detach` | Volver después de que se acepte el reinicio |
+| `--detach` | Volver después de que se acepte el reinicio, sin consultar su estado |
 | `--wait` | Esperar a que el nuevo intento de reinicio esté listo; funciona con `--json` |
 | `--timeout <seconds>` | Tiempo máximo de espera de preparación con `--wait`; valor predeterminado: `120` |
 | `--json` | Devolver JSON para scripts |
@@ -40,7 +40,9 @@ lizard restart --service api
 
 <span id="restart-without-streaming-logs" />
 
-### Reiniciar sin transmitir logs
+<span id="return-without-waiting" />
+
+### Volver sin esperar
 
 ```bash
 lizard restart --service api --detach
@@ -49,8 +51,6 @@ lizard restart --service api --detach
 <span id="wait-before-running-the-next-check" />
 
 ### Esperar antes de ejecutar la siguiente comprobación
-
-Requiere CLI 0.3.94 o posterior. Usa 0.3.95 o posterior para workers sin HTTP.
 
 ```bash
 lizard --json restart --service api --wait --timeout 120

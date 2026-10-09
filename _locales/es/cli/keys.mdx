@@ -1,0 +1,90 @@
+---
+description: "lizard keys crea, lista y elimina claves de API liz_ para CI, Lizard SDK y sandboxes, con la opción de limitarlas a proyectos o espacios de trabajo."
+---
+
+# lizard keys
+
+Crea, lista y elimina claves de API. Alias: `lizard apikey`.
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard keys create <name> [flags]
+lizard keys list
+lizard keys rm <name-or-id> [flags]
+```
+
+Las claves de API empiezan por `liz_`. Usa una allí donde no puedas iniciar sesión desde un navegador:
+
+- `LIZARD_TOKEN` o `LIZARD_API_KEY` para la CLI en CI
+- `lizard login --token liz_…` en una máquina
+- `LIZARD_API_KEY` para [Lizard SDK](/sandboxes/sdk-reference)
+- `lizard sandbox create --with-token liz_…` para usar `lizard` dentro de un sandbox
+
+<span id="subcommands" />
+
+## Subcomandos
+
+### `lizard keys create <name>`
+
+Crea una clave y la muestra una sola vez. Cópiala en ese momento; Lizard no vuelve a mostrarla. Una clave sin ámbito tiene acceso total a todos los espacios de trabajo y proyectos a los que tú puedes acceder. Limita su ámbito con estas banderas; puedes repetir cada una:
+
+| Bandera | Descripción |
+|------|-------------|
+| `-p, --project <id>` | Limitar la clave a este proyecto (nombre, slug o ID) |
+| `-w, --workspace <id>` | Limitar la clave a este espacio de trabajo (nombre, slug o ID) |
+
+Una clave con ámbito no puede ver la facturación ni los ajustes de la cuenta.
+
+### `lizard keys list`
+
+Lista tus claves con una vista previa corta, el ámbito, la fecha de creación y el último uso (alias `ls`).
+
+### `lizard keys rm <name-or-id>`
+
+Elimina una clave (alias `delete`). Si dos claves tienen el mismo nombre, elimínala por ID.
+
+| Bandera | Descripción |
+|------|-------------|
+| `-y, --yes` | Omitir la confirmación |
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="create-a-key-for-ci" />
+
+### Crear una clave para CI
+
+```bash
+lizard keys create github-actions --project my-project
+```
+
+Guarda la clave que se muestra como secreto de CI con el nombre `LIZARD_TOKEN`.
+
+<span id="create-a-key-for-a-sandbox" />
+
+### Crear una clave para un sandbox
+
+```bash
+lizard keys create sandbox-agent --workspace my-team
+lizard sandbox create --with-token liz_xxx
+```
+
+<span id="delete-a-key" />
+
+### Eliminar una clave
+
+```bash
+lizard keys rm github-actions --yes
+```
+
+<span id="see-also" />
+
+## Véase también
+
+- [lizard login](/cli/login) — iniciar sesión con una clave en una máquina
+- [JSON y automatización](/cli/json) — usar la CLI desde CI
+- [lizard sandbox](/cli/sandbox) — `--with-token` instala una clave en un sandbox

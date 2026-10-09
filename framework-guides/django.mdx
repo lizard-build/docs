@@ -99,7 +99,7 @@ Review Django's [deployment checklist](https://docs.djangoproject.com/en/6.1/how
 
 ## Plan static files and migrations
 
-Gunicorn alone does not serve Django's static files. Choose static-file middleware configured in the app or a separate static host. Collect assets into the path that setup serves. lizardpack's requirements-based Python path does not automatically run `collectstatic`; put it in a complete Dockerfile build when the app needs that step.
+Gunicorn alone does not serve Django's static files. Choose static-file middleware configured in the app or a separate static host. Collect assets into the path that setup serves. lizardpack runs `python manage.py collectstatic --noinput` during a Django build, but a failure there only prints a warning, for example when settings need runtime secrets. The Dockerfile below gives `collectstatic` build-only values and fails the build if it errors.
 
 For WhiteNoise, keep `django.contrib.staticfiles` in `INSTALLED_APPS` and insert `whitenoise.middleware.WhiteNoiseMiddleware` immediately after Django's `SecurityMiddleware`. Add or update these settings:
 
@@ -187,12 +187,16 @@ lizard secrets set ALLOWED_HOSTS=YOUR_PUBLIC_HOST \
   CSRF_TRUSTED_ORIGINS=https://YOUR_PUBLIC_HOST --service web
 ```
 
-A missing reference target or key can resolve to an empty string. The required-value check then stops Django with `Set the DATABASE_URL environment variable.` Check the database service name and its `DATABASE_URL` key; do not print the connection URL into logs.
+A missing reference target or key can resolve to an empty string. The required-value check then stops Django with `Set the DATABASE_URL environment variable.` Check the database service name and its `DATABASE_URL` key; `lizard logs --build --service web` warns about every reference that resolved to an empty value. Do not print the connection URL into logs.
 
-The variable change restarts the process. Exclude local virtual environments, secrets, and local databases from uploads. Once the process runs, apply migrations:
+The variable change restarts the process. Exclude local virtual environments, secrets, and local databases from uploads.
+
+Apply migrations from your computer. `lizard run --service postgres` runs a local command with the database's connection values, including its public `DATABASE_URL`. Pass the other settings this example requires inline; only the local command uses them:
 
 ```bash
-lizard ssh --service web -- python manage.py migrate --noinput
+python -m pip install -r requirements.txt
+SECRET_KEY=local-migrate ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
+  lizard run --service postgres -- python manage.py migrate --noinput
 ```
 
 Run the command again to check that no migrations remain. Do not treat a successful port check as proof that tables exist.

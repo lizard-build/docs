@@ -6,7 +6,7 @@ description: "Aprovisiona Postgres, Redis y almacenamiento compatible con S3 ges
 
 # Addons gestionados
 
-Lizard aprovisiona **Postgres**, **Redis** y **almacenamiento de objetos compatible con S3** gestionados con un solo comando. Cada addon vive en tu proyecto, expone un conjunto fijo de variables de entorno y lo consumen tus servicios mediante [referencias](/concepts/architecture#cross-resource-references).
+Lizard aprovisiona **Managed Postgres**, **Managed Redis** y **Managed Object Storage** compatible con S3 con un solo comando. Cada addon vive en tu proyecto, expone un conjunto fijo de variables de entorno y lo consumen tus servicios mediante [referencias](/concepts/architecture#cross-resource-references).
 
 <span id="provision-an-addon" />
 
@@ -22,26 +22,33 @@ lizard add --list              # show available types
 
 ## Nombres
 
-El **primer** addon de un tipo determinado recibe el tipo sin más como nombre; así que `${{postgres.DATABASE_URL}}` funciona de inmediato. Los addons adicionales del mismo tipo reciben un nombre generado como `postgres-autumn-bear`.
+El **primer** addon de un tipo determinado recibe el tipo sin más como nombre; así que `${{postgres.DATABASE_URL}}` funciona de inmediato. Los addons adicionales del mismo tipo reciben un nombre generado como `postgres-autumn-bear`. Un addon eliminado conserva su nombre en la papelera durante 3 días, así que un addon nuevo añadido en ese plazo recibe un nombre generado; restaura el anterior o apunta las referencias al nuevo nombre.
 
-No hay fallback de alias de tipo: una referencia debe usar el nombre **real** del addon. Como las referencias se almacenan por ID, puedes cambiar el nombre de un addon después sin romper los consumidores existentes:
+No hay fallback de alias de tipo: una referencia debe usar el nombre **actual** del addon. Cambiar el nombre de un addon rompe las referencias al nombre anterior, así que actualízalas después de renombrarlo:
 
 ```bash
-lizard service rename --service postgres   # addons rename through the same command
+lizard service rename main-db --service postgres   # addons rename through the same command
+lizard secrets set DATABASE_URL='${{main-db.DATABASE_URL}}' --service api
 ```
 
 <span id="consuming-an-addon" />
 
 ## Consumir un addon
 
-Haz referencia a las variables de un addon desde cualquier servicio. La referencia se resuelve en el momento del deploy y rota automáticamente cuando cambian las credenciales del addon:
+Haz referencia a las variables de un addon desde cualquier servicio. La referencia se resuelve en el momento del deploy, así que el servicio toma los valores actuales del addon en su siguiente deploy:
 
 ```bash
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-Limita la referencia a los servicios que realmente la usan (consulta [Alcance de secretos](/variables#scoping)).
+Lizard también inyecta `DATABASE_URL` y `REDIS_URL` de cada addon de Postgres y Redis en ejecución en todos los servicios del proyecto, con la precedencia más baja. Una referencia explícita los sobrescribe y elige un addon concreto. Para servicios del mismo proyecto, prefiere la URL privada:
+
+```bash
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
+```
+
+Consulta [Alcance de secretos](/variables#scoping).
 
 <span id="variables-by-type" />
 
@@ -49,9 +56,11 @@ Limita la referencia a los servicios que realmente la usan (consulta [Alcance de
 
 | Complemento | Variables |
 |-------|-----------|
-| **postgres** | `DATABASE_URL`, `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `POSTGRES_USER`, `POSTGRES_DB`, `POSTGRES_PASSWORD` |
-| **redis** | `REDIS_URL` |
+| **postgres** | `DATABASE_URL`, `DATABASE_PRIVATE_URL`, `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`, `POSTGRES_USER`, `POSTGRES_DB`, `POSTGRES_PASSWORD` |
+| **redis** | `REDIS_URL`, `REDIS_PRIVATE_URL` |
 | **s3** | `S3_ENDPOINT`, `S3_DEFAULT_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION` |
+
+`DATABASE_URL` y `REDIS_URL` usan el endpoint público. `DATABASE_PRIVATE_URL` y `REDIS_PRIVATE_URL` usan `<name>.lizard.internal` en la [red privada](/networking#private-networking) y solo funcionan desde servicios del mismo proyecto.
 
 <span id="dashboard-browsers" />
 
@@ -63,7 +72,7 @@ El [panel](/dashboard) incluye un navegador de datos para cada addon: un editor 
 
 ## Almacenamiento
 
-Los volúmenes de datos de los addons son **solo ampliables**. Aumenta la capacidad con:
+Los volúmenes de datos de Postgres y Redis son **solo ampliables**. Aumenta la capacidad con:
 
 ```bash
 lizard scale --service postgres --storage 8192
@@ -73,8 +82,8 @@ lizard scale --service postgres --storage 8192
 
 ## Guías por tipo
 
-- [Postgres](/addons/postgres)
-- [Redis](/addons/redis)
-- [Almacenamiento de objetos (S3)](/addons/storage)
+- [Managed Postgres](/addons/postgres)
+- [Managed Redis](/addons/redis)
+- [Managed Object Storage](/addons/storage)
 
-Para saber por qué un prototipo normalmente necesita los tres a la vez, consulta [el resto del stack que necesita un SaaS](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#the-rest-of-the-stack-a-saas-needs).
+Para saber por qué un prototipo normalmente necesita los tres a la vez, consulta [haz explícitos los datos y la configuración](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#make-data-and-configuration-explicit).

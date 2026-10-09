@@ -4,7 +4,7 @@ description: "lizard logs transmite los logs de ejecución de un servicio, o rec
 
 # lizard logs
 
-Transmite los logs de ejecución de un servicio, las últimas 200 líneas seguidas de una cola en vivo.
+Transmite los logs de ejecución de un servicio, las últimas 200 líneas seguidas de una cola en vivo. Para los logs de ejecución sin `-s`, `logs` no usa el servicio vinculado: en un TTY pregunta qué servicio mostrar; de lo contrario, muestra todos los servicios del proyecto. `--build` y `--restarts` usan el servicio vinculado.
 
 <span id="usage" />
 
@@ -21,11 +21,12 @@ lizard logs [flags]
 | Bandera | Descripción |
 |------|-------------|
 | `--build` | Mostrar los logs de compilación en su lugar |
-| `--tail <n>` | Últimas N líneas (máx. 1000) |
-| `-l, --level <level>` | Filtrar por nivel |
-| `--restarts [n]` | Listar reinicios recientes |
+| `--tail <n>` | Imprimir las últimas N líneas (máx. 1000) y salir |
+| `-l, --level <level>` | Solo logs de ejecución de este nivel: `error`, `warn`, `info` o `debug` |
+| `--restarts [n]` | Listar los últimos N reinicios (por defecto 20) |
 | `--restart <id>` | Logs alrededor de un reinicio específico (`latest` para el más reciente) |
 | `-s, --service <id>` | Servicio |
+| `-p, --project <id>` | Nombre, slug o ID del proyecto |
 
 Con `--json`, `lizard logs` no es un flujo: devuelve las últimas 200 líneas (anúlalo con `--tail N`, máximo 1000) y sale. Úsalo para capturas y scripts; transmite en vivo solo sin `--json`.
 
@@ -90,4 +91,4 @@ lizard logs --restart <id>
 - [Logs](/observability/logs) — comportamiento de los logs de ejecución, compilación y reinicio, además de la paginación por el historial con `lizard service logs`
 - [Incomplete Dockerfile](/deploy/troubleshooting/incomplete-dockerfile) — diagnosticar una compilación fallida desde `lizard logs --build`
 - [lizard events](/cli/events) — historial de despliegues y estado de las réplicas
-- [Desplegar desde Claude Code](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) — el ciclo de leer logs, corregir y volver a desplegar que ejecuta un agente en una compilación fallida
+- [Desplegar desde Claude Code](https://lizard.build/blog/deploy-from-claude-code#check-the-result-from-the-outside) — los comandos de logs que ejecuta un agente para comprobar un despliegue

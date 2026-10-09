@@ -1,5 +1,5 @@
 ---
-description: "lizard billing は Pro プラン、トライアル、利用状況を表示し、Pro の開始や解約、プロモコードの利用を行います。プリペイドクレジットの履歴と保存済みカードも表示できます。"
+description: "lizard billing は Pro プラン、トライアル、利用状況を表示し、Pro の開始や解約、プロモコードの利用を行います。Enterprise の残高の履歴と保存済みカードも表示できます。"
 ---
 
 # lizard billing
@@ -40,7 +40,7 @@ lizard billing [subcommand] [flags]
 
 ### `lizard billing start`
 
-Stripe Checkout で Pro を開始します。Checkout ではカードを登録します。コマンドはブラウザで Checkout を開きます。新しいアカウントには $5 のトライアルクレジット付きの 7 日間トライアルが付き、終了まで何も請求されません。アカウントまたはカードで以前にトライアルを使ったことがある場合、Pro はすぐに始まり、$19 が請求されます。
+Stripe Checkout で Pro を開始します。Checkout ではカードを登録します。コマンドはブラウザで Checkout を開きます。新しいアカウントには $5 のトライアルクレジット付きの 7 日間トライアルが付き、終了まで何も請求されません。アカウントで以前にトライアルを使ったことがある場合、Pro はすぐに始まり、$19 が請求されます。カードで以前にトライアルを使ったことがある場合、トライアルは始まらず、何も請求されません。請求ページで $19 の Pro を開始してください。
 
 | フラグ | 説明 |
 |------|-------------|
@@ -74,11 +74,11 @@ Stripe Checkout で Pro を開始します。Checkout ではカードを登録�
 
 ### `lizard billing balance`
 
-プリペイドクレジットの残高を表示します。2026 年 11 月 1 日までのプリペイドクレジットのアカウントと、Enterprise アカウントが対象です。
+Enterprise アカウントの残高を表示します。
 
 ### `lizard billing transactions`
 
-プリペイドクレジットのアカウントと Enterprise アカウントについて、最近の残高の取引を一覧表示します（エイリアス `ledger`）。
+Enterprise アカウントの最近の残高の取引を一覧表示します（エイリアス `ledger`）。
 
 | フラグ | 説明 |
 |------|-------------|
@@ -88,11 +88,11 @@ Stripe Checkout で Pro を開始します。Checkout ではカードを登録�
 
 ### `lizard billing payment-methods list`
 
-保存済みのカードを一覧表示します。`pm` は `payment-methods` の短縮形です。カードの追加は請求ページで行います。
+保存済みのカードを一覧表示します。`pm` は `payment-methods` の短縮形です。Pro のカードの追加、変更、削除は請求ページで行います。
 
 ### `lizard billing payment-methods remove <id>`
 
-保存済みのカードを削除します（エイリアス `rm`）。
+保存済みのカードを削除します（エイリアス `rm`）。これは Enterprise アカウントでのみ使えます。Pro アカウントでは HTTP 409 が返るため、カードは請求ページで削除してください。
 
 | フラグ | 説明 |
 |------|-------------|

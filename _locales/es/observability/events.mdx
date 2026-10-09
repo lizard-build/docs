@@ -15,10 +15,10 @@ description: "Lee la línea de tiempo de despliegue de un servicio y el estado e
 ```bash
 lizard events                     # deploy history + replica status
 lizard events --service api       # a specific service
-lizard events --limit 25          # show more entries (default 10)
+lizard events --limit 5           # fewer entries (default and maximum 10)
 ```
 
-Cada entrada cubre una acción de despliegue o escalado y el estado resultante de las réplicas, para que puedas responder de un vistazo "qué cambió y si está saludable".
+Cada entrada es un despliegue: estado, desencadenante, commit y número de reinicios. La tabla Replicas de abajo muestra el estado actual de cada pod, para que puedas responder de un vistazo "qué cambió y si está saludable".
 
 <span id="quick-status" />
 
@@ -35,7 +35,7 @@ lizard status        # the current directory's workspace/project/service link
 
 ## Panel
 
-La vista **Despliegues** del dashboard (`lizard open`) muestra el mismo historial como una línea de tiempo, con un panel de detalles por despliegue (logs de compilación, commit, estado) y el estado de salud de cada réplica.
+Abre un servicio en el dashboard (`lizard open`) para ver su historial de despliegues. Haz clic en un despliegue para ver sus logs de compilación, su commit y sus eventos de fallo. El panel del servicio muestra las réplicas en marcha y las deseadas.
 
 <span id="see-also" />
 

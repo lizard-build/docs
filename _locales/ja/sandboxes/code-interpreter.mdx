@@ -19,7 +19,38 @@ description: "Lizard SDK と interpreter テンプレートで Python コマン�
 <span id="checkpointing-a-session" />
 <span id="see-also" />
 
-`interpreter` テンプレートで Python を実行します。コマンドごとに別の Python プロセスを起動するため、変数は呼び出し間で保持されません。中間結果はファイルに保存してください。API は stdout、stderr、終了コードを返し、型付きの notebook 結果やグラフオブジェクトは返しません。
+`interpreter` テンプレートで Python を実行します。`CodeSandbox` は呼び出し間で状態を保持します。Python はコンテキストごとに永続的な Jupyter カーネルで実行され、結果には最後の式の値や `image/png` 形式のグラフを含めることができます。
+
+```ts
+import { CodeSandbox } from '@lizard-build/sdk';
+
+const sandbox = await CodeSandbox.create({ projectId: 'proj_123', timeoutMs: 300_000 });
+try {
+  await sandbox.runCode('x = 21');
+  const run = await sandbox.runCode('x * 2');
+  console.log(run.results[0]?.data, run.stdout, run.error);
+} finally {
+  await sandbox.kill();
+}
+```
+
+```python
+from lizard import CodeSandbox
+
+sandbox = CodeSandbox.create(project_id="proj_123", timeout_ms=300_000)
+try:
+    sandbox.run_code("x = 21")
+    run = sandbox.run_code("x * 2")
+    print(run.results[0].data, run.stdout, run.error)
+finally:
+    sandbox.kill()
+```
+
+`createContext()`（Python では `create_context()`）は、独自の変数を持つ別のカーネルを起動します。JavaScript と bash は、呼び出しのたびに新しいプロセスとして実行されます。
+
+## コマンドを実行する
+
+`process.exec` はコマンドごとに別のプロセスを起動するため、Python の変数は呼び出し間で保持されません。中間結果はファイルに保存してください。stdout、stderr、終了コードを返します。
 
 ```ts
 import { Sandbox } from '@lizard-build/sdk';
@@ -45,10 +76,6 @@ try:
 finally:
     sandbox.kill()
 ```
-
-## 未対応の API
-
-`CodeSandbox`、`runCode` / `run_code`、実行コンテキストのメソッドは SDK に残っていますが、公開テンプレートには必要な実行サーバーがありません。旧既定テンプレート `code-interpreter-v1` は利用できません。名前を `interpreter` に変えてもこの API は使えません。以下のように `Sandbox.create("interpreter")` とプロセスのコマンドを使ってください。
 
 ## 保存と課金
 

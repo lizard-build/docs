@@ -55,7 +55,7 @@ finally:
 
 ## Größe und Preis
 
-Neue Volumes erlauben **1–50 GB** in ganzen GB, mit **5 GB** als Standard. Der Server kann den Höchstwert über `VOLUME_MAX_SIZE_GB` ändern. Dashboard und CLI lesen die aktuellen Grenzen aus `GET /api/projects/:projectId/volume-limits`. Das Dashboard liest auch den Speicherpreis von diesem Endpunkt und zeigt ihn unter dem Größenregler.
+Neue Volumes erlauben **1–50 GB** in ganzen GB, mit **5 GB** als Standard. Der Server kann den Höchstwert über `VOLUME_MAX_SIZE_GB` ändern. Dashboard und CLI lesen die aktuellen Grenzen und den Speicherpreis aus `GET /api/projects/:projectId/volume-limits`.
 
 Du zahlst für **belegten Speicher**, nicht für die gesamte zugewiesene Kapazität. Bestehende Volumes über dem neuen Höchstwert behalten ihre Größe und bleiben erreichbar. Ein neues Volume braucht genug freien, nicht reservierten Speicher auf einem gesunden Worker der gewählten Region. Wenn kein Platz vorhanden ist, liefert die API `503` mit dem Code `volume_capacity_unavailable`.
 
@@ -67,6 +67,7 @@ Du zahlst für **belegten Speicher**, nicht für die gesamte zugewiesene Kapazit
 await Volume.list('proj_123');
 const volume = await Volume.get('proj_123', 'agent-workdir');
 await volume.getInfo('proj_123');
+await Volume.resize('proj_123', 'agent-workdir', 20);
 await Volume.delete('proj_123', 'agent-workdir'); // detach first
 ```
 
@@ -76,9 +77,12 @@ await Volume.delete('proj_123', 'agent-workdir'); // detach first
 | `Volume.create(projectId, name, options)` | `Volume.create(project_id, name, size_gb=5)` | Erstellen; Fehler bei vergebenem Namen |
 | `Volume.list(projectId)` | `Volume.list(project_id)` | Volumes des Projekts auflisten |
 | `Volume.get(projectId, nameOrId)` | `Volume.get(project_id, name_or_id)` | Volume suchen |
+| `Volume.resize(projectId, nameOrId, sizeGb)` | `Volume.resize(project_id, name_or_id, size_gb)` | Größe ändern |
 | `Volume.delete(projectId, nameOrId)` | `Volume.remove(project_id, name_or_id)` | Getrenntes Volume löschen |
 
 Erzeugte IDs und die Felder `volumeId` / `volume_id` funktionieren weiterhin. Nutze Namen in neuem Code.
+
+Die Größenänderung erfolgt direkt am Volume, auch während es verbunden ist. Ein Firecracker-Volume kann nur wachsen. Ein Pod-basiertes Volume kann auch schrumpfen, wenn mindestens 10 % der neuen Größe frei bleiben.
 
 <span id="cli" />
 
@@ -88,6 +92,7 @@ Erzeugte IDs und die Felder `volumeId` / `volume_id` funktionieren weiterhin. Nu
 lizard volume create agent-workdir --size 10 --project proj_123
 lizard volume list --project proj_123
 lizard sandbox create --volume agent-workdir --project proj_123
+lizard volume resize agent-workdir --size 20 --project proj_123
 # After stopping the sandbox:
 lizard volume rm agent-workdir --project proj_123
 ```
@@ -98,7 +103,7 @@ lizard volume rm agent-workdir --project proj_123
 
 ## Dashboard
 
-Öffne **Sandboxes → Volumes** in einem Projekt. Das Formular prüft den Namen und bietet einen Größenregler mit dem aktuellen Höchstwert und Preis. Die Liste zeigt belegten und zugewiesenen Speicher, Status und verbundene Sandbox. Die ID kannst du bei Bedarf aus den Volume-Details kopieren.
+Erstelle und verbinde Volumes mit dem SDK oder der CLI. Sobald ein Projekt ein Volume hat, listet **Sandboxes → Persistent Volumes** belegten und zugewiesenen Speicher, Status und die verbundene Sandbox auf. Dort kannst du Dateien durchsuchen, die Größe ändern oder ein Volume löschen.
 
 <span id="storage-lifecycle" />
 
@@ -110,6 +115,6 @@ lizard volume rm agent-workdir --project proj_123
 
 Sandbox-Optionen stehen in der [SDK-Referenz](/sandboxes/sdk-reference).
 
-Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, ohne ihren Zustand zu ändern; eine pausierte oder gestoppte Sandbox wird dadurch nicht fortgesetzt. Pause, Fortsetzen, Snapshot und Restore sind verfügbar; siehe [Pause, Fortsetzen und Snapshots](/sandboxes/quickstart#pause-and-resume). Fork und Dateiüberwachung geben HTTP 501 zurück. `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten. Zugriff über das SSH-Protokoll gibt es nicht, daher funktionieren SSH-Clients, `scp` und Portweiterleitung nicht.
+Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, ohne ihren Zustand zu ändern; eine pausierte oder gestoppte Sandbox wird dadurch nicht fortgesetzt. Pause, Fortsetzen, Snapshot und Restore sind verfügbar; siehe [Pause, Fortsetzen und Snapshots](/sandboxes/quickstart#pause-and-resume). `fork` kopiert eine laufende Sandbox einschließlich Arbeitsspeicher und Prozessen; es gibt 409 zurück, wenn ein Volume verbunden ist, und 501 bei einer Sandbox, die als Pod läuft. Dateiüberwachung ist noch nicht verfügbar. `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten. Zugriff über das SSH-Protokoll gibt es nicht, daher funktionieren SSH-Clients, `scp` und Portweiterleitung nicht.
 
 Dateien und laufende Prozesse bleiben verfügbar, solange die Sandbox läuft. Nach dem Stopp kann eine spätere Sandbox nur Dateien auf einem angehängten Persistent Volume unter `/workspace` wiederverwenden. Ohne Volume ist `/workspace` temporär. Ein Volume hängt jeweils an einer Sandbox und liegt auf einem einzelnen Knoten. Exportieren Sie Dateien, die einen Knotenausfall überstehen müssen.

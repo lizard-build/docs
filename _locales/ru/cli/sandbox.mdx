@@ -1,0 +1,241 @@
+---
+description: "lizard sandbox создаёт, выводит список и удаляет Sandboxes, запускает в них команды и coding-агентов, открывает оболочки и рабочие столы, управляет снапшотами и файлами."
+---
+
+# lizard sandbox
+
+Создавайте Sandboxes и управляйте ими из терминала: [Sandboxes](/sandboxes). Псевдоним: `lizard sb`.
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard sandbox create [flags]
+lizard sandbox list [flags]
+lizard sandbox exec <id> -- <command>
+lizard sandbox ssh <id>
+lizard sandbox rm <id> [flags]
+```
+
+Каждый sandbox принадлежит проекту: тому, который связан с текущей директорией, или тому, который вы укажете через `-p`.
+
+<span id="subcommands" />
+
+## Подкоманды
+
+### `lizard sandbox create`
+
+Создаёт sandbox и выводит его ID.
+
+| Флаг | Описание |
+|------|-------------|
+| `-t, --template <name>` | Шаблон (по умолчанию `base`). Доступные шаблоны: `base`, `interpreter`, `codex`, `desktop`, `opencode`, `pi`, `prime`, `claude`. Сервер проверяет список региона |
+| `-s, --size <size>` | `small`, `medium` (по умолчанию) или `large` |
+| `--timeout <ms>` | Время жизни в миллисекундах (по умолчанию `300000`, пять минут); `0` отключает истечение срока |
+| `--region <code>` | Регион, в котором создаётся sandbox |
+| `--snapshot <id>` | Запустить из сохранённого снапшота; нельзя сочетать с `--size` |
+| `--volume <name-or-id>` | Подключить [Persistent Volume](/cli/volume) |
+| `--with-token [key]` | Установить в sandbox API-ключ `liz_`, чтобы там работал `lizard`. Без значения используется ключ `liz_`, с которым вы запускаете команду; при входе через браузер такого ключа нет |
+| `-p, --project <id>` | Проект (по умолчанию связанный) |
+
+Lizard тарифицирует каждый размер посекундно по фиксированной ставке. В цену входят диск и до 2 ТБ исходящего трафика на аккаунт за скользящие 30 дней. Приостановленный sandbox ничего не стоит; подключённый том оплачивается по [тарифу тома](/cli/volume).
+
+| Размер | vCPU | Память | Диск | Цена |
+|------|------|--------|------|-------|
+| `small` | 2 | 4 GiB | 5 GB | $0.0162/h |
+| `medium` | 4 | 8 GiB | 20 GB | $0.0324/h |
+| `large` | 8 | 16 GiB | 50 GB | $0.0648/h |
+
+Ключ, установленный через `--with-token`, может прочитать любой процесс в sandbox. Используйте ключ, ограниченный одним рабочим пространством или проектом: `lizard keys create sandbox-key -w my-team`.
+
+Пока не начался пробный период или план Pro, `create` возвращает HTTP 402 со ссылкой на Checkout; выполните `lizard billing start`. Во время пробного периода можно одновременно запускать 5 sandbox, а после первого оплаченного счёта — 100. Приостановленные sandbox не учитываются. См. [Лимиты](/platform/limits#sandbox-account-limits).
+
+### `lizard sandbox list`
+
+Выводит список sandbox в связанном проекте (псевдоним `ls`).
+
+| Флаг | Описание |
+|------|-------------|
+| `-p, --project <id>` | Вывести список для указанного проекта |
+| `--all` | Вывести все sandbox во всех ваших рабочих пространствах |
+
+### `lizard sandbox rm <id>`
+
+Удаляет sandbox (псевдоним `delete`).
+
+| Флаг | Описание |
+|------|-------------|
+| `-y, --yes` | Пропустить подтверждение |
+
+### `lizard sandbox timeout <id> <ms>`
+
+Задаёт новое время жизни, отсчитываемое с текущего момента, в миллисекундах (не меньше `1000`). Это не таймер простоя: выполнение команд его не сбрасывает.
+
+### `lizard sandbox exec <id> -- <command>`
+
+Запускает одну команду внутри sandbox через `sh -c`, передаёт её вывод потоком и завершается с её кодом выхода.
+
+<span id="sandbox-ssh" />
+
+### `lizard sandbox ssh <id>`
+
+Открывает интерактивную оболочку в работающем sandbox (псевдоним `shell`). Используется ваш вход в Lizard, поэтому настраивать SSH-ключи не нужно; ограниченный API-ключ получает доступ только к sandbox в своей области. Ctrl-C, стрелки и автодополнение по Tab передаются в sandbox. Чтобы выйти, введите `exit` или нажмите Ctrl-D.
+
+Нужен интерактивный терминал; в скрипте используйте `lizard sandbox exec`. Это не протокол SSH, поэтому SSH-клиенты, `scp` и проброс портов не работают.
+
+### `lizard sandbox expose <id> <port>`
+
+Назначает порту в sandbox HTTPS-адрес. Порт приватный: запросам нужен токен доступа sandbox — в заголовке `X-Lizard-Access-Token` или в query-параметре `lizard_token`, который уже есть в выведенном URL. Запросы без него получают HTTP 401. С `--json` результат дополнительно содержит `hostname` и `accessToken`.
+
+`lizard sandbox unexpose <id> <port>` удаляет URL.
+
+### `lizard sandbox desktop <id>`
+
+Запускает графический рабочий стол sandbox, созданного с `-t desktop`, и выводит URL для браузера и URL только для просмотра. Относитесь к обеим ссылкам как к паролям.
+
+| Флаг | Описание |
+|------|-------------|
+| `--view-only` | Вывести или открыть только URL для просмотра |
+| `--resolution <WxH>` | Размер экрана, от 640x480 до 3840x2160 |
+| `--open` | Открыть рабочий стол в браузере |
+| `--status` | Показать состояние рабочего стола и URL, не запуская его |
+| `--stop` | Остановить рабочий стол и удалить его URL |
+
+<span id="sandbox-vnc" />
+
+### `lizard sandbox vnc <id>`
+
+Подключает VNC-приложение (macOS Screen Sharing, TigerVNC, RealVNC) к рабочему столу sandbox, созданного с `-t desktop`. У рабочего стола нет публичного VNC-порта, поэтому CLI слушает `localhost` и передаёт каждое подключение в sandbox через защищённый WebSocket. При необходимости он запускает рабочий стол, выводит адрес и VNC-пароль и работает до нажатия Ctrl-C.
+
+| Флаг | Описание |
+|------|-------------|
+| `--port <port>` | Локальный порт (по умолчанию `5900`; если он занят — следующий свободный) |
+| `--view-only` | Использовать пароль только для просмотра: наблюдение без управления |
+| `--open` | Открыть адрес в VNC-приложении (`vnc://`, Screen Sharing в macOS) |
+
+<span id="pause-resume-and-snapshots" />
+
+### Пауза, возобновление и снапшоты
+
+| Команда | Что делает |
+|---------|--------------|
+| `lizard sandbox pause <id>` | Сохраняет память и процессы sandbox, затем останавливает его. Приостановленный sandbox бесплатен |
+| `lizard sandbox resume <id>` | Снова запускает приостановленный sandbox с сохранёнными памятью и файлами |
+| `lizard sandbox snapshot <id> --name <name>` | Сохраняет работающий sandbox как приватный снапшот в его проекте и держит наготове прогретые копии (`--warm`, от 1 до 10, по умолчанию 5) |
+| `lizard sandbox restore <snapshot-id>` | Запускает новый sandbox из снапшота (`--timeout <ms>`, по умолчанию `300000`) |
+| `lizard sandbox snapshots` | Выводит список снапшотов проекта (`-p` для другого проекта) |
+| `lizard sandbox snapshot-pause <snapshot-id>` | Освобождает прогретые копии снапшота и сохраняет его состояние |
+| `lizard sandbox snapshot-resume <snapshot-id>` | Заново наполняет прогретые копии приостановленного снапшота |
+| `lizard sandbox snapshot-warm <snapshot-id> <count>` | Меняет число прогретых копий (от 1 до 10) |
+| `lizard sandbox snapshot-rm <snapshot-id>` | Удаляет снапшот (псевдоним `snapshot-delete`, `-y` пропускает подтверждение) |
+
+`pause`, `resume` и `snapshot` ждут завершения работы; укажите `--no-wait`, чтобы вернуться сразу после постановки в очередь. О том, что сохраняет каждый шаг, см. [Пауза, возобновление и снапшоты](/sandboxes/quickstart#pause-and-resume).
+
+### `lizard sandbox files`
+
+| Команда | Что делает |
+|---------|--------------|
+| `lizard sandbox files ls <id> [path]` | Выводит содержимое директории (по умолчанию `/`) |
+| `lizard sandbox files cat <id> <path>` | Выводит содержимое файла |
+| `lizard sandbox files put <id> <local> <remote>` | Загружает локальный файл |
+| `lizard sandbox files get <id> <remote> <local>` | Скачивает файл |
+| `lizard sandbox files rm <id> <path>` | Удаляет файл или директорию |
+
+<span id="coding-agents" />
+
+### Coding-агенты
+
+Запускайте coding-агента внутри sandbox со своими учётными данными. Сначала подключите их через [`lizard agents`](/cli/agents). Создайте sandbox из шаблона агента (`codex`, `claude`, `opencode`, `pi` или `prime`); в шаблоне `base` нет Node.js, и агенты в нём работать не могут.
+
+`lizard sandbox prompt <id> <prompt...>` отправляет промпт и передаёт потоком действия агента.
+
+| Флаг | Описание |
+|------|-------------|
+| `--agent <name>` | `codex` (по умолчанию), `claude`, `pi`, `opencode` или `prime` |
+| `-c, --conversation <id>` | Продолжить эту беседу |
+| `--new` | Начать новую беседу |
+| `-m, --model <model>` | Используемая модель |
+| `--effort <level>` | Усилие рассуждения: `minimal`, `low`, `medium`, `high` или `xhigh` |
+| `--cwd <dir>` | Рабочая директория в sandbox (по умолчанию `/workspace`) |
+| `-v, --verbose` | Также выводить вывод команд |
+| `--no-wait` | Вернуться сразу после принятия промпта |
+
+Ctrl-C прекращает наблюдение; агент продолжает работу. `lizard sandbox interrupt <id> [-c <conversation>]` останавливает его текущий ход. `lizard sandbox conversations <id>` выводит список бесед, сначала новые.
+
+<span id="examples" />
+
+## Примеры
+
+<span id="create-a-sandbox-and-run-a-command" />
+
+### Создание sandbox и запуск команды
+
+```bash
+lizard sandbox create --size small --timeout 600000
+lizard sandbox exec sb_abc123 -- python3 -c "print(1 + 1)"
+```
+
+<span id="open-a-shell" />
+
+### Открытие оболочки
+
+```bash
+lizard sandbox ssh sb_abc123
+```
+
+<span id="attach-a-persistent-volume" />
+
+### Подключение Persistent Volume
+
+```bash
+lizard volume create agent-workdir --size 10
+lizard sandbox create --volume agent-workdir
+```
+
+<span id="serve-a-port" />
+
+### Публикация порта
+
+```bash
+lizard sandbox exec sb_abc123 -- sh -c "nohup python3 -m http.server 3000 --bind 0.0.0.0 >/tmp/http.log 2>&1 &"
+lizard sandbox expose sb_abc123 3000
+```
+
+<span id="use-a-desktop-from-a-vnc-app" />
+
+### Использование рабочего стола через VNC-приложение
+
+```bash
+lizard sandbox create -t desktop
+lizard sandbox vnc sb_abc123 --open
+```
+
+<span id="run-codex-in-a-sandbox" />
+
+### Запуск Codex в sandbox
+
+```bash
+lizard agents login chatgpt
+lizard sandbox create -t codex
+lizard sandbox prompt sb_abc123 "add a health check endpoint and test it"
+```
+
+<span id="save-and-restore-a-sandbox" />
+
+### Сохранение и восстановление sandbox
+
+```bash
+lizard sandbox snapshot sb_abc123 --name my-app
+lizard sandbox restore <snapshot-id>   # ID from `lizard sandbox snapshots`
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [Sandboxes](/sandboxes) — среда выполнения, шаблоны и жизненный цикл
+- [Быстрый старт Sandboxes](/sandboxes/quickstart) — те же шаги через Lizard SDK
+- [lizard volume](/cli/volume) — Persistent Volumes для подключения через `--volume`
+- [lizard agents](/cli/agents) — учётные данные для `sandbox prompt`
+- [Лимиты](/platform/limits#sandbox-lifetime) — размеры, лимиты запущенных sandbox, исходящий трафик и время жизни

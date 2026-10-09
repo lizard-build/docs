@@ -107,7 +107,7 @@ Revisa la [lista de verificación de despliegue](https://docs.djangoproject.com/
 
 ## Planificar archivos estáticos y migraciones
 
-Gunicorn por sí solo no sirve los archivos estáticos de Django. Elige un middleware de archivos estáticos configurado en la app o un host estático aparte. Recoge los recursos en la ruta que sirva esa configuración. La ruta de Python basada en requirements de lizardpack no ejecuta automáticamente `collectstatic`; colócalo en una compilación completa de Dockerfile cuando la app necesite ese paso.
+Gunicorn por sí solo no sirve los archivos estáticos de Django. Elige un middleware de archivos estáticos configurado en la app o un host estático aparte. Recoge los recursos en la ruta que sirva esa configuración. lizardpack ejecuta `python manage.py collectstatic --noinput` durante una compilación de Django, pero si falla solo muestra una advertencia, por ejemplo cuando la configuración necesita secrets de runtime. El Dockerfile de abajo da a `collectstatic` valores solo para la compilación y hace fallar la compilación si hay un error.
 
 Para WhiteNoise, mantén `django.contrib.staticfiles` en `INSTALLED_APPS` e inserta `whitenoise.middleware.WhiteNoiseMiddleware` inmediatamente después del `SecurityMiddleware` de Django. Añade o actualiza estas configuraciones:
 
@@ -197,12 +197,16 @@ lizard secrets set ALLOWED_HOSTS=YOUR_PUBLIC_HOST \
   CSRF_TRUSTED_ORIGINS=https://YOUR_PUBLIC_HOST --service web
 ```
 
-Un destino o clave de reference ausente puede resolverse como una cadena vacía. La comprobación de valor obligatorio entonces detiene Django con `Set the DATABASE_URL environment variable.`. Comprueba el nombre del servicio de base de datos y su clave `DATABASE_URL`; no imprimas la URL de conexión en los logs.
+Un destino o clave de reference ausente puede resolverse como una cadena vacía. La comprobación de valor obligatorio entonces detiene Django con `Set the DATABASE_URL environment variable.`. Comprueba el nombre del servicio de base de datos y su clave `DATABASE_URL`; `lizard logs --build --service web` avisa de cada reference que se resolvió como un valor vacío. No imprimas la URL de conexión en los logs.
 
-El cambio de variable reinicia el proceso. Excluye los entornos virtuales locales, secrets y bases de datos locales de las subidas. Una vez que el proceso esté en ejecución, aplica las migraciones:
+El cambio de variable reinicia el proceso. Excluye los entornos virtuales locales, secrets y bases de datos locales de las subidas.
+
+Aplica las migraciones desde tu computadora. `lizard run --service postgres` ejecuta un comando local con los valores de conexión de la base de datos, incluida su `DATABASE_URL` pública. Pasa en línea los demás ajustes que requiere este ejemplo; solo el comando local los usa:
 
 ```bash
-lizard ssh --service web -- python manage.py migrate --noinput
+python -m pip install -r requirements.txt
+SECRET_KEY=local-migrate ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
+  lizard run --service postgres -- python manage.py migrate --noinput
 ```
 
 Ejecuta el comando de nuevo para comprobar que no quedan migraciones. No trates una comprobación correcta del puerto como prueba de que las tablas existen.

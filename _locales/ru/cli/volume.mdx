@@ -1,0 +1,89 @@
+---
+description: "lizard volume создаёт, выводит список, изменяет размер и удаляет Persistent Volumes, которые sandboxes подключают по имени."
+---
+
+# lizard volume
+
+Управляйте [Persistent Volumes](/sandboxes/volumes) для sandboxes. Псевдоним: `lizard vol`.
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard volume list [flags]
+lizard volume create <name> [flags]
+lizard volume resize <volume> --size <gb> [flags]
+lizard volume rm <volume> [flags]
+```
+
+Имя тома — его ключ в рамках проекта. Каждая команда принимает имя или ID, а также `-p, --project`, чтобы указать проект, отличный от связанного.
+
+<span id="subcommands" />
+
+## Подкоманды
+
+### `lizard volume list`
+
+Выводит список томов проекта с размером, статусом и sandbox, к которому они подключены (псевдоним `ls`). `--json` дополнительно включает сгенерированные ID.
+
+### `lizard volume create <name>`
+
+Создаёт том. Имена состоят из строчных букв, цифр и дефисов, начинаются и заканчиваются буквой или цифрой, содержат не более 64 символов и уникальны в рамках проекта.
+
+| Флаг | Описание |
+|------|-------------|
+| `--size <gb>` | Размер в целых ГБ, от 1 до 50 (по умолчанию 5). Сначала CLI считывает текущие лимиты сервера |
+| `--region <code>` | Регион тома; он должен совпадать с регионом sandbox, который его подключит |
+| `-p, --project <id>` | Имя проекта, slug или ID |
+
+### `lizard volume resize <volume> --size <gb>`
+
+Изменяет размер тома на месте. Подключённый sandbox продолжает работать и видит новый размер. Том Firecracker (по умолчанию) можно только увеличить. Том на основе pod можно и уменьшить, если после этого свободными остаются не менее 10% нового размера.
+
+### `lizard volume rm <volume>`
+
+Удаляет том и его данные (псевдоним `delete`). Команда завершается ошибкой, пока том подключён; сначала удалите sandbox.
+
+| Флаг | Описание |
+|------|-------------|
+| `-y, --yes` | Пропустить подтверждение |
+
+Хранение тома стоит $0.14 за ГБ-месяц используемого пространства. См. [Размер и цена](/sandboxes/volumes#size-and-price).
+
+<span id="examples" />
+
+## Примеры
+
+<span id="create-a-volume-and-attach-it" />
+
+### Создание тома и его подключение
+
+```bash
+lizard volume create agent-workdir --size 10
+lizard sandbox create --volume agent-workdir
+```
+
+<span id="grow-a-volume" />
+
+### Увеличение тома
+
+```bash
+lizard volume resize agent-workdir --size 20
+```
+
+<span id="delete-a-volume" />
+
+### Удаление тома
+
+```bash
+lizard volume rm agent-workdir --yes
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [Persistent Volumes](/sandboxes/volumes) — жизненный цикл, методы SDK и представление в дашборде
+- [lizard sandbox](/cli/sandbox) — подключение тома с помощью `sandbox create --volume`
+- [Хранение и восстановление](/platform/storage-and-recovery) — что происходит с данными тома при отказе узла

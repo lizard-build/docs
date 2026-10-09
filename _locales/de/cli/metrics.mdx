@@ -18,9 +18,14 @@ lizard metrics [flags]
 
 | Flag | Beschreibung |
 |------|-------------|
-| `-r, --range <range>` | Zeitfenster |
-| `-w, --watch` | Live-Aktualisierung |
-| `--cost` | Kosten einschließen |
+| `-s, --service <id>` | Service (Standard: der verknüpfte Service) |
+| `-p, --project <id>` | Projektname, Slug oder ID |
+| `--all` | Alle Services im Projekt, der verknüpfte Service wird ignoriert; kann nicht mit `-s` kombiniert werden |
+| `-r, --range <range>` | Zeitfenster: `1h` (Standard), `6h`, `24h`, `7d`, `14d` oder `30d` |
+| `-w, --watch` | Live-Ansicht, wird alle 3 Sekunden aktualisiert; kann nicht mit `--json` kombiniert werden |
+| `--cost` | Laufende Ressourcen, Kosten pro Stunde, Nutzung im aktuellen Abrechnungszeitraum und Pro-Nutzung in diesem Monat. Nur für Workspace-Owner |
+
+Ohne verknüpften Service oder `-s` zeigt `metrics` eine Übersicht über alle Services im Projekt an.
 
 <span id="examples" />
 

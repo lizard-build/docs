@@ -18,7 +18,7 @@ La llamada `service set` ya activó una reconstrucción por sí sola. El `redepl
 
 ## Por qué puede pasar esto
 
-Cambiar un campo que **afecta al build** en un servicio — `repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath` o `rootDirectory` — activa una reconstrucción automática de inmediato. Cambiar un campo **solo de runtime** — `startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns` — **no** activa una reconstrucción automática; solo surte efecto en el siguiente deploy.
+Cambiar un campo que **afecta al build** en un servicio — `repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath` o `rootDirectory` — activa una reconstrucción automática de inmediato en un servicio en ejecución. Un servicio que ha fallado o que nunca se ha desplegado no se reconstruye por sí solo. Cambiar un campo **solo de runtime** — `startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns` — **no** activa una reconstrucción automática; solo surte efecto en el siguiente deploy.
 
 Es fácil encadenar por reflejo un `redeploy` después de cada `service set`, pero eso solo tiene sentido para los campos solo de runtime.
 
@@ -30,7 +30,7 @@ Es fácil encadenar por reflejo un `redeploy` después de cada `service set`, pe
 
 ### Comprueba qué tipo de campo cambiaste
 
-Consulta la [tabla de activadores de reconstrucción](/concepts/build-pipeline#what-triggers-a-rebuild). Si es un campo de build, la reconstrucción ya está en cola; no hagas nada más.
+Consulta la [tabla de activadores de reconstrucción](/concepts/build-pipeline#what-triggers-a-rebuild). Si es un campo de build y el servicio estaba en ejecución, la reconstrucción ya está en cola; no hagas nada más. Si el servicio había fallado o nunca se había desplegado, ejecuta `lizard redeploy` una vez.
 
 ```bash
 lizard events   # confirm only one build is in flight

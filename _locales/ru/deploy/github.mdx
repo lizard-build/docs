@@ -52,7 +52,7 @@ lizard service set api \
   --set branch=main
 ```
 
-Изменение поля сборки автоматически запускает пересборку — **не** добавляйте `redeploy` после этого.
+Изменение поля сборки автоматически запускает пересборку работающего сервиса — **не** добавляйте `redeploy` после этого. Сервису, который упал или ни разу не был развёрнут, нужен `lizard redeploy`.
 
 > **Примечание:** `lizard up` всегда принудительно включает `sourceType=upload`. Не используйте его для обновления git-сервиса — отправьте push в удалённый репозиторий или используйте `lizard redeploy`.
 
@@ -60,7 +60,7 @@ lizard service set api \
 
 ## Автоматическое переразвёртывание при push
 
-После настройки `repoUrl` пуши в соответствующую `branch` автоматически переразвёртывают сервис через вебхук GitHub. Чтобы ограничить, какие пуши запускают переразвёртывание:
+После настройки `repoUrl` пуши в соответствующую `branch` автоматически переразвёртывают сервис через вебхук GitHub. Подключите приложение Lizard для GitHub (`lizard git connect`), чтобы Lizard получал push-события репозитория. Чтобы ограничить, какие пуши запускают переразвёртывание:
 
 - **`rootDirectory`** — собирать только подкаталог (монорепозитории).
 - **`watchPatterns`** — переразвёртывать только при изменении соответствующих путей.
@@ -84,8 +84,9 @@ lizard git checkout api staging      # move the `api` service to the `staging` b
 Для репозитория с несколькими приложениями создайте отдельный сервис для каждого и укажите его `rootDirectory` как подпуть:
 
 ```bash
-lizard add -r your-org/monorepo -n api
+lizard add -r your-org/monorepo -n api --no-deploy
 lizard service set api --set rootDirectory=apps/api
+lizard redeploy --service api
 ```
 
 Если текущая директория — под-приложение внутри репозитория, чей родитель уже подключен, добавьте сервис в проект родителя и укажите `rootDirectory` как подпуть от cwd.
@@ -97,4 +98,4 @@ lizard service set api --set rootDirectory=apps/api
 - [Сборка Pipeline](/concepts/build-pipeline) — как стек определяется и собирается.
 - [Развернуть из локального кода](/deploy/upload) — когда нет удалённого репозитория.
 - [`lizard git`](/cli/git) — полная справочная информация по командам `connect`, `status` и `checkout`.
-- [Куда развернуть приложение, созданное вашим AI IDE](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#where-to-deploy-an-app-your-ai-ide-built) — подключение к репозиторию, написанному агентом, и стоимость.
+- [Выбор хоста под приложение](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#choose-the-host-by-the-application) — подключение к репозиторию, написанному агентом.

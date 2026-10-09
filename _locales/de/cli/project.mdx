@@ -1,18 +1,19 @@
 ---
-description: "lizard project listet die Projekte in Ihrem Workspace auf oder erstellt ein neues, mit Beispielen für beide Unterbefehle."
+description: "lizard project listet Ihre Projekte auf, erstellt ein neues oder löscht eines, mit Beispielen für jeden Unterbefehl."
 ---
 
 # lizard project
 
-Projekte in einem Workspace auflisten oder erstellen.
+Projekte auflisten, erstellen oder löschen.
 
 <span id="usage" />
 
 ## Verwendung
 
 ```bash
-lizard project list
-lizard project create
+lizard project list [flags]
+lizard project create <name> [flags]
+lizard project delete [project] [flags]
 ```
 
 <span id="subcommands" />
@@ -21,11 +22,27 @@ lizard project create
 
 ### `lizard project list`
 
-Alle Projekte im Workspace auflisten.
+Listet Ihre Projekte über alle Workspaces hinweg auf, oder mit `-w` nur in einem Workspace.
 
-### `lizard project create`
+| Flag | Beschreibung |
+|------|-------------|
+| `-w, --workspace <ws>` | Nur dieser Workspace (ID, Slug oder Name) |
 
-Ein neues Projekt erstellen.
+### `lizard project create <name>`
+
+Ein Projekt erstellen. Es verknüpft nicht das aktuelle Verzeichnis; verwenden Sie dafür [`lizard init`](/cli/init).
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-w, --workspace <ws>` | Workspace, in dem das Projekt erstellt wird |
+
+### `lizard project delete [project]`
+
+Ein Projekt in den Papierkorb verschieben (Alias `rm`). Seine Services werden gestoppt. Sie können es 3 Tage lang wiederherstellen; danach löscht Lizard es endgültig. Ohne Argument wird das mit diesem Verzeichnis verknüpfte Projekt gelöscht.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-y, --yes` | Bestätigung überspringen (ohne TTY erforderlich) |
 
 <span id="examples" />
 
@@ -33,10 +50,13 @@ Ein neues Projekt erstellen.
 
 <span id="list-projects-in-the-workspace" />
 
-### Projekte im Workspace auflisten
+<span id="list-projects" />
+
+### Projekte auflisten
 
 ```bash
 lizard project list
+lizard project list --workspace my-team
 ```
 
 <span id="create-a-new-project" />
@@ -44,7 +64,16 @@ lizard project list
 ### Ein neues Projekt erstellen
 
 ```bash
-lizard project create
+lizard project create my-project
+lizard project create my-project --workspace my-team
+```
+
+<span id="delete-a-project" />
+
+### Ein Projekt löschen
+
+```bash
+lizard project delete my-project --yes
 ```
 
 <span id="see-also" />

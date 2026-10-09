@@ -22,18 +22,25 @@ Das erste Redis-Add-on heißt `redis`, daher funktioniert `${{redis.REDIS_URL}}`
 
 | Variable | Beschreibung |
 |----------|-------------|
-| `REDIS_URL` | Vollständige Verbindungszeichenfolge (`redis://…`) |
+| `REDIS_URL` | Vollständige Verbindungszeichenfolge über den öffentlichen Endpunkt (`redis://…`) |
+| `REDIS_PRIVATE_URL` | Verbindungszeichenfolge über das private Netzwerk des Projekts (`<name>.lizard.internal:6379`) |
 
 <span id="connect-a-service" />
 
 ## Einen Service verbinden
 
 ```bash
-lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service api
+lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-Der Verweis wird beim Bereitstellen aufgelöst und mit den Zugangsdaten des Addons rotiert.
+Der Verweis wird beim Bereitstellen aufgelöst; Verbraucher übernehmen die aktuellen Werte des Addons bei ihrem nächsten Deploy. Verwenden Sie `REDIS_URL` für Clients außerhalb des Projekts. Jeder Service im Projekt erhält außerdem die öffentliche `REDIS_URL` des Addons mit der niedrigsten Priorität; ein expliziter Verweis überschreibt sie.
+
+<span id="memory-and-durability" />
+
+## Arbeitsspeicher und Persistenz
+
+Managed Redis hat keine Eviction-Richtlinie und keine Append-only-Datei. Wenn der Arbeitsspeicher ausgeht, startet die Instanz neu, und kürzlich geschriebene Daten können verloren gehen. Verwenden Sie sie für Daten, die sich neu aufbauen lassen, und speichern Sie Daten, die Sie nicht verlieren dürfen, in [Managed Postgres](/addons/postgres).
 
 <span id="common-uses" />
 
@@ -45,9 +52,9 @@ Der Verweis wird beim Bereitstellen aufgelöst und mit den Zugangsdaten des Addo
 
 ```bash
 # A worker that drains a Redis queue
-lizard add -r your-org/worker -n jobs
+lizard add -r your-org/worker -n jobs --no-deploy
 lizard service set jobs --set containerPort=0
-lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service jobs
+lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service jobs
 lizard redeploy --service jobs
 ```
 
@@ -55,10 +62,10 @@ lizard redeploy --service jobs
 
 ## Schlüssel durchsuchen
 
-Öffnen Sie den **Redis-Browser** im Dashboard (`lizard open`), um Schlüssel und Werte zu prüfen. Für lokalen Zugriff:
+Öffnen Sie den **Redis-Browser** im Dashboard (`lizard open`), um Schlüssel und Werte zu prüfen. Für lokalen Zugriff mit den Verbindungswerten des Addons:
 
 ```bash
-lizard run --service api -- sh -c 'exec redis-cli -u "$REDIS_URL"'
+lizard run --service redis -- sh -c 'exec redis-cli -u "$REDIS_URL"'
 ```
 
 <span id="grow-storage" />
@@ -76,4 +83,4 @@ lizard scale --service redis --storage 4096
 - [Managed Addons](/addons) — Benennung, Verweise und die Browser im Dashboard.
 - [Background Workers](/deploy/workers) — Redis mit einem Worker kombinieren, der eine Warteschlange verarbeitet.
 
-`lizard run` startet den Befehl lokal mit der ausgewählten Service-Umgebung. Installieren Sie `redis-cli` lokal und prüfen Sie, dass der Endpunkt erreichbar ist.
+`lizard run --service redis` startet den Befehl auf Ihrem Rechner mit den öffentlichen Verbindungswerten des Addons. Installieren Sie `redis-cli` lokal.

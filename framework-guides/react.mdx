@@ -52,11 +52,11 @@ lizard logs --build --service web --json
 lizard ps --json
 ```
 
-Upload source and the lockfile, excluding `node_modules/`, `dist/`, and secrets. Leave service build/start overrides unset to use the static detection path. The nginx container listens on port 80 even though the development and preview servers use other ports.
+Upload source and the lockfile, excluding `node_modules/`, `dist/`, and secrets. Leave service build/start overrides unset to use the static detection path. The nginx container listens on port 80, the port passed with `--port`, even though the development and preview servers use other ports.
 
 ## Connect an API
 
-Use a public variable such as `VITE_API_URL` for the API's browser-reachable HTTPS address. Read it as `import.meta.env.VITE_API_URL`. Configure that value through [variables and secrets](/variables) and rebuild when it changes. Never expose a database URL, API credential, or internal-only service address through a `VITE_*` variable.
+Use a public variable such as `VITE_API_URL` for the API's browser-reachable HTTPS address. Read it as `import.meta.env.VITE_API_URL`. With `lizard up`, Lizard passes no variables to the build: commit the value in `.env.production` (check that `.gitignore` does not exclude it) and upload again when it changes. On a [GitHub service](/deploy/github), set it through [variables and secrets](/variables) and the change rebuilds the app. See [build-time variables](/concepts/build-pipeline#build-time-variables). Never expose a database URL, API credential, or internal-only service address through a `VITE_*` variable.
 
 For an API on another origin, configure its allowed origins to include the frontend URL. A private service hostname that works between backend services will not resolve in a visitor's browser.
 

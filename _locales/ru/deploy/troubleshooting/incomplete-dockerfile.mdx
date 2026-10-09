@@ -18,9 +18,16 @@ description: "Почему Lizard заменяет Dockerfile репозитор
 
 ## Почему это может произойти
 
-Lizard использует Dockerfile репозитория **как есть** только на пути автоопределения lizardpack, если в нём есть настоящий шаг сборки — строка `RUN <package-manager>`. Dockerfile, который лишь копирует предварительно собранные артефакты (`COPY dist/`, `build/`, `out/`, `.next/`, `public/`) без шага `RUN`, считается неполным — подразумевается, что эти артефакты собраны вне образа. В таком случае lizardpack создаёт заменяющий Dockerfile, включающий недостающий шаг сборки.
+Эта проверка выполняется только для сервисов с источником GitHub. Загрузки (`lizard up`) всегда используют корневой `Dockerfile` как есть.
 
-Это касается только пути автоопределения lizardpack. Если для сервиса заданы `buildCommand` или `startCommand`, Lizard синтезирует Dockerfile из этих команд и вообще не смотрит на Dockerfile в репозитории.
+При источнике GitHub Lizard считает корневой Dockerfile неполным, если выполняются оба условия:
+
+- в нём есть `COPY` каталога `build`, `dist`, `out`, `.next` или `public`, записанного без завершающего слеша, например `COPY dist /usr/share/nginx/html`;
+- в нём нет строки `RUN`, которая начинается с `npm`, `yarn`, `pnpm`, `bun`, `pip`, `pip3`, `bundle`, `cargo`, `go build`, `mvn` или `gradle`.
+
+Lizard исходит из того, что эти артефакты собраны вне образа, и lizardpack создаёт заменяющий Dockerfile, включающий недостающий шаг сборки.
+
+Ещё две настройки также обходят корневой Dockerfile вашего репозитория. Если задан `dockerfilePath`, Lizard использует этот файл как есть. Если он не задан, то заданный `buildCommand` или `startCommand` заставляет Lizard синтезировать Dockerfile из этих команд.
 
 <span id="possible-solutions" />
 
@@ -40,10 +47,10 @@ RUN npm ci && npm run build
 
 ### Или заставьте использовать файл дословно
 
-Очистите переопределения сборки и запуска, затем задайте `dockerfilePath` в том же обновлении. Переопределения имеют приоритет над путем к файлу:
+Задайте `dockerfilePath`. Он имеет приоритет над командами сборки и запуска при сборке образа, но заданный `startCommand` всё равно заменяет `CMD` из вашего Dockerfile во время выполнения, поэтому очистите оба поля в том же обновлении. Пустое значение очищает поле:
 
 ```bash
-lizard service set api --set buildCommand=null --set startCommand=null --set dockerfilePath=Dockerfile
+lizard service set api --set buildCommand= --set startCommand= --set dockerfilePath=Dockerfile
 ```
 
 <span id="see-also" />
@@ -52,6 +59,6 @@ lizard service set api --set buildCommand=null --set startCommand=null --set doc
 
 - [Конвейер сборки](/concepts/build-pipeline) — полный порядок принятия решений о сборке.
 - [Справочник по настройке сборки](/concepts/build-pipeline#build-configuration-reference)
-- [Развёртывание любого Python-приложения на Lizard](https://lizard.build/blog/python-app-hosting#deploying-any-python-app-on-lizard) — когда позволить lizardpack написать Dockerfile и когда принести свой.
+- [Минимальный контейнер FastAPI](https://lizard.build/blog/python-app-hosting#a-minimal-fastapi-container) — готовый Dockerfile для Python и случаи, когда стоит принести свой вместо сборки из исходников.
 
 Изменение этих полей сборки может запустить сборку. Проверьте `lizard events` перед отправкой очередного `redeploy`, чтобы не запустить вторую сборку случайно.

@@ -32,9 +32,11 @@ lizard secrets set NODE_ENV=production --global
 ```bash
 lizard secrets list                       # current scope
 lizard secrets list --show                # reveal values
-lizard secrets delete OLD_KEY ANOTHER_KEY # variadic
-cat .env | lizard secrets import          # import dotenv from stdin
+lizard secrets delete OLD_KEY ANOTHER_KEY # variadic; add -y in scripts
+cat .env | lizard secrets import          # KEY=value lines from stdin
 ```
+
+`secrets import` は単純な `KEY=value` 行を読み取り、引用符も値の一部として保持します。`secrets delete` は確認を求めます。端末の外で実行する場合は `-y` を渡してください。
 
 すべてのフラグについては、[`lizard secrets` コマンドリファレンス](/cli/secrets)を参照してください。
 
@@ -49,14 +51,14 @@ cat .env | lizard secrets import          # import dotenv from stdin
 
 **デフォルトでは service スコープを使ってください。** 侵害されたサービスは自身の環境を読み取れます。より広いスコープは、理由もなく公開される認証情報が増えることを意味します。`--global` は、`LOG_LEVEL`、`NODE_ENV`、feature flag、またはフロントエンドの `SENTRY_DSN` のような、secret ではなく公開されても問題ないと証明できる値に限って使ってください。値が secret かどうか迷う場合は、secret として扱い、service にスコープしてください。
 
-データベースのような共有リソースでは、DSN を `--global` に置かないでください。代わりに、[reference](/variables/references) を使って利用側ごとにバインドしてください。
+実行中のすべての Postgres と Redis の addon の `DATABASE_URL` と `REDIS_URL` は、最も低い優先順位で、すでにプロジェクト内のすべてのサービスに届いています。特定の addon を選ぶ場合やプライベート URL を使う場合は、`--global` ではなく [reference](/variables/references) を使って利用側ごとにバインドしてください。
 
 ```bash
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service worker
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service worker
 ```
 
-ローテーションは addon 側で一度行えば済み、すべての reference が更新されます。
+addon の値が変わった場合、各利用側は次回のデプロイ時または変数の変更時に新しい値を取り込みます。
 
 <span id="precedence" />
 
@@ -68,7 +70,7 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service worker
 addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets  <  platform vars
 ```
 
-したがって、**app secrets は project secrets を上書き**し、**platform variables**（`PORT`、`LIZARD_SERVICE_NAME`、`LIZARD_PROJECT_ID`、`LIZARD_PUBLIC_DOMAIN`）は最後に適用されるため、上書きできません。
+したがって、**app secrets は project secrets を上書き**し、**platform variables**（`PORT`、`LIZARD_SERVICE_NAME`、`LIZARD_PROJECT_ID`、`LIZARD_PUBLIC_DOMAIN`、`LIZARD_PRIVATE_DOMAIN`）は最後に適用されるため、上書きできません。`PORT` は、サービスに HTTP ポートがある場合にのみ設定されます。`PORT` を自分で設定すると、ポートが `lizard port` で設定されていない限り、次回のデプロイ時に Lizard がルーティングするポートが変わります。
 
 <span id="build-time-vs-runtime" />
 
@@ -76,7 +78,8 @@ addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets
 
 ほとんどの変数変更は **再ビルドなし** で反映されます。反映のためにサービスは再起動され、これには数秒かかります。例外は、イメージに焼き込まれるビルド時の値です。
 
-- `VITE_*` と `NEXT_PUBLIC_*` の変更は、次回のデプロイ時に **再ビルドを強制** します。
+- `VITE_*` または `NEXT_PUBLIC_*` の値を変更すると、影響を受ける実行中のサービス（`--global` の場合は実行中のすべてのサービス）の再ビルドがすぐに始まります。
+- Lizard は、GitHub サービス（lizardpack が生成する Dockerfile、またはリポジトリのルートの Dockerfile）と、`buildCommand` / `startCommand` からビルドされる Node サービスについて、これらの値を `ENV` 行として焼き込みます。独自の `dockerfilePath` を持つサービスや、それらのコマンドなしで `lizard up` でアップロードされたサービスには、ビルド時に Lizard の変数は渡されません。`COMMIT_SHA` 以外のビルド引数はどのサービスにも渡されません。そうした場合の公開する値は、`.env.production` にコミットするか、ビルドコマンドを設定するか、Dockerfile に書き込んでください。
 
 [ビルド パイプライン → 再ビルド トリガー](/concepts/build-pipeline#what-triggers-a-rebuild) を参照してください。
 
@@ -84,10 +87,12 @@ addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets
 
 ## 確認
 
-実行中のサービスが実際に何を参照しているか確認します。
+サービスへのシェルアクセス（`lizard ssh`）は無効になっているため、別の方法で値を確認します。
 
 ```bash
-lizard ssh --service api -- env
+lizard logs --build --service api          # warns about every empty ${{…}} reference
+lizard secrets list --service api --show   # stored values
+lizard secrets list --service api --ref    # reference templates you can use
 ```
 
 想定していた値が存在しない場合は、[Troubleshooting → secret または reference が表示されない](/variables/troubleshooting/reference-not-applied)を参照してください。
@@ -96,13 +101,19 @@ lizard ssh --service api -- env
 
 ## ローカル開発
 
-サービスの project + service secrets を注入した状態で、**ローカル** でコマンドを実行します（スクリプトや migration に便利です）。
+サービスの project secrets と service secrets を注入した状態で、**ローカル** でコマンドを実行します。
 
 ```bash
 lizard run --service api -- node scripts/seed.js
 ```
 
-[`lizard run` と `lizard ssh` の違い](/cli/run#run-vs-ssh)を参照してください。
+値は保存されたとおりに渡されます。`${{…}}` 参照は文字列のまま残り、プラットフォーム変数（`PORT`、`LIZARD_*`）は注入されません。データベースが必要なスクリプトは、addon の実際の接続値を使って実行してください。
+
+```bash
+lizard run --service postgres -- node scripts/seed.js
+```
+
+[`lizard run` が注入するもの](/cli/run#what-run-injects)を参照してください。
 
 <span id="see-also" />
 

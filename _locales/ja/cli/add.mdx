@@ -14,6 +14,8 @@ description: "lizard add は、GitHub リポジトリ、空のサービス、ま
 lizard add [types...] [flags]
 ```
 
+`add` は、現在のディレクトリにリンクされたプロジェクトに対して動作します。先に [`lizard init`](/cli/init) または [`lizard link`](/cli/link) を実行してください。
+
 <span id="flags" />
 
 ## フラグ
@@ -25,7 +27,7 @@ lizard add [types...] [flags]
 | `-a, --addon <type...>` | マネージドアドオンを追加 (`postgres` / `redis` / `s3`) |
 | `-n, --name <name>` | `${{name.KEY}}` 参照で使用する名前 |
 | `-v, --variables <K=V>` | 環境変数を初期投入 (繰り返し指定可) |
-| `--region <code>` | プロビジョニング先のリージョン |
+| `--region <code>` | プロビジョニング先のリージョン (デフォルトは `us-east-1`) |
 | `--no-deploy` | リポジトリを接続するが最初のビルドはスキップ |
 | `--list` | 利用可能なデータベースタイプを表示 |
 
@@ -41,7 +43,7 @@ lizard add [types...] [flags]
 lizard add -r your-org/your-app
 ```
 
-これにより `github` ソースのサービスが作成され、リポジトリをクローンし、スタックを自動検出してビルドし、稼働中の URL を返します。
+これにより `github` ソースのサービスが作成され、最初のビルドが開始されます。ビルドではリポジトリをクローンし、スタックを自動検出します。コマンドはサービスが作成された時点で終了します。ビルドの進行は `lizard logs --build` で確認してください。
 
 <span id="provision-addons" />
 
@@ -66,7 +68,7 @@ lizard add -s worker
 ### サービスに名前を付け、変数を初期投入
 
 ```bash
-lizard add -r your-org/monorepo -n api
+lizard add -r your-org/monorepo -n api -v NODE_ENV=production -v LOG_LEVEL=info
 ```
 
 <span id="see-also" />
@@ -74,5 +76,5 @@ lizard add -r your-org/monorepo -n api
 ## 関連項目
 
 - [GitHub からデプロイ](/deploy/github) — リポジトリの接続、プライベートアクセス、push 時の自動再デプロイ
-- [Managed Addons](/addons) — postgres/redis/s3 のプロビジョニング、命名、利用
+- [Managed Addons](/addons) — Managed Postgres、Managed Redis、Managed Object Storage のプロビジョニング、命名、利用
 - [lizard up](/cli/up) — リポジトリをリンクする代わりに、現在のディレクトリをアップロードしてデプロイ

@@ -1,23 +1,21 @@
 ---
-description: "lizard ssh は稼働中のサービスコンテナ内でコマンドを実行し、その終了コードを返します。コンテナが実際に見ている内容を確認するための信頼できる方法です。"
+description: "サービスへの lizard ssh は無効化されており、API は 403 を返します。代わりにサービスの値と参照を確認する方法と、サンドボックスでシェルを使う方法を説明します。"
 ---
 
 # lizard ssh
 
-稼働中のサービスのコンテナ内でコマンドを実行し、その出力をストリーミングし、リモートの終了コードを返します。
+> **無効化されています。** Lizard ではサービスへのシェルアクセスが無効になっています。`lizard ssh` は HTTP 403 `Shell access to services is disabled` を受け取り、終了コード `1` で終了します。
 
-<span id="run-vs-ssh" />
+コマンド自体は引き続き CLI に含まれていますが、プラットフォームはすべてのサービスでこれを拒否します。代わりに次のコマンドを使ってください:
 
-## run と ssh
+| 確認したい内容 | コマンド |
+|----------|---------|
+| 空の値に解決された参照 | `lizard logs --build --service api` (ビルドログは空の `${{…}}` 参照ごとに警告を出します) |
+| サービスに保存されている値 | `lizard secrets list --service api --show` |
+| アドオンの実際の接続値を使ったコマンド | `lizard run --service postgres -- <cmd>` |
+| アプリが実行時に出力する内容 | `lizard logs --service api` |
 
-`lizard run` と `lizard ssh` はどちらもサービスのコンテキストでコマンドを実行しますが、実行される場所が異なります。どちらが必要かを理解して選んでください。
-
-| コマンド | 実行場所 | 用途 |
-|---------|-----------|---------|
-| `lizard run` | **ローカル**, サービスの project + service secrets が注入された状態 | マイグレーション、シードスクリプト、本番設定が必要なローカルツール |
-| `lizard ssh` | **稼働中のサービスコンテナ内** | 稼働中コンテナの調査、単発のリモートコマンド、デバッグ |
-
-`lizard run` ではローカルに注入された環境のコピーが表示されます。これは通常本番環境と同じですが、稼働中コンテナが実際に見ている内容については `lizard ssh` が信頼できる基準です。
+サンドボックスでシェルを使うには、[`lizard sandbox ssh <id>`](/cli/sandbox#sandbox-ssh) を使ってください。こちらは引き続き使えます。
 
 <span id="usage" />
 
@@ -27,46 +25,16 @@ description: "lizard ssh は稼働中のサービスコンテナ内でコマン�
 lizard ssh --service <name> -- <command>
 ```
 
-<span id="examples" />
-
-## 例
-
-<span id="inspect-the-environment-the-running-app-sees" />
-
-### 稼働中アプリが見ている環境を確認する
-
-```bash
-lizard ssh --service api -- env
-```
-
-<span id="list-files-in-the-deployed-image" />
-
-### デプロイ済みイメージ内のファイルを一覧表示する
-
-```bash
-lizard ssh --service api -- ls -la /app
-```
-
-<span id="check-the-os-in-the-container" />
-
-### コンテナ内の OS を確認する
-
-```bash
-lizard ssh --service api -- cat /etc/os-release
-```
-
-<span id="confirm-a-secret-landed-in-the-live-container" />
-
-### シークレットが稼働中コンテナに反映されていることを確認する
-
-```bash
-lizard ssh --service api -- env | grep DATABASE_URL
-```
+| フラグ | 説明 |
+|------|-------------|
+| `-s, --service <id>` | サービス名または ID |
+| `-p, --project <id>` | プロジェクト名、スラッグ、または ID |
 
 <span id="see-also" />
 
 ## 関連項目
 
-- [lizard run](/cli/run) — 代わりにサービスの env を注入した状態でローカルでコマンドを実行する
-- [変数](/variables) — シークレットや参照がサービスに渡る仕組み
-- [Claude Codeからデプロイする](https://lizard.build/blog/deploy-from-claude-code#claude-code-deployment-compared-with-the-alternatives) — エージェントがなぜ稼働中コンテナへのシェルを必要とするのか、またそれを提供しないプラットフォームはどれか
+- [lizard run](/cli/run) — サービスまたはアドオンの値を注入した状態でローカルでコマンドを実行する
+- [lizard secrets](/cli/secrets) — サービスに保存されている値を一覧表示する
+- [lizard logs](/cli/logs) — ビルドログとランタイムログ
+- [lizard sandbox](/cli/sandbox) — サンドボックスでの対話型シェルとコマンド

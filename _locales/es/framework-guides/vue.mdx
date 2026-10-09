@@ -63,7 +63,7 @@ Prueba tanto la navegación desde la página de inicio como abrir `/account` en 
 
 ## Variables y solicitudes a la API
 
-Vite escribe los valores `VITE_*` en el bundle del navegador durante la compilación. Úsalos solo para valores públicos, como la URL pública HTTPS de tu API. Configúralos mediante [variables y secretos](/variables), y luego comprueba la solicitud de red real de la app recompilada. Un reinicio solo en tiempo de ejecución no puede reemplazar un valor dentro del JavaScript ya compilado.
+Vite escribe los valores `VITE_*` en el bundle del navegador durante la compilación. Úsalos solo para valores públicos, como la URL pública HTTPS de tu API. Con `lizard up`, haz commit de ellos en `.env.production` (comprueba que `.gitignore` no lo excluya); las variables de Lizard llegan a la compilación solo en un [servicio de GitHub](/deploy/github), como se describe en [variables en tiempo de compilación](/concepts/build-pipeline#build-time-variables). Luego comprueba la solicitud de red real de la app recompilada. Un reinicio solo en tiempo de ejecución no puede reemplazar un valor dentro del JavaScript ya compilado.
 
 Si las solicitudes fallan solo después del despliegue, comprueba CORS en la API y confirma que el navegador no esté llamando a `localhost` ni a un hostname privado del backend. Si el HTML carga pero fallan los recursos, inspecciona la base de Vite y las rutas de los recursos. Para páginas que necesitan HTML antes de que se ejecute JavaScript, elige el renderizado de Nuxt o un paso explícito de prerenderizado.
 

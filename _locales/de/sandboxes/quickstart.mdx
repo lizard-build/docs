@@ -67,7 +67,7 @@ finally:
 
 ## Dateien
 
-`fs.write` schreibt Text oder gültige UTF-8-Bytes; `fs.read` liest Text. Der aktuelle Schreib-Endpunkt unterstützt keine binären Uploads. Für binäre Downloads verwenden Sie `fs.readBytes` (Python: `read_bytes`).
+`fs.write` schreibt Text oder Bytes; `fs.read` liest Text. Für binäre Dateien schreiben Sie Bytes und lesen sie mit `fs.readBytes` (Python: `read_bytes`) wieder aus.
 
 Dateien und laufende Prozesse bleiben verfügbar, solange die Sandbox läuft. Nach dem Stopp kann eine spätere Sandbox nur Dateien auf einem angehängten Persistent Volume unter `/workspace` wiederverwenden. Ohne Volume ist `/workspace` temporär. Ein Volume hängt jeweils an einer Sandbox und liegt auf einem einzelnen Knoten. Exportieren Sie Dateien, die einen Knotenausfall überstehen müssen.
 
@@ -81,19 +81,22 @@ console.log(result.stdout);
 
 ## Öffentliche Ports
 
-Starten Sie einen Server auf `0.0.0.0` und registrieren Sie mit `getHost(port)` seinen öffentlichen HTTPS-Hostnamen. Der Port ist öffentlich; ergänzen Sie bei Bedarf eine Anmeldung. Nach dem Stopp bedient die Sandbox den Port nicht mehr.
+Starten Sie einen Server auf `0.0.0.0` und rufen Sie dann `exposePort(port)` auf (Python: `expose_port`). Der Aufruf gibt `url`, `hostname` und `accessToken` zurück. Der Port ist privat: Öffnen Sie `url` im Browser (sie enthält `?lizard_token=`) oder senden Sie das Token im Header `X-Lizard-Access-Token`. Anfragen ohne Token erhalten 401. Nach dem Stopp bedient die Sandbox den Port nicht mehr.
 
 ```ts
 await sandbox.process.exec(
   "nohup python -m http.server 3000 --bind 0.0.0.0 --directory /tmp >/tmp/http.log 2>&1 </dev/null &",
 );
-const host = await sandbox.getHost(3000);
-console.log(`https://${host}`);
+const { url, hostname, accessToken } = await sandbox.exposePort(3000);
+console.log(url); // open in a browser
+const res = await fetch(`https://${hostname}/`, {
+  headers: { 'X-Lizard-Access-Token': accessToken },
+});
 ```
 
 ## Mit einer laufenden Sandbox verbinden
 
-Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, ohne ihren Zustand zu ändern; eine pausierte oder gestoppte Sandbox wird dadurch nicht fortgesetzt. Pause, Fortsetzen, Snapshot und Restore sind verfügbar; siehe [Pause, Fortsetzen und Snapshots](/sandboxes/quickstart#pause-and-resume). Fork und Dateiüberwachung geben HTTP 501 zurück. `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten. Zugriff über das SSH-Protokoll gibt es nicht, daher funktionieren SSH-Clients, `scp` und Portweiterleitung nicht.
+Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, ohne ihren Zustand zu ändern; eine pausierte oder gestoppte Sandbox wird dadurch nicht fortgesetzt. Pause, Fortsetzen, Snapshot und Restore sind verfügbar; siehe [Pause, Fortsetzen und Snapshots](/sandboxes/quickstart#pause-and-resume). `fork` kopiert eine laufende Sandbox samt Arbeitsspeicher und Prozessen; bei angehängtem Volume gibt es 409 zurück, bei einer Sandbox, die als Pod läuft, 501. Dateiüberwachung ist noch nicht verfügbar. `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten. Zugriff über das SSH-Protokoll gibt es nicht, daher funktionieren SSH-Clients, `scp` und Portweiterleitung nicht.
 
 ```ts
 const connected = await Sandbox.connect(sandbox.sandboxId);
@@ -126,12 +129,12 @@ await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-Lizard hält standardmäßig fünf Kopien bereit (eine bis zehn), sodass ein Restore von einer fertigen Kopie startet. Ist keine bereit, kann Restore HTTP 503 zurückgeben, bis der Pool nachgefüllt ist. Eine wiederhergestellte Sandbox wird nach gemessener Nutzung abgerechnet; `size` gilt nicht. In der CLI nutzen Sie `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` und `lizard sandbox restore <snapshot-id>`.
+Ein Snapshot einer Firecracker-Sandbox ist bereit, sobald der Aufruf zurückkehrt, und wird von der Festplatte wiederhergestellt; daher gilt `poolSize` nicht. Jedes Restore läuft in der Größe der Quelle und wird zum Stundenpreis dieser Größe abgerechnet. Ein Snapshot einer Pod-Sandbox hält warme Kopien bereit, standardmäßig fünf (eine bis zehn); ist keine bereit, kann Restore HTTP 503 zurückgeben, bis der Pool nachgefüllt ist, und die wiederhergestellte Sandbox wird nach gemessener Nutzung abgerechnet. In beiden Fällen gilt `size` nicht für ein Restore. In der CLI nutzen Sie `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` und `lizard sandbox restore <snapshot-id>`.
 
 ## Aktuelle Laufzeitlimits
 
 SDK und CLI setzen standardmäßig eine Laufzeit von fünf Minuten. Die direkte API und das Dashboard setzen standardmäßig kein Ablaufdatum. Geben Sie die Laufzeit ausdrücklich an: `timeoutMs: 0` bei der Erstellung deaktiviert den Ablauf; ein positiver Wert setzt eine Frist. `setTimeout` akzeptiert 1000–2147483647 ms, nicht null. Befehle verlängern die Frist nicht. Dies ist kein Leerlauf-Timer.
 
-Befehlsergebnisse enthalten stdout, stderr und den Exit-Code. Befehls-Timeouts liegen zwischen 1 und 600 Sekunden. Die aktuelle Laufzeit wendet die SDK-Optionen `envs`, `workdir` und `user` nicht an; setzen Sie Verzeichnis und Umgebung im Shell-Befehl. Auch `envs` und `metadata` bei der Erstellung werden nicht angewendet.
+Befehlsergebnisse enthalten stdout, stderr und den Exit-Code. Befehls-Timeouts liegen zwischen 1 und 600 Sekunden. `process.exec` akzeptiert `envs`, `workdir` und `user`. `envs` bei der Erstellung gelangen in einer Firecracker-Sandbox an jeden Befehl; eine Pod-Sandbox ignoriert sie, übergeben Sie sie dort daher pro Befehl. `getInfo()` und `list()` geben die bei der Erstellung gesetzten `metadata` zurück.
 
 [Schnellstart](/sandboxes/quickstart) · [SDK-Referenz](/sandboxes/sdk-reference) · [Python ausführen](/sandboxes/code-interpreter) · [Dashboard](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)

@@ -18,9 +18,9 @@ Der von dir gesetzte Wert ist nie in die zusammengeführte Umgebung des Service 
 
 ## Warum das passieren kann
 
-- **Das Verweisziel oder der Schlüssel existiert nicht.** Ein Verweis auf einen fehlenden Service-/Add-on-Namen oder auf einen Schlüssel, den dieses Add-on nicht bereitstellt, wird zu einem **leeren String** aufgelöst, statt das Deployment fehlschlagen zu lassen. Es gibt keinen Fehler als Hinweis — der Service startet einfach mit einem leeren Wert.
-- **Etwas mit höherer Priorität hat ihn überschrieben.** Werte werden in einer festen Reihenfolge zusammengeführt — `addon-issued env < project secrets < project env < app env < app secrets < platform vars` — daher kann ein projektbezogenes (`--global`) Secret stillschweigend von einem servicebezogenen Secret mit demselben Schlüssel verdeckt werden, und Plattformvariablen (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`) haben immer Vorrang und können überhaupt nicht überschrieben werden.
-- **Du hast einen Build-Zeit-Wert geändert, aber keinen neuen Build ausgeführt.** Die meisten Variablenänderungen werden ohne Rebuild übernommen — der Service startet neu, um sie zu übernehmen. `VITE_*`- und `NEXT_PUBLIC_*`-Werte sind die Ausnahme — sie werden in die gebauten Assets eingebettet, daher übernimmt ein einfacher Neustart keinen neuen Wert; der Service braucht einen frischen Build.
+- **Das Verweisziel oder der Schlüssel existiert nicht.** Ein Verweis auf einen fehlenden Service-/Add-on-Namen oder auf einen Schlüssel, den dieses Add-on nicht bereitstellt, wird zu einem **leeren String** aufgelöst, statt das Deployment fehlschlagen zu lassen. Das Build-Log gibt für jeden leeren Verweis eine Warnung mit dem Grund aus; bei einer Variablenänderung, die per Neustart ohne Build übernommen wird, erscheint keine Warnung. Ein umbenanntes Ziel gilt als fehlend: Verweise beziehen sich auf den aktuellen Namen.
+- **Etwas mit höherer Priorität hat ihn überschrieben.** Werte werden in einer festen Reihenfolge zusammengeführt — `addon-issued env < project secrets < project env < app env < app secrets < platform vars` — daher kann ein projektbezogenes (`--global`) Secret stillschweigend von einem servicebezogenen Secret mit demselben Schlüssel verdeckt werden, und Plattformvariablen (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`, `LIZARD_PRIVATE_DOMAIN`) haben immer Vorrang. Wenn du `PORT` selbst setzt, ändert sich stattdessen der Port, an den Lizard weiterleitet, außer der Port wurde mit `lizard port` gesetzt.
+- **Ein Build-Zeit-Wert hat den Build nicht erreicht.** Die meisten Variablenänderungen werden ohne Rebuild übernommen — der Service startet neu, um sie zu übernehmen. `VITE_*`- und `NEXT_PUBLIC_*`-Werte werden in die gebauten Assets eingebettet, und eine Änderung startet sofort einen Rebuild laufender Services. Ein Service, der zu diesem Zeitpunkt abgestürzt oder gestoppt war, wird übersprungen, und ein Service mit eigenem `dockerfilePath` oder einer Bereitstellung per `lizard up` ohne Build-/Start-Befehle erhält diese Werte zur Build-Zeit nie.
 
 <span id="possible-solutions" />
 
@@ -28,15 +28,21 @@ Der von dir gesetzte Wert ist nie in die zusammengeführte Umgebung des Service 
 
 <span id="confirm-what-the-running-service-actually-sees" />
 
-### Prüfe, was der laufende Service tatsächlich sieht
+<span id="check-the-build-log-for-empty-references" />
 
-Das ist maßgeblich — es zeigt die Umgebung des Live-Containers, nicht das, von dem du glaubst, dass du es gesetzt hast:
+### Prüfe das Build-Log auf leere Verweise
+
+Shell-Zugriff auf Services (`lizard ssh`) ist deaktiviert. Das Build-Log ist die richtige Anlaufstelle: Jeder leere Verweis erhält eine Zeile wie `==> Warning: ... is empty` mit dem Grund.
 
 ```bash
-lizard ssh --service api -- env | grep DATABASE_URL
+lizard logs --build --service api
 ```
 
-Wenn der Schlüssel fehlt oder leer ist, ist das Verweisziel bzw. der Schlüssel falsch, oder für diesen Geltungsbereich ist nichts gesetzt. Prüfe den Add-on- oder Service-Namen mit `lizard ps` noch einmal und den Schlüssel anhand der [dokumentierten Variablen](/addons) des Addons.
+Liste danach die Verweisvorlagen auf, die in diesem Geltungsbereich gültig sind, und vergleiche Name und Schlüssel mit deinen. Prüfe Schlüssel anhand der [dokumentierten Variablen](/addons) des Add-ons:
+
+```bash
+lizard secrets list --service api --ref
+```
 
 <span id="check-for-a-scope-collision" />
 
@@ -55,7 +61,7 @@ Denke daran: **App-Secrets überschreiben Projekt-Secrets** — wenn ein service
 
 ### Nach einer Änderung zur Build-Zeit neu bauen
 
-Wenn der geänderte Schlüssel `VITE_*` oder `NEXT_PUBLIC_*` ist, löse einen echten Rebuild statt eines Neustarts aus:
+Wenn der geänderte Schlüssel `VITE_*` oder `NEXT_PUBLIC_*` ist und der Service bei der Änderung abgestürzt oder gestoppt war, löse einen Rebuild aus:
 
 ```bash
 lizard redeploy --service api

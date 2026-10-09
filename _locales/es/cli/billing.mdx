@@ -1,5 +1,5 @@
 ---
-description: "lizard billing muestra tu plan Pro, la prueba y el uso, activa o cancela Pro, canjea códigos promocionales y muestra el historial de créditos prepagados y las tarjetas guardadas."
+description: "lizard billing muestra tu plan Pro, la prueba y el uso, activa o cancela Pro, canjea códigos promocionales y muestra el historial de saldo de Enterprise y las tarjetas guardadas."
 ---
 
 # lizard billing
@@ -40,7 +40,7 @@ Abre la página Facturación en el navegador. Allí puedes pagar una factura pen
 
 ### `lizard billing start`
 
-Activa Pro en Stripe Checkout, donde añades una tarjeta. El comando abre Checkout en tu navegador. Una cuenta nueva recibe la prueba de 7 días con $5 en créditos de prueba, y no se cobra nada hasta que termina. Si la cuenta o la tarjeta ya tuvo una prueba, Pro empieza de inmediato y cobra $19.
+Activa Pro en Stripe Checkout, donde añades una tarjeta. El comando abre Checkout en tu navegador. Una cuenta nueva recibe la prueba de 7 días con $5 en créditos de prueba, y no se cobra nada hasta que termina. Si la cuenta ya tuvo una prueba, Pro empieza de inmediato y cobra $19. Si la tarjeta ya tuvo una, la prueba no empieza y no se cobra nada; activa Pro por $19 en la página Facturación.
 
 | Flag | Descripción |
 |------|-------------|
@@ -74,11 +74,11 @@ Canjea un código promocional para una prueba más larga y más créditos de pru
 
 ### `lizard billing balance`
 
-Muestra el saldo de créditos prepagados. Para cuentas con créditos prepagados hasta el 1 de noviembre de 2026 y para cuentas Enterprise.
+Muestra el saldo de una cuenta Enterprise.
 
 ### `lizard billing transactions`
 
-Lista los últimos movimientos del saldo de las cuentas con créditos prepagados y de las cuentas Enterprise (alias `ledger`).
+Lista los últimos movimientos del saldo de una cuenta Enterprise (alias `ledger`).
 
 | Flag | Descripción |
 |------|-------------|
@@ -88,11 +88,11 @@ Lista los últimos movimientos del saldo de las cuentas con créditos prepagados
 
 ### `lizard billing payment-methods list`
 
-Lista las tarjetas guardadas. `pm` es la forma corta de `payment-methods`. Añade una tarjeta en la página Facturación.
+Lista las tarjetas guardadas. `pm` es la forma corta de `payment-methods`. Añade, cambia o quita una tarjeta de Pro en la página Facturación.
 
 ### `lizard billing payment-methods remove <id>`
 
-Quita una tarjeta guardada (alias `rm`).
+Quita una tarjeta guardada (alias `rm`). Solo funciona en cuentas Enterprise; una cuenta Pro recibe HTTP 409 y quita su tarjeta en la página Facturación.
 
 | Flag | Descripción |
 |------|-------------|

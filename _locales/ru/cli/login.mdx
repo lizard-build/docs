@@ -14,7 +14,7 @@ description: "lizard login выполняет аутентификацию че�
 lizard login [flags]
 ```
 
-По умолчанию открывается браузер для аутентификации через OAuth, затем управление возвращается в терминал после подтверждения.
+По умолчанию открывается страница входа в браузере, её URL выводится в терминал, и команда завершается. После входа выполните следующую команду (например, `lizard whoami`): она завершит вход и сохранит ваши учётные данные. С флагом `--json` команда `login` выводит `{ "status": "pending", "authUrl": "…" }` и не открывает браузер.
 
 <span id="flags" />
 
@@ -22,7 +22,7 @@ lizard login [flags]
 
 | Флаг | Описание |
 |------|-------------|
-| `--token <token>` | Аутентификация с помощью API-токена |
+| `--token <token>` | Аутентификация с помощью API-ключа (`liz_…`) |
 
 <span id="examples" />
 
@@ -38,20 +38,24 @@ lizard login
 
 <span id="log-in-with-a-token" />
 
-### Вход с токеном
+<span id="log-in-with-an-api-key" />
+
+### Вход с API-ключом
+
+Создайте ключ с помощью [`lizard keys create <name>`](/cli/keys), затем выполните:
 
 ```bash
-lizard login --token lzd_xxx
+lizard login --token liz_xxx
 ```
 
 <span id="log-in-non-interactively-in-ci" />
 
 ### Неинтерактивный вход в CI
 
-В CI или других неинтерактивных средах задайте `LIZARD_TOKEN` в переменных окружения вместо запуска `login`:
+В CI или других неинтерактивных средах задайте `LIZARD_TOKEN` (или `LIZARD_API_KEY`) в переменных окружения вместо запуска `login`:
 
 ```bash
-export LIZARD_TOKEN=lzd_xxx
+export LIZARD_TOKEN=liz_xxx
 ```
 
 <span id="see-also" />

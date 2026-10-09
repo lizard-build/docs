@@ -1,12 +1,12 @@
 ---
-description: "Almacenamiento de objetos compatible con S3 para cargas, recursos y copias de seguridad. Obtén un bucket de lectura pública y variables de conexión con un solo lizard add s3."
+description: "Almacenamiento de objetos compatible con S3 para cargas, recursos y copias de seguridad. Obtén un bucket predeterminado privado y variables de conexión con un solo lizard add s3."
 ---
 
 <span id="object-storage-s3" />
 
-# Almacenamiento de objetos (S3)
+# Managed Object Storage
 
-Almacenamiento de objetos compatible con S3 para cargas, recursos y copias de seguridad. Al aprovisionar un addon `s3` también se crea un **bucket de lectura pública llamado `default`**, para que puedas servir archivos sin configuración adicional.
+Managed Object Storage es almacenamiento compatible con S3 para cargas, recursos y copias de seguridad. Al aprovisionar un addon `s3` también se crea un **bucket privado llamado `default`**. Para servir archivos sin autenticación, hazlo público desde el navegador S3 del panel.
 
 <span id="provision" />
 
@@ -69,18 +69,19 @@ const s3 = new S3Client({
 
 ## Archivos públicos
 
-Los objetos en cualquier bucket **público** se sirven sin autenticación de dos maneras:
+Los buckets son privados de forma predeterminada. Los objetos de un bucket que hagas **público** se sirven sin autenticación de dos maneras:
 
 1. **URL del gateway** (se muestra en el panel):
    ```
    https://s3-<region>.onlizard.com/<addonId>/<bucket>/<key>
    ```
+   `<region>` es el valor de `S3_REGION` (`eu-west-1` o `us-east-1`).
 2. **Proxy de la plataforma** (el host del panel, con encabezados de caché inmutables de larga duración):
    ```
    <dashboard-host>/api/s3/<addonId>/public/<bucket>/<key>
    ```
 
-Todo lo que se suba al bucket `default` es público inmediatamente en:
+Una vez que hagas público el bucket `default`, sus objetos se sirven en:
 
 ```
 <dashboard-host>/api/s3/<addonId>/public/default/<key>
@@ -90,17 +91,15 @@ Todo lo que se suba al bucket `default` es público inmediatamente en:
 
 ## Explorar objetos
 
-Abre el **navegador S3** en el panel (`lizard open`) para cargar, descargar y administrar objetos y buckets.
+Abre el **navegador S3** en el panel (`lizard open`) para cargar y eliminar objetos, crear carpetas y hacer buckets públicos o privados. Desde la CLI, `lizard s3 upload <file>` carga un archivo y `lizard s3 list` lista los objetos.
 
 > **Los cambios de ACL del bucket** (hacer un bucket público/privado) todavía no están en la CLI; gestiónalos desde el panel.
 
-<span id="grow-storage" />
+<span id="storage-limit" />
 
-## Ampliar almacenamiento
+## Límite de almacenamiento
 
-```bash
-lizard scale --service s3 --storage 16384
-```
+Cada cuenta puede almacenar hasta 16 GiB de objetos entre sus addons de Managed Object Storage. Pagas por los bytes almacenados, no por un tamaño reservado; `lizard scale --storage` no cambia este límite.
 
 <span id="see-also" />
 

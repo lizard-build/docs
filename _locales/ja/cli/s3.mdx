@@ -1,0 +1,82 @@
+---
+description: "lizard s3 は、AWS SDK を使わずに、ローカルファイルを Managed Object Storage の bucket にアップロードし、bucket 内のオブジェクトを一覧表示します。"
+---
+
+# lizard s3
+
+[Managed Object Storage](/addons/storage) の bucket にオブジェクトをアップロードし、一覧表示します。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard s3 upload <file> [flags]
+lizard s3 list [flags]
+```
+
+`--addon` と `--bucket` を渡さない限り、どちらのコマンドもプロジェクト内の唯一の S3 アドオンとその `default` bucket を対象にします。先に `lizard add s3` でアドオンを追加してください。
+
+<span id="subcommands" />
+
+## サブコマンド
+
+### `lizard s3 upload <file>`
+
+ローカルファイルをアップロードします。キー、ETag、サイズを表示し、bucket が公開されている場合は URL も表示します。`default` bucket は非公開です。bucket を公開するには、ダッシュボードの S3 ブラウザーを使ってください。
+
+| フラグ | 説明 |
+|------|-------------|
+| `--addon <name>` | S3 アドオンの名前または ID (デフォルト: プロジェクト内の唯一の S3 アドオン) |
+| `--bucket <name>` | アップロード先の bucket (デフォルトは `default`) |
+| `--key <key>` | オブジェクトキー (デフォルト: ファイル名) |
+| `--content-type <type>` | Content-Type ヘッダー (デフォルト: ファイルの拡張子から推測) |
+| `-p, --project <id>` | プロジェクト名、スラッグ、または ID |
+
+### `lizard s3 list`
+
+bucket 内のオブジェクトを一覧表示します (別名 `ls`)。
+
+| フラグ | 説明 |
+|------|-------------|
+| `--addon <name>` | S3 アドオンの名前または ID |
+| `--bucket <name>` | 一覧表示する bucket (デフォルトは `default`) |
+| `--prefix <prefix>` | このプレフィックス配下のキーのみ |
+| `-p, --project <id>` | プロジェクト名、スラッグ、または ID |
+
+各アカウントは、すべてのアドオンを合わせて最大 16 GiB まで保存できます。ストレージは保存したバイト数に対して、1 GB あたり月 $0.0135 で課金されます。
+
+<span id="examples" />
+
+## 例
+
+<span id="upload-a-file" />
+
+### ファイルをアップロードする
+
+```bash
+lizard s3 upload ./logo.png --key assets/logo.png
+```
+
+<span id="list-objects-under-a-prefix" />
+
+### プレフィックス配下のオブジェクトを一覧表示する
+
+```bash
+lizard s3 list --prefix assets/
+```
+
+<span id="use-a-second-s3-addon" />
+
+### 2 つ目の S3 アドオンを使う
+
+```bash
+lizard s3 upload ./backup.tar.gz --addon s3-autumn-bear
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [Managed Object Storage](/addons/storage) — 環境変数、AWS SDK の設定、公開ファイル
+- [lizard add](/cli/add) — `lizard add s3` で S3 アドオンを追加する

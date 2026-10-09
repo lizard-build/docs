@@ -1,10 +1,10 @@
 ---
-description: "S3-compatible object storage for uploads, assets, and backups. Get a public-read bucket and connection variables from one lizard add s3."
+description: "S3-compatible object storage for uploads, assets, and backups. Get a private default bucket and connection variables from one lizard add s3."
 ---
 
-# Object Storage (S3)
+# Managed Object Storage
 
-S3-compatible object storage for uploads, assets, and backups. Provisioning an `s3` addon also creates a **public-read bucket named `default`**, so you can serve files with zero extra setup.
+Managed Object Storage is S3-compatible storage for uploads, assets, and backups. Provisioning an `s3` addon also creates a **private bucket named `default`**. To serve files without authentication, make it public from the dashboard's S3 browser.
 
 ## Provision
 
@@ -57,18 +57,19 @@ const s3 = new S3Client({
 
 ## Public files
 
-Objects in any **public** bucket are served without authentication two ways:
+Buckets are private by default. Objects in a bucket you make **public** are served without authentication two ways:
 
 1. **Gateway URL** (shown in the dashboard):
    ```
    https://s3-<region>.onlizard.com/<addonId>/<bucket>/<key>
    ```
+   `<region>` is the value of `S3_REGION` (`eu-west-1` or `us-east-1`).
 2. **Platform proxy** (the dashboard host, with long-lived immutable cache headers):
    ```
    <dashboard-host>/api/s3/<addonId>/public/<bucket>/<key>
    ```
 
-Anything uploaded to the `default` bucket is immediately public at:
+Once you make the `default` bucket public, its objects are served at:
 
 ```
 <dashboard-host>/api/s3/<addonId>/public/default/<key>
@@ -76,15 +77,13 @@ Anything uploaded to the `default` bucket is immediately public at:
 
 ## Browse objects
 
-Open the **S3 browser** in the dashboard (`lizard open`) to upload, download, and manage objects and buckets.
+Open the **S3 browser** in the dashboard (`lizard open`) to upload and delete objects, create folders, and make buckets public or private. From the CLI, `lizard s3 upload <file>` uploads a file and `lizard s3 list` lists objects.
 
 > **Bucket ACL changes** (making a bucket public/private) aren't on the CLI yet — manage them from the dashboard.
 
-## Grow storage
+## Storage limit
 
-```bash
-lizard scale --service s3 --storage 16384
-```
+Each account can store up to 16 GiB of objects across its Managed Object Storage addons. You pay for stored bytes, not a reserved size; `lizard scale --storage` does not change this limit.
 
 ## See also
 

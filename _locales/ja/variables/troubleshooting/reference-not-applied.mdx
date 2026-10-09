@@ -18,25 +18,29 @@ description: "シークレットまたは参照は設定されていますが、
 
 ## なぜ起こるのか
 
-- **参照先のターゲットまたはキーが存在しません。** 存在しない service / addon 名への参照、またはその addon が公開していないキーへの参照は、デプロイを失敗させる代わりに **空文字列** として解決されます。通知するエラーは出ないため、サービスは空の値のまま起動します。
-- **より高い優先順位のものに上書きされました。** 値は固定順序でマージされます — `addon-issued env < project secrets < project env < app env < app secrets < platform vars` — そのため、project スコープの (`--global`) シークレットは、同じキーを持つ service スコープのシークレットに静かに隠されることがあります。また、プラットフォーム変数 (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`) は常に優先され、まったく上書きできません。
-- **ビルド時の値を変更したのに再ビルドしていません。** ほとんどの変数変更は再ビルド不要で適用され、サービスはそれらを取り込むために再起動されます。例外は `VITE_*` と `NEXT_PUBLIC_*` の値で、これらはビルド済みアセットに埋め込まれるため、単なる再起動では新しい値は反映されません。サービスには新しいビルドが必要です。
+- **参照先のターゲットまたはキーが存在しません。** 存在しない service / addon 名への参照、またはその addon が公開していないキーへの参照は、デプロイを失敗させる代わりに **空文字列** として解決されます。ビルドログには、空の参照ごとに理由付きの警告が出力されます。ビルドなしで再起動によって適用された変数変更では、警告は表示されません。名前を変更したターゲットは存在しないものとして扱われます。参照は現在の名前と照合されます。
+- **より高い優先順位のものに上書きされました。** 値は固定順序でマージされます — `addon-issued env < project secrets < project env < app env < app secrets < platform vars` — そのため、project スコープの (`--global`) シークレットは、同じキーを持つ service スコープのシークレットに静かに隠されることがあります。また、プラットフォーム変数 (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`, `LIZARD_PRIVATE_DOMAIN`) は常に優先されます。`PORT` を自分で設定すると、代わりに Lizard がルーティングするポートが変わります。ただし、ポートが `lizard port` で設定されている場合は除きます。
+- **ビルド時の値がビルドに渡っていません。** ほとんどの変数変更は再ビルド不要で適用され、サービスはそれらを取り込むために再起動されます。`VITE_*` と `NEXT_PUBLIC_*` の値はビルド済みアセットに埋め込まれ、これらを変更すると稼働中のサービスではすぐに再ビルドが始まります。その時点でクラッシュまたは停止していたサービスはスキップされます。また、独自の `dockerfilePath` を持つサービスや、build/start コマンドなしで `lizard up` でアップロードされたサービスでは、これらの値がビルド時に渡されることはありません。
 
 <span id="possible-solutions" />
 
 ## 考えられる解決策
 
-<span id="confirm-what-the-running-service-actually-sees" />
+<span id="check-the-build-log-for-empty-references" />
 
-### 実行中のサービスが実際に何を見ているか確認する
+### ビルドログで空の参照を確認する
 
-これは信頼できる確認方法です。設定したつもりの値ではなく、稼働中コンテナの実際の環境を表示します。
+サービスへのシェルアクセス (`lizard ssh`) は無効になっています。確認すべき場所はビルドログです。空の参照ごとに、`==> Warning: ... is empty` のような行が理由とともに出力されます。
 
 ```bash
-lizard ssh --service api -- env | grep DATABASE_URL
+lizard logs --build --service api
 ```
 
-キーが見つからない、または空の場合、参照先のターゲット / キーが誤っているか、そのスコープには何も設定されていません。`lizard ps` で addon または service 名を再確認し、キーについては addon の[ドキュメント化された変数](/addons)を確認してください。
+次に、このスコープで有効な参照テンプレートを一覧表示し、名前とキーを自分のものと比較してください。キーについては addon の[ドキュメント化された変数](/addons)を確認してください:
+
+```bash
+lizard secrets list --service api --ref
+```
 
 <span id="check-for-a-scope-collision" />
 
@@ -55,7 +59,7 @@ lizard secrets list --global --show
 
 ### ビルド時の変更後は再ビルドする
 
-変更したキーが `VITE_*` または `NEXT_PUBLIC_*` の場合、再起動ではなく実際の再ビルドを実行してください。
+変更したキーが `VITE_*` または `NEXT_PUBLIC_*` で、変更時にサービスがクラッシュまたは停止していた場合は、再ビルドを実行してください。
 
 ```bash
 lizard redeploy --service api

@@ -27,11 +27,12 @@ Lizard compila y ejecuta aplicaciones desde un repositorio de GitHub o una carpe
 
 ## Despliega una app
 
-Instala Lizard CLI e inicia sesión; luego despliega un repositorio al que tengas acceso:
+Instala Lizard CLI, inicia sesión y empieza la prueba de Pro de 7 días; luego despliega un repositorio al que tengas acceso:
 
 ```bash
 curl -fsSL https://lizard.build/install.sh | bash
 lizard login
+lizard billing start   # opens Stripe Checkout; add a card, nothing is charged during the trial
 lizard add -r your-org/your-app
 ```
 

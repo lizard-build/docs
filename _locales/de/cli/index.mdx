@@ -1,5 +1,5 @@
 ---
-description: "Installiere und aktualisiere die lizard CLI, authentifiziere dich und schlage globale Flags, Exit-Codes und die Laufzeit-Schema-Erkennung für jeden Befehl nach."
+description: "Installiere und aktualisiere die Lizard CLI, authentifiziere dich und schlage globale Flags, Exit-Codes und die Laufzeit-Schema-Erkennung für jeden Befehl nach."
 ---
 
 <span id="cli-reference" />
@@ -8,7 +8,7 @@ description: "Installiere und aktualisiere die lizard CLI, authentifiziere dich 
 
 Die `lizard` CLI ist die primäre Schnittstelle zur Plattform. Diese Seite behandelt Installation, globale Flags, Exit-Codes und Laufzeit-Erkennung. Jeder Befehl hat seine eigene Referenzseite in der Seitenleiste — siehe [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets) und die übrigen.
 
-> Referenz generiert für CLI **v0.3.62**. Führe `lizard <cmd> --help --json` aus, um das exakte, versionspassende Schema eines beliebigen Befehls zu sehen.
+> Referenz geschrieben für Lizard CLI **v4.0.34**. Führe `lizard <cmd> --help --json` aus, um das exakte, versionspassende Schema eines beliebigen Befehls zu sehen.
 
 <span id="install--upgrade" />
 
@@ -23,7 +23,7 @@ lizard upgrade --check    # check without installing
 
 Unter Windows führe `irm https://lizard.build/api/cli/install.ps1 | iex` in PowerShell aus. Mit Node.js kannst du stattdessen über npm installieren: `npm install -g @lizard-build/cli`.
 
-Die Binärdatei aus dem Installationsskript aktualisiert sich außerdem im Hintergrund selbst, höchstens einmal alle 6 Stunden; setze `LIZARD_NO_UPDATE=1`, um das abzuschalten. Eine npm-Installation aktualisierst du über npm: `lizard upgrade` gibt den Befehl aus.
+Unter macOS und Linux aktualisiert sich die Binärdatei aus dem Installationsskript außerdem im Hintergrund selbst, höchstens einmal alle 6 Stunden. Die Prüfung wird übersprungen, wenn `CI` oder `LIZARD_NO_UPDATE=1` gesetzt ist. Die Windows-Binärdatei aktualisiert sich nicht selbst: Führe den Installer erneut aus. Eine npm-Installation aktualisierst du über npm: `lizard upgrade` gibt den Befehl aus.
 
 Verwende immer die global installierte `lizard`-Binärdatei — **nicht** `npx`. Hinweise zur Behebung von Berechtigungsfehlern findest du unter [Quickstart](/getting-started#1-install-the-cli).
 
@@ -33,12 +33,12 @@ Verwende immer die global installierte `lizard`-Binärdatei — **nicht** `npx`.
 
 ```bash
 lizard login                  # browser OAuth
-lizard login --token lzd_xxx  # token auth
+lizard login --token liz_xxx  # API key auth
 lizard logout
 lizard whoami                 # current user, workspace, linked project
 ```
 
-In CI solltest du `LIZARD_TOKEN` in der Umgebung setzen, statt `login` auszuführen.
+API-Keys beginnen mit `liz_`. Erstelle einen mit [`lizard keys create <name>`](/cli/keys). In CI solltest du `LIZARD_TOKEN` (oder `LIZARD_API_KEY`) in der Umgebung setzen, statt `login` auszuführen.
 
 <span id="global-flags" />
 
@@ -49,7 +49,7 @@ In CI solltest du `LIZARD_TOKEN` in der Umgebung setzen, statt `login` auszufüh
 | `-V, --version` | CLI-Version ausgeben |
 | `--json` | Maschinell lesbare Ausgabe. Mit `--help` kombinieren, um das Schema eines Befehls auszugeben |
 
-Die meisten Befehle akzeptieren außerdem `-p, --project`, `-s, --service` und `-w, --workspace`, um statt der verknüpften Ressource eine bestimmte Ressource anzusteuern.
+Die meisten Befehle akzeptieren außerdem `-p, --project` und `-s, --service`, um statt der verknüpften Ressource eine bestimmte Ressource anzusteuern. `init`, `link` und `project` akzeptieren zusätzlich `-w, --workspace`. `lizard add` verwendet immer das verknüpfte Projekt.
 
 ## Exit-Codes
 
@@ -89,15 +89,30 @@ Das entspricht immer deiner installierten Version — ziehe es Vermutungen über
 - `lizard status` zeigt die Workspace-/Projekt-/Service-Verknüpfung des cwd an (keine Authentifizierung erforderlich).
 - `lizard config apply` wendet eine `lizard-config.json`-Datei auf ein Projekt an (verwende `--dry-run` für eine Vorschau).
 
+<span id="environment-variables" />
+
+## Umgebungsvariablen
+
+| Variable | Wirkung |
+|----------|--------|
+| `LIZARD_TOKEN` | API-Key oder Token, der statt des gespeicherten Logins verwendet wird |
+| `LIZARD_API_KEY` | Wie `LIZARD_TOKEN` |
+| `LIZARD_API_URL` | Basis-URL der API (Standard `https://lizard.build`) |
+| `LIZARD_HOME` | CLI-Status in `$LIZARD_HOME/.lizard` statt in `~/.lizard` speichern |
+| `LIZARD_NO_UPDATE` | Selbstaktualisierung im Hintergrund abschalten |
+| `CI` | Schaltet die Selbstaktualisierung im Hintergrund ebenfalls ab |
+| `LIZARD_SKILLS_DIR` | Skills aus diesem Verzeichnis lesen statt der in die CLI eingebauten |
+
 <span id="sandbox-volumes" />
 
 ## Sandbox-Volumes
 
-Verwalte [Persistent Volumes](/sandboxes/volumes) in einem Projekt über ihre Namen:
+Verwalte [Persistent Volumes](/sandboxes/volumes) in einem Projekt über ihre Namen. Vollständige Referenz: [`lizard volume`](/cli/volume) und [`lizard sandbox`](/cli/sandbox).
 
 ```bash
 lizard volume create agent-workdir --size 10 --project proj_123
 lizard volume list --project proj_123
+lizard volume resize agent-workdir --size 20 --project proj_123
 lizard sandbox create --volume agent-workdir --project proj_123
 ```
 

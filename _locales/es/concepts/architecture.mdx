@@ -57,13 +57,13 @@ Un **servicio** es una sola unidad desplegable. Su origen es uno de estos:
 - **`github`** — un repositorio de GitHub conectado. Los pushes a la rama seguida vuelven a desplegar automáticamente.
 - **`upload`** — un tarball subido con `lizard up`.
 
-Cada servicio en ejecución corre como su propio **pod aislado** con una política de red de denegación por defecto, un dominio `<name>.<region>.onlizard.com` generado y TLS automático. Esa separación — tú aportas el contenedor, la plataforma lo ejecuta — es [container as a service](https://lizard.build/blog/container-as-a-service), y el blog explica de qué sigues teniendo que ocuparte. Inspecciona y gestiona servicios con:
+Cada servicio en ejecución corre como su propio **pod aislado** con una política de red de denegación por defecto, un dominio `<name>-<suffix>.onlizard.com` generado (los servicios más antiguos conservan `<words>.<region>.onlizard.com`) y TLS automático. Esa separación — tú aportas el contenedor, la plataforma lo ejecuta — es [container as a service](https://lizard.build/blog/container-as-a-service), y el blog explica de qué sigues teniendo que ocuparte. Inspecciona y gestiona servicios con:
 
 ```bash
 lizard ps                       # list services with status + URL
 lizard service show             # full config as JSON
 lizard service set <svc> --set <field>=<value>
-lizard service rename --service <svc>
+lizard service rename <new-name> --service <svc>
 lizard service delete --service <svc>
 ```
 
@@ -79,7 +79,7 @@ Por defecto, un servicio es una **app HTTP** que escucha en un puerto (`3000` po
 
 ## Addons gestionados
 
-Los **addons** son Postgres, Redis y almacenamiento compatible con S3 gestionados que aprovisionas por proyecto:
+Los **addons** son Managed Postgres, Managed Redis y Managed Object Storage (compatible con S3) que aprovisionas por proyecto:
 
 ```bash
 lizard add postgres redis s3
@@ -97,17 +97,18 @@ Cualquier valor de un servicio o addon puede referenciarse desde el entorno de o
 ${{<name>.<KEY>}}
 ```
 
-Las referencias se resuelven en **tiempo de despliegue** contra el entorno combinado del destino. Se almacenan por ID, así que renombrar el destino después no rompe la referencia. Una referencia a un destino o clave inexistente se resuelve como una cadena vacía (el despliegue **no** falla por eso); solo las referencias circulares lanzan errores.
+Las referencias se resuelven en **tiempo de despliegue** contra el entorno combinado del destino. Coinciden con el **nombre actual** del destino: si renombras un servicio o addon, actualiza todas las referencias que usen el nombre anterior. Una referencia a un destino o clave inexistente se resuelve como una cadena vacía (el despliegue **no** falla por eso); solo las referencias circulares lanzan errores.
 
 ```bash
 # Wire a service to the project's Postgres
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 ```
 
-Verifica que el consumidor realmente recibió el valor:
+Comprueba que la referencia se resolvió. El log de build imprime una advertencia por cada referencia que se resolvió como un valor vacío, y `secrets list` muestra lo que está almacenado:
 
 ```bash
-lizard ssh --service api -- env | grep DATABASE_URL
+lizard logs --build --service api
+lizard secrets list --service api --show
 ```
 
 <span id="platform-injected-variables" />
@@ -121,6 +122,7 @@ Cada servicio recibe automáticamente estas variables (no se pueden sobrescribir
 | `PORT` | Puerto en el que tu app debe escuchar (se omite en modo worker) |
 | `LIZARD_SERVICE_NAME` | El nombre del servicio |
 | `LIZARD_PROJECT_ID` | El ID del proyecto |
-| `LIZARD_PUBLIC_DOMAIN` | El dominio público del servicio |
+| `LIZARD_PUBLIC_DOMAIN` | El dominio público del servicio (se define una vez que se asigna un dominio) |
+| `LIZARD_PRIVATE_DOMAIN` | El hostname privado del servicio, `<host>.lizard.internal`, accesible desde el mismo proyecto |
 
 Consulta [Variables & Secrets](/variables) para ver cómo interactúan con tus propias variables y el orden completo de precedencia.

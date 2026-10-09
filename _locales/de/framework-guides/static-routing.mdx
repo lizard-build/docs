@@ -82,7 +82,7 @@ EXPOSE 80
 
 Verwenden Sie die Richtlinie für erzeugte Seiten nur, wenn die App diese Routendateien hat. Ein SvelteKit-SPA-Fallback benötigt zum Beispiel seine eigene Routing-Richtlinie. [Next.js statischer Export](/framework-guides/nextjs/static-export) enthält eine vollständige Anleitung mit einem Trailing-Slash-Layout.
 
-Schließen Sie Abhängigkeiten, Build-Ausgabe, `.git` und `.env*` in `.dockerignore` aus. Wenn der Build öffentliche Variablen benötigt, deklarieren Sie ihre `ARG`-Werte vor dem Build-Befehl. Kopieren Sie keine privaten Secrets in das Image oder die Browser-Ausgabe.
+Schließen Sie Abhängigkeiten, Build-Ausgabe, `.git` und `.env*` in `.dockerignore` aus. Wenn der Build öffentliche Variablen benötigt, schreiben Sie sie als `ENV`-Zeilen vor den Build-Befehl. Lizard übergibt keine Build-Argumente außer `COMMIT_SHA`, daher bleibt ein `ARG` leer. Kopieren Sie keine privaten Secrets in das Image oder die Browser-Ausgabe.
 
 Nach der [CLI-Einrichtung](/framework-guides#prepare-the-project) erstellen Sie einen Service mit `lizard add --service web` und stellen dann diesen Quellcode mit `lizard up --service web --port 80` bereit. Überspringen Sie den Schritt zum Hinzufügen, wenn der Service bereits existiert. Prüfen Sie bei einem bestehenden Service die [Reihenfolge der Build-Entscheidung](/concepts/build-pipeline#build-decision-order): Befehlsüberschreibungen können Vorrang vor dem Dockerfile haben. Eine Konfigurationsdatei allein ersetzt die erzeugte nginx-Konfiguration nicht; das Dockerfile muss sie in das Image kopieren.
 
@@ -104,4 +104,3 @@ Erwarten Sie 200 für echte Seiten und 404 für den fehlenden Pfad. Wenn eine g�
 Öffnen Sie die innere Route abschließend direkt in einem Browser und laden Sie sie neu. Korrekte Client-Navigation allein kann einen Server-Routing-Fehler verbergen. Prüfen Sie vor der Veröffentlichung einer indexierten Website zusammen mit dem HTTP-Status auch die Einstellungen des Frameworks für kanonische URLs und die Sitemap.
 
 Unter [getestete Versionen und Cloud-Ergebnisse](/framework-guides/validation) finden Sie die Deployment-Prüfungen vom 9. September 2026 und ihre Grenzen.
-

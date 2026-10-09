@@ -1,5 +1,5 @@
 ---
-description: "Every service gets an onlizard.com domain with automatic TLS. Attach a custom hostname, verify DNS, expose a port, or remove a domain."
+description: "Every service gets an onlizard.com domain with automatic TLS. Attach a custom hostname, verify DNS, change the port, reach other services privately, or remove a domain."
 ---
 
 # Networking
@@ -8,14 +8,14 @@ Every service gets a generated `*.onlizard.com` domain with automatic TLS the mo
 
 ## Generated domains
 
-A service's default domain is created for you. Show it (or generate a fresh one):
+A service's default domain is created for you, in the form `<name>-<suffix>.onlizard.com`. Older services keep `<words>.<region>.onlizard.com`. Show it:
 
 ```bash
 lizard domain                    # show the service's current domain
-lizard domain generate           # generate a new *.onlizard.com subdomain
+lizard domain generate           # claim a *.onlizard.com subdomain if the service has none
 ```
 
-Object storage served from an [S3 addon](/addons/storage) uses a region-scoped gateway host (`s3-<region>.onlizard.com`) instead.
+`lizard domain generate` returns the existing generated domain when there is one, and fails while the service has a custom domain. Files served from [Managed Object Storage](/addons/storage) use a gateway host instead: `s3-eu-west-1.onlizard.com` or `s3-us-east-1.onlizard.com`.
 
 ## Attach a custom domain
 
@@ -32,7 +32,7 @@ Lizard returns the DNS records to create (a `CNAME` for the hostname and a `TXT`
 Once DNS has propagated, activate the domain:
 
 ```bash
-lizard domain verify app.example.com
+lizard domain verify app.example.com --service web
 ```
 
 This checks the `TXT` record and activates the domain. TLS is provisioned automatically.
@@ -40,28 +40,37 @@ This checks the `TXT` record and activates the domain. TLS is provisioned automa
 ## Remove a domain
 
 ```bash
-lizard domain delete app.example.com
-lizard domain rm app.example.com --yes   # alias, skip confirmation
+lizard domain delete app.example.com --service web
+lizard domain rm app.example.com --service web --yes   # alias, skip confirmation
 ```
 
-## Exposing a specific port
+## Change the port your service listens on
 
-If your service serves on a non-default port, attach the domain to that port:
+Domains route to the service's container port. If your service listens on another port, change the container port and redeploy:
 
 ```bash
-lizard domain app.example.com --service web --port 8080
+lizard port 8080 --service web
+lizard redeploy --service web
 ```
 
 ## Worker services
 
 A [worker-mode service](/deploy/workers) (`containerPort=0`) may still show a generated domain, but it serves nothing — there's no listener and no load-balancer route. Don't attach a custom domain to a worker.
 
+## Private networking
+
+Services in the same project reach each other at `<service>.lizard.internal`, on any port the service listens on, without a public domain. Reference the hostname as `${{api.LIZARD_PRIVATE_DOMAIN}}`. Managed Postgres and Managed Redis expose `DATABASE_PRIVATE_URL` and `REDIS_PRIVATE_URL` on the same network. These names resolve only inside the project.
+
+```bash
+lizard secrets set API_URL='http://${{api.LIZARD_PRIVATE_DOMAIN}}:8080' --service web
+```
+
 ## Manage in the dashboard
 
-The **Domains** view in the dashboard (`lizard open`) shows each domain's verification and TLS status and lets you add or remove hostnames visually.
+Open a service in the dashboard (`lizard open`) and go to **Settings → Networking**. It shows each domain's verification and DNS status and lets you add or remove hostnames.
 
 ## See also
 
 - [`lizard domain`](/cli/domain) — the full command reference.
 - [Regions](/deploy/regions) — co-locating services and addons for latency.
-- [From prototype to a SaaS people pay for](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#from-vibe-coded-prototype-to-a-saas-people-pay-for) — where a custom domain sits among the other things a generated app still needs.
+- [From prototype to a SaaS people pay for](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#verify-a-real-production-flow) — where a custom domain sits among the other things a generated app still needs.

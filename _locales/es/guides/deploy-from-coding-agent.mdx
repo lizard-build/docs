@@ -12,7 +12,7 @@ Un agente de código puede usar Lizard Skill y Lizard CLI para desplegar la app 
 
 ## Antes de empezar
 
-Ten una aplicación funcional, permiso para desplegarla y una cuenta en Lizard. La aplicación debe escuchar en `0.0.0.0` y el puerto configurado. Ejecuta sus comprobaciones locales antes de iniciar una compilación en la nube.
+Ten una aplicación funcional, permiso para desplegarla y una cuenta de Lizard en Pro o en la prueba de Pro de 7 días (requiere tarjeta). Hasta que empiece la prueba, `lizard add` y `lizard up` devuelven HTTP 402 con un enlace de Checkout; `lizard billing start` lo abre. La aplicación debe escuchar en `0.0.0.0` y el puerto configurado. Ejecuta sus comprobaciones locales antes de iniciar una compilación en la nube.
 
 <span id="give-the-agent-the-current-guide" />
 
@@ -24,7 +24,7 @@ lizard skills get core --json
 lizard --help --json
 ```
 
-En Windows, `npm install -g @lizard-build/cli` instala el mismo CLI.
+En Windows, ejecuta `irm https://lizard.build/api/cli/install.ps1 | iex` en PowerShell, o instálalo desde npm con `npm install -g @lizard-build/cli`.
 
 Lizard Skill carga instrucciones que coinciden con el CLI instalado. Para un comando concreto, lee su esquema en lugar de adivinar las opciones:
 
@@ -63,7 +63,7 @@ lizard up --service api --port 3000 --json
 
 Usa el nombre real de la base de datos si no es `postgres`. Mantén la referencia entre comillas para que el shell local no la expanda. Configúrala antes del primer despliegue. Inicia sesión con `lizard login` solo si un comando indica que se requiere autenticación.
 
-La ruta de carga es intencional para este ejemplo copiado. Para una aplicación que ya está en GitHub, usa la siguiente sección. En macOS con Lizard CLI 0.3.92, ejecuta `COPYFILE_DISABLE=1 lizard up --service api --port 3000 --json` para excluir metadatos AppleDouble. En esa versión del CLI, una compilación fallida aún puede salir con código 0: inspecciona el evento de terminal `failed`/`deployed` y verifica la aplicación. Consulta [problemas conocidos](/platform/known-issues).
+La ruta de carga es intencional para este ejemplo copiado. Para una aplicación que ya está en GitHub, usa la siguiente sección. Una compilación fallida sale con código 1; aun así, inspecciona el evento de terminal `failed`/`deployed` y verifica la aplicación. Consulta [problemas conocidos](/platform/known-issues).
 
 <span id="deploy-from-github" />
 

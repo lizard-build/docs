@@ -27,11 +27,12 @@ Lizard erstellt und betreibt Anwendungen aus einem GitHub-Repository oder einem 
 
 ## Eine App bereitstellen
 
-Installieren Sie Lizard CLI und melden Sie sich an. Stellen Sie dann ein Repository bereit, auf das Sie zugreifen können:
+Installieren Sie Lizard CLI, melden Sie sich an und starten Sie die 7-tägige Pro-Testphase. Stellen Sie dann ein Repository bereit, auf das Sie zugreifen können:
 
 ```bash
 curl -fsSL https://lizard.build/install.sh | bash
 lizard login
+lizard billing start   # opens Stripe Checkout; add a card, nothing is charged during the trial
 lizard add -r your-org/your-app
 ```
 

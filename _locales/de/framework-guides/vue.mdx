@@ -63,7 +63,7 @@ Teste sowohl die Navigation von der Startseite als auch das Öffnen von `/accoun
 
 ## Variablen und API-Anfragen
 
-Vite schreibt `VITE_*`-Werte während des Builds in das Browser-Bundle. Verwende sie nur für öffentliche Werte, etwa die öffentliche HTTPS-URL deiner API. Setze sie über [Variablen und Secrets](/variables) und prüfe dann die tatsächliche Netzwerkanfrage der neu gebauten App. Ein reiner Laufzeit-Neustart kann keinen Wert in bereits gebautem JavaScript ersetzen.
+Vite schreibt `VITE_*`-Werte während des Builds in das Browser-Bundle. Verwende sie nur für öffentliche Werte, etwa die öffentliche HTTPS-URL deiner API. Committe sie bei `lizard up` in `.env.production` (prüfe, dass `.gitignore` die Datei nicht ausschließt); Lizard-Variablen gelangen nur bei einem [GitHub-Service](/deploy/github) in den Build, wie unter [Build-Zeit-Variablen](/concepts/build-pipeline#build-time-variables) beschrieben. Prüfe dann die tatsächliche Netzwerkanfrage der neu gebauten App. Ein reiner Laufzeit-Neustart kann keinen Wert in bereits gebautem JavaScript ersetzen.
 
 Wenn Anfragen nur nach dem Deployment fehlschlagen, prüfe CORS auf der API und bestätige, dass der Browser nicht `localhost` oder einen privaten Backend-Hostnamen aufruft. Wenn das HTML lädt, aber Assets fehlschlagen, prüfe die base von Vite und die Asset-Pfade. Für Seiten, die HTML benötigen, bevor JavaScript läuft, wähle Nuxt-Rendering oder einen expliziten Prerendering-Schritt.
 

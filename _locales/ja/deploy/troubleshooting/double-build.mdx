@@ -18,7 +18,7 @@ description: "lizard service set の後に redeploy を実行すると 2 つの�
 
 ## なぜこれが起こるのか
 
-サービスの **ビルドに影響する** フィールド — `repoUrl`、`branch`、`sourceType`、`buildCommand`、`dockerfilePath`、または `rootDirectory` — を変更すると、すぐに自動で再ビルドされます。**ランタイムのみ** のフィールド — `startCommand`、`preDeployCommand`、`containerPort`、`watchPatterns` — を変更しても、自動で再ビルドは **されません**。これは次回のデプロイ時にのみ反映されます。
+サービスの **ビルドに影響する** フィールド — `repoUrl`、`branch`、`sourceType`、`buildCommand`、`dockerfilePath`、または `rootDirectory` — を変更すると、稼働中のサービスはすぐに自動で再ビルドされます。クラッシュしたサービスや一度もデプロイされていないサービスは、自動では再ビルドされません。**ランタイムのみ** のフィールド — `startCommand`、`preDeployCommand`、`containerPort`、`watchPatterns` — を変更しても、自動で再ビルドは **されません**。これは次回のデプロイ時にのみ反映されます。
 
 `service set` のたびに反射的に `redeploy` を続けて実行しがちですが、それが意味を持つのはランタイムのみのフィールドに対してだけです。
 
@@ -30,7 +30,7 @@ description: "lizard service set の後に redeploy を実行すると 2 つの�
 
 ### 変更したフィールドの種類を確認する
 
-[再ビルドのトリガー一覧表](/concepts/build-pipeline#what-triggers-a-rebuild)を参照してください。ビルドフィールドであれば、再ビルドはすでにキューされています。追加では何もしないでください。
+[再ビルドのトリガー一覧表](/concepts/build-pipeline#what-triggers-a-rebuild)を参照してください。ビルドフィールドで、サービスが稼働中だった場合、再ビルドはすでにキューされています。追加では何もしないでください。サービスがクラッシュしていたか、一度もデプロイされていなかった場合は、`lizard redeploy` を 1 回実行してください。
 
 ```bash
 lizard events   # confirm only one build is in flight

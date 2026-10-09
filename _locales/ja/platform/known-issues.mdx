@@ -14,11 +14,11 @@ description: "ワークフローに依存する前に確認すべき、現在の
 
 ## サンドボックス の一時停止と有効期限
 
-sandbox を作成してコマンドを実行し、終了後に `kill` を呼び出します。`connect` は既存の sandbox に接続するだけで状態を変えないため、一時停止中や停止済みの sandbox を再開しません。一時停止、再開、snapshot、restore は利用できます。[一時停止、再開、スナップショット](/sandboxes/quickstart#pause-and-resume)を参照してください。fork とファイル監視は HTTP 501 を返します。`lizard sandbox ssh` は CLI の認証情報で対話型シェルを開きます。SSH プロトコルでのアクセスはできないため、SSH クライアント、`scp`、ポートフォワーディングは使えません。
+sandbox を作成してコマンドを実行し、終了後に `kill` を呼び出します。`connect` は既存の sandbox に接続するだけで状態を変えないため、一時停止中や停止済みの sandbox を再開しません。一時停止、再開、snapshot、restore は利用できます。[一時停止、再開、スナップショット](/sandboxes/quickstart#pause-and-resume)を参照してください。fork（`sandbox.fork({ count })`）は Firecracker の sandbox で動作します。ボリュームが接続されている場合は HTTP 409 を返し、pod の sandbox では HTTP 501 を返します。`lizard sandbox ssh` は CLI の認証情報で対話型シェルを開きます。SSH プロトコルでのアクセスはできないため、SSH クライアント、`scp`、ポートフォワーディングは使えません。
 
 一時停止すると、開いているネットワーク接続は閉じられます。プロセスを保存できない場合、sandbox は実行を続け、理由を `pauseError` に記録します。一時停止中の sandbox は元のノードでしか再開できず、そのノードが故障すると一時停止した状態は失われます。
 
-sandbox の実行中はファイルとプロセスを維持します。停止後、別の sandbox で使えるのは、接続した Persistent Volume の `/workspace` に保存したファイルだけです。ボリュームがなければ `/workspace` は一時領域です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。
+sandbox の実行中はファイルとプロセスを維持します。停止後、別の sandbox で使えるのは、接続した永続ボリュームの `/workspace` に保存したファイルだけです。ボリュームがなければ `/workspace` は一時領域です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。
 
 ## 再デプロイはロールバックではありません
 
@@ -34,9 +34,9 @@ sandbox の実行中はファイルとプロセスを維持します。停止後
 
 ## テンプレートと MCP
 
-現在のカタログからテンプレートを選びます。有効なテンプレートには `base`、`codex`、`interpreter` があり、利用可否はリージョンとプールの空き容量によって変わります。`interpreter` には Python と一般的なデータ処理ライブラリが含まれます。ツールのバージョンは sandbox 内で確認してください。公開 CLI には独自テンプレートのアップロード機能はありません。
+現在のカタログからテンプレートを選びます。有効なテンプレートは `base`、`interpreter`、`codex`、`desktop`、`opencode`、`pi`、`prime`、`claude` で、利用可否はリージョンとプールの空き容量によって変わります。`interpreter` には Python と一般的なデータ処理ライブラリが含まれます。ツールのバージョンは sandbox 内で確認してください。公開 CLI には独自テンプレートのアップロード機能はありません。
 
-Lizard Skill は Lizard CLI を使用します。そのワークフローでは MCP トランスポートは公開されません。独自のリモート MCP サーバーをホストするには、別個のアプリケーションデプロイが必要です。[ガイド](/guides/deploy-mcp-server)を参照してください。
+Lizard Skill は Lizard CLI を使用し、MCP トランスポートは公開しません。MCP クライアントには、ホストされた Lizard MCP サーバーを使ってください。[Lizard MCP](/agents#lizard-mcp) を参照してください。独自のリモート MCP サーバーをホストするには、別個のアプリケーションデプロイが必要です。[ガイド](/guides/deploy-mcp-server)を参照してください。
 
 <span id="service-port-changes-fixed-and-verified-on-2026-09-09" />
 

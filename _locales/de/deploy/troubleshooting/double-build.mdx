@@ -18,7 +18,7 @@ Der Aufruf `service set` hat bereits selbstständig einen Rebuild ausgelöst. Da
 
 ## Warum das passieren kann
 
-Wenn du ein **build-relevantes** Feld eines Service änderst — `repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath` oder `rootDirectory` — wird sofort automatisch ein Rebuild ausgelöst. Wenn du ein **reines Laufzeitfeld** änderst — `startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns` — wird **kein** automatischer Rebuild ausgelöst; die Änderung wird erst beim nächsten Bereitstellen wirksam.
+Wenn du ein **build-relevantes** Feld eines Service änderst — `repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath` oder `rootDirectory` — wird ein laufender Service sofort automatisch neu gebaut. Ein abgestürzter oder noch nie bereitgestellter Service wird nicht selbstständig neu gebaut. Wenn du ein **reines Laufzeitfeld** änderst — `startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns` — wird **kein** automatischer Rebuild ausgelöst; die Änderung wird erst beim nächsten Bereitstellen wirksam.
 
 Es ist leicht, reflexartig nach jedem `service set` noch ein `redeploy` anzuhängen, aber das ist nur bei reinen Laufzeitfeldern sinnvoll.
 
@@ -30,7 +30,7 @@ Es ist leicht, reflexartig nach jedem `service set` noch ein `redeploy` anzuhän
 
 ### Prüfe, welche Art von Feld du geändert hast
 
-Sieh in der [Tabelle der Rebuild-Auslöser](/concepts/build-pipeline#what-triggers-a-rebuild) nach. Wenn es ein Build-Feld ist, ist der Rebuild bereits in der Warteschlange — du musst nichts weiter tun.
+Sieh in der [Tabelle der Rebuild-Auslöser](/concepts/build-pipeline#what-triggers-a-rebuild) nach. Wenn es ein Build-Feld ist und der Service lief, ist der Rebuild bereits in der Warteschlange — du musst nichts weiter tun. Wenn der Service abgestürzt war oder noch nie bereitgestellt wurde, führe einmal `lizard redeploy` aus.
 
 ```bash
 lizard events   # confirm only one build is in flight

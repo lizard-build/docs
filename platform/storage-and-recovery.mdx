@@ -9,10 +9,10 @@ Choose storage by the data that must survive a process restart, a new deployment
 | Data | Where to keep it | Boundary |
 |---|---|---|
 | Application records | Managed Postgres or another database | A restart is different from restoring deleted or corrupt data. Test a separate export and restore path. |
-| Cache and queue data | Managed Redis | Decide whether the workload can rebuild its state or needs its own recovery plan. |
-| Files shared by applications | Managed Object Storage | Set the bucket's access policy before uploading private data. The automatically created `default` bucket is public-read. |
+| Cache and queue data | Managed Redis | Decide whether the workload can rebuild its state or needs its own recovery plan. Managed Redis has no eviction policy and no append-only file: if it runs out of memory, it restarts and recent writes can be lost. Keep data you cannot lose in Managed Postgres. |
+| Files shared by applications | Managed Object Storage | The automatically created `default` bucket is private. Make a bucket public from the bucket browser in the dashboard only if anyone may read its files. |
 
-Files and running processes remain available while the sandbox runs. After it stops, only files written to an attached Persistent Volume at `/workspace` can be reused by a later sandbox. Without a volume, `/workspace` is temporary. Each volume attaches to one sandbox at a time and uses node-local storage; export files that must survive node loss.
+Files and running processes remain available while the sandbox runs. After it stops, only files written to an attached persistent volume at `/workspace` can be reused by a later sandbox. Without a volume, `/workspace` is temporary. Each volume attaches to one sandbox at a time and uses node-local storage; export files that must survive node loss.
 
 ## Keep files after a sandbox ends
 

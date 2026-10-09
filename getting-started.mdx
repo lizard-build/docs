@@ -4,7 +4,7 @@ description: "Install the lizard CLI, log in, and ship your first app from a Git
 
 # App quickstart
 
-Ship your first app to Lizard in a few minutes. A Lizard account is created automatically the first time you `lizard login`. You'll install the CLI, log in, and deploy — either straight from a GitHub repo or from a local directory.
+Ship your first app to Lizard in a few minutes. A Lizard account is created automatically the first time you `lizard login`. You'll install Lizard CLI, log in, start the Pro trial, and deploy — either straight from a GitHub repo or from a local directory.
 
 ## 1. Install the CLI
 
@@ -14,7 +14,7 @@ On macOS or Linux, run the install script:
 curl -fsSL https://lizard.build/install.sh | bash
 ```
 
-It puts the `lizard` binary in `~/.lizard/bin`, adds that folder to your `PATH` in `~/.zshrc` or `~/.bashrc`, and links `lizard` into a folder that is already on your `PATH`, so it works in this terminal right away. The binary updates itself from then on. If the script says `lizard` may not be found, open a new terminal. Check the version:
+It puts the `lizard` binary in `~/.lizard/bin`, adds that folder to your `PATH` in `~/.zshrc` or `~/.bashrc`, and links `lizard` into a folder that is already on your `PATH`, so it works in this terminal right away. The binary updates itself from then on, except in CI. If the script says `lizard` may not be found, open a new terminal. Check the version:
 
 ```bash
 lizard --version
@@ -51,10 +51,12 @@ lizard login
 This opens your browser to authenticate, then drops back to your terminal once you confirm. In CI or other non-interactive environments, authenticate with a token instead:
 
 ```bash
-export LIZARD_TOKEN=lzd_xxx
+export LIZARD_TOKEN=liz_xxx
 # or
-lizard login --token lzd_xxx
+lizard login --token liz_xxx
 ```
+
+API keys start with `liz_`. Create one with `lizard keys create <name>`. `LIZARD_API_KEY` works in place of `LIZARD_TOKEN`.
 
 Check who you are at any time:
 
@@ -62,7 +64,17 @@ Check who you are at any time:
 lizard whoami
 ```
 
-## 3. Deploy
+## 3. Start the Pro trial
+
+A new account has no plan, so creating anything returns HTTP 402 with a Checkout link. Start the 7-day Pro trial first:
+
+```bash
+lizard billing start
+```
+
+This opens Stripe Checkout, where you add a card. The trial includes $5 in trial credits, and nothing is charged until it ends. See [Billing](/platform/billing).
+
+## 4. Deploy
 
 Pick the path that matches where your code lives.
 
@@ -90,9 +102,9 @@ lizard up
 
 If the directory isn't linked to a project yet, `up` will create or select one interactively. In CI, link explicitly first with `lizard init --name my-project`.
 
-Either way, when the build finishes you'll get a generated URL like `https://your-app-production.onlizard.com`.
+Either way, when the build finishes you'll get a generated URL like `https://your-app-x1y2z.onlizard.com`.
 
-## 4. Watch it build and run
+## 5. Watch it build and run
 
 ```bash
 lizard ps          # services in the project, with status + URL
@@ -101,17 +113,17 @@ lizard logs --build  # the most recent build's logs
 lizard open        # open the project in the dashboard
 ```
 
-## 5. Add a database (optional)
+## 6. Add a database (optional)
 
-Provision a managed Postgres and reference it from your service:
+Provision Managed Postgres and reference it from your service:
 
 ```bash
 lizard add postgres
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service your-app
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service your-app
 lizard redeploy --service your-app
 ```
 
-The `${{postgres.DATABASE_URL}}` reference is resolved at deploy time and rotates automatically with the addon. See [Managed Addons](/addons).
+The `${{postgres.DATABASE_PRIVATE_URL}}` reference is resolved at deploy time and connects over the project's private network. It matches the addon's current name, so update the reference if you rename the addon. Credentials do not rotate on their own; a service picks up new values on its next deploy. See [Managed Addons](/addons).
 
 ## Next steps
 
@@ -119,8 +131,8 @@ The `${{postgres.DATABASE_URL}}` reference is resolved at deploy time and rotate
 - **[Deploying from GitHub](/deploy/github)** — branches, monorepos, and auto-redeploys.
 - **[Variables & Secrets](/variables)** — scoping and precedence.
 - **[Networking](/networking)** — attach your own hostname with automatic TLS.
-- **[Deploying an app your AI IDE built](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — the same three steps handed to an agent instead, for an app written in Google Antigravity.
+- **[Deploying an app your AI IDE built](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — the same steps handed to an agent instead, for an app written in Google Antigravity.
 
 ## Hosting costs
 
-Pro costs $19 a month with $19 in monthly credits. Usage above that is pay as you go at the published rates. A new account starts with a 7-day trial and $5 in trial credits. See [Billing](/platform/billing) and [pricing](https://lizard.build/pricing), and check your [limits](/platform/limits) before deploying.
+Pro costs $19 a month with $19 in monthly credits. Usage above that is pay as you go at the published rates. Pro starts with a 7-day trial and $5 in trial credits; you add a card to start it. See [Billing](/platform/billing) and [pricing](https://lizard.build/pricing), and check your [limits](/platform/limits) before deploying.

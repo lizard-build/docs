@@ -12,7 +12,7 @@ description: "Lizard Skill と Lizard CLI を使って、Claude Code、Codex、�
 
 ## 始める前に
 
-動作するアプリケーション、そのデプロイ権限、および Lizard のアカウントを用意してください。アプリケーションは `0.0.0.0` と設定されたポートで待ち受ける必要があります。クラウドビルドを始める前に、ローカルチェックを実行してください。
+動作するアプリケーション、そのデプロイ権限、および Pro または 7 日間の Pro トライアル（カードが必要）の Lizard アカウントを用意してください。トライアルが始まるまで、`lizard add` と `lizard up` は Checkout リンク付きの HTTP 402 を返します。`lizard billing start` でそのリンクを開けます。アプリケーションは `0.0.0.0` と設定されたポートで待ち受ける必要があります。クラウドビルドを始める前に、ローカルチェックを実行してください。
 
 <span id="give-the-agent-the-current-guide" />
 
@@ -24,7 +24,7 @@ lizard skills get core --json
 lizard --help --json
 ```
 
-Windows では、`npm install -g @lizard-build/cli` で同じ CLI をインストールできます。
+Windows では、PowerShell で `irm https://lizard.build/api/cli/install.ps1 | iex` を実行するか、`npm install -g @lizard-build/cli` で npm からインストールします。
 
 Lizard Skill は、インストール済み CLI に一致する手順を読み込みます。特定のコマンドについては、フラグを推測せず、そのスキーマを読んでください:
 
@@ -63,7 +63,7 @@ lizard up --service api --port 3000 --json
 
 データベースの実際の名前が `postgres` でない場合は、その名前を使用してください。ローカルシェルで展開されないよう、参照は引用符で囲んだままにしてください。最初のデプロイ前に設定してください。コマンドが認証必須と報告した場合にのみ、`lizard login` でサインインしてください。
 
-このコピーした例では、アップロードパスは意図的なものです。すでに GitHub にあるアプリケーションの場合は、代わりに次のセクションを使用してください。macOS で Lizard CLI 0.3.92 を使う場合は、AppleDouble メタデータを除外するために `COPYFILE_DISABLE=1 lizard up --service api --port 3000 --json` を実行してください。その CLI バージョンでは、ビルドが失敗しても code 0 で終了することがあります: ターミナルの `failed`/`deployed` event を確認し、アプリケーションを検証してください。[既知の問題](/platform/known-issues) を参照してください。
+このコピーした例では、アップロードパスは意図的なものです。すでに GitHub にあるアプリケーションの場合は、代わりに次のセクションを使用してください。ビルドが失敗すると code 1 で終了します。それでも、ターミナルの `failed`/`deployed` event を確認し、アプリケーションを検証してください。[既知の問題](/platform/known-issues) を参照してください。
 
 <span id="deploy-from-github" />
 

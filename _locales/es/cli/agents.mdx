@@ -1,0 +1,114 @@
+---
+description: "lizard agents conecta tus credenciales de ChatGPT, de Claude o de claves de API para los agentes de programación que se ejecutan en sandboxes, y fija el modelo predeterminado de cada agente."
+---
+
+# lizard agents
+
+Conecta las credenciales que usan los agentes de programación en los sandboxes y configura los valores predeterminados de cada agente. Ejecuta los agentes con [`lizard sandbox prompt`](/cli/sandbox#coding-agents).
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard agents status
+lizard agents login [chatgpt] [flags]
+lizard agents add <credential> [flags]
+lizard agents remove <credential>
+lizard agents use <agent> [flags]
+```
+
+Las credenciales pertenecen a tu cuenta: conecta una sola vez cada credencial y cualquier sandbox podrá ejecutar agentes con ella. La plataforma guarda el token de larga duración y entrega al sandbox un token de acceso de corta duración en cada ejecución. Estos comandos aceptan `-p, --project`, pero lo ignoran.
+
+<span id="agents-and-credentials" />
+
+## Agentes y credenciales
+
+| Agente | Nombre | Acepta |
+|-------|------|---------|
+| Codex | `codex` | una de: `chatgpt`, `openai`, `deepseek`, `openrouter` |
+| Claude Code | `claude` | una de: `claude`, `anthropic`, `openrouter` |
+| pi | `pi` | cualquiera de: `claude`, `chatgpt`, `anthropic`, `openai`, `openrouter`, `llmgateway` |
+| OpenCode | `opencode` | cualquiera de: `chatgpt`, `anthropic`, `openai`, `openrouter`, `llmgateway` |
+| Prime Agent | `prime` | cualquiera de: `claude`, `chatgpt`, `anthropic`, `openai`, `openrouter`, `llmgateway` |
+
+Kimi Code (`kimi`, con credenciales `kimi` o `moonshot`) aparece en la lista, pero aún no se puede ejecutar.
+
+<span id="subcommands" />
+
+## Subcomandos
+
+### `lizard agents status`
+
+Muestra qué credenciales están conectadas y qué agentes pueden ejecutarse. `lizard agents` sin argumentos hace lo mismo.
+
+### `lizard agents login [chatgpt]`
+
+Conecta tu suscripción de ChatGPT con un código de dispositivo. La CLI muestra una URL y un código; abre la URL, inicia sesión e introduce el código antes de que pasen 15 minutos. El comando espera hasta que lo apruebes.
+
+| Bandera | Descripción |
+|------|-------------|
+| `--open` | Abrir la página de inicio de sesión en el navegador |
+
+### `lizard agents add <credential>`
+
+Añade una clave de API: `anthropic`, `openai`, `openrouter`, `llmgateway`, `deepseek` o `moonshot`. Para una suscripción de Claude, ejecuta `claude setup-token` en tu máquina y añade su token como `claude`.
+
+| Bandera | Descripción |
+|------|-------------|
+| `--key <value>` | La clave o el token. Sin esta bandera, la CLI lee stdin o te lo pide |
+
+### `lizard agents remove <credential>`
+
+Elimina una credencial conectada (alias `logout`).
+
+### `lizard agents use <agent>`
+
+Configura la credencial y los valores predeterminados de un agente.
+
+| Bandera | Descripción |
+|------|-------------|
+| `--credential <name>` | Para Codex y Claude Code: qué credencial usar |
+| `-m, --model <model>` | Modelo predeterminado (`none` lo borra) |
+| `--effort <level>` | Esfuerzo de razonamiento predeterminado (`none` lo borra) |
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="connect-chatgpt-and-run-codex" />
+
+### Conectar ChatGPT y ejecutar Codex
+
+```bash
+lizard agents login chatgpt --open
+lizard sandbox create -t codex
+lizard sandbox prompt sb_abc123 "add a health check endpoint and test it"
+```
+
+<span id="add-a-claude-subscription-for-claude-code" />
+
+### Añadir una suscripción de Claude para Claude Code
+
+```bash
+claude setup-token
+lizard agents add claude
+lizard sandbox create -t claude
+lizard sandbox prompt sb_abc123 --agent claude "fix the failing tests"
+```
+
+<span id="run-codex-on-an-openai-api-key" />
+
+### Ejecutar Codex con una clave de API de OpenAI
+
+```bash
+lizard agents add openai < openai.key
+lizard agents use codex --credential openai --effort high
+```
+
+<span id="see-also" />
+
+## Véase también
+
+- [lizard sandbox](/cli/sandbox#coding-agents) — `sandbox prompt`, `conversations` e `interrupt`
+- [Sandboxes](/sandboxes) — plantillas y ciclo de vida

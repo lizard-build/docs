@@ -4,7 +4,7 @@ description: "lizard skills liest die mit deiner CLI-Version gebündelten Agente
 
 # lizard skills
 
-Lies die eingebetteten Agenten-Skills, die mit dieser CLI-Version ausgeliefert werden.
+Lies die eingebetteten Agenten-Skills, die mit dieser CLI-Version ausgeliefert werden. Alias: `lizard skill`.
 
 <span id="usage" />
 
@@ -26,11 +26,11 @@ Liste die verfügbaren eingebetteten Skills auf.
 
 ### `lizard skills get core`
 
-Lies den Core-Anleitung — den maßgeblichen Nutzungsleitfaden für die Plattform, versioniert mit der CLI. Er gibt `{ name, frontmatter, content, … }` zurück, wobei `content` der vollständige Leitfaden ist (Build-Pipeline, env-Priorität, Add-ons, Discovery, Exit-Codes).
+Lies den Core-Anleitung — den maßgeblichen Nutzungsleitfaden für die Plattform, versioniert mit der CLI. Mit `--json` gibt er `{ name, path, frontmatter, content }` zurück, wobei `content` der vollständige Leitfaden ist (Build-Pipeline, env-Priorität, Add-ons, Discovery, Exit-Codes).
 
-### `lizard skills path`
+### `lizard skills path [name]`
 
-Zeige an, wo Skills auf dem Datenträger gespeichert sind.
+Gib aus, woher ein Skill stammt. Skills sind in die CLI eingebaut, daher gibt dieser Befehl `embedded://skills` aus, es sei denn, `LIZARD_SKILLS_DIR` verweist die CLI auf ein Verzeichnis auf dem Datenträger.
 
 <span id="examples" />
 

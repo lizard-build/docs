@@ -12,6 +12,8 @@ Add a database, service, or repo to the project.
 lizard add [types...] [flags]
 ```
 
+`add` works on the project linked to the current directory. Run [`lizard init`](/cli/init) or [`lizard link`](/cli/link) first.
+
 ## Flags
 
 | Flag | Description |
@@ -21,7 +23,7 @@ lizard add [types...] [flags]
 | `-a, --addon <type...>` | Add managed addons (`postgres` / `redis` / `s3`) |
 | `-n, --name <name>` | Name used in `${{name.KEY}}` refs |
 | `-v, --variables <K=V>` | Seed an env var (repeatable) |
-| `--region <code>` | Region to provision in |
+| `--region <code>` | Region to provision in (default `us-east-1`) |
 | `--no-deploy` | Attach repo but skip the first build |
 | `--list` | Show available database types |
 
@@ -33,7 +35,7 @@ lizard add [types...] [flags]
 lizard add -r your-org/your-app
 ```
 
-This creates a `github`-source service, clones the repo, auto-detects the stack, builds it, and returns a live URL.
+This creates a `github`-source service and starts the first build, which clones the repo and auto-detects the stack. The command returns once the service exists; follow the build with `lizard logs --build`.
 
 ### Provision addons
 
@@ -52,11 +54,11 @@ lizard add -s worker
 ### Name a service and seed variables
 
 ```bash
-lizard add -r your-org/monorepo -n api
+lizard add -r your-org/monorepo -n api -v NODE_ENV=production -v LOG_LEVEL=info
 ```
 
 ## See also
 
 - [Deploy from GitHub](/deploy/github) — connecting repos, private access, and auto-redeploy on push
-- [Managed Addons](/addons) — provisioning, naming, and consuming postgres/redis/s3
+- [Managed Addons](/addons) — provisioning, naming, and using Managed Postgres, Managed Redis, and Managed Object Storage
 - [lizard up](/cli/up) — upload and deploy the current directory instead of linking a repo

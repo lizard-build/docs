@@ -74,7 +74,7 @@ EXPOSE 80
 
 Use the generated-pages policy only when the app has those route files. A SvelteKit SPA fallback, for example, needs its own routing policy. [Next.js static export](/framework-guides/nextjs/static-export) has a complete recipe with a trailing-slash layout.
 
-Exclude dependencies, build output, `.git`, and `.env*` in `.dockerignore`. If the build needs public variables, declare their `ARG` values before the build command. Do not copy private secrets into the image or browser output.
+Exclude dependencies, build output, `.git`, and `.env*` in `.dockerignore`. If the build needs public variables, write them as `ENV` lines before the build command. Lizard passes no build args except `COMMIT_SHA`, so an `ARG` stays empty. Do not copy private secrets into the image or browser output.
 
 After [CLI setup](/framework-guides#prepare-the-project), create a service with `lizard add --service web`, then deploy this source with `lizard up --service web --port 80`. Skip the add step when the service already exists. On an existing service, check [build decision order](/concepts/build-pipeline#build-decision-order): command overrides can take precedence over the Dockerfile. A config file by itself does not replace the generated nginx configuration; the Dockerfile must copy it into the image.
 

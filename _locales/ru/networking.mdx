@@ -1,5 +1,5 @@
 ---
-description: "Каждому сервису выдается домен onlizard.com с автоматическим TLS. Подключите собственный хостнейм, верифицируйте DNS, пробросьте порт или удалите домен."
+description: "Каждому сервису выдается домен onlizard.com с автоматическим TLS. Подключите собственный хостнейм, верифицируйте DNS, смените порт, обращайтесь к другим сервисам по приватной сети или удалите домен."
 ---
 
 <span id="networking" />
@@ -12,14 +12,14 @@ description: "Каждому сервису выдается домен onlizard
 
 ## Сгенерированные домены
 
-Сервису автоматически создается домен по умолчанию. Посмотреть его (или сгенерировать новый):
+Сервису автоматически создается домен по умолчанию в формате `<name>-<suffix>.onlizard.com`. У более старых сервисов остается `<words>.<region>.onlizard.com`. Посмотреть его:
 
 ```bash
 lizard domain                    # show the service's current domain
-lizard domain generate           # generate a new *.onlizard.com subdomain
+lizard domain generate           # claim a *.onlizard.com subdomain if the service has none
 ```
 
-Объектное хранилище, обслуживаемое через [S3-аддон](/addons/storage), использует региональный шлюз (`s3-<region>.onlizard.com`) вместо стандартного домена.
+`lizard domain generate` возвращает уже существующий сгенерированный домен, если он есть, и завершается ошибкой, пока у сервиса есть собственный домен. Файлы, обслуживаемые через [Managed Object Storage](/addons/storage), используют шлюз с отдельным хостом: `s3-eu-west-1.onlizard.com` или `s3-us-east-1.onlizard.com`.
 
 <span id="attach-a-custom-domain" />
 
@@ -40,7 +40,7 @@ Lizard вернет DNS-записи, которые нужно создать (
 После распространения DNS активируйте домен:
 
 ```bash
-lizard domain verify app.example.com
+lizard domain verify app.example.com --service web
 ```
 
 Команда проверяет `TXT` запись и активирует домен. TLS подготавливается автоматически.
@@ -50,18 +50,21 @@ lizard domain verify app.example.com
 ## Удаление домена
 
 ```bash
-lizard domain delete app.example.com
-lizard domain rm app.example.com --yes   # alias, skip confirmation
+lizard domain delete app.example.com --service web
+lizard domain rm app.example.com --service web --yes   # alias, skip confirmation
 ```
 
 <span id="exposing-a-specific-port" />
 
-## Проброс конкретного порта
+<span id="change-the-port-your-service-listens-on" />
 
-Если сервис слушает нестандартный порт, подключите домен к этому порту:
+## Смена порта, который слушает сервис
+
+Домены направляют трафик на порт контейнера сервиса. Если сервис слушает другой порт, измените порт контейнера и сделайте редеплой:
 
 ```bash
-lizard domain app.example.com --service web --port 8080
+lizard port 8080 --service web
+lizard redeploy --service web
 ```
 
 <span id="worker-services" />
@@ -70,11 +73,21 @@ lizard domain app.example.com --service web --port 8080
 
 У [сервисов в режиме worker](/deploy/workers) (`containerPort=0`) может всё равно отображаться сгенерированный домен, но он ничего не обслуживает — слушателя и маршрута балансировщика нет. Не подключайте собственный домен к worker-сервису.
 
+<span id="private-networking" />
+
+## Приватная сеть
+
+Сервисы одного проекта обращаются друг к другу по адресу `<service>.lizard.internal` на любом порту, который слушает сервис, без публичного домена. Хостнейм можно указать как `${{api.LIZARD_PRIVATE_DOMAIN}}`. Managed Postgres и Managed Redis в той же сети предоставляют `DATABASE_PRIVATE_URL` и `REDIS_PRIVATE_URL`. Эти имена разрешаются только внутри проекта.
+
+```bash
+lizard secrets set API_URL='http://${{api.LIZARD_PRIVATE_DOMAIN}}:8080' --service web
+```
+
 <span id="manage-in-the-dashboard" />
 
 ## Управление в дашборде
 
-Раздел **Домены** в дашборде (`lizard open`) показывает статус верификации и TLS для каждого домена, а также позволяет визуально добавлять или удалять хостнеймы.
+Откройте сервис в дашборде (`lizard open`) и перейдите в **Settings → Networking**. Там показан статус верификации и DNS для каждого домена, а также можно добавлять и удалять хостнеймы.
 
 <span id="see-also" />
 
@@ -82,4 +95,4 @@ lizard domain app.example.com --service web --port 8080
 
 - [`lizard domain`](/cli/domain) — полная справка по командам.
 - [Регионы](/deploy/regions) — размещение сервисов и аддонов в одном регионе для низкой задержки.
-- [От прототипа к SaaS, за который платят](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#from-vibe-coded-prototype-to-a-saas-people-pay-for) — где собственный домен стоит среди прочих вещей, которые всё ещё нужны сгенерированному приложению.
+- [От прототипа к SaaS, за который платят](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#verify-a-real-production-flow) — где собственный домен стоит среди прочих вещей, которые всё ещё нужны сгенерированному приложению.

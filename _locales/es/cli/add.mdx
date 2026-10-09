@@ -14,6 +14,8 @@ Añade una base de datos, servicio o repositorio al proyecto.
 lizard add [types...] [flags]
 ```
 
+`add` funciona sobre el proyecto vinculado al directorio actual. Ejecuta primero [`lizard init`](/cli/init) o [`lizard link`](/cli/link).
+
 <span id="flags" />
 
 ## Banderas
@@ -25,7 +27,7 @@ lizard add [types...] [flags]
 | `-a, --addon <type...>` | Añadir addons gestionados (`postgres` / `redis` / `s3`) |
 | `-n, --name <name>` | Nombre usado en las referencias de `${{name.KEY}}` |
 | `-v, --variables <K=V>` | Inicializar una variable de entorno (repetible) |
-| `--region <code>` | Región en la que aprovisionar |
+| `--region <code>` | Región en la que aprovisionar (por defecto `us-east-1`) |
 | `--no-deploy` | Adjuntar repositorio pero omitir la primera compilación |
 | `--list` | Mostrar los tipos de base de datos disponibles |
 
@@ -41,7 +43,7 @@ lizard add [types...] [flags]
 lizard add -r your-org/your-app
 ```
 
-Esto crea un servicio con código fuente en `github`, clona el repositorio, detecta automáticamente el stack, lo compila y devuelve una URL activa.
+Esto crea un servicio con código fuente en `github` e inicia la primera compilación, que clona el repositorio y detecta automáticamente el stack. El comando termina una vez que el servicio existe; sigue la compilación con `lizard logs --build`.
 
 <span id="provision-addons" />
 
@@ -66,7 +68,7 @@ lizard add -s worker
 ### Asignar un nombre a un servicio e inicializar variables
 
 ```bash
-lizard add -r your-org/monorepo -n api
+lizard add -r your-org/monorepo -n api -v NODE_ENV=production -v LOG_LEVEL=info
 ```
 
 <span id="see-also" />
@@ -74,5 +76,5 @@ lizard add -r your-org/monorepo -n api
 ## Véase también
 
 - [Desplegar desde GitHub](/deploy/github) — conectar repositorios, acceso privado y redespliegue automático al hacer push
-- [Addons gestionados](/addons) — aprovisionamiento, nombres y uso de postgres/redis/s3
+- [Addons gestionados](/addons) — aprovisionamiento, nombres y uso de Managed Postgres, Managed Redis y Managed Object Storage
 - [lizard up](/cli/up) — subir y desplegar el directorio actual en lugar de vincular un repositorio

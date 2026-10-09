@@ -20,11 +20,11 @@ lizard scale --service api --cpu 2 --memory 2048
 | Bandera | Se aplica a | Valores permitidos |
 |------|-----------|----------------|
 | `--replicas <n>` | apps | De `1` al [límite](/platform/limits#applications) de tu plan: `1` durante la prueba, `5` en Pro y Enterprise |
-| `--cpu <cores>` | apps | núcleos completos: `1`, `2`, `3`, `4` |
-| `--memory <mb>` | apps | `128`–`8192` MB (pasos de 1 MB) |
+| `--cpu <cores>` | apps y addons | núcleos completos: `1`, `2`, `3`, `4` |
+| `--memory <mb>` | apps y addons | `128`–`8192` MB (pasos de 1 MB) |
 | `--storage <mb>` | **solo addons**, solo ampliación | `512`, `1024`, `2048`, `4096`, `8192`, `16384` |
 
-Puedes combinar flags en un solo comando. Los cambios de réplicas se aplican sin reconstrucción.
+Puedes combinar flags en un solo comando. Los cambios de réplicas se aplican sin reconstrucción. Los cambios de CPU y memoria reinician el servicio con los nuevos límites.
 
 <span id="horizontal-scaling" />
 
@@ -36,7 +36,7 @@ Ejecuta varias réplicas de una app detrás del balanceador de carga:
 lizard scale --service api --replicas 5
 ```
 
-Cada réplica es su propio pod. Asegúrate de que tu app sea sin estado (guarda el estado en [Postgres](/addons/postgres), [Redis](/addons/redis) o [S3](/addons/storage)) para que las réplicas sean intercambiables.
+Cada réplica es su propio pod. Asegúrate de que tu app sea sin estado (guarda el estado en [Managed Postgres](/addons/postgres), [Managed Redis](/addons/redis) o [Managed Object Storage](/addons/storage)) para que las réplicas sean intercambiables.
 
 <span id="vertical-scaling" />
 
@@ -75,4 +75,4 @@ lizard metrics --cost     # include cost
 
 - [Observabilidad → Métricas](/observability/metrics) — supervisión de recursos y costes.
 - [`lizard scale`](/cli/scale) — la referencia completa de comandos.
-- [Qué cobran los proveedores de CaaS en 2026](https://lizard.build/blog/container-as-a-service#what-caas-providers-charge-in-2026) — tarifas por vCPU, por GB y de salida en nueve plataformas, para calcular una factura antes de escalar.
+- [Cómo estimar el coste de CaaS](https://lizard.build/blog/container-as-a-service#how-to-estimate-caas-cost) — qué medidores comparar antes de calcular una factura.

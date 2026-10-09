@@ -1,0 +1,114 @@
+---
+description: "lizard agents verbindet deine ChatGPT-, Claude- oder API-Key-Zugangsdaten für Coding-Agents, die in Sandboxes laufen, und legt das Standardmodell jedes Agents fest."
+---
+
+# lizard agents
+
+Verbinde die Zugangsdaten, die Coding-Agents in Sandboxes verwenden, und lege die Standardwerte jedes Agents fest. Führe die Agents mit [`lizard sandbox prompt`](/cli/sandbox#coding-agents) aus.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard agents status
+lizard agents login [chatgpt] [flags]
+lizard agents add <credential> [flags]
+lizard agents remove <credential>
+lizard agents use <agent> [flags]
+```
+
+Zugangsdaten gehören zu deinem Konto: Verbinde sie einmal, und jede Sandbox kann Agents damit ausführen. Die Plattform bewahrt das langlebige Token auf und gibt einer Sandbox für jeden Lauf ein kurzlebiges Zugriffstoken. Diese Befehle akzeptieren `-p, --project`, ignorieren es aber.
+
+<span id="agents-and-credentials" />
+
+## Agents und Zugangsdaten
+
+| Agent | Name | Akzeptiert |
+|-------|------|---------|
+| Codex | `codex` | eines von: `chatgpt`, `openai`, `deepseek`, `openrouter` |
+| Claude Code | `claude` | eines von: `claude`, `anthropic`, `openrouter` |
+| pi | `pi` | beliebige von: `claude`, `chatgpt`, `anthropic`, `openai`, `openrouter`, `llmgateway` |
+| OpenCode | `opencode` | beliebige von: `chatgpt`, `anthropic`, `openai`, `openrouter`, `llmgateway` |
+| Prime Agent | `prime` | beliebige von: `claude`, `chatgpt`, `anthropic`, `openai`, `openrouter`, `llmgateway` |
+
+Kimi Code (`kimi`, mit `kimi`- oder `moonshot`-Zugangsdaten) ist aufgeführt, kann aber noch nicht ausgeführt werden.
+
+<span id="subcommands" />
+
+## Unterbefehle
+
+### `lizard agents status`
+
+Zeigt, welche Zugangsdaten verbunden sind und welche Agents ausgeführt werden können. Ein einfaches `lizard agents` macht dasselbe.
+
+### `lizard agents login [chatgpt]`
+
+Verbindet dein ChatGPT-Abonnement mit einem Gerätecode. Die CLI gibt eine URL und einen Code aus; öffne die URL, melde dich an und gib den Code innerhalb von 15 Minuten ein. Der Befehl wartet, bis du bestätigst.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `--open` | Die Anmeldeseite im Browser öffnen |
+
+### `lizard agents add <credential>`
+
+Fügt einen API-Key hinzu: `anthropic`, `openai`, `openrouter`, `llmgateway`, `deepseek` oder `moonshot`. Für ein Claude-Abonnement führe `claude setup-token` auf deinem Rechner aus und füge das Token als `claude` hinzu.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `--key <value>` | Der Key oder das Token. Ohne dieses Flag liest die CLI von stdin oder fragt nach |
+
+### `lizard agents remove <credential>`
+
+Entfernt verbundene Zugangsdaten (Alias `logout`).
+
+### `lizard agents use <agent>`
+
+Legt die Zugangsdaten und Standardwerte eines Agents fest.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `--credential <name>` | Für Codex und Claude Code: welche Zugangsdaten verwendet werden |
+| `-m, --model <model>` | Standardmodell (`none` setzt es zurück) |
+| `--effort <level>` | Standard-Reasoning-Aufwand (`none` setzt ihn zurück) |
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="connect-chatgpt-and-run-codex" />
+
+### ChatGPT verbinden und Codex ausführen
+
+```bash
+lizard agents login chatgpt --open
+lizard sandbox create -t codex
+lizard sandbox prompt sb_abc123 "add a health check endpoint and test it"
+```
+
+<span id="add-a-claude-subscription-for-claude-code" />
+
+### Ein Claude-Abonnement für Claude Code hinzufügen
+
+```bash
+claude setup-token
+lizard agents add claude
+lizard sandbox create -t claude
+lizard sandbox prompt sb_abc123 --agent claude "fix the failing tests"
+```
+
+<span id="run-codex-on-an-openai-api-key" />
+
+### Codex mit einem OpenAI-API-Key ausführen
+
+```bash
+lizard agents add openai < openai.key
+lizard agents use codex --credential openai --effort high
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [lizard sandbox](/cli/sandbox#coding-agents) — `sandbox prompt`, `conversations` und `interrupt`
+- [Sandboxes](/sandboxes) — Templates und Lebenszyklus

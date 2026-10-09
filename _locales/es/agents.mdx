@@ -1,12 +1,12 @@
 ---
-description: "Controla Lizard desde un agente de programación con IA: lee Lizard Skill, descubre los esquemas de comandos con --json y despliega mediante Lizard CLI."
+description: "Controla Lizard desde un agente de programación con IA: lee Lizard Skill, descubre los esquemas de comandos con --json, despliega mediante Lizard CLI o conecta un cliente MCP a Lizard MCP."
 ---
 
 <span id="coding-agents" />
 
 # Agentes de programación
 
-Lizard está diseñado para ser manejado por agentes de programación con IA tan fácilmente como por humanos. La CLI incluye una **skill integrada** que le enseña a un agente toda la plataforma, y cada comando es **autodescriptivo** mediante `--json` para que los agentes nunca tengan que adivinar.
+Lizard está diseñado para ser manejado por agentes de programación con IA tan fácilmente como por humanos. Lizard CLI incluye una **skill integrada** que le enseña a un agente toda la plataforma, y cada comando es **autodescriptivo** mediante `--json` para que los agentes nunca tengan que adivinar.
 
 <span id="the-embedded-skill" />
 
@@ -49,8 +49,9 @@ Un flujo típico de un agente:
 
 1. **Cargar la guía:** `lizard skills get core --json` → leer `content`.
 2. **Verificar la autenticación de forma optimista:** ejecuta la tarea del usuario; con el código de salida `2`, ejecuta `lizard login`, entrega al usuario la URL impresa y luego reintenta.
-3. **Resolver el contexto antes de modificar:** `lizard status` (enlace cwd) y `lizard ps --json` (servicios).
-4. **Actuar** usando la guía — `add`, `up`, `secrets`, `domain`, etc., siempre con `--json`.
+3. **Iniciar la prueba si se solicita:** una cuenta nueva no tiene plan, así que su primera creación falla con HTTP 402 (`code: "PAYMENT_REQUIRED"`, código de salida `1`). Ejecuta `lizard billing start --json`, entrega al usuario la `url` de Checkout y reintenta cuando haya añadido una tarjeta.
+4. **Resolver el contexto antes de modificar:** `lizard status` (enlace cwd) y `lizard ps --json` (servicios).
+5. **Actuar** usando la guía — `add`, `up`, `secrets`, `domain`, etc., siempre con `--json`.
 
 Si el binario `lizard` no está presente, instálalo primero. En macOS o Linux, usa el script de instalación:
 
@@ -58,7 +59,13 @@ Si el binario `lizard` no está presente, instálalo primero. En macOS o Linux, 
 curl -fsSL https://lizard.build/install.sh | bash
 ```
 
-No necesita Node.js ni `sudo`, y enlaza `lizard` en una carpeta que ya está en el `PATH`, así que el agente puede llamarlo en la misma sesión. Si el script avisa de que quizá no se encuentre `lizard`, llama a `~/.lizard/bin/lizard`. En Windows, usa npm:
+No necesita Node.js ni `sudo`, y enlaza `lizard` en una carpeta que ya está en el `PATH`, así que el agente puede llamarlo en la misma sesión. Si el script avisa de que quizá no se encuentre `lizard`, llama a `~/.lizard/bin/lizard`. En Windows, ejecuta esto en PowerShell:
+
+```powershell
+irm https://lizard.build/api/cli/install.ps1 | iex
+```
+
+O instala desde npm en cualquier sistema:
 
 ```bash
 npm install -g @lizard-build/cli
@@ -78,9 +85,54 @@ npm install -g @lizard-build/cli
 
 ## Integraciones con editores
 
-Lizard Skill se distribuye como un bootstrap público para que los agentes en editores y asistentes puedan instalarla y cargarla bajo demanda, y luego manejar la misma CLI descrita a lo largo de esta documentación. La CLI es la única fuente de verdad — no hay una API separada de agentes que aprender.
+Lizard Skill se distribuye como un bootstrap público para que los agentes en editores y asistentes puedan instalarla y cargarla bajo demanda, y luego manejar la misma CLI descrita a lo largo de esta documentación. Instálala una sola vez para todos tus agentes:
 
-Eso también cubre los IDE con IA: escriben y prueban una app, pero no la alojan. Consulta [desplegar una app creada en Google Antigravity](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-an-antigravity-app-to-production-without-typing-a-command), donde todo el despliegue se ejecuta desde dos prompts.
+```bash
+npx skills add lizard-build/skill -g
+```
+
+Funciona con Claude Code, Cursor, Codex, Copilot, Gemini CLI y otros agentes que leen el formato Agent Skills. Para los clientes que usan MCP en lugar de ejecutar comandos de shell, usa [Lizard MCP](#lizard-mcp).
+
+Eso también cubre los IDE con IA: escriben y prueban una app, pero no la alojan. Consulta [desplegar una app creada en Google Antigravity](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat), donde un solo prompt impulsa todo el despliegue.
+
+<span id="lizard-mcp" />
+
+## Lizard MCP
+
+Lizard MCP permite que ChatGPT, Claude y otros clientes MCP gestionen tus proyectos de Lizard: crear servicios y addons, redesplegar, leer logs y métricas, definir secretos, escalar réplicas y asociar dominios. Es un servidor alojado que habla Streamable HTTP en:
+
+```text
+https://employ-woman-g1q2.us-east-1.onlizard.com/mcp
+```
+
+Un cliente que admita OAuth te hace iniciar sesión en el primer uso. Otros clientes envían una clave de API `liz_` en la cabecera `Authorization: Bearer`; crea una con `lizard keys create <name>`.
+
+Añádelo a Claude Code:
+
+```bash
+claude mcp add --transport http lizard https://employ-woman-g1q2.us-east-1.onlizard.com/mcp
+```
+
+Para Cursor y otros clientes configurados mediante JSON:
+
+```json
+{
+  "mcpServers": {
+    "lizard": {
+      "url": "https://employ-woman-g1q2.us-east-1.onlizard.com/mcp",
+      "headers": { "Authorization": "Bearer liz_your_key" }
+    }
+  }
+}
+```
+
+Iniciar la prueba, pagar y cancelar Pro se hace en la página de Billing. Cuando la cuenta tiene que pagar antes de poder crear algo, el error de la herramienta incluye `PAYMENT_REQUIRED` y el enlace que hay que abrir.
+
+<span id="hosting-your-own-mcp-server" />
+
+## Alojar tu propio servidor MCP
+
+Un agente que usa Lizard CLI y una aplicación que expone MCP son flujos de trabajo separados. Los comandos de CLI anteriores no proporcionan un transporte MCP. Para desplegar tu propio servidor con Streamable HTTP, sigue la [guía de MCP remoto](/guides/deploy-mcp-server).
 
 <span id="see-also" />
 
@@ -89,10 +141,4 @@ Eso también cubre los IDE con IA: escriben y prueban una app, pero no la alojan
 - [`lizard skills`](/cli/skills) — la referencia completa de comandos.
 - [JSON y automatización](/cli/json) — salida `--json` y descubrimiento de esquemas.
 - [Variables y secretos](/variables#scoping) — convenciones de alcance de secretos que los agentes deben seguir.
-- [Despliega tu app desde Claude Code](https://lizard.build/blog/deploy-from-claude-code#deploy-from-claude-code-in-3-steps) — el mismo bootstrap escrito como guía paso a paso, con los prompts que lo impulsan.
-
-<span id="hosting-your-own-mcp-server" />
-
-## Alojar tu propio servidor MCP
-
-Un agente que usa Lizard CLI y una aplicación que expone MCP son flujos de trabajo separados. Los comandos de CLI anteriores no proporcionan un transporte MCP. Para desplegar tu propio servidor con Streamable HTTP, sigue la [guía de MCP remoto](/guides/deploy-mcp-server).
+- [Despliega tu app desde Claude Code](https://lizard.build/blog/deploy-from-claude-code#a-prompt-that-defines-the-deployment-task) — el mismo bootstrap escrito como guía paso a paso, con el prompt que lo impulsa.

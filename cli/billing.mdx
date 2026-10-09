@@ -1,5 +1,5 @@
 ---
-description: "lizard billing shows your Pro plan, trial and usage, starts or cancels Pro, redeems promo codes, and lists prepaid credits history and saved cards."
+description: "lizard billing shows your Pro plan, trial and usage, starts or cancels Pro, redeems promo codes, and lists Enterprise balance history and saved cards."
 ---
 
 # lizard billing
@@ -36,7 +36,7 @@ Open the Billing page in your browser. Pay an open invoice, add or change your c
 
 ### `lizard billing start`
 
-Start Pro in Stripe Checkout, where you add a card. The command opens Checkout in your browser. A new account gets the 7-day trial with $5 in trial credits, and nothing is charged until the trial ends. If the account or the card had a trial before, Pro starts at once and charges $19.
+Start Pro in Stripe Checkout, where you add a card. The command opens Checkout in your browser. A new account gets the 7-day trial with $5 in trial credits, and nothing is charged until the trial ends. If the account had a trial before, Pro starts at once and charges $19. If the card had one, the trial does not start and nothing is charged; start Pro at $19 on the Billing page.
 
 | Flag | Description |
 |------|-------------|
@@ -70,11 +70,11 @@ Redeem a promo code for a longer trial and more trial credits. Before the trial 
 
 ### `lizard billing balance`
 
-Show the prepaid credits balance. For accounts on prepaid credits until 1 November 2026, and for Enterprise accounts.
+Show the balance of an Enterprise account.
 
 ### `lizard billing transactions`
 
-List recent balance transactions for prepaid credits and Enterprise accounts (alias `ledger`).
+List recent balance transactions of an Enterprise account (alias `ledger`).
 
 | Flag | Description |
 |------|-------------|
@@ -84,11 +84,11 @@ List recent balance transactions for prepaid credits and Enterprise accounts (al
 
 ### `lizard billing payment-methods list`
 
-List saved cards. `pm` is short for `payment-methods`. Add a card on the Billing page.
+List saved cards. `pm` is short for `payment-methods`. Add, change or remove a Pro card on the Billing page.
 
 ### `lizard billing payment-methods remove <id>`
 
-Remove a saved card (alias `rm`).
+Remove a saved card (alias `rm`). This works only for Enterprise accounts; a Pro account gets HTTP 409 and removes its card on the Billing page.
 
 | Flag | Description |
 |------|-------------|

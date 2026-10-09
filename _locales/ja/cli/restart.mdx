@@ -21,7 +21,7 @@ lizard restart [nameOrId] [flags]
 | フラグ | 説明 |
 |------|--------------|
 | `-s, --service <name>` | サービス |
-| `--detach` | 再起動が受理されたら戻る |
+| `--detach` | 再起動が受理されたら、ステータスをポーリングせずに戻る |
 | `--wait` | 新しい再起動試行が ready になるまで待機する。`--json` と併用可能 |
 | `--timeout <seconds>` | `--wait` 使用時の readiness 待機時間の上限。デフォルトは `120` |
 | `--json` | スクリプト用に JSON を返す |
@@ -38,9 +38,9 @@ lizard restart [nameOrId] [flags]
 lizard restart --service api
 ```
 
-<span id="restart-without-streaming-logs" />
+<span id="return-without-waiting" />
 
-### ログをストリーミングせずに再起動する
+### 待機せずに戻る
 
 ```bash
 lizard restart --service api --detach
@@ -49,8 +49,6 @@ lizard restart --service api --detach
 <span id="wait-before-running-the-next-check" />
 
 ### 次のチェックを実行する前に待機する
-
-CLI 0.3.94 以降が必要です。HTTP を使わない worker では 0.3.95 以降を使用してください。
 
 ```bash
 lizard --json restart --service api --wait --timeout 120

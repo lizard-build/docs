@@ -52,7 +52,7 @@ lizard service set api \
   --set branch=main
 ```
 
-Cambiar un campo de build activa automáticamente un rebuild — **no** encadenes un `redeploy` después.
+Cambiar un campo de build activa automáticamente un rebuild de un servicio en ejecución — **no** encadenes un `redeploy` después. Un servicio que se ha caído o que nunca se ha desplegado necesita `lizard redeploy`.
 
 > **Nota:** `lizard up` siempre fuerza `sourceType=upload`. No lo uses para actualizar un servicio respaldado por git — haz push al remoto o usa `lizard redeploy` en su lugar.
 
@@ -60,7 +60,7 @@ Cambiar un campo de build activa automáticamente un rebuild — **no** encadene
 
 ## Redespliegue automático en push
 
-Una vez que `repoUrl` está configurado, los push a la `branch` correspondiente redespliegan automáticamente mediante el webhook de GitHub. Para limitar qué push activan un redespliegue:
+Una vez que `repoUrl` está configurado, los push a la `branch` correspondiente redespliegan automáticamente mediante el webhook de GitHub. Conecta la GitHub App de Lizard (`lizard git connect`) para que Lizard reciba los eventos de push del repositorio. Para limitar qué push activan un redespliegue:
 
 - **`rootDirectory`** — solo hace build de un subdirectorio (monorepos).
 - **`watchPatterns`** — solo redespliega cuando cambian rutas coincidentes.
@@ -82,8 +82,9 @@ lizard git checkout api staging      # move the `api` service to the `staging` b
 Para un repositorio que contiene varias apps, crea un servicio por app y configura su `rootDirectory` con la subruta:
 
 ```bash
-lizard add -r your-org/monorepo -n api
+lizard add -r your-org/monorepo -n api --no-deploy
 lizard service set api --set rootDirectory=apps/api
+lizard redeploy --service api
 ```
 
 Si tu directorio actual es una subapp dentro de un repositorio cuyo directorio padre ya está vinculado, añade el servicio en el proyecto del padre y configura `rootDirectory` con la subruta del cwd.
@@ -95,4 +96,4 @@ Si tu directorio actual es una subapp dentro de un repositorio cuyo directorio p
 - [Proceso de compilación](/concepts/build-pipeline) — cómo se detecta y se hace build de tu stack.
 - [Desplegar desde código local](/deploy/upload) — cuando no tienes un remoto.
 - [`lizard git`](/cli/git) — la referencia completa de comandos para `connect`, `status` y `checkout`.
-- [Dónde desplegar una aplicación que construyó tu IDE de IA](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#where-to-deploy-an-app-your-ai-ide-built) — cómo apuntar esto a un repositorio que escribió un agente, y cuánto cuesta.
+- [Elige el host según la aplicación](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#choose-the-host-by-the-application) — cómo apuntar esto a un repositorio que escribió un agente.

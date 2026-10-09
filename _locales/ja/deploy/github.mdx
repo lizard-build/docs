@@ -52,7 +52,7 @@ lizard service set api \
   --set branch=main
 ```
 
-ビルド項目を変更すると自動的に再ビルドされます。**その後に** `redeploy` **をつなげないでください**。
+稼働中のサービスでビルド項目を変更すると自動的に再ビルドされます。**その後に** `redeploy` **をつなげないでください**。クラッシュしたサービスや一度もデプロイされていないサービスには `lizard redeploy` が必要です。
 
 > **Note:** `lizard up` は常に `sourceType=upload` を強制します。git バックエンドのサービス更新には使わないでください。リモートへ push するか、代わりに `lizard redeploy` を使用してください。
 
@@ -60,7 +60,7 @@ lizard service set api \
 
 ## push 時に自動再デプロイ
 
-`repoUrl` が設定されると、一致する `branch` への push は GitHub webhook 経由で自動的に再デプロイされます。どの push が再デプロイをトリガーするかを絞り込むには:
+`repoUrl` が設定されると、一致する `branch` への push は GitHub webhook 経由で自動的に再デプロイされます。Lizard がリポジトリの push イベントを受け取れるように、Lizard GitHub App を接続してください（`lizard git connect`）。どの push が再デプロイをトリガーするかを絞り込むには:
 
 - **`rootDirectory`** — サブディレクトリのみをビルドします（モノレポ）。
 - **`watchPatterns`** — 一致するパスが変更された場合のみ再デプロイします。
@@ -84,8 +84,9 @@ lizard git checkout api staging      # move the `api` service to the `staging` b
 複数のアプリを含むリポジトリでは、アプリごとに 1 つのサービスを作成し、その `rootDirectory` をサブパスに設定します:
 
 ```bash
-lizard add -r your-org/monorepo -n api
+lizard add -r your-org/monorepo -n api --no-deploy
 lizard service set api --set rootDirectory=apps/api
+lizard redeploy --service api
 ```
 
 現在のディレクトリが、親がすでにリンク済みのリポジトリ内のサブアプリである場合は、親のプロジェクト内にサービスを追加し、`rootDirectory` を cwd のサブパスに設定します。
@@ -97,4 +98,4 @@ lizard service set api --set rootDirectory=apps/api
 - [ビルド Pipeline](/concepts/build-pipeline) — スタックがどのように検出され、ビルドされるか。
 - [ローカルコードからデプロイする](/deploy/upload) — リモートがない場合。
 - [`lizard git`](/cli/git) — `connect`、`status`、`checkout` の完全なコマンドリファレンス。
-- [AI IDE が作成したアプリのデプロイ先](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#where-to-deploy-an-app-your-ai-ide-built) — エージェントが作成したリポジトリをこれに向ける方法と、そのコスト。
+- [アプリケーションに合わせてホストを選ぶ](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#choose-the-host-by-the-application) — エージェントが作成したリポジトリをこれに向ける方法。

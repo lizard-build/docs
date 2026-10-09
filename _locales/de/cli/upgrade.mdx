@@ -1,5 +1,5 @@
 ---
-description: "lizard upgrade aktualisiert die CLI direkt, oder prüft mit --check, ob eine neuere Version verfügbar ist, ohne sie zu installieren."
+description: "lizard upgrade ersetzt das CLI-Binary auf macOS und Linux durch das neueste Release, oder prüft mit --check, ob eine neuere Version verfügbar ist."
 ---
 
 # lizard upgrade
@@ -13,6 +13,12 @@ Aktualisiere die CLI auf die neueste Version.
 ```bash
 lizard upgrade [flags]
 ```
+
+Wie die Aktualisierung abläuft, hängt davon ab, wie du die CLI installiert hast:
+
+- **Installationsskript auf macOS oder Linux:** lädt das neueste Release herunter und ersetzt das Binary.
+- **npm:** gibt den Befehl aus, den du ausführen musst, `npm install -g @lizard-build/cli@latest`.
+- **Windows:** Das Binary kann sich nicht selbst ersetzen. Führe den Installer erneut aus: `irm https://lizard.build/api/cli/install.ps1 | iex`.
 
 ## Flags
 

@@ -1,24 +1,24 @@
 ---
-description: "Ein Build ist erfolgreich, aber der Bereitstellen bleibt ungesund. Port-Binding, versehentlicher Worker-Modus und weitere Ursachen für einen fehlschlagenden Health-Checks."
+description: "A build succeeds but the deploy stays unhealthy. Port binding, accidental worker mode, and the other causes of a failing health check."
 ---
 
 <span id="my-service-deploys-but-never-becomes-healthy" />
 
 # Mein Service wird deployt, wird aber nie healthy
 
-Der Build ist erfolgreich, Replikate starten, aber der Bereitstellen bleibt ausstehend, wird als ungesund markiert oder erhält nie Traffic.
+Der Build ist erfolgreich und ein neuer Pod startet, aber der Deploy wird als fehlgeschlagen markiert oder die neue Version erhält nie Traffic.
 
 <span id="what-this-means" />
 
 ## Was das bedeutet
 
-Der Health-Checks der Plattform — der prüft, ob der Port deiner App erreichbar ist — schlägt nie an, daher wird der Traffic nie auf die neuen Replikate umgeschaltet.
+Der Health-Checks der Plattform — eine TCP-Probe auf den Port deiner App — schlägt nie an, daher wird der Traffic nie auf den neuen Pod umgeschaltet. Lizard wartet etwa 30 Sekunden und markiert den Deploy dann als fehlgeschlagen. Ein Service, der bereits lief, liefert weiterhin seine vorherige Version aus; ein erster Deploy wird als abgestürzt angezeigt.
 
 <span id="why-this-can-happen" />
 
 ## Warum das passieren kann
 
-- **Deine App lauscht nicht auf dem erwarteten Port.** Lizard setzt eine `PORT`-Umgebungsvariable (Standard-Container-Port `3000`) und prüft, ob deine App dort erreichbar ist. Wenn deine App fest auf einen anderen Port eingestellt ist oder nie einen Port bindet, schlägt der Health-Checks unbegrenzt fehl. Ein Python-App ist der übliche Fall: `gunicorn` und `uvicorn` binden an `127.0.0.1`, sofern du nichts anderes angibst, und die Probe kommt von außerhalb des Prozesses. [Python-App-Hosting](https://lizard.build/blog/python-app-hosting#what-a-python-app-actually-needs-from-a-host) enthält die Zeile `--bind 0.0.0.0:$PORT`, die jedes Framework braucht.
+- **Deine App lauscht nicht auf dem erwarteten Port.** Lizard setzt eine `PORT`-Umgebungsvariable (Standard-Container-Port `3000`) und prüft, ob deine App dort erreichbar ist. Wenn deine App fest auf einen anderen Port eingestellt ist oder nie einen Port bindet, schlägt der Health-Checks nie an. Ein Python-App ist der übliche Fall: `gunicorn` und `uvicorn` binden an `127.0.0.1`, sofern du nichts anderes angibst, und die Probe kommt von außerhalb des Prozesses. [Python-App-Hosting](https://lizard.build/blog/python-app-hosting#build-and-start-commands) enthält die Zeile `--bind 0.0.0.0:$PORT`, die jedes Framework braucht.
 - **Der Service ist versehentlich im Worker-Modus.** Das Setzen von `containerPort=0` versetzt einen Service in den [Worker-Modus](/deploy/workers), wodurch **der Health-Checks und die Registrierung beim Load Balancer vollständig übersprungen werden**. Ein Service, der eigentlich HTTP bereitstellen soll, aber auf `containerPort=0` umgestellt wurde, wird "erfolgreich" deployt und liefert dann einfach nie etwas aus — der Worker-Modus verdeckt das zugrunde liegende Startproblem, statt es sichtbar zu machen.
 
 <span id="possible-solutions" />
@@ -44,11 +44,11 @@ lizard redeploy --service api
 
 ### Bestätigen, dass deine App dort lauscht, wo Lizard es erwartet
 
-Prüfe die Runtime-Logs auf Startfehler und vergleiche den Port, an den die App tatsächlich gebunden wurde, mit dem, was Lizard gesetzt hat:
+Prüfe die Runtime-Logs auf Startfehler und auf die Adresse, auf der die App laut Log lauscht. Vergleiche sie mit dem Service-Port, den Lizard der App als `PORT` übergibt:
 
 ```bash
 lizard logs --service api
-lizard ssh --service api -- env | grep PORT
+lizard port --service api
 ```
 
 <span id="see-also" />

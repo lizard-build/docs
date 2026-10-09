@@ -14,7 +14,7 @@ Muestra el dominio actual o adjunta uno personalizado.
 lizard domain [hostname] [flags]
 ```
 
-El hostname es un argumento posicional: no existe el subcomando `add`. Ejecutar `lizard domain` sin argumentos muestra el dominio actual del servicio.
+El hostname es un argumento posicional: no existe el subcomando `add`. Ejecutar `lizard domain` sin argumentos muestra el dominio actual del servicio, o genera uno si no tiene ninguno. Alias: `lizard domains`.
 
 <span id="flags" />
 
@@ -23,7 +23,11 @@ El hostname es un argumento posicional: no existe el subcomando `add`. Ejecutar 
 | Bandera | Descripción |
 |------|-------------|
 | `-s, --service <name>` | Servicio |
+| `-p, --project <id>` | Nombre, slug o ID del proyecto |
 | `--port <n>` | Puerto que se expondrá |
+| `-f, --force` | Mueve el dominio aquí si está adjunto a otro de tus servicios |
+
+Los subcomandos usan las mismas banderas `-s` y `-p`. Verifica y elimina un dominio en el servicio al que lo adjuntaste.
 
 <span id="subcommands" />
 
@@ -73,10 +77,10 @@ lizard domain generate
 lizard domain app.example.com --service web
 ```
 
-Lizard devuelve los registros DNS que debes crear (un registro `CNAME` para el hostname y un registro `TXT` para la verificación). Agrégalos en tu proveedor de DNS y luego verifica:
+Lizard devuelve los registros DNS que debes crear: un registro `CNAME` para el hostname y, a menos que ya hayas verificado el dominio, un registro `TXT` en `_lizard-verify.<apex domain>` (para `app.example.com`, es `_lizard-verify.example.com`). Agrégalos en tu proveedor de DNS y luego verifica en el mismo servicio:
 
 ```bash
-lizard domain verify app.example.com
+lizard domain verify app.example.com --service web
 ```
 
 <span id="attach-a-domain-to-a-specific-port" />
@@ -87,13 +91,21 @@ lizard domain verify app.example.com
 lizard domain app.example.com --service web --port 8080
 ```
 
+<span id="move-a-domain-from-another-of-your-services" />
+
+### Mover un dominio desde otro de tus servicios
+
+```bash
+lizard domain app.example.com --service web --force
+```
+
 <span id="remove-a-domain" />
 
 ### Eliminar un dominio
 
 ```bash
-lizard domain delete app.example.com
-lizard domain rm app.example.com --yes
+lizard domain delete app.example.com --service web
+lizard domain rm app.example.com --service web --yes
 ```
 
 <span id="see-also" />

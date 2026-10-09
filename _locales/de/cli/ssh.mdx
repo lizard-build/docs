@@ -1,21 +1,21 @@
 ---
-description: "lizard ssh führt einen Befehl in einem laufenden Service-Container aus und gibt seinen Exit-Code zurück. Die maßgebliche Methode, um zu sehen, was der Container sieht."
+description: "lizard ssh auf Services ist abgeschaltet: Die API antwortet mit 403. So prüfst du stattdessen die Werte und Referenzen eines Service und so bekommst du eine Shell in einer Sandbox."
 ---
 
 # lizard ssh
 
-Führe einen Befehl in dem Container eines laufenden Service aus, streame seine Ausgabe und gib den Remote-Exit-Code zurück.
+> **Abgeschaltet.** Der Shell-Zugriff auf Services ist bei Lizard deaktiviert. `lizard ssh` erhält HTTP 403 `Shell access to services is disabled` und beendet sich mit Exit-Code `1`.
 
-## run vs. ssh
+Der Befehl ist weiterhin Teil der CLI, aber die Plattform lehnt ihn für jeden Service ab. Verwende stattdessen diese Befehle:
 
-`lizard run` und `lizard ssh` führen beide einen Befehl im Kontext eines Service aus, aber sie laufen an unterschiedlichen Orten — du solltest wissen, welchen du brauchst.
+| Zu prüfen | Befehl |
+|----------|---------|
+| Referenzen, die zu einem leeren Wert aufgelöst wurden | `lizard logs --build --service api` (das Build-Log warnt bei jeder leeren `${{…}}`-Referenz) |
+| Die auf einem Service gespeicherten Werte | `lizard secrets list --service api --show` |
+| Ein Befehl mit den echten Verbindungswerten eines Addons | `lizard run --service postgres -- <cmd>` |
+| Was die App zur Laufzeit ausgibt | `lizard logs --service api` |
 
-| Befehl | Wird ausgeführt in | Verwenden für |
-|---------|-----------|---------|
-| `lizard run` | **Lokal**, mit injiziertem Projekt des Service + Service-Secrets | Migrationen, Seed-Skripte, lokale Tools, die Produktionskonfiguration brauchen |
-| `lizard ssh` | **Im laufenden Service-Container** | Den Live-Container inspizieren, einmalige Remote-Befehle, Debugging |
-
-`lizard run` zeigt deine lokal injizierte Kopie der Umgebung, die normalerweise mit der Produktion übereinstimmt — aber `lizard ssh` ist maßgeblich dafür, was der Live-Container tatsächlich sieht.
+Für eine Shell in einer Sandbox verwende [`lizard sandbox ssh <id>`](/cli/sandbox#sandbox-ssh). Das funktioniert weiterhin.
 
 <span id="usage" />
 
@@ -25,46 +25,16 @@ Führe einen Befehl in dem Container eines laufenden Service aus, streame seine 
 lizard ssh --service <name> -- <command>
 ```
 
-<span id="examples" />
-
-## Beispiele
-
-<span id="inspect-the-environment-the-running-app-sees" />
-
-### Die Umgebung inspizieren, die die laufende App sieht
-
-```bash
-lizard ssh --service api -- env
-```
-
-<span id="list-files-in-the-deployed-image" />
-
-### Dateien im bereitgestellten Image auflisten
-
-```bash
-lizard ssh --service api -- ls -la /app
-```
-
-<span id="check-the-os-in-the-container" />
-
-### Das Betriebssystem im Container prüfen
-
-```bash
-lizard ssh --service api -- cat /etc/os-release
-```
-
-<span id="confirm-a-secret-landed-in-the-live-container" />
-
-### Bestätigen, dass ein Secret im Live-Container angekommen ist
-
-```bash
-lizard ssh --service api -- env | grep DATABASE_URL
-```
+| Flag | Beschreibung |
+|------|-------------|
+| `-s, --service <id>` | Service-Name oder ID |
+| `-p, --project <id>` | Projektname, Slug oder ID |
 
 <span id="see-also" />
 
 ## Siehe auch
 
-- [lizard run](/cli/run) — stattdessen einen Befehl lokal mit injizierter Service-Umgebung ausführen
-- [Variablen](/variables) — wie Secrets und Referenzen einen Service erreichen
-- [Von Claude Code bereitstellen](https://lizard.build/blog/deploy-from-claude-code#claude-code-deployment-compared-with-the-alternatives) — warum ein Agent eine Shell in den laufenden Container braucht und welche Plattformen keine bereitstellen
+- [lizard run](/cli/run) — einen Befehl lokal mit den Werten eines Service oder Addons ausführen
+- [lizard secrets](/cli/secrets) — die auf einem Service gespeicherten Werte auflisten
+- [lizard logs](/cli/logs) — Build- und Laufzeit-Logs
+- [lizard sandbox](/cli/sandbox) — interaktive Shells und Befehle in Sandboxes

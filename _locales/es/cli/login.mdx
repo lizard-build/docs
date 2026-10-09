@@ -14,7 +14,7 @@ Inicia sesión en Lizard.
 lizard login [flags]
 ```
 
-De forma predeterminada, esto abre tu navegador para autenticarte mediante OAuth y luego vuelve a tu terminal una vez que confirmas.
+De forma predeterminada, esto abre la página de inicio de sesión en tu navegador, imprime su URL y termina. Después de iniciar sesión, ejecuta tu siguiente comando (por ejemplo `lizard whoami`); este completa el inicio de sesión y guarda tus credenciales. Con `--json`, `login` imprime `{ "status": "pending", "authUrl": "…" }` y no abre un navegador.
 
 <span id="flags" />
 
@@ -22,7 +22,7 @@ De forma predeterminada, esto abre tu navegador para autenticarte mediante OAuth
 
 | Bandera | Descripción |
 |------|-------------|
-| `--token <token>` | Autenticar con un token de API |
+| `--token <token>` | Autenticar con una clave de API (`liz_…`) |
 
 <span id="examples" />
 
@@ -38,20 +38,24 @@ lizard login
 
 <span id="log-in-with-a-token" />
 
-### Iniciar sesión con un token
+<span id="log-in-with-an-api-key" />
+
+### Iniciar sesión con una clave de API
+
+Crea una clave con [`lizard keys create <name>`](/cli/keys) y luego:
 
 ```bash
-lizard login --token lzd_xxx
+lizard login --token liz_xxx
 ```
 
 <span id="log-in-non-interactively-in-ci" />
 
 ### Iniciar sesión de forma no interactiva en CI
 
-En CI u otros entornos no interactivos, configura `LIZARD_TOKEN` en el entorno en lugar de ejecutar `login`:
+En CI u otros entornos no interactivos, configura `LIZARD_TOKEN` (o `LIZARD_API_KEY`) en el entorno en lugar de ejecutar `login`:
 
 ```bash
-export LIZARD_TOKEN=lzd_xxx
+export LIZARD_TOKEN=liz_xxx
 ```
 
 <span id="see-also" />

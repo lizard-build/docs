@@ -4,9 +4,9 @@ description: "Was das Lizard-Dashboard zusätzlich zur CLI bietet: Service-Statu
 
 # App-Dashboard
 
-Das Lizard-Dashboard ist die visuelle Ergänzung zur CLI. Alles, was Sie mit `lizard …` tun, wird hier angezeigt, plus Dinge, die sich mit einer UI einfacher erledigen lassen — Live-Logs, Diagramme, die Datenbrowser und die Team-/Abrechnungsverwaltung.
+Das Lizard-Dashboard ist die visuelle Ergänzung zu Lizard CLI. Alles, was Sie mit `lizard …` tun, wird hier angezeigt, plus Dinge, die sich mit einer UI einfacher erledigen lassen — Live-Logs, Diagramme, die Datenbrowser, Sandboxes und die Team-/Abrechnungsverwaltung.
 
-Wenn Sie lieber gar kein Terminal öffnen möchten, lassen Sie den Agenten die Befehle ausführen und verfolgen Sie das Ergebnis hier — die Anleitung unter [Bereitstellen einer Antigravity-App in der Produktion](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-an-antigravity-app-to-production-without-typing-a-command), die nur zwei Prompts erfordert und keinerlei Eingaben im Terminal.
+Wenn Sie lieber gar kein Terminal öffnen möchten, lassen Sie den Agenten die Befehle ausführen und verfolgen Sie das Ergebnis hier — die Anleitung unter [Bereitstellen einer Antigravity-App in der Produktion](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat), bei der ein einziger Prompt das Deployment steuert.
 
 Öffnen Sie es aus der CLI:
 
@@ -49,15 +49,19 @@ Verwalten Sie Secrets auf Service- und Projektebene mit maskierten Werten und Un
 
 Fügen Sie benutzerdefinierte Domains hinzu, sehen Sie DNS-Einträge ein und verfolgen Sie den Verifizierungs- und TLS-Status. Siehe [Networking](/networking).
 
-<span id="managed-addon-browsers" />
+<span id="data-browsers" />
 
-### Browser für Managed Addons
+### Datenbrowser
 
-Jedes Add-on enthält einen Datenbrowser:
+Jedes Managed Addon enthält einen Datenbrowser:
 
-- **Postgres** — ein SQL-/Tabelleneditor zum Abfragen und Bearbeiten von Daten.
-- **Redis** — ein Key/Wert-Browser.
-- **S3** — ein Bucket- und Objektbrowser mit Upload/Download.
+- **Managed Postgres** — ein SQL-/Tabelleneditor zum Abfragen und Bearbeiten von Daten.
+- **Managed Redis** — ein Key/Wert-Browser.
+- **Managed Object Storage** — ein Bucket- und Objektbrowser mit Upload/Download und Einstellungen für den Bucket-Zugriff.
+
+### Sandboxes
+
+Die Seite **Sandboxes** enthält Tabs für Sandboxes, Persistent Volumes, Vorlagen und Agenten. Erstellen Sie eine Sandbox mit **New Sandbox**; die Zahl daneben zeigt, wie viele Sandboxes im Verhältnis zu Ihrem Limit laufen. Siehe [Sandboxes quickstart](/sandboxes/quickstart).
 
 ### GitHub-Integration
 
@@ -78,7 +82,7 @@ Projekt- und Workspace-Einstellungen, Einladungen und Rollen für Mitglieder sow
 | Ressourcendiagramme | `lizard metrics` | Metriken / Nutzung |
 | Secrets verwalten | `lizard secrets` | Variablen |
 | Benutzerdefinierte Domains | `lizard domain` | Domains |
-| Postgres/Redis/S3 durchsuchen | `lizard run` / `lizard ssh` | Add-on-Browser |
+| Managed Postgres, Managed Redis oder Managed Object Storage abfragen | `lizard run --service <addon> -- <cmd>` | Datenbrowser |
 | Teammitglieder einladen | — | Team / Einstellungen |
 
 Verwenden Sie einfach das, was gerade am besten passt — beide arbeiten mit denselben Projekten und Services.

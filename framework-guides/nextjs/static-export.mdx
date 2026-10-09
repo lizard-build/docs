@@ -91,6 +91,6 @@ The complete Dockerfile includes an npm build step that lizardpack can recognize
 
 Request the live home page, an exported inner route, a JavaScript asset, and a made-up path. The made-up path must return HTTP 404, not the home page with HTTP 200. Use the checks in [static routes and 404s](/framework-guides/static-routing#verify-http-responses).
 
-All exported content changes require a new build. Runtime environment variables cannot change values already written into `out/`. For public build variables in a custom Dockerfile, declare the needed `ARG` before `RUN npm run build`; never place private credentials in the exported bundle.
+All exported content changes require a new build. Runtime environment variables cannot change values already written into `out/`. For public build variables, write them as `ENV` lines in the build stage before `RUN npm run build`. Lizard passes no build args except `COMMIT_SHA`, so an `ARG` stays empty. Never place private credentials in the exported bundle.
 
 See [tested versions and cloud results](/framework-guides/validation) for the September 9, 2026 deployment checks and their limits.

@@ -14,7 +14,7 @@ Lizard にログインします。
 lizard login [flags]
 ```
 
-デフォルトでは、OAuth で認証するためにブラウザが開き、確認が完了するとターミナルに戻ります。
+デフォルトでは、ブラウザでサインインページを開き、その URL を表示して終了します。サインインしたら次のコマンド（例: `lizard whoami`）を実行してください。そのコマンドがログインを完了し、認証情報を保存します。`--json` を付けると、`login` は `{ "status": "pending", "authUrl": "…" }` を出力し、ブラウザは開きません。
 
 <span id="flags" />
 
@@ -22,7 +22,7 @@ lizard login [flags]
 
 | フラグ | 説明 |
 |------|-------------|
-| `--token <token>` | API token で認証 |
+| `--token <token>` | API キー（`liz_…`）で認証 |
 
 <span id="examples" />
 
@@ -36,22 +36,24 @@ lizard login [flags]
 lizard login
 ```
 
-<span id="log-in-with-a-token" />
+<span id="log-in-with-an-api-key" />
 
-### token でログイン
+### API キーでログイン
+
+[`lizard keys create <name>`](/cli/keys) でキーを作成してから、次を実行します:
 
 ```bash
-lizard login --token lzd_xxx
+lizard login --token liz_xxx
 ```
 
 <span id="log-in-non-interactively-in-ci" />
 
 ### CI で非対話的にログイン
 
-CI またはその他の非対話環境では、`login` を実行する代わりに、環境変数に `LIZARD_TOKEN` を設定します:
+CI またはその他の非対話環境では、`login` を実行する代わりに、環境変数に `LIZARD_TOKEN`（または `LIZARD_API_KEY`）を設定します:
 
 ```bash
-export LIZARD_TOKEN=lzd_xxx
+export LIZARD_TOKEN=liz_xxx
 ```
 
 <span id="see-also" />

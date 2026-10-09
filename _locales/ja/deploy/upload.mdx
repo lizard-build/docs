@@ -16,11 +16,11 @@ description: "Git は不要で、lizard up を使って現在のディレクト�
 lizard up
 ```
 
-- 現在のディレクトリを tarball としてアップロードし、`.gitignore` を尊重します（`--no-gitignore` で無効化）。
+- 現在のディレクトリを tarball としてアップロードします。git リポジトリ内では `.gitignore` を尊重します（`--no-gitignore` で無効化）。git の外では、決まったビルド用・依存関係用フォルダー（`node_modules`、`.git`、`dist`、`.next`、`build`、`__pycache__`、`.venv`、`venv`、`.cache`、`coverage`、`.turbo`、`.vercel`）と、`.DS_Store`、`*.pyc`、`*.pyo`、`*.log` だけをスキップするため、`.env` ファイルはアップロードされます。先に `git init` を実行するか、シークレットを移動してください。
 - `sourceType=upload` を強制します。
 - SSE 経由でビルドログをストリーミングし、完了時にライブ URL を表示します。
 
-ディレクトリがまだプロジェクトにリンクされていない場合、`up` は最初に `init` を実行します。TTY では対話的に動作しますが、非 TTY（CI）では空のプロジェクトを暗黙的に作成することは**ありません**。代わりにエラーになり、`lizard init --name <project>` を実行するよう求めます（または `--name` を渡します）。これは、タイプミスによって空のプロジェクトが作成されるのを防ぐためです。
+ディレクトリがまだプロジェクトにリンクされていない場合、`up` は最初に `init` を実行します。TTY では対話的に動作しますが、非 TTY（CI）では空のプロジェクトを暗黙的に作成することは**ありません**。代わりにエラーになり、`lizard init --name <project>` を実行するよう求めます（または `up` に `--project <name>` を渡します）。これは、タイプミスによって空のプロジェクトが作成されるのを防ぐためです。
 
 <span id="common-flags" />
 
@@ -28,12 +28,12 @@ lizard up
 
 | フラグ | 目的 |
 |------|---------|
-| `-s, --service <name>` | 特定のサービスを対象にする／作成する |
+| `-s, --service <name>` | 既存のサービスを対象にする |
 | `--build-command <cmd>` | build コマンドを上書きする |
 | `--start-command <cmd>` | start コマンドを上書きする |
-| `--pre-deploy-command <cmd>` | 各デプロイ前に 1 回実行する（例: マイグレーション） |
+| `--pre-deploy-command <cmd>` | すべてのコンテナの起動時に、start コマンドの前に実行する。`--start-command` が必要（[ビルド設定](/concepts/build-pipeline#build-configuration-reference) を参照） |
 | `--port <number>` | コンテナポート（`0` = [worker mode](/deploy/workers)） |
-| `--region <code>` | デプロイ先のリージョン |
+| `--region <code>` | 新しいサービスのリージョン（既存のサービスでは無視される） |
 | `-d, --detach` | デプロイを開始して、ログをストリーミングせずに終了する |
 | `-c, --ci` | CI 向けの出力 |
 | `--no-gitignore` | `.gitignore` を無視してすべてをアップロードする |
@@ -46,7 +46,7 @@ lizard up --service api --start-command "node server.js" --port 8080
 
 ## build/start コマンドの設定
 
-`--build-command` または `--start-command` を渡すと、サービスは **synthesized Dockerfile** パスに切り替わります。このパスでは、`Procfile` と `package.json` `scripts.start` は読み取られ**ません**。start コマンドを明示的に設定してください（または独自の Dockerfile に `CMD` を含めてください）。詳しくは [ビルド Pipeline](/concepts/build-pipeline) を参照してください。特に影響を受けやすいのは Python です。[Django, Flask and FastAPI](https://lizard.build/blog/python-app-hosting#deploying-django) では、それぞれ異なる `gunicorn` または `uvicorn` の行が必要です。
+`--build-command` または `--start-command` を渡すと、その値がサービスに保存され、`dockerfilePath` が設定されていない限り、サービスは **synthesized Dockerfile** パスに切り替わります。このパスでは、`Procfile` と `package.json` `scripts.start` は読み取られ**ません**。start コマンドを明示的に設定してください。詳しくは [ビルド Pipeline](/concepts/build-pipeline) を参照してください。特に影響を受けやすいのは Python です。[Django, Flask and FastAPI](https://lizard.build/blog/python-app-hosting#build-and-start-commands) では、それぞれ異なる `gunicorn` または `uvicorn` の行が必要です。
 
 <span id="re-deploying-an-upload-service" />
 
@@ -65,7 +65,7 @@ lizard redeploy --service api
 非対話フローでは、デプロイ前に明示的にプロジェクトをリンクしてください:
 
 ```bash
-export LIZARD_TOKEN=lzd_xxx
+export LIZARD_TOKEN=liz_xxx   # create one with: lizard keys create <name>
 lizard init --name my-project
 lizard up --ci --service api
 ```

@@ -101,6 +101,6 @@ El Dockerfile completo incluye un paso de compilación con npm que lizardpack pu
 
 Solicita la página de inicio activa, una ruta interna exportada, un recurso JavaScript y una ruta inventada. La ruta inventada debe devolver HTTP 404, no la página de inicio con HTTP 200. Usa las comprobaciones de [rutas estáticas y 404](/framework-guides/static-routing#verify-http-responses).
 
-Todos los cambios del contenido exportado requieren una nueva compilación. Las variables de entorno en tiempo de ejecución no pueden cambiar valores ya escritos en `out/`. Para variables públicas de compilación en un Dockerfile personalizado, declara los `ARG` necesarios antes de `RUN npm run build`; nunca coloques credenciales privadas en el paquete exportado.
+Todos los cambios del contenido exportado requieren una nueva compilación. Las variables de entorno en tiempo de ejecución no pueden cambiar valores ya escritos en `out/`. Para variables públicas de compilación, escríbelas como líneas `ENV` en la etapa de compilación antes de `RUN npm run build`. Lizard no pasa argumentos de compilación excepto `COMMIT_SHA`, así que un `ARG` queda vacío. Nunca coloques credenciales privadas en el paquete exportado.
 
 Consulta [versiones probadas y resultados en la nube](/framework-guides/validation) para las comprobaciones de implementación del 9 de septiembre de 2026 y sus límites.

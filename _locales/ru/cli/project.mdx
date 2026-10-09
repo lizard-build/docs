@@ -1,18 +1,19 @@
 ---
-description: "lizard project выводит список проектов в рабочей области или создаёт новый, с примерами для обеих подкоманд."
+description: "lizard project выводит список проектов, создаёт новый или удаляет существующий, с примерами для каждой подкоманды."
 ---
 
 # lizard project
 
-Вывод списка или создание проектов в рабочей области.
+Вывод списка, создание или удаление проектов.
 
 <span id="usage" />
 
 ## Использование
 
 ```bash
-lizard project list
-lizard project create
+lizard project list [flags]
+lizard project create <name> [flags]
+lizard project delete [project] [flags]
 ```
 
 <span id="subcommands" />
@@ -21,11 +22,27 @@ lizard project create
 
 ### `lizard project list`
 
-Выводит все проекты в рабочей области.
+Выводит ваши проекты из всех рабочих областей или из одной рабочей области, если указан флаг `-w`.
 
-### `lizard project create`
+| Флаг | Описание |
+|------|----------|
+| `-w, --workspace <ws>` | Только эта рабочая область (id, slug или имя) |
 
-Создаёт новый проект.
+### `lizard project create <name>`
+
+Создаёт проект. Текущая директория при этом не связывается с проектом; для этого используйте [`lizard init`](/cli/init).
+
+| Флаг | Описание |
+|------|----------|
+| `-w, --workspace <ws>` | Рабочая область, в которой нужно создать проект |
+
+### `lizard project delete [project]`
+
+Перемещает проект в корзину (псевдоним `rm`). Его сервисы останавливаются. Проект можно восстановить в течение 3 дней, после этого Lizard удаляет его безвозвратно. Без аргумента удаляет проект, связанный с этой директорией.
+
+| Флаг | Описание |
+|------|----------|
+| `-y, --yes` | Пропустить подтверждение (обязателен без TTY) |
 
 <span id="examples" />
 
@@ -33,10 +50,13 @@ lizard project create
 
 <span id="list-projects-in-the-workspace" />
 
-### Вывод списка проектов в рабочей области
+<span id="list-projects" />
+
+### Вывод списка проектов
 
 ```bash
 lizard project list
+lizard project list --workspace my-team
 ```
 
 <span id="create-a-new-project" />
@@ -44,7 +64,16 @@ lizard project list
 ### Создание нового проекта
 
 ```bash
-lizard project create
+lizard project create my-project
+lizard project create my-project --workspace my-team
+```
+
+<span id="delete-a-project" />
+
+### Удаление проекта
+
+```bash
+lizard project delete my-project --yes
 ```
 
 <span id="see-also" />

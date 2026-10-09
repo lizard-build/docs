@@ -4,7 +4,7 @@ description: "lizard skills は、このCLIバージョンに同梱されたエ�
 
 # lizard skills
 
-このCLIバージョンに同梱された埋め込みエージェントスキルを読み取ります。
+このCLIバージョンに同梱された埋め込みエージェントスキルを読み取ります。エイリアス: `lizard skill`。
 
 <span id="usage" />
 
@@ -26,11 +26,11 @@ lizard skills path
 
 ### `lizard skills get core`
 
-コアガイドを読み取ります。これはプラットフォームの正式な使い方ガイドで、CLIとともにバージョン管理されています。`{ name, frontmatter, content, … }` を返します。ここで、`content` は完全なガイド（ビルドパイプライン、env の優先順位、アドオン、検出、終了コード）です。
+コアガイドを読み取ります。これはプラットフォームの正式な使い方ガイドで、CLIとともにバージョン管理されています。`--json` を付けると `{ name, path, frontmatter, content }` を返します。ここで、`content` は完全なガイド（ビルドパイプライン、env の優先順位、アドオン、検出、終了コード）です。
 
-### `lizard skills path`
+### `lizard skills path [name]`
 
-スキルがディスク上のどこに保存されているかを表示します。
+スキルの取得元を表示します。スキルはCLIに組み込まれているため、`LIZARD_SKILLS_DIR` でCLIにディスク上のディレクトリを指定しない限り、`embedded://skills` と表示されます。
 
 <span id="examples" />
 

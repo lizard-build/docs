@@ -6,7 +6,7 @@ description: "Installieren Sie die lizard CLI, melden Sie sich an und stellen Si
 
 # App-Schnellstart
 
-Stellen Sie Ihre erste App in wenigen Minuten auf Lizard bereit. Ein Lizard-Konto wird automatisch erstellt, wenn Sie zum ersten Mal `lizard login`. Sie installieren die CLI, melden sich an und stellen dann bereit — entweder direkt aus einem GitHub-Repo oder aus einem lokalen Verzeichnis.
+Stellen Sie Ihre erste App in wenigen Minuten auf Lizard bereit. Ein Lizard-Konto wird automatisch erstellt, wenn Sie zum ersten Mal `lizard login`. Sie installieren Lizard CLI, melden sich an, starten die Pro-Testphase und stellen dann bereit — entweder direkt aus einem GitHub-Repo oder aus einem lokalen Verzeichnis.
 
 <span id="1-install-the-cli" />
 
@@ -18,7 +18,7 @@ Führen Sie unter macOS oder Linux das Installationsskript aus:
 curl -fsSL https://lizard.build/install.sh | bash
 ```
 
-Das Skript legt die `lizard`-Binärdatei in `~/.lizard/bin` ab, fügt diesen Ordner in `~/.zshrc` oder `~/.bashrc` zu Ihrem `PATH` hinzu und verlinkt `lizard` in einen Ordner, der bereits in Ihrem `PATH` liegt. So funktioniert `lizard` sofort in diesem Terminal. Danach aktualisiert sich die Binärdatei selbst. Meldet das Skript, dass `lizard` eventuell nicht gefunden wird, öffnen Sie ein neues Terminal. Prüfen Sie die Version:
+Das Skript legt die `lizard`-Binärdatei in `~/.lizard/bin` ab, fügt diesen Ordner in `~/.zshrc` oder `~/.bashrc` zu Ihrem `PATH` hinzu und verlinkt `lizard` in einen Ordner, der bereits in Ihrem `PATH` liegt. So funktioniert es sofort in diesem Terminal. Danach aktualisiert sich die Binärdatei selbst, außer in CI. Meldet das Skript, dass `lizard` eventuell nicht gefunden wird, öffnen Sie ein neues Terminal. Prüfen Sie die Version:
 
 ```bash
 lizard --version
@@ -57,10 +57,12 @@ lizard login
 Dadurch wird Ihr Browser zur Authentifizierung geöffnet und Sie kehren nach der Bestätigung in Ihr Terminal zurück. In CI oder anderen nicht interaktiven Umgebungen authentifizieren Sie sich stattdessen mit einem Token:
 
 ```bash
-export LIZARD_TOKEN=lzd_xxx
+export LIZARD_TOKEN=liz_xxx
 # or
-lizard login --token lzd_xxx
+lizard login --token liz_xxx
 ```
+
+API-Schlüssel beginnen mit `liz_`. Erstellen Sie einen mit `lizard keys create <name>`. `LIZARD_API_KEY` funktioniert anstelle von `LIZARD_TOKEN`.
 
 Sie können jederzeit prüfen, wer Sie sind:
 
@@ -68,9 +70,21 @@ Sie können jederzeit prüfen, wer Sie sind:
 lizard whoami
 ```
 
-<span id="3-deploy" />
+<span id="3-start-the-pro-trial" />
 
-## 3. Bereitstellen
+## 3. Die Pro-Testphase starten
+
+Ein neues Konto hat keinen Plan, daher gibt das Erstellen von Ressourcen HTTP 402 mit einem Checkout-Link zurück. Starten Sie zuerst die 7-tägige Pro-Testphase:
+
+```bash
+lizard billing start
+```
+
+Dadurch wird Stripe Checkout geöffnet, wo Sie eine Karte hinzufügen. Die Testphase enthält $5 Testguthaben, und es wird nichts abgebucht, bis sie endet. Siehe [Abrechnung](/platform/billing).
+
+<span id="4-deploy" />
+
+## 4. Bereitstellen
 
 Wählen Sie den Weg, der zu dem Ort passt, an dem Ihr Code liegt.
 
@@ -102,11 +116,11 @@ lizard up
 
 Wenn das Verzeichnis noch nicht mit einem Projekt verknüpft ist, erstellt oder wählt `up` es interaktiv aus. In CI verknüpfen Sie es vorher explizit mit `lizard init --name my-project`.
 
-In beiden Fällen erhalten Sie nach Abschluss des Builds eine generierte URL wie `https://your-app-production.onlizard.com`.
+In beiden Fällen erhalten Sie nach Abschluss des Builds eine generierte URL wie `https://your-app-x1y2z.onlizard.com`.
 
-<span id="4-watch-it-build-and-run" />
+<span id="5-watch-it-build-and-run" />
 
-## 4. Build und Ausführung beobachten
+## 5. Build und Ausführung beobachten
 
 ```bash
 lizard ps          # services in the project, with status + URL
@@ -115,19 +129,19 @@ lizard logs --build  # the most recent build's logs
 lizard open        # open the project in the dashboard
 ```
 
-<span id="5-add-a-database-optional" />
+<span id="6-add-a-database-optional" />
 
-## 5. Eine Datenbank hinzufügen (optional)
+## 6. Eine Datenbank hinzufügen (optional)
 
-Stellen Sie ein Managed Postgres bereit und referenzieren Sie es aus Ihrem Service:
+Stellen Sie Managed Postgres bereit und referenzieren Sie es aus Ihrem Service:
 
 ```bash
 lizard add postgres
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service your-app
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service your-app
 lizard redeploy --service your-app
 ```
 
-Die Referenz `${{postgres.DATABASE_URL}}` wird beim Bereitstellen aufgelöst und automatisch zusammen mit dem Add-on rotiert. Siehe [Managed Addons](/addons).
+Die Referenz `${{postgres.DATABASE_PRIVATE_URL}}` wird beim Bereitstellen aufgelöst und verbindet über das private Netzwerk des Projekts. Sie entspricht dem aktuellen Namen des Add-ons, aktualisieren Sie die Referenz also, wenn Sie das Add-on umbenennen. Zugangsdaten rotieren nicht von selbst; ein Service übernimmt neue Werte bei seiner nächsten Bereitstellung. Siehe [Managed Addons](/addons).
 
 <span id="next-steps" />
 
@@ -137,10 +151,10 @@ Die Referenz `${{postgres.DATABASE_URL}}` wird beim Bereitstellen aufgelöst und
 - **[Bereitstellung über GitHub](/deploy/github)** — Branches, Monorepos und automatische erneute Bereitstellungen.
 - **[Variablen & Secrets](/variables)** — Geltungsbereich und Priorität.
 - **[Netzwerk](/networking)** — Ihren eigenen Hostnamen mit automatischem TLS verbinden.
-- **[Eine App bereitstellen, die Ihre AI IDE erstellt hat](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — dieselben drei Schritte, nur stattdessen an einen Agenten übergeben, für eine in Google Antigravity geschriebene App.
+- **[Eine App bereitstellen, die Ihre AI IDE erstellt hat](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — dieselben Schritte, nur stattdessen an einen Agenten übergeben, für eine in Google Antigravity geschriebene App.
 
 <span id="hosting-costs" />
 
 ## Hosting-Kosten
 
-Pro kostet $19 im Monat und enthält $19 monatliches Guthaben. Nutzung darüber hinaus läuft pay as you go zu den veröffentlichten Preisen. Ein neues Konto beginnt mit einer 7-tägigen Testphase und $5 Testguthaben. Siehe [Abrechnung](/platform/billing) und [Preise](https://lizard.build/pricing), und prüfen Sie vor der Bereitstellung Ihre [Limits](/platform/limits).
+Pro kostet $19 im Monat und enthält $19 monatliches Guthaben. Nutzung darüber hinaus läuft pay as you go zu den veröffentlichten Preisen. Pro beginnt mit einer 7-tägigen Testphase und $5 Testguthaben; zum Starten fügen Sie eine Karte hinzu. Siehe [Abrechnung](/platform/billing) und [Preise](https://lizard.build/pricing), und prüfen Sie vor der Bereitstellung Ihre [Limits](/platform/limits).

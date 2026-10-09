@@ -8,11 +8,11 @@ This page records behavior that needs care or a verified release. A code fix und
 
 ## Sandbox pause and expiration
 
-Create a sandbox, run commands, then call `kill`. `connect` attaches to an existing sandbox without changing its state, so it does not resume a paused or stopped sandbox. Pause, resume, snapshot, and restore are available; see [Pause, resume, and snapshots](/sandboxes/quickstart#pause-and-resume). Fork and file watching return HTTP 501. `lizard sandbox ssh` opens an interactive shell with your CLI credentials. SSH protocol access is not available, so SSH clients, `scp`, and port forwarding do not work.
+Create a sandbox, run commands, then call `kill`. `connect` attaches to an existing sandbox without changing its state, so it does not resume a paused or stopped sandbox. Pause, resume, snapshot, and restore are available; see [Pause, resume, and snapshots](/sandboxes/quickstart#pause-and-resume). Fork (`sandbox.fork({ count })`) works on Firecracker sandboxes; it returns HTTP 409 when a volume is attached and HTTP 501 for a pod sandbox. `lizard sandbox ssh` opens an interactive shell with your CLI credentials. SSH protocol access is not available, so SSH clients, `scp`, and port forwarding do not work.
 
 Pausing closes open network connections. If the processes cannot be saved, the sandbox keeps running and reports the reason in `pauseError`. A paused sandbox resumes only on its own node; if that node fails, the paused state is lost.
 
-Files and running processes remain available while the sandbox runs. After it stops, only files written to an attached Persistent Volume at `/workspace` can be reused by a later sandbox. Without a volume, `/workspace` is temporary. Each volume attaches to one sandbox at a time and uses node-local storage; export files that must survive node loss.
+Files and running processes remain available while the sandbox runs. After it stops, only files written to an attached persistent volume at `/workspace` can be reused by a later sandbox. Without a volume, `/workspace` is temporary. Each volume attaches to one sandbox at a time and uses node-local storage; export files that must survive node loss.
 
 ## Redeploy is not rollback
 
@@ -24,9 +24,9 @@ Explicit build or start commands take priority over a repository Dockerfile. Cle
 
 ## Templates and MCP
 
-Choose a template from the current catalog. Enabled templates include `base`, `codex`, and `interpreter`; availability depends on the region and pool capacity. `interpreter` includes Python and common data libraries. Check tool versions inside your sandbox. The public CLI does not provide a custom-template upload flow.
+Choose a template from the current catalog. Enabled templates are `base`, `interpreter`, `codex`, `desktop`, `opencode`, `pi`, `prime`, and `claude`; availability depends on the region and pool capacity. `interpreter` includes Python and common data libraries. Check tool versions inside your sandbox. The public CLI does not provide a custom-template upload flow.
 
-Lizard Skill uses Lizard CLI. That workflow does not expose an MCP transport. Hosting your own remote MCP server is a separate application deployment; see the [guide](/guides/deploy-mcp-server).
+Lizard Skill uses Lizard CLI and does not expose an MCP transport. For MCP clients, use the hosted Lizard MCP server; see [Lizard MCP](/agents#lizard-mcp). Hosting your own remote MCP server is a separate application deployment; see the [guide](/guides/deploy-mcp-server).
 
 ## Service port changes: fixed and verified on 2026-09-09
 

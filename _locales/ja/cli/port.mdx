@@ -4,7 +4,7 @@ description: "lizard port はサービスのコンテナポートを表示また
 
 # lizard port
 
-サービスのコンテナポートを表示または変更します。引数なしでは現在のポートを表示します（`worker mode` が `0` の場合）。
+サービスのコンテナポートを表示または変更します。引数なしでは現在のポートを表示します（`worker mode` が `0` の場合）。新しいポートは次のデプロイで有効になります。反映するには [`lizard redeploy`](/cli/redeploy) を実行してください。
 
 <span id="usage" />
 
@@ -21,6 +21,7 @@ lizard port [value] [flags]
 | フラグ | 説明 |
 |------|-------------|
 | `-s, --service <name>` | 対象のサービス |
+| `-p, --project <id>` | プロジェクト名、スラッグ、または ID |
 
 <span id="examples" />
 
@@ -56,4 +57,4 @@ lizard port --service worker
 
 - [Background workers](/deploy/workers) — ポートを `0` に設定すると、受信ルーティングなしでサービスを実行します
 - [lizard service](/cli/service) — サービス設定の残りを管理します
-- [Pythonアプリがホストに求めるもの](https://lizard.build/blog/python-app-hosting#what-a-python-app-actually-needs-from-a-host) — `gunicorn` または `uvicorn` のプロセスが、`0.0.0.0` 上で `$PORT` にバインドする必要がある理由
+- [Pythonアプリのビルドコマンドと起動コマンド](https://lizard.build/blog/python-app-hosting#build-and-start-commands) — `gunicorn` または `uvicorn` のプロセスが、`0.0.0.0` 上で `$PORT` にバインドする必要がある理由

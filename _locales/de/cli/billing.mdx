@@ -1,5 +1,5 @@
 ---
-description: "lizard billing zeigt deinen Pro-Plan, die Testphase und die Nutzung, startet oder kündigt Pro, löst Promo-Codes ein und zeigt den Verlauf des Prepaid-Guthabens und gespeicherte Karten."
+description: "lizard billing zeigt deinen Pro-Plan, die Testphase und die Nutzung, startet oder kündigt Pro, löst Promo-Codes ein und zeigt den Guthabenverlauf von Enterprise und gespeicherte Karten."
 ---
 
 # lizard billing
@@ -40,7 +40,7 @@ Zeigt deinen Plan und seinen Stand: verbleibende Tage und Testguthaben, wie viel
 
 ### `lizard billing start`
 
-Startet Pro in Stripe Checkout, wo du eine Karte hinterlegst. Der Befehl öffnet Checkout in deinem Browser. Ein neues Konto bekommt die 7-tägige Testphase mit $5 Testguthaben, und bis zu ihrem Ende wird nichts berechnet. Hatte das Konto oder die Karte schon eine Testphase, beginnt Pro sofort, und $19 werden belastet.
+Startet Pro in Stripe Checkout, wo du eine Karte hinterlegst. Der Befehl öffnet Checkout in deinem Browser. Ein neues Konto bekommt die 7-tägige Testphase mit $5 Testguthaben, und bis zu ihrem Ende wird nichts berechnet. Hatte das Konto schon eine Testphase, beginnt Pro sofort, und $19 werden belastet. Hatte die Karte schon eine, startet die Testphase nicht, und es wird nichts berechnet; starte Pro für $19 auf der Seite „Abrechnung“.
 
 | Flag | Beschreibung |
 |------|-------------|
@@ -74,11 +74,11 @@ Löst einen Promo-Code für eine längere Testphase und mehr Testguthaben ein. V
 
 ### `lizard billing balance`
 
-Zeigt das Prepaid-Guthaben. Für Konten mit Prepaid-Guthaben bis zum 1. November 2026 und für Enterprise-Konten.
+Zeigt das Guthaben eines Enterprise-Kontos.
 
 ### `lizard billing transactions`
 
-Listet die letzten Buchungen auf dem Guthaben für Konten mit Prepaid-Guthaben und Enterprise-Konten auf (Alias `ledger`).
+Listet die letzten Buchungen auf dem Guthaben eines Enterprise-Kontos auf (Alias `ledger`).
 
 | Flag | Beschreibung |
 |------|-------------|
@@ -88,11 +88,11 @@ Listet die letzten Buchungen auf dem Guthaben für Konten mit Prepaid-Guthaben u
 
 ### `lizard billing payment-methods list`
 
-Listet gespeicherte Karten auf. `pm` ist die Kurzform von `payment-methods`. Eine Karte fügst du auf der Seite „Abrechnung“ hinzu.
+Listet gespeicherte Karten auf. `pm` ist die Kurzform von `payment-methods`. Eine Pro-Karte fügst du auf der Seite „Abrechnung“ hinzu, änderst oder entfernst sie dort.
 
 ### `lizard billing payment-methods remove <id>`
 
-Entfernt eine gespeicherte Karte (Alias `rm`).
+Entfernt eine gespeicherte Karte (Alias `rm`). Das funktioniert nur für Enterprise-Konten; ein Pro-Konto erhält HTTP 409 und entfernt seine Karte auf der Seite „Abrechnung“.
 
 | Flag | Beschreibung |
 |------|-------------|

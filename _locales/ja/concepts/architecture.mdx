@@ -57,13 +57,13 @@ lizard project list             # all projects in the workspace
 - **`github`** — 接続された GitHub repo。追跡対象ブランチへの push により自動で再デプロイされます。
 - **`upload`** — `lizard up` でアップロードされた tarball。
 
-実行中の各 service は、それぞれ独立した **isolated pod** として動作し、default-deny の network policy、生成された `<name>.<region>.onlizard.com` domain、自動 TLS を備えます。この分担、つまりコンテナはあなたが用意し、platform がそれを実行するという形は [container as a service](https://lizard.build/blog/container-as-a-service) であり、blog ではそれでもなお利用者側に残る責任について説明しています。service の確認と管理には次を使います:
+実行中の各 service は、それぞれ独立した **isolated pod** として動作し、default-deny の network policy、生成された `<name>-<suffix>.onlizard.com` domain（古い service は `<words>.<region>.onlizard.com` のまま）、自動 TLS を備えます。この分担、つまりコンテナはあなたが用意し、platform がそれを実行するという形は [container as a service](https://lizard.build/blog/container-as-a-service) であり、blog ではそれでもなお利用者側に残る責任について説明しています。service の確認と管理には次を使います:
 
 ```bash
 lizard ps                       # list services with status + URL
 lizard service show             # full config as JSON
 lizard service set <svc> --set <field>=<value>
-lizard service rename --service <svc>
+lizard service rename <new-name> --service <svc>
 lizard service delete --service <svc>
 ```
 
@@ -79,7 +79,7 @@ lizard service delete --service <svc>
 
 ## マネージドアドオン
 
-**addons** は、project ごとにプロビジョニングする managed Postgres、Redis、および S3 互換 storage です:
+**addons** は、project ごとにプロビジョニングする Managed Postgres、Managed Redis、および Managed Object Storage（S3 互換）です:
 
 ```bash
 lizard add postgres redis s3
@@ -97,17 +97,18 @@ lizard add postgres redis s3
 ${{<name>.<KEY>}}
 ```
 
-reference はデプロイ時に、対象のマージ済み環境に対して解決されます。ID で保存されるため、後で対象の名前を変更しても reference は壊れません。存在しない対象または key への reference は空文字列に解決されます（デプロイは**失敗しません**）。失敗するのは circular references の場合だけです。
+reference はデプロイ時に、対象のマージ済み環境に対して解決されます。reference は対象の **現在の名前** と照合されます。service または addon の名前を変更した場合は、古い名前を使っているすべての reference を更新してください。存在しない対象または key への reference は空文字列に解決されます（デプロイは**失敗しません**）。失敗するのは circular references の場合だけです。
 
 ```bash
 # Wire a service to the project's Postgres
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 ```
 
-実際に consumer がその値を受け取ったことを確認するには、次を実行します:
+reference が解決されたことを確認します。ビルドログには空の値に解決されたすべての reference について警告が出力され、`secrets list` には保存されている内容が表示されます:
 
 ```bash
-lizard ssh --service api -- env | grep DATABASE_URL
+lizard logs --build --service api
+lizard secrets list --service api --show
 ```
 
 <span id="platform-injected-variables" />
@@ -121,6 +122,7 @@ lizard ssh --service api -- env | grep DATABASE_URL
 | `PORT` | アプリが待ち受けるべきポート（worker mode では省略） |
 | `LIZARD_SERVICE_NAME` | service の名前 |
 | `LIZARD_PROJECT_ID` | project ID |
-| `LIZARD_PUBLIC_DOMAIN` | service の public domain |
+| `LIZARD_PUBLIC_DOMAIN` | service の public domain（domain が割り当てられると設定されます） |
+| `LIZARD_PRIVATE_DOMAIN` | service の private hostname `<host>.lizard.internal`。同じ project から到達できます |
 
 これらが独自の変数とどのように相互作用するか、および完全な優先順位については [変数 & Secrets](/variables) を参照してください。

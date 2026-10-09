@@ -1,5 +1,5 @@
 ---
-description: "Развернуть Flowise with PostgreSQL, preserve its credential encryption key, and check saved flows after restarts and upgrades."
+description: "Deploy Flowise with PostgreSQL, preserve its credential encryption key, and check saved flows after restarts and upgrades."
 ---
 
 <span id="run-flowise-with-postgresql" />
@@ -14,7 +14,7 @@ description: "Развернуть Flowise with PostgreSQL, preserve its credent
 
 ## Предварительные требования
 
-- Учетная запись Lizard с доступом к хостингу приложений и Managed Postgres.
+- Учетная запись Lizard с тарифом Pro или 7-дневным пробным периодом Pro (требуется карта). Пока пробный период не начался, `lizard add` и `lizard up` возвращают ссылку на Checkout; `lizard billing start` открывает ее.
 - OpenSSL на вашем компьютере.
 - Достаточно памяти для вашей рабочей нагрузки Flowise; тестовый сервис использует 4 ГиБ.
 
@@ -148,7 +148,7 @@ PostgreSQL не хранит все файлы, которые пишет Flowis
 
 Перед использованием загрузок или рабочих процессов с документами настройте частный S3-бакет, используя [переменные хранилища](https://docs.flowiseai.com/configuration/environment-variables) Flowise. Задайте `STORAGE_TYPE=s3`, `S3_STORAGE_BUCKET_NAME`, `S3_STORAGE_ACCESS_KEY_ID`, `S3_STORAGE_SECRET_ACCESS_KEY` и `S3_STORAGE_REGION`. Для S3-совместимого провайдера также задайте `S3_ENDPOINT_URL` и `S3_FORCE_PATH_STYLE=true`.
 
-Managed Object Storage Lizard создает бакет `default` с публичным доступом на чтение. Не помещайте туда приватные документы Flowise, не изменив сначала настройку доступа. Настройка PostgreSQL выше не предоставляет и не тестирует файловое хранилище, локальные векторные хранилища или рабочие процессы очередей.
+Managed Object Storage Lizard создает приватный бакет `default`, который подходит для документов Flowise. Оставьте его приватным: если сделать его публичным через S3-браузер в панели управления, все файлы в нем станут доступны всем. Настройка PostgreSQL выше не предоставляет и не тестирует файловое хранилище, локальные векторные хранилища или рабочие процессы очередей.
 
 <span id="troubleshooting-and-updates" />
 
@@ -160,6 +160,6 @@ lizard logs --build --service flowise
 lizard logs --service flowise
 ```
 
-Если первое развертывание завершается тайм-аутом, пока образ всё ещё скачивается, проверьте `lizard events`. После запуска контейнера повторите `lizard up --service flowise --port 3000`. Сервис без предыдущей успешной сборки еще не может использовать `lizard redeploy`.
+Если первое развертывание завершается тайм-аутом, пока образ всё ещё скачивается, проверьте `lizard events`. После запуска контейнера повторите `lizard up --service flowise --port 3000` или выполните `lizard redeploy --service flowise`, чтобы пересобрать последнюю загрузку, даже после неудачной первой сборки.
 
 Для обновлений сделайте резервную копию базы данных, изучите заметки к выпуску Flowise, измените версию npm в Dockerfile и загрузите его снова с помощью `lizard up`. Проверьте новую версию и выполните проверки сохранности перед тем, как полагаться на обновление.

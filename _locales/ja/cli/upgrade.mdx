@@ -1,5 +1,5 @@
 ---
-description: "lizard upgrade は CLI をその場で更新します。--check を付けると、インストールせずに新しいバージョンがあるか確認します。"
+description: "lizard upgrade は macOS と Linux で CLI バイナリを最新リリースに置き換えます。--check を付けると、新しいバージョンがあるか確認します。"
 ---
 
 # lizard upgrade
@@ -13,6 +13,12 @@ CLI を最新バージョンに更新します。
 ```bash
 lizard upgrade [flags]
 ```
+
+更新方法は、CLI をどの方法でインストールしたかによって異なります:
+
+- **macOS または Linux のインストールスクリプト:** 最新リリースをダウンロードし、バイナリを置き換えます。
+- **npm:** 実行するコマンド `npm install -g @lizard-build/cli@latest` を表示します。
+- **Windows:** バイナリは自分自身を置き換えられません。インストーラーを再度実行してください: `irm https://lizard.build/api/cli/install.ps1 | iex`。
 
 <span id="flags" />
 

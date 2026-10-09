@@ -26,9 +26,11 @@ lizard secrets set NODE_ENV=production --global
 ```bash
 lizard secrets list                       # current scope
 lizard secrets list --show                # reveal values
-lizard secrets delete OLD_KEY ANOTHER_KEY # variadic
-cat .env | lizard secrets import          # import dotenv from stdin
+lizard secrets delete OLD_KEY ANOTHER_KEY # variadic; add -y in scripts
+cat .env | lizard secrets import          # KEY=value lines from stdin
 ```
+
+`secrets import` reads plain `KEY=value` lines and keeps quotes as part of the value. `secrets delete` asks for confirmation; pass `-y` when it runs outside a terminal.
 
 See the [`lizard secrets` command reference](/cli/secrets) for every flag.
 
@@ -41,14 +43,14 @@ See the [`lizard secrets` command reference](/cli/secrets) for every flag.
 
 **Default to service scope.** A compromised service can read its own environment — broader scope means more credentials exposed for no reason. Reserve `--global` for non-secret, provably-public values like `LOG_LEVEL`, `NODE_ENV`, feature flags, or a frontend `SENTRY_DSN`. If you're unsure whether a value is a secret, treat it as one and scope it to the service.
 
-For shared resources like a database, **don't** put the DSN in `--global` — bind it per consumer with a [reference](/variables/references):
+Every running Postgres and Redis addon's `DATABASE_URL` and `REDIS_URL` already reach every service in the project, at the lowest precedence. To pick a specific addon or use its private URL, bind it per consumer with a [reference](/variables/references) instead of `--global`:
 
 ```bash
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service worker
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service worker
 ```
 
-Rotation still happens once on the addon; every reference updates.
+If the addon's values change, each consumer picks up the new value on its next deploy or variable change.
 
 ## Precedence
 
@@ -58,35 +60,44 @@ When the same key is defined in multiple places, the **last writer wins**:
 addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets  <  platform vars
 ```
 
-So **app secrets override project secrets**, and **platform variables** (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`) are applied last and cannot be shadowed.
+So **app secrets override project secrets**, and **platform variables** (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`, `LIZARD_PRIVATE_DOMAIN`) are applied last and cannot be shadowed. `PORT` is set only when the service has an HTTP port. Setting `PORT` yourself changes the port Lizard routes to on the next deploy, unless the port was set with `lizard port`.
 
 ## Build-time vs. runtime
 
 Most variable changes apply with **no rebuild** — the service restarts to pick them up, which takes a few seconds. The exceptions are build-time values baked into the image:
 
-- `VITE_*` and `NEXT_PUBLIC_*` changes **force a rebuild** on the next deploy.
+- Changing a `VITE_*` or `NEXT_PUBLIC_*` value starts a rebuild of the affected running services right away (every running service for `--global`).
+- Lizard bakes these values in as `ENV` lines for GitHub services (the Dockerfile lizardpack generates, or the repo's root Dockerfile) and for Node services built from `buildCommand` / `startCommand`. A service with a custom `dockerfilePath`, or one uploaded with `lizard up` without those commands, gets no Lizard variables at build time; no service gets build args except `COMMIT_SHA`. For public values in those cases, commit them in `.env.production`, set a build command, or write them into your Dockerfile.
 
 See [Build Pipeline → rebuild triggers](/concepts/build-pipeline#what-triggers-a-rebuild).
 
 ## Verifying
 
-Confirm what a running service actually sees:
+Shell access to services (`lizard ssh`) is turned off, so check the values another way:
 
 ```bash
-lizard ssh --service api -- env
+lizard logs --build --service api          # warns about every empty ${{…}} reference
+lizard secrets list --service api --show   # stored values
+lizard secrets list --service api --ref    # reference templates you can use
 ```
 
 If a value you expected isn't there, see [Troubleshooting → a secret or reference isn't showing up](/variables/troubleshooting/reference-not-applied).
 
 ## Local development
 
-Run a command **locally** with the service's project + service secrets injected (handy for scripts and migrations):
+Run a command **locally** with the service's project and service secrets injected:
 
 ```bash
 lizard run --service api -- node scripts/seed.js
 ```
 
-See [`lizard run` vs. `lizard ssh`](/cli/run#run-vs-ssh).
+Values arrive as stored: `${{…}}` references stay literal text, and platform variables (`PORT`, `LIZARD_*`) are not injected. For a script that needs the database, run it with the addon's real connection values:
+
+```bash
+lizard run --service postgres -- node scripts/seed.js
+```
+
+See [what `lizard run` injects](/cli/run#what-run-injects).
 
 ## See also
 

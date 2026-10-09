@@ -22,18 +22,25 @@ lizard add redis
 
 | Переменная | Описание |
 |----------|-------------|
-| `REDIS_URL` | Полная строка подключения (`redis://…`) |
+| `REDIS_URL` | Полная строка подключения через публичную конечную точку (`redis://…`) |
+| `REDIS_PRIVATE_URL` | Строка подключения через приватную сеть проекта (`<name>.lizard.internal:6379`) |
 
 <span id="connect-a-service" />
 
 ## Подключение сервиса
 
 ```bash
-lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service api
+lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-Ссылка разрешается при развёртывании и обновляется при смене учётных данных дополнения.
+Ссылка разрешается при развёртывании; потребители получают актуальные значения дополнения при следующем развёртывании. Используйте `REDIS_URL` для клиентов вне проекта. Каждый сервис в проекте также получает публичный `REDIS_URL` дополнения с самым низким приоритетом; явная ссылка переопределяет его.
+
+<span id="memory-and-durability" />
+
+## Память и сохранность данных
+
+В Managed Redis нет политики вытеснения и append-only файла. Если память заканчивается, экземпляр перезапускается, и последние записи могут быть потеряны. Используйте его для данных, которые можно восстановить, а данные, которые нельзя потерять, храните в [Managed Postgres](/addons/postgres).
 
 <span id="common-uses" />
 
@@ -45,9 +52,9 @@ lizard redeploy --service api
 
 ```bash
 # A worker that drains a Redis queue
-lizard add -r your-org/worker -n jobs
+lizard add -r your-org/worker -n jobs --no-deploy
 lizard service set jobs --set containerPort=0
-lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service jobs
+lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service jobs
 lizard redeploy --service jobs
 ```
 
@@ -55,10 +62,10 @@ lizard redeploy --service jobs
 
 ## Просмотр ключей
 
-Откройте **Браузер Redis** в панели управления (`lizard open`), чтобы просмотреть ключи и значения. Для локального доступа:
+Откройте **Браузер Redis** в панели управления (`lizard open`), чтобы просмотреть ключи и значения. Для локального доступа со значениями подключения дополнения:
 
 ```bash
-lizard run --service api -- sh -c 'exec redis-cli -u "$REDIS_URL"'
+lizard run --service redis -- sh -c 'exec redis-cli -u "$REDIS_URL"'
 ```
 
 <span id="grow-storage" />
@@ -76,4 +83,4 @@ lizard scale --service redis --storage 4096
 - [Управляемые дополнения](/addons) — соглашения об именах, ссылки и браузеры в панели управления.
 - [Фоновые воркеры](/deploy/workers) — использование Redis вместе с воркером, обрабатывающим очередь.
 
-`lizard run` запускает команду локально с выбранным окружением сервиса. Установите `redis-cli` локально и проверьте доступность конечной точки.
+`lizard run --service redis` запускает команду на вашей машине с публичными значениями подключения дополнения. Установите `redis-cli` локально.

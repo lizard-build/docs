@@ -1,10 +1,10 @@
 ---
-description: "Drive Lizard from an AI coding agent: read Lizard Skill, discover command schemas with --json, and deploy through Lizard CLI."
+description: "Drive Lizard from an AI coding agent: read Lizard Skill, discover command schemas with --json, deploy through Lizard CLI, or connect an MCP client to Lizard MCP."
 ---
 
 # Coding agents
 
-Lizard is designed to be driven by AI coding agents as easily as by humans. The CLI ships an **embedded skill** that teaches an agent the whole platform, and every command is **self-describing** via `--json` so agents never have to guess.
+Lizard is designed to be driven by AI coding agents as easily as by humans. Lizard CLI ships an **embedded skill** that teaches an agent the whole platform, and every command is **self-describing** via `--json` so agents never have to guess.
 
 ## The embedded skill
 
@@ -41,8 +41,9 @@ A typical agent flow:
 
 1. **Load the guide:** `lizard skills get core --json` → read `content`.
 2. **Check auth optimistically:** run the user's task; on exit code `2`, run `lizard login`, hand the printed URL to the user, then retry.
-3. **Resolve context before mutating:** `lizard status` (cwd link) and `lizard ps --json` (services).
-4. **Act** using the guide — `add`, `up`, `secrets`, `domain`, etc., always with `--json`.
+3. **Start the trial if asked:** a new account has no plan, so its first create fails with HTTP 402 (`code: "PAYMENT_REQUIRED"`, exit code `1`). Run `lizard billing start --json`, hand the Checkout `url` to the user, then retry once they have added a card.
+4. **Resolve context before mutating:** `lizard status` (cwd link) and `lizard ps --json` (services).
+5. **Act** using the guide — `add`, `up`, `secrets`, `domain`, etc., always with `--json`.
 
 If the `lizard` binary isn't present, install it first. On macOS or Linux, use the install script:
 
@@ -50,7 +51,13 @@ If the `lizard` binary isn't present, install it first. On macOS or Linux, use t
 curl -fsSL https://lizard.build/install.sh | bash
 ```
 
-It needs no Node.js or `sudo`, and it links `lizard` into a folder that is already on the `PATH`, so the agent can call it in the same session. If the script says `lizard` may not be found, call `~/.lizard/bin/lizard` instead. On Windows, use npm:
+It needs no Node.js or `sudo`, and it links `lizard` into a folder that is already on the `PATH`, so the agent can call it in the same session. If the script says `lizard` may not be found, call `~/.lizard/bin/lizard` instead. On Windows, run this in PowerShell:
+
+```powershell
+irm https://lizard.build/api/cli/install.ps1 | iex
+```
+
+Or install from npm on any system:
 
 ```bash
 npm install -g @lizard-build/cli
@@ -66,17 +73,54 @@ npm install -g @lizard-build/cli
 
 ## Editor integrations
 
-Lizard Skill is distributed as a public bootstrap so agents in editors and assistants can install and load it on demand, then drive the same CLI described throughout these docs. The CLI is the single source of truth — there's no separate agent API to learn.
+Lizard Skill is distributed as a public bootstrap so agents in editors and assistants can install and load it on demand, then drive the same CLI described throughout these docs. Install it once for all your agents:
 
-That covers the AI IDEs too: they write and test an app but don't host it. See [deploying an app built in Google Antigravity](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-an-antigravity-app-to-production-without-typing-a-command), where the whole deploy runs from two prompts.
+```bash
+npx skills add lizard-build/skill -g
+```
+
+It works with Claude Code, Cursor, Codex, Copilot, Gemini CLI and other agents that read the Agent Skills format. For clients that speak MCP instead of running shell commands, use [Lizard MCP](#lizard-mcp).
+
+That covers the AI IDEs too: they write and test an app but don't host it. See [deploying an app built in Google Antigravity](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat), where one prompt drives the whole deploy.
+
+## Lizard MCP
+
+Lizard MCP lets ChatGPT, Claude and other MCP clients manage your Lizard projects: create services and addons, redeploy, read logs and metrics, set secrets, scale replicas and attach domains. It is a hosted server that speaks Streamable HTTP at:
+
+```text
+https://employ-woman-g1q2.us-east-1.onlizard.com/mcp
+```
+
+A client that supports OAuth signs you in on first use. Other clients send a `liz_` API key in the `Authorization: Bearer` header; create one with `lizard keys create <name>`.
+
+Add it to Claude Code:
+
+```bash
+claude mcp add --transport http lizard https://employ-woman-g1q2.us-east-1.onlizard.com/mcp
+```
+
+For Cursor and other clients configured by JSON:
+
+```json
+{
+  "mcpServers": {
+    "lizard": {
+      "url": "https://employ-woman-g1q2.us-east-1.onlizard.com/mcp",
+      "headers": { "Authorization": "Bearer liz_your_key" }
+    }
+  }
+}
+```
+
+Starting the trial, paying and cancelling Pro happen on the Billing page. When the account has to pay before it can create something, the tool error carries `PAYMENT_REQUIRED` and the link to open.
+
+## Hosting your own MCP server
+
+An agent using Lizard CLI and an application exposing MCP are separate workflows. The CLI commands above do not provide an MCP transport. To deploy your own server with Streamable HTTP, follow the [remote MCP guide](/guides/deploy-mcp-server).
 
 ## See also
 
 - [`lizard skills`](/cli/skills) — the full command reference.
 - [JSON & Automation](/cli/json) — `--json` output and schema discovery.
 - [Variables & Secrets](/variables#scoping) — secret-scoping conventions agents should follow.
-- [Deploy your app from Claude Code](https://lizard.build/blog/deploy-from-claude-code#deploy-from-claude-code-in-3-steps) — the same bootstrap written as a walkthrough, with the prompts that drive it.
-
-## Hosting your own MCP server
-
-An agent using Lizard CLI and an application exposing MCP are separate workflows. The CLI commands above do not provide an MCP transport. To deploy your own server with Streamable HTTP, follow the [remote MCP guide](/guides/deploy-mcp-server).
+- [Deploy your app from Claude Code](https://lizard.build/blog/deploy-from-claude-code#a-prompt-that-defines-the-deployment-task) — the same bootstrap written as a walkthrough, with the prompt that drives it.

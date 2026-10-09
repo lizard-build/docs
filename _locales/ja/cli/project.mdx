@@ -1,18 +1,19 @@
 ---
-description: "lizard project は、ワークスペース内のプロジェクトを一覧表示するか、新しいプロジェクトを作成します。両方のサブコマンドの例も含まれています。"
+description: "lizard project は、プロジェクトを一覧表示、新規作成、または削除します。各サブコマンドの例も含まれています。"
 ---
 
 # lizard project
 
-ワークスペース内のプロジェクトを一覧表示または作成します。
+プロジェクトを一覧表示、作成、または削除します。
 
 <span id="usage" />
 
 ## 使い方
 
 ```bash
-lizard project list
-lizard project create
+lizard project list [flags]
+lizard project create <name> [flags]
+lizard project delete [project] [flags]
 ```
 
 <span id="subcommands" />
@@ -21,22 +22,39 @@ lizard project create
 
 ### `lizard project list`
 
-ワークスペース内のすべてのプロジェクトを一覧表示します。
+すべてのワークスペースのプロジェクトを一覧表示します。`-w` を付けると 1 つのワークスペースに絞り込みます。
 
-### `lizard project create`
+| フラグ | 説明 |
+|------|-------------|
+| `-w, --workspace <ws>` | このワークスペースのみ (ID、スラッグ、または名前) |
 
-新しいプロジェクトを作成します。
+### `lizard project create <name>`
+
+プロジェクトを作成します。現在のディレクトリはリンクされません。リンクするには [`lizard init`](/cli/init) を使ってください。
+
+| フラグ | 説明 |
+|------|-------------|
+| `-w, --workspace <ws>` | プロジェクトを作成するワークスペース |
+
+### `lizard project delete [project]`
+
+プロジェクトをゴミ箱に移動します (別名 `rm`)。プロジェクトのサービスは停止します。3 日間は復元でき、その後 Lizard が完全に削除します。引数を省略すると、このディレクトリにリンクされたプロジェクトを削除します。
+
+| フラグ | 説明 |
+|------|-------------|
+| `-y, --yes` | 確認をスキップ (TTY がない場合は必須) |
 
 <span id="examples" />
 
 ## 例
 
-<span id="list-projects-in-the-workspace" />
+<span id="list-projects" />
 
-### ワークスペース内のプロジェクトを一覧表示する
+### プロジェクトを一覧表示する
 
 ```bash
 lizard project list
+lizard project list --workspace my-team
 ```
 
 <span id="create-a-new-project" />
@@ -44,7 +62,16 @@ lizard project list
 ### 新しいプロジェクトを作成する
 
 ```bash
-lizard project create
+lizard project create my-project
+lizard project create my-project --workspace my-team
+```
+
+<span id="delete-a-project" />
+
+### プロジェクトを削除する
+
+```bash
+lizard project delete my-project --yes
 ```
 
 <span id="see-also" />

@@ -20,7 +20,8 @@ The addon exposes a standard set of connection variables:
 
 | Variable | Description |
 |----------|-------------|
-| `DATABASE_URL` | Full connection string (`postgres://…`) |
+| `DATABASE_URL` | Full connection string over the public endpoint (`postgresql://…`) |
+| `DATABASE_PRIVATE_URL` | Connection string over the project's private network (`<name>.lizard.internal:5432`) |
 | `PGHOST` | Host |
 | `PGPORT` | Port |
 | `PGUSER` | User |
@@ -32,38 +33,38 @@ The addon exposes a standard set of connection variables:
 
 ## Connect a service
 
-Reference the connection string from the consumer service and redeploy:
+Reference the private connection string from the consumer service and redeploy:
 
 ```bash
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-The reference resolves at deploy time and rotates automatically if the addon's credentials change — every consumer picks up the new value on its next deploy.
+The reference resolves at deploy time, so every consumer picks up the addon's current values on its next deploy. Use `DATABASE_URL` instead for clients outside the project. Every service in the project also gets the addon's public `DATABASE_URL` at the lowest precedence; an explicit reference overrides it.
 
-Verify connectivity without printing the connection string:
+Verify connectivity from your machine without printing the connection string:
 
 ```bash
-lizard run --service api -- sh -c 'psql "$DATABASE_URL" -c "SELECT 1"'
+lizard run --service postgres -- sh -c 'psql "$DATABASE_URL" -c "SELECT 1"'
 ```
 
 ## Run migrations on deploy
 
-Use a pre-deploy command for migrations. Make migrations safe to retry and compatible with both the old and new application version:
+Use a pre-deploy command for migrations. It runs only when a start command is also set, as `sh -c "<pre> && exec <start>"` at the start of every container: each replica, each restart. Make migrations safe to run many times and at the same time, and compatible with both the old and new application version:
 
 ```bash
-lizard service set api --set preDeployCommand="npm run migrate"
+lizard service set api --set preDeployCommand="npm run migrate" --set startCommand="npm start"
 lizard redeploy --service api
 ```
 
-For a Django app the command is `python manage.py migrate`; [Python app hosting](https://lizard.build/blog/python-app-hosting#deploying-django) has the equivalent for Flask and FastAPI.
+For a Django app the command is `python manage.py migrate`; see [Python app hosting](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks).
 
 ## Browse and query data
 
-Open the **Postgres editor** in the dashboard (`lizard open`) to run SQL and browse tables directly. For ad-hoc local work, run a command with the service's injected environment:
+Open the **Postgres editor** in the dashboard (`lizard open`) to run SQL and browse tables directly. For ad-hoc local work, run a command with the addon's connection values:
 
 ```bash
-lizard run --service api -- sh -c 'exec psql "$DATABASE_URL"'
+lizard run --service postgres -- sh -c 'exec psql "$DATABASE_URL"'
 ```
 
 ## Grow storage
@@ -80,7 +81,7 @@ Adding a second Postgres gives it a generated name (e.g. `postgres-autumn-bear`)
 
 ```bash
 lizard add postgres
-lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_URL}}' --service api
+lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_PRIVATE_URL}}' --service api
 ```
 
 ## See also
@@ -88,4 +89,4 @@ lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_URL}}' --serv
 - [Managed Addons](/addons) — naming, references, and the dashboard browsers.
 - [Cross-Service References](/variables/references) — reference syntax and resolution.
 
-See [storage and recovery](/platform/storage-and-recovery) for backup and restore planning. Local `lizard run` requires `psql` and a reachable database endpoint; it does not run inside the deployed service.
+See [storage and recovery](/platform/storage-and-recovery) for backup and restore planning. `lizard run --service postgres` runs the command on your machine with the addon's public connection values; it needs `psql` installed locally. `lizard run --service api` would pass `${{…}}` references through as literal text.

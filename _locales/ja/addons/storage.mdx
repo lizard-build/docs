@@ -1,10 +1,10 @@
 ---
-description: "アップロード、アセット、バックアップ向けの S3互換オブジェクトストレージ。one lizard add s3 だけで public-read バケットと接続変数を取得できます。"
+description: "アップロード、アセット、バックアップ向けの S3互換オブジェクトストレージ。lizard add s3 を 1 回実行するだけで、プライベートな default バケットと接続変数を取得できます。"
 ---
 
-# Object Storage (S3)
+# Managed Object Storage
 
-アップロード、アセット、バックアップ向けの S3互換オブジェクトストレージです。`s3` アドオンをプロビジョニングすると、**`default` という名前の public-read バケット** も作成されるため、追加設定なしでファイルを配信できます。
+Managed Object Storage は、アップロード、アセット、バックアップ向けの S3互換ストレージです。`s3` アドオンをプロビジョニングすると、**`default` という名前のプライベートバケット** も作成されます。認証なしでファイルを配信するには、ダッシュボードの S3 browser からバケットを public にしてください。
 
 <span id="provision" />
 
@@ -67,18 +67,19 @@ const s3 = new S3Client({
 
 ## 公開ファイル
 
-任意の **public** バケット内のオブジェクトは、認証なしで次の 2 つの方法で配信されます:
+バケットはデフォルトでプライベートです。**public** にしたバケット内のオブジェクトは、認証なしで次の 2 つの方法で配信されます:
 
 1. **Gateway URL** (ダッシュボードに表示):
    ```
    https://s3-<region>.onlizard.com/<addonId>/<bucket>/<key>
    ```
+   `<region>` は `S3_REGION` の値 (`eu-west-1` または `us-east-1`) です。
 2. **Platform proxy** (ダッシュボードのホスト。長期間有効な immutable キャッシュヘッダー付き):
    ```
    <dashboard-host>/api/s3/<addonId>/public/<bucket>/<key>
    ```
 
-`default` バケットにアップロードされたものはすべて、すぐに次の URL で公開されます:
+`default` バケットを public にすると、そのオブジェクトは次の URL で配信されます:
 
 ```
 <dashboard-host>/api/s3/<addonId>/public/default/<key>
@@ -88,17 +89,15 @@ const s3 = new S3Client({
 
 ## オブジェクトの参照
 
-ダッシュボードで **S3 browser** (`lizard open`) を開くと、オブジェクトとバケットのアップロード、ダウンロード、管理を行えます。
+ダッシュボードで **S3 browser** (`lizard open`) を開くと、オブジェクトのアップロードと削除、フォルダーの作成、バケットの public/private の切り替えを行えます。CLI では、`lizard s3 upload <file>` でファイルをアップロードし、`lizard s3 list` でオブジェクトを一覧表示できます。
 
 > **Bucket ACL の変更** (バケットを public/private にすること) はまだ CLI ではできません — ダッシュボードから管理してください。
 
-<span id="grow-storage" />
+<span id="storage-limit" />
 
-## ストレージを拡張
+## ストレージの上限
 
-```bash
-lizard scale --service s3 --storage 16384
-```
+各アカウントは、Managed Object Storage アドオン全体で最大 16 GiB のオブジェクトを保存できます。料金は予約したサイズではなく、保存したバイト数に対して発生します。`lizard scale --storage` ではこの上限は変わりません。
 
 <span id="see-also" />
 

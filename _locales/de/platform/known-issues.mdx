@@ -14,7 +14,7 @@ Diese Seite dokumentiert Verhalten, das besondere Vorsicht oder eine verifiziert
 
 ## Pause und Ablauf von Sandboxen
 
-Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, ohne ihren Zustand zu ändern; eine pausierte oder gestoppte Sandbox wird dadurch nicht fortgesetzt. Pause, Fortsetzen, Snapshot und Restore sind verfügbar; siehe [Pause, Fortsetzen und Snapshots](/sandboxes/quickstart#pause-and-resume). Fork und Dateiüberwachung geben HTTP 501 zurück. `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten. Zugriff über das SSH-Protokoll gibt es nicht, daher funktionieren SSH-Clients, `scp` und Portweiterleitung nicht.
+Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, ohne ihren Zustand zu ändern; eine pausierte oder gestoppte Sandbox wird dadurch nicht fortgesetzt. Pause, Fortsetzen, Snapshot und Restore sind verfügbar; siehe [Pause, Fortsetzen und Snapshots](/sandboxes/quickstart#pause-and-resume). Fork (`sandbox.fork({ count })`) funktioniert bei Firecracker-Sandboxes; bei angehängtem Volume gibt es HTTP 409 zurück, bei einer Pod-Sandbox HTTP 501. `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten. Zugriff über das SSH-Protokoll gibt es nicht, daher funktionieren SSH-Clients, `scp` und Portweiterleitung nicht.
 
 Eine Pause schließt offene Netzwerkverbindungen. Lassen sich die Prozesse nicht speichern, läuft die Sandbox weiter und meldet den Grund in `pauseError`. Eine pausierte Sandbox lässt sich nur auf ihrem eigenen Node fortsetzen; fällt dieser Node aus, geht der pausierte Zustand verloren.
 
@@ -34,9 +34,9 @@ Explizite Build- oder Start-Befehle haben Vorrang vor einem Dockerfile im Reposi
 
 ## Vorlagen und MCP
 
-Wählen Sie eine Vorlage aus dem aktuellen Katalog. Aktiviert sind unter anderem `base`, `codex` und `interpreter`; die Verfügbarkeit hängt von Region und Pool-Kapazität ab. `interpreter` enthält Python und gängige Datenbibliotheken. Prüfen Sie die Werkzeugversionen in der Sandbox. Die öffentliche CLI bietet keinen Upload eigener Vorlagen.
+Wählen Sie eine Vorlage aus dem aktuellen Katalog. Aktiviert sind `base`, `interpreter`, `codex`, `desktop`, `opencode`, `pi`, `prime` und `claude`; die Verfügbarkeit hängt von Region und Pool-Kapazität ab. `interpreter` enthält Python und gängige Datenbibliotheken. Prüfen Sie die Werkzeugversionen in der Sandbox. Die öffentliche CLI bietet keinen Upload eigener Vorlagen.
 
-Lizard Skill verwendet Lizard CLI. Dieser Workflow stellt keinen MCP-Transport bereit. Das Hosting eines eigenen entfernten MCP-Servers ist ein separates Application-Deployment; siehe den [Leitfaden](/guides/deploy-mcp-server).
+Lizard Skill verwendet Lizard CLI und stellt keinen MCP-Transport bereit. Für MCP-Clients verwenden Sie den gehosteten Lizard MCP Server; siehe [Lizard MCP](/agents#lizard-mcp). Das Hosting eines eigenen entfernten MCP-Servers ist ein separates Application-Deployment; siehe den [Leitfaden](/guides/deploy-mcp-server).
 
 <span id="service-port-changes-fixed-and-verified-on-2026-09-09" />
 

@@ -19,7 +19,7 @@ description: "Crea e inspecciona Sandboxes, elige plantillas y gestiona volúmen
 <span id="snapshots" />
 <span id="volumes" />
 
-Abre un proyecto y selecciona Sandboxes. Al crear, elige una plantilla, una región y un tamaño: Small, Medium (el predeterminado) o Large. La región por defecto no tiene por qué ser la más cercana. Los Sandboxes creados en el panel no caducan salvo que fijes una duración mediante la API.
+Abre un proyecto y selecciona Sandboxes. Al crear, elige una plantilla, una región y un tamaño: Small, Medium (el predeterminado) o Large. La región por defecto no tiene por qué ser la más cercana. Elige una duración en **Delete after**: 15 minutos, 1 hora, 4 horas, 1 día, 7 días o Never (el predeterminado).
 
 ## Instalar y autenticar
 
@@ -29,12 +29,12 @@ Instala Lizard SDK y crea una clave API en Settings → API keys. Guárdala en `
 
 La vista de detalle muestra estado, plantilla, región, consumo medido y puertos abiertos. Su cabecera tiene los botones Pause y Resume, y la pestaña Terminal abre una shell en un sandbox en marcha.
 
-Cada tamaño tiene un precio fijo por hora, facturado por segundo mientras el sandbox está en marcha, incluido el tiempo inactivo. El tráfico saliente está incluido hasta [2 TB por cuenta](/platform/limits#sandbox-egress) en una ventana móvil de 30 días. Un sandbox restaurado desde un snapshot se factura por consumo medido. Un sandbox pausado no se factura; los Persistent Volumes se facturan aparte mientras guardes los datos. Pausa o detén el sandbox cuando termine la tarea.
+Cada tamaño tiene un precio fijo por hora, facturado por segundo mientras el sandbox está en marcha, incluido el tiempo inactivo. El tráfico saliente está incluido hasta [2 TB por cuenta](/platform/limits#sandbox-egress) en una ventana móvil de 30 días. Un sandbox restaurado desde un snapshot se ejecuta con el tamaño y el precio de su origen; uno restaurado desde un snapshot de pod se factura por consumo medido. Un sandbox pausado no se factura; los Persistent Volumes se facturan aparte mientras guardes los datos. Pausa o detén el sandbox cuando termine la tarea.
 
 ## Plantillas y volúmenes
 
 La pestaña Templates muestra las plantillas de la plataforma y los snapshots privados de tu proyecto; puedes iniciar un sandbox nuevo desde cualquiera. Crea snapshots con el SDK o la CLI. Kill Sandbox detiene el sandbox y separa su volumen.
 
-La pestaña Persistent Volumes permite gestionar volúmenes con nombre y sus conexiones. Adjunta un volumen al crear el sandbox y escribe en `/workspace`. Detén el sandbox actual antes de adjuntar el volumen a otro.
+Crea y adjunta volúmenes con el SDK o la CLI; el formulario de creación no tiene opción de volumen. La pestaña Persistent Volumes aparece cuando un proyecto tiene un volumen. Muestra el tamaño de cada volumen y el sandbox adjunto, y te permite explorar sus archivos, cambiar su tamaño o eliminarlo. Detén el sandbox actual antes de adjuntar el volumen a otro.
 
 [Inicio rápido](/sandboxes/quickstart) · [Referencia del SDK](/sandboxes/sdk-reference) · [Ejecutar Python](/sandboxes/code-interpreter) · [Panel](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)

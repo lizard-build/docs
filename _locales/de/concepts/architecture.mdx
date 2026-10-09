@@ -53,13 +53,13 @@ Ein **Service** ist eine einzelne deploybare Einheit. Seine Quelle ist eine der 
 - **`github`** — ein verbundenes GitHub-Repo. Pushes auf den verfolgten Branch lösen automatisch ein Redeploy aus.
 - **`upload`** — ein mit `lizard up` hochgeladenes Tarball.
 
-Jeder laufende Service läuft in seinem eigenen **isolierten Pod** mit einer Network Policy nach dem Prinzip Standard Deny, einer generierten `<name>.<region>.onlizard.com`-Domain und automatischem TLS. Diese Aufteilung — Sie liefern den Container, die Plattform führt ihn aus — ist [container as a service](https://lizard.build/blog/container-as-a-service), und der Blog behandelt, was dabei trotzdem noch bei Ihnen verbleibt. Prüfen und verwalten Sie Services mit:
+Jeder laufende Service läuft in seinem eigenen **isolierten Pod** mit einer Network Policy nach dem Prinzip Standard Deny, einer generierten `<name>-<suffix>.onlizard.com`-Domain (ältere Services behalten `<words>.<region>.onlizard.com`) und automatischem TLS. Diese Aufteilung — Sie liefern den Container, die Plattform führt ihn aus — ist [container as a service](https://lizard.build/blog/container-as-a-service), und der Blog behandelt, was dabei trotzdem noch bei Ihnen verbleibt. Prüfen und verwalten Sie Services mit:
 
 ```bash
 lizard ps                       # list services with status + URL
 lizard service show             # full config as JSON
 lizard service set <svc> --set <field>=<value>
-lizard service rename --service <svc>
+lizard service rename <new-name> --service <svc>
 lizard service delete --service <svc>
 ```
 
@@ -75,7 +75,7 @@ Standardmäßig ist ein Service eine **HTTP-App**, die auf einem Port lauscht (S
 
 ## Verwaltete Addons
 
-**Addons** sind verwaltetes Postgres, Redis und S3-kompatibler Storage, die Sie pro Projekt bereitstellen:
+**Addons** sind Managed Postgres, Managed Redis und Managed Object Storage (S3-kompatibel), die Sie pro Projekt bereitstellen:
 
 ```bash
 lizard add postgres redis s3
@@ -93,17 +93,18 @@ Jeder Wert eines Service oder Addons kann aus der Umgebung einer anderen Ressour
 ${{<name>.<KEY>}}
 ```
 
-Referenzen werden zur **Bereitstellen-Zeit** gegen die zusammengeführte Umgebung des Ziels aufgelöst. Sie werden per ID gespeichert, daher bricht ein späteres Umbenennen des Ziels die Referenz nicht. Eine Referenz auf ein fehlendes Ziel oder einen fehlenden Schlüssel wird zu einer leeren Zeichenfolge aufgelöst (das Bereitstellen schlägt **nicht** fehl); nur zirkuläre Referenzen führen zu einem Fehler.
+Referenzen werden zur **Bereitstellen-Zeit** gegen die zusammengeführte Umgebung des Ziels aufgelöst. Sie beziehen sich auf den **aktuellen Namen** des Ziels: Wenn Sie einen Service oder ein Addon umbenennen, aktualisieren Sie jede Referenz, die den alten Namen verwendet. Eine Referenz auf ein fehlendes Ziel oder einen fehlenden Schlüssel wird zu einer leeren Zeichenfolge aufgelöst (das Bereitstellen schlägt **nicht** fehl); nur zirkuläre Referenzen führen zu einem Fehler.
 
 ```bash
 # Wire a service to the project's Postgres
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 ```
 
-Prüfen Sie, ob der Consumer den Wert tatsächlich erhalten hat:
+Prüfen Sie, ob die Referenz aufgelöst wurde. Das Build-Log gibt für jede Referenz, die zu einem leeren Wert aufgelöst wurde, eine Warnung aus, und `secrets list` zeigt, was gespeichert ist:
 
 ```bash
-lizard ssh --service api -- env | grep DATABASE_URL
+lizard logs --build --service api
+lizard secrets list --service api --show
 ```
 
 <span id="platform-injected-variables" />
@@ -117,6 +118,7 @@ Jeder Service erhält automatisch diese Variablen (sie können nicht überschrie
 | `PORT` | Port, auf dem Ihre App lauschen soll (im Worker-Modus weggelassen) |
 | `LIZARD_SERVICE_NAME` | Der Name des Service |
 | `LIZARD_PROJECT_ID` | Die Projekt-ID |
-| `LIZARD_PUBLIC_DOMAIN` | Die öffentliche Domain des Service |
+| `LIZARD_PUBLIC_DOMAIN` | Die öffentliche Domain des Service (wird gesetzt, sobald eine Domain zugewiesen ist) |
+| `LIZARD_PRIVATE_DOMAIN` | Der private Hostname des Service, `<host>.lizard.internal`, erreichbar aus demselben Projekt |
 
 Unter [Variablen & Secrets](/variables) erfahren Sie, wie diese mit Ihren eigenen Variablen interagieren und wie die vollständige Prioritätsreihenfolge aussieht.

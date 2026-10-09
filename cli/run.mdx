@@ -1,21 +1,27 @@
 ---
-description: "lizard run executes a command on your machine with a service's project and service secrets injected. Includes when to use ssh instead."
+description: "lizard run executes a command on your machine with a service's project and service secrets injected. What it injects, and how to check what the running app sees."
 ---
 
 # lizard run
 
 Run a command locally with project and service secrets injected.
 
-## run vs. ssh
+## What `run` injects
 
-Two commands let you execute commands with a service's context. They run in different places — know which one you want.
+`lizard run` loads the project's secrets, then the service's secrets on top, and runs your command on your machine with them in its environment.
 
-| Command | Runs where | Use for |
-|---------|-----------|---------|
-| `lizard run` | Locally, with the service's project + service secrets injected | Migrations, seed scripts, local tooling that needs prod config |
-| `lizard ssh` | Inside the running service container | Inspecting the live container, one-off remote commands, debugging |
+- For an app service, it injects the stored values. References such as `${{postgres.DATABASE_URL}}` arrive as that literal text, not the resolved value. Platform variables such as `PORT` and `LIZARD_*` are not injected.
+- For an addon (`--service postgres`, `--service redis`, `--service s3`), it injects the addon's real connection values, such as `DATABASE_URL`.
 
-`lizard run` shows your local injected copy of the environment, which is usually the same as what the running app sees — but `lizard ssh` is authoritative for the live container. To check what the running app actually sees, use `lizard ssh` instead.
+So to run a migration or a database client locally, point `--service` at the addon, not at the app that references it.
+
+`lizard ssh` into a running service is turned off (the API answers 403 "Shell access to services is disabled"). To check what the running app gets, use:
+
+| Check | Command |
+|-------|---------|
+| Empty references | `lizard logs --build --service api` (the build log warns about every `${{…}}` reference that resolved to an empty value) |
+| Stored values | `lizard secrets list --service api --show` |
+| An addon's real connection values | `lizard run --service postgres -- printenv DATABASE_URL` |
 
 ## Usage
 
@@ -27,25 +33,33 @@ lizard run [flags] -- <command>
 
 | Flag | Description |
 |------|-------------|
-| `-s, --service <name>` | Service whose env to inject |
-| `--no-service` | Don't inject service env |
+| `-s, --service <name>` | Service whose env to inject (defaults to the linked service) |
+| `--no-service` | Don't inject service env, project secrets only |
+| `-p, --project <id>` | Project (defaults to the linked one) |
 
 ## Examples
 
-### Run a migration with service secrets injected
+### Run a migration against Managed Postgres
 
 ```bash
-lizard run --service api -- node scripts/migrate.js
+lizard run --service postgres -- node scripts/migrate.js
 ```
 
 ### Print an injected environment variable
 
 ```bash
-lizard run --service api -- printenv DATABASE_URL
+lizard run --service postgres -- printenv DATABASE_URL
+```
+
+### Run a local tool with an app's stored secrets
+
+```bash
+lizard run --service api -- node scripts/report.js
 ```
 
 ## See also
 
-- [lizard ssh](/cli/ssh) — execute a command inside the running service container instead of locally
+- [lizard ssh](/cli/ssh) — why shell access to services is off, and what to use instead
+- [lizard secrets](/cli/secrets) — list and set the values `run` injects
 - [Variables](/variables) — how project and service variables are defined and referenced
 - [Python app hosting](https://lizard.build/blog/python-app-hosting) — running `manage.py` and other framework tooling against a deployed database

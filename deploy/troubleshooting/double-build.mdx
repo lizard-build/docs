@@ -12,7 +12,7 @@ The `service set` call already triggered a rebuild on its own. The follow-up `re
 
 ## Why this can happen
 
-Changing a **build-affecting** field on a service — `repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath`, or `rootDirectory` — auto-rebuilds immediately. Changing a **runtime-only** field — `startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns` — does **not** auto-rebuild; it takes effect only on the next deploy.
+Changing a **build-affecting** field on a service — `repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath`, or `rootDirectory` — auto-rebuilds a running service immediately. A crashed or never-deployed service does not rebuild on its own. Changing a **runtime-only** field — `startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns` — does **not** auto-rebuild; it takes effect only on the next deploy.
 
 It's easy to reflexively chain a `redeploy` after every `service set`, but that only makes sense for the runtime-only fields.
 
@@ -20,7 +20,7 @@ It's easy to reflexively chain a `redeploy` after every `service set`, but that 
 
 ### Check which kind of field you changed
 
-See the [rebuild triggers table](/concepts/build-pipeline#what-triggers-a-rebuild). If it's a build field, the rebuild is already queued — do nothing further.
+See the [rebuild triggers table](/concepts/build-pipeline#what-triggers-a-rebuild). If it's a build field and the service was running, the rebuild is already queued — do nothing further. If the service was crashed or never deployed, run `lizard redeploy` once.
 
 ```bash
 lizard events   # confirm only one build is in flight

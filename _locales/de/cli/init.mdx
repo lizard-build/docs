@@ -41,8 +41,9 @@ lizard init
 `lizard up` führt `init` für Sie in einem TTY aus, aber in einer Nicht-TTY-Umgebung (CI) gibt es einen Fehler aus, statt stillschweigend ein Projekt zu erstellen. Verknüpfen Sie es zuerst explizit:
 
 ```bash
-export LIZARD_TOKEN=lzd_xxx
+export LIZARD_TOKEN=liz_xxx
 lizard init --name my-project
+lizard add --service api   # first run only; skip when the service exists
 lizard up --ci --service api
 ```
 

@@ -24,7 +24,8 @@ Das Add-on stellt einen Standardsatz an Verbindungsvariablen bereit:
 
 | Variable | Beschreibung |
 |----------|-------------|
-| `DATABASE_URL` | Vollständige Verbindungszeichenfolge (`postgres://…`) |
+| `DATABASE_URL` | Vollständige Verbindungszeichenfolge über den öffentlichen Endpunkt (`postgresql://…`) |
+| `DATABASE_PRIVATE_URL` | Verbindungszeichenfolge über das private Netzwerk des Projekts (`<name>.lizard.internal:5432`) |
 | `PGHOST` | Host |
 | `PGPORT` | Port |
 | `PGUSER` | Benutzer |
@@ -38,42 +39,42 @@ Das Add-on stellt einen Standardsatz an Verbindungsvariablen bereit:
 
 ## Einen Service verbinden
 
-Referenzieren Sie die Verbindungszeichenfolge aus dem konsumierenden Service und deployen Sie erneut:
+Referenzieren Sie die private Verbindungszeichenfolge aus dem konsumierenden Service und deployen Sie erneut:
 
 ```bash
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-Die Referenz wird zur Bereitstellen-Zeit aufgelöst und automatisch rotiert, wenn sich die Zugangsdaten des Addons ändern — jeder konsumierende Service übernimmt den neuen Wert beim nächsten Bereitstellen.
+Die Referenz wird zur Bereitstellen-Zeit aufgelöst, daher übernimmt jeder konsumierende Service die aktuellen Werte des Add-ons beim nächsten Bereitstellen. Verwenden Sie stattdessen `DATABASE_URL` für Clients außerhalb des Projekts. Jeder Service im Projekt erhält außerdem die öffentliche `DATABASE_URL` des Add-ons mit der niedrigsten Priorität; eine explizite Referenz überschreibt sie.
 
-Prüfen Sie die Verbindung, ohne die Verbindungszeichenfolge auszugeben:
+Prüfen Sie die Verbindung von Ihrem Rechner aus, ohne die Verbindungszeichenfolge auszugeben:
 
 ```bash
-lizard run --service api -- sh -c 'psql "$DATABASE_URL" -c "SELECT 1"'
+lizard run --service postgres -- sh -c 'psql "$DATABASE_URL" -c "SELECT 1"'
 ```
 
 <span id="run-migrations-on-deploy" />
 
 ## Migrationen beim Bereitstellen ausführen
 
-Verwenden Sie für Migrationen einen Pre-Bereitstellen-Befehl. Gestalten Sie Migrationen so, dass sie sicher erneut ausgeführt werden können und sowohl mit der alten als auch mit der neuen Anwendungsversion kompatibel sind:
+Verwenden Sie für Migrationen einen Pre-Bereitstellen-Befehl. Er wird nur ausgeführt, wenn auch ein Startbefehl gesetzt ist, und zwar als `sh -c "<pre> && exec <start>"` beim Start jedes Containers: jedes Replikats, jedes Neustarts. Gestalten Sie Migrationen so, dass sie sicher mehrfach und gleichzeitig ausgeführt werden können und sowohl mit der alten als auch mit der neuen Anwendungsversion kompatibel sind:
 
 ```bash
-lizard service set api --set preDeployCommand="npm run migrate"
+lizard service set api --set preDeployCommand="npm run migrate" --set startCommand="npm start"
 lizard redeploy --service api
 ```
 
-Für eine Django-App lautet der Befehl `python manage.py migrate`; [Python-App-Hosting](https://lizard.build/blog/python-app-hosting#deploying-django) enthält das entsprechende Pendant für Flask und FastAPI.
+Für eine Django-App lautet der Befehl `python manage.py migrate`; siehe [Python-App-Hosting](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks).
 
 <span id="browse-and-query-data" />
 
 ## Daten durchsuchen und abfragen
 
-Öffnen Sie den **Postgres-Editor** im Dashboard (`lizard open`), um SQL auszuführen und Tabellen direkt zu durchsuchen. Für lokale Ad-hoc-Arbeiten führen Sie einen Befehl mit der in den Service injizierten Umgebung aus:
+Öffnen Sie den **Postgres-Editor** im Dashboard (`lizard open`), um SQL auszuführen und Tabellen direkt zu durchsuchen. Für lokale Ad-hoc-Arbeiten führen Sie einen Befehl mit den Verbindungswerten des Add-ons aus:
 
 ```bash
-lizard run --service api -- sh -c 'exec psql "$DATABASE_URL"'
+lizard run --service postgres -- sh -c 'exec psql "$DATABASE_URL"'
 ```
 
 <span id="grow-storage" />
@@ -94,7 +95,7 @@ Wenn Sie ein zweites Postgres hinzufügen, erhält es einen generierten Namen (z
 
 ```bash
 lizard add postgres
-lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_URL}}' --service api
+lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_PRIVATE_URL}}' --service api
 ```
 
 <span id="see-also" />
@@ -104,4 +105,4 @@ lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_URL}}' --serv
 - [Managed Addons](/addons) — Benennung, Referenzen und die Dashboard-Browser.
 - [Service-übergreifende Referenzen](/variables/references) — Referenzsyntax und Auflösung.
 
-Siehe [Speicher und Wiederherstellung](/platform/storage-and-recovery) für die Planung von Backup und Wiederherstellung. Lokal `lizard run` erfordert `psql` und einen erreichbaren Datenbank-Endpunkt; es läuft nicht innerhalb des deployten Service.
+Siehe [Speicher und Wiederherstellung](/platform/storage-and-recovery) für die Planung von Backup und Wiederherstellung. `lizard run --service postgres` führt den Befehl auf Ihrem Rechner mit den öffentlichen Verbindungswerten des Add-ons aus; dafür muss `psql` lokal installiert sein. `lizard run --service api` würde `${{…}}`-Referenzen als Literaltext durchreichen.

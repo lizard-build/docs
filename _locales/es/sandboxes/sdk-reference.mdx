@@ -30,9 +30,12 @@ Instala Lizard SDK y crea una clave API en Settings → API keys. Guárdala en `
 | `volumeName / volumeId` | `volume_name / volume_id` |
 | `size` | `size` |
 | `snapshotId` | `snapshot_id` |
+| `envs` | `envs` |
+| `metadata` | `metadata` |
+| `lizardToken` | `lizard_token` |
 | `apiKey` | `api_key` |
 
-Elige una plantilla del catálogo actual. Las plantillas habilitadas incluyen `base`, `codex` e `interpreter`; su disponibilidad depende de la región y de la capacidad del pool. `interpreter` incluye Python y bibliotecas de datos habituales. Comprueba las versiones dentro del sandbox. La CLI pública no permite subir plantillas propias.
+Elige una plantilla del catálogo actual: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` o `desktop`. Su disponibilidad depende de la región y de la capacidad del pool. `interpreter` incluye Python y bibliotecas de datos habituales. `desktop` ejecuta un escritorio gráfico que controlas con `sandbox.desktop` o `lizard sandbox desktop`. Comprueba las versiones dentro del sandbox. La CLI pública no permite subir plantillas propias.
 
 El SDK y la CLI fijan cinco minutos de duración por defecto. La API directa y el panel no fijan caducidad por defecto. Indica la duración: `timeoutMs: 0` al crear desactiva la caducidad; un valor positivo fija un plazo. `setTimeout` acepta 1000–2147483647 ms, no cero. Los comandos no reinician el plazo. No es un temporizador de inactividad.
 
@@ -45,41 +48,45 @@ El SDK y la CLI fijan cinco minutos de duración por defecto. La API directa y e
 | `Sandbox.list()` | Listar Sandboxes accesibles; comprobar su estado. |
 | `sandbox.getInfo()` | Obtener estado y metadatos. |
 | `sandbox.process.exec(cmd)` | Ejecutar shell; devolver stdout, stderr y exitCode. |
-| `sandbox.fs.write(path, data)` | Escribir texto o UTF-8; crear directorios superiores. |
+| `sandbox.fs.write(path, data)` | Escribir texto o bytes; crear directorios superiores. |
 | `sandbox.fs.read(path)` | Leer texto UTF-8. |
 | `sandbox.fs.readBytes(path)` | Leer los bytes de un archivo. |
 | `sandbox.fs.list(path)` | Listar un directorio. |
 | `sandbox.fs.makeDir(path)` | Crear un directorio y los superiores que falten. |
 | `sandbox.fs.remove(path)` | Eliminar un archivo o directorio. |
-| `sandbox.getHost(port)` | Registrar un nombre HTTPS público para un puerto. |
+| `sandbox.exposePort(port)` | Publicar un puerto; devolver `url`, `hostname` y `accessToken`. |
+| `sandbox.getHost(port)` | Publicar un puerto y devolver su hostname; las solicitudes necesitan `sandbox.accessToken`. |
 | `sandbox.setTimeout(ms)` | Fijar la duración restante, mínimo 1000 ms. |
 | `sandbox.pause()` / `sandbox.resume()` | Poner en cola una pausa o reanudación y responder al instante. |
 | `sandbox.waitForStatus(status)` | Esperar a `paused` o `running`; lanzar un error si falla la pausa. |
+| `sandbox.fork({ count })` | Copiar un sandbox en marcha, incluidos la memoria y los procesos. |
 | `sandbox.snapshot(name, { poolSize })` | Guardar la memoria y los archivos de `/workspace` en un snapshot privado. |
 | `Sandbox.waitForSnapshot(snapshotId)` | Esperar a que el snapshot esté listo. |
 | `Sandbox.restore(snapshotId)` | Iniciar un sandbox nuevo desde una copia lista. |
 | `sandbox.kill()` | Detener el sandbox y separar su volumen. |
 
-Python: `exec_`, `get_info`, `get_host`, `set_timeout`, `sandbox_id`, `read_bytes`, `make_dir`, `wait_for_status`, `wait_for_snapshot`, `pool_size`.
+Python: `exec_`, `get_info`, `expose_port`, `get_host`, `access_token`, `set_timeout`, `sandbox_id`, `read_bytes`, `make_dir`, `wait_for_status`, `wait_for_snapshot`, `pool_size`.
 
 ## Límites actuales del runtime
 
-Los resultados incluyen stdout, stderr y el código de salida. El tiempo máximo de un comando está entre 1 y 600 segundos. El runtime actual no aplica las opciones `envs`, `workdir` ni `user`; fija el directorio y las variables en el comando de shell. Tampoco aplica `envs` ni `metadata` al crear.
+Los resultados incluyen stdout, stderr y el código de salida. El tiempo máximo de un comando está entre 1 y 600 segundos. `process.exec` acepta `envs`, `workdir` y `user`. Las `envs` de creación llegan a todos los comandos en un sandbox Firecracker; un sandbox de pod las ignora, así que allí pásalas en cada comando. `getInfo()` y `list()` devuelven la `metadata` de creación.
 
-`fs.write` escribe texto o bytes UTF-8 válidos; `fs.read` lee texto. El endpoint de escritura actual no admite subidas binarias. Para descargar un archivo binario usa `fs.readBytes` (Python: `read_bytes`).
+`fs.write` escribe texto o bytes; `fs.read` lee texto. Para archivos binarios, escribe bytes y vuelve a leerlos con `fs.readBytes` (Python: `read_bytes`).
 
-Pasa `size` (`'small'`, `'medium'` o `'large'`) para elegir 2 vCPU / 4 GB, 4 vCPU / 8 GB (el predeterminado) u 8 vCPU / 16 GB; consulta [tamaños y precios](/platform/limits#sandbox-sizes). `size` no se aplica a un sandbox restaurado desde un snapshot. Indica la región de forma explícita si hace falta; que aparezca en el catálogo no garantiza capacidad libre.
+Pasa `size` (`'small'`, `'medium'` o `'large'`) para elegir 2 vCPU / 4 GB, 4 vCPU / 8 GB (el predeterminado) u 8 vCPU / 16 GB; consulta [tamaños y precios](/platform/limits#sandbox-sizes). `size` no se aplica a un sandbox restaurado desde un snapshot; se ejecuta con el tamaño de su origen. Indica la región de forma explícita si hace falta; que aparezca en el catálogo no garantiza capacidad libre.
+
+## Ejecutar código con estado
+
+`CodeSandbox` arranca la plantilla `interpreter` y ejecuta código con `runCode` (Python: `run_code`). En esa plantilla, Python se ejecuta en un kernel de Jupyter persistente por contexto, así que las variables se conservan entre llamadas y los resultados pueden incluir gráficos como `image/png`. JavaScript y bash se ejecutan como un proceso nuevo en cada llamada. Consulta [Ejecutar Python](/sandboxes/code-interpreter).
 
 ## API no compatibles
 
-`sandbox.fork()` y la vigilancia de archivos devuelven HTTP 501. `Sandbox.connect` no reanuda un sandbox pausado ni uno detenido; para uno pausado, llama a `resume()`. No hay acceso por el protocolo SSH; `lizard sandbox ssh` abre una shell interactiva con tus credenciales de la CLI.
-
-`CodeSandbox`, `runCode` / `run_code` y los métodos de contexto siguen en el SDK, pero el catálogo alojado no ofrece el servidor de ejecución que requieren. La plantilla antigua por defecto `code-interpreter-v1` no está disponible. Cambiar su nombre a `interpreter` no activa esa API. Usa `Sandbox.create("interpreter")` y comandos de procesos como se muestra abajo.
+La vigilancia de archivos aún no está disponible. `sandbox.fork()` devuelve 409 cuando hay un volumen adjunto y 501 en un sandbox que se ejecuta como pod. `Sandbox.connect` no reanuda un sandbox pausado ni uno detenido; para uno pausado, llama a `resume()`. No hay acceso por el protocolo SSH; `lizard sandbox ssh` abre una shell interactiva con tus credenciales de la CLI.
 
 ## Almacenamiento y facturación
 
 Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un Persistent Volume adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
 
-Cada tamaño tiene un precio fijo por hora, facturado por segundo mientras el sandbox está en marcha, incluido el tiempo inactivo. El tráfico saliente está incluido hasta [2 TB por cuenta](/platform/limits#sandbox-egress) en una ventana móvil de 30 días. Un sandbox restaurado desde un snapshot se factura por consumo medido. Un sandbox pausado no se factura; los Persistent Volumes se facturan aparte mientras guardes los datos. Pausa o detén el sandbox cuando termine la tarea.
+Cada tamaño tiene un precio fijo por hora, facturado por segundo mientras el sandbox está en marcha, incluido el tiempo inactivo. El tráfico saliente está incluido hasta [2 TB por cuenta](/platform/limits#sandbox-egress) en una ventana móvil de 30 días. Un sandbox restaurado desde un snapshot se ejecuta con el tamaño y el precio de su origen; uno restaurado desde un snapshot de pod se factura por consumo medido. Un sandbox pausado no se factura; los Persistent Volumes se facturan aparte mientras guardes los datos. Pausa o detén el sandbox cuando termine la tarea.
 
 [Inicio rápido](/sandboxes/quickstart) · [Referencia del SDK](/sandboxes/sdk-reference) · [Ejecutar Python](/sandboxes/code-interpreter) · [Panel](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)

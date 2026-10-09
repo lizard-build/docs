@@ -50,7 +50,7 @@ lizard service set api \
   --set branch=main
 ```
 
-Das Ändern eines Build-Felds löst automatisch einen Rebuild aus — hänge danach **kein** `redeploy` an.
+Das Ändern eines Build-Felds löst bei einem laufenden Service automatisch einen Rebuild aus — hänge danach **kein** `redeploy` an. Ein abgestürzter oder noch nie bereitgestellter Service braucht `lizard redeploy`.
 
 > **Hinweis:** `lizard up` erzwingt immer `sourceType=upload`. Verwende es nicht, um einen Git-gestützten Service zu aktualisieren — pushe zum Remote oder verwende stattdessen `lizard redeploy`.
 
@@ -58,7 +58,7 @@ Das Ändern eines Build-Felds löst automatisch einen Rebuild aus — hänge dan
 
 ## Automatische erneute Bereitstellung bei Push
 
-Sobald `repoUrl` gesetzt ist, lösen Pushes zum passenden `branch` über den GitHub-Webhook automatisch eine erneute Bereitstellung aus. Um festzulegen, welche Pushes eine erneute Bereitstellung auslösen:
+Sobald `repoUrl` gesetzt ist, lösen Pushes zum passenden `branch` über den GitHub-Webhook automatisch eine erneute Bereitstellung aus. Verbinde die Lizard GitHub App (`lizard git connect`), damit Lizard Push-Events für das Repository erhält. Um festzulegen, welche Pushes eine erneute Bereitstellung auslösen:
 
 - **`rootDirectory`** — nur ein Unterverzeichnis bauen (Monorepos).
 - **`watchPatterns`** — nur dann erneut bereitstellen, wenn passende Pfade geändert werden.
@@ -80,8 +80,9 @@ lizard git checkout api staging      # move the `api` service to the `staging` b
 Für ein Repo, das mehrere Apps enthält, erstelle einen Service pro App und setze dessen `rootDirectory` auf den Unterpfad:
 
 ```bash
-lizard add -r your-org/monorepo -n api
+lizard add -r your-org/monorepo -n api --no-deploy
 lizard service set api --set rootDirectory=apps/api
+lizard redeploy --service api
 ```
 
 Wenn dein aktuelles Verzeichnis eine Sub-App in einem Repo ist, dessen Elternverzeichnis bereits verknüpft ist, füge den Service im Projekt des Elternverzeichnisses hinzu und setze `rootDirectory` auf den Unterpfad des aktuellen Verzeichnisses.
@@ -93,4 +94,4 @@ Wenn dein aktuelles Verzeichnis eine Sub-App in einem Repo ist, dessen Elternver
 - [Build-Pipeline](/concepts/build-pipeline) — wie dein Stack erkannt und gebaut wird.
 - [Von lokalem Code deployen](/deploy/upload) — wenn du kein Remote hast.
 - [`lizard git`](/cli/git) — die vollständige Befehlsreferenz für `connect`, `status` und `checkout`.
-- [Wohin du eine App deployen solltest, die deine AI IDE gebaut hat](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#where-to-deploy-an-app-your-ai-ide-built) — wie du dies auf ein Repo verweist, das ein Agent geschrieben hat, und was es kostet.
+- [Den Host nach der Anwendung wählen](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#choose-the-host-by-the-application) — wie du dies auf ein Repo verweist, das ein Agent geschrieben hat.

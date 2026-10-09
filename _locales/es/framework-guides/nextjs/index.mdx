@@ -74,7 +74,7 @@ Lizard detecta la dependencia `next` y ejecuta los scripts de compilación e ini
 
 ## Variables de entorno y datos
 
-Los valores de `NEXT_PUBLIC_*` pasan a formar parte del paquete del navegador durante la compilación. Mantén las credenciales en variables solo del servidor y configúralas para el servicio mediante [variables y secretos](/variables). El código que obtiene datos durante la compilación también necesita acceso a esos datos en el momento de compilar. Un reinicio en tiempo de ejecución no cambia el HTML o JavaScript ya generados.
+Los valores de `NEXT_PUBLIC_*` pasan a formar parte del paquete del navegador durante la compilación. Con `lizard up`, Lizard no pasa ninguna variable a la compilación: confirma los valores públicos en `.env.production` (el `.gitignore` de `create-next-app` puede excluir `.env*`; permite ese archivo). En un [servicio de GitHub](/deploy/github), Lizard incorpora las variables `NEXT_PUBLIC_*` del servicio en la compilación; consulta [variables en tiempo de compilación](/concepts/build-pipeline#build-time-variables). Mantén las credenciales en variables solo del servidor y configúralas para el servicio mediante [variables y secretos](/variables). Ninguna otra variable del servicio llega a la compilación, por lo que el código que obtiene datos durante la compilación no puede leerlas. Un reinicio en tiempo de ejecución no cambia el HTML o JavaScript ya generados.
 
 Los archivos de caché locales y los archivos subidos no forman un almacenamiento compartido entre réplicas. Revisa los requisitos de caché y de Server Acción de Next.js antes de escalar más allá de una réplica. Coloca los datos persistentes de la app en una base de datos o en almacenamiento de objetos, y consulta [almacenamiento y recuperación](/platform/storage-and-recovery).
 
@@ -86,7 +86,7 @@ Los archivos de caché locales y los archivos subidos no forman un almacenamient
 |---|---|
 | `Missing script: start` | Agrega el script de inicio de producción anterior; `next dev` es para desarrollo local. |
 | La app nunca pasa a estado healthy | Haz coincidir `--port 3000` con el comando de inicio y enlaza a `0.0.0.0`. |
-| La URL pública de la API sigue teniendo su valor anterior | Vuelve a compilar con el nuevo valor de `NEXT_PUBLIC_*`. |
+| La URL pública de la API sigue teniendo su valor anterior | Cámbiala en `.env.production` y vuelve a subir, o cambia la variable en un servicio de GitHub para que se vuelva a compilar. |
 | La compilación no puede alcanzar una base de datos | Comprueba si una ruta obtiene datos en tiempo de compilación y si esa dependencia es accesible en ese momento. |
 | La exportación estática falla con `next start` | Sigue la guía separada de exportación estática. |
 

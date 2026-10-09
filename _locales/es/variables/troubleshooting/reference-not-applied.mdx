@@ -18,25 +18,29 @@ El valor que configuraste nunca llegó al entorno combinado del servicio, o algo
 
 ## Por qué puede pasar esto
 
-- **El destino o la clave de la referencia no existen.** Una referencia a un nombre de servicio/addon que no existe, o a una clave que ese addon no expone, se resuelve como una **cadena vacía** en lugar de hacer fallar el despliegue. No hay ningún error que te avise: el servicio simplemente arranca con un valor vacío.
-- **Algo con mayor precedencia lo sobrescribió.** Los valores se combinan en un orden fijo — `addon-issued env < project secrets < project env < app env < app secrets < platform vars` — así que un secreto con alcance de proyecto (`--global`) puede quedar oculto silenciosamente por uno con alcance de servicio con la misma clave, y las variables de la plataforma (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`) siempre prevalecen y no se pueden sobrescribir en absoluto.
-- **Cambiaste un valor de tiempo de compilación pero no recompilaste.** La mayoría de los cambios de variables se aplican sin recompilar: el servicio se reinicia para tomarlos. Los valores de `VITE_*` y `NEXT_PUBLIC_*` son la excepción: quedan integrados en los recursos compilados, así que un reinicio normal no aplicará un valor nuevo; el servicio necesita una compilación nueva.
+- **El destino o la clave de la referencia no existen.** Una referencia a un nombre de servicio/addon que no existe, o a una clave que ese addon no expone, se resuelve como una **cadena vacía** en lugar de hacer fallar el despliegue. El log de compilación muestra un aviso por cada referencia vacía, con el motivo; un cambio de variables aplicado con un reinicio, sin compilación, no muestra ningún aviso. Un destino al que le cambiaste el nombre cuenta como inexistente: las referencias coinciden con el nombre actual.
+- **Algo con mayor precedencia lo sobrescribió.** Los valores se combinan en un orden fijo — `addon-issued env < project secrets < project env < app env < app secrets < platform vars` — así que un secreto con alcance de proyecto (`--global`) puede quedar oculto silenciosamente por uno con alcance de servicio con la misma clave, y las variables de la plataforma (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`, `LIZARD_PRIVATE_DOMAIN`) siempre prevalecen. Si defines `PORT` tú mismo, lo que cambias es el puerto al que Lizard dirige el tráfico, salvo que el puerto se haya fijado con `lizard port`.
+- **Un valor de tiempo de compilación no llegó a la compilación.** La mayoría de los cambios de variables se aplican sin recompilar: el servicio se reinicia para tomarlos. Los valores de `VITE_*` y `NEXT_PUBLIC_*` quedan integrados en los recursos compilados, y cambiar uno inicia al momento una recompilación de los servicios en marcha. Un servicio que en ese momento había fallado o estaba detenido se omite, y un servicio con un `dockerfilePath` personalizado o subido con `lizard up` sin comandos de compilación/inicio nunca recibe estos valores en la compilación.
 
 <span id="possible-solutions" />
 
 ## Posibles soluciones
 
-<span id="confirm-what-the-running-service-actually-sees" />
+<span id="check-the-build-log-for-empty-references" />
 
-### Confirma lo que realmente ve el servicio en ejecución
+### Busca referencias vacías en el log de compilación
 
-Esto es determinante: muestra el entorno del contenedor activo, no lo que crees haber configurado:
+El acceso por shell a los servicios (`lizard ssh`) está desactivado. El log de compilación es el lugar donde mirar: cada referencia vacía recibe una línea como `==> Warning: ... is empty` con el motivo.
 
 ```bash
-lizard ssh --service api -- env | grep DATABASE_URL
+lizard logs --build --service api
 ```
 
-Si la clave falta o está vacía, el destino/clave de la referencia es incorrecto, o no hay nada configurado para ese alcance. Vuelve a comprobar el nombre del addon o servicio con `lizard ps`, y la clave en las [variables documentadas](/addons) del addon.
+Después, lista las plantillas de referencia válidas en este alcance y compara el nombre y la clave con los tuyos. Comprueba las claves en las [variables documentadas](/addons) del addon:
+
+```bash
+lizard secrets list --service api --ref
+```
 
 <span id="check-for-a-scope-collision" />
 
@@ -55,7 +59,7 @@ Recuerda que **los secretos de la app sobrescriben los secretos del proyecto**: 
 
 ### Recompila después de un cambio en tiempo de compilación
 
-Si la clave modificada es `VITE_*` o `NEXT_PUBLIC_*`, activa una recompilación real en lugar de un reinicio:
+Si la clave modificada es `VITE_*` o `NEXT_PUBLIC_*` y el servicio había fallado o estaba detenido cuando la cambiaste, activa una recompilación:
 
 ```bash
 lizard redeploy --service api

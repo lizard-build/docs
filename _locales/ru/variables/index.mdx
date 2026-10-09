@@ -32,9 +32,11 @@ lizard secrets set NODE_ENV=production --global
 ```bash
 lizard secrets list                       # current scope
 lizard secrets list --show                # reveal values
-lizard secrets delete OLD_KEY ANOTHER_KEY # variadic
-cat .env | lizard secrets import          # import dotenv from stdin
+lizard secrets delete OLD_KEY ANOTHER_KEY # variadic; add -y in scripts
+cat .env | lizard secrets import          # KEY=value lines from stdin
 ```
+
+`secrets import` читает простые строки `KEY=value` и сохраняет кавычки как часть значения. `secrets delete` запрашивает подтверждение; передайте `-y`, если команда запускается вне терминала.
 
 Все флаги описаны в [справке по команде `lizard secrets`](/cli/secrets).
 
@@ -49,14 +51,14 @@ cat .env | lizard secrets import          # import dotenv from stdin
 
 **По умолчанию — уровень сервиса.** Скомпрометированный сервис может прочитать своё окружение — более широкая область видимости означает больше учётных данных без нужды. Используйте `--global` только для несекретных, заведомо публичных значений вроде `LOG_LEVEL`, `NODE_ENV`, флагов функций или публичного URL фронтенда `SENTRY_DSN`. Если не уверены, является ли значение секретом — считайте его секретом и ограничьте сервисом.
 
-Для общих ресурсов вроде базы данных **не кладите** DSN в `--global` — привяжите его к каждому потребителю через [ссылку](/variables/references):
+`DATABASE_URL` и `REDIS_URL` каждого запущенного аддона Postgres и Redis уже попадают во все сервисы проекта с самым низким приоритетом. Чтобы выбрать конкретный аддон или использовать его приватный URL, привяжите его к каждому потребителю через [ссылку](/variables/references), а не через `--global`:
 
 ```bash
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service worker
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service worker
 ```
 
-Ротация происходит один раз в аддоне; все ссылки обновятся автоматически.
+Если значения аддона изменятся, каждый потребитель получит новое значение при следующем деплое или изменении переменных.
 
 <span id="precedence" />
 
@@ -68,7 +70,7 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service worker
 addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets  <  platform vars
 ```
 
-Поэтому **секреты приложения перекрывают секреты проекта**, а **платформенные переменные** (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`) применяются в самом конце и их нельзя переопределить.
+Поэтому **секреты приложения перекрывают секреты проекта**, а **платформенные переменные** (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`, `LIZARD_PRIVATE_DOMAIN`) применяются в самом конце и их нельзя переопределить. `PORT` задаётся только тогда, когда у сервиса есть HTTP-порт. Если задать `PORT` самостоятельно, порт, на который Lizard направляет трафик, изменится при следующем деплое, если только порт не был задан через `lizard port`.
 
 <span id="build-time-vs-runtime" />
 
@@ -76,7 +78,8 @@ addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets
 
 Большинство изменений переменных вступают в силу **без пересборки** — сервис перезапускается и подхватывает их за несколько секунд. Исключения — значения времени сборки, зашиваемые в образ:
 
-- Изменения `VITE_*` и `NEXT_PUBLIC_*` **требуют пересборку** при следующем деплое.
+- Изменение значения `VITE_*` или `NEXT_PUBLIC_*` сразу запускает пересборку затронутых запущенных сервисов (для `--global` — всех запущенных сервисов).
+- Lizard зашивает эти значения в виде строк `ENV` для сервисов из GitHub (Dockerfile, который генерирует lizardpack, или Dockerfile в корне репозитория) и для Node-сервисов, собираемых через `buildCommand` / `startCommand`. Сервис с собственным `dockerfilePath` или загруженный через `lizard up` без этих команд не получает переменные Lizard во время сборки; build args не получает ни один сервис, кроме `COMMIT_SHA`. Для публичных значений в таких случаях закоммитьте их в `.env.production`, задайте команду сборки или впишите их в свой Dockerfile.
 
 См. [Пайплайн сборки → триггеры пересборки](/concepts/build-pipeline#what-triggers-a-rebuild).
 
@@ -84,10 +87,12 @@ addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets
 
 ## Проверка
 
-Убедитесь, что запущенный сервис видит именно то, что вы ждёте:
+Доступ к сервисам по shell (`lizard ssh`) отключён, поэтому проверяйте значения другим способом:
 
 ```bash
-lizard ssh --service api -- env
+lizard logs --build --service api          # warns about every empty ${{…}} reference
+lizard secrets list --service api --show   # stored values
+lizard secrets list --service api --ref    # reference templates you can use
 ```
 
 Если ожидаемого значения нет, см. [Устранение неполадок → секрет или ссылка не отображается](/variables/troubleshooting/reference-not-applied).
@@ -96,13 +101,19 @@ lizard ssh --service api -- env
 
 ## Локальная разработка
 
-Запустите команду **локально** с внедрёнными секретами проекта и сервиса (удобно для скриптов и миграций):
+Запустите команду **локально** с внедрёнными секретами проекта и сервиса:
 
 ```bash
 lizard run --service api -- node scripts/seed.js
 ```
 
-См. [`lizard run` vs. `lizard ssh`](/cli/run#run-vs-ssh).
+Значения передаются как сохранены: ссылки `${{…}}` остаются буквальным текстом, а платформенные переменные (`PORT`, `LIZARD_*`) не внедряются. Если скрипту нужна база данных, запустите его с реальными параметрами подключения аддона:
+
+```bash
+lizard run --service postgres -- node scripts/seed.js
+```
+
+См. [что внедряет `lizard run`](/cli/run#what-run-injects).
 
 <span id="see-also" />
 

@@ -82,7 +82,7 @@ EXPOSE 80
 
 Usa la política de páginas generadas solo cuando la app tenga esos archivos de ruta. Un fallback de SPA de SvelteKit, por ejemplo, necesita su propia política de enrutamiento. [Exportación estática de Next.js](/framework-guides/nextjs/static-export) tiene una receta completa con un diseño de barra final.
 
-Excluye dependencias, salida de compilación, `.git` y `.env*` en `.dockerignore`. Si la compilación necesita variables públicas, declara sus valores de `ARG` antes del comando de compilación. No copies secretos privados en la imagen ni en la salida del navegador.
+Excluye dependencias, salida de compilación, `.git` y `.env*` en `.dockerignore`. Si la compilación necesita variables públicas, escríbelas como líneas `ENV` antes del comando de compilación. Lizard no pasa ningún build arg salvo `COMMIT_SHA`, así que un `ARG` queda vacío. No copies secretos privados en la imagen ni en la salida del navegador.
 
 Después de la [configuración de CLI](/framework-guides#prepare-the-project), crea un servicio con `lizard add --service web` y luego despliega este código fuente con `lizard up --service web --port 80`. Omite el paso de agregar cuando el servicio ya exista. En un servicio existente, revisa el [orden de decisión de compilación](/concepts/build-pipeline#build-decision-order): las anulaciones de comandos pueden tener prioridad sobre el Dockerfile. Un archivo de configuración por sí solo no reemplaza la configuración generada de nginx; el Dockerfile debe copiarlo a la imagen.
 

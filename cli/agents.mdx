@@ -1,0 +1,98 @@
+---
+description: "lizard agents connects your ChatGPT, Claude, or API-key credentials for coding agents that run in sandboxes, and sets each agent's default model."
+---
+
+# lizard agents
+
+Connect the credentials that coding agents use in sandboxes, and set each agent's defaults. Run the agents with [`lizard sandbox prompt`](/cli/sandbox#coding-agents).
+
+## Usage
+
+```bash
+lizard agents status
+lizard agents login [chatgpt] [flags]
+lizard agents add <credential> [flags]
+lizard agents remove <credential>
+lizard agents use <agent> [flags]
+```
+
+Credentials belong to your account: connect one once and every sandbox can run agents on it. The platform keeps the long-lived token and hands a sandbox a short-lived access token for each run. These commands accept `-p, --project` but ignore it.
+
+## Agents and credentials
+
+| Agent | Name | Accepts |
+|-------|------|---------|
+| Codex | `codex` | one of: `chatgpt`, `openai`, `deepseek`, `openrouter` |
+| Claude Code | `claude` | one of: `claude`, `anthropic`, `openrouter` |
+| pi | `pi` | any of: `claude`, `chatgpt`, `anthropic`, `openai`, `openrouter`, `llmgateway` |
+| OpenCode | `opencode` | any of: `chatgpt`, `anthropic`, `openai`, `openrouter`, `llmgateway` |
+| Prime Agent | `prime` | any of: `claude`, `chatgpt`, `anthropic`, `openai`, `openrouter`, `llmgateway` |
+
+Kimi Code (`kimi`, with `kimi` or `moonshot` credentials) is listed but can't run yet.
+
+## Subcommands
+
+### `lizard agents status`
+
+Show which credentials are connected and which agents can run. Plain `lizard agents` does the same.
+
+### `lizard agents login [chatgpt]`
+
+Connect your ChatGPT subscription with a device code. The CLI prints a URL and a code; open the URL, sign in, and enter the code within 15 minutes. The command waits until you approve.
+
+| Flag | Description |
+|------|-------------|
+| `--open` | Open the sign-in page in your browser |
+
+### `lizard agents add <credential>`
+
+Add an API key: `anthropic`, `openai`, `openrouter`, `llmgateway`, `deepseek`, or `moonshot`. For a Claude subscription, run `claude setup-token` on your machine and add its token as `claude`.
+
+| Flag | Description |
+|------|-------------|
+| `--key <value>` | The key or token. Without it, the CLI reads stdin, or asks |
+
+### `lizard agents remove <credential>`
+
+Remove a connected credential (alias `logout`).
+
+### `lizard agents use <agent>`
+
+Set an agent's credential and defaults.
+
+| Flag | Description |
+|------|-------------|
+| `--credential <name>` | For Codex and Claude Code: which credential to use |
+| `-m, --model <model>` | Default model (`none` clears it) |
+| `--effort <level>` | Default reasoning effort (`none` clears it) |
+
+## Examples
+
+### Connect ChatGPT and run Codex
+
+```bash
+lizard agents login chatgpt --open
+lizard sandbox create -t codex
+lizard sandbox prompt sb_abc123 "add a health check endpoint and test it"
+```
+
+### Add a Claude subscription for Claude Code
+
+```bash
+claude setup-token
+lizard agents add claude
+lizard sandbox create -t claude
+lizard sandbox prompt sb_abc123 --agent claude "fix the failing tests"
+```
+
+### Run Codex on an OpenAI API key
+
+```bash
+lizard agents add openai < openai.key
+lizard agents use codex --credential openai --effort high
+```
+
+## See also
+
+- [lizard sandbox](/cli/sandbox#coding-agents) — `sandbox prompt`, `conversations`, and `interrupt`
+- [Sandboxes](/sandboxes) — templates and lifecycle

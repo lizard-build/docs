@@ -1,21 +1,21 @@
 ---
-description: "lizard ssh ejecuta un comando dentro del contenedor de un servicio en vivo y devuelve su código de salida. La forma autorizada de ver lo que ve el contenedor."
+description: "lizard ssh a servicios está desactivado: la API responde 403. Cómo comprobar en su lugar los valores y las referencias de un servicio, y cómo obtener una shell en un sandbox."
 ---
 
 # lizard ssh
 
-Ejecuta un comando dentro del contenedor de un servicio en ejecución, transmite su salida y devuelve el código de salida remoto.
+> **Desactivado.** El acceso a shell en los servicios está deshabilitado en Lizard. `lizard ssh` recibe HTTP 403 `Shell access to services is disabled` y termina con el código `1`.
 
-## run vs. ssh
+El comando sigue incluido en la CLI, pero la plataforma lo rechaza para todos los servicios. Usa estas alternativas:
 
-`lizard run` y `lizard ssh` ejecutan un comando con el contexto de un servicio, pero se ejecutan en lugares distintos — conviene saber cuál quieres.
+| Para comprobar | Comando |
+|----------|---------|
+| Referencias que se resolvieron a un valor vacío | `lizard logs --build --service api` (el log de build avisa de cada referencia `${{…}}` vacía) |
+| Los valores almacenados en un servicio | `lizard secrets list --service api --show` |
+| Un comando con los valores de conexión reales de un addon | `lizard run --service postgres -- <cmd>` |
+| Lo que imprime la app en tiempo de ejecución | `lizard logs --service api` |
 
-| Comando | Dónde se ejecuta | Usar para |
-|---------|-----------|---------|
-| `lizard run` | **Localmente**, con el proyecto del servicio + los secretos del servicio inyectados | Migraciones, scripts de seed, herramientas locales que necesitan configuración de prod |
-| `lizard ssh` | **Dentro del contenedor del servicio en ejecución** | Inspeccionar el contenedor en vivo, comandos remotos puntuales, depuración |
-
-`lizard run` muestra tu copia local inyectada del entorno, que normalmente es la misma que producción — pero `lizard ssh` es la referencia autorizada de lo que realmente ve el contenedor en vivo.
+Para obtener una shell en un sandbox, usa [`lizard sandbox ssh <id>`](/cli/sandbox#sandbox-ssh). Sigue funcionando.
 
 <span id="usage" />
 
@@ -25,46 +25,16 @@ Ejecuta un comando dentro del contenedor de un servicio en ejecución, transmite
 lizard ssh --service <name> -- <command>
 ```
 
-<span id="examples" />
-
-## Ejemplos
-
-<span id="inspect-the-environment-the-running-app-sees" />
-
-### Inspeccionar el entorno que ve la app en ejecución
-
-```bash
-lizard ssh --service api -- env
-```
-
-<span id="list-files-in-the-deployed-image" />
-
-### Listar archivos en la imagen desplegada
-
-```bash
-lizard ssh --service api -- ls -la /app
-```
-
-<span id="check-the-os-in-the-container" />
-
-### Comprobar el sistema operativo en el contenedor
-
-```bash
-lizard ssh --service api -- cat /etc/os-release
-```
-
-<span id="confirm-a-secret-landed-in-the-live-container" />
-
-### Confirmar que un secreto llegó al contenedor en vivo
-
-```bash
-lizard ssh --service api -- env | grep DATABASE_URL
-```
+| Flag | Descripción |
+|------|-------------|
+| `-s, --service <id>` | Nombre o ID del servicio |
+| `-p, --project <id>` | Nombre, slug o ID del proyecto |
 
 <span id="see-also" />
 
 ## Véase también
 
-- [lizard run](/cli/run) — ejecuta un comando localmente con el entorno del servicio inyectado en su lugar
-- [Variables](/variables) — cómo llegan los secretos y las referencias a un servicio
-- [Desplegar desde Claude Code](https://lizard.build/blog/deploy-from-claude-code#claude-code-deployment-compared-with-the-alternatives) — por qué un agente necesita una shell dentro del contenedor en ejecución, y qué plataformas no ofrecen una
+- [lizard run](/cli/run) — ejecuta un comando localmente con los valores de un servicio o de un addon inyectados
+- [lizard secrets](/cli/secrets) — lista los valores almacenados en un servicio
+- [lizard logs](/cli/logs) — logs de build y de ejecución
+- [lizard sandbox](/cli/sandbox) — shells interactivas y comandos en sandboxes

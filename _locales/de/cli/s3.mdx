@@ -1,0 +1,82 @@
+---
+description: "lizard s3 lädt eine lokale Datei in einen Managed Object Storage Bucket hoch und listet die Objekte eines Buckets auf, ohne AWS SDK."
+---
+
+# lizard s3
+
+Lade Objekte in einen [Managed Object Storage](/addons/storage) Bucket hoch und liste sie auf.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard s3 upload <file> [flags]
+lizard s3 list [flags]
+```
+
+Beide Befehle arbeiten mit dem einzigen S3-Addon des Projekts und dessen `default`-Bucket, sofern du nicht `--addon` und `--bucket` angibst. Füge das Addon zuerst mit `lizard add s3` hinzu.
+
+<span id="subcommands" />
+
+## Unterbefehle
+
+### `lizard s3 upload <file>`
+
+Lädt eine lokale Datei hoch. Gibt den Key, den ETag, die Größe und eine URL aus, wenn der Bucket öffentlich ist. Der `default`-Bucket ist privat; mach einen Bucket über den S3-Browser im Dashboard öffentlich.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `--addon <name>` | Name oder ID des S3-Addons (Standard: das einzige S3-Addon des Projekts) |
+| `--bucket <name>` | Ziel-Bucket (Standard `default`) |
+| `--key <key>` | Objekt-Key (Standard: der Dateiname) |
+| `--content-type <type>` | Content-Type-Header (Standard: aus der Dateiendung abgeleitet) |
+| `-p, --project <id>` | Projektname, Slug oder ID |
+
+### `lizard s3 list`
+
+Listet Objekte in einem Bucket auf (Alias `ls`).
+
+| Flag | Beschreibung |
+|------|-------------|
+| `--addon <name>` | Name oder ID des S3-Addons |
+| `--bucket <name>` | Aufzulistender Bucket (Standard `default`) |
+| `--prefix <prefix>` | Nur Keys unter diesem Präfix |
+| `-p, --project <id>` | Projektname, Slug oder ID |
+
+Jedes Konto kann über seine Addons hinweg bis zu 16 GiB speichern. Der Speicher wird nach gespeicherten Bytes abgerechnet, zu 0,0135 $ pro GB-Monat.
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="upload-a-file" />
+
+### Eine Datei hochladen
+
+```bash
+lizard s3 upload ./logo.png --key assets/logo.png
+```
+
+<span id="list-objects-under-a-prefix" />
+
+### Objekte unter einem Präfix auflisten
+
+```bash
+lizard s3 list --prefix assets/
+```
+
+<span id="use-a-second-s3-addon" />
+
+### Ein zweites S3-Addon verwenden
+
+```bash
+lizard s3 upload ./backup.tar.gz --addon s3-autumn-bear
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Managed Object Storage](/addons/storage) — Umgebungsvariablen, Einrichtung des AWS SDK und öffentliche Dateien
+- [lizard add](/cli/add) — ein S3-Addon mit `lizard add s3` hinzufügen

@@ -32,9 +32,11 @@ lizard secrets set NODE_ENV=production --global
 ```bash
 lizard secrets list                       # current scope
 lizard secrets list --show                # reveal values
-lizard secrets delete OLD_KEY ANOTHER_KEY # variadic
-cat .env | lizard secrets import          # import dotenv from stdin
+lizard secrets delete OLD_KEY ANOTHER_KEY # variadic; add -y in scripts
+cat .env | lizard secrets import          # KEY=value lines from stdin
 ```
+
+`secrets import` liest einfache `KEY=value`-Zeilen und behält Anführungszeichen als Teil des Werts bei. `secrets delete` fragt nach einer Bestätigung; übergeben Sie `-y`, wenn der Befehl außerhalb eines Terminals läuft.
 
 Im [Befehlsreferenz für `lizard secrets`](/cli/secrets) finden Sie alle Flags.
 
@@ -49,14 +51,14 @@ Im [Befehlsreferenz für `lizard secrets`](/cli/secrets) finden Sie alle Flags.
 
 **Verwenden Sie standardmäßig den Service-Bereich.** Ein kompromittierter Service kann seine eigene Umgebung lesen — ein breiterer Bereich bedeutet, dass ohne Grund mehr Anmeldedaten offengelegt werden. Reservieren Sie `--global` für nicht geheime, nachweislich öffentliche Werte wie `LOG_LEVEL`, `NODE_ENV`, Feature-Flags oder ein Frontend-`SENTRY_DSN`. Wenn Sie unsicher sind, ob ein Wert ein Secret ist, behandeln Sie ihn als solches und begrenzen Sie ihn auf den Service.
 
-Für gemeinsam genutzte Ressourcen wie eine Datenbank gilt: Legen Sie die DSN **nicht** in `--global` ab — binden Sie sie pro Consumer mit einer [Referenz](/variables/references):
+`DATABASE_URL` und `REDIS_URL` jedes laufenden Postgres- und Redis-Add-ons erreichen bereits jeden Service im Projekt, und zwar mit der niedrigsten Priorität. Um ein bestimmtes Add-on auszuwählen oder dessen private URL zu verwenden, binden Sie sie statt mit `--global` pro Consumer mit einer [Referenz](/variables/references):
 
 ```bash
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service worker
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service worker
 ```
 
-Die Rotation erfolgt weiterhin einmal auf dem Add-on; jede Referenz wird aktualisiert.
+Wenn sich die Werte des Add-ons ändern, übernimmt jeder Consumer den neuen Wert beim nächsten Deployment oder bei der nächsten Variablenänderung.
 
 <span id="precedence" />
 
@@ -68,7 +70,7 @@ Wenn derselbe Schlüssel an mehreren Stellen definiert ist, gilt: **Der letzte S
 addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets  <  platform vars
 ```
 
-Also **überschreiben App-Secrets Projekt-Secrets**, und **Plattformvariablen** (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`) werden zuletzt angewendet und können nicht überschrieben werden.
+Also **überschreiben App-Secrets Projekt-Secrets**, und **Plattformvariablen** (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`, `LIZARD_PRIVATE_DOMAIN`) werden zuletzt angewendet und können nicht überschrieben werden. `PORT` wird nur gesetzt, wenn der Service einen HTTP-Port hat. Wenn Sie `PORT` selbst setzen, ändert sich beim nächsten Deployment der Port, an den Lizard routet, es sei denn, der Port wurde mit `lizard port` festgelegt.
 
 <span id="build-time-vs-runtime" />
 
@@ -76,7 +78,8 @@ Also **überschreiben App-Secrets Projekt-Secrets**, und **Plattformvariablen** 
 
 Die meisten Variablenänderungen werden **ohne Rebuild** angewendet — der Service wird neu gestartet, um sie zu übernehmen, was ein paar Sekunden dauert. Ausnahmen sind Build-Zeit-Werte, die in das Image eingebettet werden:
 
-- Änderungen an `VITE_*` und `NEXT_PUBLIC_*` **erzwingen beim nächsten Bereitstellen einen Rebuild**.
+- Das Ändern eines `VITE_*`- oder `NEXT_PUBLIC_*`-Werts startet sofort einen Rebuild der betroffenen laufenden Services (bei `--global` aller laufenden Services).
+- Lizard bettet diese Werte als `ENV`-Zeilen ein, und zwar für GitHub-Services (das von lizardpack generierte Dockerfile oder das Dockerfile im Stammverzeichnis des Repos) sowie für Node-Services, die mit `buildCommand` / `startCommand` gebaut werden. Ein Service mit eigenem `dockerfilePath` oder einer, der ohne diese Befehle mit `lizard up` hochgeladen wurde, erhält zur Build-Zeit keine Lizard-Variablen; kein Service erhält Build-Args außer `COMMIT_SHA`. Für öffentliche Werte in diesen Fällen committen Sie sie in `.env.production`, setzen einen Build-Befehl oder schreiben sie in Ihr Dockerfile.
 
 Siehe [Build-Pipeline → Rebuild-Trigger](/concepts/build-pipeline#what-triggers-a-rebuild).
 
@@ -84,10 +87,12 @@ Siehe [Build-Pipeline → Rebuild-Trigger](/concepts/build-pipeline#what-trigger
 
 ## Überprüfen
 
-Bestätigen Sie, was ein laufender Service tatsächlich sieht:
+Der Shell-Zugriff auf Services (`lizard ssh`) ist deaktiviert, prüfen Sie die Werte daher auf andere Weise:
 
 ```bash
-lizard ssh --service api -- env
+lizard logs --build --service api          # warns about every empty ${{…}} reference
+lizard secrets list --service api --show   # stored values
+lizard secrets list --service api --ref    # reference templates you can use
 ```
 
 Wenn ein erwarteter Wert nicht vorhanden ist, siehe [Fehlerbehebung → ein Secret oder eine Referenz wird nicht angezeigt](/variables/troubleshooting/reference-not-applied).
@@ -96,13 +101,19 @@ Wenn ein erwarteter Wert nicht vorhanden ist, siehe [Fehlerbehebung → ein Secr
 
 ## Lokale Entwicklung
 
-Führen Sie einen Befehl **lokal** aus, wobei die Projekt- und Service-Secrets des Service eingefügt werden (praktisch für Skripte und Migrationen):
+Führen Sie einen Befehl **lokal** aus, wobei die Projekt- und Service-Secrets des Service eingefügt werden:
 
 ```bash
 lizard run --service api -- node scripts/seed.js
 ```
 
-Siehe [`lizard run` vs. `lizard ssh`](/cli/run#run-vs-ssh).
+Die Werte kommen so an, wie sie gespeichert sind: `${{…}}`-Referenzen bleiben wörtlicher Text, und Plattformvariablen (`PORT`, `LIZARD_*`) werden nicht eingefügt. Für ein Skript, das die Datenbank benötigt, führen Sie es mit den echten Verbindungswerten des Add-ons aus:
+
+```bash
+lizard run --service postgres -- node scripts/seed.js
+```
+
+Siehe [was `lizard run` einfügt](/cli/run#what-run-injects).
 
 <span id="see-also" />
 

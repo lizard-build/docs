@@ -1,10 +1,10 @@
 ---
-description: "lizard workspace list zeigt alle Workspaces, auf die dein Konto zugreifen kann, und wie Workspaces mit Projekten und Services zusammenhängen."
+description: "lizard workspace erstellt, listet und löscht Workspaces und zeigt, wie Workspaces mit Projekten und Services zusammenhängen."
 ---
 
 # lizard workspace
 
-Liste die Workspaces auf, auf die du zugreifen kannst.
+Erstelle, liste und lösche Workspaces.
 
 <span id="usage" />
 
@@ -12,7 +12,35 @@ Liste die Workspaces auf, auf die du zugreifen kannst.
 
 ```bash
 lizard workspace list
+lizard workspace create <name>
+lizard workspace rm <name-or-id> [flags]
 ```
+
+<span id="subcommands" />
+
+## Unterbefehle
+
+<span id="lizard-workspace-list" />
+
+### `lizard workspace list`
+
+Liste die Workspaces auf, zu denen du gehörst, mit deiner Rolle und der Anzahl der Projekte (Alias `ls`).
+
+<span id="lizard-workspace-create-name" />
+
+### `lizard workspace create <name>`
+
+Erstelle einen Workspace. Füge ihm Projekte mit `lizard project create <name> --workspace <slug>` hinzu.
+
+<span id="lizard-workspace-rm-name-or-id" />
+
+### `lizard workspace rm <name-or-id>`
+
+Lösche einen Workspace (Alias `delete`). Nur der Owner kann ihn löschen, und nur wenn er keine Projekte oder Sandboxes mehr enthält. Du kannst deinen persönlichen Workspace nicht löschen.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-y, --yes` | Bestätigung überspringen |
 
 <span id="examples" />
 
@@ -26,9 +54,26 @@ lizard workspace list
 lizard workspace list
 ```
 
+<span id="create-a-workspace" />
+
+### Einen Workspace erstellen
+
+```bash
+lizard workspace create my-team
+```
+
+<span id="delete-an-empty-workspace" />
+
+### Einen leeren Workspace löschen
+
+```bash
+lizard workspace rm my-team --yes
+```
+
 <span id="see-also" />
 
 ## Siehe auch
 
 - [lizard whoami](/cli/whoami) — zeigt deinen aktiven Workspace an
+- [lizard project](/cli/project) — Projekte in einem Workspace auflisten und erstellen
 - [Architecture: Workspace](/concepts/architecture) — wie Workspaces mit Projekten und Services zusammenhängen

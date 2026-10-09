@@ -14,7 +14,7 @@ description: "PostgreSQL で Flowise をデプロイし、その認証情報の�
 
 ## 前提条件
 
-- アプリホスティングと Managed Postgres を利用できる Lizard アカウント。
+- Pro または 7 日間の Pro トライアル（カードが必要）を利用している Lizard アカウント。トライアルを開始するまでは、`lizard add` と `lizard up` は Checkout へのリンクを返します。`lizard billing start` でそのリンクを開けます。
 - お使いのコンピューターに OpenSSL がインストールされていること。
 - Flowise のワークロードに十分なメモリ。テストサービスでは 4 GiB を使用します。
 
@@ -148,7 +148,7 @@ PostgreSQL は、Flowise が書き込むすべてのファイルを保存する�
 
 アップロードやドキュメントワークフローを使用する前に、Flowise の [ストレージ変数](https://docs.flowiseai.com/configuration/environment-variables) を使用してプライベート S3 バケットを設定してください。`STORAGE_TYPE=s3`、`S3_STORAGE_BUCKET_NAME`、`S3_STORAGE_ACCESS_KEY_ID`、`S3_STORAGE_SECRET_ACCESS_KEY`、`S3_STORAGE_REGION` を設定します。S3 互換プロバイダーの場合は、`S3_ENDPOINT_URL` と `S3_FORCE_PATH_STYLE=true` も設定します。
 
-Lizard の Managed Object Storage は、公開読み取りの `default` バケットを作成します。アクセス設定を先に変更せずに、そのバケットへ非公開の Flowise ドキュメントを保存しないでください。上記の PostgreSQL セットアップでは、ファイルストレージ、ローカルベクターストア、キューワーカーはプロビジョニングもテストも行いません。
+Lizard の Managed Object Storage は、プライベートな `default` バケットを作成します。これは Flowise のドキュメントの保存に適しています。プライベートのままにしてください。ダッシュボードの S3 browser から public にすると、バケット内のすべてのファイルが公開されます。上記の PostgreSQL セットアップでは、ファイルストレージ、ローカルベクターストア、キューワーカーはプロビジョニングもテストも行いません。
 
 <span id="troubleshooting-and-updates" />
 
@@ -160,6 +160,6 @@ lizard logs --build --service flowise
 lizard logs --service flowise
 ```
 
-初回デプロイで、イメージの pull 中にタイムアウトした場合は、`lizard events` を確認してください。コンテナの起動後に、`lizard up --service flowise --port 3000` を再試行します。これまでにビルド成功が 1 度もないサービスでは、まだ `lizard redeploy` を使用できません。
+初回デプロイで、イメージの pull 中にタイムアウトした場合は、`lizard events` を確認してください。コンテナの起動後に、`lizard up --service flowise --port 3000` を再試行するか、`lizard redeploy --service flowise` を実行して最後のアップロードを再ビルドします。これは初回ビルドが失敗した後でも使えます。
 
 アップデートする場合は、データベースをバックアップし、Flowise のリリースノートを読み、Dockerfile の npm バージョンを変更してから、`lizard up` で再度アップロードします。更新に依存する前に、新しいバージョンを確認し、永続性チェックを実行してください。

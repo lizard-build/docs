@@ -1,16 +1,36 @@
 ---
-description: "lizard workspace list shows every workspace your account can reach, and how workspaces relate to projects and services."
+description: "lizard workspace creates, lists, and deletes workspaces, and shows how workspaces relate to projects and services."
 ---
 
 # lizard workspace
 
-List the workspaces you can access.
+Create, list, and delete workspaces.
 
 ## Usage
 
 ```bash
 lizard workspace list
+lizard workspace create <name>
+lizard workspace rm <name-or-id> [flags]
 ```
+
+## Subcommands
+
+### `lizard workspace list`
+
+List the workspaces you belong to, with your role and project count (alias `ls`).
+
+### `lizard workspace create <name>`
+
+Create a workspace. Add projects to it with `lizard project create <name> --workspace <slug>`.
+
+### `lizard workspace rm <name-or-id>`
+
+Delete a workspace (alias `delete`). Only the owner can delete it, and only when it has no projects or sandboxes left. You can't delete your personal workspace.
+
+| Flag | Description |
+|------|-------------|
+| `-y, --yes` | Skip confirmation |
 
 ## Examples
 
@@ -20,7 +40,20 @@ lizard workspace list
 lizard workspace list
 ```
 
+### Create a workspace
+
+```bash
+lizard workspace create my-team
+```
+
+### Delete an empty workspace
+
+```bash
+lizard workspace rm my-team --yes
+```
+
 ## See also
 
 - [lizard whoami](/cli/whoami) — shows your active workspace
+- [lizard project](/cli/project) — list and create projects in a workspace
 - [Architecture: Workspace](/concepts/architecture) — how workspaces relate to projects and services

@@ -60,13 +60,13 @@ lizard logs --build --service web --json
 lizard ps --json
 ```
 
-ソースと lockfile をアップロードし、`node_modules/`、`dist/`、および secrets は除外します。静的検出パスを使うため、service build/start overrides は未設定のままにしてください。nginx コンテナは、development サーバーや preview サーバーが別の port を使っていても、port 80 で待ち受けます。
+ソースと lockfile をアップロードし、`node_modules/`、`dist/`、および secrets は除外します。静的検出パスを使うため、service build/start overrides は未設定のままにしてください。nginx コンテナは、development サーバーや preview サーバーが別の port を使っていても、`--port` で渡す port 80 で待ち受けます。
 
 <span id="connect-an-api" />
 
 ## API を接続する
 
-API のブラウザから到達可能な HTTPS アドレスには、`VITE_API_URL` のような公開変数を使用します。これを `import.meta.env.VITE_API_URL` として読み取ります。この値は [変数とシークレット](/variables) で設定し、変更時には再ビルドしてください。データベース URL、API credential、または internal-only service address を `VITE_*` 変数で公開してはいけません。
+API のブラウザから到達可能な HTTPS アドレスには、`VITE_API_URL` のような公開変数を使用します。これを `import.meta.env.VITE_API_URL` として読み取ります。`lizard up` では、Lizard はビルドに変数を渡しません。値は `.env.production` にコミットし（`.gitignore` で除外されていないことを確認してください）、変更したらもう一度アップロードしてください。[GitHub サービス](/deploy/github) では、[変数とシークレット](/variables) で設定すると、変更時にアプリが再ビルドされます。[ビルド時の変数](/concepts/build-pipeline#build-time-variables) を参照してください。データベース URL、API credential、または internal-only service address を `VITE_*` 変数で公開してはいけません。
 
 別オリジン上の API の場合は、許可する origin にフロントエンド URL を含めるよう設定してください。バックエンドサービス間で機能する private service hostname は、訪問者のブラウザでは解決されません。
 

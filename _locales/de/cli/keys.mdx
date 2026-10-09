@@ -1,0 +1,90 @@
+---
+description: "lizard keys erstellt, listet und löscht liz_-API-Schlüssel für CI, das Lizard SDK und Sandboxes, optional auf Projekte oder Workspaces beschränkt."
+---
+
+# lizard keys
+
+Erstelle, liste und lösche API-Schlüssel. Alias: `lizard apikey`.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard keys create <name> [flags]
+lizard keys list
+lizard keys rm <name-or-id> [flags]
+```
+
+API-Schlüssel beginnen mit `liz_`. Verwende einen überall dort, wo du dich nicht über den Browser anmelden kannst:
+
+- `LIZARD_TOKEN` oder `LIZARD_API_KEY` für die CLI in CI
+- `lizard login --token liz_…` auf einem Rechner
+- `LIZARD_API_KEY` für das [Lizard SDK](/sandboxes/sdk-reference)
+- `lizard sandbox create --with-token liz_…`, um `lizard` innerhalb einer Sandbox zu verwenden
+
+<span id="subcommands" />
+
+## Unterbefehle
+
+### `lizard keys create <name>`
+
+Erstellt einen Schlüssel und gibt ihn einmalig aus. Kopiere ihn sofort; Lizard zeigt ihn nicht erneut an. Ein Schlüssel ohne Bereichseinschränkung hat vollen Zugriff auf jeden Workspace und jedes Projekt, die du erreichen kannst. Schränke ihn mit diesen Flags ein, die jeweils mehrfach angegeben werden können:
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-p, --project <id>` | Beschränkt den Schlüssel auf dieses Projekt (Name, Slug oder ID) |
+| `-w, --workspace <id>` | Beschränkt den Schlüssel auf diesen Workspace (Name, Slug oder ID) |
+
+Ein eingeschränkter Schlüssel hat keinen Zugriff auf Abrechnung und Einstellungen des Kontos.
+
+### `lizard keys list`
+
+Listet deine Schlüssel mit kurzer Vorschau, Bereich, Erstellungszeitpunkt und letzter Verwendung auf (Alias `ls`).
+
+### `lizard keys rm <name-or-id>`
+
+Löscht einen Schlüssel (Alias `delete`). Wenn zwei Schlüssel denselben Namen haben, lösche per ID.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-y, --yes` | Bestätigung überspringen |
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="create-a-key-for-ci" />
+
+### Einen Schlüssel für CI erstellen
+
+```bash
+lizard keys create github-actions --project my-project
+```
+
+Speichere den ausgegebenen Schlüssel als CI-Secret mit dem Namen `LIZARD_TOKEN`.
+
+<span id="create-a-key-for-a-sandbox" />
+
+### Einen Schlüssel für eine Sandbox erstellen
+
+```bash
+lizard keys create sandbox-agent --workspace my-team
+lizard sandbox create --with-token liz_xxx
+```
+
+<span id="delete-a-key" />
+
+### Einen Schlüssel löschen
+
+```bash
+lizard keys rm github-actions --yes
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [lizard login](/cli/login) — auf einem Rechner mit einem Schlüssel anmelden
+- [JSON & Automatisierung](/cli/json) — die CLI aus CI verwenden
+- [lizard sandbox](/cli/sandbox) — `--with-token` installiert einen Schlüssel in einer Sandbox

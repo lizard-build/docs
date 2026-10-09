@@ -1,0 +1,90 @@
+---
+description: "lizard keys создаёт, выводит список и удаляет API-ключи liz_ для CI, Lizard SDK и sandboxes, при необходимости ограничивая их проектами или рабочими пространствами."
+---
+
+# lizard keys
+
+Создавайте, просматривайте и удаляйте API-ключи. Псевдоним: `lizard apikey`.
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard keys create <name> [flags]
+lizard keys list
+lizard keys rm <name-or-id> [flags]
+```
+
+API-ключи начинаются с `liz_`. Используйте ключ там, где нельзя войти через браузер:
+
+- `LIZARD_TOKEN` или `LIZARD_API_KEY` для CLI в CI
+- `lizard login --token liz_…` на машине
+- `LIZARD_API_KEY` для [Lizard SDK](/sandboxes/sdk-reference)
+- `lizard sandbox create --with-token liz_…`, чтобы использовать `lizard` внутри sandbox
+
+<span id="subcommands" />
+
+## Подкоманды
+
+### `lizard keys create <name>`
+
+Создаёт ключ и выводит его один раз. Скопируйте его сразу: Lizard больше его не покажет. Ключ без области действия имеет полный доступ ко всем рабочим пространствам и проектам, которые вам доступны. Ограничьте его с помощью этих флагов, каждый из них можно повторять:
+
+| Флаг | Описание |
+|------|-------------|
+| `-p, --project <id>` | Ограничить ключ этим проектом (имя, slug или ID) |
+| `-w, --workspace <id>` | Ограничить ключ этим рабочим пространством (имя, slug или ID) |
+
+Ключ с ограниченной областью не видит платёжные данные и настройки аккаунта.
+
+### `lizard keys list`
+
+Выводит список ваших ключей с коротким превью, областью действия, временем создания и последнего использования (псевдоним `ls`).
+
+### `lizard keys rm <name-or-id>`
+
+Удаляет ключ (псевдоним `delete`). Если у двух ключей одинаковое имя, удаляйте по ID.
+
+| Флаг | Описание |
+|------|-------------|
+| `-y, --yes` | Пропустить подтверждение |
+
+<span id="examples" />
+
+## Примеры
+
+<span id="create-a-key-for-ci" />
+
+### Создание ключа для CI
+
+```bash
+lizard keys create github-actions --project my-project
+```
+
+Сохраните выведенный ключ как секрет CI с именем `LIZARD_TOKEN`.
+
+<span id="create-a-key-for-a-sandbox" />
+
+### Создание ключа для sandbox
+
+```bash
+lizard keys create sandbox-agent --workspace my-team
+lizard sandbox create --with-token liz_xxx
+```
+
+<span id="delete-a-key" />
+
+### Удаление ключа
+
+```bash
+lizard keys rm github-actions --yes
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [lizard login](/cli/login) — вход по ключу на машине
+- [JSON & автоматизация](/cli/json) — использование CLI из CI
+- [lizard sandbox](/cli/sandbox) — `--with-token` устанавливает ключ в sandbox

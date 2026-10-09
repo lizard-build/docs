@@ -1,0 +1,90 @@
+---
+description: "lizard keys は、CI、Lizard SDK、Sandboxes 向けの liz_ API キーを作成、一覧表示、削除します。キーはプロジェクトやワークスペースに限定することもできます。"
+---
+
+# lizard keys
+
+API キーを作成、一覧表示、削除します。エイリアス: `lizard apikey`。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard keys create <name> [flags]
+lizard keys list
+lizard keys rm <name-or-id> [flags]
+```
+
+API キーは `liz_` で始まります。ブラウザでログインできない場所で使います:
+
+- CI で CLI を使うときの `LIZARD_TOKEN` または `LIZARD_API_KEY`
+- マシン上での `lizard login --token liz_…`
+- [Lizard SDK](/sandboxes/sdk-reference) 用の `LIZARD_API_KEY`
+- sandbox 内で `lizard` を使うための `lizard sandbox create --with-token liz_…`
+
+<span id="subcommands" />
+
+## サブコマンド
+
+### `lizard keys create <name>`
+
+キーを作成し、一度だけ表示します。その場でコピーしてください。Lizard は再表示しません。スコープのないキーは、アクセスできるすべてのワークスペースとプロジェクトに完全にアクセスできます。次のフラグでスコープを限定できます。どのフラグも複数回指定できます:
+
+| フラグ | 説明 |
+|------|-------------|
+| `-p, --project <id>` | キーをこのプロジェクトに限定（名前、スラッグ、または ID） |
+| `-w, --workspace <id>` | キーをこのワークスペースに限定（名前、スラッグ、または ID） |
+
+スコープを限定したキーでは、アカウントの請求情報や設定は見られません。
+
+### `lizard keys list`
+
+キーを、短いプレビュー、スコープ、作成日時、最終使用日時とともに一覧表示します（エイリアス `ls`）。
+
+### `lizard keys rm <name-or-id>`
+
+キーを削除します（エイリアス `delete`）。同じ名前のキーが 2 つある場合は、ID で削除してください。
+
+| フラグ | 説明 |
+|------|-------------|
+| `-y, --yes` | 確認をスキップ |
+
+<span id="examples" />
+
+## 例
+
+<span id="create-a-key-for-ci" />
+
+### CI 用のキーを作成する
+
+```bash
+lizard keys create github-actions --project my-project
+```
+
+表示されたキーを、`LIZARD_TOKEN` という名前の CI secret として保存します。
+
+<span id="create-a-key-for-a-sandbox" />
+
+### sandbox 用のキーを作成する
+
+```bash
+lizard keys create sandbox-agent --workspace my-team
+lizard sandbox create --with-token liz_xxx
+```
+
+<span id="delete-a-key" />
+
+### キーを削除する
+
+```bash
+lizard keys rm github-actions --yes
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [lizard login](/cli/login) — マシン上でキーを使ってログイン
+- [JSON と自動化](/cli/json) — CI から CLI を使う
+- [lizard sandbox](/cli/sandbox) — `--with-token` で sandbox にキーをインストール

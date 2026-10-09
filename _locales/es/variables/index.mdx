@@ -32,9 +32,11 @@ lizard secrets set NODE_ENV=production --global
 ```bash
 lizard secrets list                       # current scope
 lizard secrets list --show                # reveal values
-lizard secrets delete OLD_KEY ANOTHER_KEY # variadic
-cat .env | lizard secrets import          # import dotenv from stdin
+lizard secrets delete OLD_KEY ANOTHER_KEY # variadic; add -y in scripts
+cat .env | lizard secrets import          # KEY=value lines from stdin
 ```
+
+`secrets import` lee líneas simples `KEY=value` y conserva las comillas como parte del valor. `secrets delete` pide confirmación; pasa `-y` cuando se ejecuta fuera de una terminal.
 
 Consulta la [referencia de comandos de `lizard secrets`](/cli/secrets) para ver todas las opciones.
 
@@ -49,14 +51,14 @@ Consulta la [referencia de comandos de `lizard secrets`](/cli/secrets) para ver 
 
 **Usa por defecto el alcance de servicio.** Un servicio comprometido puede leer su propio entorno; un alcance más amplio significa más credenciales expuestas sin necesidad. Reserva `--global` para valores no secretos y demostrablemente públicos como `LOG_LEVEL`, `NODE_ENV`, feature flags o un frontend `SENTRY_DSN`. Si no estás seguro de si un valor es un secret, trátalo como tal y asígnalo al servicio.
 
-Para recursos compartidos como una base de datos, **no** pongas el DSN en `--global`; vincúlalo por consumidor con una [referencia](/variables/references):
+Los valores `DATABASE_URL` y `REDIS_URL` de cada addon de Postgres y Redis en marcha ya llegan a todos los servicios del proyecto, con la precedencia más baja. Para elegir un addon concreto o usar su URL privada, vincúlalo por consumidor con una [referencia](/variables/references) en lugar de `--global`:
 
 ```bash
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service worker
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service worker
 ```
 
-La rotación sigue ocurriendo una sola vez en el addon; todas las referencias se actualizan.
+Si los valores del addon cambian, cada consumidor recoge el valor nuevo en su siguiente deploy o cambio de variables.
 
 <span id="precedence" />
 
@@ -68,7 +70,7 @@ Cuando la misma clave se define en varios lugares, **la última escritura preval
 addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets  <  platform vars
 ```
 
-Así que **los secrets de la app anulan los secrets del proyecto**, y **las variables de la plataforma** (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`) se aplican al final y no se pueden sobrescribir.
+Así que **los secrets de la app anulan los secrets del proyecto**, y **las variables de la plataforma** (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`, `LIZARD_PRIVATE_DOMAIN`) se aplican al final y no se pueden sobrescribir. `PORT` solo se define cuando el servicio tiene un puerto HTTP. Si defines `PORT` tú mismo, cambias el puerto al que Lizard dirige el tráfico en el siguiente deploy, salvo que el puerto se haya fijado con `lizard port`.
 
 <span id="build-time-vs-runtime" />
 
@@ -76,7 +78,8 @@ Así que **los secrets de la app anulan los secrets del proyecto**, y **las vari
 
 La mayoría de los cambios de variables se aplican **sin recompilar**: el servicio se reinicia para recogerlos, lo que tarda unos segundos. Las excepciones son los valores de compilación integrados en la imagen:
 
-- Los cambios en `VITE_*` y `NEXT_PUBLIC_*` **fuerzan una recompilación** en el siguiente deploy.
+- Cambiar un valor `VITE_*` o `NEXT_PUBLIC_*` inicia al momento una recompilación de los servicios en marcha afectados (todos los servicios en marcha si es `--global`).
+- Lizard integra estos valores como líneas `ENV` en los servicios de GitHub (el Dockerfile que genera lizardpack, o el Dockerfile raíz del repositorio) y en los servicios Node compilados desde `buildCommand` / `startCommand`. Un servicio con un `dockerfilePath` personalizado, o uno subido con `lizard up` sin esos comandos, no recibe variables de Lizard en la compilación; ningún servicio recibe build args salvo `COMMIT_SHA`. Para valores públicos en esos casos, haz commit de ellos en `.env.production`, define un comando de compilación o escríbelos en tu Dockerfile.
 
 Consulta [Pipeline de compilación → desencadenantes de recompilación](/concepts/build-pipeline#what-triggers-a-rebuild).
 
@@ -84,10 +87,12 @@ Consulta [Pipeline de compilación → desencadenantes de recompilación](/conce
 
 ## Verificación
 
-Confirma qué ve realmente un servicio en ejecución:
+El acceso por shell a los servicios (`lizard ssh`) está desactivado, así que comprueba los valores de otra forma:
 
 ```bash
-lizard ssh --service api -- env
+lizard logs --build --service api          # warns about every empty ${{…}} reference
+lizard secrets list --service api --show   # stored values
+lizard secrets list --service api --ref    # reference templates you can use
 ```
 
 Si un valor que esperabas no está ahí, consulta [Resolución de problemas → un secret o una referencia no aparece](/variables/troubleshooting/reference-not-applied).
@@ -96,13 +101,19 @@ Si un valor que esperabas no está ahí, consulta [Resolución de problemas → 
 
 ## Desarrollo local
 
-Ejecuta un comando **localmente** con los secrets de proyecto + servicio del servicio inyectados (útil para scripts y migraciones):
+Ejecuta un comando **localmente** con los secrets de proyecto y de servicio del servicio inyectados:
 
 ```bash
 lizard run --service api -- node scripts/seed.js
 ```
 
-Consulta [`lizard run` vs. `lizard ssh`](/cli/run#run-vs-ssh).
+Los valores llegan tal como están guardados: las referencias `${{…}}` quedan como texto literal y las variables de la plataforma (`PORT`, `LIZARD_*`) no se inyectan. Para un script que necesita la base de datos, ejecútalo con los valores de conexión reales del addon:
+
+```bash
+lizard run --service postgres -- node scripts/seed.js
+```
+
+Consulta [qué inyecta `lizard run`](/cli/run#what-run-injects).
 
 <span id="see-also" />
 

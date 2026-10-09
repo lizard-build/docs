@@ -11,12 +11,12 @@ description: "lizard service は、サービスの build、start、source、vari
 ## 使い方
 
 ```bash
-lizard service set [flags]
-lizard service show [flags]
-lizard service rename
-lizard service delete [flags]
-lizard service logs
-lizard service link
+lizard service set [service] [flags]
+lizard service show [service] [flags]
+lizard service rename <new-name> [flags]
+lizard service delete [service] [flags]
+lizard service logs [service] [flags]
+lizard service link [name]
 ```
 
 <span id="subcommands" />
@@ -29,11 +29,11 @@ lizard service link
 
 | フラグ | 説明 |
 |------|-------------|
-| `--set <path>=<value>` | フィールドを設定します（繰り返し指定可） |
+| `--set <path>=<value>` | フィールドを設定します（繰り返し指定可。`service` 引数が必要です） |
 | `-f, --file <path>` | 適用する JSON 設定ファイル |
 | `--force` | リモートで変更されていても上書きします |
 
-共通フィールドはフラットで、wire schema に 1:1 で対応します: `sourceType`, `repoUrl`, `branch`, `rootDirectory`, `dockerfilePath`, `buildCommand`, `startCommand`, `preDeployCommand`, `watchPatterns`, `containerPort`, `name`.
+共通フィールドはフラットで、wire schema に 1:1 で対応します: `sourceType`, `repoUrl`, `branch`, `rootDirectory`, `dockerfilePath`, `buildCommand`, `startCommand`, `preDeployCommand`, `watchPatterns`, `containerPort`, `cpuLimit`（例: `2000m`）, `memoryLimit`（例: `2Gi`）, `name`. `variables.<KEY>=<value>` はサービスシークレットを設定します。`lizard secrets set --service` と同じです。
 
 `service set` は `configRevision` による楽観的並行制御を使用します。`409` が発生した場合は、`lizard service show` で設定を再読み込みし、調整して再試行するか、`--force` を渡してください。
 
@@ -41,17 +41,23 @@ lizard service link
 
 現在のサービス設定を JSON として表示します。1 つのサービスだけに限定するには `-s` を使用します。
 
-### `lizard service rename`
+### `lizard service rename <new-name>`
 
-サービスまたは addon の名前を変更します。その参照先（`${{name.KEY}}`）は安定したままです。
+サービスまたは addon の名前を変更します。対象はリンク済みのもの、または `-s` で指定したものです。参照は対象の現在の名前を使うため、名前を変更したら、すべての `${{old-name.KEY}}` を新しい名前に更新してください。
 
 ### `lizard service delete`
 
-サービスを削除します。`-y, --yes` は確認をスキップします。
+サービスを削除します（エイリアス `rm`）。`-y, --yes` は確認をスキップします。TTY がない場合は必須です。
 
 ### `lizard service logs`
 
 サービスのログをストリーミング表示します（[lizard logs](/cli/logs) も参照）。
+
+| フラグ | 説明 |
+|------|-------------|
+| `--build` | 最新のビルドのログを表示します |
+| `-n, --tail <n>` | 最後の N 行（最大 2000）を表示して終了します。`--tail all` は 2000 行を表示します |
+| `--page <n>` | 古いログを 1 ページ 200 行でページ送りします（1 = 最新） |
 
 ### `lizard service link`
 

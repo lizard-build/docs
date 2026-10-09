@@ -19,7 +19,38 @@ description: "Запускайте команды Python в шаблоне inter
 <span id="checkpointing-a-session" />
 <span id="see-also" />
 
-Запускайте Python в шаблоне `interpreter`. Каждая команда создаёт отдельный процесс Python, поэтому переменные между вызовами не сохраняются. Записывайте промежуточные результаты в файлы. API возвращает stdout, stderr и код завершения, а не типизированные результаты notebook или объекты графиков.
+Запускайте Python в шаблоне `interpreter`. `CodeSandbox` сохраняет состояние между вызовами: Python выполняется в постоянном ядре Jupyter для каждого контекста, а результаты могут включать значение последнего выражения и графики в формате `image/png`.
+
+```ts
+import { CodeSandbox } from '@lizard-build/sdk';
+
+const sandbox = await CodeSandbox.create({ projectId: 'proj_123', timeoutMs: 300_000 });
+try {
+  await sandbox.runCode('x = 21');
+  const run = await sandbox.runCode('x * 2');
+  console.log(run.results[0]?.data, run.stdout, run.error);
+} finally {
+  await sandbox.kill();
+}
+```
+
+```python
+from lizard import CodeSandbox
+
+sandbox = CodeSandbox.create(project_id="proj_123", timeout_ms=300_000)
+try:
+    sandbox.run_code("x = 21")
+    run = sandbox.run_code("x * 2")
+    print(run.results[0].data, run.stdout, run.error)
+finally:
+    sandbox.kill()
+```
+
+`createContext()` (Python: `create_context()`) запускает отдельное ядро со своими переменными. JavaScript и bash выполняются как новый процесс при каждом вызове.
+
+## Запуск команд
+
+`process.exec` создаёт отдельный процесс для каждой команды, поэтому переменные Python между вызовами не сохраняются. Записывайте промежуточные результаты в файлы. Метод возвращает stdout, stderr и код завершения.
 
 ```ts
 import { Sandbox } from '@lizard-build/sdk';
@@ -45,10 +76,6 @@ try:
 finally:
     sandbox.kill()
 ```
-
-## Недоступные API
-
-`CodeSandbox`, `runCode` / `run_code` и методы контекста исполнения остаются в SDK, но в каталоге нет шаблона с нужным им сервером исполнения. Старый шаблон по умолчанию `code-interpreter-v1` недоступен. Замена имени на `interpreter` не включает этот API. Используйте `Sandbox.create("interpreter")` и команды процессов, как в примере ниже.
 
 ## Хранение и оплата
 

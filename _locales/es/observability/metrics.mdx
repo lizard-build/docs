@@ -15,7 +15,7 @@ Supervisa CPU, memoria, red y disco de un servicio — y consulta cuánto está 
 ```bash
 lizard metrics                    # CPU / memory / network / disk
 lizard metrics --service api      # a specific service
-lizard metrics --range <range>    # time window
+lizard metrics --range 24h        # time window: 1h (default), 6h, 24h, 7d, 14d, 30d
 lizard metrics --watch            # live-updating view
 ```
 
@@ -27,13 +27,13 @@ lizard metrics --watch            # live-updating view
 lizard metrics --cost
 ```
 
-Añade cifras de costo junto al uso de recursos para que puedas ver el precio de la escala actual.
+Muestra una vista de costos en lugar de las métricas: el precio por hora de cada recurso en marcha, el uso del periodo de facturación actual (tráfico saliente incluido) y cuánto has usado este mes de los $19 incluidos en Pro. Cubre todo el proyecto, ignora `--service` y `--range`, y solo la ve el propietario del workspace.
 
 <span id="dashboard" />
 
 ## Panel
 
-El panel (`lizard open`) muestra estos datos como gráficos en la vista **Metrics / Observabilidad**, y la vista **Uso** desglosa el consumo y la facturación de todo el proyecto. Ábrelo con:
+El panel (`lizard open`) muestra estos datos como gráficos en la vista **Metrics**, y la vista **Uso** desglosa el consumo y la facturación de todo el proyecto. Ábrelo con:
 
 ```bash
 lizard open
@@ -44,7 +44,7 @@ lizard open
 ## Actuar según lo que ves
 
 - CPU/memoria altas → escala hacia arriba: `lizard scale --service api --cpu 2 --memory 2048`.
-- Carga sostenida → añade réplicas: `lizard scale --service api --replicas 3`.
+- Carga sostenida → añade réplicas: `lizard scale --service api --replicas 3`. Pro permite 1 réplica por servicio durante la prueba y 5 tras la primera factura pagada.
 - Presión de disco en un addon → amplía el almacenamiento: `lizard scale --service postgres --storage 8192`.
 
 Consulta [Scaling](/deploy/scaling).

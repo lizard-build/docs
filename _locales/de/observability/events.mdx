@@ -15,10 +15,10 @@ description: "Lies die Bereitstellen-Zeitleiste eines Service und den Live-Statu
 ```bash
 lizard events                     # deploy history + replica status
 lizard events --service api       # a specific service
-lizard events --limit 25          # show more entries (default 10)
+lizard events --limit 5           # fewer entries (default and maximum 10)
 ```
 
-Jeder Eintrag umfasst eine Bereitstellen- oder Skalierungsaktion und den daraus resultierenden Replikatstatus, sodass du "Was hat sich geändert, und ist es gesund?" auf einen Blick beantworten kannst.
+Jeder Eintrag ist eine Bereitstellung: Status, Auslöser, Commit und Anzahl der Neustarts. Die Tabelle Replicas darunter zeigt den aktuellen Zustand jedes Pods, sodass du "Was hat sich geändert, und ist es gesund?" auf einen Blick beantworten kannst.
 
 <span id="quick-status" />
 
@@ -33,7 +33,7 @@ lizard status        # the current directory's workspace/project/service link
 
 ## Dashboard
 
-Die Ansicht **Bereitstellungen** im Dashboard (`lizard open`) stellt denselben Verlauf als Zeitleiste dar, mit einem Detailbereich pro Bereitstellen (Build-Logs, Commit, Status) und dem Gesundheitsstatus pro Replikat.
+Öffne einen Service im Dashboard (`lizard open`), um seinen Bereitstellen-Verlauf zu sehen. Klicke auf eine Bereitstellung, um ihre Build-Logs, den Commit und Crash-Events zu sehen. Das Service-Panel zeigt die laufenden und gewünschten Replikate.
 
 <span id="see-also" />
 

@@ -1,12 +1,12 @@
 ---
-description: "AIコーディングエージェントから Lizard を操作: Lizard Skill を読み込み、--json でコマンドスキーマを確認し、Lizard CLI でデプロイします。"
+description: "AIコーディングエージェントから Lizard を操作: Lizard Skill を読み込み、--json でコマンドスキーマを確認し、Lizard CLI でデプロイするか、MCP クライアントを Lizard MCP に接続します。"
 ---
 
 <span id="coding-agents" />
 
 # コーディングエージェント
 
-Lizard は、人間と同じくらい簡単に AI コーディングエージェントから操作できるよう設計されています。CLI には、エージェントにプラットフォーム全体を教える **組み込みスキル** が含まれており、すべてのコマンドは `--json` によって **自己記述的** なので、エージェントが推測に頼る必要はありません。
+Lizard は、人間と同じくらい簡単に AI コーディングエージェントから操作できるよう設計されています。Lizard CLI には、エージェントにプラットフォーム全体を教える **組み込みスキル** が含まれており、すべてのコマンドは `--json` によって **自己記述的** なので、エージェントが推測に頼る必要はありません。
 
 <span id="the-embedded-skill" />
 
@@ -49,8 +49,9 @@ lizard <cmd> --help --json          # a specific command's schema
 
 1. **ガイドを読み込む:** `lizard skills get core --json` → `content` を読む。
 2. **認証を楽観的に確認する:** ユーザーのタスクを実行し、終了コード `2` の場合は `lizard login` を実行し、表示された URL をユーザーに渡してから再試行する。
-3. **変更前にコンテキストを解決する:** `lizard status` (cwd リンク) と `lizard ps --json` (サービス)。
-4. **ガイドに従って実行する** — `add`、`up`、`secrets`、`domain` など。常に `--json` を付けます。
+3. **求められたらトライアルを開始する:** 新しいアカウントにはプランがないため、最初の作成は HTTP 402（`code: "PAYMENT_REQUIRED"`、終了コード `1`）で失敗する。`lizard billing start --json` を実行し、Checkout の `url` をユーザーに渡して、カードが追加されたら再試行する。
+4. **変更前にコンテキストを解決する:** `lizard status` (cwd リンク) と `lizard ps --json` (サービス)。
+5. **ガイドに従って実行する** — `add`、`up`、`secrets`、`domain` など。常に `--json` を付けます。
 
 `lizard` バイナリが存在しない場合は、最初にインストールしてください。macOS または Linux では、インストールスクリプトを使います:
 
@@ -58,7 +59,13 @@ lizard <cmd> --help --json          # a specific command's schema
 curl -fsSL https://lizard.build/install.sh | bash
 ```
 
-スクリプトは Node.js も `sudo` も必要とせず、すでに `PATH` に含まれているフォルダに `lizard` をリンクするので、エージェントは同じセッション内でそのまま呼び出せます。`lizard` が見つからない可能性があるとスクリプトに表示された場合は、代わりに `~/.lizard/bin/lizard` を呼び出してください。Windows では npm を使います:
+スクリプトは Node.js も `sudo` も必要とせず、すでに `PATH` に含まれているフォルダに `lizard` をリンクするので、エージェントは同じセッション内でそのまま呼び出せます。`lizard` が見つからない可能性があるとスクリプトに表示された場合は、代わりに `~/.lizard/bin/lizard` を呼び出してください。Windows では、PowerShell で次を実行します:
+
+```powershell
+irm https://lizard.build/api/cli/install.ps1 | iex
+```
+
+または、どのシステムでも npm からインストールできます:
 
 ```bash
 npm install -g @lizard-build/cli
@@ -78,9 +85,52 @@ npm install -g @lizard-build/cli
 
 ## エディタ統合
 
-Lizard Skill は公開ブートストラップとして配布されているため、エディタやアシスタント内のエージェントは必要に応じてこれをインストールして読み込み、その後、このドキュメント全体で説明されているのと同じ CLI を操作できます。CLI が唯一の信頼できる情報源です — 学ぶべき別個のエージェント API はありません。
+Lizard Skill は公開ブートストラップとして配布されているため、エディタやアシスタント内のエージェントは必要に応じてこれをインストールして読み込み、その後、このドキュメント全体で説明されているのと同じ CLI を操作できます。すべてのエージェント向けに一度インストールします:
 
-これは AI IDE にも当てはまります。アプリの作成やテストは行っても、ホスティングはしません。[Google Antigravity で構築したアプリをデプロイする](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-an-antigravity-app-to-production-without-typing-a-command) を参照してください。デプロイ全体が 2 つのプロンプトで実行されます。
+```bash
+npx skills add lizard-build/skill -g
+```
+
+Claude Code、Cursor、Codex、Copilot、Gemini CLI のほか、Agent Skills 形式を読み込むエージェントで動作します。シェルコマンドを実行する代わりに MCP で通信するクライアントには、[Lizard MCP](#lizard-mcp) を使ってください。
+
+これは AI IDE にも当てはまります。アプリの作成やテストは行っても、ホスティングはしません。[Google Antigravity で構築したアプリをデプロイする](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat) を参照してください。1 つのプロンプトでデプロイ全体を実行します。
+
+## Lizard MCP
+
+Lizard MCP を使うと、ChatGPT、Claude などの MCP クライアントから Lizard プロジェクトを管理できます。サービスとアドオンの作成、再デプロイ、ログとメトリクスの確認、secret の設定、レプリカのスケール、ドメインの割り当てができます。これはホスト型のサーバーで、次の URL で Streamable HTTP を使って通信します:
+
+```text
+https://employ-woman-g1q2.us-east-1.onlizard.com/mcp
+```
+
+OAuth に対応したクライアントでは、初回利用時にサインインします。それ以外のクライアントは、`Authorization: Bearer` ヘッダーで `liz_` API キーを送ります。キーは `lizard keys create <name>` で作成します。
+
+Claude Code に追加する:
+
+```bash
+claude mcp add --transport http lizard https://employ-woman-g1q2.us-east-1.onlizard.com/mcp
+```
+
+Cursor など、JSON で設定するクライアントの場合:
+
+```json
+{
+  "mcpServers": {
+    "lizard": {
+      "url": "https://employ-woman-g1q2.us-east-1.onlizard.com/mcp",
+      "headers": { "Authorization": "Bearer liz_your_key" }
+    }
+  }
+}
+```
+
+トライアルの開始、支払い、Pro の解約は Billing ページで行います。何かを作成する前にアカウントの支払いが必要な場合、ツールのエラーには `PAYMENT_REQUIRED` と開くべきリンクが含まれます。
+
+<span id="hosting-your-own-mcp-server" />
+
+## 独自の MCP サーバーをホストする
+
+Lizard CLI を使うエージェントと、MCP を公開するアプリケーションは別のワークフローです。上記の CLI コマンドは MCP トランスポートを提供しません。Streamable HTTP を使って独自のサーバーをデプロイするには、[リモート MCP ガイド](/guides/deploy-mcp-server) に従ってください。
 
 <span id="see-also" />
 
@@ -89,10 +139,4 @@ Lizard Skill は公開ブートストラップとして配布されているた�
 - [`lizard skills`](/cli/skills) — 完全なコマンドリファレンス。
 - [JSON と自動化](/cli/json) — `--json` の出力とスキーマ確認。
 - [変数と Secrets](/variables#scoping) — エージェントが従うべき secret のスコープ慣例。
-- [Claude Code からアプリをデプロイする](https://lizard.build/blog/deploy-from-claude-code#deploy-from-claude-code-in-3-steps) — 同じブートストラップを、動かすためのプロンプト付きのウォークスルーとして記述したものです。
-
-<span id="hosting-your-own-mcp-server" />
-
-## 独自の MCP サーバーをホストする
-
-Lizard CLI を使うエージェントと、MCP を公開するアプリケーションは別のワークフローです。上記の CLI コマンドは MCP トランスポートを提供しません。Streamable HTTP を使って独自のサーバーをデプロイするには、[リモート MCP ガイド](/guides/deploy-mcp-server) に従ってください。
+- [Claude Code からアプリをデプロイする](https://lizard.build/blog/deploy-from-claude-code#a-prompt-that-defines-the-deployment-task) — 同じブートストラップを、動かすためのプロンプト付きのウォークスルーとして記述したものです。

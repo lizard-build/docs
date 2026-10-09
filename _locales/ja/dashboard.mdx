@@ -6,9 +6,9 @@ description: "LizardダッシュボードがCLIに追加するもの: サービ�
 
 # アプリダッシュボード
 
-LizardダッシュボードはCLIのビジュアルな補完機能です。`lizard …` で行うことはすべてここにも反映され、さらに UI のほうが簡単なもの — ストリーミングログ、チャート、データブラウザー、チーム/請求管理 — も利用できます。
+LizardダッシュボードはLizard CLIのビジュアルな補完機能です。`lizard …` で行うことはすべてここにも反映され、さらに UI のほうが簡単なもの — ストリーミングログ、チャート、データブラウザー、Sandboxes、チーム/請求管理 — も利用できます。
 
-端末をまったく開きたくない場合は、エージェントにコマンドを実行させて、ここで結果を確認してください — [Antigravity アプリを本番環境にデプロイする](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-an-antigravity-app-to-production-without-typing-a-command) の手順では、2 つのプロンプトだけで、端末に何も入力する必要はありません。
+端末をまったく開きたくない場合は、エージェントにコマンドを実行させて、ここで結果を確認してください — [Antigravity アプリを本番環境にデプロイする](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat) の手順では、1 つのプロンプトでデプロイを進められます。
 
 CLI から開く:
 
@@ -57,15 +57,21 @@ lizard docs          # open this documentation
 
 カスタムドメインの追加、DNS レコードの表示、検証と TLS ステータスの追跡ができます。[Networking](/networking) を参照してください。
 
-<span id="managed-addon-browsers" />
+<span id="data-browsers" />
 
-### Managed addon ブラウザー
+### データブラウザー
 
-各 addon にはデータブラウザーが付属しています:
+各 managed addon にはデータブラウザーが付属しています:
 
-- **Postgres** — データのクエリと編集ができる SQL/テーブルエディター。
-- **Redis** — キー/バリューブラウザー。
-- **S3** — アップロード/ダウンロードに対応したバケット/オブジェクトブラウザー。
+- **Managed Postgres** — データのクエリと編集ができる SQL/テーブルエディター。
+- **Managed Redis** — キー/バリューブラウザー。
+- **Managed Object Storage** — アップロード/ダウンロードとバケットのアクセス設定に対応したバケット/オブジェクトブラウザー。
+
+<span id="sandboxes" />
+
+### Sandboxes
+
+**Sandboxes** ページには、sandbox、Persistent Volumes、テンプレート、エージェントのタブがあります。sandbox は **New Sandbox** で作成します。その横の数字は、上限に対していくつ実行中かを示します。[Sandboxes クイックスタート](/sandboxes/quickstart) を参照してください。
 
 <span id="github-integration" />
 
@@ -90,7 +96,7 @@ GitHub App を接続し、リポジトリを選択して、Lizard がビルド�
 | リソースチャート | `lizard metrics` | Metrics / 使用量 |
 | シークレットを管理 | `lizard secrets` | 変数 |
 | カスタムドメイン | `lizard domain` | ドメイン |
-| Postgres/Redis/S3 を閲覧 | `lizard run` / `lizard ssh` | アドオンブラウザー |
+| Managed Postgres、Managed Redis、Managed Object Storage にクエリする | `lizard run --service <addon> -- <cmd>` | データブラウザー |
 | チームメンバーを招待 | — | Team / Settings |
 
 そのときに合うほうを使ってください — どちらも同じプロジェクトとサービスを操作します。

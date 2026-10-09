@@ -14,7 +14,7 @@ description: "lizard domain показывает домен сервиса, со
 lizard domain [hostname] [flags]
 ```
 
-Имя хоста — позиционный аргумент, отдельного `add` подкоманды нет. Запуск `lizard domain` без аргументов показывает текущий домен сервиса.
+Имя хоста — позиционный аргумент, отдельного `add` подкоманды нет. Запуск `lizard domain` без аргументов показывает текущий домен сервиса или создаёт его, если домена ещё нет. Алиас: `lizard domains`.
 
 <span id="flags" />
 
@@ -23,7 +23,11 @@ lizard domain [hostname] [flags]
 | Флаг | Описание |
 |------|-------------|
 | `-s, --service <name>` | Сервис |
+| `-p, --project <id>` | Название, slug или ID проекта |
 | `--port <n>` | Порт для публикации |
+| `-f, --force` | Перенести домен сюда, если он привязан к другому вашему сервису |
+
+Подкоманды используют те же флаги `-s` и `-p`. Проверяйте и удаляйте домен на том сервисе, к которому вы его привязали.
 
 <span id="subcommands" />
 
@@ -73,10 +77,10 @@ lizard domain generate
 lizard domain app.example.com --service web
 ```
 
-Lizard возвращает DNS-записи для создания (`CNAME` для имени хоста и `TXT` для проверки). Добавьте их у вашего DNS-провайдера, затем выполните проверку:
+Lizard возвращает DNS-записи для создания: `CNAME` для имени хоста и, если вы ещё не проверили домен, `TXT`-запись в `_lizard-verify.<apex domain>` (для `app.example.com` это `_lizard-verify.example.com`). Добавьте их у вашего DNS-провайдера, затем выполните проверку на том же сервисе:
 
 ```bash
-lizard domain verify app.example.com
+lizard domain verify app.example.com --service web
 ```
 
 <span id="attach-a-domain-to-a-specific-port" />
@@ -87,13 +91,21 @@ lizard domain verify app.example.com
 lizard domain app.example.com --service web --port 8080
 ```
 
+<span id="move-a-domain-from-another-of-your-services" />
+
+### Перенести домен с другого вашего сервиса
+
+```bash
+lizard domain app.example.com --service web --force
+```
+
 <span id="remove-a-domain" />
 
 ### Удалить домен
 
 ```bash
-lizard domain delete app.example.com
-lizard domain rm app.example.com --yes
+lizard domain delete app.example.com --service web
+lizard domain rm app.example.com --service web --yes
 ```
 
 <span id="see-also" />

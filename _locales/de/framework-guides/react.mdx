@@ -60,13 +60,13 @@ lizard logs --build --service web --json
 lizard ps --json
 ```
 
-Lade den Quellcode und die Lockfile hoch, aber schließe `node_modules/`, `dist/` und Secrets aus. Lasse Überschreibungen für Service-Build/Start deaktiviert, um den statischen Erkennungspfad zu verwenden. Der nginx-Container lauscht auf Port 80, obwohl die Entwicklungs- und Preview-Server andere Ports verwenden.
+Lade den Quellcode und die Lockfile hoch, aber schließe `node_modules/`, `dist/`, und Secrets aus. Lasse Überschreibungen für Service-Build/Start deaktiviert, um den statischen Erkennungspfad zu verwenden. Der nginx-Container lauscht auf Port 80, dem mit `--port` übergebenen Port, obwohl die Entwicklungs- und Preview-Server andere Ports verwenden.
 
 <span id="connect-an-api" />
 
 ## Eine API verbinden
 
-Verwende eine öffentliche Variable wie `VITE_API_URL` für die per HTTPS im Browser erreichbare Adresse der API. Lies sie als `import.meta.env.VITE_API_URL` aus. Konfiguriere diesen Wert über [Variablen und Secrets](/variables) und erstelle die App neu, wenn er sich ändert. Stelle niemals eine Datenbank-URL, API-Zugangsdaten oder eine nur intern erreichbare Service-Adresse über eine Variable vom Typ `VITE_*` bereit.
+Verwende eine öffentliche Variable wie `VITE_API_URL` für die per HTTPS im Browser erreichbare Adresse der API. Lies sie als `import.meta.env.VITE_API_URL` aus. Mit `lizard up` übergibt Lizard keine Variablen an den Build: Committe den Wert in `.env.production` (prüfe, dass `.gitignore` ihn nicht ausschließt) und lade erneut hoch, wenn er sich ändert. Bei einem [GitHub-Service](/deploy/github) legst du ihn über [Variablen und Secrets](/variables) fest, und die Änderung erstellt die App neu. Siehe [Build-Time-Variablen](/concepts/build-pipeline#build-time-variables). Stelle niemals eine Datenbank-URL, API-Zugangsdaten oder eine nur intern erreichbare Service-Adresse über eine Variable vom Typ `VITE_*` bereit.
 
 Für eine API auf einer anderen Origin konfiguriere die erlaubten Origins so, dass sie die Frontend-URL einschließen. Ein privater Service-Hostname, der zwischen Backend-Services funktioniert, wird im Browser eines Besuchers nicht aufgelöst.
 

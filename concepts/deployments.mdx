@@ -4,7 +4,7 @@ description: "The deploy lifecycle on Lizard: what triggers a build, how traffic
 
 # Deployments
 
-A **deployment** is one build-and-release of a service. The release path depends on the service runtime. A successful build does not by itself prove that the application started or can serve requests.
+A **deployment** is one build-and-release of a service. Services run as Kubernetes pods. A successful build does not by itself prove that the application started or can serve requests.
 
 ## How a deploy happens
 
@@ -23,9 +23,9 @@ lizard up                          # upload cwd and deploy
 ## Lifecycle
 
 1. **Build** — the platform runs your build (see [Build Pipeline](/concepts/build-pipeline)).
-2. **Pre-deploy** — if `preDeployCommand` is set, it runs once (e.g. migrations).
-3. **Start** — Lizard starts the application for its configured runtime.
-4. **Health check** — the platform verifies the app's port is reachable (skipped for [workers](/deploy/workers)).
+2. **Pre-deploy** — if both `preDeployCommand` and `startCommand` are set, the container runs `sh -c "<pre> && exec <start>"`. The pre-deploy command runs at the start of every container (each replica, each restart), so make it safe to run many times and at the same time. Without `startCommand` it is skipped.
+3. **Start** — Lizard starts the new pod next to the old one. [Workers](/deploy/workers) stop the old pod first.
+4. **Health check** — a TCP probe checks the app's port every 2 seconds, and traffic moves only to a ready pod. Lizard waits about 30 seconds for it; if the new pod is not ready by then, the deploy is marked failed. Workers skip the probe.
 5. **Verify** — inspect the release status and call the application URL. Port reachability is not a full application health check.
 
 ## Streaming output
@@ -70,8 +70,8 @@ lizard events                      # see replica status
 
 ## Config changes (no rebuild)
 
-Most environment variable and secret changes apply without a rebuild: Lizard updates the service's config and restarts it, which takes a few seconds. Build-time values (`VITE_*`, `NEXT_PUBLIC_*`) and build-field changes do force a rebuild — see the [rebuild triggers table](/concepts/build-pipeline#what-triggers-a-rebuild).
+Most environment variable and secret changes apply without a rebuild: Lizard updates the service's config and restarts it, which takes a few seconds. Build-time values (`VITE_*`, `NEXT_PUBLIC_*`) and build-field changes do force a rebuild of a running service — see the [rebuild triggers table](/concepts/build-pipeline#what-triggers-a-rebuild) and [build-time variables](/concepts/build-pipeline#build-time-variables).
 
 ## Failed releases and recovery
 
-A failed build and a failed application start are different cases. Do not assume an old release continues serving in every runtime. Inspect the active service, build logs, and runtime logs. `lizard redeploy` builds the selected source again; it is not a command for restoring a previous build. Revert the source commit when needed, deploy it, and check the result. See [known issues](/platform/known-issues).
+A failed build and a failed application start are different cases. In both, an HTTP service that already runs keeps serving its previous version: a failed build changes nothing, and a new pod that never becomes ready gets no traffic. A worker's old pod stops before the new one starts, so a broken worker release leaves no worker running. Inspect the active service, build logs, and runtime logs. `lizard redeploy` builds the selected source again; it is not a command for restoring a previous build. Revert the source commit when needed, deploy it, and check the result. See [known issues](/platform/known-issues).

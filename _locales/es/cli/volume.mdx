@@ -1,0 +1,89 @@
+---
+description: "lizard volume crea, lista, redimensiona y elimina Persistent Volumes que los sandboxes conectan por nombre."
+---
+
+# lizard volume
+
+Gestiona [Persistent Volumes](/sandboxes/volumes) para sandboxes. Alias: `lizard vol`.
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard volume list [flags]
+lizard volume create <name> [flags]
+lizard volume resize <volume> --size <gb> [flags]
+lizard volume rm <volume> [flags]
+```
+
+El nombre de un volumen es su clave dentro del proyecto. Todos los comandos aceptan un nombre o un ID, y `-p, --project` para apuntar a un proyecto distinto del vinculado.
+
+<span id="subcommands" />
+
+## Subcomandos
+
+### `lizard volume list`
+
+Lista los volúmenes del proyecto con su tamaño, su estado y el sandbox al que están conectados (alias `ls`). `--json` incluye además los ID generados.
+
+### `lizard volume create <name>`
+
+Crea un volumen. Los nombres usan letras minúsculas, dígitos y guiones, empiezan y terminan con una letra o un dígito, tienen hasta 64 caracteres y son únicos en el proyecto.
+
+| Bandera | Descripción |
+|------|-------------|
+| `--size <gb>` | Tamaño en GB enteros, de 1 a 50 (por defecto 5). La CLI lee primero los límites actuales del servidor |
+| `--region <code>` | Región del volumen; debe coincidir con la del sandbox que lo conectará |
+| `-p, --project <id>` | Nombre, slug o ID del proyecto |
+
+### `lizard volume resize <volume> --size <gb>`
+
+Cambia el tamaño de un volumen sin recrearlo. Un sandbox conectado sigue en ejecución y ve el nuevo tamaño. Un volumen Firecracker (el predeterminado) solo puede crecer. Un volumen respaldado por un pod también puede reducirse si al menos el 10 % del nuevo tamaño queda libre.
+
+### `lizard volume rm <volume>`
+
+Elimina un volumen y sus datos (alias `delete`). Falla mientras el volumen esté conectado; elimina antes el sandbox.
+
+| Bandera | Descripción |
+|------|-------------|
+| `-y, --yes` | Omitir la confirmación |
+
+El almacenamiento de volúmenes cuesta $0.14 por GB-mes de espacio usado. Consulta [Tamaño y precio](/sandboxes/volumes#size-and-price).
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="create-a-volume-and-attach-it" />
+
+### Crear un volumen y conectarlo
+
+```bash
+lizard volume create agent-workdir --size 10
+lizard sandbox create --volume agent-workdir
+```
+
+<span id="grow-a-volume" />
+
+### Ampliar un volumen
+
+```bash
+lizard volume resize agent-workdir --size 20
+```
+
+<span id="delete-a-volume" />
+
+### Eliminar un volumen
+
+```bash
+lizard volume rm agent-workdir --yes
+```
+
+<span id="see-also" />
+
+## Véase también
+
+- [Persistent Volumes](/sandboxes/volumes) — ciclo de vida, métodos del SDK y la vista del panel
+- [lizard sandbox](/cli/sandbox) — conectar un volumen con `sandbox create --volume`
+- [Almacenamiento y recuperación](/platform/storage-and-recovery) — qué pasa con los datos del volumen cuando falla un nodo

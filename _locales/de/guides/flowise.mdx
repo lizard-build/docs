@@ -14,7 +14,7 @@ Das grundlegende Setup deckt Flows ab, die APIs verwenden. Hochgeladene Dateien 
 
 ## Voraussetzungen
 
-- Ein Lizard-Konto mit Zugriff auf App-Hosting und Managed Postgres.
+- Ein Lizard-Konto mit Pro oder der 7-tägigen Pro-Testphase (Karte erforderlich). Solange die Testphase nicht gestartet ist, geben `lizard add` und `lizard up` einen Checkout-Link zurück; `lizard billing start` öffnet ihn.
 - OpenSSL auf deinem Computer.
 - Genügend Arbeitsspeicher für deine Flowise-Workload; der Test-Service verwendet 4 GiB.
 
@@ -148,7 +148,7 @@ PostgreSQL speichert nicht jede Datei, die Flowise schreibt. Dieses Setup bindet
 
 Bevor du Uploads oder Dokument-Workflows verwendest, konfiguriere einen privaten S3-Bucket mit den [Speichervariablen](https://docs.flowiseai.com/configuration/environment-variables) von Flowise. Setze `STORAGE_TYPE=s3`, `S3_STORAGE_BUCKET_NAME`, `S3_STORAGE_ACCESS_KEY_ID`, `S3_STORAGE_SECRET_ACCESS_KEY` und `S3_STORAGE_REGION`. Für einen S3-kompatiblen Anbieter setze außerdem `S3_ENDPOINT_URL` und `S3_FORCE_PATH_STYLE=true`.
 
-Lizard's Managed Object Storage erstellt einen öffentlich lesbaren `default`-Bucket. Lege keine privaten Flowise-Dokumente in diesem Bucket ab, ohne zuvor dessen Zugriffseinstellung zu ändern. Das PostgreSQL-Setup oben richtet weder Dateispeicher, lokale Vektor-Stores noch Queue-Worker ein oder testet sie.
+Lizard's Managed Object Storage erstellt einen privaten `default`-Bucket, der sich für Flowise-Dokumente eignet. Lass ihn privat: Wenn du ihn im S3-Browser des Dashboards öffentlich machst, wird jede darin enthaltene Datei zugänglich. Das PostgreSQL-Setup oben richtet weder Dateispeicher, lokale Vektor-Stores noch Queue-Worker ein oder testet sie.
 
 <span id="troubleshooting-and-updates" />
 
@@ -160,6 +160,6 @@ lizard logs --build --service flowise
 lizard logs --service flowise
 ```
 
-Wenn ein erster Bereitstellen ein Timeout erreicht, während das Image noch geladen wird, prüfe `lizard events`. Sobald der Container gestartet wurde, versuche `lizard up --service flowise --port 3000` erneut. Ein Service ohne zuvor erfolgreichen Build kann `lizard redeploy` noch nicht verwenden.
+Wenn ein erster Bereitstellen ein Timeout erreicht, während das Image noch geladen wird, prüfe `lizard events`. Sobald der Container gestartet wurde, versuche `lizard up --service flowise --port 3000` erneut, oder führe `lizard redeploy --service flowise` aus, um den letzten Upload neu zu bauen, auch nach einem fehlgeschlagenen ersten Build.
 
 Für Updates sichere die Datenbank, lies die Release-Hinweise von Flowise, ändere die npm-Version in der Dockerfile und lade sie dann erneut mit `lizard up` hoch. Prüfe die neue Version und führe die Persistenzprüfungen durch, bevor du dich auf das Update verlässt.

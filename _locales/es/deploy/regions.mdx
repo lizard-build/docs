@@ -1,5 +1,5 @@
 ---
-description: "Elige dónde se ejecutan tus servicios y addons, ubica juntos los recursos con estado para reducir la latencia y observa cómo la región afecta a los dominios generados."
+description: "Elige dónde se ejecutan tus servicios y addons, ubica juntos los recursos con estado para reducir la latencia y consulta qué nombres de host reciben los servicios y el almacenamiento de objetos."
 ---
 
 <span id="regions" />
@@ -26,15 +26,15 @@ Pasa `--region <code>` al crear un servicio o addon:
 ```bash
 lizard add -r your-org/your-app --region <code>
 lizard add postgres --region <code>
-lizard up --region <code>
+lizard up --region <code>          # new services only
 ```
 
-Si no especificas una región, la plataforma usa la predeterminada del proyecto.
+Los proyectos no tienen una región predeterminada. Sin `--region`, `lizard add` crea en `us-east-1`, y `lizard up` crea un servicio nuevo en la región del servidor de API que gestiona la solicitud. Pasa `--region` para elegir.
 
-> **Ubica juntos los recursos con estado.** Coloca un servicio y los addons con los que se comunica (Postgres, Redis, S3) en la **misma región** para mantener baja la latencia y evitar cargos por datos entre regiones.
+> **Ubica juntos los recursos con estado.** Coloca un servicio y los addons con los que se comunica (Managed Postgres, Managed Redis, Managed Object Storage) en la **misma región** para mantener baja la latencia y evitar cargos por datos entre regiones.
 
 <span id="generated-domains" />
 
 ## Dominios generados
 
-Cada servicio recibe un dominio generado en `*.onlizard.com` con TLS automático, independientemente de la región. El almacenamiento de objetos servido desde un [addon de S3](/addons/storage) usa un host de gateway con alcance regional (`s3-<region>.onlizard.com`). Para asociar tu propio nombre de host, consulta [Networking](/networking).
+Cada servicio recibe un dominio generado con TLS automático: `<name>-<suffix>.onlizard.com` para los servicios nuevos, mientras que los servicios más antiguos conservan `<words>.<region>.onlizard.com`. [Managed Object Storage](/addons/storage) usa un host de gateway por región: `s3-us-east-1.onlizard.com` para `us-east-1` y `s3-eu-west-1.onlizard.com` para `eu-west-lim-a`. Para asociar tu propio nombre de host, consulta [Networking](/networking).

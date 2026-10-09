@@ -11,10 +11,10 @@ description: "Read a service's deploy timeline and live replica status with liza
 ```bash
 lizard events                     # deploy history + replica status
 lizard events --service api       # a specific service
-lizard events --limit 25          # show more entries (default 10)
+lizard events --limit 5           # fewer entries (default and maximum 10)
 ```
 
-Each entry covers a deploy or scaling action and the resulting replica state, so you can answer "what changed, and is it healthy?" at a glance.
+Each entry is a deploy: status, trigger, commit, and restart count. The Replicas table below shows the current state of each pod, so you can answer "what changed, and is it healthy?" at a glance.
 
 ## Quick status
 
@@ -27,7 +27,7 @@ lizard status        # the current directory's workspace/project/service link
 
 ## Dashboard
 
-The **Deployments** view in the dashboard (`lizard open`) renders the same history as a timeline, with a detail drawer per deploy (build logs, commit, status) and per-replica health.
+Open a service in the dashboard (`lizard open`) to see its deploy history. Click a deploy for its build logs, commit, and crash events. The service panel shows running and desired replicas.
 
 ## See also
 

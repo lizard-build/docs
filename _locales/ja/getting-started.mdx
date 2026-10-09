@@ -6,7 +6,7 @@ description: "lizard CLI をインストールし、ログインして、GitHub 
 
 # アプリ クイックスタート
 
-数分で最初のアプリを Lizard に公開できます。`lizard login` した最初のタイミングで、Lizard アカウントは自動的に作成されます。CLI をインストールしてログインし、デプロイします。方法は GitHub リポジトリから直接行うか、ローカルディレクトリから行うかのどちらかです。
+数分で最初のアプリを Lizard に公開できます。`lizard login` した最初のタイミングで、Lizard アカウントは自動的に作成されます。Lizard CLI をインストールしてログインし、Pro トライアルを開始してからデプロイします。方法は GitHub リポジトリから直接行うか、ローカルディレクトリから行うかのどちらかです。
 
 <span id="1-install-the-cli" />
 
@@ -18,7 +18,7 @@ macOS または Linux では、インストールスクリプトを実行しま�
 curl -fsSL https://lizard.build/install.sh | bash
 ```
 
-スクリプトは `lizard` バイナリを `~/.lizard/bin` に置き、`~/.zshrc` または `~/.bashrc` でそのフォルダを `PATH` に追加します。さらに、すでに `PATH` に含まれているフォルダに `lizard` をリンクするので、このターミナルですぐに使えます。以後、バイナリは自動で更新されます。`lizard` が見つからない可能性があるとスクリプトに表示された場合は、新しいターミナルを開いてください。バージョンを確認します:
+スクリプトは `lizard` バイナリを `~/.lizard/bin` に置き、`~/.zshrc` または `~/.bashrc` でそのフォルダを `PATH` に追加します。さらに、すでに `PATH` に含まれているフォルダに `lizard` をリンクするので、このターミナルですぐに使えます。以後、バイナリは自動で更新されます（CI を除く）。`lizard` が見つからない可能性があるとスクリプトに表示された場合は、新しいターミナルを開いてください。バージョンを確認します:
 
 ```bash
 lizard --version
@@ -57,10 +57,12 @@ lizard login
 ブラウザが開いて認証し、確認するとターミナルに戻ります。CI やその他の非対話環境では、代わりにトークンで認証します:
 
 ```bash
-export LIZARD_TOKEN=lzd_xxx
+export LIZARD_TOKEN=liz_xxx
 # or
-lizard login --token lzd_xxx
+lizard login --token liz_xxx
 ```
+
+API キーは `liz_` で始まります。`lizard keys create <name>` で作成できます。`LIZARD_TOKEN` の代わりに `LIZARD_API_KEY` も使えます。
 
 現在どのアカウントであるかはいつでも確認できます:
 
@@ -68,9 +70,21 @@ lizard login --token lzd_xxx
 lizard whoami
 ```
 
-<span id="3-deploy" />
+<span id="3-start-the-pro-trial" />
 
-## 3. デプロイする
+## 3. Pro トライアルを開始する
+
+新しいアカウントにはプランがないため、何かを作成しようとすると、Checkout へのリンク付きで HTTP 402 が返ります。先に 7 日間の Pro トライアルを開始してください:
+
+```bash
+lizard billing start
+```
+
+Stripe Checkout が開くので、カードを登録します。トライアルには $5 のトライアルクレジットが含まれ、終了まで何も請求されません。[請求](/platform/billing)を参照してください。
+
+<span id="4-deploy" />
+
+## 4. デプロイする
 
 コードがどこにあるかに応じて、該当する方法を選んでください。
 
@@ -102,11 +116,11 @@ lizard up
 
 ディレクトリがまだプロジェクトにリンクされていない場合、`up` が対話的に作成または選択を行います。CI では、先に `lizard init --name my-project` で明示的にリンクしてください。
 
-どちらの場合でも、ビルドが完了すると `https://your-app-production.onlizard.com` のような生成済み URL が取得できます。
+どちらの場合でも、ビルドが完了すると `https://your-app-x1y2z.onlizard.com` のような生成済み URL が取得できます。
 
-<span id="4-watch-it-build-and-run" />
+<span id="5-watch-it-build-and-run" />
 
-## 4. ビルドと実行を確認する
+## 5. ビルドと実行を確認する
 
 ```bash
 lizard ps          # services in the project, with status + URL
@@ -115,19 +129,19 @@ lizard logs --build  # the most recent build's logs
 lizard open        # open the project in the dashboard
 ```
 
-<span id="5-add-a-database-optional" />
+<span id="6-add-a-database-optional" />
 
-## 5. データベースを追加する（任意）
+## 6. データベースを追加する（任意）
 
-マネージド Postgres をプロビジョニングし、サービスから参照します:
+Managed Postgres をプロビジョニングし、サービスから参照します:
 
 ```bash
 lizard add postgres
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service your-app
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service your-app
 lizard redeploy --service your-app
 ```
 
-`${{postgres.DATABASE_URL}}` 参照はデプロイ時に解決され、addon とともに自動的にローテーションされます。[Managed Addons](/addons) を参照してください。
+`${{postgres.DATABASE_PRIVATE_URL}}` 参照はデプロイ時に解決され、プロジェクトのプライベートネットワーク経由で接続します。参照は addon の現在の名前と照合されるため、addon の名前を変更した場合は参照を更新してください。認証情報が自動でローテーションされることはありません。サービスは次回のデプロイ時に新しい値を取り込みます。[Managed Addons](/addons) を参照してください。
 
 <span id="next-steps" />
 
@@ -137,10 +151,10 @@ lizard redeploy --service your-app
 - **[GitHubからのデプロイ](/deploy/github)** — ブランチ、モノレポ、自動再デプロイ。
 - **[変数 & Secrets](/variables)** — スコープと優先順位。
 - **[Networking](/networking)** — 自動 TLS で独自のホスト名を接続します。
-- **[AI IDEが構築したアプリをデプロイする](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — Google Antigravity で書かれたアプリについて、同じ 3 つの手順を代わりにエージェントに渡します。
+- **[AI IDEが構築したアプリをデプロイする](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — Google Antigravity で書かれたアプリについて、同じ手順を代わりにエージェントに渡します。
 
 <span id="hosting-costs" />
 
 ## ホスティング費用
 
-Pro は月額 $19 で、毎月 $19 分のクレジットが含まれます。それを超えた利用は、公開料金での pay as you go です。新しいアカウントは 7 日間のトライアルと $5 のトライアルクレジットから始まります。[請求](/platform/billing)と[料金](https://lizard.build/pricing)を参照し、デプロイ前に[上限](/platform/limits)を確認してください。
+Pro は月額 $19 で、毎月 $19 分のクレジットが含まれます。それを超えた利用は、公開料金での pay as you go です。Pro は 7 日間のトライアルと $5 のトライアルクレジットから始まり、開始するにはカードを登録します。[請求](/platform/billing)と[料金](https://lizard.build/pricing)を参照し、デプロイ前に[上限](/platform/limits)を確認してください。

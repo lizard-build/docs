@@ -4,7 +4,7 @@ description: "lizard logs streams a service's runtime logs, or fetches build log
 
 # lizard logs
 
-Stream a service's runtime logs, the last 200 lines followed by a live tail.
+Stream a service's runtime logs, the last 200 lines followed by a live tail. For runtime logs without `-s`, `logs` does not use the linked service: on a TTY it asks which service to show, otherwise it shows all services in the project. `--build` and `--restarts` use the linked service.
 
 ## Usage
 
@@ -17,11 +17,12 @@ lizard logs [flags]
 | Flag | Description |
 |------|-------------|
 | `--build` | Show build logs instead |
-| `--tail <n>` | Last N lines (max 1000) |
-| `-l, --level <level>` | Filter by level |
-| `--restarts [n]` | List recent restarts |
+| `--tail <n>` | Print the last N lines (max 1000) and exit |
+| `-l, --level <level>` | Runtime logs at this level only: `error`, `warn`, `info`, or `debug` |
+| `--restarts [n]` | List the last N restarts (default 20) |
 | `--restart <id>` | Logs around a specific restart (`latest` for the most recent) |
 | `-s, --service <id>` | Service |
+| `-p, --project <id>` | Project name, slug, or ID |
 
 With `--json`, `lizard logs` is not a stream — it returns the last 200 lines (override with `--tail N`, max 1000) and exits. Use it for snapshots and scripting; stream live only without `--json`.
 
@@ -70,4 +71,4 @@ lizard logs --restart <id>
 - [Logs](/observability/logs) — runtime, build, and restart log behavior, plus paging through history with `lizard service logs`
 - [Incomplete Dockerfile](/deploy/troubleshooting/incomplete-dockerfile) — diagnosing a failed build from `lizard logs --build`
 - [lizard events](/cli/events) — deploy history and replica status
-- [Deploy from Claude Code](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) — the read-logs, fix, redeploy loop an agent runs on a failed build
+- [Deploy from Claude Code](https://lizard.build/blog/deploy-from-claude-code#check-the-result-from-the-outside) — the log commands an agent runs to check a deploy

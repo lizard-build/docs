@@ -1,0 +1,89 @@
+---
+description: "lizard volume erstellt, listet, ändert die Größe von und löscht Persistent Volumes, die Sandboxes per Name einbinden."
+---
+
+# lizard volume
+
+Verwalte [Persistent Volumes](/sandboxes/volumes) für Sandboxes. Alias: `lizard vol`.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard volume list [flags]
+lizard volume create <name> [flags]
+lizard volume resize <volume> --size <gb> [flags]
+lizard volume rm <volume> [flags]
+```
+
+Der Name eines Volumes ist sein Schlüssel innerhalb des Projekts. Jeder Befehl akzeptiert einen Namen oder eine ID sowie `-p, --project`, um ein anderes als das verknüpfte Projekt anzusprechen.
+
+<span id="subcommands" />
+
+## Unterbefehle
+
+### `lizard volume list`
+
+Listet die Volumes des Projekts mit Größe, Status und der Sandbox auf, an die sie angehängt sind (Alias `ls`). `--json` enthält zusätzlich die generierten IDs.
+
+### `lizard volume create <name>`
+
+Erstellt ein Volume. Namen bestehen aus Kleinbuchstaben, Ziffern und Bindestrichen, beginnen und enden mit einem Buchstaben oder einer Ziffer, sind höchstens 64 Zeichen lang und im Projekt eindeutig.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `--size <gb>` | Größe in ganzen GB, 1 bis 50 (Standard 5). Die CLI liest zuerst die aktuellen Limits des Servers |
+| `--region <code>` | Region für das Volume; sie muss zur Sandbox passen, die es einbindet |
+| `-p, --project <id>` | Projektname, Slug oder ID |
+
+### `lizard volume resize <volume> --size <gb>`
+
+Ändert die Größe eines Volumes direkt. Eine angehängte Sandbox läuft weiter und sieht die neue Größe. Ein Firecracker-Volume (der Standard) kann nur wachsen. Ein Pod-basiertes Volume kann auch verkleinert werden, wenn mindestens 10 % der neuen Größe frei bleiben.
+
+### `lizard volume rm <volume>`
+
+Löscht ein Volume und seine Daten (Alias `delete`). Der Befehl schlägt fehl, solange das Volume angehängt ist; lösche zuerst die Sandbox.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-y, --yes` | Bestätigung überspringen |
+
+Der Volume-Speicher kostet 0,14 $ pro GB und Monat für belegten Speicherplatz. Siehe [Größe und Preis](/sandboxes/volumes#size-and-price).
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="create-a-volume-and-attach-it" />
+
+### Ein Volume erstellen und anhängen
+
+```bash
+lizard volume create agent-workdir --size 10
+lizard sandbox create --volume agent-workdir
+```
+
+<span id="grow-a-volume" />
+
+### Ein Volume vergrößern
+
+```bash
+lizard volume resize agent-workdir --size 20
+```
+
+<span id="delete-a-volume" />
+
+### Ein Volume löschen
+
+```bash
+lizard volume rm agent-workdir --yes
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [Persistent Volumes](/sandboxes/volumes) — Lebenszyklus, SDK-Methoden und die Dashboard-Ansicht
+- [lizard sandbox](/cli/sandbox) — ein Volume mit `sandbox create --volume` anhängen
+- [Speicher und Wiederherstellung](/platform/storage-and-recovery) — was mit Volume-Daten passiert, wenn ein Node ausfällt

@@ -1,23 +1,29 @@
 ---
-description: "lizard run は、サービスのプロジェクトシークレットとサービスシークレットを注入した状態で、あなたのマシン上でコマンドを実行します。ssh を使うべき場合も含みます。"
+description: "lizard run は、サービスのプロジェクトシークレットとサービスシークレットを注入した状態で、あなたのマシン上でコマンドを実行します。何が注入されるか、実行中のアプリが参照する内容をどう確認するかも説明します。"
 ---
 
 # lizard run
 
 プロジェクトシークレットとサービスシークレットを注入した状態で、ローカルでコマンドを実行します。
 
-<span id="run-vs-ssh" />
+<span id="what-run-injects" />
 
-## run と ssh の違い
+## `run` が注入するもの
 
-2 つのコマンドで、サービスのコンテキストを使ってコマンドを実行できます。実行される場所が異なるため、どちらが必要かを把握してください。
+`lizard run` はプロジェクトのシークレットを読み込み、その上にサービスのシークレットを重ねて、それらを環境に入れた状態であなたのマシン上でコマンドを実行します。
 
-| コマンド | 実行場所 | 用途 |
-|---------|-----------|---------|
-| `lizard run` | ローカル。サービスの project + service secrets を注入した状態 | マイグレーション、シードスクリプト、本番設定が必要なローカルツール |
-| `lizard ssh` | 実行中のサービスコンテナ内 | 稼働中コンテナの確認、単発のリモートコマンド、デバッグ |
+- アプリサービスの場合は、保存されている値を注入します。`${{postgres.DATABASE_URL}}` のような参照は、解決された値ではなく、その文字列のまま渡されます。`PORT` や `LIZARD_*` などのプラットフォーム変数は注入されません。
+- アドオン（`--service postgres`、`--service redis`、`--service s3`）の場合は、`DATABASE_URL` などのアドオンの実際の接続値を注入します。
 
-`lizard run` は、ローカルに注入された環境のコピーを表示します。通常は実行中のアプリが参照しているものと同じですが、稼働中コンテナに対して信頼できる情報源は `lizard ssh` です。実行中のアプリが実際に参照している内容を確認するには、代わりに `lizard ssh` を使ってください。
+そのため、マイグレーションやデータベースクライアントをローカルで実行するときは、`--service` にはそれを参照するアプリではなく、アドオンを指定してください。
+
+実行中のサービスへの `lizard ssh` は無効になっています（API は 403 "Shell access to services is disabled" を返します）。実行中のアプリが受け取る内容を確認するには、次を使います:
+
+| 確認する内容 | コマンド |
+|-------|---------|
+| 空の参照 | `lizard logs --build --service api`（ビルドログは、空の値に解決されたすべての `${{…}}` 参照について警告します） |
+| 保存されている値 | `lizard secrets list --service api --show` |
+| アドオンの実際の接続値 | `lizard run --service postgres -- printenv DATABASE_URL` |
 
 <span id="usage" />
 
@@ -33,19 +39,20 @@ lizard run [flags] -- <command>
 
 | フラグ | 説明 |
 |------|-------------|
-| `-s, --service <name>` | 環境変数を注入する対象のサービス |
-| `--no-service` | サービス環境変数を注入しない |
+| `-s, --service <name>` | 環境変数を注入する対象のサービス（既定はリンク済みのサービス） |
+| `--no-service` | サービス環境変数を注入せず、プロジェクトシークレットのみを注入する |
+| `-p, --project <id>` | プロジェクト（既定はリンク済みのプロジェクト） |
 
 <span id="examples" />
 
 ## 例
 
-<span id="run-a-migration-with-service-secrets-injected" />
+<span id="run-a-migration-against-managed-postgres" />
 
-### サービスシークレットを注入してマイグレーションを実行する
+### Managed Postgres に対してマイグレーションを実行する
 
 ```bash
-lizard run --service api -- node scripts/migrate.js
+lizard run --service postgres -- node scripts/migrate.js
 ```
 
 <span id="print-an-injected-environment-variable" />
@@ -53,13 +60,22 @@ lizard run --service api -- node scripts/migrate.js
 ### 注入された環境変数を表示する
 
 ```bash
-lizard run --service api -- printenv DATABASE_URL
+lizard run --service postgres -- printenv DATABASE_URL
+```
+
+<span id="run-a-local-tool-with-an-apps-stored-secrets" />
+
+### アプリの保存済みシークレットを使ってローカルツールを実行する
+
+```bash
+lizard run --service api -- node scripts/report.js
 ```
 
 <span id="see-also" />
 
 ## 関連項目
 
-- [lizard ssh](/cli/ssh) — ローカルではなく、実行中のサービスコンテナ内でコマンドを実行します
+- [lizard ssh](/cli/ssh) — サービスへのシェルアクセスが無効になっている理由と、その代わりに使うもの
+- [lizard secrets](/cli/secrets) — `run` が注入する値の一覧表示と設定
 - [変数](/variables) — プロジェクト変数とサービス変数の定義方法および参照方法
 - [Pythonアプリホスティング](https://lizard.build/blog/python-app-hosting) — デプロイ済みデータベースに対して `manage.py` やその他のフレームワークツールを実行する方法

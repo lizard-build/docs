@@ -15,7 +15,7 @@ No todos los servicios sirven HTTP. Los consumidores de colas, reconcilers, bucl
 Cuando `containerPort=0`, la plataforma:
 
 - **Omite la inyección de `PORT`** — el worker no se enlaza en ningún sitio.
-- **Omite la comprobación de accesibilidad del puerto** — sin spam de logs de `app port X unreachable` ni estado "unhealthy" por falsos positivos.
+- **Omite la sonda de preparación TCP** — sin estado "unhealthy" por falsos positivos. El pod antiguo se detiene antes de que arranque el nuevo.
 - **Omite `EXPOSE`** en el Dockerfile sintetizado.
 - **Omite el registro de rutas del balanceador de carga** — no se sirve nada. (Puede que siga apareciendo un dominio `*.onlizard.com` generado en el servicio, pero no responderá.)
 
@@ -70,18 +70,25 @@ lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service worker
 lizard up --service worker --port 0
 ```
 
-Inicia sesión con `lizard login` si un comando indica que se requiere autenticación. Usa el nombre real de la base de datos si no es `redis`. Mantén la referencia entre comillas. Configúrala antes de subir la aplicación. En macOS con Lizard CLI 0.3.92, antepone `COPYFILE_DISABLE=1` a `lizard up` para excluir metadatos AppleDouble.
+Inicia sesión con `lizard login` si un comando indica que se requiere autenticación. Usa el nombre real de la base de datos si no es `redis`. Mantén la referencia entre comillas. Configúrala antes de subir la aplicación.
 
 Comprueba el evento final del despliegue y luego comprueba el worker:
 
 ```bash
 lizard port --service worker
 lizard logs --service worker --json
-lizard ssh --service worker -- python jobs.py enqueue first-job
-lizard ssh --service worker -- python jobs.py result first-job
 ```
 
-El proceso imprime `Queue worker ready`. Si el seguimiento de logs está vacío, continúa con la comprobación del trabajo más abajo; los [resultados de pruebas](/guides/validation) registran el límite de logs observado. El comando de resultado espera hasta 30 segundos e imprime `{"id": "first-job", "result": "HELLO"}`. Que el proceso esté en ejecución por sí solo no demuestra que pueda consumir un trabajo. Managed Redis se alcanza desde dentro del servicio; el comando de CLI no requiere que tu portátil alcance su dirección privada.
+Envía un trabajo desde tu equipo. `lizard run --service redis` ejecuta un comando local con los valores de conexión del addon de Redis, incluido su `REDIS_URL` público:
+
+```bash
+python3 -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+lizard run --service redis -- python jobs.py enqueue first-job
+lizard run --service redis -- python jobs.py result first-job
+```
+
+El proceso imprime `Queue worker ready` y, después de ejecutar el trabajo, `Processed first-job`. Si el seguimiento de logs está vacío, confía en la comprobación del trabajo; los [resultados de pruebas](/guides/validation) registran el límite de logs observado. El comando de resultado espera hasta 30 segundos e imprime `{"id": "first-job", "result": "HELLO"}`. Que el proceso esté en ejecución por sí solo no demuestra que pueda consumir un trabajo.
 
 <span id="verify-a-restart" />
 
@@ -91,12 +98,12 @@ Para este servicio de prueba, reinicia el worker y envía otro trabajo:
 
 ```bash
 lizard restart --service worker
-lizard ssh --service worker -- python jobs.py result first-job
-lizard ssh --service worker -- python jobs.py enqueue after-restart
-lizard ssh --service worker -- python jobs.py result after-restart
+lizard run --service redis -- python jobs.py result first-job
+lizard run --service redis -- python jobs.py enqueue after-restart
+lizard run --service redis -- python jobs.py result after-restart
 ```
 
-Espera a que el servicio vuelva a `running` en `lizard ps --json` si SSH todavía no está disponible. Ambos resultados deben ser `HELLO`. El primer resultado vive en Redis, así que reiniciar un worker no lo elimina. Al arrancar, el consumidor único devuelve las entradas de procesamiento sin terminar a la lista pendiente.
+Si `after-restart` no tiene resultado después de 30 segundos, espera a que el servicio vuelva a `running` en `lizard ps --json` y ejecuta de nuevo el comando de resultado. Ambos resultados deben ser `HELLO`. El primer resultado vive en Redis, así que reiniciar un worker no lo elimina. Al arrancar, el consumidor único devuelve las entradas de procesamiento sin terminar a la lista pendiente.
 
 Esta demo solo acepta los trabajos JSON creados por `jobs.py`. No implementa una cola de mensajes fallidos, validación para productores no confiables ni efectos externos exactamente una vez. Usa una biblioteca de colas consolidada y handlers idempotentes para pagos, correo u otros efectos. La durabilidad y las copias de seguridad de Redis son independientes del comportamiento de reinicio del worker; consulta [almacenamiento y recuperación](/platform/storage-and-recovery).
 
@@ -119,6 +126,6 @@ Esta demo solo acepta los trabajos JSON creados por `jobs.py`. No implementa una
 - [`lizard port`](/cli/port) — muestra o cambia el puerto del contenedor de un servicio.
 - [El servicio nunca llega a healthy](/deploy/troubleshooting/service-never-healthy) — la configuración incorrecta del modo worker más común.
 - [Managed Addons](/addons) — Redis, Postgres y S3 para cargas de trabajo con estado.
-- [Hosting de apps Python](https://lizard.build/blog/python-app-hosting#deploying-django) — un worker de Celery es la misma imagen con un comando distinto y sin puerto HTTP.
+- [Hosting de apps Python](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks) — un worker de Celery es la misma imagen con un comando distinto y sin puerto HTTP.
 
 Consulta los [resultados de pruebas del escenario](/guides/validation) para ver versiones comprobadas, resultados en la nube y limitaciones restantes.

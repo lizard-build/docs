@@ -1,10 +1,10 @@
 ---
-description: "lizard workspace list は、あなたのアカウントがアクセスできるすべてのワークスペースと、ワークスペースがプロジェクトやサービスとどう関係するかを表示します。"
+description: "lizard workspace は、ワークスペースを作成、一覧表示、削除します。ワークスペースがプロジェクトやサービスとどう関係するかも説明します。"
 ---
 
 # lizard workspace
 
-アクセスできるワークスペースを一覧表示します。
+ワークスペースを作成、一覧表示、削除します。
 
 <span id="usage" />
 
@@ -12,7 +12,29 @@ description: "lizard workspace list は、あなたのアカウントがアク�
 
 ```bash
 lizard workspace list
+lizard workspace create <name>
+lizard workspace rm <name-or-id> [flags]
 ```
+
+<span id="subcommands" />
+
+## サブコマンド
+
+### `lizard workspace list`
+
+所属しているワークスペースを、あなたのロールとプロジェクト数とともに一覧表示します (別名 `ls`)。
+
+### `lizard workspace create <name>`
+
+ワークスペースを作成します。`lizard project create <name> --workspace <slug>` でプロジェクトを追加します。
+
+### `lizard workspace rm <name-or-id>`
+
+ワークスペースを削除します (別名 `delete`)。削除できるのはオーナーだけで、プロジェクトもサンドボックスも残っていない場合に限ります。個人用ワークスペースは削除できません。
+
+| フラグ | 説明 |
+|------|-------------|
+| `-y, --yes` | 確認をスキップ |
 
 <span id="examples" />
 
@@ -26,9 +48,26 @@ lizard workspace list
 lizard workspace list
 ```
 
+<span id="create-a-workspace" />
+
+### ワークスペースを作成する
+
+```bash
+lizard workspace create my-team
+```
+
+<span id="delete-an-empty-workspace" />
+
+### 空のワークスペースを削除する
+
+```bash
+lizard workspace rm my-team --yes
+```
+
 <span id="see-also" />
 
 ## 関連項目
 
 - [lizard whoami](/cli/whoami) — アクティブなワークスペースを表示します
+- [lizard project](/cli/project) — ワークスペース内のプロジェクトを一覧表示または作成します
 - [Architecture: ワークスペース](/concepts/architecture) — ワークスペースがプロジェクトやサービスとどう関係するか

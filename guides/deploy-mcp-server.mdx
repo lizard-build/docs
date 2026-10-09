@@ -63,7 +63,7 @@ lizard logs --service mcp --json
 lizard ps --json
 ```
 
-On macOS with Lizard CLI 0.3.92, use `COPYFILE_DISABLE=1 lizard up --service mcp --port 8000` to exclude AppleDouble metadata from the archive. A later CLI release may include the archive fix. Check the final deployment event and public endpoint; do not rely on this CLI version's exit code alone after a failed build. `server.mjs` listens on `0.0.0.0` and reads `PORT`, with 8000 as its default. The deploy command sets the service port to 8000. Configure the public key as a multiline environment value; do not upload the private signing key or the token file.
+Check the final deployment event and public endpoint, not only the exit code. `server.mjs` listens on `0.0.0.0` and reads `PORT`, with 8000 as its default. The deploy command sets the service port to 8000. Configure the public key as a multiline environment value; do not upload the private signing key or the token file.
 
 ## Verify the public endpoint
 

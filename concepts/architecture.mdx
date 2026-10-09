@@ -49,13 +49,13 @@ A **service** is a single deployable unit. Its source is one of:
 - **`github`** — a connected GitHub repo. Pushes to the tracked branch auto-redeploy.
 - **`upload`** — a tarball uploaded with `lizard up`.
 
-Each running service runs as its own **isolated pod** with a default-deny network policy, a generated `<name>.<region>.onlizard.com` domain, and automatic TLS. That split — you bring the container, the platform runs it — is [container as a service](https://lizard.build/blog/container-as-a-service), and the blog covers what it still leaves you holding. Inspect and manage services with:
+Each running service runs as its own **isolated pod** with a default-deny network policy, a generated `<name>-<suffix>.onlizard.com` domain (older services keep `<words>.<region>.onlizard.com`), and automatic TLS. That split — you bring the container, the platform runs it — is [container as a service](https://lizard.build/blog/container-as-a-service), and the blog covers what it still leaves you holding. Inspect and manage services with:
 
 ```bash
 lizard ps                       # list services with status + URL
 lizard service show             # full config as JSON
 lizard service set <svc> --set <field>=<value>
-lizard service rename --service <svc>
+lizard service rename <new-name> --service <svc>
 lizard service delete --service <svc>
 ```
 
@@ -67,7 +67,7 @@ By default a service is an **HTTP app** that listens on a port (default `3000`) 
 
 ## Managed addons
 
-**Addons** are managed Postgres, Redis, and S3-compatible storage that you provision per project:
+**Addons** are Managed Postgres, Managed Redis, and Managed Object Storage (S3-compatible) that you provision per project:
 
 ```bash
 lizard add postgres redis s3
@@ -83,17 +83,18 @@ Any service or addon value can be referenced from another resource's environment
 ${{<name>.<KEY>}}
 ```
 
-References resolve at **deploy time** against the target's merged environment. They're stored by ID, so renaming the target later doesn't break the reference. A reference to a missing target or key resolves to an empty string (it does **not** fail the deploy); only circular references throw.
+References resolve at **deploy time** against the target's merged environment. They match the target's **current name**: if you rename a service or addon, update every reference that uses the old name. A reference to a missing target or key resolves to an empty string (it does **not** fail the deploy); only circular references throw.
 
 ```bash
 # Wire a service to the project's Postgres
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 ```
 
-Verify the consumer actually received the value:
+Check that the reference resolved. The build log prints a warning for every reference that resolved to an empty value, and `secrets list` shows what is stored:
 
 ```bash
-lizard ssh --service api -- env | grep DATABASE_URL
+lizard logs --build --service api
+lizard secrets list --service api --show
 ```
 
 ## Platform-injected variables
@@ -105,6 +106,7 @@ Every service automatically receives these variables (they cannot be overridden)
 | `PORT` | Port your app should listen on (omitted in worker mode) |
 | `LIZARD_SERVICE_NAME` | The service's name |
 | `LIZARD_PROJECT_ID` | The project ID |
-| `LIZARD_PUBLIC_DOMAIN` | The service's public domain |
+| `LIZARD_PUBLIC_DOMAIN` | The service's public domain (set once a domain is assigned) |
+| `LIZARD_PRIVATE_DOMAIN` | The service's private hostname, `<host>.lizard.internal`, reachable from the same project |
 
 See [Variables & Secrets](/variables) for how these interact with your own variables and the full precedence order.

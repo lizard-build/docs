@@ -13,10 +13,10 @@ description: "lizard events でサービスのデプロイタイムラインと�
 ```bash
 lizard events                     # deploy history + replica status
 lizard events --service api       # a specific service
-lizard events --limit 25          # show more entries (default 10)
+lizard events --limit 5           # fewer entries (default and maximum 10)
 ```
 
-各エントリは、デプロイまたはスケーリング操作と、その結果のレプリカ状態を扱うため、"何が変わったのか、そして正常か？" をひと目で確認できます。
+各エントリは 1 回のデプロイで、ステータス、トリガー、コミット、再起動回数を示します。その下の Replicas テーブルには各 Pod の現在の状態が表示されるため、"何が変わったのか、そして正常か？" をひと目で確認できます。
 
 <span id="quick-status" />
 
@@ -33,7 +33,7 @@ lizard status        # the current directory's workspace/project/service link
 
 ## ダッシュボード
 
-ダッシュボードの **デプロイメント** ビュー（`lizard open`）は、同じ履歴をタイムラインとして表示し、デプロイごとの詳細ドロワー（ビルドログ、コミット、ステータス）とレプリカごとのヘルスを確認できます。
+ダッシュボード（`lizard open`）でサービスを開くと、そのデプロイ履歴を確認できます。デプロイをクリックすると、ビルドログ、コミット、クラッシュイベントが表示されます。サービスパネルには、稼働中のレプリカ数と目標のレプリカ数が表示されます。
 
 <span id="see-also" />
 

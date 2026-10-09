@@ -13,12 +13,12 @@ Limits hängen von der Ressource, dem Tarif und dem Konto ab. Eine Einstellung p
 | Einstellung | Geltungsbereich | Was zu prüfen ist |
 |---|---|---|
 | CPU und Arbeitsspeicher | Jedes Replikat | Drei Replikate mit einer Obergrenze von 2 vCPU / 2 GiB haben zusammen eine konfigurierte Obergrenze von 6 vCPU / 6 GiB. Das ist keine Nutzungsvorhersage. |
-| Anzahl der Replikate | Service und Tarif | Ihr Plan legt das Limit fest: 1 pro App in der Testphase von Pro, 5 in Pro nach der ersten bezahlten Rechnung und in Enterprise. Konten mit altem Prepaid-Guthaben erhalten 1. Die API akzeptiert höchstens 10, was nur eine Ausnahme für das Konto erreicht. |
+| Anzahl der Replikate | Service und Tarif | Ihr Plan legt das Limit fest: 1 pro App in der Testphase von Pro, 5 in Pro nach der ersten bezahlten Rechnung und in Enterprise. Die API akzeptiert höchstens 10, was nur eine Ausnahme für das Konto erreicht. |
 | Ressourcenobergrenze des Kontos | Kontoinhaber | Ein zweites Projekt erzeugt nicht zwangsläufig ein zweites Kontingent. Fragen Sie vor der Planung eines großen Bereitstellungen nach der effektiven Kontenobergrenze. |
 | Worker-Modus | Service | `containerPort=0` läuft ohne HTTP-Listener oder öffentliche Load-Balancer-Route. |
 | Benutzerdefinierte Domain | Hostname | Benutzerdefinierte Wildcard-Domains werden nicht akzeptiert. Verwenden Sie einen spezifischen Hostnamen und schließen Sie die Prüfungen zu Eigentümerschaft und DNS ab. |
 
-Sandboxes führen kurze Befehle und Agentenaufgaben in Kubernetes-Pods mit runc aus. Sie teilen den Kernel des Hosts und sind keine Firecracker-VMs. Beschränken Sie Zugangsdaten und Netzwerkzugriff für nicht vertrauenswürdigen Code.
+Sandboxes führen kurze Befehle und Agentenaufgaben als Firecracker-microVMs aus, jeweils mit eigenem Kernel. Eine Sandbox, die ein vorhandenes Pod-basiertes Persistent Volume anbindet oder einen älteren Pod-Snapshot wiederherstellt, läuft als Kubernetes-Pod mit runc und teilt den Kernel des Hosts. `getInfo().runtime` im Lizard SDK zeigt, welcher Fall vorliegt. Beschränken Sie Zugangsdaten und Netzwerkzugriff für nicht vertrauenswürdigen Code.
 
 ## Sandboxes
 
@@ -46,8 +46,6 @@ Diese Limits begrenzen, wie viele Sandboxes ein Konto gleichzeitig ausführt und
 | Pro | 100 | 24 | 120 | 400 |
 | Enterprise | Individuell | Individuell | Individuell | Individuell |
 
-Konten, die noch altes Prepaid-Guthaben nutzen, behalten die bisherigen Limits bis zum 1. November 2026: 5 gleichzeitig vor der ersten Aufladung, 20 nach einer ersten Aufladung und 100 nach insgesamt $20 bezahlt.
-
 - Die Limits gelten pro Kontoinhaber, über alle Workspaces des Inhabers hinweg. Ein zweiter Workspace bringt kein zweites Kontingent.
 - Aktiv bedeutet laufend oder fortsetzend. Eine pausierte Sandbox zählt nicht; um eine fortzusetzen, braucht es einen freien Platz.
 - Ein Start ist eine neue Sandbox. Ein Fortsetzen ist kein Start. Eine Erstellung, die auf Seiten von Lizard fehlschlägt, zählt nicht.
@@ -66,7 +64,7 @@ Ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum 
 
 | Einstellung | Aktuelle Create-API |
 |---|---|
-| Vorlagen | `base`, `codex`, `interpreter` |
+| Vorlagen | `base`, `interpreter`, `codex`, `desktop`, `opencode`, `pi`, `prime`, `claude` |
 | Standardlaufzeit der Raw API | `timeoutMs: 0`, kein Ablauf |
 | Standardlaufzeit des Lizard SDK | 300000 ms, fünf Minuten |
 | Bereich für explizite Laufzeit | Ganzzahlige Millisekunden von 0 bis 2147483647 |
@@ -75,7 +73,7 @@ Ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum 
 
 SDK und CLI setzen standardmäßig eine Laufzeit von fünf Minuten. Die direkte API und das Dashboard setzen standardmäßig kein Ablaufdatum. Geben Sie die Laufzeit ausdrücklich an: `timeoutMs: 0` bei der Erstellung deaktiviert den Ablauf; ein positiver Wert setzt eine Frist. `setTimeout` akzeptiert 1000–2147483647 ms, nicht null. Befehle verlängern die Frist nicht. Dies ist kein Leerlauf-Timer.
 
-Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, ohne ihren Zustand zu ändern; eine pausierte oder gestoppte Sandbox wird dadurch nicht fortgesetzt. Pause, Fortsetzen, Snapshot und Restore sind verfügbar; siehe [Pause, Fortsetzen und Snapshots](/sandboxes/quickstart#pause-and-resume). Fork und Dateiüberwachung geben HTTP 501 zurück. `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten. Zugriff über das SSH-Protokoll gibt es nicht, daher funktionieren SSH-Clients, `scp` und Portweiterleitung nicht.
+Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, ohne ihren Zustand zu ändern; eine pausierte oder gestoppte Sandbox wird dadurch nicht fortgesetzt. Pause, Fortsetzen, Snapshot und Restore sind verfügbar; siehe [Pause, Fortsetzen und Snapshots](/sandboxes/quickstart#pause-and-resume). Fork (`sandbox.fork({ count })`) funktioniert bei Firecracker-Sandboxes; bei angebundenem Volume gibt es HTTP 409 zurück, bei einer Pod-Sandbox HTTP 501. `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten. Zugriff über das SSH-Protokoll gibt es nicht, daher funktionieren SSH-Clients, `scp` und Portweiterleitung nicht.
 
 <span id="regions" />
 

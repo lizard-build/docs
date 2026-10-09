@@ -14,6 +14,8 @@ Füge dem Projekt eine Datenbank, einen Service oder ein Repo hinzu.
 lizard add [types...] [flags]
 ```
 
+`add` arbeitet mit dem Projekt, das mit dem aktuellen Verzeichnis verknüpft ist. Führe zuerst [`lizard init`](/cli/init) oder [`lizard link`](/cli/link) aus.
+
 ## Flags
 
 | Flag | Beschreibung |
@@ -23,7 +25,7 @@ lizard add [types...] [flags]
 | `-a, --addon <type...>` | Verwaltete Add-ons hinzufügen (`postgres` / `redis` / `s3`) |
 | `-n, --name <name>` | Name für `${{name.KEY}}`-Referenzen |
 | `-v, --variables <K=V>` | Eine Umgebungsvariable vorbelegen (wiederholbar) |
-| `--region <code>` | Region für die Bereitstellung |
+| `--region <code>` | Region für die Bereitstellung (Standard `us-east-1`) |
 | `--no-deploy` | Repo verknüpfen, aber den ersten Build überspringen |
 | `--list` | Verfügbare Datenbanktypen anzeigen |
 
@@ -39,7 +41,7 @@ lizard add [types...] [flags]
 lizard add -r your-org/your-app
 ```
 
-Dadurch wird ein Service aus `github`-Quelle erstellt, das Repo geklont, der Stack automatisch erkannt, gebaut und eine Live-URL zurückgegeben.
+Dadurch wird ein Service aus `github`-Quelle erstellt und der erste Build gestartet, der das Repo klont und den Stack automatisch erkennt. Der Befehl kehrt zurück, sobald der Service existiert; verfolge den Build mit `lizard logs --build`.
 
 <span id="provision-addons" />
 
@@ -64,7 +66,7 @@ lizard add -s worker
 ### Einen Service benennen und Variablen vorbelegen
 
 ```bash
-lizard add -r your-org/monorepo -n api
+lizard add -r your-org/monorepo -n api -v NODE_ENV=production -v LOG_LEVEL=info
 ```
 
 <span id="see-also" />
@@ -72,5 +74,5 @@ lizard add -r your-org/monorepo -n api
 ## Siehe auch
 
 - [Von GitHub deployen](/deploy/github) — Repos verbinden, privater Zugriff und automatische Neu-Bereitstellungen bei Push
-- [Managed Addons](/addons) — Bereitstellung, Benennung und Verwendung von postgres/redis/s3
+- [Managed Addons](/addons) — Bereitstellung, Benennung und Verwendung von Managed Postgres, Managed Redis und Managed Object Storage
 - [lizard up](/cli/up) — das aktuelle Verzeichnis hochladen und deployen, statt ein Repo zu verknüpfen

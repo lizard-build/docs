@@ -13,12 +13,12 @@ Elige el almacenamiento según los datos que deben sobrevivir a un reinicio del 
 | Datos | Dónde mantenerla | Límite |
 |---|---|---|
 | Registros de la aplicación | Managed Postgres u otra base de datos | Un reinicio es distinto de restaurar datos eliminados o dañados. Prueba una ruta independiente de exportación y restauración. |
-| Datos de caché y cola | Managed Redis | Decide si la carga de trabajo puede reconstruir su estado o necesita su propio plan de recuperación. |
-| Archivos compartidos por aplicaciones | Managed Object Storage | Configura la política de acceso del bucket antes de subir datos privados. El bucket `default` creado automáticamente es de lectura pública. |
+| Datos de caché y cola | Managed Redis | Decide si la carga de trabajo puede reconstruir su estado o necesita su propio plan de recuperación. Managed Redis no tiene política de expulsión ni archivo append-only: si se queda sin memoria, se reinicia y pueden perderse las escrituras recientes. Guarda en Managed Postgres los datos que no puedas perder. |
+| Archivos compartidos por aplicaciones | Managed Object Storage | El bucket `default` creado automáticamente es privado. Haz público un bucket desde el navegador de buckets del dashboard solo si cualquiera puede leer sus archivos. |
 
 <span id="keep-files-after-a-sandbox-ends" />
 
-Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un Persistent Volume adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
+Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un volumen persistente adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
 
 ## Conservar archivos después de que termine un sandbox
 

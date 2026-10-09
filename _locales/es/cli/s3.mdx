@@ -1,0 +1,82 @@
+---
+description: "lizard s3 sube un archivo local a un bucket de Managed Object Storage y lista los objetos de un bucket, sin un SDK de AWS."
+---
+
+# lizard s3
+
+Sube y lista objetos en un bucket de [Managed Object Storage](/addons/storage).
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard s3 upload <file> [flags]
+lizard s3 list [flags]
+```
+
+Ambos comandos trabajan con el único addon S3 del proyecto y su bucket `default`, salvo que pases `--addon` y `--bucket`. Añade primero el addon con `lizard add s3`.
+
+<span id="subcommands" />
+
+## Subcomandos
+
+### `lizard s3 upload <file>`
+
+Sube un archivo local. Muestra la clave, el ETag, el tamaño y una URL si el bucket es público. El bucket `default` es privado; para hacer público un bucket, usa el explorador S3 del panel.
+
+| Bandera | Descripción |
+|------|-------------|
+| `--addon <name>` | Nombre o ID del addon S3 (por defecto: el único addon S3 del proyecto) |
+| `--bucket <name>` | Bucket de destino (por defecto `default`) |
+| `--key <key>` | Clave del objeto (por defecto: el nombre del archivo) |
+| `--content-type <type>` | Cabecera Content-Type (por defecto: se deduce de la extensión del archivo) |
+| `-p, --project <id>` | Nombre, slug o ID del proyecto |
+
+### `lizard s3 list`
+
+Lista los objetos de un bucket (alias `ls`).
+
+| Bandera | Descripción |
+|------|-------------|
+| `--addon <name>` | Nombre o ID del addon S3 |
+| `--bucket <name>` | Bucket que listar (por defecto `default`) |
+| `--prefix <prefix>` | Solo las claves bajo este prefijo |
+| `-p, --project <id>` | Nombre, slug o ID del proyecto |
+
+Cada cuenta puede almacenar hasta 16 GiB entre todos sus addons. El almacenamiento se factura por bytes almacenados a $0.0135 por GB-mes.
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="upload-a-file" />
+
+### Subir un archivo
+
+```bash
+lizard s3 upload ./logo.png --key assets/logo.png
+```
+
+<span id="list-objects-under-a-prefix" />
+
+### Listar objetos bajo un prefijo
+
+```bash
+lizard s3 list --prefix assets/
+```
+
+<span id="use-a-second-s3-addon" />
+
+### Usar un segundo addon S3
+
+```bash
+lizard s3 upload ./backup.tar.gz --addon s3-autumn-bear
+```
+
+<span id="see-also" />
+
+## Véase también
+
+- [Managed Object Storage](/addons/storage) — variables de entorno, configuración del SDK de AWS y archivos públicos
+- [lizard add](/cli/add) — añadir un addon S3 con `lizard add s3`

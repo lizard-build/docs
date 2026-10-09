@@ -4,7 +4,7 @@ description: "lizard skills reads the agent guides bundled with your CLI version
 
 # lizard skills
 
-Read the embedded agent skills shipped with this CLI version.
+Read the embedded agent skills shipped with this CLI version. Alias: `lizard skill`.
 
 ## Usage
 
@@ -22,11 +22,11 @@ List the available embedded skills.
 
 ### `lizard skills get core`
 
-Read the core guide — the authoritative usage guide for the platform, versioned with the CLI. It returns `{ name, frontmatter, content, … }`, where `content` is the complete guide (build pipeline, env precedence, addons, discovery, exit codes).
+Read the core guide — the authoritative usage guide for the platform, versioned with the CLI. With `--json` it returns `{ name, path, frontmatter, content }`, where `content` is the complete guide (build pipeline, env precedence, addons, discovery, exit codes).
 
-### `lizard skills path`
+### `lizard skills path [name]`
 
-Show where skills are stored on disk.
+Print where a skill comes from. Skills are built into the CLI, so this prints `embedded://skills` unless `LIZARD_SKILLS_DIR` points the CLI at a directory on disk.
 
 ## Examples
 

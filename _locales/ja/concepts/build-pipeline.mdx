@@ -14,9 +14,10 @@ description: "Lizard がソースをコンテナイメージに変換する方�
 
 プラットフォームは次の順序で、ビルド戦略をちょうど 1 つ選びます:
 
-1. **合成された Dockerfile** — サービスに `buildCommand` および/または `startCommand` が設定されている場合（または `lizard up --build-command` / `--start-command` 経由で渡された場合）、Lizard はそれらのコマンドから Dockerfile を生成します。lizardpack は呼び出されません。
-2. **リポジトリの Dockerfile（そのまま）** — サービスに `dockerfilePath` が設定されている場合、リポジトリ内のその Dockerfile が変更されずに使用されます。
-3. **lizardpack 自動検出** — それ以外の場合、プラットフォームはソースをクローンし、ビルドパック / Dockerfile ジェネレーターである **lizardpack** を実行します。
+1. **`dockerfilePath` のリポジトリ Dockerfile** — サービスに `dockerfilePath` が設定されている場合、ビルドコマンドや開始コマンドが設定されていても、その Dockerfile が変更されずに使用されます。`startCommand` が設定されていれば、実行時には Dockerfile の `CMD` がそれに置き換えられます。
+2. **合成された Dockerfile** — それ以外で、サービスに `buildCommand` および/または `startCommand` が設定されている場合（または `lizard up --build-command` / `--start-command` 経由で渡された場合）、Lizard はそれらのコマンドから Dockerfile を生成します。lizardpack は呼び出されません。
+3. **ソース内の Dockerfile** — それ以外の場合、ビルドディレクトリのルートにある `Dockerfile` が使用されます（後述の GitHub の例外を参照）。
+4. **lizardpack 自動検出** — それ以外の場合、プラットフォームはビルドパック / Dockerfile ジェネレーターである **lizardpack** を実行します。
 
 <span id="lizardpack-auto-detect" />
 
@@ -30,12 +31,13 @@ lizardpack はリポジトリを検査し、最適化されたマルチステー
 
 この経路では:
 
-- リポジトリに `Dockerfile` が存在し、**かつ** 実際のビルドステップ（`RUN <package-manager>` の行であり、単なる `COPY dist/` ではない）がある場合、それがそのまま使用されます。
-- それ以外の場合、lizardpack が Dockerfile を生成します。
+- アップロードされたソース（`lizard up`）では、ルートの `Dockerfile` が常に書かれたとおりに使用されます。
+- GitHub ソースでは、ルートの `Dockerfile` は不完全に見えない限り、書かれたとおりに使用されます。不完全と見なされるのは、`build`、`dist`、`out`、`.next`、`public` を末尾のスラッシュなしで `COPY` していて（`COPY dist /usr/share/nginx/html`）、`npm`、`yarn`、`pnpm`、`bun`、`pip`、`pip3`、`bundle`、`cargo`、`go build`、`mvn`、`gradle` で始まる `RUN` 行がない場合です。その場合は lizardpack が代わりの Dockerfile を生成します。
+- Dockerfile がない場合は、lizardpack が生成します。
 - **開始コマンド** は自動検出されます: `Procfile` `web:` の行（Python/Ruby）または `package.json` `scripts.start`（Node）が自動的に検出されます。Django、Flask、FastAPI がそれぞれ必要とする正確な行については、[Pythonアプリホスティング](https://lizard.build/blog/python-app-hosting) を参照してください。
 - **ポート** は `EXPOSE`、フレームワークのデフォルト、または明示的な `PORT` 環境変数から推定されます。
 
-> **注意:** 事前ビルド済みアーティファクトのみをコピーする Dockerfile（`COPY dist/`、`build/`、`out/`、`.next/`、`public/`）で、`RUN` のビルドステップが**ない**場合は、不完全と見なされ、lizardpack によって再生成されます。実際のビルドステップを追加するか、`dockerfilePath` を設定してそのまま使用するよう強制してください。
+> **注意:** GitHub ソースでは、事前ビルド済みの出力をコピーし（`COPY dist /dest`）、パッケージマネージャーの `RUN` ステップがない Dockerfile は、不完全と見なされ、lizardpack によって再生成されます。実際のビルドステップを追加するか、`dockerfilePath` を設定してそのまま使用するよう強制してください。[Dockerfile の変更が反映されない](/deploy/troubleshooting/incomplete-dockerfile) を参照してください。
 
 <span id="what-triggers-a-rebuild" />
 
@@ -45,12 +47,23 @@ lizardpack はリポジトリを検査し、最適化されたマルチステー
 |--------|-----------|
 | 追跡対象ブランチへの `git push` | ✅ GitHub webhook 経由 |
 | `lizard redeploy` / `lizard up` | ✅ 明示的 |
-| `VITE_*` または `NEXT_PUBLIC_*` 変数の変更 | ✅ ビルド時の値は焼き込まれます |
-| ビルドフィールド（`repoUrl`、`branch`、`sourceType`、`buildCommand`、`dockerfilePath`、`rootDirectory`）の `service set` | ✅ 自動的に再ビルド |
+| `VITE_*` または `NEXT_PUBLIC_*` 変数の変更 | ✅ 稼働中のサービスを再ビルドします。値がいつビルドに渡されるかは [ビルド時の変数](#build-time-variables) を参照してください |
+| ビルドフィールド（`repoUrl`、`branch`、`sourceType`、`buildCommand`、`dockerfilePath`、`rootDirectory`）の `service set` | ✅ 稼働中のサービスは自動的に再ビルド。それ以外は `lizard redeploy` を実行 |
 | ランタイム専用フィールド（`startCommand`、`preDeployCommand`、`containerPort`、`watchPatterns`）の `service set` | ❌ 適用するには `lizard redeploy` を実行 |
 | その他の環境変数 / シークレットの変更 | ❌ クイック再起動で適用（再ビルドなし） |
 
-> **二重にビルドしないでください。** ビルドフィールドを変更する `service set` の後は、再ビルドが自動的に発火します — その後に `lizard redeploy` を続けないでください。2 回目の冗長なビルドがキューに入ります。
+> **二重にビルドしないでください。** 稼働中のサービスでビルドフィールドを変更する `service set` の後は、再ビルドが自動的に発火します — その後に `lizard redeploy` を続けないでください。2 回目の冗長なビルドがキューに入ります。クラッシュしたサービスや一度もデプロイされていないサービスは、自動では再ビルドされません。`lizard redeploy` を実行してください。
+
+<span id="build-time-variables" />
+
+## ビルド時の変数
+
+Lizard は次の 2 つの場合に、`VITE_*` と `NEXT_PUBLIC_*` 変数を `ENV` 行として Dockerfile に書き込みます:
+
+- `dockerfilePath` のない GitHub サービス: lizardpack の Dockerfile、またはリポジトリのルートの `Dockerfile` に書き込まれます。
+- `buildCommand` または `startCommand` があり、合成された Dockerfile が Node のビルドであるサービス。
+
+ビルドコマンドも開始コマンドもなしに `lizard up` でデプロイしたサービスには、ビルド時に Lizard の変数は渡されません。`COMMIT_SHA` 以外のビルド引数はどのサービスにも渡されないため、Dockerfile 内の `ARG` は空のままになります。`lizard up` で公開値を使うには、`.env.production` にコミットする（`.gitignore` で除外されていないか確認してください）、Dockerfile に書き込む、または Node のサーバーアプリなら `buildCommand` と `startCommand` の両方を設定する、のいずれかを行ってください。
 
 <span id="watching-a-build" />
 
@@ -78,12 +91,12 @@ lizard events                  # deploy history + replica status
 
 | フィールド | 説明 |
 |-------|-------------|
-| `buildCommand` | アプリをビルドするコマンド → **合成された Dockerfile** 経路を強制 |
-| `startCommand` | ランタイムでアプリを起動するコマンド |
-| `preDeployCommand` | 各デプロイ前に 1 回実行されます（例: DB マイグレーション） |
-| `dockerfilePath` | **そのまま**使用する、リポジトリ内 Dockerfile へのパス |
+| `buildCommand` | アプリをビルドするコマンド → `dockerfilePath` が設定されていない限り、**合成された Dockerfile** 経路を選択 |
+| `startCommand` | ランタイムでアプリを起動するコマンド。イメージの `CMD` を置き換えます |
+| `preDeployCommand` | すべてのコンテナの起動時（レプリカごと、再起動ごと）に、`startCommand` の前に実行されます。`startCommand` が設定されている場合のみ実行されます。何度実行しても、同時に実行しても安全なようにしてください |
+| `dockerfilePath` | **そのまま**使用する、リポジトリ内 Dockerfile へのパス。イメージのビルドでは `buildCommand` / `startCommand` より優先されます |
 | `rootDirectory` | ビルド元のサブディレクトリ（モノレポ） |
 | `watchPatterns` | 一致するパスが変更された場合のみ再デプロイ |
 | `containerPort` | アプリが listen する TCP ポート（デフォルト `3000`; `0` = [worker](/deploy/workers)） |
 
-これらはいずれも `lizard service set <svc> --set <field>=<value>` で設定できます。[`lizard service`](/cli/service) を参照してください.
+これらはいずれも `lizard service set <svc> --set <field>=<value>` で設定できます。フィールドをクリアするには、`--set buildCommand=` のように空の値を指定します。[`lizard service`](/cli/service) を参照してください.

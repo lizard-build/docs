@@ -16,11 +16,11 @@ Cuando tu código no está en GitHub — o simplemente quieres iterar rápido �
 lizard up
 ```
 
-- Sube el directorio actual como un tarball, respetando `.gitignore` (desactívalo con `--no-gitignore`).
+- Sube el directorio actual como un tarball. Dentro de un repositorio git respeta `.gitignore` (desactívalo con `--no-gitignore`). Fuera de git omite solo una lista fija de carpetas de compilación y dependencias (`node_modules`, `.git`, `dist`, `.next`, `build`, `__pycache__`, `.venv`, `venv`, `.cache`, `coverage`, `.turbo`, `.vercel`) además de `.DS_Store`, `*.pyc`, `*.pyo` y `*.log`, por lo que los archivos `.env` se suben. Ejecuta `git init` o mueve antes los secretos a otro lugar.
 - Fuerza `sourceType=upload`.
 - Transmite los logs de compilación por SSE y muestra la URL en vivo al finalizar.
 
-Si el directorio todavía no está vinculado a un proyecto, `up` ejecuta primero `init`. En un TTY eso es interactivo; en un entorno no TTY (CI) **no** creará un proyecto silenciosamente: devuelve un error y te pide que ejecutes `lizard init --name <project>` (o que pases `--name`). Esto evita que un error tipográfico genere un proyecto vacío.
+Si el directorio todavía no está vinculado a un proyecto, `up` ejecuta primero `init`. En un TTY eso es interactivo; en un entorno no TTY (CI) **no** creará un proyecto silenciosamente: devuelve un error y te pide que ejecutes `lizard init --name <project>` (o que pases `--project <name>` a `up`). Esto evita que un error tipográfico genere un proyecto vacío.
 
 <span id="common-flags" />
 
@@ -28,12 +28,12 @@ Si el directorio todavía no está vinculado a un proyecto, `up` ejecuta primero
 
 | Bandera | Propósito |
 |------|---------|
-| `-s, --service <name>` | Apuntar a un servicio específico o crearlo |
+| `-s, --service <name>` | Apuntar a un servicio existente |
 | `--build-command <cmd>` | Anular el comando de compilación |
 | `--start-command <cmd>` | Anular el comando de arranque |
-| `--pre-deploy-command <cmd>` | Ejecutar una vez antes de cada despliegue (p. ej., migraciones) |
+| `--pre-deploy-command <cmd>` | Ejecutar al inicio de cada contenedor, antes del comando de arranque; requiere `--start-command` (consulta [configuración de compilación](/concepts/build-pipeline#build-configuration-reference)) |
 | `--port <number>` | Puerto del contenedor (`0` = [modo worker](/deploy/workers)) |
-| `--region <code>` | Región donde desplegar |
+| `--region <code>` | Región para un servicio nuevo (se ignora en servicios existentes) |
 | `-d, --detach` | Iniciar el despliegue y salir sin transmitir logs |
 | `-c, --ci` | Salida amigable para CI |
 | `--no-gitignore` | Subir todo, ignorando `.gitignore` |
@@ -46,7 +46,7 @@ lizard up --service api --start-command "node server.js" --port 8080
 
 ## Configurar comandos de compilación/arranque
 
-Pasar `--build-command` o `--start-command` cambia el servicio a la ruta de **Dockerfile sintetizado**. En esa ruta, `Procfile` y `package.json` `scripts.start` **no** se leen — establece el comando de arranque explícitamente (o incluye un `CMD` en tu propio Dockerfile). Consulta [Proceso de compilación](/concepts/build-pipeline). Python es donde esto más suele afectar: [Django, Flask and FastAPI](https://lizard.build/blog/python-app-hosting#deploying-django) necesitan cada uno una línea distinta de `gunicorn` o `uvicorn`.
+Pasar `--build-command` o `--start-command` lo guarda en el servicio y cambia el servicio a la ruta de **Dockerfile sintetizado**, a menos que `dockerfilePath` esté definido. En esa ruta, `Procfile` y `package.json` `scripts.start` **no** se leen — establece el comando de arranque explícitamente. Consulta [Proceso de compilación](/concepts/build-pipeline). Python es donde esto más suele afectar: [Django, Flask and FastAPI](https://lizard.build/blog/python-app-hosting#build-and-start-commands) necesitan cada uno una línea distinta de `gunicorn` o `uvicorn`.
 
 <span id="re-deploying-an-upload-service" />
 
@@ -65,7 +65,7 @@ lizard redeploy --service api
 Para flujos no interactivos, vincula el proyecto explícitamente antes de desplegar:
 
 ```bash
-export LIZARD_TOKEN=lzd_xxx
+export LIZARD_TOKEN=liz_xxx   # create one with: lizard keys create <name>
 lizard init --name my-project
 lizard up --ci --service api
 ```

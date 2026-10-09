@@ -41,7 +41,7 @@ lizard up --service bot --port 0
 
 The preflight checks the token with `getMe` and refuses a bot with an active webhook. It does not remove or change that webhook. A second polling process can still conflict: stop any local copy before deployment.
 
-The example excludes `.env*` from uploads. Keep the token out of source files and screenshots. On macOS with Lizard CLI 0.3.92, prefix the upload command with `COPYFILE_DISABLE=1`. Read the final deployment event and logs even if the command exits successfully.
+Inside a git repository, the example's `.gitignore` keeps `.env*` out of the upload. Outside git, the CLI uploads `.env`, so run `git init` in the example directory first; its `.dockerignore` keeps the file out of the image either way. Keep the token out of source files and screenshots. Read the final deployment event and logs even if the command exits successfully.
 
 For an existing service, set worker mode explicitly:
 

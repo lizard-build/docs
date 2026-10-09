@@ -1,5 +1,5 @@
 ---
-description: "Pick where your services and addons run, co-locate stateful resources to cut latency, and see how region affects generated domains."
+description: "Pick where your services and addons run, co-locate stateful resources to cut latency, and see which hostnames services and object storage get."
 ---
 
 # Regions
@@ -20,13 +20,13 @@ Pass `--region <code>` when creating a service or addon:
 ```bash
 lizard add -r your-org/your-app --region <code>
 lizard add postgres --region <code>
-lizard up --region <code>
+lizard up --region <code>          # new services only
 ```
 
-If you don't specify a region, the platform uses the project's default.
+Projects have no default region. Without `--region`, `lizard add` creates in `us-east-1`, and `lizard up` creates a new service in the region of the API server that handles the request. Pass `--region` to choose.
 
-> **Co-locate stateful resources.** Put a service and the addons it talks to (Postgres, Redis, S3) in the **same region** to keep latency low and avoid cross-region data charges.
+> **Co-locate stateful resources.** Put a service and the addons it talks to (Managed Postgres, Managed Redis, Managed Object Storage) in the **same region** to keep latency low and avoid cross-region data charges.
 
 ## Generated domains
 
-Each service gets a generated domain on `*.onlizard.com` with automatic TLS, regardless of region. Object storage served from an [S3 addon](/addons/storage) uses a region-scoped gateway host (`s3-<region>.onlizard.com`). To attach your own hostname, see [Networking](/networking).
+Each service gets a generated domain with automatic TLS: `<name>-<suffix>.onlizard.com` for new services, while older services keep `<words>.<region>.onlizard.com`. [Managed Object Storage](/addons/storage) uses a gateway host per region: `s3-us-east-1.onlizard.com` for `us-east-1` and `s3-eu-west-1.onlizard.com` for `eu-west-lim-a`. To attach your own hostname, see [Networking](/networking).

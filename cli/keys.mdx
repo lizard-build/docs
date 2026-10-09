@@ -1,0 +1,76 @@
+---
+description: "lizard keys creates, lists, and deletes liz_ API keys for CI, the Lizard SDK, and sandboxes, optionally scoped to projects or workspaces."
+---
+
+# lizard keys
+
+Create, list, and delete API keys. Alias: `lizard apikey`.
+
+## Usage
+
+```bash
+lizard keys create <name> [flags]
+lizard keys list
+lizard keys rm <name-or-id> [flags]
+```
+
+API keys start with `liz_`. Use one wherever you can't log in through a browser:
+
+- `LIZARD_TOKEN` or `LIZARD_API_KEY` for the CLI in CI
+- `lizard login --token liz_…` on a machine
+- `LIZARD_API_KEY` for the [Lizard SDK](/sandboxes/sdk-reference)
+- `lizard sandbox create --with-token liz_…` to use `lizard` inside a sandbox
+
+## Subcommands
+
+### `lizard keys create <name>`
+
+Create a key and print it once. Copy it then; Lizard does not show it again. A key without a scope has full access to every workspace and project you can reach. Scope it with these flags, each repeatable:
+
+| Flag | Description |
+|------|-------------|
+| `-p, --project <id>` | Limit the key to this project (name, slug, or ID) |
+| `-w, --workspace <id>` | Limit the key to this workspace (name, slug, or ID) |
+
+A scoped key can't see account billing or settings.
+
+### `lizard keys list`
+
+List your keys with a short preview, scope, creation time, and last use (alias `ls`).
+
+### `lizard keys rm <name-or-id>`
+
+Delete a key (alias `delete`). If two keys share a name, delete by ID.
+
+| Flag | Description |
+|------|-------------|
+| `-y, --yes` | Skip confirmation |
+
+## Examples
+
+### Create a key for CI
+
+```bash
+lizard keys create github-actions --project my-project
+```
+
+Store the printed key as a CI secret named `LIZARD_TOKEN`.
+
+### Create a key for a sandbox
+
+```bash
+lizard keys create sandbox-agent --workspace my-team
+lizard sandbox create --with-token liz_xxx
+```
+
+### Delete a key
+
+```bash
+lizard keys rm github-actions --yes
+```
+
+## See also
+
+- [lizard login](/cli/login) — log in with a key on a machine
+- [JSON & Automation](/cli/json) — using the CLI from CI
+- [lizard sandbox](/cli/sandbox) — `--with-token` installs a key in a sandbox

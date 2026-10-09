@@ -1,10 +1,10 @@
 ---
-description: "lizard workspace list показывает все рабочие пространства, доступные вашему аккаунту, и как они связаны с проектами и сервисами."
+description: "lizard workspace создаёт, показывает и удаляет рабочие пространства, а также показывает, как они связаны с проектами и сервисами."
 ---
 
 # lizard workspace
 
-Список доступных вам рабочих пространств.
+Создание, просмотр и удаление рабочих пространств.
 
 <span id="usage" />
 
@@ -12,7 +12,35 @@ description: "lizard workspace list показывает все рабочие �
 
 ```bash
 lizard workspace list
+lizard workspace create <name>
+lizard workspace rm <name-or-id> [flags]
 ```
+
+<span id="subcommands" />
+
+## Подкоманды
+
+<span id="lizard-workspace-list" />
+
+### `lizard workspace list`
+
+Список рабочих пространств, в которых вы состоите, с вашей ролью и количеством проектов (псевдоним `ls`).
+
+<span id="lizard-workspace-create-name" />
+
+### `lizard workspace create <name>`
+
+Создайте рабочее пространство. Добавлять в него проекты можно командой `lizard project create <name> --workspace <slug>`.
+
+<span id="lizard-workspace-rm-name-or-id" />
+
+### `lizard workspace rm <name-or-id>`
+
+Удаляет рабочее пространство (псевдоним `delete`). Удалить его может только владелец, и только если в нём не осталось проектов и sandboxes. Личное рабочее пространство удалить нельзя.
+
+| Флаг | Описание |
+|------|----------|
+| `-y, --yes` | Пропустить подтверждение |
 
 <span id="examples" />
 
@@ -26,9 +54,26 @@ lizard workspace list
 lizard workspace list
 ```
 
+<span id="create-a-workspace" />
+
+### Создание рабочего пространства
+
+```bash
+lizard workspace create my-team
+```
+
+<span id="delete-an-empty-workspace" />
+
+### Удаление пустого рабочего пространства
+
+```bash
+lizard workspace rm my-team --yes
+```
+
 <span id="see-also" />
 
 ## См. также
 
 - [lizard whoami](/cli/whoami) — показывает ваше активное рабочее пространство
+- [lizard project](/cli/project) — список и создание проектов в рабочем пространстве
 - [Architecture: Рабочая область](/concepts/architecture) — как рабочие пространства связаны с проектами и сервисами

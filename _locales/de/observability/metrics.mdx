@@ -15,7 +15,7 @@ Verfolge CPU, Arbeitsspeicher, Netzwerk und Festplatte für einen Service — un
 ```bash
 lizard metrics                    # CPU / memory / network / disk
 lizard metrics --service api      # a specific service
-lizard metrics --range <range>    # time window
+lizard metrics --range 24h        # time window: 1h (default), 6h, 24h, 7d, 14d, 30d
 lizard metrics --watch            # live-updating view
 ```
 
@@ -27,11 +27,11 @@ lizard metrics --watch            # live-updating view
 lizard metrics --cost
 ```
 
-Fügt Kostenangaben neben der Ressourcennutzung hinzu, damit du den Preis der aktuellen Skalierung sehen kannst.
+Zeigt anstelle der Metriken eine Kostenansicht: den Preis pro Stunde jeder laufenden Ressource, die Nutzung im aktuellen Abrechnungszeitraum (inklusive Egress) und wie viel der in Pro enthaltenen $19 du in diesem Monat bereits verbraucht hast. Sie umfasst das gesamte Projekt, ignoriert `--service` und `--range`, und nur der Workspace-Eigentümer kann sie sehen.
 
 ## Dashboard
 
-Das Dashboard (`lizard open`) stellt diese als Diagramme in der Ansicht **Metriken / Observability** dar, und die Ansicht **Nutzung** schlüsselt Verbrauch und Abrechnung im gesamten Projekt auf. Öffne es mit:
+Das Dashboard (`lizard open`) stellt diese als Diagramme in der Ansicht **Metriken** dar, und die Ansicht **Nutzung** schlüsselt Verbrauch und Abrechnung im gesamten Projekt auf. Öffne es mit:
 
 ```bash
 lizard open
@@ -42,7 +42,7 @@ lizard open
 ## Auf Basis der Werte handeln
 
 - Hohe CPU-/Arbeitsspeicherauslastung → hochskalieren: `lizard scale --service api --cpu 2 --memory 2048`.
-- Anhaltende Last → Replikate hinzufügen: `lizard scale --service api --replicas 3`.
+- Anhaltende Last → Replikate hinzufügen: `lizard scale --service api --replicas 3`. Pro erlaubt 1 Replikat pro Service während der Testphase und 5 nach der ersten bezahlten Rechnung.
 - Speicherengpass bei einem Add-on → Speicher erweitern: `lizard scale --service postgres --storage 8192`.
 
 Siehe [Scaling](/deploy/scaling).

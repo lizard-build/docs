@@ -49,7 +49,7 @@ lizard up --service bot --port 0
 
 La comprobación previa valida el token con `getMe` y rechaza un bot con un webhook activo. No elimina ni cambia ese webhook. Un segundo proceso de polling aún puede entrar en conflicto: detén cualquier copia local antes del despliegue.
 
-El ejemplo excluye `.env*` de las cargas. Mantén el token fuera de los archivos fuente y las capturas de pantalla. En macOS con Lizard CLI 0.3.92, añade el prefijo `COPYFILE_DISABLE=1` al comando de carga. Lee el evento final del despliegue y los logs incluso si el comando termina correctamente.
+Dentro de un repositorio git, el `.gitignore` del ejemplo deja `.env*` fuera de la carga. Fuera de git, la CLI sube `.env`, así que ejecuta primero `git init` en el directorio del ejemplo; su `.dockerignore` deja el archivo fuera de la imagen en ambos casos. Mantén el token fuera de los archivos fuente y las capturas de pantalla. Lee el evento final del despliegue y los logs incluso si el comando termina correctamente.
 
 Para un servicio existente, configura explícitamente el modo worker:
 

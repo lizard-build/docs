@@ -32,9 +32,9 @@ lizard regions
 lizard regions --json
 ```
 
-### Choose a region when creating a service or addon
+### Choose a region when you create a resource
 
-Pass `--region <code>` to `lizard add` or `lizard up`:
+Pass `--region <code>` to `lizard add`, `lizard up`, `lizard sandbox create`, or `lizard volume create`:
 
 ```bash
 lizard add -r your-org/your-app --region <code>
@@ -42,7 +42,7 @@ lizard add postgres --region <code>
 lizard up --region <code>
 ```
 
-If you don't specify a region, the platform uses the project's default.
+Without `--region`, `lizard add` uses `us-east-1` and `lizard up` uses the platform's default region. On `lizard up`, `--region` only applies when it creates a new service.
 
 ## See also
 

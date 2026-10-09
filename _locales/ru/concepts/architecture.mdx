@@ -57,13 +57,13 @@ lizard project list             # all projects in the workspace
 - **`github`** — подключённый репозиторий GitHub. Пуш в отслеживаемую ветку вызывает повторный деплой.
 - **`upload`** — тарболл, загруженный через `lizard up`.
 
-Каждый запущенный сервис работает как отдельный **изолированный под** с политикой сети default-deny, сгенерированным доменом `<name>.<region>.onlizard.com` и автоматическим TLS. Это разделение — вы предоставляете контейнер, платформа его запускает — называется [container as a service](https://lizard.build/blog/container-as-a-service), а в блоге описано, что ещё остаётся на вашей стороне. Инспектировать и управлять сервисами можно с помощью:
+Каждый запущенный сервис работает как отдельный **изолированный под** с политикой сети default-deny, сгенерированным доменом `<name>-<suffix>.onlizard.com` (у более старых сервисов остаётся `<words>.<region>.onlizard.com`) и автоматическим TLS. Это разделение — вы предоставляете контейнер, платформа его запускает — называется [container as a service](https://lizard.build/blog/container-as-a-service), а в блоге описано, что ещё остаётся на вашей стороне. Инспектировать и управлять сервисами можно с помощью:
 
 ```bash
 lizard ps                       # list services with status + URL
 lizard service show             # full config as JSON
 lizard service set <svc> --set <field>=<value>
-lizard service rename --service <svc>
+lizard service rename <new-name> --service <svc>
 lizard service delete --service <svc>
 ```
 
@@ -79,7 +79,7 @@ lizard service delete --service <svc>
 
 ## Управляемые аддоны
 
-**Аддоны** — это управляемые Postgres, Redis и S3-совместимое хранилище, которые вы создаёте на уровне проекта:
+**Аддоны** — это Managed Postgres, Managed Redis и Managed Object Storage (S3-совместимое), которые вы создаёте на уровне проекта:
 
 ```bash
 lizard add postgres redis s3
@@ -97,17 +97,18 @@ lizard add postgres redis s3
 ${{<name>.<KEY>}}
 ```
 
-Ссылки разрешаются **во время деплоя** против объединённого окружения цели. Они хранятся по ID, поэтому последующее переименование цели не ломает ссылку. Ссылка на несуществующую цель или ключ разрешается в пустую строку (деплой **не** падает); выбрасывают ошибку только циклические ссылки.
+Ссылки разрешаются **во время деплоя** против объединённого окружения цели. Они сопоставляются с **текущим именем** цели: если вы переименуете сервис или аддон, обновите все ссылки, использующие старое имя. Ссылка на несуществующую цель или ключ разрешается в пустую строку (деплой **не** падает); выбрасывают ошибку только циклические ссылки.
 
 ```bash
 # Wire a service to the project's Postgres
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 ```
 
-Проверить, что потребитель действительно получил значение:
+Проверьте, что ссылка разрешилась. Лог сборки выводит предупреждение для каждой ссылки, разрешившейся в пустое значение, а `secrets list` показывает, что сохранено:
 
 ```bash
-lizard ssh --service api -- env | grep DATABASE_URL
+lizard logs --build --service api
+lizard secrets list --service api --show
 ```
 
 <span id="platform-injected-variables" />
@@ -121,6 +122,7 @@ lizard ssh --service api -- env | grep DATABASE_URL
 | `PORT` | Порт, который должно слушать приложение (отсутствует в режиме воркера) |
 | `LIZARD_SERVICE_NAME` | Имя сервиса |
 | `LIZARD_PROJECT_ID` | ID проекта |
-| `LIZARD_PUBLIC_DOMAIN` | Публичный домен сервиса |
+| `LIZARD_PUBLIC_DOMAIN` | Публичный домен сервиса (устанавливается после назначения домена) |
+| `LIZARD_PRIVATE_DOMAIN` | Приватное имя хоста сервиса, `<host>.lizard.internal`, доступное из того же проекта |
 
 Как они взаимодействуют с вашими переменными и полный порядок приоритетов см. в разделе [Переменные и секреты](/variables).

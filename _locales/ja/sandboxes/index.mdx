@@ -15,19 +15,20 @@ description: "Sandboxes のランタイム、テンプレート、ライフサ�
 <span id="lifecycle" />
 <span id="ways-to-drive-sandboxes" />
 
-Sandboxes は runc を使う Kubernetes Pod で短時間のコマンドやエージェントのタスクを実行します。ホストのカーネルを共有し、Firecracker 仮想マシンではありません。信頼できないコードを実行する際は、認証情報とネットワークへのアクセスを制限してください。
+Sandboxes は、それぞれ独自のカーネルを持つ Firecracker microVM として、短時間のコマンドやエージェントのタスクを実行します。Pod ベースの Persistent Volume を接続した sandbox や、Pod の snapshot から復元した sandbox は、runc を使う Kubernetes Pod として実行され、ホストのカーネルを共有します。どちらで実行されているかは `getInfo().runtime` でわかります。信頼できないコードを実行する際は、認証情報とネットワークへのアクセスを制限してください。
 
 ## ランタイムとテンプレート
 
-現在のカタログからテンプレートを選びます。有効なテンプレートには `base`、`codex`、`interpreter` があり、利用可否はリージョンとプールの空き容量によって変わります。`interpreter` には Python と一般的なデータ処理ライブラリが含まれます。ツールのバージョンは sandbox 内で確認してください。公開 CLI には独自テンプレートのアップロード機能はありません。
+現在のカタログからテンプレートを選びます: `base`、`interpreter`、`codex`、`claude`、`opencode`、`pi`、`prime`、`desktop`。利用可否はリージョンとプールの空き容量によって変わります。`interpreter` には Python と一般的なデータ処理ライブラリが含まれます。`desktop` はグラフィカルなデスクトップを実行し、`sandbox.desktop` または `lizard sandbox desktop` で操作します。ツールのバージョンは sandbox 内で確認してください。公開 CLI には独自テンプレートのアップロード機能はありません。
 
 ## ライフサイクル
 
-sandbox を作成してコマンドを実行し、終了後に `kill` を呼び出します。`connect` は既存の sandbox に接続するだけで状態を変えないため、一時停止中や停止済みの sandbox を再開しません。一時停止、再開、snapshot、restore は利用できます。[一時停止、再開、スナップショット](/sandboxes/quickstart#pause-and-resume)を参照してください。fork とファイル監視は HTTP 501 を返します。`lizard sandbox ssh` は CLI の認証情報で対話型シェルを開きます。SSH プロトコルでのアクセスはできないため、SSH クライアント、`scp`、ポートフォワーディングは使えません。
+sandbox を作成してコマンドを実行し、終了後に `kill` を呼び出します。`connect` は既存の sandbox に接続するだけで状態を変えないため、一時停止中や停止済みの sandbox を再開しません。一時停止、再開、snapshot、restore は利用できます。[一時停止、再開、スナップショット](/sandboxes/quickstart#pause-and-resume)を参照してください。`fork` は、メモリとプロセスを含めて実行中の sandbox をコピーします。ボリュームが接続されている場合は 409 を、Pod として実行されている sandbox では 501 を返します。ファイル監視はまだ利用できません。`lizard sandbox ssh` は CLI の認証情報で対話型シェルを開きます。SSH プロトコルでのアクセスはできないため、SSH クライアント、`scp`、ポートフォワーディングは使えません。
 
 ```text
 create -> running -> stopped (kill / expiration)
 running -> paused -> running (pause / resume)
+running -> new sandboxes (fork)
 snapshot -> new sandbox (restore)
 ```
 
@@ -41,7 +42,7 @@ SDK と CLI の既定の有効期間は 5 分です。API の直接呼び出し�
 
 sandbox の実行中はファイルとプロセスを維持します。停止後、別の sandbox で使えるのは、接続した Persistent Volume の `/workspace` に保存したファイルだけです。ボリュームがなければ `/workspace` は一時領域です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。
 
-各サイズは固定の時間単価で、sandbox の実行中は秒単位で課金されます。アイドル時間も含みます。送信トラフィックはアカウントごとに直近 30 日間で [2 TB まで](/platform/limits#sandbox-egress)料金に含まれます。スナップショットから復元した sandbox は実測使用量で課金されます。一時停止中の sandbox は課金されません。Persistent Volumes はデータを保存している間、別途課金されます。タスクが終わったら sandbox を一時停止するか停止してください。
+各サイズは固定の時間単価で、sandbox の実行中は秒単位で課金されます。アイドル時間も含みます。送信トラフィックはアカウントごとに直近 30 日間で [2 TB まで](/platform/limits#sandbox-egress)料金に含まれます。スナップショットから復元した sandbox は、復元元と同じサイズと料金で実行されます。Pod の snapshot から復元した sandbox は実測使用量で課金されます。一時停止中の sandbox は課金されません。Persistent Volumes はデータを保存している間、別途課金されます。タスクが終わったら sandbox を一時停止するか停止してください。
 
 ```ts
 import { Sandbox } from '@lizard-build/sdk';

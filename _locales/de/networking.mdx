@@ -1,5 +1,5 @@
 ---
-description: "Jeder Service erhält eine onlizard.com-Domain mit automatischem TLS. Füge einen benutzerdefinierten Hostnamen hinzu, verifiziere DNS, stelle einen Port bereit oder entferne eine Domain."
+description: "Jeder Service erhält eine onlizard.com-Domain mit automatischem TLS. Füge einen benutzerdefinierten Hostnamen hinzu, verifiziere DNS, ändere den Port, erreiche andere Services privat oder entferne eine Domain."
 ---
 
 <span id="networking" />
@@ -12,14 +12,14 @@ Jeder Service erhält beim Deployment sofort eine generierte `*.onlizard.com`-Do
 
 ## Generierte Domains
 
-Die Standarddomain eines Service wird automatisch für dich erstellt. Zeige sie an (oder generiere eine neue):
+Die Standarddomain eines Service wird automatisch für dich erstellt, in der Form `<name>-<suffix>.onlizard.com`. Ältere Services behalten `<words>.<region>.onlizard.com`. Zeige sie an:
 
 ```bash
 lizard domain                    # show the service's current domain
-lizard domain generate           # generate a new *.onlizard.com subdomain
+lizard domain generate           # claim a *.onlizard.com subdomain if the service has none
 ```
 
-Object Storage, das über ein [S3-Add-on](/addons/storage) bereitgestellt wird, verwendet stattdessen einen regionsspezifischen Gateway-Host (`s3-<region>.onlizard.com`).
+`lizard domain generate` gibt die vorhandene generierte Domain zurück, falls es eine gibt, und schlägt fehl, solange der Service eine benutzerdefinierte Domain hat. Dateien, die über [Managed Object Storage](/addons/storage) bereitgestellt werden, verwenden stattdessen einen Gateway-Host: `s3-eu-west-1.onlizard.com` oder `s3-us-east-1.onlizard.com`.
 
 <span id="attach-a-custom-domain" />
 
@@ -40,7 +40,7 @@ Lizard gibt die zu erstellenden DNS-Einträge zurück (einen `CNAME` für den Ho
 Sobald DNS propagiert wurde, aktiviere die Domain:
 
 ```bash
-lizard domain verify app.example.com
+lizard domain verify app.example.com --service web
 ```
 
 Dabei wird der `TXT`-Eintrag geprüft und die Domain aktiviert. TLS wird automatisch bereitgestellt.
@@ -50,29 +50,42 @@ Dabei wird der `TXT`-Eintrag geprüft und die Domain aktiviert. TLS wird automat
 ## Eine Domain entfernen
 
 ```bash
-lizard domain delete app.example.com
-lizard domain rm app.example.com --yes   # alias, skip confirmation
+lizard domain delete app.example.com --service web
+lizard domain rm app.example.com --service web --yes   # alias, skip confirmation
 ```
 
 <span id="exposing-a-specific-port" />
 
-## Einen bestimmten Port bereitstellen
+<span id="change-the-port-your-service-listens-on" />
 
-Wenn dein Service auf einem nicht standardmäßigen Port bereitstellt, ordne die Domain diesem Port zu:
+## Den Port ändern, auf dem dein Service lauscht
+
+Domains leiten zum Container-Port des Service. Wenn dein Service auf einem anderen Port lauscht, ändere den Container-Port und führe ein Redeploy durch:
 
 ```bash
-lizard domain app.example.com --service web --port 8080
+lizard port 8080 --service web
+lizard redeploy --service web
 ```
 
 ## Worker-Services
 
 Ein [Service im Worker-Modus](/deploy/workers) (`containerPort=0`) kann weiterhin eine generierte Domain anzeigen, stellt aber nichts bereit — es gibt keinen Listener und keine Load-Balancer-Route. Füge einem Worker keine benutzerdefinierte Domain hinzu.
 
+<span id="private-networking" />
+
+## Privates Netzwerk
+
+Services im selben Projekt erreichen sich unter `<service>.lizard.internal`, auf jedem Port, auf dem der Service lauscht, ohne öffentliche Domain. Verweise auf den Hostnamen mit `${{api.LIZARD_PRIVATE_DOMAIN}}`. Managed Postgres und Managed Redis stellen im selben Netzwerk `DATABASE_PRIVATE_URL` und `REDIS_PRIVATE_URL` bereit. Diese Namen werden nur innerhalb des Projekts aufgelöst.
+
+```bash
+lizard secrets set API_URL='http://${{api.LIZARD_PRIVATE_DOMAIN}}:8080' --service web
+```
+
 <span id="manage-in-the-dashboard" />
 
 ## Im Dashboard verwalten
 
-Die Ansicht **Domains** im Dashboard (`lizard open`) zeigt den Verifizierungs- und TLS-Status jeder Domain und ermöglicht es dir, Hostnamen visuell hinzuzufügen oder zu entfernen.
+Öffne einen Service im Dashboard (`lizard open`) und gehe zu **Settings → Networking**. Dort siehst du den Verifizierungs- und DNS-Status jeder Domain und kannst Hostnamen hinzufügen oder entfernen.
 
 <span id="see-also" />
 
@@ -80,4 +93,4 @@ Die Ansicht **Domains** im Dashboard (`lizard open`) zeigt den Verifizierungs- u
 
 - [`lizard domain`](/cli/domain) — die vollständige Befehlsreferenz.
 - [Regionen](/deploy/regions) — Services und Addons zur Verringerung der Latenz gemeinsam platzieren.
-- [Vom Prototyp zu einem SaaS, für das Leute zahlen](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#from-vibe-coded-prototype-to-a-saas-people-pay-for) — wo eine benutzerdefinierte Domain zwischen all den anderen Dingen steht, die eine generierte App noch braucht.
+- [Vom Prototyp zu einem SaaS, für das Leute zahlen](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#verify-a-real-production-flow) — wo eine benutzerdefinierte Domain zwischen all den anderen Dingen steht, die eine generierte App noch braucht.

@@ -101,6 +101,6 @@ Das vollständige Dockerfile enthält einen npm-Build-Schritt, den lizardpack er
 
 Rufen Sie die Live-Startseite, eine exportierte innere Route, ein JavaScript-Asset und einen erfundenen Pfad auf. Der erfundene Pfad muss HTTP 404 zurückgeben, nicht die Startseite mit HTTP 200. Verwenden Sie die Prüfungen unter [statische Routen und 404er](/framework-guides/static-routing#verify-http-responses).
 
-Alle Änderungen an exportierten Inhalten erfordern einen neuen Build. Laufzeit-Umgebungsvariablen können Werte, die bereits in `out/` geschrieben wurden, nicht ändern. Deklarieren Sie für öffentliche Build-Variablen in einem benutzerdefinierten Dockerfile das erforderliche `ARG` vor `RUN npm run build`; legen Sie niemals private Zugangsdaten im exportierten Bundle ab.
+Alle Änderungen an exportierten Inhalten erfordern einen neuen Build. Laufzeit-Umgebungsvariablen können Werte, die bereits in `out/` geschrieben wurden, nicht ändern. Schreiben Sie öffentliche Build-Variablen als `ENV`-Zeilen in der Build-Stage vor `RUN npm run build`. Lizard übergibt außer `COMMIT_SHA` keine Build-Argumente, daher bleibt ein `ARG` leer. Legen Sie niemals private Zugangsdaten im exportierten Bundle ab.
 
 Siehe [getestete Versionen und Cloud-Ergebnisse](/framework-guides/validation) für die Bereitstellungsprüfungen vom 9. September 2026 und ihre Grenzen.

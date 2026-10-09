@@ -68,7 +68,7 @@ finally:
 
 ## ファイル
 
-`fs.write` はテキストまたは有効な UTF-8 バイトを書き込み、`fs.read` はテキストを読み取ります。現在の書き込み API はバイナリアップロードに対応していません。バイナリのダウンロードには `fs.readBytes`（Python では `read_bytes`）を使います。
+`fs.write` はテキストまたはバイトを書き込み、`fs.read` はテキストを読み取ります。バイナリファイルは、バイトとして書き込み、`fs.readBytes`（Python では `read_bytes`）で読み戻します。
 
 sandbox の実行中はファイルとプロセスを維持します。停止後、別の sandbox で使えるのは、接続した Persistent Volume の `/workspace` に保存したファイルだけです。ボリュームがなければ `/workspace` は一時領域です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。
 
@@ -82,19 +82,22 @@ console.log(result.stdout);
 
 ## 公開ポート
 
-`0.0.0.0` で待ち受けるサーバーを起動し、`getHost(port)` で公開 HTTPS ホスト名を登録します。ポートは公開されるため、必要に応じて認証を追加してください。sandbox を停止するとポートは応答しなくなります。
+`0.0.0.0` で待ち受けるサーバーを起動し、`exposePort(port)`（Python では `expose_port`）を呼び出します。`url`、`hostname`、`accessToken` が返されます。ポートは非公開です。ブラウザで `url` を開く（`?lizard_token=` が付いています）か、`X-Lizard-Access-Token` ヘッダーでトークンを送信してください。トークンのないリクエストには 401 が返されます。sandbox を停止するとポートは応答しなくなります。
 
 ```ts
 await sandbox.process.exec(
   "nohup python -m http.server 3000 --bind 0.0.0.0 --directory /tmp >/tmp/http.log 2>&1 </dev/null &",
 );
-const host = await sandbox.getHost(3000);
-console.log(`https://${host}`);
+const { url, hostname, accessToken } = await sandbox.exposePort(3000);
+console.log(url); // open in a browser
+const res = await fetch(`https://${hostname}/`, {
+  headers: { 'X-Lizard-Access-Token': accessToken },
+});
 ```
 
 ## 実行中の sandbox への再接続
 
-sandbox を作成してコマンドを実行し、終了後に `kill` を呼び出します。`connect` は既存の sandbox に接続するだけで状態を変えないため、一時停止中や停止済みの sandbox を再開しません。一時停止、再開、snapshot、restore は利用できます。[一時停止、再開、スナップショット](/sandboxes/quickstart#pause-and-resume)を参照してください。fork とファイル監視は HTTP 501 を返します。`lizard sandbox ssh` は CLI の認証情報で対話型シェルを開きます。SSH プロトコルでのアクセスはできないため、SSH クライアント、`scp`、ポートフォワーディングは使えません。
+sandbox を作成してコマンドを実行し、終了後に `kill` を呼び出します。`connect` は既存の sandbox に接続するだけで状態を変えないため、一時停止中や停止済みの sandbox を再開しません。一時停止、再開、snapshot、restore は利用できます。[一時停止、再開、スナップショット](/sandboxes/quickstart#pause-and-resume)を参照してください。`fork` は実行中の sandbox を、メモリとプロセスも含めてコピーします。ボリュームが接続されている場合は 409 を返し、pod として動作する sandbox では 501 を返します。ファイル監視はまだ利用できません。`lizard sandbox ssh` は CLI の認証情報で対話型シェルを開きます。SSH プロトコルでのアクセスはできないため、SSH クライアント、`scp`、ポートフォワーディングは使えません。
 
 ```ts
 const connected = await Sandbox.connect(sandbox.sandboxId);
@@ -127,12 +130,12 @@ await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-Lizard は既定で 5 つのコピーを待機させ (1〜10 で変更可能)、restore は待機中のコピーから起動します。待機中のコピーがないときは、プールが補充されるまで restore が HTTP 503 を返すことがあります。復元した sandbox は実測使用量で課金され、`size` は適用されません。CLI では `lizard sandbox pause <id>`、`lizard sandbox resume <id>`、`lizard sandbox snapshot <id> --name my-app`、`lizard sandbox restore <snapshot-id>` を使います。
+Firecracker の sandbox のスナップショットは、呼び出しが戻った時点で準備が完了し、ディスクから restore されるため、`poolSize` は適用されません。restore のたびに元の sandbox と同じサイズで実行され、そのサイズの時間単価で課金されます。pod の sandbox のスナップショットは待機中のコピーを保持します (既定で 5 つ、1〜10 で変更可能)。待機中のコピーがないときは、プールが補充されるまで restore が HTTP 503 を返すことがあり、復元した sandbox は実測使用量で課金されます。どちらの場合も、restore には `size` は適用されません。CLI では `lizard sandbox pause <id>`、`lizard sandbox resume <id>`、`lizard sandbox snapshot <id> --name my-app`、`lizard sandbox restore <snapshot-id>` を使います。
 
 ## 現在のランタイムの制限
 
 SDK と CLI の既定の有効期間は 5 分です。API の直接呼び出しとダッシュボードでは、既定で期限を設けません。有効期間を明示してください。作成時の `timeoutMs: 0` は期限を無効にし、正の値は期限を設定します。`setTimeout` は 1000～2147483647 ミリ秒を受け付け、0 は指定できません。コマンド実行で期限は延長されません。アイドル時間のタイマーではありません。
 
-コマンドの結果には stdout、stderr、終了コードが含まれます。タイムアウトは 1～600 秒です。現在のランタイムは SDK の `envs`、`workdir`、`user` オプションを適用しません。ディレクトリと環境変数はシェルコマンド内で指定してください。作成時の `envs` と `metadata` も適用しません。
+コマンドの結果には stdout、stderr、終了コードが含まれます。タイムアウトは 1～600 秒です。`process.exec` は `envs`、`workdir`、`user` を受け付けます。作成時の `envs` は、Firecracker の sandbox ではすべてのコマンドに渡されます。pod の sandbox ではこれらは無視されるため、コマンドごとに渡してください。`getInfo()` と `list()` は作成時の `metadata` を返します。
 
 [クイックスタート](/sandboxes/quickstart) · [SDK リファレンス](/sandboxes/sdk-reference) · [Python の実行](/sandboxes/code-interpreter) · [ダッシュボード](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)

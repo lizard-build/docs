@@ -6,7 +6,7 @@ description: "Der Bereitstellen-Lebenszyklus auf Lizard: was einen Build auslös
 
 # Bereitstellungen
 
-Ein **Deployment** ist ein Build-und-Release eines Service. Der Release-Ablauf hängt von der Laufzeitumgebung des Service ab. Ein erfolgreicher Build belegt für sich allein nicht, dass die Anwendung gestartet ist oder Anfragen verarbeiten kann.
+Ein **Deployment** ist ein Build-und-Release eines Service. Services laufen als Kubernetes-Pods. Ein erfolgreicher Build belegt für sich allein nicht, dass die Anwendung gestartet ist oder Anfragen verarbeiten kann.
 
 <span id="how-a-deploy-happens" />
 
@@ -29,9 +29,9 @@ lizard up                          # upload cwd and deploy
 ## Ablauf
 
 1. **Build** — die Plattform führt Ihren Build aus (siehe [Build-Pipeline](/concepts/build-pipeline)).
-2. **Vor dem Bereitstellen** — wenn `preDeployCommand` gesetzt ist, wird es einmal ausgeführt (z. B. Migrationen).
-3. **Start** — Lizard startet die Anwendung für ihre konfigurierte Laufzeitumgebung.
-4. **Health-Checks** — die Plattform prüft, ob der Port der App erreichbar ist (entfällt bei [Workers](/deploy/workers)).
+2. **Vor dem Bereitstellen** — wenn sowohl `preDeployCommand` als auch `startCommand` gesetzt sind, führt der Container `sh -c "<pre> && exec <start>"` aus. Der Pre-Deploy-Befehl läuft beim Start jedes Containers (jedes Replikat, jeder Neustart). Machen Sie ihn daher so, dass er sich gefahrlos mehrfach und gleichzeitig ausführen lässt. Ohne `startCommand` wird er übersprungen.
+3. **Start** — Lizard startet den neuen Pod neben dem alten. Bei [Workers](/deploy/workers) wird zuerst der alte Pod gestoppt.
+4. **Health-Checks** — eine TCP-Probe prüft alle 2 Sekunden den Port der App, und Traffic wird erst auf einen bereiten Pod umgeschaltet. Lizard wartet darauf etwa 30 Sekunden; ist der neue Pod bis dahin nicht bereit, wird das Deployment als fehlgeschlagen markiert. Workers überspringen die Probe.
 5. **Prüfen** — prüfen Sie den Release-Status und rufen Sie die Anwendungs-URL auf. Die Erreichbarkeit des Ports ist kein vollständiger Health-Checks der Anwendung.
 
 <span id="streaming-output" />
@@ -86,10 +86,10 @@ lizard events                      # see replica status
 
 ## Konfigurationsänderungen (kein Neuaufbau)
 
-Die meisten Änderungen an Umgebungsvariablen und Secrets werden ohne Neuaufbau übernommen: Lizard aktualisiert die Konfiguration des Service und startet ihn neu, was einige Sekunden dauert. Build-Zeit-Werte (`VITE_*`, `NEXT_PUBLIC_*`) und Änderungen an Build-Feldern erzwingen jedoch einen Neuaufbau — siehe die [Tabelle der Rebuild-Auslöser](/concepts/build-pipeline#what-triggers-a-rebuild).
+Die meisten Änderungen an Umgebungsvariablen und Secrets werden ohne Neuaufbau übernommen: Lizard aktualisiert die Konfiguration des Service und startet ihn neu, was einige Sekunden dauert. Build-Zeit-Werte (`VITE_*`, `NEXT_PUBLIC_*`) und Änderungen an Build-Feldern erzwingen bei einem laufenden Service jedoch einen Neuaufbau — siehe die [Tabelle der Rebuild-Auslöser](/concepts/build-pipeline#what-triggers-a-rebuild) und [Build-Zeit-Variablen](/concepts/build-pipeline#build-time-variables).
 
 <span id="failed-releases-and-recovery" />
 
 ## Fehlgeschlagene Releases und Wiederherstellung
 
-Ein fehlgeschlagener Build und ein fehlgeschlagener Start der Anwendung sind unterschiedliche Fälle. Gehen Sie nicht davon aus, dass ein altes Release in jeder Laufzeitumgebung weiter Anfragen verarbeitet. Prüfen Sie den aktiven Service, die Build-Logs und die Runtime-Logs. `lizard redeploy` baut die ausgewählte Quelle erneut; es ist kein Befehl zum Wiederherstellen eines vorherigen Builds. Setzen Sie bei Bedarf den Quell-Commit zurück, deployen Sie ihn und prüfen Sie das Ergebnis. Siehe [bekannte Probleme](/platform/known-issues).
+Ein fehlgeschlagener Build und ein fehlgeschlagener Start der Anwendung sind unterschiedliche Fälle. In beiden Fällen liefert ein HTTP-Service, der bereits läuft, weiterhin seine vorherige Version aus: Ein fehlgeschlagener Build ändert nichts, und ein neuer Pod, der nie bereit wird, erhält keinen Traffic. Der alte Pod eines Workers wird gestoppt, bevor der neue startet, daher läuft nach einem fehlerhaften Worker-Release kein Worker mehr. Prüfen Sie den aktiven Service, die Build-Logs und die Runtime-Logs. `lizard redeploy` baut die ausgewählte Quelle erneut; es ist kein Befehl zum Wiederherstellen eines vorherigen Builds. Setzen Sie bei Bedarf den Quell-Commit zurück, deployen Sie ihn und prüfen Sie das Ergebnis. Siehe [bekannte Probleme](/platform/known-issues).

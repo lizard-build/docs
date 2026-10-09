@@ -107,7 +107,7 @@ gunicorn config.wsgi:application --bind 0.0.0.0:8000
 
 ## 静的ファイルとマイグレーションを計画する
 
-Gunicorn 単体では Django の静的ファイルは配信されません。アプリ内で設定した静的ファイル用 middleware を使うか、別の静的ホストを選んでください。asset は、その構成が配信する path に collect してください。lizardpack の requirements ベースの Python path は `collectstatic` を自動実行しません。アプリでその手順が必要なら、完全な Dockerfile build に含めてください。
+Gunicorn 単体では Django の静的ファイルは配信されません。アプリ内で設定した静的ファイル用 middleware を使うか、別の静的ホストを選んでください。asset は、その構成が配信する path に collect してください。lizardpack は Django の build 中に `python manage.py collectstatic --noinput` を実行しますが、そこで失敗しても警告が表示されるだけです。たとえば settings が実行時の secrets を必要とする場合です。以下の Dockerfile は `collectstatic` に build 専用の値を渡し、エラーになった場合は build を失敗させます。
 
 WhiteNoise を使う場合は、`INSTALLED_APPS` に `django.contrib.staticfiles` を維持し、Django の `SecurityMiddleware` の直後に `whitenoise.middleware.WhiteNoiseMiddleware` を挿入してください。以下の設定を追加または更新します:
 
@@ -197,12 +197,16 @@ lizard secrets set ALLOWED_HOSTS=YOUR_PUBLIC_HOST \
   CSRF_TRUSTED_ORIGINS=https://YOUR_PUBLIC_HOST --service web
 ```
 
-reference の対象または key が見つからないと、空文字列に解決されることがあります。その場合、必須値チェックにより Django は `Set the DATABASE_URL environment variable.` で停止します。データベースサービス名と、その `DATABASE_URL` key を確認してください。接続 URL を logs に出力しないでください。
+reference の対象または key が見つからないと、空文字列に解決されることがあります。その場合、必須値チェックにより Django は `Set the DATABASE_URL environment variable.` で停止します。データベースサービス名と、その `DATABASE_URL` key を確認してください。`lizard logs --build --service web` は、空の値に解決されたすべての reference について警告を表示します。接続 URL を logs に出力しないでください。
 
-変数変更により process は再起動されます。ローカル virtual environments、secrets、ローカルデータベースは uploads から除外してください。process が動作したら、マイグレーションを適用します:
+変数変更により process は再起動されます。ローカル virtual environments、secrets、ローカルデータベースは uploads から除外してください。
+
+マイグレーションは手元のコンピューターから適用します。`lizard run --service postgres` は、公開用の `DATABASE_URL` を含むデータベースの接続値を使ってローカルコマンドを実行します。この例で必要なほかの settings はインラインで渡してください。それらを使うのはローカルコマンドだけです:
 
 ```bash
-lizard ssh --service web -- python manage.py migrate --noinput
+python -m pip install -r requirements.txt
+SECRET_KEY=local-migrate ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
+  lizard run --service postgres -- python manage.py migrate --noinput
 ```
 
 マイグレーションが残っていないことを確認するために、もう一度コマンドを実行してください。port check が成功したことを、tables が存在する証拠と見なさないでください。

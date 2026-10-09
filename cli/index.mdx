@@ -1,12 +1,12 @@
 ---
-description: "Install and upgrade the lizard CLI, authenticate, and look up global flags, exit codes, and runtime schema discovery for every command."
+description: "Install and upgrade the Lizard CLI, authenticate, and look up global flags, exit codes, and runtime schema discovery for every command."
 ---
 
 # CLI Reference
 
 The `lizard` CLI is the primary interface to the platform. This page covers installation, global flags, exit codes, and runtime discovery. Every command has its own reference page in the sidebar — see [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets), and the rest.
 
-> Reference generated against CLI **v0.3.62**. Run `lizard <cmd> --help --json` for the exact, version-matched schema of any command.
+> Reference written for Lizard CLI **v4.0.34**. Run `lizard <cmd> --help --json` for the exact, version-matched schema of any command.
 
 ## Install & upgrade
 
@@ -19,7 +19,7 @@ lizard upgrade --check    # check without installing
 
 On Windows, run `irm https://lizard.build/api/cli/install.ps1 | iex` in PowerShell. With Node.js you can install from npm instead: `npm install -g @lizard-build/cli`.
 
-The binary from the install script also updates itself in the background, at most once every 6 hours; set `LIZARD_NO_UPDATE=1` to turn that off. An npm install updates through npm: `lizard upgrade` prints the command.
+On macOS and Linux, the binary from the install script also updates itself in the background, at most once every 6 hours. It skips the check when `CI` or `LIZARD_NO_UPDATE=1` is set. The Windows binary does not update itself: run the installer again. An npm install updates through npm: `lizard upgrade` prints the command.
 
 Always use the globally installed `lizard` binary — **not** `npx`. See [Quickstart](/getting-started#1-install-the-cli) for permission-error fixes.
 
@@ -27,12 +27,12 @@ Always use the globally installed `lizard` binary — **not** `npx`. See [Quicks
 
 ```bash
 lizard login                  # browser OAuth
-lizard login --token lzd_xxx  # token auth
+lizard login --token liz_xxx  # API key auth
 lizard logout
 lizard whoami                 # current user, workspace, linked project
 ```
 
-In CI, set `LIZARD_TOKEN` in the environment instead of running `login`.
+API keys start with `liz_`. Create one with [`lizard keys create <name>`](/cli/keys). In CI, set `LIZARD_TOKEN` (or `LIZARD_API_KEY`) in the environment instead of running `login`.
 
 ## Global flags
 
@@ -41,7 +41,7 @@ In CI, set `LIZARD_TOKEN` in the environment instead of running `login`.
 | `-V, --version` | Print the CLI version |
 | `--json` | Machine-readable output. Combine with `--help` to dump a command's schema |
 
-Most commands also accept `-p, --project`, `-s, --service`, and `-w, --workspace` to target a specific resource instead of the linked one.
+Most commands also accept `-p, --project` and `-s, --service` to target a specific resource instead of the linked one. `init`, `link`, and `project` also take `-w, --workspace`. `lizard add` always uses the linked project.
 
 ## Exit codes
 
@@ -77,13 +77,26 @@ This always reflects your installed version — prefer it over guessing flag sha
 - `lizard status` shows the cwd's workspace/project/service link (no auth required).
 - `lizard config apply` applies a `lizard-config.json` file to a project (use `--dry-run` to preview).
 
+## Environment variables
+
+| Variable | Effect |
+|----------|--------|
+| `LIZARD_TOKEN` | API key or token to use instead of the stored login |
+| `LIZARD_API_KEY` | Same as `LIZARD_TOKEN` |
+| `LIZARD_API_URL` | API base URL (default `https://lizard.build`) |
+| `LIZARD_HOME` | Keep CLI state in `$LIZARD_HOME/.lizard` instead of `~/.lizard` |
+| `LIZARD_NO_UPDATE` | Turn off background self-update |
+| `CI` | Also turns off background self-update |
+| `LIZARD_SKILLS_DIR` | Read skills from this directory instead of the ones built into the CLI |
+
 ## Sandbox volumes
 
-Use names to manage [Persistent Volumes](/sandboxes/volumes) within a project:
+Use names to manage [Persistent Volumes](/sandboxes/volumes) within a project. Full reference: [`lizard volume`](/cli/volume) and [`lizard sandbox`](/cli/sandbox).
 
 ```bash
 lizard volume create agent-workdir --size 10 --project proj_123
 lizard volume list --project proj_123
+lizard volume resize agent-workdir --size 20 --project proj_123
 lizard sandbox create --volume agent-workdir --project proj_123
 ```
 

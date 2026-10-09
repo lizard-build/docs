@@ -27,11 +27,12 @@ Lizard собирает и запускает приложения из репо
 
 ## Разверните приложение
 
-Установите Lizard CLI и войдите, затем разверните репозиторий, к которому у вас есть доступ:
+Установите Lizard CLI, войдите и запустите 7-дневный пробный период Pro, затем разверните репозиторий, к которому у вас есть доступ:
 
 ```bash
 curl -fsSL https://lizard.build/install.sh | bash
 lizard login
+lizard billing start   # opens Stripe Checkout; add a card, nothing is charged during the trial
 lizard add -r your-org/your-app
 ```
 

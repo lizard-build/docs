@@ -11,12 +11,12 @@ Verwalte die Konfiguration, Source und den Lebenszyklus eines einzelnen Service.
 ## Verwendung
 
 ```bash
-lizard service set [flags]
-lizard service show [flags]
-lizard service rename
-lizard service delete [flags]
-lizard service logs
-lizard service link
+lizard service set [service] [flags]
+lizard service show [service] [flags]
+lizard service rename <new-name> [flags]
+lizard service delete [service] [flags]
+lizard service logs [service] [flags]
+lizard service link [name]
 ```
 
 <span id="subcommands" />
@@ -29,11 +29,11 @@ Wende Änderungen an Build/Start/Source/Variablen/Umbenennen auf einen Service a
 
 | Flag | Beschreibung |
 |------|-------------|
-| `--set <path>=<value>` | Ein Feld setzen (wiederholbar) |
+| `--set <path>=<value>` | Ein Feld setzen (wiederholbar; benötigt das Argument `service`) |
 | `-f, --file <path>` | JSON-Konfigurationsdatei zum Anwenden |
 | `--force` | Auch dann überschreiben, wenn es remote geändert wurde |
 
-Häufige Felder sind flach und entsprechen 1:1 dem Wire-Schema: `sourceType`, `repoUrl`, `branch`, `rootDirectory`, `dockerfilePath`, `buildCommand`, `startCommand`, `preDeployCommand`, `watchPatterns`, `containerPort`, `name`.
+Häufige Felder sind flach und entsprechen 1:1 dem Wire-Schema: `sourceType`, `repoUrl`, `branch`, `rootDirectory`, `dockerfilePath`, `buildCommand`, `startCommand`, `preDeployCommand`, `watchPatterns`, `containerPort`, `cpuLimit` (zum Beispiel `2000m`), `memoryLimit` (zum Beispiel `2Gi`), `name`. `variables.<KEY>=<value>` setzt ein Service-Secret, genauso wie `lizard secrets set --service`.
 
 `service set` verwendet optimistische Nebenläufigkeit über `configRevision`. Bei einem `409` lies die Konfiguration mit `lizard service show` erneut, gleiche sie ab und versuche es noch einmal — oder übergib `--force`.
 
@@ -41,17 +41,23 @@ Häufige Felder sind flach und entsprechen 1:1 dem Wire-Schema: `sourceType`, `r
 
 Zeige die aktuelle Service-Konfiguration als JSON an. Verwende `-s`, um sie auf einen Service zu beschränken.
 
-### `lizard service rename`
+### `lizard service rename <new-name>`
 
-Benenne einen Service oder ein Add-on um. Verweise darauf (`${{name.KEY}}`) bleiben stabil.
+Benenne einen Service oder ein Add-on um: den verknüpften oder den, den du mit `-s` übergibst. Verweise verwenden den aktuellen Namen des Ziels, aktualisiere daher nach dem Umbenennen jedes `${{old-name.KEY}}` auf den neuen Namen.
 
 ### `lizard service delete`
 
-Lösche einen Service. `-y, --yes` überspringt die Bestätigung.
+Lösche einen Service (Alias `rm`). `-y, --yes` überspringt die Bestätigung; ohne TTY ist es erforderlich.
 
 ### `lizard service logs`
 
 Streame die Logs eines Service (siehe auch [lizard logs](/cli/logs)).
+
+| Flag | Beschreibung |
+|------|-------------|
+| `--build` | Die Logs des letzten Builds anzeigen |
+| `-n, --tail <n>` | Die letzten N Zeilen ausgeben (bis zu 2000) und beenden; `--tail all` gibt 2000 aus |
+| `--page <n>` | Durch ältere Logs blättern, 200 Zeilen pro Seite (1 = neueste) |
 
 ### `lizard service link`
 

@@ -24,7 +24,8 @@ lizard add postgres
 
 | Переменная | Описание |
 |----------|-------------|
-| `DATABASE_URL` | Полная строка подключения (`postgres://…`) |
+| `DATABASE_URL` | Полная строка подключения через публичную точку доступа (`postgresql://…`) |
+| `DATABASE_PRIVATE_URL` | Строка подключения через приватную сеть проекта (`<name>.lizard.internal:5432`) |
 | `PGHOST` | Хост |
 | `PGPORT` | Порт |
 | `PGUSER` | Пользователь |
@@ -38,42 +39,42 @@ lizard add postgres
 
 ## Подключение сервиса
 
-Укажите ссылку на строку подключения в сервисе-потребителе и выполните повторное развёртывание:
+Укажите ссылку на приватную строку подключения в сервисе-потребителе и выполните повторное развёртывание:
 
 ```bash
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-Ссылка вычисляется при развёртывании и автоматически обновляется при изменении учётных данных дополнения — каждый сервис-потребитель получает новое значение при следующем развёртывании.
+Ссылка вычисляется при развёртывании, поэтому каждый сервис-потребитель получает актуальные значения дополнения при следующем развёртывании. Для клиентов за пределами проекта используйте `DATABASE_URL`. Кроме того, каждый сервис в проекте получает публичный `DATABASE_URL` дополнения с самым низким приоритетом; явная ссылка переопределяет его.
 
-Проверьте подключение, не выводя строку подключения:
+Проверьте подключение со своей машины, не выводя строку подключения:
 
 ```bash
-lizard run --service api -- sh -c 'psql "$DATABASE_URL" -c "SELECT 1"'
+lizard run --service postgres -- sh -c 'psql "$DATABASE_URL" -c "SELECT 1"'
 ```
 
 <span id="run-migrations-on-deploy" />
 
 ## Запуск миграций при развёртывании
 
-Используйте команду перед развёртыванием для запуска миграций. Сделайте миграции безопасными для повторного запуска и совместимыми как со старой, так и с новой версией приложения:
+Используйте команду перед развёртыванием для запуска миграций. Она выполняется только если задана также команда запуска, в виде `sh -c "<pre> && exec <start>"` при старте каждого контейнера: каждой реплики, каждого перезапуска. Сделайте миграции безопасными для многократного и одновременного запуска и совместимыми как со старой, так и с новой версией приложения:
 
 ```bash
-lizard service set api --set preDeployCommand="npm run migrate"
+lizard service set api --set preDeployCommand="npm run migrate" --set startCommand="npm start"
 lizard redeploy --service api
 ```
 
-Для приложения Django используется команда `python manage.py migrate`; в разделе [Хостинг Python-приложений](https://lizard.build/blog/python-app-hosting#deploying-django) приведены её аналоги для Flask и FastAPI.
+Для приложения Django используется команда `python manage.py migrate`; см. [Хостинг Python-приложений](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks).
 
 <span id="browse-and-query-data" />
 
 ## Просмотр данных и выполнение запросов
 
-Откройте **редактор Postgres** в панели управления (`lizard open`), чтобы выполнять SQL-запросы и просматривать таблицы напрямую. Для разовых локальных задач выполните команду, используя внедрённое в сервис окружение:
+Откройте **редактор Postgres** в панели управления (`lizard open`), чтобы выполнять SQL-запросы и просматривать таблицы напрямую. Для разовых локальных задач выполните команду, используя значения подключения дополнения:
 
 ```bash
-lizard run --service api -- sh -c 'exec psql "$DATABASE_URL"'
+lizard run --service postgres -- sh -c 'exec psql "$DATABASE_URL"'
 ```
 
 <span id="grow-storage" />
@@ -94,7 +95,7 @@ lizard scale --service postgres --storage 8192
 
 ```bash
 lizard add postgres
-lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_URL}}' --service api
+lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_PRIVATE_URL}}' --service api
 ```
 
 <span id="see-also" />
@@ -104,4 +105,4 @@ lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_URL}}' --serv
 - [Управляемые дополнения](/addons) — имена, ссылки и инструменты просмотра в панели управления.
 - [Межсервисные ссылки](/variables/references) — синтаксис ссылок и порядок их вычисления.
 
-Сведения о планировании резервного копирования и восстановления см. в разделе [хранилище и восстановление](/platform/storage-and-recovery). При локальном использовании `lizard run` требуется `psql` и доступная точка подключения к базе данных; этот процесс не выполняется внутри развёрнутого сервиса.
+Сведения о планировании резервного копирования и восстановления см. в разделе [хранилище и восстановление](/platform/storage-and-recovery). `lizard run --service postgres` выполняет команду на вашей машине с публичными значениями подключения дополнения; для этого локально должен быть установлен `psql`. `lizard run --service api` передаст ссылки `${{…}}` как буквальный текст.

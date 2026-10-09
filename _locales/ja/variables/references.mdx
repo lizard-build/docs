@@ -6,7 +6,7 @@ description: "${{name.KEY}} 構文で、あるサービスやアドオンの値�
 
 # サービス間参照
 
-参照を使うと、あるサービスやアドオンが、認証情報をコピー＆ペーストせずに別のサービスやアドオンの値を読み取れます。シークレットを1か所にまとめて保持でき、自動的にローテーションされます。
+参照を使うと、あるサービスが、認証情報をコピー＆ペーストせずに別のサービスやアドオンの値を読み取れます。各値を1か所にまとめて保持でき、コンシューマーは次回のデプロイ時に変更を取得します。
 
 <span id="syntax" />
 
@@ -30,13 +30,13 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 ## 解決の仕組み
 
 - 参照は、対象のマージ済み環境に対して**デプロイ時**に解決されます。
-- **ID** で保存されるため、あとで対象の名前を変更しても参照は壊れません。
-- **存在しない**対象またはキーへの参照は、**空文字列**に解決されます。デプロイは失敗しません。
+- 参照は対象の**現在の名前**と照合されます。対象の名前を変更すると参照は壊れるため、名前の変更後はすべての `${{oldname.KEY}}` を更新してください。
+- **存在しない**対象またはキーへの参照は、**空文字列**に解決されます。デプロイは失敗しません。ビルドログには、空になった参照ごとに理由付きの警告が表示されます。
 - エラーになるのは**循環**参照だけです。
 
-> 存在しないキーは黙って空になるため、参照を設定したあとは、コンシューマーが実際に値を受け取ったかを必ず確認してください:
+> 参照を設定したあとは、ビルドログで空の参照がないか確認してください:
 > ```bash
-> lizard ssh --service api -- env | grep DATABASE_URL
+> lizard logs --build --service api
 > ```
 
 参照が期待どおりに反映されない場合は、[トラブルシューティング → シークレットまたは参照が表示されない](/variables/troubleshooting/reference-not-applied) を参照してください。
@@ -45,17 +45,18 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 
 ## よくあるパターン
 
-**1つのアドオンを複数のサービスに接続する** — ローテーションがどこにでも伝播するよう、各コンシューマー側でバインドします:
+**1つのアドオンを複数のサービスに接続する** — 各コンシューマー側でバインドします。プロジェクト内ではプライベート URL を使ってください:
 
 ```bash
-lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service api
-lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service worker
+lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service api
+lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service worker
 ```
 
-**別のサービスの値を参照する** — たとえば、計算された URL やトークンを共有する場合:
+**別のサービスの値を参照する** — たとえば、計算された URL やトークンを共有する場合。`LIZARD_PUBLIC_DOMAIN` はスキームを含まないホスト名で、サービスにドメインができると利用できます。`LIZARD_PRIVATE_DOMAIN`（`<name>.lizard.internal`）を使うと、プロジェクト内からサービスに接続できます:
 
 ```bash
-lizard secrets set UPSTREAM_URL='${{api.LIZARD_PUBLIC_DOMAIN}}' --service web
+lizard secrets set UPSTREAM_URL='https://${{api.LIZARD_PUBLIC_DOMAIN}}' --service web
+lizard secrets set INTERNAL_API='http://${{api.LIZARD_PRIVATE_DOMAIN}}:8080' --service web
 ```
 
 **同じ種類の2つ目のアドオンを参照する** — その自動生成された名前を使います:
@@ -68,7 +69,7 @@ lizard secrets set CACHE_URL='${{redis-winter-otter.REDIS_URL}}' --service api
 
 ## なぜ `--global` を使わないのですか？
 
-共有 DSN をプロジェクト（`--global`）スコープに置くと、必要のないものも含めて*すべて*のサービスに公開されます。参照を使えば、単一の信頼できる情報源としてのローテーションという利点はそのままに、各シークレットを実際に利用するサービスだけにスコープできます。[シークレットのスコープ](/variables#scoping) を参照してください。
+共有の値をプロジェクト（`--global`）スコープに置くと、必要のないものも含めて*すべて*のサービスに公開されます。参照なら値を1か所にまとめて保持し、設定した場所にだけバインドできます。なお、実行中のすべての Postgres アドオンと Redis アドオンの `DATABASE_URL` と `REDIS_URL` は、いずれにせよ最も低い優先順位ですべてのサービスに渡されます。参照はこれらを上書きします。[シークレットのスコープ](/variables#scoping) を参照してください。
 
 <span id="see-also" />
 

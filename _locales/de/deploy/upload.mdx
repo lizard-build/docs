@@ -16,11 +16,11 @@ Wenn dein Code nicht auf GitHub liegt — oder du einfach schnell iterieren will
 lizard up
 ```
 
-- Lädt das aktuelle Verzeichnis als Tarball hoch und beachtet dabei `.gitignore` (deaktivierbar mit `--no-gitignore`).
+- Lädt das aktuelle Verzeichnis als Tarball hoch. Innerhalb eines Git-Repositorys wird `.gitignore` beachtet (deaktivierbar mit `--no-gitignore`). Außerhalb von Git werden nur eine feste Liste von Build- und Abhängigkeitsordnern (`node_modules`, `.git`, `dist`, `.next`, `build`, `__pycache__`, `.venv`, `venv`, `.cache`, `coverage`, `.turbo`, `.vercel`) sowie `.DS_Store`, `*.pyc`, `*.pyo` und `*.log` übersprungen, sodass `.env`-Dateien hochgeladen werden. Führe zuvor `git init` aus oder lagere Secrets aus.
 - Erzwingt `sourceType=upload`.
 - Streamt Build-Logs über SSE und gibt nach Abschluss die Live-URL aus.
 
-Wenn das Verzeichnis noch nicht mit einem Projekt verknüpft ist, führt `up` zuerst `init` aus. In einem TTY ist das interaktiv; in einem non-TTY (CI) wird **nicht** stillschweigend ein Projekt erstellt — stattdessen gibt es einen Fehler und die Aufforderung, `lizard init --name <project>` auszuführen (oder `--name` zu übergeben). Das schützt davor, dass ein Tippfehler ein leeres Projekt erzeugt.
+Wenn das Verzeichnis noch nicht mit einem Projekt verknüpft ist, führt `up` zuerst `init` aus. In einem TTY ist das interaktiv; in einem non-TTY (CI) wird **nicht** stillschweigend ein Projekt erstellt — stattdessen gibt es einen Fehler und die Aufforderung, `lizard init --name <project>` auszuführen (oder `--project <name>` an `up` zu übergeben). Das schützt davor, dass ein Tippfehler ein leeres Projekt erzeugt.
 
 <span id="common-flags" />
 
@@ -28,12 +28,12 @@ Wenn das Verzeichnis noch nicht mit einem Projekt verknüpft ist, führt `up` zu
 
 | Flag | Zweck |
 |------|---------|
-| `-s, --service <name>` | Einen bestimmten Service ansprechen/erstellen |
+| `-s, --service <name>` | Einen bestehenden Service ansprechen |
 | `--build-command <cmd>` | Den Build-Befehl überschreiben |
 | `--start-command <cmd>` | Den Start-Befehl überschreiben |
-| `--pre-deploy-command <cmd>` | Vor jeder Bereitstellung einmal ausführen (z. B. Migrationen) |
+| `--pre-deploy-command <cmd>` | Zu Beginn jedes Containers vor dem Start-Befehl ausführen; erfordert `--start-command` (siehe [Build-Konfiguration](/concepts/build-pipeline#build-configuration-reference)) |
 | `--port <number>` | Container-Port (`0` = [Worker-Modus](/deploy/workers)) |
-| `--region <code>` | Region für die Bereitstellung |
+| `--region <code>` | Region für einen neuen Service (wird bei bestehenden Services ignoriert) |
 | `-d, --detach` | Bereitstellung starten und beenden, ohne Logs zu streamen |
 | `-c, --ci` | CI-freundliche Ausgabe |
 | `--no-gitignore` | Alles hochladen und `.gitignore` ignorieren |
@@ -46,7 +46,7 @@ lizard up --service api --start-command "node server.js" --port 8080
 
 ## Build-/Start-Befehle festlegen
 
-Wenn du `--build-command` oder `--start-command` übergibst, wechselt der Service auf den Pfad mit dem **synthetisierten Dockerfile**. Auf diesem Pfad werden `Procfile` und `package.json` `scripts.start` **nicht** gelesen — setze den Start-Befehl daher explizit (oder füge ein `CMD` in dein eigenes Dockerfile ein). Siehe [Build-Pipeline](/concepts/build-pipeline). Besonders oft tritt das bei Python auf: [Django, Flask und FastAPI](https://lizard.build/blog/python-app-hosting#deploying-django) benötigen jeweils eine andere Zeile für `gunicorn` oder `uvicorn`.
+Wenn du `--build-command` oder `--start-command` übergibst, wird der Befehl im Service gespeichert und der Service wechselt auf den Pfad mit dem **synthetisierten Dockerfile**, sofern `dockerfilePath` nicht gesetzt ist. Auf diesem Pfad werden `Procfile` und `package.json` `scripts.start` **nicht** gelesen — setze den Start-Befehl daher explizit. Siehe [Build-Pipeline](/concepts/build-pipeline). Besonders oft tritt das bei Python auf: [Django, Flask und FastAPI](https://lizard.build/blog/python-app-hosting#build-and-start-commands) benötigen jeweils eine andere Zeile für `gunicorn` oder `uvicorn`.
 
 <span id="re-deploying-an-upload-service" />
 
@@ -63,7 +63,7 @@ lizard redeploy --service api
 Für nicht interaktive Abläufe verknüpfe das Projekt vor der Bereitstellung ausdrücklich:
 
 ```bash
-export LIZARD_TOKEN=lzd_xxx
+export LIZARD_TOKEN=liz_xxx   # create one with: lizard keys create <name>
 lizard init --name my-project
 lizard up --ci --service api
 ```

@@ -1,0 +1,114 @@
+---
+description: "lizard agents は、sandbox で動作するコーディングエージェント用に ChatGPT、Claude、または API キーの認証情報を接続し、各エージェントのデフォルトのモデルを設定します。"
+---
+
+# lizard agents
+
+コーディングエージェントが sandbox で使う認証情報を接続し、各エージェントのデフォルト設定を行います。エージェントの実行には [`lizard sandbox prompt`](/cli/sandbox#coding-agents) を使います。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard agents status
+lizard agents login [chatgpt] [flags]
+lizard agents add <credential> [flags]
+lizard agents remove <credential>
+lizard agents use <agent> [flags]
+```
+
+認証情報はアカウントに紐づきます。一度接続すれば、すべての sandbox でその認証情報を使ってエージェントを実行できます。プラットフォームは有効期間の長いトークンを保持し、実行のたびに有効期間の短いアクセストークンを sandbox に渡します。これらのコマンドは `-p, --project` を受け付けますが、無視します。
+
+<span id="agents-and-credentials" />
+
+## エージェントと認証情報
+
+| エージェント | 名前 | 使える認証情報 |
+|-------|------|---------|
+| Codex | `codex` | 次のいずれか 1 つ: `chatgpt`、`openai`、`deepseek`、`openrouter` |
+| Claude Code | `claude` | 次のいずれか 1 つ: `claude`、`anthropic`、`openrouter` |
+| pi | `pi` | 次のいずれでも可: `claude`、`chatgpt`、`anthropic`、`openai`、`openrouter`、`llmgateway` |
+| OpenCode | `opencode` | 次のいずれでも可: `chatgpt`、`anthropic`、`openai`、`openrouter`、`llmgateway` |
+| Prime Agent | `prime` | 次のいずれでも可: `claude`、`chatgpt`、`anthropic`、`openai`、`openrouter`、`llmgateway` |
+
+Kimi Code（`kimi`。認証情報は `kimi` または `moonshot`）は一覧に表示されますが、まだ実行できません。
+
+<span id="subcommands" />
+
+## サブコマンド
+
+### `lizard agents status`
+
+接続済みの認証情報と、実行できるエージェントを表示します。サブコマンドなしの `lizard agents` も同じ内容を表示します。
+
+### `lizard agents login [chatgpt]`
+
+デバイスコードを使って ChatGPT のサブスクリプションを接続します。CLI が URL とコードを表示するので、URL を開いてサインインし、15 分以内にコードを入力してください。承認されるまでコマンドは待機します。
+
+| フラグ | 説明 |
+|------|-------------|
+| `--open` | ブラウザでサインインページを開きます |
+
+### `lizard agents add <credential>`
+
+API キーを追加します: `anthropic`、`openai`、`openrouter`、`llmgateway`、`deepseek`、`moonshot`。Claude のサブスクリプションの場合は、自分のマシンで `claude setup-token` を実行し、そのトークンを `claude` として追加します。
+
+| フラグ | 説明 |
+|------|-------------|
+| `--key <value>` | キーまたはトークン。指定しない場合、CLI は stdin から読み取るか、入力を求めます |
+
+### `lizard agents remove <credential>`
+
+接続済みの認証情報を削除します（エイリアス `logout`）。
+
+### `lizard agents use <agent>`
+
+エージェントの認証情報とデフォルト設定を指定します。
+
+| フラグ | 説明 |
+|------|-------------|
+| `--credential <name>` | Codex と Claude Code で使う認証情報 |
+| `-m, --model <model>` | デフォルトのモデル（`none` で解除） |
+| `--effort <level>` | デフォルトの推論の強さ（`none` で解除） |
+
+<span id="examples" />
+
+## 例
+
+<span id="connect-chatgpt-and-run-codex" />
+
+### ChatGPT を接続して Codex を実行する
+
+```bash
+lizard agents login chatgpt --open
+lizard sandbox create -t codex
+lizard sandbox prompt sb_abc123 "add a health check endpoint and test it"
+```
+
+<span id="add-a-claude-subscription-for-claude-code" />
+
+### Claude Code 用に Claude のサブスクリプションを追加する
+
+```bash
+claude setup-token
+lizard agents add claude
+lizard sandbox create -t claude
+lizard sandbox prompt sb_abc123 --agent claude "fix the failing tests"
+```
+
+<span id="run-codex-on-an-openai-api-key" />
+
+### OpenAI の API キーで Codex を実行する
+
+```bash
+lizard agents add openai < openai.key
+lizard agents use codex --credential openai --effort high
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [lizard sandbox](/cli/sandbox#coding-agents) — `sandbox prompt`、`conversations`、`interrupt`
+- [Sandboxes](/sandboxes) — テンプレートとライフサイクル

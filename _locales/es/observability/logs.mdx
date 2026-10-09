@@ -6,6 +6,8 @@ description: "Transmite logs de ejecución en tiempo real, consulta logs de comp
 
 Lizard captura logs de **ejecución**, logs de **compilación** y la cola de logs alrededor de **reinicios**. Transmítelos en vivo en tu terminal o consúltalos en el dashboard.
 
+Los logs de ejecución se recogen mientras hay una transmisión de logs abierta (`lizard logs` o la página Logs del dashboard, más 60 segundos después de cerrarla), alrededor de despliegues y reinicios, y mientras un servicio está en un bucle de fallos. Al abrir una transmisión se rellenan las últimas 500 líneas por réplica.
+
 <span id="runtime-logs" />
 
 ## Logs de ejecución
@@ -13,7 +15,7 @@ Lizard captura logs de **ejecución**, logs de **compilación** y la cola de log
 ```bash
 lizard logs                       # last 200 runtime lines, then live tail
 lizard logs --service api         # a specific service
-lizard logs --tail 1000           # more history (max 1000)
+lizard logs --tail 1000           # print the last 1000 lines and exit (max 1000)
 lizard logs --level error         # filter by level
 ```
 
@@ -21,7 +23,7 @@ lizard logs --level error         # filter by level
 
 ### Comportamiento con `--json`
 
-`lizard logs --json` **no** es una transmisión: devuelve las últimas 200 líneas (puedes cambiarlo con `--tail N`, máximo 1000) y finaliza. Úsalo para instantáneas y scripts. Transmite en vivo solo sin `--json` cuando quieras una cola interactiva.
+`lizard logs --json` **no** es una transmisión: devuelve las últimas 200 líneas (puedes cambiarlo con `--tail N`, máximo 1000) y finaliza. Úsalo para instantáneas y scripts. Una instantánea tomada mientras nadie transmitía puede perder líneas recientes; abre antes una transmisión si las necesitas. Transmite en vivo solo sin `--json` cuando quieras una cola interactiva.
 
 <span id="build-logs" />
 
@@ -52,7 +54,7 @@ lizard logs --restarts            # list recent restarts
 `lizard service logs` permite paginar ventanas más antiguas:
 
 ```bash
-lizard service logs --service api --tail all     # full history (no follow)
+lizard service logs --service api --tail all     # last 2,000 lines (no follow)
 lizard service logs --service api --page 2       # older window (implies --tail 200)
 ```
 
@@ -60,7 +62,7 @@ lizard service logs --service api --page 2       # older window (implies --tail 
 
 ## Panel
 
-El dashboard (`lizard open`) transmite logs de ejecución y de compilación con filtros de búsqueda y nivel, y muestra la salida de compilación por deploy en la vista de **Despliegues**.
+El dashboard (`lizard open`) transmite logs de ejecución y de compilación con filtros de búsqueda y nivel. Abre un servicio y haz clic en un deploy de su historial para ver la salida de compilación de ese deploy.
 
 <span id="see-also" />
 

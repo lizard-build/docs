@@ -62,7 +62,7 @@ Lizard detects the `next` dependency and runs the build and start scripts. These
 
 ## Environment variables and data
 
-`NEXT_PUBLIC_*` values become part of the browser bundle during the build. Keep credentials in server-only variables and configure them for the service through [variables and secrets](/variables). Code that fetches data while building also needs access to that data at build time. A runtime restart does not change already generated HTML or JavaScript.
+`NEXT_PUBLIC_*` values become part of the browser bundle during the build. With `lizard up`, Lizard passes no variables to the build: commit public values in `.env.production` (the `.gitignore` from `create-next-app` can exclude `.env*`; allow that file). On a [GitHub service](/deploy/github), Lizard bakes the service's `NEXT_PUBLIC_*` variables into the build; see [build-time variables](/concepts/build-pipeline#build-time-variables). Keep credentials in server-only variables and configure them for the service through [variables and secrets](/variables). No other service variables reach the build, so code that fetches data while building cannot read them. A runtime restart does not change already generated HTML or JavaScript.
 
 Local cache files and uploaded files do not form a shared store across replicas. Review Next.js cache and Server Action requirements before scaling beyond one replica. Put durable app data in a database or object storage, and read [storage and recovery](/platform/storage-and-recovery).
 
@@ -72,7 +72,7 @@ Local cache files and uploaded files do not form a shared store across replicas.
 |---|---|
 | `Missing script: start` | Add the production start script above; `next dev` is for local development. |
 | App never becomes healthy | Match `--port 3000` to the start command and bind to `0.0.0.0`. |
-| Public API URL still has its old value | Rebuild with the new `NEXT_PUBLIC_*` value. |
+| Public API URL still has its old value | Change it in `.env.production` and upload again, or change the variable on a GitHub service so it rebuilds. |
 | Build cannot reach a database | Check whether a route fetches data at build time and whether that dependency is reachable then. |
 | Static export fails under `next start` | Follow the separate static export guide. |
 

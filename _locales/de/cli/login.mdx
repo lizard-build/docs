@@ -14,13 +14,13 @@ Bei Lizard anmelden.
 lizard login [flags]
 ```
 
-Standardmäßig öffnet dies deinen Browser für die Authentifizierung per OAuth und kehrt nach der Bestätigung in dein Terminal zurück.
+Standardmäßig öffnet dies die Anmeldeseite in deinem Browser, gibt deren URL aus und beendet sich. Nachdem du dich angemeldet hast, führe deinen nächsten Befehl aus (zum Beispiel `lizard whoami`); er schließt die Anmeldung ab und speichert deine Zugangsdaten. Mit `--json` gibt `login` `{ "status": "pending", "authUrl": "…" }` aus und öffnet keinen Browser.
 
 ## Flags
 
 | Flag | Beschreibung |
 |------|-------------|
-| `--token <token>` | Mit einem API-Token authentifizieren |
+| `--token <token>` | Mit einem API-Key (`liz_…`) authentifizieren |
 
 <span id="examples" />
 
@@ -36,20 +36,24 @@ lizard login
 
 <span id="log-in-with-a-token" />
 
-### Mit einem Token anmelden
+<span id="log-in-with-an-api-key" />
+
+### Mit einem API-Key anmelden
+
+Erstelle einen Key mit [`lizard keys create <name>`](/cli/keys) und führe dann aus:
 
 ```bash
-lizard login --token lzd_xxx
+lizard login --token liz_xxx
 ```
 
 <span id="log-in-non-interactively-in-ci" />
 
 ### In CI nicht-interaktiv anmelden
 
-In CI oder anderen nicht-interaktiven Umgebungen setze `LIZARD_TOKEN` als Umgebungsvariable, statt `login` auszuführen:
+In CI oder anderen nicht-interaktiven Umgebungen setze `LIZARD_TOKEN` (oder `LIZARD_API_KEY`) als Umgebungsvariable, statt `login` auszuführen:
 
 ```bash
-export LIZARD_TOKEN=lzd_xxx
+export LIZARD_TOKEN=liz_xxx
 ```
 
 <span id="see-also" />

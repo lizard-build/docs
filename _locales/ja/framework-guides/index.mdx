@@ -42,21 +42,23 @@ curl -fsSL https://lizard.build/install.sh | bash
 lizard login
 ```
 
+Windows では、PowerShell で `irm https://lizard.build/api/cli/install.ps1 | iex` を実行します。新しいアカウントはプランなしで始まります。7 日間の Pro トライアル（カードが必要）を開始するまで、`lizard add` と `lizard up` は Checkout リンクを返します。`lizard billing start` でそのリンクを開けます。
+
 各ガイドでは、新しいプロジェクトと `web` または `api` という名前のサービスを使用します。最初の `lizard up --service` 呼び出しの前に、`lizard add --service web`（または `api`）でそのサービスを作成してください。`up --service` は既存のサービスを選択します。存在しない名前付きサービスは作成しません。既存のプロジェクトでは、デプロイ前に `lizard status --json` と `lizard ps --json` を確認してください。ポートはコンテナ内のプロセスと一致している必要があり、そのプロセスは `0.0.0.0` で待ち受ける必要があります。
 
-Lizard CLI 0.3.95 は、アップロード時に macOS のアーカイブメタデータを除外します。`COPYFILE_DISABLE` の設定は不要です。これらのガイドに従う前に、古い CLI バージョンを更新してください。
+Lizard CLI 0.3.95 以降は、アップロード時に macOS のアーカイブメタデータを除外します。`COPYFILE_DISABLE` の設定は不要です。これらのガイドに従う前に、古い CLI バージョンを更新してください。
 
 <span id="choose-github-or-local-source" />
 
 ## GitHub またはローカルソースを選ぶ
 
-ガイドのコマンドでは、現在のフォルダーをアップロードするために `lizard up` を使います。このコマンドは、既存のサービスをソースアップロードに変更します。git push to deploy を維持したい場合は、代わりに [GitHub を接続](/deploy/github) し、リポジトリでガイドのビルド設定を使用してください。テーブルの内容に従ってサービスのポートを設定します。
+ガイドのコマンドでは、現在のフォルダーをアップロードするために `lizard up` を使います。このコマンドは、既存のサービスをソースアップロードに変更します。git push to deploy を維持したい場合は、代わりに [GitHub を接続](/deploy/github) し、リポジトリでガイドのビルド設定を使用してください。テーブルの内容に従ってサービスのポートを設定します。Vite、Astro、SvelteKit、Docusaurus、VitePress のビルドを配信する nginx は、設定したポートで待ち受けます。設定しない場合は `3000` で待ち受けます。
 
 <span id="keep-build-settings-consistent" />
 
 ## ビルド設定の整合性を保つ
 
-これらのガイドでは、Dockerfile が必要な場合を除き、lizardpack の検出を使います。既存の `buildCommand` または `startCommand` のオーバーライドは、検出とリポジトリの Dockerfile より優先されます。ビルド方法を切り替える前に、[ビルド決定順序](/concepts/build-pipeline#build-decision-order) を確認してください。ガイドで指示された場合は `package.json` にスクリプトを設定してください。CLI オーバーライドを追加するのは別のビルドパスです。
+これらのガイドでは、Dockerfile が必要な場合を除き、lizardpack の検出を使います。既存の `buildCommand` または `startCommand` のオーバーライドは、検出とリポジトリの Dockerfile より優先されます。`dockerfilePath` が設定されている場合は、その両方より優先されます。ビルド方法を切り替える前に、[ビルド決定順序](/concepts/build-pipeline#build-decision-order) を確認してください。ガイドで指示された場合は `package.json` にスクリプトを設定してください。CLI オーバーライドを追加するのは別のビルドパスです。
 
 <span id="check-a-release" />
 

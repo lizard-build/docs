@@ -10,7 +10,7 @@ The basic setup covers flows that use APIs. Uploaded files and local vector stor
 
 ## Prerequisites
 
-- A Lizard account with access to app hosting and Managed Postgres.
+- A Lizard account on Pro or the 7-day Pro trial (card required). Until the trial starts, `lizard add` and `lizard up` return a Checkout link; `lizard billing start` opens it.
 - OpenSSL on your computer.
 - Enough memory for your Flowise workload; the test service uses 4 GiB.
 
@@ -132,7 +132,7 @@ PostgreSQL does not store every file that Flowise writes. This setup does not mo
 
 Before using uploads or document workflows, configure a private S3 bucket using Flowise's [storage variables](https://docs.flowiseai.com/configuration/environment-variables). Set `STORAGE_TYPE=s3`, `S3_STORAGE_BUCKET_NAME`, `S3_STORAGE_ACCESS_KEY_ID`, `S3_STORAGE_SECRET_ACCESS_KEY`, and `S3_STORAGE_REGION`. For an S3-compatible provider, also set `S3_ENDPOINT_URL` and `S3_FORCE_PATH_STYLE=true`.
 
-Lizard's Managed Object Storage creates a public-read `default` bucket. Do not put private Flowise documents in that bucket without first changing its access setting. The PostgreSQL setup above does not provision or test file storage, local vector stores, or queue workers.
+Lizard's Managed Object Storage creates a private `default` bucket, which suits Flowise documents. Keep it private: making it public from the dashboard S3 browser exposes every file in it. The PostgreSQL setup above does not provision or test file storage, local vector stores, or queue workers.
 
 ## Troubleshooting and updates
 
@@ -142,6 +142,6 @@ lizard logs --build --service flowise
 lizard logs --service flowise
 ```
 
-If a first deployment times out while the image is still being pulled, inspect `lizard events`. Once the container has started, retry `lizard up --service flowise --port 3000`. A service with no successful prior build cannot use `lizard redeploy` yet.
+If a first deployment times out while the image is still being pulled, inspect `lizard events`. Once the container has started, retry `lizard up --service flowise --port 3000`, or run `lizard redeploy --service flowise` to rebuild the last upload, even after a failed first build.
 
 For updates, back up the database, read Flowise's release notes, change the npm version in the Dockerfile, and upload it again with `lizard up`. Verify the new version and run the persistence checks before relying on the update.

@@ -14,7 +14,7 @@ description: "lizard domain はサービスのドメインを表示し、onlizar
 lizard domain [hostname] [flags]
 ```
 
-ホスト名は位置引数です。`add` サブコマンドはありません。引数なしで `lizard domain` を実行すると、サービスの現在のドメインが表示されます。
+ホスト名は位置引数です。`add` サブコマンドはありません。引数なしで `lizard domain` を実行すると、サービスの現在のドメインが表示されます。ドメインがない場合は生成されます。エイリアス: `lizard domains`。
 
 <span id="flags" />
 
@@ -23,7 +23,11 @@ lizard domain [hostname] [flags]
 | フラグ | 説明 |
 |------|-------------|
 | `-s, --service <name>` | サービス |
+| `-p, --project <id>` | プロジェクト名、スラッグ、または ID |
 | `--port <n>` | 公開するポート |
+| `-f, --force` | ドメインが自分の別のサービスに接続されている場合、このサービスに移動する |
+
+サブコマンドでも同じ `-s` と `-p` フラグを使います。ドメインの検証と削除は、そのドメインを接続したサービスで行ってください。
 
 <span id="subcommands" />
 
@@ -73,10 +77,10 @@ lizard domain generate
 lizard domain app.example.com --service web
 ```
 
-Lizard は作成する DNS レコード（ホスト名用の `CNAME` と、検証用の `TXT` レコード）を返します。DNS プロバイダーでそれらを追加してから、検証します:
+Lizard は作成する DNS レコードを返します。ホスト名用の `CNAME` と、ドメインをまだ検証していない場合は `_lizard-verify.<apex domain>` の `TXT` レコードです（`app.example.com` の場合は `_lizard-verify.example.com`）。DNS プロバイダーでそれらを追加してから、同じサービスで検証します:
 
 ```bash
-lizard domain verify app.example.com
+lizard domain verify app.example.com --service web
 ```
 
 <span id="attach-a-domain-to-a-specific-port" />
@@ -87,13 +91,21 @@ lizard domain verify app.example.com
 lizard domain app.example.com --service web --port 8080
 ```
 
+<span id="move-a-domain-from-another-of-your-services" />
+
+### 自分の別のサービスからドメインを移動する
+
+```bash
+lizard domain app.example.com --service web --force
+```
+
 <span id="remove-a-domain" />
 
 ### ドメインを削除する
 
 ```bash
-lizard domain delete app.example.com
-lizard domain rm app.example.com --yes
+lizard domain delete app.example.com --service web
+lizard domain rm app.example.com --service web --yes
 ```
 
 <span id="see-also" />

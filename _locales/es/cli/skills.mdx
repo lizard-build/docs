@@ -4,7 +4,7 @@ description: "lizard skills lee las guías para agentes incluidas con tu versió
 
 # lizard skills
 
-Lee las skills para agentes integradas que se incluyen con esta versión de CLI.
+Lee las skills para agentes integradas que se incluyen con esta versión de CLI. Alias: `lizard skill`.
 
 <span id="usage" />
 
@@ -26,11 +26,11 @@ Lista las skills integradas disponibles.
 
 ### `lizard skills get core`
 
-Lee la guía principal — la guía de uso autorizada para la plataforma, versionada junto con la CLI. Devuelve `{ name, frontmatter, content, … }`, donde `content` es la guía completa (pipeline de build, precedencia de env, addons, discovery, códigos de salida).
+Lee la guía principal — la guía de uso autorizada para la plataforma, versionada junto con la CLI. Con `--json` devuelve `{ name, path, frontmatter, content }`, donde `content` es la guía completa (pipeline de build, precedencia de env, addons, discovery, códigos de salida).
 
-### `lizard skills path`
+### `lizard skills path [name]`
 
-Muestra dónde se almacenan las skills en el disco.
+Imprime de dónde proviene una skill. Las skills están integradas en la CLI, por lo que esto imprime `embedded://skills` a menos que `LIZARD_SKILLS_DIR` apunte la CLI a un directorio en el disco.
 
 <span id="examples" />
 

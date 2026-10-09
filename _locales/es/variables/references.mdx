@@ -6,7 +6,7 @@ description: "Lee los valores de un servicio o addon desde otro con la sintaxis 
 
 # Referencias entre servicios
 
-Las referencias permiten que un servicio o addon lea los valores de otro sin copiar y pegar credenciales. Mantienen los secretos en un solo lugar y rotan automáticamente.
+Las referencias permiten que un servicio lea los valores de otro servicio o addon sin copiar y pegar credenciales. Mantienen cada valor en un solo lugar; los consumidores recogen los cambios en su siguiente despliegue.
 
 <span id="syntax" />
 
@@ -30,13 +30,13 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 ## Cómo se resuelven
 
 - Las referencias se resuelven en el **momento del despliegue** usando el entorno combinado del destino.
-- Se almacenan por **ID**, así que cambiar el nombre del destino más adelante no rompe la referencia.
-- Una referencia a un destino o clave **inexistente** se resuelve como una **cadena vacía**: *no* hace fallar el despliegue.
+- Coinciden con el **nombre actual** del destino. Cambiar el nombre del destino las rompe; actualiza cada `${{oldname.KEY}}` después de un cambio de nombre.
+- Una referencia a un destino o clave **inexistente** se resuelve como una **cadena vacía**: *no* hace fallar el despliegue. El log de compilación muestra un aviso por cada referencia vacía, con el motivo.
 - Solo las referencias **circulares** producen un error.
 
-> Como una clave faltante pasa silenciosamente a estar vacía, verifica siempre que el consumidor realmente haya recibido el valor después de conectar una referencia:
+> Después de conectar una referencia, busca referencias vacías en el log de compilación:
 > ```bash
-> lizard ssh --service api -- env | grep DATABASE_URL
+> lizard logs --build --service api
 > ```
 
 Si una referencia no aparece como esperas, consulta [Solución de problemas → no aparece un secreto o referencia](/variables/troubleshooting/reference-not-applied).
@@ -45,17 +45,18 @@ Si una referencia no aparece como esperas, consulta [Solución de problemas → 
 
 ## Patrones habituales
 
-**Conecta un addon a varios servicios**: vincúlalo en cada consumidor para que la rotación se propague a todas partes:
+**Conecta un addon a varios servicios**: vincúlalo en cada consumidor; usa la URL privada dentro del proyecto:
 
 ```bash
-lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service api
-lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service worker
+lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service api
+lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service worker
 ```
 
-**Haz referencia al valor de otro servicio**: por ejemplo, comparte una URL calculada o un token:
+**Haz referencia al valor de otro servicio**: por ejemplo, comparte una URL calculada o un token. `LIZARD_PUBLIC_DOMAIN` es un hostname sin más y existe cuando el servicio tiene un dominio; `LIZARD_PRIVATE_DOMAIN` (`<name>.lizard.internal`) llega al servicio dentro del proyecto:
 
 ```bash
-lizard secrets set UPSTREAM_URL='${{api.LIZARD_PUBLIC_DOMAIN}}' --service web
+lizard secrets set UPSTREAM_URL='https://${{api.LIZARD_PUBLIC_DOMAIN}}' --service web
+lizard secrets set INTERNAL_API='http://${{api.LIZARD_PRIVATE_DOMAIN}}:8080' --service web
 ```
 
 **Haz referencia a un segundo addon del mismo tipo**: usa su nombre generado:
@@ -68,7 +69,7 @@ lizard secrets set CACHE_URL='${{redis-winter-otter.REDIS_URL}}' --service api
 
 ## ¿Por qué no usar simplemente `--global`?
 
-Poner un DSN compartido en el ámbito del proyecto (`--global`) lo expone a *todos* los servicios, incluidos los que no lo necesitan. Las referencias te dan la misma rotación con una sola fuente de verdad, pero mantienen cada secreto limitado a los servicios que realmente lo consumen. Consulta [Alcance de secretos](/variables#scoping).
+Poner un valor compartido en el ámbito del proyecto (`--global`) lo expone a *todos* los servicios, incluidos los que no lo necesitan. Una referencia mantiene el valor en un solo lugar y lo vincula solo donde lo configuras. Ten en cuenta que los valores `DATABASE_URL` y `REDIS_URL` de cada addon de Postgres y Redis en marcha llegan a todos los servicios de todos modos, con la precedencia más baja; una referencia los sobrescribe. Consulta [Alcance de secretos](/variables#scoping).
 
 <span id="see-also" />
 

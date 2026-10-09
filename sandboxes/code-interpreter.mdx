@@ -12,7 +12,38 @@ description: "Run Python commands in the interpreter template with the Lizard SD
 <span id="checkpointing-a-session" />
 <span id="see-also" />
 
-Run Python with the `interpreter` template. Each process command starts a separate Python process, so Python variables do not survive between calls. Save intermediate results to files. The API returns stdout, stderr, and an exit code; it does not return typed notebook results or chart objects.
+Run Python with the `interpreter` template. `CodeSandbox` keeps state between calls: Python runs in a persistent Jupyter kernel per context, and results can include the last expression's value and charts as `image/png`.
+
+```ts
+import { CodeSandbox } from '@lizard-build/sdk';
+
+const sandbox = await CodeSandbox.create({ projectId: 'proj_123', timeoutMs: 300_000 });
+try {
+  await sandbox.runCode('x = 21');
+  const run = await sandbox.runCode('x * 2');
+  console.log(run.results[0]?.data, run.stdout, run.error);
+} finally {
+  await sandbox.kill();
+}
+```
+
+```python
+from lizard import CodeSandbox
+
+sandbox = CodeSandbox.create(project_id="proj_123", timeout_ms=300_000)
+try:
+    sandbox.run_code("x = 21")
+    run = sandbox.run_code("x * 2")
+    print(run.results[0].data, run.stdout, run.error)
+finally:
+    sandbox.kill()
+```
+
+`createContext()` (Python: `create_context()`) starts a separate kernel with its own variables. JavaScript and bash run as a fresh process on each call.
+
+## Run commands
+
+`process.exec` starts a separate process for each command, so Python variables do not survive between calls. Save intermediate results to files. It returns stdout, stderr, and an exit code.
 
 ```ts
 import { Sandbox } from '@lizard-build/sdk';
@@ -38,10 +69,6 @@ try:
 finally:
     sandbox.kill()
 ```
-
-## Unsupported APIs
-
-`CodeSandbox`, `runCode` / `run_code`, and execution-context methods remain in the SDK, but the hosted template catalog does not provide their required execution server. The legacy default `code-interpreter-v1` is unavailable. Changing its name to `interpreter` does not enable this API. Use `Sandbox.create("interpreter")` and process commands as shown below.
 
 ## Storage and billing
 

@@ -42,11 +42,11 @@ lizard regions
 lizard regions --json
 ```
 
-<span id="choose-a-region-when-creating-a-service-or-addon" />
+<span id="choose-a-region-when-you-create-a-resource" />
 
-### サービスまたはアドオンの作成時にリージョンを選択する
+### リソースの作成時にリージョンを選択する
 
-`--region <code>` を `lizard add` または `lizard up` に渡します:
+`--region <code>` を `lizard add`、`lizard up`、`lizard sandbox create`、または `lizard volume create` に渡します:
 
 ```bash
 lizard add -r your-org/your-app --region <code>
@@ -54,7 +54,7 @@ lizard add postgres --region <code>
 lizard up --region <code>
 ```
 
-リージョンを指定しない場合、プラットフォームはプロジェクトのデフォルトを使用します。
+`--region` を指定しない場合、`lizard add` は `us-east-1` を使い、`lizard up` はプラットフォームのデフォルトリージョンを使います。`lizard up` では、`--region` は新しいサービスを作成するときにだけ適用されます。
 
 <span id="see-also" />
 

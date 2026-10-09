@@ -1,5 +1,5 @@
 ---
-description: "lizard upgrade updates the CLI in place, or checks for a newer version without installing it with --check."
+description: "lizard upgrade replaces the CLI binary with the latest release on macOS and Linux, or checks for a newer version with --check."
 ---
 
 # lizard upgrade
@@ -11,6 +11,12 @@ Upgrade the CLI to the latest version.
 ```bash
 lizard upgrade [flags]
 ```
+
+How it upgrades depends on how you installed the CLI:
+
+- **Install script on macOS or Linux:** downloads the latest release and replaces the binary.
+- **npm:** prints the command to run, `npm install -g @lizard-build/cli@latest`.
+- **Windows:** the binary can't replace itself. Run the installer again: `irm https://lizard.build/api/cli/install.ps1 | iex`.
 
 ## Flags
 

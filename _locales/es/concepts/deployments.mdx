@@ -6,7 +6,7 @@ description: "El ciclo de despliegue en Lizard: qué desencadena una compilació
 
 # Despliegues
 
-Un **despliegue** es una compilación y publicación de un servicio. La ruta de publicación depende del entorno de ejecución del servicio. Una compilación correcta no demuestra por sí sola que la aplicación se haya iniciado o pueda atender solicitudes.
+Un **despliegue** es una compilación y publicación de un servicio. Los servicios se ejecutan como pods de Kubernetes. Una compilación correcta no demuestra por sí sola que la aplicación se haya iniciado o pueda atender solicitudes.
 
 <span id="how-a-deploy-happens" />
 
@@ -29,9 +29,9 @@ lizard up                          # upload cwd and deploy
 ## Ciclo de vida
 
 1. **Compilación** — la plataforma ejecuta tu compilación (consulta [Proceso de compilación](/concepts/build-pipeline)).
-2. **Predeploy** — si `preDeployCommand` está configurado, se ejecuta una vez (por ejemplo, migraciones).
-3. **Inicio** — Lizard inicia la aplicación para su entorno de ejecución configurado.
-4. **Comprobación de estado** — la plataforma verifica que se pueda acceder al puerto de la app (se omite para [workers](/deploy/workers)).
+2. **Predeploy** — si están configurados tanto `preDeployCommand` como `startCommand`, el contenedor ejecuta `sh -c "<pre> && exec <start>"`. El comando de predeploy se ejecuta al inicio de cada contenedor (cada réplica, cada reinicio), así que hazlo seguro para ejecutarse muchas veces y al mismo tiempo. Sin `startCommand` se omite.
+3. **Inicio** — Lizard inicia el nuevo pod junto al anterior. Los [workers](/deploy/workers) detienen primero el pod anterior.
+4. **Comprobación de estado** — una sonda TCP comprueba el puerto de la app cada 2 segundos, y el tráfico pasa solo a un pod listo. Lizard espera unos 30 segundos; si el nuevo pod no está listo para entonces, el despliegue se marca como fallido. Los workers omiten la sonda.
 5. **Verificación** — inspecciona el estado de la publicación y llama a la URL de la aplicación. La accesibilidad del puerto no es una comprobación completa del estado de la aplicación.
 
 <span id="streaming-output" />
@@ -86,10 +86,10 @@ lizard events                      # see replica status
 
 ## Cambios de configuración (sin recompilar)
 
-La mayoría de los cambios en variables de entorno y secretos se aplican sin recompilar: Lizard actualiza la configuración del servicio y lo reinicia, lo que tarda unos segundos. Los valores de tiempo de compilación (`VITE_*`, `NEXT_PUBLIC_*`) y los cambios en campos de compilación sí fuerzan una recompilación — consulta la [tabla de desencadenantes de recompilación](/concepts/build-pipeline#what-triggers-a-rebuild).
+La mayoría de los cambios en variables de entorno y secretos se aplican sin recompilar: Lizard actualiza la configuración del servicio y lo reinicia, lo que tarda unos segundos. Los valores de tiempo de compilación (`VITE_*`, `NEXT_PUBLIC_*`) y los cambios en campos de compilación sí fuerzan una recompilación de un servicio en ejecución — consulta la [tabla de desencadenantes de recompilación](/concepts/build-pipeline#what-triggers-a-rebuild) y las [variables de tiempo de compilación](/concepts/build-pipeline#build-time-variables).
 
 <span id="failed-releases-and-recovery" />
 
 ## Publicaciones fallidas y recuperación
 
-Una compilación fallida y un inicio fallido de la aplicación son casos distintos. No asumas que una publicación anterior sigue atendiendo tráfico en todos los entornos de ejecución. Inspecciona el servicio activo, los registros de compilación y los registros de ejecución. `lizard redeploy` vuelve a compilar el origen seleccionado; no es un comando para restaurar una compilación anterior. Revierte el commit del código fuente cuando sea necesario, desplíegalo y comprueba el resultado. Consulta [problemas conocidos](/platform/known-issues).
+Una compilación fallida y un inicio fallido de la aplicación son casos distintos. En ambos, un servicio HTTP que ya está en ejecución sigue atendiendo su versión anterior: una compilación fallida no cambia nada, y un pod nuevo que nunca llega a estar listo no recibe tráfico. El pod anterior de un worker se detiene antes de que arranque el nuevo, así que una publicación defectuosa de un worker no deja ningún worker en ejecución. Inspecciona el servicio activo, los registros de compilación y los registros de ejecución. `lizard redeploy` vuelve a compilar el origen seleccionado; no es un comando para restaurar una compilación anterior. Revierte el commit del código fuente cuando sea necesario, desplíegalo y comprueba el resultado. Consulta [problemas conocidos](/platform/known-issues).

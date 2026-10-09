@@ -4,7 +4,7 @@ description: "lizard port показывает или меняет контей�
 
 # lizard port
 
-Показать или изменить контейнерный порт для сервиса. Без аргументов выводит текущий порт (`worker mode`, когда он `0`).
+Показать или изменить контейнерный порт для сервиса. Без аргументов выводит текущий порт (`worker mode`, когда он `0`). Новый порт вступает в силу при следующем деплое; выполните [`lizard redeploy`](/cli/redeploy), чтобы применить его.
 
 <span id="usage" />
 
@@ -21,6 +21,7 @@ lizard port [value] [flags]
 | Флаг | Описание |
 |------|-------------|
 | `-s, --service <name>` | Сервис для управления |
+| `-p, --project <id>` | Имя проекта, slug или ID |
 
 <span id="examples" />
 
@@ -56,4 +57,4 @@ lizard port --service worker
 
 - [Фоновые рабочие процессы](/deploy/workers) — установите порт в `0`, чтобы запустить сервис без входящей маршрутизации
 - [lizard service](/cli/service) — управляйте остальной конфигурацией сервиса
-- [Что нужно Python-приложению от хостинга](https://lizard.build/blog/python-app-hosting#what-a-python-app-actually-needs-from-a-host) — почему `gunicorn` или `uvicorn` процесс должен привязываться к `$PORT` на `0.0.0.0`
+- [Команды сборки и запуска Python-приложения](https://lizard.build/blog/python-app-hosting#build-and-start-commands) — почему `gunicorn` или `uvicorn` процесс должен привязываться к `$PORT` на `0.0.0.0`

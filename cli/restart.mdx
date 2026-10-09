@@ -17,7 +17,7 @@ lizard restart [nameOrId] [flags]
 | Flag | Description |
 |------|--------------|
 | `-s, --service <name>` | Service |
-| `--detach` | Return after the restart is accepted |
+| `--detach` | Return after the restart is accepted, without polling its status |
 | `--wait` | Wait for the new restart attempt to become ready; works with `--json` |
 | `--timeout <seconds>` | Readiness wait budget with `--wait`; default `120` |
 | `--json` | Return JSON for scripts |
@@ -30,15 +30,13 @@ lizard restart [nameOrId] [flags]
 lizard restart --service api
 ```
 
-### Restart without streaming logs
+### Return without waiting
 
 ```bash
 lizard restart --service api --detach
 ```
 
 ### Wait before running the next check
-
-Requires CLI 0.3.94 or later. Use 0.3.95 or later for workers without HTTP.
 
 ```bash
 lizard --json restart --service api --wait --timeout 120

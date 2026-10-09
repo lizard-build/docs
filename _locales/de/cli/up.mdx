@@ -11,34 +11,35 @@ Das aktuelle Verzeichnis hochladen und bereitstellen.
 ## Verwendung
 
 ```bash
-lizard up [flags]
+lizard up [path] [flags]
 ```
 
-`up` paketiert Ihren Arbeitsbaum als Tarball, sendet ihn an die Build-Knoten und stellt ihn bereit. Es erzwingt `sourceType=upload` auf dem Zieldienst, streamt Build-Logs über SSE und gibt nach Abschluss die Live-URL aus.
+`up` paketiert Ihren Arbeitsbaum (oder `path`) als Tarball, sendet ihn an die Build-Knoten und stellt ihn bereit. Es erzwingt `sourceType=upload` auf dem Zieldienst, streamt Build-Logs über SSE und gibt nach Abschluss die Live-URL aus.
 
-Wenn das aktuelle Verzeichnis noch nicht mit einem Projekt verknüpft ist, führt `up` zuerst `init` aus. In einem TTY ist das interaktiv; in einer Nicht-TTY-Umgebung (CI) wird **nicht** stillschweigend ein Projekt erstellt — stattdessen wird ein Fehler ausgegeben und Sie werden aufgefordert, `lizard init --name <project>` auszuführen (oder `--name` zu übergeben), damit nicht durch einen Tippfehler ein leeres Projekt erzeugt wird.
+Wenn das aktuelle Verzeichnis noch nicht mit einem Projekt verknüpft ist, führt `up` zuerst `init` aus. In einem TTY ist das interaktiv; in einer Nicht-TTY-Umgebung (CI) wird **nicht** stillschweigend ein Projekt erstellt — stattdessen wird ein Fehler ausgegeben und Sie werden aufgefordert, `lizard init --name <project>` auszuführen (oder `--project <project>` an `up` zu übergeben), damit nicht durch einen Tippfehler ein leeres Projekt erzeugt wird.
 
 ## Flags
 
 | Flag | Beschreibung |
 |------|-------------|
 | `-s, --service <name>` | Einen vorhandenen Dienst als Ziel verwenden |
+| `-p, --project <id>` | Projektname, Slug oder ID |
 | `--build-command <cmd>` | Den Build-Befehl überschreiben |
 | `--start-command <cmd>` | Den Startbefehl überschreiben |
-| `--pre-deploy-command <cmd>` | Vor jedem Bereitstellen einmal ausführen |
-| `--port <number>` | Container-Port (`0` = Worker-Modus) |
-| `--region <code>` | Region für das Bereitstellen |
+| `--pre-deploy-command <cmd>` | Vor dem Startbefehl bei jedem Containerstart ausführen (jedes Replikat, jeder Neustart). Erfordert einen Startbefehl; er sollte sich gefahrlos mehrfach ausführen lassen |
+| `--port <number>` | Container-Port (`0` = Worker-Modus). Neue Dienste verwenden standardmäßig `3000`, sofern nicht ein `EXPOSE` im Dockerfile den Port festlegt |
+| `--region <code>` | Region für einen neuen Dienst; bei einem vorhandenen Dienst wird sie ignoriert |
 | `-d, --detach` | Das Bereitstellen starten und beenden, ohne Logs zu streamen |
-| `-c, --ci` | CI-freundliche Ausgabe |
+| `-c, --ci` | Nur Build-Logs streamen und beenden, sobald der Build endet |
 | `--no-gitignore` | Alles hochladen und `.gitignore` ignorieren |
 
 <span id="subcommands" />
 
 ## Unterbefehle
 
-### `lizard up status`
+### `lizard up status <app-id>`
 
-Den Status eines laufenden Upload-Deploys melden.
+Den Status, die URL und den Status des letzten Builds eines Dienstes anzeigen. Übergeben Sie die Dienst-ID, die `up --detach` ausgibt.
 
 <span id="examples" />
 
@@ -67,13 +68,13 @@ lizard up --service api --start-command "node server.js" --port 8080
 ### Headless in CI bereitstellen
 
 ```bash
-export LIZARD_TOKEN=lzd_xxx
+export LIZARD_TOKEN=liz_xxx
 lizard init --name my-project
 lizard add --service api
 lizard up --ci --service api
 ```
 
-Überspringen Sie `lizard add`, wenn der Dienst bereits existiert. Mit Lizard CLI 0.3.92 kann ein fehlgeschlagener Build trotzdem mit Exit-Code `0` enden; prüfen Sie den Build-Status und die bereitgestellte URL, bevor Sie ein CI-Release als erfolgreich markieren. Eine Korrektur steht zur Veröffentlichung aus. Setzen Sie auf macOS außerdem vor einem Upload `COPYFILE_DISABLE=1`, um zusätzliche `._*`-Metadatendateien im Archiv zu vermeiden. Siehe [Framework-Setup](/framework-guides#prepare-the-project).
+Überspringen Sie `lizard add`, wenn der Dienst bereits existiert. Ein fehlgeschlagener Build oder Deploy endet mit Exit-Code `1`. Mit `--ci` bezieht sich der Exit-Code nur auf den Build. Prüfen Sie daher `lizard ps --json`, bevor Sie das Release als abgeschlossen markieren. `--detach` endet mit `0`, sobald der Upload akzeptiert wurde. Siehe [Framework-Setup](/framework-guides#prepare-the-project).
 
 <span id="see-also" />
 
@@ -83,4 +84,4 @@ lizard up --ci --service api
 - [lizard redeploy](/cli/redeploy) — den letzten Upload neu bauen, ohne erneut hochzuladen
 - [lizard init](/cli/init) — ein Projekt vor dem Bereitstellen explizit erstellen oder verknüpfen
 - [Worker-Dienste](/deploy/workers) — was `--port 0` bedeutet
-- [Einen Container bereitstellen, ohne einen zu konfigurieren](https://lizard.build/blog/container-as-a-service#deploy-a-container-without-configuring-one) — wie sich dieser Befehl unter Container-as-a-Service-Plattformen einordnet
+- [Container as a Service](https://lizard.build/blog/container-as-a-service#what-happens-when-you-deploy-a-container) — was eine Plattform tut, wenn Sie einen Container bereitstellen

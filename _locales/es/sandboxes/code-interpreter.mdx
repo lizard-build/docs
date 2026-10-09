@@ -19,7 +19,38 @@ description: "Ejecuta comandos Python con Lizard SDK y la plantilla interpreter.
 <span id="checkpointing-a-session" />
 <span id="see-also" />
 
-Ejecuta Python con la plantilla `interpreter`. Cada comando inicia un proceso Python distinto, por lo que las variables no persisten entre llamadas. Guarda los resultados intermedios en archivos. La API devuelve stdout, stderr y un código de salida; no devuelve resultados tipados de notebook ni objetos de gráficos.
+Ejecuta Python con la plantilla `interpreter`. `CodeSandbox` conserva el estado entre llamadas: Python se ejecuta en un kernel de Jupyter persistente por contexto, y los resultados pueden incluir el valor de la última expresión y gráficos como `image/png`.
+
+```ts
+import { CodeSandbox } from '@lizard-build/sdk';
+
+const sandbox = await CodeSandbox.create({ projectId: 'proj_123', timeoutMs: 300_000 });
+try {
+  await sandbox.runCode('x = 21');
+  const run = await sandbox.runCode('x * 2');
+  console.log(run.results[0]?.data, run.stdout, run.error);
+} finally {
+  await sandbox.kill();
+}
+```
+
+```python
+from lizard import CodeSandbox
+
+sandbox = CodeSandbox.create(project_id="proj_123", timeout_ms=300_000)
+try:
+    sandbox.run_code("x = 21")
+    run = sandbox.run_code("x * 2")
+    print(run.results[0].data, run.stdout, run.error)
+finally:
+    sandbox.kill()
+```
+
+`createContext()` (Python: `create_context()`) inicia un kernel aparte con sus propias variables. JavaScript y bash se ejecutan como un proceso nuevo en cada llamada.
+
+## Ejecutar comandos
+
+`process.exec` inicia un proceso distinto para cada comando, por lo que las variables de Python no persisten entre llamadas. Guarda los resultados intermedios en archivos. Devuelve stdout, stderr y un código de salida.
 
 ```ts
 import { Sandbox } from '@lizard-build/sdk';
@@ -45,10 +76,6 @@ try:
 finally:
     sandbox.kill()
 ```
-
-## API no compatibles
-
-`CodeSandbox`, `runCode` / `run_code` y los métodos de contexto siguen en el SDK, pero el catálogo alojado no ofrece el servidor de ejecución que requieren. La plantilla antigua por defecto `code-interpreter-v1` no está disponible. Cambiar su nombre a `interpreter` no activa esa API. Usa `Sandbox.create("interpreter")` y comandos de procesos como se muestra abajo.
 
 ## Almacenamiento y facturación
 

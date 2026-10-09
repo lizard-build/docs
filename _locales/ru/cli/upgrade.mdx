@@ -1,5 +1,5 @@
 ---
-description: "lizard upgrade обновляет CLI на месте или проверяет наличие новой версии без установки с флагом --check."
+description: "lizard upgrade заменяет бинарный файл CLI последним релизом на macOS и Linux или проверяет наличие новой версии с флагом --check."
 ---
 
 # lizard upgrade
@@ -13,6 +13,12 @@ description: "lizard upgrade обновляет CLI на месте или пр�
 ```bash
 lizard upgrade [flags]
 ```
+
+Способ обновления зависит от того, как вы установили CLI:
+
+- **Установочный скрипт на macOS или Linux:** загружает последний релиз и заменяет бинарный файл.
+- **npm:** выводит команду, которую нужно выполнить, `npm install -g @lizard-build/cli@latest`.
+- **Windows:** бинарный файл не может заменить сам себя. Запустите установщик ещё раз: `irm https://lizard.build/api/cli/install.ps1 | iex`.
 
 <span id="flags" />
 

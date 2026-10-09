@@ -55,7 +55,7 @@ finally:
 
 ## 容量と料金
 
-新しいボリュームの容量は **1–50 GB** の整数で、既定値は **5 GB** です。サーバーは `VOLUME_MAX_SIZE_GB` で上限を変更できます。ダッシュボードと CLI は `GET /api/projects/:projectId/volume-limits` から現在の制限を取得します。ダッシュボードは同じエンドポイントから保存料金も取得し、容量スライダーの下に表示します。
+新しいボリュームの容量は **1–50 GB** の整数で、既定値は **5 GB** です。サーバーは `VOLUME_MAX_SIZE_GB` で上限を変更できます。ダッシュボードと CLI は `GET /api/projects/:projectId/volume-limits` から現在の制限と保存料金を取得します。
 
 課金対象は割り当てた容量全体ではなく、**使用中の容量**です。新しい上限を超える既存のボリュームは、サイズを維持したまま使えます。新規作成には、選んだリージョンの正常なワーカーに十分な未予約の空き容量が必要です。空き容量がない場合、API はコード `volume_capacity_unavailable` とともに `503` を返します。
 
@@ -67,6 +67,7 @@ finally:
 await Volume.list('proj_123');
 const volume = await Volume.get('proj_123', 'agent-workdir');
 await volume.getInfo('proj_123');
+await Volume.resize('proj_123', 'agent-workdir', 20);
 await Volume.delete('proj_123', 'agent-workdir'); // detach first
 ```
 
@@ -76,9 +77,12 @@ await Volume.delete('proj_123', 'agent-workdir'); // detach first
 | `Volume.create(projectId, name, options)` | `Volume.create(project_id, name, size_gb=5)` | 作成する。同名がある場合はエラー |
 | `Volume.list(projectId)` | `Volume.list(project_id)` | プロジェクトのボリューム一覧を取得する |
 | `Volume.get(projectId, nameOrId)` | `Volume.get(project_id, name_or_id)` | ボリュームを検索する |
+| `Volume.resize(projectId, nameOrId, sizeGb)` | `Volume.resize(project_id, name_or_id, size_gb)` | サイズを変更する |
 | `Volume.delete(projectId, nameOrId)` | `Volume.remove(project_id, name_or_id)` | 切断済みのボリュームを削除する |
 
 生成された ID と `volumeId` / `volume_id` フィールドも引き続き使えます。新しいコードでは名前を使ってください。
+
+サイズ変更はその場で行われ、ボリュームの接続中でも実行できます。Firecracker のボリュームは拡張のみできます。Pod ベースのボリュームは、新しいサイズの 10% 以上が空いたままになる場合に限り、縮小もできます。
 
 <span id="cli" />
 
@@ -88,6 +92,7 @@ await Volume.delete('proj_123', 'agent-workdir'); // detach first
 lizard volume create agent-workdir --size 10 --project proj_123
 lizard volume list --project proj_123
 lizard sandbox create --volume agent-workdir --project proj_123
+lizard volume resize agent-workdir --size 20 --project proj_123
 # After stopping the sandbox:
 lizard volume rm agent-workdir --project proj_123
 ```
@@ -98,7 +103,7 @@ lizard volume rm agent-workdir --project proj_123
 
 ## ダッシュボード
 
-プロジェクトで **Sandboxes → Volumes** を開きます。作成フォームは名前を検証し、現在の上限と料金を示す容量スライダーを表示します。一覧には使用量、割り当て容量、状態、接続先の Sandbox が表示されます。必要な場合はボリュームの詳細から ID をコピーできます。
+ボリュームの作成と接続は SDK または CLI で行います。プロジェクトにボリュームがあると、**Sandboxes → Persistent Volumes** に使用量、割り当て容量、状態、接続先の Sandbox が表示されます。そこからファイルの参照、サイズ変更、ボリュームの削除ができます。
 
 <span id="storage-lifecycle" />
 
@@ -110,6 +115,6 @@ lizard volume rm agent-workdir --project proj_123
 
 Sandbox のオプションは [SDK リファレンス](/sandboxes/sdk-reference)を参照してください。
 
-sandbox を作成してコマンドを実行し、終了後に `kill` を呼び出します。`connect` は既存の sandbox に接続するだけで状態を変えないため、一時停止中や停止済みの sandbox を再開しません。一時停止、再開、snapshot、restore は利用できます。[一時停止、再開、スナップショット](/sandboxes/quickstart#pause-and-resume)を参照してください。fork とファイル監視は HTTP 501 を返します。`lizard sandbox ssh` は CLI の認証情報で対話型シェルを開きます。SSH プロトコルでのアクセスはできないため、SSH クライアント、`scp`、ポートフォワーディングは使えません。
+sandbox を作成してコマンドを実行し、終了後に `kill` を呼び出します。`connect` は既存の sandbox に接続するだけで状態を変えないため、一時停止中や停止済みの sandbox を再開しません。一時停止、再開、snapshot、restore は利用できます。[一時停止、再開、スナップショット](/sandboxes/quickstart#pause-and-resume)を参照してください。`fork` は、メモリとプロセスを含めて実行中の sandbox をコピーします。ボリュームが接続されている場合は 409 を、Pod として実行されている sandbox では 501 を返します。ファイル監視はまだ利用できません。`lizard sandbox ssh` は CLI の認証情報で対話型シェルを開きます。SSH プロトコルでのアクセスはできないため、SSH クライアント、`scp`、ポートフォワーディングは使えません。
 
 sandbox の実行中はファイルとプロセスを維持します。停止後、別の sandbox で使えるのは、接続した Persistent Volume の `/workspace` に保存したファイルだけです。ボリュームがなければ `/workspace` は一時領域です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。

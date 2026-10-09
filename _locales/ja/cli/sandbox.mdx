@@ -1,0 +1,241 @@
+---
+description: "lizard sandbox は Sandboxes の作成、一覧表示、削除を行い、その中でコマンドやコーディングエージェントを実行し、シェルやデスクトップを開き、スナップショットとファイルを管理します。"
+---
+
+# lizard sandbox
+
+ターミナルから [Sandboxes](/sandboxes) を作成・管理します。エイリアス: `lizard sb`。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard sandbox create [flags]
+lizard sandbox list [flags]
+lizard sandbox exec <id> -- <command>
+lizard sandbox ssh <id>
+lizard sandbox rm <id> [flags]
+```
+
+すべての sandbox はプロジェクトに属します。現在のディレクトリにリンクされたプロジェクト、または `-p` で指定したプロジェクトです。
+
+<span id="subcommands" />
+
+## サブコマンド
+
+### `lizard sandbox create`
+
+sandbox を作成し、その ID を表示します。
+
+| フラグ | 説明 |
+|------|-------------|
+| `-t, --template <name>` | テンプレート（既定値 `base`）。有効なテンプレート: `base`、`interpreter`、`codex`、`desktop`、`opencode`、`pi`、`prime`、`claude`。サーバーがリージョンの一覧と照合します |
+| `-s, --size <size>` | `small`、`medium`（既定値）、`large` のいずれか |
+| `--timeout <ms>` | 有効期間（ミリ秒）。既定値は `300000`（5 分）で、`0` を指定すると期限がなくなります |
+| `--region <code>` | sandbox を作成するリージョン |
+| `--snapshot <id>` | 保存済みのスナップショットから起動します。`--size` とは併用できません |
+| `--volume <name-or-id>` | [Persistent Volume](/cli/volume) を接続します |
+| `--with-token [key]` | sandbox 内で `lizard` が動作するように、`liz_` API キーを sandbox にインストールします。値を省略すると、実行中の `liz_` キーを再利用します。ブラウザでログインした場合、そのキーはありません |
+| `-p, --project <id>` | プロジェクト（既定はリンク済みのプロジェクト） |
+
+Lizard は各サイズを定額で秒単位で課金します。料金には、ディスクと、直近 30 日間でアカウントあたり最大 2 TB の送信トラフィックが含まれます。一時停止中の sandbox には費用がかかりません。接続したボリュームには[ボリュームの料金](/cli/volume)がかかります。
+
+| サイズ | vCPU | メモリ | ディスク | 料金 |
+|------|------|--------|------|-------|
+| `small` | 2 | 4 GiB | 5 GB | $0.0162/h |
+| `medium` | 4 | 8 GiB | 20 GB | $0.0324/h |
+| `large` | 8 | 16 GiB | 50 GB | $0.0648/h |
+
+`--with-token` でインストールしたキーは、sandbox 内のあらゆるものから読み取れます。1 つのワークスペースまたはプロジェクトにスコープを限定したキーを使ってください: `lizard keys create sandbox-key -w my-team`。
+
+トライアルまたは Pro プランが始まるまで、`create` は Checkout へのリンク付きで HTTP 402 を返します。`lizard billing start` を実行してください。トライアル中は同時に 5 個、最初の有料の請求書の後は 100 個の sandbox を実行できます。一時停止中の sandbox は数えません。[制限](/platform/limits#sandbox-account-limits)を参照してください。
+
+### `lizard sandbox list`
+
+リンク済みのプロジェクト内の sandbox を一覧表示します（エイリアス `ls`）。
+
+| フラグ | 説明 |
+|------|-------------|
+| `-p, --project <id>` | 代わりにこのプロジェクトを一覧表示します |
+| `--all` | すべてのワークスペースにまたがるすべての sandbox を一覧表示します |
+
+### `lizard sandbox rm <id>`
+
+sandbox を削除します（エイリアス `delete`）。
+
+| フラグ | 説明 |
+|------|-------------|
+| `-y, --yes` | 確認を省略します |
+
+### `lizard sandbox timeout <id> <ms>`
+
+現在時点から数えた新しい有効期間をミリ秒で設定します（最小 `1000`）。アイドル時間のタイマーではありません。コマンドを実行してもリセットされません。
+
+### `lizard sandbox exec <id> -- <command>`
+
+sandbox 内で `sh -c` を通して 1 つのコマンドを実行し、その出力をストリーミングして、そのコマンドの終了コードで終了します。
+
+<span id="sandbox-ssh" />
+
+### `lizard sandbox ssh <id>`
+
+実行中の sandbox で対話型シェルを開きます（エイリアス `shell`）。Lizard のログインを使うため、SSH キーを設定する必要はありません。スコープを限定した API キーでは、そのスコープ内の sandbox にだけ接続できます。Ctrl-C、矢印キー、タブ補完は sandbox に送られます。終了するには `exit` と入力するか、Ctrl-D を押してください。
+
+対話型の端末が必要です。スクリプトでは `lizard sandbox exec` を使ってください。SSH プロトコルではないため、SSH クライアント、`scp`、ポートフォワーディングは使えません。
+
+### `lizard sandbox expose <id> <port>`
+
+sandbox 内のポートに HTTPS URL を割り当てます。ポートは非公開です。リクエストには sandbox のアクセストークンが必要で、`X-Lizard-Access-Token` ヘッダーで送るか、表示される URL にすでに含まれている `lizard_token` クエリパラメーターとして渡します。トークンのないリクエストには HTTP 401 が返ります。`--json` を付けると、結果に `hostname` と `accessToken` も含まれます。
+
+`lizard sandbox unexpose <id> <port>` は URL を削除します。
+
+### `lizard sandbox desktop <id>`
+
+`-t desktop` で作成した sandbox のグラフィカルなデスクトップを起動し、ブラウザ用の URL と閲覧専用の URL を表示します。どちらのリンクもパスワードと同じように扱ってください。
+
+| フラグ | 説明 |
+|------|-------------|
+| `--view-only` | 閲覧専用の URL だけを表示するか開きます |
+| `--resolution <WxH>` | 画面サイズ。640x480 から 3840x2160 まで |
+| `--open` | ブラウザでデスクトップを開きます |
+| `--status` | デスクトップを起動せずに、その状態と URL を表示します |
+| `--stop` | デスクトップを停止し、その URL を削除します |
+
+<span id="sandbox-vnc" />
+
+### `lizard sandbox vnc <id>`
+
+`-t desktop` で作成した sandbox のデスクトップに VNC アプリ（macOS の画面共有、TigerVNC、RealVNC）を接続します。デスクトップには公開された VNC ポートがないため、CLI が `localhost` で待ち受け、各接続を安全な WebSocket 経由で sandbox に中継します。必要に応じてデスクトップを起動し、アドレスと VNC パスワードを表示して、Ctrl-C で止めるまで動作し続けます。
+
+| フラグ | 説明 |
+|------|-------------|
+| `--port <port>` | ローカルポート（既定値 `5900`。使用中の場合は次の空いているポート） |
+| `--view-only` | 閲覧専用のパスワードを使います。画面は見られますが、操作はできません |
+| `--open` | VNC アプリでアドレスを開きます（`vnc://`、macOS では画面共有） |
+
+<span id="pause-resume-and-snapshots" />
+
+### 一時停止、再開、スナップショット
+
+| コマンド | 動作 |
+|---------|--------------|
+| `lizard sandbox pause <id>` | sandbox のメモリとプロセスを保存してから停止します。一時停止中の sandbox は無料です |
+| `lizard sandbox resume <id>` | 一時停止中の sandbox を、保存したメモリとファイルで再び起動します |
+| `lizard sandbox snapshot <id> --name <name>` | 実行中の sandbox をそのプロジェクトのプライベートなスナップショットとして保存し、待機中のコピーを用意しておきます（`--warm`、1〜10、既定値 5） |
+| `lizard sandbox restore <snapshot-id>` | スナップショットから新しい sandbox を起動します（`--timeout <ms>`、既定値 `300000`） |
+| `lizard sandbox snapshots` | プロジェクトのスナップショットを一覧表示します（別のプロジェクトには `-p`） |
+| `lizard sandbox snapshot-pause <snapshot-id>` | スナップショットの待機中のコピーを解放し、保存した状態は残します |
+| `lizard sandbox snapshot-resume <snapshot-id>` | 一時停止したスナップショットの待機中のコピーを補充します |
+| `lizard sandbox snapshot-warm <snapshot-id> <count>` | 待機させておくコピーの数を変更します（1〜10） |
+| `lizard sandbox snapshot-rm <snapshot-id>` | スナップショットを削除します（エイリアス `snapshot-delete`。`-y` で確認を省略） |
+
+`pause`、`resume`、`snapshot` は処理が終わるまで待機します。キューに入った時点で戻るには `--no-wait` を渡してください。各手順で何が保持されるかは、[一時停止、再開、スナップショット](/sandboxes/quickstart#pause-and-resume)を参照してください。
+
+### `lizard sandbox files`
+
+| コマンド | 動作 |
+|---------|--------------|
+| `lizard sandbox files ls <id> [path]` | ディレクトリを一覧表示します（既定値 `/`） |
+| `lizard sandbox files cat <id> <path>` | ファイルの内容を表示します |
+| `lizard sandbox files put <id> <local> <remote>` | ローカルファイルをアップロードします |
+| `lizard sandbox files get <id> <remote> <local>` | ファイルをダウンロードします |
+| `lizard sandbox files rm <id> <path>` | ファイルまたはディレクトリを削除します |
+
+<span id="coding-agents" />
+
+### コーディングエージェント
+
+自分の認証情報を使って、sandbox 内でコーディングエージェントを実行します。先に [`lizard agents`](/cli/agents) で認証情報を接続してください。sandbox はエージェント用のテンプレート（`codex`、`claude`、`opencode`、`pi`、`prime`）から作成します。`base` テンプレートには Node.js がないため、エージェントを実行できません。
+
+`lizard sandbox prompt <id> <prompt...>` はプロンプトを送信し、エージェントの動作をストリーミング表示します。
+
+| フラグ | 説明 |
+|------|-------------|
+| `--agent <name>` | `codex`（既定値）、`claude`、`pi`、`opencode`、`prime` のいずれか |
+| `-c, --conversation <id>` | この会話を続けます |
+| `--new` | 新しい会話を始めます |
+| `-m, --model <model>` | 使用するモデル |
+| `--effort <level>` | 推論の強さ: `minimal`、`low`、`medium`、`high`、`xhigh` のいずれか |
+| `--cwd <dir>` | sandbox 内の作業ディレクトリ（既定値 `/workspace`） |
+| `-v, --verbose` | コマンドの出力も表示します |
+| `--no-wait` | プロンプトが受け付けられた時点で戻ります |
+
+Ctrl-C で表示を止めても、エージェントは作業を続けます。`lizard sandbox interrupt <id> [-c <conversation>]` は実行中のターンを停止します。`lizard sandbox conversations <id>` は会話を新しい順に一覧表示します。
+
+<span id="examples" />
+
+## 例
+
+<span id="create-a-sandbox-and-run-a-command" />
+
+### sandbox を作成してコマンドを実行する
+
+```bash
+lizard sandbox create --size small --timeout 600000
+lizard sandbox exec sb_abc123 -- python3 -c "print(1 + 1)"
+```
+
+<span id="open-a-shell" />
+
+### シェルを開く
+
+```bash
+lizard sandbox ssh sb_abc123
+```
+
+<span id="attach-a-persistent-volume" />
+
+### Persistent Volume を接続する
+
+```bash
+lizard volume create agent-workdir --size 10
+lizard sandbox create --volume agent-workdir
+```
+
+<span id="serve-a-port" />
+
+### ポートで配信する
+
+```bash
+lizard sandbox exec sb_abc123 -- sh -c "nohup python3 -m http.server 3000 --bind 0.0.0.0 >/tmp/http.log 2>&1 &"
+lizard sandbox expose sb_abc123 3000
+```
+
+<span id="use-a-desktop-from-a-vnc-app" />
+
+### VNC アプリからデスクトップを使う
+
+```bash
+lizard sandbox create -t desktop
+lizard sandbox vnc sb_abc123 --open
+```
+
+<span id="run-codex-in-a-sandbox" />
+
+### sandbox で Codex を実行する
+
+```bash
+lizard agents login chatgpt
+lizard sandbox create -t codex
+lizard sandbox prompt sb_abc123 "add a health check endpoint and test it"
+```
+
+<span id="save-and-restore-a-sandbox" />
+
+### sandbox を保存して復元する
+
+```bash
+lizard sandbox snapshot sb_abc123 --name my-app
+lizard sandbox restore <snapshot-id>   # ID from `lizard sandbox snapshots`
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [Sandboxes](/sandboxes) — ランタイム、テンプレート、ライフサイクル
+- [Sandboxes クイックスタート](/sandboxes/quickstart) — Lizard SDK から行う同じ手順
+- [lizard volume](/cli/volume) — `--volume` で接続する Persistent Volumes
+- [lizard agents](/cli/agents) — `sandbox prompt` 用の認証情報
+- [制限](/platform/limits#sandbox-lifetime) — サイズ、実行数の上限、送信トラフィック、有効期間

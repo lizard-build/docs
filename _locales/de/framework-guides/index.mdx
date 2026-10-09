@@ -42,21 +42,23 @@ curl -fsSL https://lizard.build/install.sh | bash
 lizard login
 ```
 
+Führe unter Windows `irm https://lizard.build/api/cli/install.ps1 | iex` in PowerShell aus. Ein neues Konto startet ohne Tarif: Bis du die 7-tägige Pro-Testphase startest (Karte erforderlich), geben `lizard add` und `lizard up` einen Checkout-Link zurück. `lizard billing start` öffnet ihn.
+
 Jede Anleitung verwendet ein neues Projekt und einen Service mit dem Namen `web` oder `api`. Erstelle diesen Service mit `lizard add --service web` (oder `api`) vor dem ersten Aufruf von `lizard up --service`. `up --service` wählt einen vorhandenen Service aus; ein fehlender benannter Service wird dadurch nicht erstellt. Prüfe bei einem bestehenden Projekt vor der Bereitstellung `lizard status --json` und `lizard ps --json`. Der Port muss zum Prozess im Container passen, der auf `0.0.0.0` lauschen muss.
 
-Lizard CLI 0.3.95 schließt macOS-Archivmetadaten bei Uploads aus. Eine Einstellung für `COPYFILE_DISABLE` ist nicht erforderlich. Aktualisiere ältere CLI-Versionen, bevor du diesen Anleitungen folgst.
+Lizard CLI 0.3.95 und neuer schließen macOS-Archivmetadaten bei Uploads aus. Eine Einstellung für `COPYFILE_DISABLE` ist nicht erforderlich. Aktualisiere ältere CLI-Versionen, bevor du diesen Anleitungen folgst.
 
 <span id="choose-github-or-local-source" />
 
 ## GitHub oder lokalen Quellcode wählen
 
-Die Befehle in dieser Anleitung verwenden `lizard up`, um den aktuellen Ordner hochzuladen. Dieser Befehl stellt einen bestehenden Service auf Quellcode-Upload um. Wenn du git push to deploy beibehalten möchtest, [verbinde GitHub](/deploy/github) stattdessen und verwende die Build-Einstellungen der Anleitung im Repository. Konfiguriere den Service-Port anhand der Tabelle.
+Die Befehle in dieser Anleitung verwenden `lizard up`, um den aktuellen Ordner hochzuladen. Dieser Befehl stellt einen bestehenden Service auf Quellcode-Upload um. Wenn du git push to deploy beibehalten möchtest, [verbinde GitHub](/deploy/github) stattdessen und verwende die Build-Einstellungen der Anleitung im Repository. Konfiguriere den Service-Port anhand der Tabelle: nginx lauscht bei einem Build mit Vite, Astro, SvelteKit, Docusaurus oder VitePress auf dem Port, den du festlegst, oder auf `3000`, wenn du keinen festlegst.
 
 <span id="keep-build-settings-consistent" />
 
 ## Build-Einstellungen konsistent halten
 
-Diese Anleitungen verwenden lizardpack-Erkennung, sofern nicht ein Dockerfile verlangt wird. Bestehende Überschreibungen in `buildCommand` oder `startCommand` haben Vorrang vor der Erkennung und dem Dockerfile im Repository. Prüfe die [Reihenfolge der Build-Entscheidung](/concepts/build-pipeline#build-decision-order), bevor du die Build-Methode wechselst. Setze Skripte in `package.json`, wenn eine Anleitung dich dazu auffordert; das Hinzufügen einer CLI-Überschreibung ist ein anderer Build-Pfad.
+Diese Anleitungen verwenden lizardpack-Erkennung, sofern nicht ein Dockerfile verlangt wird. Bestehende Überschreibungen in `buildCommand` oder `startCommand` haben Vorrang vor der Erkennung und dem Dockerfile im Repository; ein gesetzter `dockerfilePath` hat Vorrang vor beidem. Prüfe die [Reihenfolge der Build-Entscheidung](/concepts/build-pipeline#build-decision-order), bevor du die Build-Methode wechselst. Setze Skripte in `package.json`, wenn eine Anleitung dich dazu auffordert; das Hinzufügen einer CLI-Überschreibung ist ein anderer Build-Pfad.
 
 <span id="check-a-release" />
 

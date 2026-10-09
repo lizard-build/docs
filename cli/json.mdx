@@ -1,12 +1,12 @@
 ---
-description: "Script the lizard CLI: --json on every command, line-delimited events for streaming builds, schema discovery, and token auth in CI."
+description: "Script the Lizard CLI: --json on every command, line-delimited events for streaming builds, schema discovery, and token auth in CI."
 ---
 
 # JSON & Automation
 
 The CLI is built to be scripted. Pass `--json` for machine-readable output, drive it from CI with a token, and discover any command's schema at runtime.
 
-The other reader of this output is an AI coding agent — [deploying from Claude Code](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) shows what it does with a failed build's JSON.
+The other reader of this output is an AI coding agent — [deploying from Claude Code](https://lizard.build/blog/deploy-from-claude-code#check-the-result-from-the-outside) shows the JSON log commands it runs to check a deploy.
 
 ## `--json` everywhere
 
@@ -28,7 +28,7 @@ For streaming commands (`lizard up` without `--detach`), `--json` emits **one JS
 { "event": "deployed", "status": "running", "url": "https://app.onlizard.com" }
 ```
 
-The stream terminates with `done`, or `error` / `failed`. `lizard up` additionally emits a final `deployed` / `failed` / `deploying` event with `status` and `url` (which may be `null`).
+The build stream ends with `done` or `error`. Without `--ci`, `lizard up` then emits a final `deployed`, `failed`, or `deploying` event with `status`. Only `deployed` carries `url` (which may be `null`).
 
 ### `logs --json` is a snapshot, not a stream
 
@@ -43,7 +43,7 @@ lizard --help --json                 # whole tree + global flags + exit codes
 lizard service set --help --json     # one command
 ```
 
-The response shape is `{ cli, version, command: { arguments, options, subcommands }, globalOptions, exitCodes }`. Because it's generated from your installed binary, it always matches your version — prefer it over hard-coding flags.
+The response shape is `{ cli, version, agents, command: { arguments, options, subcommands }, globalOptions, exitCodes }`. Because it's generated from your installed binary, it always matches your version — prefer it over hard-coding flags.
 
 ## CI / headless usage
 
@@ -52,6 +52,7 @@ Authenticate with a token and link the project explicitly (headless `up` won't a
 ```bash
 # Set LIZARD_TOKEN through your CI secret store.
 lizard init --name my-project
+lizard add --service api   # first run only; skip when the service exists
 lizard up --ci --service api --detach
 ```
 
@@ -66,8 +67,10 @@ Check exit codes to branch your pipeline:
 | `4` | timeout |
 | `5` | cancelled |
 
+`--wait` makes `redeploy` wait for the build and for the new deploy to become ready. Without it, JSON mode exits `0` as soon as Lizard accepts the build request.
+
 ```bash
-if lizard redeploy --service api --json; then
+if lizard redeploy --service api --wait --json; then
   echo "Deploy succeeded"
 else
   status=$?

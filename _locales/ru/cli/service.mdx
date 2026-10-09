@@ -11,12 +11,12 @@ description: "Команда lizard service читает и редактируе
 ## Использование
 
 ```bash
-lizard service set [flags]
-lizard service show [flags]
-lizard service rename
-lizard service delete [flags]
-lizard service logs
-lizard service link
+lizard service set [service] [flags]
+lizard service show [service] [flags]
+lizard service rename <new-name> [flags]
+lizard service delete [service] [flags]
+lizard service logs [service] [flags]
+lizard service link [name]
 ```
 
 <span id="subcommands" />
@@ -29,11 +29,11 @@ lizard service link
 
 | Флаг | Описание |
 |------|-------------|
-| `--set <path>=<value>` | Установить поле (можно указывать несколько раз) |
+| `--set <path>=<value>` | Установить поле (можно указывать несколько раз; требуется аргумент `service`) |
 | `-f, --file <path>` | JSON-файл конфигурации для применения |
 | `--force` | Перезаписать даже при наличии удалённых изменений |
 
-Общие поля плоские и отображаются 1:1 в схему API: `sourceType`, `repoUrl`, `branch`, `rootDirectory`, `dockerfilePath`, `buildCommand`, `startCommand`, `preDeployCommand`, `watchPatterns`, `containerPort`, `name`.
+Общие поля плоские и отображаются 1:1 в схему API: `sourceType`, `repoUrl`, `branch`, `rootDirectory`, `dockerfilePath`, `buildCommand`, `startCommand`, `preDeployCommand`, `watchPatterns`, `containerPort`, `cpuLimit` (например, `2000m`), `memoryLimit` (например, `2Gi`), `name`. `variables.<KEY>=<value>` задаёт секрет сервиса, так же как `lizard secrets set --service`.
 
 `service set` использует оптимистичную блокировку через `configRevision`. При `409` перечитайте конфигурацию с помощью `lizard service show`, приведите в соответствие и повторите попытку — или передайте `--force`.
 
@@ -41,17 +41,23 @@ lizard service link
 
 Показывает текущую конфигурацию сервиса в JSON. Используйте `-s`, чтобы ограничить вывод одним сервисом.
 
-### `lizard service rename`
+### `lizard service rename <new-name>`
 
-Переименовывает сервис или аддон. Ссылки на него (`${{name.KEY}}`) остаются стабильными.
+Переименовывает сервис или аддон: связанный или тот, который вы указали через `-s`. Ссылки используют текущее имя целевого объекта, поэтому после переименования обновите все `${{old-name.KEY}}` на новое имя.
 
 ### `lizard service delete`
 
-Удаляет сервис. `-y, --yes` пропускает запрос подтверждения.
+Удаляет сервис (псевдоним `rm`). `-y, --yes` пропускает запрос подтверждения; без TTY этот флаг обязателен.
 
 ### `lizard service logs`
 
 Выводит логи сервиса в потоке (см. также [lizard logs](/cli/logs)).
+
+| Флаг | Описание |
+|------|-------------|
+| `--build` | Показать логи последней сборки |
+| `-n, --tail <n>` | Вывести последние N строк (до 2000) и завершить работу; `--tail all` выводит 2000 |
+| `--page <n>` | Постраничный просмотр более старых логов, по 200 строк на страницу (1 = самые свежие) |
 
 ### `lizard service link`
 

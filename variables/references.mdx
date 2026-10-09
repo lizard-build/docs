@@ -4,7 +4,7 @@ description: "Read one service or addon's values from another with ${{name.KEY}}
 
 # Cross-Service References
 
-References let one service or addon read another's values without copy-pasting credentials. They keep secrets in one place and rotate automatically.
+References let a service read another service's or addon's values without copy-pasting credentials. They keep each value in one place; consumers pick up changes on their next deploy.
 
 ## Syntax
 
@@ -24,30 +24,31 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 ## How they resolve
 
 - References resolve at **deploy time** against the target's merged environment.
-- They're stored by **ID**, so renaming the target later doesn't break the reference.
-- A reference to a **missing** target or key resolves to an **empty string** — it does *not* fail the deploy.
+- They match the target's **current name**. Renaming the target breaks them; update every `${{oldname.KEY}}` after a rename.
+- A reference to a **missing** target or key resolves to an **empty string** — it does *not* fail the deploy. The build log prints a warning for each empty reference with the reason.
 - Only **circular** references throw an error.
 
-> Because a missing key silently becomes empty, always verify the consumer actually received the value after wiring a reference:
+> After wiring a reference, check the build log for empty ones:
 > ```bash
-> lizard ssh --service api -- env | grep DATABASE_URL
+> lizard logs --build --service api
 > ```
 
 If a reference isn't showing up the way you expect, see [Troubleshooting → a secret or reference isn't showing up](/variables/troubleshooting/reference-not-applied).
 
 ## Common patterns
 
-**Wire an addon to several services** — bind on each consumer so rotation propagates everywhere:
+**Wire an addon to several services** — bind on each consumer; use the private URL inside the project:
 
 ```bash
-lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service api
-lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service worker
+lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service api
+lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service worker
 ```
 
-**Reference another service's value** — e.g. share a computed URL or token:
+**Reference another service's value** — e.g. share a computed URL or token. `LIZARD_PUBLIC_DOMAIN` is a bare hostname and exists once the service has a domain; `LIZARD_PRIVATE_DOMAIN` (`<name>.lizard.internal`) reaches the service inside the project:
 
 ```bash
-lizard secrets set UPSTREAM_URL='${{api.LIZARD_PUBLIC_DOMAIN}}' --service web
+lizard secrets set UPSTREAM_URL='https://${{api.LIZARD_PUBLIC_DOMAIN}}' --service web
+lizard secrets set INTERNAL_API='http://${{api.LIZARD_PRIVATE_DOMAIN}}:8080' --service web
 ```
 
 **Reference a second addon of the same type** — use its generated name:
@@ -58,7 +59,7 @@ lizard secrets set CACHE_URL='${{redis-winter-otter.REDIS_URL}}' --service api
 
 ## Why not just use `--global`?
 
-Putting a shared DSN in project (`--global`) scope exposes it to *every* service, including ones that don't need it. References give you the same single-source-of-truth rotation while keeping each secret scoped to the services that actually consume it. See [Secret scoping](/variables#scoping).
+Putting a shared value in project (`--global`) scope exposes it to *every* service, including ones that don't need it. A reference keeps the value in one place and binds it only where you set it. Note that every running Postgres and Redis addon's `DATABASE_URL` and `REDIS_URL` reach every service anyway, at the lowest precedence; a reference overrides them. See [Secret scoping](/variables#scoping).
 
 ## See also
 

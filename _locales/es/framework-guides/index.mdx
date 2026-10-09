@@ -42,21 +42,23 @@ curl -fsSL https://lizard.build/install.sh | bash
 lizard login
 ```
 
+En Windows, ejecuta `irm https://lizard.build/api/cli/install.ps1 | iex` en PowerShell. Una cuenta nueva empieza sin plan: hasta que inicies la prueba de Pro de 7 días (se requiere tarjeta), `lizard add` y `lizard up` devuelven un enlace de Checkout. `lizard billing start` lo abre.
+
 Cada guía usa un proyecto nuevo y un servicio llamado `web` o `api`. Crea ese servicio con `lizard add --service web` (o `api`) antes de la primera llamada a `lizard up --service`. `up --service` selecciona un servicio existente; no crea un servicio con nombre si falta. Para un proyecto existente, comprueba `lizard status --json` y `lizard ps --json` antes de implementar. El puerto debe coincidir con el proceso dentro del contenedor, que debe escuchar en `0.0.0.0`.
 
-Lizard CLI 0.3.95 excluye los metadatos de archivo de macOS durante las cargas. No se necesita ninguna configuración `COPYFILE_DISABLE`. Actualiza las versiones anteriores de CLI antes de seguir estas guías.
+Lizard CLI 0.3.95 y posteriores excluyen los metadatos de archivo de macOS durante las cargas. No se necesita ninguna configuración `COPYFILE_DISABLE`. Actualiza las versiones anteriores de CLI antes de seguir estas guías.
 
 <span id="choose-github-or-local-source" />
 
 ## Elige GitHub o código fuente local
 
-Los comandos de la guía usan `lizard up` para cargar la carpeta actual. Ese comando cambia un servicio existente para cargar código fuente. Para mantener git push to deploy, [conecta GitHub](/deploy/github) en su lugar y usa en el repositorio los ajustes de compilación de la guía. Configura el puerto del servicio según la tabla.
+Los comandos de la guía usan `lizard up` para cargar la carpeta actual. Ese comando cambia un servicio existente para cargar código fuente. Para mantener git push to deploy, [conecta GitHub](/deploy/github) en su lugar y usa en el repositorio los ajustes de compilación de la guía. Configura el puerto del servicio según la tabla: nginx, en una compilación de Vite, Astro, SvelteKit, Docusaurus o VitePress, escucha en el puerto que establezcas, o en `3000` si no estableces ninguno.
 
 <span id="keep-build-settings-consistent" />
 
 ## Mantén consistentes los ajustes de compilación
 
-Estas guías usan la detección de lizardpack salvo cuando requieren un Dockerfile. Las anulaciones existentes de `buildCommand` o `startCommand` tienen prioridad sobre la detección y sobre el Dockerfile del repositorio. Consulta el [orden de decisión de compilación](/concepts/build-pipeline#build-decision-order) antes de cambiar de método de compilación. Configura scripts en `package.json` cuando una guía te lo indique; añadir una anulación de CLI es una ruta de compilación diferente.
+Estas guías usan la detección de lizardpack salvo cuando requieren un Dockerfile. Las anulaciones existentes de `buildCommand` o `startCommand` tienen prioridad sobre la detección y sobre el Dockerfile del repositorio; un `dockerfilePath` establecido tiene prioridad sobre ambos. Consulta el [orden de decisión de compilación](/concepts/build-pipeline#build-decision-order) antes de cambiar de método de compilación. Configura scripts en `package.json` cuando una guía te lo indique; añadir una anulación de CLI es una ruta de compilación diferente.
 
 <span id="check-a-release" />
 

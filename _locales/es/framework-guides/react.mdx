@@ -60,13 +60,13 @@ lizard logs --build --service web --json
 lizard ps --json
 ```
 
-Sube el código fuente y el lockfile, excluyendo `node_modules/`, `dist/` y los secretos. Deja sin configurar las anulaciones de compilación/inicio del servicio para usar la ruta de detección estática. El contenedor de nginx escucha en el puerto 80 aunque los servidores de desarrollo y vista previa usen otros puertos.
+Sube el código fuente y el lockfile, excluyendo `node_modules/`, `dist/` y los secretos. Deja sin configurar las anulaciones de compilación/inicio del servicio para usar la ruta de detección estática. El contenedor de nginx escucha en el puerto 80, el que pasas con `--port`, aunque los servidores de desarrollo y vista previa usen otros puertos.
 
 <span id="connect-an-api" />
 
 ## Conectar una API
 
-Usa una variable pública como `VITE_API_URL` para la dirección HTTPS de la API accesible desde el navegador. Léela como `import.meta.env.VITE_API_URL`. Configura ese valor mediante [variables y secretos](/variables) y vuelve a compilar cuando cambie. Nunca expongas una URL de base de datos, una credencial de API ni una dirección de servicio solo interna mediante una variable `VITE_*`.
+Usa una variable pública como `VITE_API_URL` para la dirección HTTPS de la API accesible desde el navegador. Léela como `import.meta.env.VITE_API_URL`. Con `lizard up`, Lizard no pasa ninguna variable a la compilación: haz commit del valor en `.env.production` (comprueba que `.gitignore` no lo excluya) y vuelve a subir el código cuando cambie. En un [servicio de GitHub](/deploy/github), configúralo mediante [variables y secretos](/variables) y el cambio vuelve a compilar la app. Consulta [variables en tiempo de compilación](/concepts/build-pipeline#build-time-variables). Nunca expongas una URL de base de datos, una credencial de API ni una dirección de servicio solo interna mediante una variable `VITE_*`.
 
 Para una API en otro origen, configura sus orígenes permitidos para que incluyan la URL del frontend. Un hostname de servicio privado que funciona entre servicios de backend no se resolverá en el navegador de un visitante.
 

@@ -15,7 +15,7 @@ Nicht jeder Dienst stellt HTTP bereit. Queue-Consumer, Reconciler, Cron-artige P
 Wenn `containerPort=0`, macht die Plattform Folgendes:
 
 - **Überspringt die `PORT`-Injektion** — der Worker bindet nirgendwo.
-- **Überspringt die Erreichbarkeitsprüfung des Ports** — kein `app port X unreachable`-Log-Spam und kein falsch-positiver Status „unhealthy“.
+- **Überspringt die TCP-Readiness-Prüfung** — kein falsch-positiver Status „unhealthy“. Der alte Pod wird beendet, bevor der neue startet.
 - **Überspringt `EXPOSE`** im erzeugten Dockerfile.
 - **Überspringt die Registrierung von Load-Balancer-Routen** — es wird nichts bereitgestellt. (Eine generierte `*.onlizard.com`-Domain kann beim Dienst dennoch erscheinen, antwortet aber nicht.)
 
@@ -70,18 +70,25 @@ lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service worker
 lizard up --service worker --port 0
 ```
 
-Melden Sie sich mit `lizard login` an, wenn ein Befehl meldet, dass eine Authentifizierung erforderlich ist. Verwenden Sie den tatsächlichen Namen der Datenbank, falls er nicht `redis` ist. Lassen Sie die Referenz in Anführungszeichen. Setzen Sie sie, bevor Sie die Anwendung hochladen. Unter macOS mit Lizard CLI 0.3.92 stellen Sie `lizard up` `COPYFILE_DISABLE=1` voran, um AppleDouble-Metadaten auszuschließen.
+Melden Sie sich mit `lizard login` an, wenn ein Befehl meldet, dass eine Authentifizierung erforderlich ist. Verwenden Sie den tatsächlichen Namen der Datenbank, falls er nicht `redis` ist. Lassen Sie die Referenz in Anführungszeichen. Setzen Sie sie, bevor Sie die Anwendung hochladen.
 
 Prüfen Sie das letzte Bereitstellen-Ereignis und dann den Worker:
 
 ```bash
 lizard port --service worker
 lizard logs --service worker --json
-lizard ssh --service worker -- python jobs.py enqueue first-job
-lizard ssh --service worker -- python jobs.py result first-job
 ```
 
-Der Prozess gibt `Queue worker ready` aus. Wenn das Log-Tail leer ist, fahren Sie mit der untenstehenden Job-Prüfung fort; die [Testergebnisse](/guides/validation) dokumentieren das beobachtete Logging-Limit. Der Ergebnisbefehl wartet bis zu 30 Sekunden und gibt `{"id": "first-job", "result": "HELLO"}` aus. Ein laufender Prozess allein beweist nicht, dass er einen Job verarbeiten kann. Managed Redis wird aus dem Dienst heraus erreicht; der CLI-Befehl setzt nicht voraus, dass Ihr Laptop seine private Adresse erreichen kann.
+Senden Sie einen Job von Ihrem Computer aus. `lizard run --service redis` führt einen lokalen Befehl mit den Verbindungswerten des Redis-Add-ons aus, einschließlich seiner öffentlichen `REDIS_URL`:
+
+```bash
+python3 -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+lizard run --service redis -- python jobs.py enqueue first-job
+lizard run --service redis -- python jobs.py result first-job
+```
+
+Der Prozess gibt `Queue worker ready` aus, nach der Ausführung des Jobs dann `Processed first-job`. Wenn das Log-Tail leer ist, verlassen Sie sich auf die Job-Prüfung; die [Testergebnisse](/guides/validation) dokumentieren das beobachtete Logging-Limit. Der Ergebnisbefehl wartet bis zu 30 Sekunden und gibt `{"id": "first-job", "result": "HELLO"}` aus. Ein laufender Prozess allein beweist nicht, dass er einen Job verarbeiten kann.
 
 <span id="verify-a-restart" />
 
@@ -91,12 +98,12 @@ Für diesen Testdienst starten Sie den Worker neu und senden einen weiteren Job 
 
 ```bash
 lizard restart --service worker
-lizard ssh --service worker -- python jobs.py result first-job
-lizard ssh --service worker -- python jobs.py enqueue after-restart
-lizard ssh --service worker -- python jobs.py result after-restart
+lizard run --service redis -- python jobs.py result first-job
+lizard run --service redis -- python jobs.py enqueue after-restart
+lizard run --service redis -- python jobs.py result after-restart
 ```
 
-Warten Sie, bis der Dienst wieder `running` in `lizard ps --json` meldet, falls SSH noch nicht verfügbar ist. Beide Ergebnisse sollten `HELLO` sein. Das erste Ergebnis liegt in Redis, daher entfernt ein Worker-Neustart es nicht. Beim Start verschiebt der einzelne Consumer nicht abgeschlossene Processing-Einträge zurück in die Pending-Liste.
+Wenn `after-restart` nach 30 Sekunden kein Ergebnis hat, warten Sie, bis der Dienst in `lizard ps --json` wieder `running` meldet, und führen Sie den Ergebnisbefehl erneut aus. Beide Ergebnisse sollten `HELLO` sein. Das erste Ergebnis liegt in Redis, daher entfernt ein Worker-Neustart es nicht. Beim Start verschiebt der einzelne Consumer nicht abgeschlossene Processing-Einträge zurück in die Pending-Liste.
 
 Diese Demo akzeptiert nur die JSON-Jobs, die von `jobs.py` erstellt werden. Sie implementiert weder eine Dead-Letter-Queue noch eine Validierung für nicht vertrauenswürdige Producer oder Exactly-once-Nebeneffekte nach außen. Verwenden Sie für Zahlungen, E-Mails oder andere Effekte eine etablierte Queue-Bibliothek und idempotente Handler. Redis-Dauerhaftigkeit und Backups sind getrennt vom Verhalten bei Worker-Neustarts zu betrachten; siehe [Speicherung und Wiederherstellung](/platform/storage-and-recovery).
 
@@ -119,6 +126,6 @@ Diese Demo akzeptiert nur die JSON-Jobs, die von `jobs.py` erstellt werden. Sie 
 - [`lizard port`](/cli/port) — Container-Port eines Dienstes anzeigen oder ändern.
 - [Dienst wird nie healthy](/deploy/troubleshooting/service-never-healthy) — die häufigste Fehlkonfiguration im Worker-Modus.
 - [Managed Addons](/addons) — Redis, Postgres und S3 für zustandsbehaftete Workloads.
-- [Python-App-Hosting](https://lizard.build/blog/python-app-hosting#deploying-django) — ein Celery-Worker ist dasselbe Image mit einem anderen Befehl und ohne HTTP-Port.
+- [Python-App-Hosting](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks) — ein Celery-Worker ist dasselbe Image mit einem anderen Befehl und ohne HTTP-Port.
 
 Siehe [Testergebnisse zum Szenario](/guides/validation) für geprüfte Versionen, Cloud-Ergebnisse und verbleibende Einschränkungen.

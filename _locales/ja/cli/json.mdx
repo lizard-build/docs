@@ -1,5 +1,5 @@
 ---
-description: "lizard CLI をスクリプト化: すべてのコマンドで --json、ストリーミングビルドでは行区切りイベント、スキーマ検出、CI でのトークン認証。"
+description: "Lizard CLI をスクリプト化: すべてのコマンドで --json、ストリーミングビルドでは行区切りイベント、スキーマ検出、CI でのトークン認証。"
 ---
 
 <span id="json--automation" />
@@ -8,7 +8,7 @@ description: "lizard CLI をスクリプト化: すべてのコマンドで --js
 
 CLI はスクリプト化できるように作られています。機械可読な出力には `--json` を渡し、CI からはトークンで操作し、任意のコマンドのスキーマをランタイム時に検出できます。
 
-この出力のもう 1 つの読み手は AI コーディングエージェントです — [Claude Code からのデプロイ](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) では、ビルド失敗時の JSON をどう扱うかを示しています。
+この出力のもう 1 つの読み手は AI コーディングエージェントです — [Claude Code からのデプロイ](https://lizard.build/blog/deploy-from-claude-code#check-the-result-from-the-outside) では、エージェントがデプロイを確認するために実行する JSON ログコマンドを示しています。
 
 <span id="--json-everywhere" />
 
@@ -34,7 +34,7 @@ lizard metrics --json
 { "event": "deployed", "status": "running", "url": "https://app.onlizard.com" }
 ```
 
-ストリームは `done`、または `error` / `failed` で終了します。`lizard up` はさらに、`status` と `url`（`null` の場合があります）を含む最終的な `deployed` / `failed` / `deploying` イベントを出力します。
+ビルドストリームは `done` または `error` で終了します。`--ci` を付けない場合、`lizard up` はその後、`status` を含む最終的な `deployed`、`failed`、または `deploying` イベントを出力します。`url`（`null` の場合があります）を含むのは `deployed` だけです。
 
 <span id="logs---json-is-a-snapshot-not-a-stream" />
 
@@ -53,7 +53,7 @@ lizard --help --json                 # whole tree + global flags + exit codes
 lizard service set --help --json     # one command
 ```
 
-レスポンスの形式は `{ cli, version, command: { arguments, options, subcommands }, globalOptions, exitCodes }` です。これはインストール済みのバイナリから生成されるため、常に使用中のバージョンと一致します — フラグをハードコードするよりこちらを優先してください。
+レスポンスの形式は `{ cli, version, agents, command: { arguments, options, subcommands }, globalOptions, exitCodes }` です。これはインストール済みのバイナリから生成されるため、常に使用中のバージョンと一致します — フラグをハードコードするよりこちらを優先してください。
 
 <span id="ci--headless-usage" />
 
@@ -64,6 +64,7 @@ lizard service set --help --json     # one command
 ```bash
 # Set LIZARD_TOKEN through your CI secret store.
 lizard init --name my-project
+lizard add --service api   # first run only; skip when the service exists
 lizard up --ci --service api --detach
 ```
 
@@ -78,8 +79,10 @@ lizard up --ci --service api --detach
 | `4` | タイムアウト |
 | `5` | キャンセル済み |
 
+`--wait` を付けると、`redeploy` はビルドと新しいデプロイが ready になるまで待機します。付けない場合、JSON モードは Lizard がビルドリクエストを受け付けた時点で `0` で終了します。
+
 ```bash
-if lizard redeploy --service api --json; then
+if lizard redeploy --service api --wait --json; then
   echo "Deploy succeeded"
 else
   status=$?

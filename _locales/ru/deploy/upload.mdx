@@ -16,11 +16,11 @@ description: "Разверните текущую директорию с пом
 lizard up
 ```
 
-- Загружает текущую директорию как tarball, уважая `.gitignore` (отключается через `--no-gitignore`).
+- Загружает текущую директорию как tarball. Внутри git-репозитория учитывает `.gitignore` (отключается через `--no-gitignore`). Вне git пропускает только фиксированный список папок сборки и зависимостей (`node_modules`, `.git`, `dist`, `.next`, `build`, `__pycache__`, `.venv`, `venv`, `.cache`, `coverage`, `.turbo`, `.vercel`), а также `.DS_Store`, `*.pyc`, `*.pyo` и `*.log`, поэтому файлы `.env` загружаются. Предварительно выполните `git init` или уберите секреты из директории.
 - Принудительно включает `sourceType=upload`.
 - Выводит логи сборки через SSE и печатает живой URL по завершении.
 
-Если директория ещё не привязана к проекту, `up` сначала запускает `init`. В интерактивном TTY это происходит в диалоговом режиме; в неинтерактивном (CI) проект **не** создаётся молча — команда выдаёт ошибку и просит выполнить `lizard init --name <project>` (или передать `--name`). Это защищает от появления пустого проекта из-за опечатки.
+Если директория ещё не привязана к проекту, `up` сначала запускает `init`. В интерактивном TTY это происходит в диалоговом режиме; в неинтерактивном (CI) проект **не** создаётся молча — команда выдаёт ошибку и просит выполнить `lizard init --name <project>` (или передать `--project <name>` в `up`). Это защищает от появления пустого проекта из-за опечатки.
 
 <span id="common-flags" />
 
@@ -28,12 +28,12 @@ lizard up
 
 | Флаг | Назначение |
 |------|----------|
-| `-s, --service <name>` | Выбрать/создать конкретный сервис |
+| `-s, --service <name>` | Выбрать существующий сервис |
 | `--build-command <cmd>` | Переопределить команду сборки |
 | `--start-command <cmd>` | Переопределить команду запуска |
-| `--pre-deploy-command <cmd>` | Запустить один раз перед каждым деплоем (например, миграции) |
+| `--pre-deploy-command <cmd>` | Запускать в начале каждого контейнера перед командой запуска; требует `--start-command` (см. [конфигурация сборки](/concepts/build-pipeline#build-configuration-reference)) |
 | `--port <number>` | Порт контейнера (`0` = [режим воркера](/deploy/workers)) |
-| `--region <code>` | Регион для развертывания |
+| `--region <code>` | Регион для нового сервиса (для существующих сервисов игнорируется) |
 | `-d, --detach` | Запустить деплой и выйти без стриминга логов |
 | `-c, --ci` | Вывод, дружественный к CI |
 | `--no-gitignore` | Загрузить всё, игнорируя `.gitignore` |
@@ -46,7 +46,7 @@ lizard up --service api --start-command "node server.js" --port 8080
 
 ## Установка команд сборки и запуска
 
-Передача `--build-command` или `--start-command` переключает сервис на путь **синтезированного Dockerfile**. На этом пути `Procfile` и `package.json` `scripts.start` **не** считываются — задавайте команду запуска явно (или включите `CMD` в свой Dockerfile). Подробнее в разделе [Конвейер сборки](/concepts/build-pipeline). Чаще всего это касается Python: [Django, Flask и FastAPI](https://lizard.build/blog/python-app-hosting#deploying-django) требуют разную строку `gunicorn` или `uvicorn`.
+Передача `--build-command` или `--start-command` сохраняет её в сервисе и переключает сервис на путь **синтезированного Dockerfile**, если не задан `dockerfilePath`. На этом пути `Procfile` и `package.json` `scripts.start` **не** считываются — задавайте команду запуска явно. Подробнее в разделе [Конвейер сборки](/concepts/build-pipeline). Чаще всего это касается Python: [Django, Flask и FastAPI](https://lizard.build/blog/python-app-hosting#build-and-start-commands) требуют разную строку `gunicorn` или `uvicorn`.
 
 <span id="re-deploying-an-upload-service" />
 
@@ -63,7 +63,7 @@ lizard redeploy --service api
 Для неинтерактивных сценариев явно привяжите проект перед деплоем:
 
 ```bash
-export LIZARD_TOKEN=lzd_xxx
+export LIZARD_TOKEN=liz_xxx   # create one with: lizard keys create <name>
 lizard init --name my-project
 lizard up --ci --service api
 ```

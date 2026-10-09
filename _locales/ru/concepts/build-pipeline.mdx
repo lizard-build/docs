@@ -14,9 +14,10 @@ description: "Как Lizard превращает исходный код в об
 
 Платформа выбирает ровно одну стратегию сборки, в таком порядке:
 
-1. **Синтезированный Dockerfile** — если на сервисе заданы `buildCommand` и/или `startCommand` (или переданы через `lizard up --build-command` / `--start-command`), Lizard генерирует Dockerfile из этих команд. lizardpack не вызывается.
-2. **Dockerfile из репозитория (как есть)** — если на сервисе задан `dockerfilePath`, используется тот Dockerfile из вашего репозитория без изменений.
-3. **Автоопределение lizardpack** — иначе платформа клонирует ваш исходный код и запускает **lizardpack**, свой генератор Dockerfile / buildpack.
+1. **Dockerfile из репозитория по пути `dockerfilePath`** — если на сервисе задан `dockerfilePath`, этот Dockerfile используется без изменений, даже если заданы также команды сборки или запуска. Заданный `startCommand` по-прежнему заменяет `CMD` из Dockerfile во время выполнения.
+2. **Синтезированный Dockerfile** — иначе, если на сервисе заданы `buildCommand` и/или `startCommand` (или переданы через `lizard up --build-command` / `--start-command`), Lizard генерирует Dockerfile из этих команд. lizardpack не вызывается.
+3. **Dockerfile в исходном коде** — иначе используется `Dockerfile` в корне директории сборки (см. исключение для GitHub ниже).
+4. **Автоопределение lizardpack** — иначе платформа запускает **lizardpack**, свой генератор Dockerfile / buildpack.
 
 <span id="lizardpack-auto-detect" />
 
@@ -30,12 +31,13 @@ lizardpack анализирует ваш репозиторий и собира�
 
 На этом пути:
 
-- Если в репозитории есть `Dockerfile` **и** в нём есть реальный шаг сборки (строка `RUN <package-manager>`, а не только `COPY dist/`), он используется как есть.
-- Иначе lizardpack генерирует Dockerfile за вас.
+- Загруженный исходный код (`lizard up`) всегда использует корневой `Dockerfile` как есть.
+- Исходный код из GitHub использует корневой `Dockerfile` как есть, если он не выглядит неполным: в нём есть `COPY` для `build`, `dist`, `out`, `.next` или `public`, записанный без завершающего слеша (`COPY dist /usr/share/nginx/html`), и нет строки `RUN`, начинающейся с `npm`, `yarn`, `pnpm`, `bun`, `pip`, `pip3`, `bundle`, `cargo`, `go build`, `mvn` или `gradle`. Тогда lizardpack генерирует замену.
+- Если Dockerfile нет, lizardpack генерирует его за вас.
 - **Команда запуска** определяется автоматически: строка `Procfile` `web:` (Python/Ruby) или `package.json` `scripts.start` (Node) подхватывается автоматически. Для точной строки, которую хотят Django, Flask и FastAPI, см. [Хостинг Python-приложений](https://lizard.build/blog/python-app-hosting).
 - **Порт** выводится из `EXPOSE`, значений фреймворка по умолчанию или явной переменной окружения `PORT`.
 
-> **Подвох:** Dockerfile, который только копирует предварительно собранные артефакты (`COPY dist/`, `build/`, `out/`, `.next/`, `public/`) **без** шага сборки `RUN`, считается неполным и регенерируется lizardpack. Добавьте реальный шаг сборки или задайте `dockerfilePath` для принудительного использования как есть.
+> **Подвох:** Для исходного кода из GitHub Dockerfile, который копирует предварительно собранный результат (`COPY dist /dest`) и не содержит шага `RUN` с менеджером пакетов, считается неполным и регенерируется lizardpack. Добавьте реальный шаг сборки или задайте `dockerfilePath` для принудительного использования как есть. См. [Изменения Dockerfile не применяются](/deploy/troubleshooting/incomplete-dockerfile).
 
 <span id="what-triggers-a-rebuild" />
 
@@ -45,12 +47,23 @@ lizardpack анализирует ваш репозиторий и собира�
 |----------|---------------|
 | `git push` в отслеживаемую ветку | ✅ через вебхук GitHub |
 | `lizard redeploy` / `lizard up` | ✅ явно |
-| Изменение переменных `VITE_*` или `NEXT_PUBLIC_*` | ✅ значения времени сборки запекаются в образ |
-| `service set` полей сборки (`repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath`, `rootDirectory`) | ✅ автопересборка |
+| Изменение переменных `VITE_*` или `NEXT_PUBLIC_*` | ✅ пересобирает запущенный сервис; о том, когда значения попадают в сборку, см. [переменные времени сборки](#build-time-variables) |
+| `service set` полей сборки (`repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath`, `rootDirectory`) | ✅ автопересборка запущенного сервиса; иначе запустите `lizard redeploy` |
 | `service set` полей только времени выполнения (`startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns`) | ❌ запустите `lizard redeploy` для применения |
 | Любое другое изменение переменной окружения / секрета | ❌ применяется при быстром перезапуске (без пересборки) |
 
-> **Не дублируйте сборку.** После `service set`, меняющего поле сборки, пересборка запускается автоматически — не ставьте в цепочку `lizard redeploy` после этого, иначе поставите в очередь вторую избыточную сборку.
+> **Не дублируйте сборку.** После `service set`, меняющего поле сборки на запущенном сервисе, пересборка запускается автоматически — не ставьте в цепочку `lizard redeploy` после этого, иначе поставите в очередь вторую избыточную сборку. Упавший или ни разу не развёрнутый сервис сам не пересобирается; запустите `lizard redeploy`.
+
+<span id="build-time-variables" />
+
+## Переменные времени сборки
+
+Lizard записывает переменные `VITE_*` и `NEXT_PUBLIC_*` в Dockerfile в виде строк `ENV` в двух случаях:
+
+- Сервисы из GitHub без `dockerfilePath`: их получает Dockerfile от lizardpack или корневой `Dockerfile` репозитория.
+- Сервисы с `buildCommand` или `startCommand`, у которых синтезированный Dockerfile — это сборка Node.
+
+Сервисы, развёрнутые через `lizard up` без команды сборки или запуска, не получают переменных Lizard во время сборки. Ни один сервис не получает аргументов сборки, кроме `COMMIT_SHA`, поэтому `ARG` в вашем Dockerfile остаётся пустым. Для публичных значений при `lizard up` закоммитьте их в `.env.production` (проверьте, что `.gitignore` его не исключает), впишите их в свой Dockerfile или, для серверного приложения на Node, задайте и `buildCommand`, и `startCommand`.
 
 <span id="watching-a-build" />
 
@@ -78,12 +91,12 @@ lizard events                  # deploy history + replica status
 
 | Поле | Описание |
 |------|----------|
-| `buildCommand` | Команда сборки вашего приложения → принудительно использует путь **синтезированного Dockerfile** |
-| `startCommand` | Команда запуска приложения во время выполнения |
-| `preDeployCommand` | Выполняется один раз перед каждым деплоем (например, миграции БД) |
-| `dockerfilePath` | Путь к Dockerfile в репозитории для использования **как есть** |
+| `buildCommand` | Команда сборки вашего приложения → выбирает путь **синтезированного Dockerfile**, если не задан `dockerfilePath` |
+| `startCommand` | Команда запуска приложения во время выполнения; заменяет `CMD` образа |
+| `preDeployCommand` | Выполняется в начале каждого контейнера (каждая реплика, каждый перезапуск) перед `startCommand`; выполняется, только если задан `startCommand`. Сделайте её безопасной для многократного и одновременного запуска |
+| `dockerfilePath` | Путь к Dockerfile в репозитории для использования **как есть**; при сборке образа имеет приоритет над `buildCommand` / `startCommand` |
 | `rootDirectory` | Поддиректория для сборки (монорепозитории) |
 | `watchPatterns` | Передеплой только при изменении соответствующих путей |
 | `containerPort` | TCP-порт, который слушает приложение (по умолчанию `3000`; `0` = [воркер](/deploy/workers)) |
 
-Любое из этих полей можно задать через `lizard service set <svc> --set <field>=<value>`. См. [`lizard service`](/cli/service).
+Любое из этих полей можно задать через `lizard service set <svc> --set <field>=<value>`. Очистить поле можно пустым значением, например `--set buildCommand=`. См. [`lizard service`](/cli/service).

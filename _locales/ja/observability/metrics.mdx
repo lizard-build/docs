@@ -15,7 +15,7 @@ CLI またはダッシュボードから、サービスの CPU、メモリ、ネ
 ```bash
 lizard metrics                    # CPU / memory / network / disk
 lizard metrics --service api      # a specific service
-lizard metrics --range <range>    # time window
+lizard metrics --range 24h        # time window: 1h (default), 6h, 24h, 7d, 14d, 30d
 lizard metrics --watch            # live-updating view
 ```
 
@@ -27,13 +27,13 @@ lizard metrics --watch            # live-updating view
 lizard metrics --cost
 ```
 
-リソース使用量とあわせてコストの数値を追加し、現在のスケールの料金を確認できるようにします。
+メトリクスの代わりにコストビューを表示します。実行中の各リソースの時間あたりの料金、現在の請求期間の使用量（送信トラフィックを含む）、今月 Pro に含まれる $19 のうちどれだけ使ったかが表示されます。プロジェクト全体が対象で、`--service` と `--range` は無視されます。表示できるのはワークスペースのオーナーだけです。
 
 <span id="dashboard" />
 
 ## ダッシュボード
 
-ダッシュボード（`lizard open`）では、これらが **Metrics / オブザーバビリティ** ビューにチャートとして表示され、**使用量** ビューではプロジェクト全体の使用量と請求の内訳を確認できます。次のコマンドで開きます:
+ダッシュボード（`lizard open`）では、これらが **Metrics** ビューにチャートとして表示され、**使用量** ビューではプロジェクト全体の使用量と請求の内訳を確認できます。次のコマンドで開きます:
 
 ```bash
 lizard open
@@ -44,7 +44,7 @@ lizard open
 ## 表示内容に基づいて対応する
 
 - CPU/メモリ使用率が高い → スケールアップ: `lizard scale --service api --cpu 2 --memory 2048`.
-- 負荷が継続している → レプリカを追加: `lizard scale --service api --replicas 3`.
+- 負荷が継続している → レプリカを追加: `lizard scale --service api --replicas 3`. Pro では、トライアル中はサービスごとに 1 レプリカ、最初の請求書の支払い後は 5 レプリカまで使えます。
 - アドオンのディスク逼迫 → ストレージを拡張: `lizard scale --service postgres --storage 8192`.
 
 [スケーリング](/deploy/scaling) を参照してください。

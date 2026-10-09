@@ -1,40 +1,65 @@
 ---
-description: "lizard project lists the projects in your workspace or creates a new one, with examples for both subcommands."
+description: "lizard project lists your projects, creates a new one, or deletes one, with examples for each subcommand."
 ---
 
 # lizard project
 
-List or create projects in a workspace.
+List, create, or delete projects.
 
 ## Usage
 
 ```bash
-lizard project list
-lizard project create
+lizard project list [flags]
+lizard project create <name> [flags]
+lizard project delete [project] [flags]
 ```
 
 ## Subcommands
 
 ### `lizard project list`
 
-List all projects in the workspace.
+List your projects across all workspaces, or in one workspace with `-w`.
 
-### `lizard project create`
+| Flag | Description |
+|------|-------------|
+| `-w, --workspace <ws>` | Only this workspace (id, slug, or name) |
 
-Create a new project.
+### `lizard project create <name>`
+
+Create a project. It does not link the current directory; use [`lizard init`](/cli/init) for that.
+
+| Flag | Description |
+|------|-------------|
+| `-w, --workspace <ws>` | Workspace to create the project in |
+
+### `lizard project delete [project]`
+
+Move a project to trash (alias `rm`). Its services stop. You can recover it for 3 days; after that Lizard deletes it for good. Without an argument it deletes the project linked to this directory.
+
+| Flag | Description |
+|------|-------------|
+| `-y, --yes` | Skip confirmation (required without a TTY) |
 
 ## Examples
 
-### List projects in the workspace
+### List projects
 
 ```bash
 lizard project list
+lizard project list --workspace my-team
 ```
 
 ### Create a new project
 
 ```bash
-lizard project create
+lizard project create my-project
+lizard project create my-project --workspace my-team
+```
+
+### Delete a project
+
+```bash
+lizard project delete my-project --yes
 ```
 
 ## See also

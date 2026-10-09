@@ -107,7 +107,7 @@ Prüfe Djangos [Deployment-Checkliste](https://docs.djangoproject.com/en/6.1/how
 
 ## Statische Dateien und Migrationen planen
 
-Gunicorn allein stellt Djangos statische Dateien nicht bereit. Wähle entweder für die App konfigurierte Static-File-Middleware oder einen separaten Host für statische Dateien. Sammle Assets in den Pfad, den das Setup bereitstellt. Der Python-Pfad von lizardpack auf Basis von Requirements führt `collectstatic` nicht automatisch aus; füge ihn in einen vollständigen Dockerfile-Build ein, wenn die App diesen Schritt benötigt.
+Gunicorn allein stellt Djangos statische Dateien nicht bereit. Wähle entweder für die App konfigurierte Static-File-Middleware oder einen separaten Host für statische Dateien. Sammle Assets in den Pfad, den das Setup bereitstellt. lizardpack führt bei einem Django-Build `python manage.py collectstatic --noinput` aus, aber ein Fehlschlag dort gibt nur eine Warnung aus, zum Beispiel wenn die Einstellungen Laufzeit-Secrets benötigen. Das Dockerfile unten übergibt `collectstatic` Werte nur für den Build und lässt den Build fehlschlagen, wenn ein Fehler auftritt.
 
 Für WhiteNoise belasse `django.contrib.staticfiles` in `INSTALLED_APPS` und füge `whitenoise.middleware.WhiteNoiseMiddleware` direkt nach Djangos `SecurityMiddleware` ein. Füge diese Einstellungen hinzu oder aktualisiere sie:
 
@@ -197,12 +197,16 @@ lizard secrets set ALLOWED_HOSTS=YOUR_PUBLIC_HOST \
   CSRF_TRUSTED_ORIGINS=https://YOUR_PUBLIC_HOST --service web
 ```
 
-Ein fehlendes Referenzziel oder ein fehlender Schlüssel kann zu einer leeren Zeichenfolge aufgelöst werden. Die Prüfung auf erforderliche Werte stoppt Django dann mit `Set the DATABASE_URL environment variable.`. Prüfe den Namen des Datenbank-Service und seinen Schlüssel `DATABASE_URL`; gib die Verbindungs-URL nicht in Logs aus.
+Ein fehlendes Referenzziel oder ein fehlender Schlüssel kann zu einer leeren Zeichenfolge aufgelöst werden. Die Prüfung auf erforderliche Werte stoppt Django dann mit `Set the DATABASE_URL environment variable.`. Prüfe den Namen des Datenbank-Service und seinen Schlüssel `DATABASE_URL`; `lizard logs --build --service web` warnt vor jeder Referenz, die zu einem leeren Wert aufgelöst wurde. Gib die Verbindungs-URL nicht in Logs aus.
 
-Die Variablenänderung startet den Prozess neu. Schließe lokale virtuelle Umgebungen, Secrets und lokale Datenbanken von Uploads aus. Sobald der Prozess läuft, wende Migrationen an:
+Die Variablenänderung startet den Prozess neu. Schließe lokale virtuelle Umgebungen, Secrets und lokale Datenbanken von Uploads aus.
+
+Wende Migrationen von deinem Computer aus an. `lizard run --service postgres` führt einen lokalen Befehl mit den Verbindungswerten der Datenbank aus, einschließlich ihrer öffentlichen `DATABASE_URL`. Übergib die anderen Einstellungen, die dieses Beispiel erfordert, inline; nur der lokale Befehl verwendet sie:
 
 ```bash
-lizard ssh --service web -- python manage.py migrate --noinput
+python -m pip install -r requirements.txt
+SECRET_KEY=local-migrate ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
+  lizard run --service postgres -- python manage.py migrate --noinput
 ```
 
 Führe den Befehl erneut aus, um zu prüfen, dass keine Migrationen mehr ausstehen. Betrachte eine erfolgreiche Port-Prüfung nicht als Nachweis dafür, dass Tabellen existieren.

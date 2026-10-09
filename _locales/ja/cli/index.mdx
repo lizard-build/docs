@@ -1,5 +1,5 @@
 ---
-description: "lizard CLI をインストールおよびアップグレードし、認証し、すべてのコマンドのグローバルフラグ、終了コード、実行時スキーマ検出を確認します。"
+description: "Lizard CLI をインストールおよびアップグレードし、認証し、すべてのコマンドのグローバルフラグ、終了コード、実行時スキーマ検出を確認します。"
 ---
 
 <span id="cli-reference" />
@@ -8,7 +8,7 @@ description: "lizard CLI をインストールおよびアップグレードし�
 
 `lizard` CLI はプラットフォームへの主要なインターフェースです。このページでは、インストール、グローバルフラグ、終了コード、実行時検出について扱います。各コマンドにはサイドバーに専用のリファレンスページがあります — [`lizard up`](/cli/up)、[`lizard service`](/cli/service)、[`lizard secrets`](/cli/secrets) などを参照してください。
 
-> CLI **v0.3.62** を基準に生成されたリファレンスです。任意のコマンドの正確でバージョン一致のスキーマを確認するには、`lizard <cmd> --help --json` を実行してください。
+> Lizard CLI **v4.0.34** を基準に書かれたリファレンスです。任意のコマンドの正確でバージョン一致のスキーマを確認するには、`lizard <cmd> --help --json` を実行してください。
 
 <span id="install--upgrade" />
 
@@ -23,7 +23,7 @@ lizard upgrade --check    # check without installing
 
 Windows では、PowerShell で `irm https://lizard.build/api/cli/install.ps1 | iex` を実行します。Node.js があれば、代わりに `npm install -g @lizard-build/cli` で npm からインストールすることもできます。
 
-インストールスクリプトで入れたバイナリは、バックグラウンドで自動更新もされます（最大で 6 時間に 1 回）。無効にするには `LIZARD_NO_UPDATE=1` を設定してください。npm でインストールした場合は npm で更新します。そのコマンドは `lizard upgrade` が表示します。
+macOS と Linux では、インストールスクリプトで入れたバイナリは、バックグラウンドで自動更新もされます（最大で 6 時間に 1 回）。`CI` または `LIZARD_NO_UPDATE=1` が設定されているときは、更新の確認を行いません。Windows のバイナリは自動更新されないため、インストーラーをもう一度実行してください。npm でインストールした場合は npm で更新します。そのコマンドは `lizard upgrade` が表示します。
 
 必ずグローバルにインストールされた `lizard` バイナリを使用してください — `npx` ではありません。権限エラーの修正については [Quickstart](/getting-started#1-install-the-cli) を参照してください。
 
@@ -33,12 +33,12 @@ Windows では、PowerShell で `irm https://lizard.build/api/cli/install.ps1 | 
 
 ```bash
 lizard login                  # browser OAuth
-lizard login --token lzd_xxx  # token auth
+lizard login --token liz_xxx  # API key auth
 lizard logout
 lizard whoami                 # current user, workspace, linked project
 ```
 
-CI では、`login` を実行する代わりに、環境変数に `LIZARD_TOKEN` を設定してください。
+API キーは `liz_` で始まります。[`lizard keys create <name>`](/cli/keys) で作成できます。CI では、`login` を実行する代わりに、環境変数に `LIZARD_TOKEN`（または `LIZARD_API_KEY`）を設定してください。
 
 <span id="global-flags" />
 
@@ -49,7 +49,7 @@ CI では、`login` を実行する代わりに、環境変数に `LIZARD_TOKEN`
 | `-V, --version` | CLI バージョンを表示 |
 | `--json` | 機械可読な出力。`--help` と組み合わせると、コマンドのスキーマをダンプします |
 
-ほとんどのコマンドは、リンク済みのものではなく特定のリソースを対象にするために、`-p, --project`、`-s, --service`、`-w, --workspace` も受け付けます。
+ほとんどのコマンドは、リンク済みのものではなく特定のリソースを対象にするために、`-p, --project` と `-s, --service` も受け付けます。`init`、`link`、`project` は `-w, --workspace` も受け付けます。`lizard add` は常にリンク済みのプロジェクトを使います。
 
 <span id="exit-codes" />
 
@@ -91,15 +91,30 @@ lizard <cmd> <sub> --help --json     # e.g. lizard service set --help --json
 - `lizard status` は cwd の workspace/project/service リンクを表示します（認証不要）。
 - `lizard config apply` は `lizard-config.json` ファイルをプロジェクトに適用します（プレビューには `--dry-run` を使用）。
 
+<span id="environment-variables" />
+
+## 環境変数
+
+| 変数 | 効果 |
+|----------|--------|
+| `LIZARD_TOKEN` | 保存されたログインの代わりに使う API キーまたはトークン |
+| `LIZARD_API_KEY` | `LIZARD_TOKEN` と同じ |
+| `LIZARD_API_URL` | API のベース URL（既定値 `https://lizard.build`） |
+| `LIZARD_HOME` | CLI の状態を `~/.lizard` ではなく `$LIZARD_HOME/.lizard` に保存します |
+| `LIZARD_NO_UPDATE` | バックグラウンドの自動更新を無効にします |
+| `CI` | これもバックグラウンドの自動更新を無効にします |
+| `LIZARD_SKILLS_DIR` | CLI に組み込まれたスキルの代わりに、このディレクトリからスキルを読み込みます |
+
 <span id="sandbox-volumes" />
 
 ## Sandbox のボリューム
 
-プロジェクト内の [Persistent Volumes](/sandboxes/volumes) を名前で管理します。
+プロジェクト内の [Persistent Volumes](/sandboxes/volumes) を名前で管理します。完全なリファレンスは [`lizard volume`](/cli/volume) と [`lizard sandbox`](/cli/sandbox) を参照してください。
 
 ```bash
 lizard volume create agent-workdir --size 10 --project proj_123
 lizard volume list --project proj_123
+lizard volume resize agent-workdir --size 20 --project proj_123
 lizard sandbox create --volume agent-workdir --project proj_123
 ```
 

@@ -4,7 +4,7 @@ description: "lizard logs はサービスのランタイムログをストリー
 
 # lizard logs
 
-サービスのランタイムログをストリーミングします。直近 200 行を表示したあと、ライブ tail を続けます。
+サービスのランタイムログをストリーミングします。直近 200 行を表示したあと、ライブ tail を続けます。`-s` を付けずにランタイムログを表示する場合、`logs` はリンク済みのサービスを使いません。TTY ではどのサービスを表示するか尋ね、それ以外ではプロジェクト内のすべてのサービスを表示します。`--build` と `--restarts` はリンク済みのサービスを使います。
 
 <span id="usage" />
 
@@ -21,11 +21,12 @@ lizard logs [flags]
 | フラグ | 説明 |
 |------|-------------|
 | `--build` | 代わりにビルドログを表示 |
-| `--tail <n>` | 直近 N 行（最大 1000） |
-| `-l, --level <level>` | レベルでフィルタ |
-| `--restarts [n]` | 最近の再起動を一覧表示 |
+| `--tail <n>` | 直近 N 行（最大 1000）を表示して終了 |
+| `-l, --level <level>` | このレベルのランタイムログのみ：`error`、`warn`、`info`、`debug` のいずれか |
+| `--restarts [n]` | 直近 N 回の再起動を一覧表示（デフォルトは 20） |
 | `--restart <id>` | 特定の再起動前後のログ（最新は `latest`） |
 | `-s, --service <id>` | サービス |
+| `-p, --project <id>` | プロジェクト名、スラッグ、または ID |
 
 `--json` を使うと、`lizard logs` はストリームではありません。直近 200 行を返し（`--tail N` で上書き、最大 1000）、終了します。スナップショットやスクリプトで使用してください。ライブストリームになるのは `--json` がない場合だけです。
 
@@ -90,4 +91,4 @@ lizard logs --restart <id>
 - [ログ](/observability/logs) — ランタイム、ビルド、再起動ログの挙動、および `lizard service logs` で履歴をページ送りする方法
 - [Incomplete Dockerfile](/deploy/troubleshooting/incomplete-dockerfile) — `lizard logs --build` から失敗したビルドを診断する
 - [lizard events](/cli/events) — デプロイ履歴とレプリカのステータス
-- [Claude Codeからデプロイする](https://lizard.build/blog/deploy-from-claude-code#how-lizard-handles-claude-code-deployment) — ビルド失敗時にエージェントが実行する、ログ確認、修正、再デプロイのループ
+- [Claude Codeからデプロイする](https://lizard.build/blog/deploy-from-claude-code#check-the-result-from-the-outside) — デプロイを確認するためにエージェントが実行するログコマンド

@@ -8,7 +8,7 @@ description: "Установите и обновите Lizard CLI, выполн�
 
 `lizard` CLI — это основной интерфейс платформы. Эта страница охватывает установку, глобальные флаги, коды выхода и автоматическое обнаружение. У каждой команды есть собственная справочная страница в боковой панели — см. [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets) и остальные.
 
-> Справочник сгенерирован для CLI **v0.3.62**. Выполните `lizard <cmd> --help --json` для получения точной схемы, соответствующей версии, для любой команды.
+> Справочник написан для Lizard CLI **v4.0.34**. Выполните `lizard <cmd> --help --json` для получения точной схемы, соответствующей версии, для любой команды.
 
 <span id="install--upgrade" />
 
@@ -23,7 +23,7 @@ lizard upgrade --check    # check without installing
 
 На Windows выполните `irm https://lizard.build/api/cli/install.ps1 | iex` в PowerShell. С Node.js можно установить CLI из npm: `npm install -g @lizard-build/cli`.
 
-Бинарный файл из скрипта установки также сам обновляется в фоне, не чаще раза в 6 часов; чтобы это отключить, задайте `LIZARD_NO_UPDATE=1`. Установка из npm обновляется через npm: `lizard upgrade` выведет нужную команду.
+На macOS и Linux бинарный файл из скрипта установки также сам обновляется в фоне, не чаще раза в 6 часов. Проверка пропускается, если задана переменная `CI` или `LIZARD_NO_UPDATE=1`. Бинарный файл для Windows сам не обновляется: запустите установщик снова. Установка из npm обновляется через npm: `lizard upgrade` выведет нужную команду.
 
 Всегда используйте глобально установленный бинарный файл `lizard` — **не** `npx`. См. [Быстрый старт](/getting-started#1-install-the-cli) для исправления ошибок доступа.
 
@@ -33,12 +33,12 @@ lizard upgrade --check    # check without installing
 
 ```bash
 lizard login                  # browser OAuth
-lizard login --token lzd_xxx  # token auth
+lizard login --token liz_xxx  # API key auth
 lizard logout
 lizard whoami                 # current user, workspace, linked project
 ```
 
-В CI задайте `LIZARD_TOKEN` в переменных окружения вместо запуска `login`.
+API-ключи начинаются с `liz_`. Создайте ключ командой [`lizard keys create <name>`](/cli/keys). В CI задайте `LIZARD_TOKEN` (или `LIZARD_API_KEY`) в переменных окружения вместо запуска `login`.
 
 <span id="global-flags" />
 
@@ -49,7 +49,7 @@ lizard whoami                 # current user, workspace, linked project
 | `-V, --version` | Вывести версию CLI |
 | `--json` | Машинно-читаемый вывод. Комбинируйте с `--help`, чтобы выгрузить схему команды |
 
-Большинство команд также принимают `-p, --project`, `-s, --service` и `-w, --workspace` для обращения к конкретному ресурсу вместо связанного.
+Большинство команд также принимают `-p, --project` и `-s, --service` для обращения к конкретному ресурсу вместо связанного. Команды `init`, `link` и `project` также принимают `-w, --workspace`. `lizard add` всегда использует связанный проект.
 
 <span id="exit-codes" />
 
@@ -91,15 +91,30 @@ lizard <cmd> <sub> --help --json     # e.g. lizard service set --help --json
 - `lizard status` показывает ссылку на рабочую область/проект/сервис текущей директории (аутентификация не требуется).
 - `lizard config apply` применяет файл `lizard-config.json` к проекту (используйте `--dry-run` для предварительного просмотра).
 
+<span id="environment-variables" />
+
+## Переменные окружения
+
+| Переменная | Эффект |
+|----------|--------|
+| `LIZARD_TOKEN` | API-ключ или токен, используемые вместо сохранённого входа |
+| `LIZARD_API_KEY` | То же, что `LIZARD_TOKEN` |
+| `LIZARD_API_URL` | Базовый URL API (по умолчанию `https://lizard.build`) |
+| `LIZARD_HOME` | Хранить состояние CLI в `$LIZARD_HOME/.lizard` вместо `~/.lizard` |
+| `LIZARD_NO_UPDATE` | Отключить фоновое самообновление |
+| `CI` | Также отключает фоновое самообновление |
+| `LIZARD_SKILLS_DIR` | Читать навыки из этой директории вместо встроенных в CLI |
+
 <span id="sandbox-volumes" />
 
 ## Тома Sandbox
 
-Управляйте [Persistent Volumes](/sandboxes/volumes) по имени в пределах проекта:
+Управляйте [Persistent Volumes](/sandboxes/volumes) по имени в пределах проекта. Полный справочник: [`lizard volume`](/cli/volume) и [`lizard sandbox`](/cli/sandbox).
 
 ```bash
 lizard volume create agent-workdir --size 10 --project proj_123
 lizard volume list --project proj_123
+lizard volume resize agent-workdir --size 20 --project proj_123
 lizard sandbox create --volume agent-workdir --project proj_123
 ```
 

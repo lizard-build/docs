@@ -1,0 +1,82 @@
+---
+description: "lizard s3 загружает локальный файл в бакет Managed Object Storage и выводит список объектов в бакете без AWS SDK."
+---
+
+# lizard s3
+
+Загружайте объекты в бакет [Managed Object Storage](/addons/storage) и выводите их список.
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard s3 upload <file> [flags]
+lizard s3 list [flags]
+```
+
+Обе команды работают с единственным S3-аддоном проекта и его бакетом `default`, если не указать `--addon` и `--bucket`. Сначала добавьте аддон командой `lizard add s3`.
+
+<span id="subcommands" />
+
+## Подкоманды
+
+### `lizard s3 upload <file>`
+
+Загружает локальный файл. Выводит ключ, ETag, размер и URL, если бакет публичный. Бакет `default` приватный; сделать бакет публичным можно в S3-браузере на дашборде.
+
+| Флаг | Описание |
+|------|-------------|
+| `--addon <name>` | Имя или ID S3-аддона (по умолчанию — единственный S3-аддон проекта) |
+| `--bucket <name>` | Целевой бакет (по умолчанию `default`) |
+| `--key <key>` | Ключ объекта (по умолчанию — имя файла) |
+| `--content-type <type>` | Заголовок Content-Type (по умолчанию определяется по расширению файла) |
+| `-p, --project <id>` | Имя, slug или ID проекта |
+
+### `lizard s3 list`
+
+Выводит список объектов в бакете (псевдоним `ls`).
+
+| Флаг | Описание |
+|------|-------------|
+| `--addon <name>` | Имя или ID S3-аддона |
+| `--bucket <name>` | Бакет для вывода списка (по умолчанию `default`) |
+| `--prefix <prefix>` | Только ключи с этим префиксом |
+| `-p, --project <id>` | Имя, slug или ID проекта |
+
+Каждый аккаунт может хранить до 16 GiB во всех своих аддонах. Хранилище оплачивается по объёму хранимых байтов по цене $0.0135 за GB-месяц.
+
+<span id="examples" />
+
+## Примеры
+
+<span id="upload-a-file" />
+
+### Загрузка файла
+
+```bash
+lizard s3 upload ./logo.png --key assets/logo.png
+```
+
+<span id="list-objects-under-a-prefix" />
+
+### Список объектов с префиксом
+
+```bash
+lizard s3 list --prefix assets/
+```
+
+<span id="use-a-second-s3-addon" />
+
+### Использование второго S3-аддона
+
+```bash
+lizard s3 upload ./backup.tar.gz --addon s3-autumn-bear
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [Managed Object Storage](/addons/storage) — переменные окружения, настройка AWS SDK и публичные файлы
+- [lizard add](/cli/add) — добавление S3-аддона командой `lizard add s3`

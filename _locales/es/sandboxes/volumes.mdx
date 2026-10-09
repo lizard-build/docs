@@ -55,7 +55,7 @@ finally:
 
 ## Tamaño y precio
 
-Los volúmenes nuevos admiten **1–50 GB**, en GB enteros, con **5 GB** por defecto. El servidor puede cambiar el máximo mediante `VOLUME_MAX_SIZE_GB`; el panel y la CLI leen los límites actuales de `GET /api/projects/:projectId/volume-limits`. El panel también lee el precio de almacenamiento de ese endpoint y lo muestra bajo el control de tamaño.
+Los volúmenes nuevos admiten **1–50 GB**, en GB enteros, con **5 GB** por defecto. El servidor puede cambiar el máximo mediante `VOLUME_MAX_SIZE_GB`; el panel y la CLI leen los límites actuales y el precio de almacenamiento de `GET /api/projects/:projectId/volume-limits`.
 
 Pagas por el **espacio usado**, no por toda la capacidad asignada. Los volúmenes que superen el nuevo máximo mantienen su tamaño y siguen disponibles. Crear un volumen requiere suficiente espacio libre sin reservar en un nodo de trabajo sano de la región elegida. Si no hay espacio, la API devuelve `503` con el código `volume_capacity_unavailable`.
 
@@ -67,6 +67,7 @@ Pagas por el **espacio usado**, no por toda la capacidad asignada. Los volúmene
 await Volume.list('proj_123');
 const volume = await Volume.get('proj_123', 'agent-workdir');
 await volume.getInfo('proj_123');
+await Volume.resize('proj_123', 'agent-workdir', 20);
 await Volume.delete('proj_123', 'agent-workdir'); // detach first
 ```
 
@@ -76,9 +77,12 @@ await Volume.delete('proj_123', 'agent-workdir'); // detach first
 | `Volume.create(projectId, name, options)` | `Volume.create(project_id, name, size_gb=5)` | Crear; fallar si el nombre ya existe |
 | `Volume.list(projectId)` | `Volume.list(project_id)` | Listar los volúmenes del proyecto |
 | `Volume.get(projectId, nameOrId)` | `Volume.get(project_id, name_or_id)` | Buscar un volumen |
+| `Volume.resize(projectId, nameOrId, sizeGb)` | `Volume.resize(project_id, name_or_id, size_gb)` | Cambiar el tamaño |
 | `Volume.delete(projectId, nameOrId)` | `Volume.remove(project_id, name_or_id)` | Eliminar un volumen desconectado |
 
 Los ID generados y los campos `volumeId` / `volume_id` siguen funcionando. Usa nombres en el código nuevo.
+
+El cambio de tamaño se hace en el sitio, también mientras el volumen está conectado. Un volumen Firecracker solo puede crecer. Un volumen basado en pods también puede reducirse si al menos el 10% del nuevo tamaño queda libre.
 
 <span id="cli" />
 
@@ -88,6 +92,7 @@ Los ID generados y los campos `volumeId` / `volume_id` siguen funcionando. Usa n
 lizard volume create agent-workdir --size 10 --project proj_123
 lizard volume list --project proj_123
 lizard sandbox create --volume agent-workdir --project proj_123
+lizard volume resize agent-workdir --size 20 --project proj_123
 # After stopping the sandbox:
 lizard volume rm agent-workdir --project proj_123
 ```
@@ -98,7 +103,7 @@ lizard volume rm agent-workdir --project proj_123
 
 ## Panel de control
 
-Abre **Sandboxes → Volumes** en un proyecto. El formulario comprueba el nombre y ofrece un control de tamaño con el máximo y el precio actuales. La lista muestra el espacio usado y asignado, el estado y la Sandbox conectada. Puedes copiar el ID desde los detalles del volumen.
+Crea y conecta volúmenes con el SDK o la CLI. Cuando un proyecto tiene un volumen, **Sandboxes → Persistent Volumes** muestra el espacio usado y asignado, el estado y la Sandbox conectada. Desde ahí puedes explorar archivos, cambiar el tamaño de un volumen o eliminarlo.
 
 <span id="storage-lifecycle" />
 
@@ -106,11 +111,10 @@ Abre **Sandboxes → Volumes** en un proyecto. El formulario comprueba el nombre
 
 - Detener una Sandbox o dejar que caduque desconecta su volumen y conserva los datos.
 - Un volumen conectado no puede conectarse a otra Sandbox ni eliminarse.
-- Una Sandbox en pausa mantiene su conexión.
 - Eliminar un volumen borra sus datos. Los volúmenes usan almacenamiento local del nodo; exporta los datos que necesites tras un fallo del nodo. Consulta [almacenamiento y recuperación](/platform/storage-and-recovery).
 
 Consulta las opciones de Sandbox en la [referencia del SDK](/sandboxes/sdk-reference).
 
-Crea un sandbox, ejecuta comandos y llama a `kill`. `connect` se conecta a un sandbox existente sin cambiar su estado, así que no reanuda uno pausado ni uno detenido. Pausar, reanudar, snapshot y restore están disponibles; consulta [Pausa, reanudación y snapshots](/sandboxes/quickstart#pause-and-resume). Fork y la vigilancia de archivos devuelven HTTP 501. `lizard sandbox ssh` abre una shell interactiva con tus credenciales de la CLI. No hay acceso por el protocolo SSH, así que los clientes SSH, `scp` y el reenvío de puertos no funcionan.
+Crea un sandbox, ejecuta comandos y llama a `kill`. `connect` se conecta a un sandbox existente sin cambiar su estado, así que no reanuda uno pausado ni uno detenido. Pausar, reanudar, snapshot y restore están disponibles; consulta [Pausa, reanudación y snapshots](/sandboxes/quickstart#pause-and-resume). `fork` copia un sandbox en marcha, incluidos la memoria y los procesos; devuelve 409 cuando hay un volumen adjunto y 501 en un sandbox que se ejecuta como pod. La vigilancia de archivos aún no está disponible. `lizard sandbox ssh` abre una shell interactiva con tus credenciales de la CLI. No hay acceso por el protocolo SSH, así que los clientes SSH, `scp` y el reenvío de puertos no funcionan.
 
 Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un Persistent Volume adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.

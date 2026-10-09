@@ -6,7 +6,7 @@ description: "Instala la Lizard CLI, inicia sesión y lanza tu primera app desde
 
 # Inicio rápido de apps
 
-Lanza tu primera app en Lizard en unos minutos. Se crea una cuenta de Lizard automáticamente la primera vez que `lizard login`. Instalarás la CLI, iniciarás sesión y desplegarás, ya sea directamente desde un repositorio de GitHub o desde un directorio local.
+Lanza tu primera app en Lizard en unos minutos. Se crea una cuenta de Lizard automáticamente la primera vez que `lizard login`. Instalarás Lizard CLI, iniciarás sesión, empezarás la prueba de Pro y desplegarás, ya sea directamente desde un repositorio de GitHub o desde un directorio local.
 
 <span id="1-install-the-cli" />
 
@@ -18,7 +18,7 @@ En macOS o Linux, ejecuta el script de instalación:
 curl -fsSL https://lizard.build/install.sh | bash
 ```
 
-Instala el binario `lizard` en `~/.lizard/bin`, añade esa carpeta a tu `PATH` en `~/.zshrc` o `~/.bashrc`, y enlaza `lizard` en una carpeta que ya está en tu `PATH`, así que funciona al momento en esta terminal. Desde entonces el binario se actualiza solo. Si el script avisa de que quizá no se encuentre `lizard`, abre una terminal nueva. Comprueba la versión:
+Instala el binario `lizard` en `~/.lizard/bin`, añade esa carpeta a tu `PATH` en `~/.zshrc` o `~/.bashrc`, y enlaza `lizard` en una carpeta que ya está en tu `PATH`, así que funciona al momento en esta terminal. Desde entonces el binario se actualiza solo, salvo en CI. Si el script avisa de que quizá no se encuentre `lizard`, abre una terminal nueva. Comprueba la versión:
 
 ```bash
 lizard --version
@@ -57,10 +57,12 @@ lizard login
 Esto abre tu navegador para autenticarte y luego vuelve a tu terminal una vez que confirmes. En CI u otros entornos no interactivos, autentícate con un token en su lugar:
 
 ```bash
-export LIZARD_TOKEN=lzd_xxx
+export LIZARD_TOKEN=liz_xxx
 # or
-lizard login --token lzd_xxx
+lizard login --token liz_xxx
 ```
+
+Las claves de API empiezan por `liz_`. Crea una con `lizard keys create <name>`. `LIZARD_API_KEY` funciona en lugar de `LIZARD_TOKEN`.
 
 Comprueba quién eres en cualquier momento:
 
@@ -68,9 +70,21 @@ Comprueba quién eres en cualquier momento:
 lizard whoami
 ```
 
-<span id="3-deploy" />
+<span id="3-start-the-pro-trial" />
 
-## 3. Despliega
+## 3. Empieza la prueba de Pro
+
+Una cuenta nueva no tiene plan, así que crear cualquier cosa devuelve HTTP 402 con un enlace de Checkout. Empieza primero la prueba de Pro de 7 días:
+
+```bash
+lizard billing start
+```
+
+Esto abre Stripe Checkout, donde añades una tarjeta. La prueba incluye $5 en créditos de prueba y no se cobra nada hasta que termina. Consulta [Facturación](/platform/billing).
+
+<span id="4-deploy" />
+
+## 4. Despliega
 
 Elige la ruta que coincida con dónde vive tu código.
 
@@ -102,11 +116,11 @@ lizard up
 
 Si el directorio aún no está vinculado a un proyecto, `up` creará o seleccionará uno de forma interactiva. En CI, vincúlalo explícitamente primero con `lizard init --name my-project`.
 
-De cualquier forma, cuando termine la compilación obtendrás una URL generada como `https://your-app-production.onlizard.com`.
+De cualquier forma, cuando termine la compilación obtendrás una URL generada como `https://your-app-x1y2z.onlizard.com`.
 
-<span id="4-watch-it-build-and-run" />
+<span id="5-watch-it-build-and-run" />
 
-## 4. Observa cómo compila y se ejecuta
+## 5. Observa cómo compila y se ejecuta
 
 ```bash
 lizard ps          # services in the project, with status + URL
@@ -115,19 +129,19 @@ lizard logs --build  # the most recent build's logs
 lizard open        # open the project in the dashboard
 ```
 
-<span id="5-add-a-database-optional" />
+<span id="6-add-a-database-optional" />
 
-## 5. Añade una base de datos (opcional)
+## 6. Añade una base de datos (opcional)
 
-Aprovisiona un Managed Postgres y haz referencia a él desde tu servicio:
+Aprovisiona Managed Postgres y haz referencia a él desde tu servicio:
 
 ```bash
 lizard add postgres
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service your-app
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service your-app
 lizard redeploy --service your-app
 ```
 
-La referencia `${{postgres.DATABASE_URL}}` se resuelve en el momento del despliegue y rota automáticamente con el addon. Consulta [Managed Addons](/addons).
+La referencia `${{postgres.DATABASE_PRIVATE_URL}}` se resuelve en el momento del despliegue y se conecta por la red privada del proyecto. Coincide con el nombre actual del addon, así que actualiza la referencia si le cambias el nombre al addon. Las credenciales no rotan solas; un servicio recoge los valores nuevos en su siguiente despliegue. Consulta [Managed Addons](/addons).
 
 <span id="next-steps" />
 
@@ -137,10 +151,10 @@ La referencia `${{postgres.DATABASE_URL}}` se resuelve en el momento del desplie
 - **[Desplegar desde GitHub](/deploy/github)** — ramas, monorepos y redespliegues automáticos.
 - **[Variables y secretos](/variables)** — alcance y precedencia.
 - **[Redes](/networking)** — adjunta tu propio hostname con TLS automático.
-- **[Desplegar una app que creó tu IDE con IA](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — los mismos tres pasos, pero entregados a un agente en su lugar, para una app escrita en Google Antigravity.
+- **[Desplegar una app que creó tu IDE con IA](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — los mismos pasos, pero entregados a un agente en su lugar, para una app escrita en Google Antigravity.
 
 <span id="hosting-costs" />
 
 ## Costes de hosting
 
-Pro cuesta $19 al mes con $19 en créditos mensuales. El uso por encima de eso es pay as you go a las tarifas publicadas. Una cuenta nueva empieza con una prueba de 7 días y $5 en créditos de prueba. Consulta [Facturación](/platform/billing) y los [precios](https://lizard.build/pricing), y revisa tus [límites](/platform/limits) antes de desplegar.
+Pro cuesta $19 al mes con $19 en créditos mensuales. El uso por encima de eso es pay as you go a las tarifas publicadas. Pro empieza con una prueba de 7 días y $5 en créditos de prueba; añades una tarjeta para empezarla. Consulta [Facturación](/platform/billing) y los [precios](https://lizard.build/pricing), y revisa tus [límites](/platform/limits) antes de desplegar.
