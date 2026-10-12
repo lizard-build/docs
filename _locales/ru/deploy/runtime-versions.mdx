@@ -1,0 +1,113 @@
+---
+title: "Как задать версию Node.js, Python, Go или Ruby"
+description: "Задайте версию Node.js, Python, Go или Ruby, с которой собирает Lizard: .nvmrc, engines.node, .python-version, requires-python, go.mod или .ruby-version."
+---
+
+<span id="set-the-nodejs-python-go-or-ruby-version" />
+
+# Как задать версию Node.js, Python, Go или Ruby
+
+Когда lizardpack собирает ваш проект, Lizard (lizard.build) берёт версию рантайма из файлов проекта: `.nvmrc` или `engines.node` для Node.js, `.python-version` или `requires-python` для Python, строку `go` в `go.mod` для Go и `.ruby-version` или строку `ruby` в `Gemfile` для Ruby. Чтобы сменить версию, поправьте этот файл и запустите деплой заново. Если такого файла нет, Lizard использует Node.js 22, Python 3.13, Go 1.24 или Ruby 3.4.
+
+**Статус тестов:** 2026-10-12 мы проверили каждое правило на этой странице, запустив на тестовых проектах lizardpack — планировщик сборки, который запускают сборщики Lizard.
+
+<span id="where-lizard-looks" />
+
+## Где Lizard ищет версию
+
+| Язык | Файлы, по порядку проверки | Какая часть версии используется | По умолчанию | Базовый образ |
+|---|---|---|---|---|
+| Node.js | `.nvmrc`, `.node-version`, `.tool-versions` (`nodejs` или `node`), `engines.node` в `package.json` | Мажорная: `20.11.1` → `20` | `22` | `node:<major>-slim` |
+| Python | `.python-version`, `.tool-versions` (`python`), `requires-python` в `pyproject.toml` | Мажорная и минорная: `3.12.4` → `3.12` | `3.13` | `python:<x.y>-slim` |
+| Go | Строка `go` в `go.mod` | Мажорная и минорная: `1.24.3` → `1.24` | `1.24` | `golang:<x.y>-alpine` для сборки, `alpine:3.19` для запуска |
+| Ruby | `.ruby-version`, строка `ruby` в `Gemfile` | Мажорная и минорная: `3.4.1` → `3.4` | `3.4` | `ruby:<x.y>-slim` |
+
+Lizard отбрасывает номер патча и собирает на официальном теге образа для этой ветки версий, поэтому каждая сборка получает самый свежий патч-релиз, на который тег указывает в этот момент.
+
+Эти файлы учитываются, только когда Dockerfile пишет lizardpack. См. [когда Lizard игнорирует файлы версий](#when-lizard-ignores-version-files).
+
+<span id="change-the-nodejs-version" />
+
+## Смена версии Node.js
+
+```bash
+echo 24 > .nvmrc
+lizard up --service web
+```
+
+Для GitHub-сервиса вместо этого закоммитьте файл и сделайте push. Правила:
+
+- Пишите число: `24`, `v24` и `24.1.0` выбирают Node.js 24. Строки, которые начинаются с `#`, Lizard пропускает.
+- Значения `lts/*` и `node` в `.nvmrc` Lizard пропускает и переходит к следующему файлу. Другие псевдонимы, например `lts/iron`, он берёт как есть, и сборка падает.
+- `.nvmrc` имеет приоритет над `engines.node`.
+- `engines.node` даёт нижнюю версию своего диапазона: `>=18` собирается на Node.js 18, а `^20.11.0` — на Node.js 20. Диапазон с `||`, например `18 || 20`, ломает сборку.
+
+<span id="change-the-python-version" />
+
+## Смена версии Python
+
+```bash
+echo 3.12 > .python-version
+lizard up --service web
+```
+
+- В `.python-version` должен быть номер версии, например `3.12` или `3.12.4`. Строки, которые начинаются с `#`, Lizard пропускает. Другие значения, например `pypy3.10`, он тоже пропускает и переходит к следующему файлу.
+- `requires-python = ">=3.11"` собирается на Python 3.11 — нижней версии диапазона.
+- Диапазон с верхней границей, например `">=3.11,<3.14"`, даёт имя образа, которого не существует, и сборка падает. Добавьте файл `.python-version`: у него приоритет.
+- `runtime.txt` не читается.
+
+<span id="change-the-go-version" />
+
+## Смена версии Go
+
+```bash
+go mod edit -go=1.25
+lizard up --service api
+```
+
+Lizard читает только строку `go`. Строку `toolchain` он не читает.
+
+<span id="change-the-ruby-version" />
+
+## Смена версии Ruby
+
+```bash
+echo 3.4.1 > .ruby-version
+lizard up --service web
+```
+
+Пишите голое число. `rails new` записывает `ruby-3.4.1`, а Lizard не убирает префикс `ruby-`, поэтому сборка падает. Строка в `Gemfile` вроде `ruby "~> 3.3.0"` собирается на Ruby 3.3. Приложение Rails, которое сохранило сгенерированный `Dockerfile`, берёт версию из этого файла; см. [Развёртывание приложения Rails](/framework-guides/rails).
+
+<span id="when-lizard-ignores-version-files" />
+
+## Когда Lizard игнорирует файлы версий
+
+- **Ваш собственный Dockerfile.** Версию определяет его строка `FROM`, например `FROM node:24-slim`. См. [Развёртывание Docker-контейнера из Dockerfile](/deploy/dockerfile).
+- **Команда сборки или запуска у сервиса.** Тогда Lizard пишет Dockerfile из команд на фиксированном образе: `node:22-alpine`, `python:3.13-slim` или `golang:1.24-alpine`, в зависимости от первого слова команды. Чтобы вернуться к файлам версий, очистите обе команды:
+
+```bash
+lizard service set web --set buildCommand= --set startCommand=
+```
+
+Очистка `buildCommand` у работающего сервиса сама запускает пересборку. Проверьте `lizard events`, прежде чем выполнять `lizard redeploy`, чтобы не поставить в очередь вторую сборку. См. [порядок выбора сборки](/concepts/build-pipeline#build-decision-order).
+
+<span id="check-which-version-a-build-used" />
+
+## Как узнать, какую версию использовала сборка
+
+```bash
+lizard logs --build --service web
+```
+
+В логе сборки указан базовый образ, например `node:24-slim` или `python:3.12-slim`. Чтобы проверить версию во время выполнения, выводите её при старте приложения, например `process.version` в Node.js или `sys.version` в Python, и читайте `lizard logs --service web`.
+
+<span id="related" />
+
+## См. также
+
+- [Конвейер сборки](/concepts/build-pipeline)
+- [Развёртывание приложения Node.js](/framework-guides/nodejs)
+- [Развёртывание приложения Go](/framework-guides/go)
+- [Развёртывание приложения Streamlit](/framework-guides/streamlit)
+- [Развёртывание FastAPI](/framework-guides/fastapi)
+- [Развёртывание Django](/framework-guides/django)

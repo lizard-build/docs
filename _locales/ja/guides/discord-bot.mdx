@@ -1,0 +1,183 @@
+---
+title: "Discord bot をホストする"
+description: "Discord bot をバックグラウンド worker として Lizard でホストします。discord.js の例、シークレットとしての bot トークン、ポートなしの worker mode、レプリカ 1 つ、ログを説明します。"
+---
+
+<span id="host-a-discord-bot" />
+
+# Discord bot をホストする
+
+Lizard (lizard.build) で Discord bot をホストするには、バックグラウンド worker として実行します。gateway bot は Discord へのアウトバウンド接続を開くだけで HTTP を提供しないため、`lizard up --port 0`（`containerPort=0`）でデプロイし、bot トークンごとにレプリカを 1 つに保ってください。Lizard は `package.json` から Node.js の bot を検出し、`npm run start` で起動します。Python の bot には Procfile の `web:` 行が必要です。
+
+**テスト状況:** サンプルの bot は discord.js 14.27.0 でローカルで動作し、偽のトークンを渡すと `TokenInvalid` で停止します。そのビルドプランは、Lizard が実行するビルドプランナーである lizardpack で確認しました。このガイドを Lizard から実際の Discord に対して実行したことはまだありません。運用に使う前に、テストメッセージを送ってログを確認してください。
+
+<span id="before-you-start" />
+
+## 始める前に
+
+- **bot トークン。** [Discord Developer Portal](https://discord.com/developers/applications) でアプリケーションを作成し、**Bot** を開いて **Reset Token** を押します。トークンは非公開にしてください。トークンを持つ人は誰でも bot を操作できます。
+- **Message Content intent。** この例は `!ping` を読み取るため、**Bot → Privileged Gateway Intents** で **Message Content Intent** をオンにします。スラッシュコマンドにだけ応答する bot には不要です。
+- **サーバーに追加した bot。** **OAuth2 → URL Generator** で `bot` スコープと、**View Channels**、**Send Messages**、**Read Message History** の権限にチェックを入れ、生成された URL を開いてサーバーを選びます。
+- **Lizard CLI とプラン。** CLI をインストールし、`lizard login` を実行します。サービスは Lizard Pro またはその 7 日間トライアル（カードが必要）で動作します。[料金](https://lizard.build/pricing)を参照してください。
+
+<span id="write-the-bot" />
+
+## bot を書く
+
+2 つのファイルを入れるフォルダーを作成します。
+
+`package.json`:
+
+```json
+{
+  "name": "discord-bot",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.27.0"
+  }
+}
+```
+
+`bot.js`:
+
+```js
+import { Client, Events, GatewayIntentBits } from "discord.js";
+
+const token = process.env.DISCORD_TOKEN;
+if (!token) {
+  console.error("DISCORD_TOKEN is not set");
+  process.exit(1);
+}
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
+});
+
+client.once(Events.ClientReady, (ready) => {
+  console.log(`Logged in as ${ready.user.tag}`);
+});
+
+client.on(Events.MessageCreate, async (message) => {
+  if (message.author.bot) return;
+  if (message.content === "!ping") {
+    await message.reply("pong");
+  }
+});
+
+client.login(token);
+```
+
+`npm install` を実行して `package-lock.json` を作成し、lock ファイルを `package.json` と同じ場所に置いてください。lock ファイルがあると、Lizard は `npm ci` でインストールします。`node_modules` と `.env` を書いた `.gitignore` も追加します。
+
+手元のコンピューターで bot を試すには、トークンをファイルに保存せずに貼り付けてから起動します:
+
+```bash
+read -rs DISCORD_TOKEN && export DISCORD_TOKEN
+npm start
+```
+
+bot が見えるチャンネルで `!ping` と入力すると、`pong` と返ってきます。デプロイの前にローカルのコピーを停止してください。2 つのコピーが動いていると、どちらもすべてのメッセージに応答します。
+
+<span id="deploy-as-a-worker" />
+
+## worker としてデプロイする
+
+bot のフォルダーから実行します:
+
+```bash
+lizard init --name discord-bot
+lizard add --service bot
+read -rs DISCORD_TOKEN
+lizard secrets set DISCORD_TOKEN="$DISCORD_TOKEN" --service bot
+lizard up --service bot --port 0
+```
+
+- `lizard add --service bot` は空のサービスを作成し、続く `lizard up --service bot` がそこにコードを入れます。
+- `lizard secrets set` はトークンを **bot** サービスだけに保存します。[変数とシークレット](/variables)を参照してください。
+- `--port 0` は [worker mode](/deploy/workers) を有効にします。Lizard は `PORT` を設定せず、ポートのヘルスチェックを実行せず、HTTP ルートも追加しません。サービスに `onlizard.com` ドメインが表示されることはありますが、そこでは何も応答しません。
+
+git リポジトリ内では、`lizard up` は `.gitignore` に書かれたものをスキップします。git の外では `.env` ファイルもアップロードするため、このフォルダー内のファイルにトークンを置かないか、先に `git init` を実行してください。[ローカルコードからデプロイする](/deploy/upload)を参照してください。
+
+git push to deploy を使う場合は、代わりにフォルダーを GitHub に push して [リポジトリを接続](/deploy/github) し、サービスを worker mode に切り替えます:
+
+```bash
+lizard port 0 --service bot
+lizard redeploy --service bot
+```
+
+<span id="one-replica-per-token" />
+
+### トークンごとにレプリカは 1 つ
+
+各レプリカは同じトークンでそれぞれ gateway セッションを開くため、どのレプリカもすべてのメッセージに応答します。bot サービスはレプリカ 1 つのままにしてください。worker の新しいバージョンをデプロイするとき、Lizard は新しいプロセスを起動する前に古いプロセスを停止します。そのため、返信が重複するのではなく、短い空白が生じます。2,500 を超えるサーバーに参加している bot は Discord の sharding を使う必要があります。これはコードの変更であり、同じプロセスのレプリカを増やすことではありません。
+
+<span id="python-bots" />
+
+## Python の bot
+
+discord.py を使う場合は、`requirements.txt` に記載し、`Procfile` を追加します:
+
+```text
+web: python bot.py
+```
+
+lizardpack は worker であっても Procfile の `web:` 行だけを読み取り、`worker:` 行は無視します。Procfile がない場合は `python main.py` を実行するため、bot が `main.py` にあれば Procfile は不要です。同じコマンドと `--port 0` でデプロイしてください。Python のバージョンを選ぶには、[ランタイムバージョン](/deploy/runtime-versions)を参照してください。
+
+<span id="keep-data-in-managed-postgres" />
+
+## Managed Postgres にデータを保存する
+
+コンテナ内に書き込んだファイルは、次のデプロイで失われます。設定、スコア、キューは [Managed Postgres](/addons/postgres) に保存してください:
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service bot
+```
+
+シングルクォートにより、シェルが `${{…}}` を解釈しなくなります。Lizard は bot の起動時に [参照](/variables/references) を解決し、変数の変更によって bot は再起動します。`pg` などのクライアントで `process.env.DATABASE_URL` を読み取って接続します。handler は 2 回実行されても安全なようにしてください。再起動によって、処理中だった作業がもう一度実行されることがあります。
+
+<span id="check-that-it-works" />
+
+## 動作を確認する
+
+```bash
+lizard port --service bot
+lizard logs --service bot --tail 50
+lizard ps
+```
+
+`lizard port` は `worker mode` と表示します。ログには `Logged in as` と bot の名前が表示されます。次に、サーバーで `!ping` と入力し、`pong` が 1 回だけ返ることを確認します。実行中と表示されている worker でも、この確認は必要です。Discord に拒否されていても、プロセスは動き続けることがあります。
+
+<span id="common-problems" />
+
+## よくある問題
+
+| 症状 | 対処 |
+|---|---|
+| `An invalid token was provided` の後に再起動を繰り返す | Developer Portal でトークンをリセットし、bot サービスに `DISCORD_TOKEN` を設定し直します。 |
+| `Privileged intent provided is not enabled or whitelisted` | **Message Content Intent** をオンにするか、コードから `GatewayIntentBits.MessageContent` を削除します。 |
+| bot はオンラインだが `!ping` に反応しない | intent がないと、メッセージ内容は空で届きます。bot がそのチャンネルを閲覧でき、送信できることも確認してください。 |
+| どのメッセージにも返信が 2 つ付く | 別のコピーがトークンを使っています。ローカルのプロセス、2 つ目のレプリカ、別のホストのいずれかです。`lizard ps` で確認してください。 |
+| デプロイがヘルスチェックを待ち続ける | サービスが worker mode になっていません。`lizard port 0 --service bot` を実行してから、`lizard redeploy --service bot` を実行します。 |
+| `DISCORD_TOKEN is not set` | シークレットが別のサービスかプロジェクトに設定されています。`lizard secrets list --service bot` を実行してください。 |
+
+**Interactions Endpoint URL** 経由でスラッシュコマンドにだけ応答する bot は、worker ではなく HTTP サービスです。実際のポートでデプロイし、その HTTPS URL を Discord に設定してください。
+
+<span id="related" />
+
+## 関連項目
+
+- [バックグラウンドワーカー](/deploy/workers)
+- [Telegram bot を実行する](/guides/telegram-bot)
+- [Node.js アプリをデプロイする](/framework-guides/nodejs)
+- [ログ](/observability/logs)
+- [制限](/platform/limits)
+- [discord.js ガイド](https://discordjs.guide/)

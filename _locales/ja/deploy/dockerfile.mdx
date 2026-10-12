@@ -1,0 +1,155 @@
+---
+title: "Dockerfile から Docker コンテナをデプロイする"
+description: "Lizard で Docker コンテナをホスト: Dockerfile をコミットし、lizard up を実行するか GitHub を接続します。Lizard がビルドし、EXPOSE からポートを取得して HTTPS で配信します。"
+---
+
+<span id="deploy-a-docker-container-from-a-dockerfile" />
+
+# Dockerfile から Docker コンテナをデプロイする
+
+Lizard (lizard.build) は、`Dockerfile` からビルドした Docker コンテナをホストします。ファイルをプロジェクトのルートに置いて `lizard up` を実行するか、GitHub リポジトリを接続してください。Lizard は自身のビルドマシンでイメージをビルドするため、ローカルに Docker は必要ありません。ポートは `EXPOSE` または `--port` から取得し、`PORT` でコンテナに渡して、`onlizard.com` のドメインから HTTPS でコンテナを配信します。Lizard はレジストリからビルド済みのイメージを取得しません。公開イメージを実行するには、そのイメージを `FROM` で指定する 1 行の Dockerfile を書きます。
+
+**テスト状況:** このページは、2026-10-12 時点の Lizard のビルダー、デプロイヤー、CLI 4.0.42 について、それぞれのソースと照らし合わせて確認した内容です。このページのために新たなデプロイは行っていません。[Umami ガイド](/guides/umami) では、1 行の `FROM` Dockerfile をこの方法でデプロイし、そのテスト結果を記録しています。
+
+<span id="before-you-start" />
+
+## 始める前に
+
+- アプリが `0.0.0.0` で待ち受ける `Dockerfile`。`127.0.0.1` にバインドしたサーバーは、コンテナの外からの接続を受け付けません。
+- `lizard login` でサインイン済みの Lizard CLI と、Pro プランまたは 7 日間の Pro トライアル（カードが必要）。[料金](https://lizard.build/pricing) を参照してください。
+
+Dockerfile がない場合は、まず Dockerfile なしでデプロイを試してください。lizardpack は Go、Node.js、Python、Ruby、PHP、Java、Rust、静的サイトを検出します。[ビルドパイプライン](/concepts/build-pipeline) を参照してください。
+
+<span id="an-example-dockerfile" />
+
+## Dockerfile の例
+
+[Node.js アプリをデプロイする](/framework-guides/nodejs) にあるような Node.js サーバーの場合:
+
+```dockerfile
+FROM node:22-slim
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY . .
+ENV NODE_ENV=production
+EXPOSE 3000
+CMD ["node", "server.js"]
+```
+
+ローカルのファイルがイメージに入らないよう、`.dockerignore` を追加します:
+
+```text
+node_modules
+.git
+.env*
+```
+
+<span id="deploy-with-lizard-up" />
+
+## lizard up でデプロイする
+
+```bash
+lizard init --name my-container
+lizard add --service web
+lizard up --service web
+```
+
+`lizard up` はローカルの `Dockerfile` の最初の `EXPOSE` 行を読み、`Detected port 3000 from Dockerfile` と表示して、そのポートをサービスのポートに設定します。別のポートを使うには `--port <number>` を渡します。アップロードでは、ルートの `Dockerfile` が常に書かれたとおりに使われます。アップロードに含まれるものについては、[ローカルコードからデプロイ](/deploy/upload) を参照してください。
+
+<span id="deploy-from-github" />
+
+## GitHub からデプロイする
+
+```bash
+lizard add -r your-org/your-app -n web
+```
+
+追跡対象ブランチへの push のたびにイメージが再ビルドされます。Lizard はルートの `Dockerfile` を使いますが、そのファイルが別の場所でビルドされた出力をコピーするだけの場合（`COPY dist …` があり、`npm`、`pip`、`go build` などの `RUN` ステップがない場合）は、lizardpack が代わりの Dockerfile を生成します。常に自分の Dockerfile を使うには、`dockerfilePath` を設定します:
+
+```bash
+lizard service set web --set dockerfilePath=Dockerfile
+```
+
+[Dockerfile の変更が反映されない](/deploy/troubleshooting/incomplete-dockerfile) と [GitHub からデプロイ](/deploy/github) を参照してください。
+
+<span id="a-dockerfile-in-a-subdirectory-or-with-another-name" />
+
+## サブディレクトリにある Dockerfile や別名の Dockerfile
+
+`dockerfilePath` は、`rootDirectory` で決まるビルドディレクトリからの相対パスです。モノレポのサービスの場合:
+
+```bash
+lizard service set api --set rootDirectory=apps/api --set dockerfilePath=Dockerfile.prod
+```
+
+Dockerfile を使うサービスでは、`buildCommand` と `startCommand` を空のままにしてください。`dockerfilePath` がない場合、どちらか一方でも設定されていると、Lizard はあなたの Dockerfile を使わず、そのコマンドから独自の Dockerfile を生成します。`dockerfilePath` を設定していても、`startCommand` はイメージの `ENTRYPOINT` と `CMD` を置き換えます。Lizard は `sh -c "<start command>"` を実行します。
+
+<span id="which-port-lizard-routes-to" />
+
+## Lizard がルーティングするポート
+
+Lizard は次の順序でサービスのポートを決めます:
+
+1. 設定したポート: `lizard up --port`、`lizard port`、ダッシュボード、または `lizard up` が読み取った `EXPOSE` 行。
+2. `0`。これは [worker mode](/deploy/workers) で、ポートもルートもありません。
+3. サービスに設定した `PORT` 変数。
+4. ビルドしたイメージが公開する最初のポート。ベースイメージのポートも含みます。ポートは文字列として並べ替えられるため、`3000` が `80` より先になります。
+5. `3000`。
+
+コンテナ内では、`PORT` に選ばれたポートが入っています。これを読むか、同じ固定ポートで待ち受けてください。後でポートを変えるには、`lizard port 8080 --service web` を実行してから `lizard redeploy --service web` を実行します。[ネットワーキング](/networking) を参照してください。
+
+<span id="what-reaches-the-build" />
+
+## ビルドに渡されるもの
+
+- **ビルド引数:** `COMMIT_SHA` だけです。使うには `ARG COMMIT_SHA` を宣言します。ほかの `ARG` 行は、デフォルト値のままか空になります。
+- **変数:** サービスの変数とシークレットは Dockerfile のビルドに渡されません。例外は `VITE_*` と `NEXT_PUBLIC_*` の値で、[ビルド時の変数](/concepts/build-pipeline#build-time-variables) で説明しています。公開してよい値は Dockerfile に書き込むかコミットし、シークレットは実行時に使ってください。
+- **ベースイメージ:** ビルダーはあなたのレジストリにログインできないため、`FROM` のイメージはすべて公開されている必要があります。
+- **Lizard が加える変更:** ビルドの前に、Lizard はソースの `COPY` の前に `ARG COMMIT_SHA` を追加し、`npm`、`yarn`、`pnpm`、`bun` のインストールステップに BuildKit のキャッシュマウントを追加します。自分で書いたキャッシュマウントは、このサービスに限定された形でそのまま機能します。引用符付きで書いた `--mount` オプションはビルドを失敗させます。
+
+ビルドの様子は `lizard logs --build --service web` で確認できます。
+
+<span id="at-run-time" />
+
+## 実行時
+
+- **ヘルスチェック:** Lizard は `HEALTHCHECK` を無視し、コンテナがサービスのポートで TCP 接続を受け付けるかを確認します。[サービスが正常にならない](/deploy/troubleshooting/service-never-healthy) を参照してください。
+- **ユーザー:** イメージの `USER` が適用されます。root 以外のユーザーには 1024 未満のポートを開く権限がないことがあるため、そのようなイメージでは `80` より `8080` を使ってください。
+- **変数:** コンテナには、サービスの変数、`PORT`、`LIZARD_*` のプラットフォーム変数が渡されます。[変数とシークレット](/variables) を参照してください。
+- **ファイル:** コンテナが書き込んだものは、次のデプロイで失われます。データには [Managed Postgres](/addons/postgres)、[Managed Object Storage](/addons/storage)、または別のサービスを使ってください。[ストレージと復旧](/platform/storage-and-recovery) を参照してください。
+
+<span id="run-a-public-image" />
+
+## 公開イメージを実行する
+
+Lizard はすべてのサービスをソースからビルドするため、公開イメージは Dockerfile で包みます:
+
+```dockerfile
+FROM ghcr.io/umami-software/umami:3.3.1
+EXPOSE 3000
+```
+
+`latest` ではなくバージョンタグを固定してください。そうすれば、再デプロイでアプリが知らないうちに変わることはありません。[Umami を実行する](/guides/umami) と [Flowise を実行する](/guides/flowise) では、この方法を Managed Postgres と組み合わせて使っています。
+
+<span id="common-problems" />
+
+## よくある問題
+
+| 症状 | 対処 |
+|---|---|
+| Dockerfile の編集が反映されない | GitHub では、Lizard がファイルを不完全と見なすことがあります。`dockerfilePath` を設定してください。サービスに `buildCommand` や `startCommand` がないことも確認してください。 |
+| デプロイが正常にならない | アプリが別のポートか `127.0.0.1` で待ち受けています。`lizard port --service web` の出力とログを比べてください。 |
+| ベースイメージで `pull access denied` が出る | イメージが非公開か、名前が間違っています。公開イメージを使ってください。 |
+| `ARG` の値が空になる | Lizard は `COMMIT_SHA` 以外のビルド引数を渡しません。Dockerfile でデフォルト値を設定してください。 |
+| サービスは動いているが何も返さない | worker mode になっている可能性があります: `lizard port --service web` が `worker mode` と表示します。 |
+
+<span id="related" />
+
+## 関連項目
+
+- [ビルドパイプライン](/concepts/build-pipeline)
+- [ランタイムバージョン](/deploy/runtime-versions)
+- [Rails アプリをデプロイする](/framework-guides/rails)
+- [バックグラウンドワーカー](/deploy/workers)
+- [`lizard up`](/cli/up)

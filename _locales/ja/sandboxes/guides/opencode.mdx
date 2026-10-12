@@ -1,0 +1,124 @@
+---
+title: "sandbox で OpenCode を実行する"
+description: "Lizard の sandbox で OpenCode を実行: ChatGPT か API キーを接続し、lizard sandbox prompt でプロンプトを送るか、OpenCode の Web UI をプライベートなプレビュー URL で開きます。"
+---
+
+<span id="run-opencode-in-a-sandbox" />
+
+# sandbox で OpenCode を実行する
+
+Lizard (lizard.build) の sandbox で OpenCode を実行するには、`lizard agents` で認証情報（ChatGPT のサブスクリプション、または Anthropic、OpenAI、OpenRouter、LLM Gateway のキー）を接続し、`opencode` テンプレートから sandbox を作成して、`lizard sandbox prompt <id> --agent opencode "…"` でプロンプトを送ります。OpenCode の Web UI を使う場合は、sandbox 内で `opencode web --hostname 0.0.0.0 --port 4096` を起動し、`lizard sandbox expose` でそのポートを公開します。
+
+**テスト状況:** コマンドは、2026-10-12 時点の Lizard CLI 4.0.42 とプラットフォームのエージェントランナーに基づいています。Web UI の手順は、OpenCode 1.18.34 のソース（UI と API を 1 つのポートで配信します）と、Lizard の sandbox ルーターのソース（アクセストークンを cookie に保持し、WebSocket を通します）と照らし合わせて確認しました。このページのために、どちらの方法もまだ実際の sandbox で最初から最後まで実行していません。
+
+<span id="before-you-start" />
+
+## 始める前に
+
+- `lizard login` でサインイン済みの Lizard CLI と、プロジェクト。フォルダーで `lizard init` を実行するか、sandbox コマンドに `-p <project>` を渡します。
+- Lizard Pro または 7 日間の Pro トライアル（カードが必要）。Sandboxes は実行中、サイズに応じて秒単位で課金されます。[制限](/platform/limits#sandbox-sizes) と [料金](https://lizard.build/pricing) を参照してください。
+
+<span id="connect-credentials" />
+
+## 認証情報を接続する
+
+| 認証情報 | コマンド |
+|---|---|
+| ChatGPT のサブスクリプション | `lizard agents login chatgpt --open` |
+| Anthropic API キー | `lizard agents add anthropic` |
+| OpenAI API キー | `lizard agents add openai` |
+| OpenRouter API キー | `lizard agents add openrouter` |
+| LLM Gateway API キー | `lizard agents add llmgateway` |
+
+OpenCode は、接続済みの認証情報のうち対応するものをすべて受け取り、それぞれでそのプロバイダーのモデルが使えるようになります。Claude のサブスクリプションのトークンは受け付けません。その場合は [Claude Code](/sandboxes/guides/claude-code) を使ってください。ChatGPT のログインは、有効期間の短いアクセストークンとして実行に渡され、リフレッシュトークンが渡されることはありません。API キーは `ANTHROPIC_API_KEY` などの環境変数として実行に渡されます。
+
+OpenCode ではモデルを `provider/model` の形で指定します。デフォルトを設定するか、プロンプトごとに `-m` を渡します:
+
+```bash
+lizard agents use opencode -m openrouter/anthropic/claude-sonnet-4.5
+lizard agents status
+```
+
+OpenRouter のキーだけを接続していてモデルを選んでいない場合、Lizard は `openrouter/openai/gpt-5.3-codex` を使います。
+
+<span id="create-a-sandbox" />
+
+## sandbox を作成する
+
+```bash
+lizard sandbox create -t opencode --timeout 3600000
+```
+
+表示された ID を変数に入れておきます: `SB=sb_abc123`。CLI の既定の有効期間は 5 分で、それを過ぎると Lizard は sandbox とそのファイルを削除します。`--timeout 3600000` で有効期間を 1 時間にします。`opencode` テンプレートには Node.js 22、バージョンを固定した OpenCode、git、Python 3、ripgrep、curl、jq、unzip、Lizard CLI が入っています。
+
+コードは Claude Code の場合と同じ方法でコピーします:
+
+```bash
+lizard sandbox exec $SB -- git clone https://github.com/your-org/your-app /workspace/app
+```
+
+プライベートまたはローカルのリポジトリについては、[sandbox にコードを入れる](/sandboxes/guides/claude-code#put-your-code-in-the-sandbox) を参照してください。
+
+<span id="send-a-prompt" />
+
+## プロンプトを送る
+
+```bash
+lizard sandbox prompt $SB --agent opencode --cwd /workspace/app "add input validation to the signup form"
+```
+
+各ターンでは `opencode run --auto` が実行され、明示的に拒否されていない権限リクエストはすべて承認されます。つまり OpenCode は確認を求めずにファイルを編集し、コマンドを実行します。`--effort <level>` は OpenCode の `--variant` になります。会話を続けるには `-c <conversation-id>` を渡し、フォローアップのたびに `--agent opencode` と `--cwd` も渡してください。Ctrl-C で表示が止まり、`lizard sandbox interrupt $SB` でエージェントが止まります。
+
+変更をパッチとして受け取る方法は、[変更を受け取る](/sandboxes/guides/claude-code#get-the-changes-back) を参照してください。
+
+<span id="open-the-opencode-web-ui" />
+
+## OpenCode の Web UI を開く
+
+`opencode web` は、OpenCode のブラウザー用インターフェースと API を 1 つのポートで配信します。sandbox 内で起動し、そのポートを [プレビュー URL](/sandboxes/preview-urls) で開きます。
+
+`lizard agents` の認証情報は `lizard sandbox prompt` の実行にしか渡されないため、このサーバーには専用のキーが必要です。コマンドラインに現れないよう、ファイルとしてコピーします:
+
+```bash
+printf 'export ANTHROPIC_API_KEY=%s\n' "$ANTHROPIC_API_KEY" > opencode.env
+lizard sandbox files put $SB opencode.env /root/opencode.env
+rm opencode.env
+```
+
+サーバーを起動し、ポートを公開します:
+
+```bash
+lizard sandbox exec $SB -- sh -c '. /root/opencode.env && cd /workspace/app && nohup opencode web --hostname 0.0.0.0 --port 4096 >/tmp/opencode.log 2>&1 </dev/null & echo $! > /tmp/opencode.pid'
+lizard sandbox expose $SB 4096
+```
+
+`expose` が表示した URL を開きます。URL には `?lizard_token=` が付いています。Lizard はトークンをそのホスト用の cookie に移し、トークンを外した同じページにリダイレクトします。そのため、UI 自身のリクエスト、イベントストリーム、ターミナルの WebSocket も通ります。
+
+- `--hostname 0.0.0.0` が必要です。OpenCode は既定で `127.0.0.1` で待ち受けるため、その場合プレビュー URL は `Sandbox is not listening on port 4096` を返します。
+- `--port` は固定の値を指定してください。指定しないと、OpenCode は空いているポートをランダムに選びます。
+- URL はパスワードと同じように扱ってください。URL を知っている人は誰でも、OpenCode を通じて sandbox 内でコマンドを実行できます。パスワードも必須にするには、`opencode.env` に `export OPENCODE_SERVER_PASSWORD=…` を追加します。ユーザー名は `opencode` です。
+- サーバーのログは `lizard sandbox exec $SB -- tail -n 50 /tmp/opencode.log` で読めます。サーバーを止めるには `lizard sandbox exec $SB -- sh -c 'kill $(cat /tmp/opencode.pid)'` を実行します。
+- sandbox が停止すると UI も止まります。有効期間は `lizard sandbox timeout $SB 3600000` で延長できます。
+
+<span id="common-problems" />
+
+## よくある問題
+
+| メッセージまたは症状 | 対処 |
+|---|---|
+| `OpenCode has no credential. Connect one of: …` | 上の表の認証情報のいずれかを `lizard agents` で接続します。 |
+| `Your ChatGPT login expired` | `lizard agents login chatgpt` をもう一度実行します。 |
+| 出力に Codex が出てくる | `--agent opencode` なしでプロンプトが送られました。 |
+| プレビュー URL が 401 を返す | `expose` が表示した、`lizard_token` 付きの完全な URL を開いてください。[プレビュー URL](/sandboxes/preview-urls) を参照してください。 |
+| プレビュー URL が 502 を返す | サーバーが起動していないか、`127.0.0.1` で待ち受けています。`/tmp/opencode.log` を確認してください。 |
+| Web UI は開くが、どのモデルも失敗する | サーバーにプロバイダーのキーがありません。`/root/opencode.env` を直し、サーバーを止めてから起動し直してください。 |
+
+<span id="related" />
+
+## 関連項目
+
+- [sandbox で Claude Code を実行する](/sandboxes/guides/claude-code)
+- [プレビュー URL](/sandboxes/preview-urls)
+- [`lizard agents`](/cli/agents)
+- [`lizard sandbox`](/cli/sandbox#coding-agents)
+- [Sandboxes](/sandboxes)

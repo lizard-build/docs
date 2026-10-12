@@ -1,0 +1,189 @@
+---
+title: "Node.js アプリをデプロイする（Express）"
+description: "Node.js や Express のアプリを Lizard でホストします。lizardpack は package.json を読み、.nvmrc か engines で Node を選び、PORT を設定してポート 3000 で npm start を実行します。"
+---
+
+<span id="deploy-a-nodejs-app-express" />
+
+# Node.js アプリをデプロイする（Express）
+
+Lizard (lizard.build) で Node.js アプリをホストするには、`package.json` を含むフォルダーをデプロイします。lizardpack は lock ファイルからパッケージマネージャーを選び、依存関係をインストールし、`build` スクリプトがあれば実行して、`start` スクリプトでアプリをポート `3000` で起動します。`.nvmrc` や `engines.node` で別のメジャーバージョンを指定しない限り、Node.js 22 を使います。Lizard はポートを `PORT` で渡すので、そのポートで待ち受けてください。
+
+**テスト状況:** 以下の Express サンプルは Express 5.3.0 でローカルで動作し、データベースのルートは pg 8.23.1 を使って PostgreSQL 14 に対して動作しました。そのビルドプランは、Lizard が実行するビルドプランナーである lizardpack で確認しました。このガイドでエンドツーエンドのデプロイはまだ行っていません。
+
+<span id="before-you-start" />
+
+## 始める前に
+
+- lock ファイルの作成とローカルでのテストに使う、手元のコンピューターの Node.js と npm。
+- `lizard login` でサインイン済みで、Pro または 7 日間の Pro トライアル（カードが必要）を利用している Lizard CLI。[料金](https://lizard.build/pricing)を参照してください。
+
+Next.js、Nuxt、Astro、SvelteKit、Vite のアプリには専用のガイドがあります。[フレームワークガイド](/framework-guides)を参照してください。
+
+<span id="a-minimal-express-app" />
+
+## 最小構成の Express アプリ
+
+`package.json`:
+
+```json
+{
+  "name": "express-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
+```
+
+`server.js`:
+
+```js
+import express from "express";
+
+const app = express();
+const port = Number(process.env.PORT) || 3000;
+
+app.get("/", (req, res) => {
+  res.send("Hello from Express on Lizard");
+});
+
+app.get("/healthz", (req, res) => {
+  res.json({ status: "ok" });
+});
+
+app.listen(port, "0.0.0.0", () => {
+  console.log(`listening on ${port}`);
+});
+```
+
+`npm install` を実行して `package-lock.json` を作成し、両方のファイルをコミットして、`node_modules` と `.env` を `.gitignore` に追加します。ローカルで確認します:
+
+```bash
+npm start
+curl http://localhost:3000/healthz
+```
+
+<span id="what-lizardpack-does-with-a-nodejs-app" />
+
+## lizardpack が Node.js アプリに対して行うこと
+
+| ステップ | 内容 |
+|---|---|
+| パッケージマネージャー | `bun.lock` または `bun.lockb`: Bun。`pnpm-lock.yaml`: pnpm。`yarn.lock`: Yarn。`package-lock.json`: `npm ci`。lock ファイルなし: `npm install`。 |
+| Node.js のバージョン | `.nvmrc`、次に `.node-version`、次に `.tool-versions`、次に `engines.node`。使われるのはメジャーバージョンだけで、`node:<major>-slim` 上でビルドされます。デフォルトは `22`。 |
+| ビルド | `package.json` に `build` スクリプトがあれば、devDependencies を含む別のステージで実行 |
+| 起動 | `start` スクリプト。なければ `node <main>`。それもなければ `server.js`、`index.js`、`app.js`、`main.js`、`dist/index.js` のうち最初に見つかったもの |
+| ランタイム | `NODE_ENV=production`、ポート `3000` |
+
+`build` スクリプトがない場合、イメージはパッケージをインストールする前に `NODE_ENV=production` を設定するため、devDependencies はインストールされません。そのため、devDependencies にある `nodemon`、`tsx`、`ts-node` を呼び出す start スクリプトは失敗します。TypeScript では、`build` でコンパイルし、その出力を起動してください:
+
+```json
+{
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  }
+}
+```
+
+バージョンファイルとそのエッジケースは [ランタイムバージョン](/deploy/runtime-versions) で説明しています。サービスのビルドコマンドと起動コマンドは空のままにしてください。どちらかが設定されていると、Lizard は `node:22-alpine` をベースに独自の Dockerfile を書き、バージョンファイルを無視します。[ビルドパイプライン](/concepts/build-pipeline)を参照してください。
+
+<span id="deploy" />
+
+## デプロイ
+
+アプリのルートから実行します:
+
+```bash
+lizard init --name node-app
+lizard add --service web
+lizard up --service web --port 3000
+```
+
+`lizard up` はフォルダーをアップロードし、Lizard 上でビルドして URL を表示します。git リポジトリ内では `.gitignore` に書かれたものをスキップします。git の外では `node_modules` はスキップしますが、`.env` ファイルはアップロードします。[ローカルコードからデプロイする](/deploy/upload)を参照してください。
+
+git push to deploy を使う場合は、リポジトリを GitHub に push し、`lizard add -r your-org/your-app -n web` で接続します。[GitHub からデプロイする](/deploy/github)を参照してください。
+
+<span id="set-variables" />
+
+## 変数を設定する
+
+```bash
+lizard secrets set SESSION_SECRET="$(openssl rand -hex 32)" --service web
+```
+
+値は `process.env.SESSION_SECRET` で読み取ります。変数を変更すると、再ビルドなしでサービスが再起動します。[変数とシークレット](/variables)を参照してください。
+
+<span id="add-managed-postgres" />
+
+## Managed Postgres を追加する
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service web
+npm install pg
+```
+
+シングルクォートにより、シェルが `${{…}}` を解釈しなくなります。Lizard はデプロイ時に [参照](/variables/references) を、プロジェクトのプライベートネットワーク上のデータベースのアドレスに解決します。`server.js` にプールとルートを追加します:
+
+```js
+import pg from "pg";
+
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+
+app.get("/db", async (req, res) => {
+  const { rows } = await pool.query("SELECT now() AS now");
+  res.json(rows[0]);
+});
+```
+
+Express 5 はルートで reject された promise をエラーハンドラーに渡すため、クエリが失敗してもプロセスはクラッシュせず、HTTP 500 を返します。マイグレーションは、データベースのパブリック URL を使って手元のコンピューターから実行します:
+
+```bash
+lizard run --service postgres -- npm run migrate
+```
+
+キャッシュやジョブキューには、同じ方法で [Managed Redis](/addons/redis) を追加します。`lizard add redis` を実行してから、`REDIS_URL='${{redis.REDIS_PRIVATE_URL}}'` を設定してください。
+
+<span id="check-that-it-works" />
+
+## 動作を確認する
+
+```bash
+lizard logs --build --service web
+lizard logs --service web --tail 100
+lizard ps
+```
+
+ランタイムログには `listening on 3000` が表示されます。`lizard up` が表示した URL で `/healthz` と `/db` をリクエストしてください。
+
+<span id="common-problems" />
+
+## よくある問題
+
+| 症状 | 対処 |
+|---|---|
+| lock ファイルが同期していないため `npm ci` が失敗する | ローカルで `npm install` を実行し、`package-lock.json` をコミットします。 |
+| `nodemon: not found` または `tsx: not found` | これらのツールは devDependencies なので、起動用にはインストールされません。`build` ステップを追加するか、ツールを `dependencies` に移します。 |
+| デプロイがいつまでも healthy にならない | `process.env.PORT` で待ち受けてください。`5000` のような固定ポートはサービスポートと一致しません。[サービスが healthy にならない](/deploy/troubleshooting/service-never-healthy)を参照してください。 |
+| Node.js のバージョンが違う | `.nvmrc` にメジャーバージョン（例: `24`）を書き、もう一度デプロイします。 |
+| `Cannot use import statement outside a module` | `package.json` に `"type": "module"` を追加するか、`require` を使います。 |
+
+キューコンシューマーや [Discord bot](/guides/discord-bot) のように HTTP を提供しない Node.js プロセスは、[バックグラウンドワーカー](/deploy/workers) として実行します。
+
+<span id="related" />
+
+## 関連項目
+
+- [フレームワークガイド](/framework-guides)
+- [ランタイムバージョン](/deploy/runtime-versions)
+- [Managed Postgres](/addons/postgres)
+- [ログ](/observability/logs)

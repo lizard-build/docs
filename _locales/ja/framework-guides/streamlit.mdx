@@ -1,0 +1,171 @@
+---
+title: "Streamlit アプリをデプロイする"
+description: "Streamlit アプリを Lizard にデプロイします。Procfile で streamlit run app.py を 0.0.0.0:8501 で実行し、requirements.txt で Streamlit を固定し、シークレットは変数から渡します。"
+---
+
+<span id="deploy-a-streamlit-app" />
+
+# Streamlit アプリをデプロイする
+
+Lizard (lizard.build) は、ローカルで使うのと同じコマンド `streamlit run app.py` で Streamlit アプリを実行します。このコマンドに `--server.address 0.0.0.0` と `8501` などの固定ポートを付けて Procfile の `web:` 行に書き、`lizard up --port 8501` でデプロイします。Procfile がない場合、lizardpack は `python app.py` を起動しますが、これは警告を出して終了するだけで、アプリを配信しません。
+
+**テスト状況:** 以下のサンプルは Streamlit 1.65.0 でローカルで動作し、データベース版は psycopg 3.3.5 を使って PostgreSQL 14 に対して動作しました。そのビルドプランは、Lizard が実行するビルドプランナーである lizardpack で確認しました。エンドツーエンドのデプロイはまだ行っていません。ブラウザーは Streamlit との WebSocket を開いたままにしますが、Lizard のルーティングを通したその接続はまだ確認していません。
+
+<span id="before-you-start" />
+
+## 始める前に
+
+- アプリのテストに使う、手元のコンピューターの Python 3。
+- `lizard login` でサインイン済みで、Pro または 7 日間の Pro トライアル（カードが必要）を利用している Lizard CLI。[料金](https://lizard.build/pricing)を参照してください。
+
+<span id="a-minimal-app" />
+
+## 最小構成のアプリ
+
+`app.py`:
+
+```python
+import streamlit as st
+
+st.title("Hello from Streamlit on Lizard")
+name = st.text_input("Your name", "world")
+st.write(f"Hello, {name}!")
+```
+
+`requirements.txt`:
+
+```text
+streamlit==1.65.0
+```
+
+`.python-version`:
+
+```text
+3.13
+```
+
+`Procfile`:
+
+```text
+web: streamlit run app.py --server.port 8501 --server.address 0.0.0.0
+```
+
+ローカルで実行します:
+
+```bash
+python -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+Streamlit は `http://localhost:8501` で開きます。`.venv/`、`.env`、`.streamlit/secrets.toml` を `.gitignore` に追加してください。
+
+<span id="what-lizardpack-builds" />
+
+## lizardpack がビルドするもの
+
+| ステップ | 内容 |
+|---|---|
+| 検出 | `requirements.txt`、`pyproject.toml`、`Pipfile`、または任意の `.py` ファイル |
+| Python のバージョン | `.python-version`、次に `.tool-versions`、次に `pyproject.toml` の `requires-python`。使われるのはメジャーとマイナーだけで、`python:<x.y>-slim` 上でビルドされます。デフォルトは `3.13`。 |
+| インストール | `pip install -r requirements.txt`。uv、Poetry、Pipenv の lock ファイルや設定ファイルがある場合はそれらを使用 |
+| 起動 | Procfile の `web:` 行 |
+| ランタイム | `PYTHONUNBUFFERED=1`。`print` の出力がすぐにログに届きます |
+
+サービスポートは `--port` で決まり、Procfile の `--server.port` と一致している必要があります。バージョンのルールとそのエッジケースについては、[ランタイムバージョン](/deploy/runtime-versions)を参照してください。
+
+<span id="deploy" />
+
+## デプロイ
+
+アプリのフォルダーから実行します:
+
+```bash
+lizard init --name streamlit-app
+lizard add --service web
+lizard up --service web --port 8501
+```
+
+`lizard up` はフォルダーをアップロードし、Lizard 上でビルドして URL を表示します。git リポジトリ内では `.gitignore` に書かれたものをスキップします。git の外では `.env` ファイルもアップロードします。git push to deploy を使う場合は、[GitHub リポジトリを接続](/deploy/github) し、`lizard port 8501 --service web` でポートを設定してください。
+
+<span id="secrets-and-settings" />
+
+## シークレットと設定
+
+`st.secrets` は `.streamlit/secrets.toml` を読み取りますが、このファイルはアップロードしないでください。Lizard では、シークレットをサービスの変数として保存し、環境変数から読み取ります:
+
+```bash
+lizard secrets set OPENAI_API_KEY=sk-... --service web
+```
+
+```python
+import os
+
+api_key = os.environ["OPENAI_API_KEY"]
+```
+
+変数を変更すると、再ビルドなしでアプリが再起動します。[変数とシークレット](/variables)を参照してください。
+
+<span id="add-managed-postgres" />
+
+## Managed Postgres を追加する
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service web
+```
+
+シングルクォートにより、シェルが `${{…}}` を解釈しなくなります。Lizard はデプロイ時に [参照](/variables/references) を解決します。`requirements.txt` に `psycopg[binary]==3.3.5` を追加し、サーバープロセスごとに接続を 1 つ開きます:
+
+```python
+import os
+
+import psycopg
+import streamlit as st
+
+
+@st.cache_resource
+def get_conn():
+    return psycopg.connect(os.environ["DATABASE_URL"], autocommit=True)
+
+
+with get_conn().cursor() as cur:
+    cur.execute("SELECT now()")
+    st.write("Database time:", cur.fetchone()[0])
+```
+
+`st.cache_resource` により、再実行やブラウザーセッションをまたいで接続が保持されます。データは [Managed Postgres](/addons/postgres) か [Managed Object Storage](/addons/storage) に保存してください。アプリがコンテナ内に書き込んだファイルは、次のデプロイで失われます。
+
+<span id="check-that-it-works" />
+
+## 動作を確認する
+
+```bash
+lizard logs --service web --tail 100
+lizard domain --service web
+curl https://<your-domain>/_stcore/health
+```
+
+ログには `You can now view your Streamlit app in your browser` が表示され、ヘルス URL は `ok` を返します。アプリの URL を開いてテキストボックスを変更すると、あいさつ文が更新されるはずです。
+
+<span id="common-problems" />
+
+## よくある問題
+
+| 症状 | 対処 |
+|---|---|
+| ログに `to view this Streamlit app on a browser, run it with the following command` と表示される | Procfile がないか `web:` 行がないため、lizardpack が `python app.py` を実行しました。 |
+| デプロイがいつまでも healthy にならない | サービスポートと `--server.port` が違います。`lizard port --service web` を実行してください。[サービスが healthy にならない](/deploy/troubleshooting/service-never-healthy)を参照してください。 |
+| `ModuleNotFoundError` | パッケージを `requirements.txt` に追加し、もう一度デプロイします。 |
+| シークレットの `KeyError` | `web` サービスに変数がありません。`lizard secrets list --service web` で確認してください。 |
+| ページに接続中のメッセージが表示されたまま読み込まれない | ブラウザーが `/_stcore/stream` への WebSocket を維持できていません。ブラウザーのコンソールで失敗したそのリクエストを探し、`lizard logs` でエラーを確認してください。 |
+
+<span id="related" />
+
+## 関連項目
+
+- [フレームワークガイド](/framework-guides)
+- [FastAPI をデプロイする](/framework-guides/fastapi)
+- [ランタイムバージョン](/deploy/runtime-versions)
+- [Managed Postgres](/addons/postgres)
+- [ログ](/observability/logs)

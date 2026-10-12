@@ -1,0 +1,155 @@
+---
+title: "Desplegar un contenedor Docker desde un Dockerfile"
+description: "Aloja un contenedor Docker en Lizard: haz commit de un Dockerfile y ejecuta lizard up o conecta GitHub; Lizard lo compila, toma el puerto de EXPOSE y lo sirve por HTTPS."
+---
+
+<span id="deploy-a-docker-container-from-a-dockerfile" />
+
+# Desplegar un contenedor Docker desde un Dockerfile
+
+Lizard (lizard.build) aloja contenedores Docker que compila a partir de tu `Dockerfile`. Pon el archivo en la raíz del proyecto y ejecuta `lizard up`, o conecta un repositorio de GitHub: Lizard compila la imagen en sus propias máquinas, así que no necesitas Docker en local. Toma el puerto de `EXPOSE` o de `--port`, se lo pasa al contenedor en `PORT` y sirve el contenedor por HTTPS en un dominio `onlizard.com`. Lizard no descarga imágenes ya hechas de un registro; para ejecutar una imagen pública, escribe un Dockerfile de una línea que empiece por `FROM` con esa imagen.
+
+**Estado de las pruebas:** esta página describe el sistema de compilación y el de despliegue de Lizard y Lizard CLI 4.0.42 tal como estaban el 2026-10-12; la comprobamos con su código fuente. No hicimos un despliegue nuevo para ella. La [guía de Umami](/guides/umami) despliega de esta forma un Dockerfile de una línea con `FROM` y recoge su prueba.
+
+<span id="before-you-start" />
+
+## Antes de empezar
+
+- Un `Dockerfile` cuya app escuche en `0.0.0.0`. Un servidor que escucha en `127.0.0.1` no acepta conexiones desde fuera del contenedor.
+- Lizard CLI, con la sesión iniciada mediante `lizard login`, en Pro o en la prueba de Pro de 7 días (requiere tarjeta). Consulta los [precios](https://lizard.build/pricing).
+
+Si no tienes Dockerfile, prueba antes un despliegue sin él: lizardpack detecta Go, Node.js, Python, Ruby, PHP, Java, Rust y sitios estáticos. Consulta el [proceso de compilación](/concepts/build-pipeline).
+
+<span id="an-example-dockerfile" />
+
+## Un Dockerfile de ejemplo
+
+Para un servidor Node.js como el de [Desplegar una app Node.js](/framework-guides/nodejs):
+
+```dockerfile
+FROM node:22-slim
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY . .
+ENV NODE_ENV=production
+EXPOSE 3000
+CMD ["node", "server.js"]
+```
+
+Añade un `.dockerignore` para que los archivos locales no entren en la imagen:
+
+```text
+node_modules
+.git
+.env*
+```
+
+<span id="deploy-with-lizard-up" />
+
+## Desplegar con lizard up
+
+```bash
+lizard init --name my-container
+lizard add --service web
+lizard up --service web
+```
+
+`lizard up` lee la primera línea `EXPOSE` del `Dockerfile` local, muestra `Detected port 3000 from Dockerfile` y fija ese puerto como puerto del servicio. Pasa `--port <number>` para elegir otro. Una subida siempre usa el `Dockerfile` de la raíz tal como está escrito. Consulta [desplegar desde código local](/deploy/upload) para saber qué incluye la subida.
+
+<span id="deploy-from-github" />
+
+## Desplegar desde GitHub
+
+```bash
+lizard add -r your-org/your-app -n web
+```
+
+Cada push a la rama supervisada vuelve a compilar la imagen. Lizard usa el `Dockerfile` de la raíz salvo que este solo copie una salida compilada en otro sitio (`COPY dist …` sin ningún paso `RUN` con `npm`, `pip`, `go build` o similar); en ese caso, lizardpack escribe otro en su lugar. Para usar siempre el tuyo, configura `dockerfilePath`:
+
+```bash
+lizard service set web --set dockerfilePath=Dockerfile
+```
+
+Consulta [Los cambios en el Dockerfile no se aplican](/deploy/troubleshooting/incomplete-dockerfile) y [desplegar desde GitHub](/deploy/github).
+
+<span id="a-dockerfile-in-a-subdirectory-or-with-another-name" />
+
+## Un Dockerfile en un subdirectorio o con otro nombre
+
+`dockerfilePath` es relativo al directorio de compilación, que fija `rootDirectory`. Para un servicio de un monorepo:
+
+```bash
+lizard service set api --set rootDirectory=apps/api --set dockerfilePath=Dockerfile.prod
+```
+
+Deja vacíos `buildCommand` y `startCommand` en un servicio con Dockerfile. Sin `dockerfilePath`, cualquiera de los dos hace que Lizard escriba su propio Dockerfile a partir de los comandos en lugar de usar el tuyo. Con `dockerfilePath` configurado, un `startCommand` sigue reemplazando el `ENTRYPOINT` y el `CMD` de la imagen: Lizard ejecuta `sh -c "<start command>"`.
+
+<span id="which-port-lizard-routes-to" />
+
+## A qué puerto envía Lizard el tráfico
+
+Lizard elige el puerto del servicio en este orden:
+
+1. Un puerto que hayas fijado: `lizard up --port`, `lizard port`, el panel o la línea `EXPOSE` que leyó `lizard up`.
+2. `0`, que es el [modo worker](/deploy/workers): sin puerto ni ruta.
+3. Una variable `PORT` que hayas fijado en el servicio.
+4. El primer puerto que expone la imagen compilada, incluidos los puertos de su imagen base. Los puertos se ordenan como texto, así que `3000` va antes que `80`.
+5. `3000`.
+
+Dentro del contenedor, `PORT` contiene el puerto elegido. Léelo o escucha en el mismo puerto fijo. Para cambiar el puerto más adelante, ejecuta `lizard port 8080 --service web` y luego `lizard redeploy --service web`. Consulta [redes](/networking).
+
+<span id="what-reaches-the-build" />
+
+## Qué llega a la compilación
+
+- **Argumentos de compilación:** solo `COMMIT_SHA`. Declara `ARG COMMIT_SHA` para usarlo. Las demás líneas `ARG` conservan su valor predeterminado o quedan vacías.
+- **Variables:** las variables y los secretos del servicio no llegan a la compilación de un Dockerfile, con una excepción para los valores `VITE_*` y `NEXT_PUBLIC_*` que se explica en [variables en tiempo de compilación](/concepts/build-pipeline#build-time-variables). Escribe los valores públicos en el Dockerfile o haz commit de ellos; deja los secretos para el tiempo de ejecución.
+- **Imágenes base:** el sistema de compilación no tiene credenciales para tus registros, así que toda imagen de `FROM` debe ser pública.
+- **Cambios que hace Lizard:** antes de compilar, Lizard añade `ARG COMMIT_SHA` antes del `COPY` de tu código fuente y añade montajes de caché de BuildKit a los pasos de instalación de `npm`, `yarn`, `pnpm` y `bun`. Los montajes de caché que escribas tú siguen funcionando, limitados a este servicio; una opción `--mount` escrita entre comillas hace fallar la compilación.
+
+Sigue la compilación con `lizard logs --build --service web`.
+
+<span id="at-run-time" />
+
+## En tiempo de ejecución
+
+- **Comprobación de estado:** Lizard ignora `HEALTHCHECK` y comprueba que el contenedor acepte conexiones TCP en el puerto del servicio. Consulta [el servicio nunca pasa a healthy](/deploy/troubleshooting/service-never-healthy).
+- **Usuario:** se aplica el `USER` de la imagen. Un usuario que no es root puede no tener permiso para abrir un puerto por debajo de 1024, así que en esas imágenes es mejor `8080` que `80`.
+- **Variables:** el contenedor recibe las variables de tu servicio, `PORT` y las variables de plataforma `LIZARD_*`. Consulta [variables y secretos](/variables).
+- **Archivos:** todo lo que escribe el contenedor se pierde en el siguiente despliegue. Usa [Managed Postgres](/addons/postgres), [Managed Object Storage](/addons/storage) u otro servicio para los datos; consulta [almacenamiento y recuperación](/platform/storage-and-recovery).
+
+<span id="run-a-public-image" />
+
+## Ejecutar una imagen pública
+
+Lizard compila cada servicio desde el código fuente, así que mete la imagen pública en un Dockerfile:
+
+```dockerfile
+FROM ghcr.io/umami-software/umami:3.3.1
+EXPOSE 3000
+```
+
+Fija una etiqueta de versión en lugar de `latest`, para que un nuevo despliegue no te cambie la app sin avisar. [Ejecutar Umami](/guides/umami) y [Ejecutar Flowise](/guides/flowise) usan este patrón con Managed Postgres.
+
+<span id="common-problems" />
+
+## Problemas comunes
+
+| Síntoma | Solución |
+|---|---|
+| Los cambios en tu Dockerfile no aparecen | En GitHub, Lizard puede considerar el archivo incompleto; configura `dockerfilePath`. Comprueba también que el servicio no tenga `buildCommand` ni `startCommand`. |
+| El despliegue nunca pasa a healthy | La app escucha en otro puerto o en `127.0.0.1`. Compara `lizard port --service web` con el log. |
+| `pull access denied` para la imagen base | La imagen es privada o el nombre está mal. Usa una imagen pública. |
+| Un valor de `ARG` está vacío | Lizard no pasa argumentos de compilación salvo `COMMIT_SHA`. Fija un valor predeterminado en el Dockerfile. |
+| El servicio está en marcha, pero no sirve nada | Puede estar en modo worker: `lizard port --service web` muestra `worker mode`. |
+
+<span id="related" />
+
+## Ver también
+
+- [Proceso de compilación](/concepts/build-pipeline)
+- [Versiones de runtime](/deploy/runtime-versions)
+- [Desplegar una app Rails](/framework-guides/rails)
+- [Workers en segundo plano](/deploy/workers)
+- [`lizard up`](/cli/up)

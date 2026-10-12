@@ -1,5 +1,5 @@
 ---
-description: "Everything about getting a service running on Lizard and keeping it there: GitHub and local deploys, workers, scaling, regions, and fixes."
+description: "Get a service running on Lizard and keep it there: GitHub, local and Dockerfile deploys, runtime versions, workers, scaling, regions and fixes."
 ---
 
 # Deploy
@@ -12,7 +12,9 @@ Weighing this against another host first? The blog explains how [container as a 
 
 - [Deploy from GitHub](/deploy/github) — connect a repo so pushes to the tracked branch auto-redeploy.
 - [Deploy from Local Code](/deploy/upload) — ship the current directory with `lizard up`, no Git required.
-- [Background Workers](/deploy/workers) — run queue consumers and polling loops with `containerPort=0`.
+- [Deploy from a Dockerfile](/deploy/dockerfile) — build and host your own Docker container, or wrap a public image.
+- [Runtime versions](/deploy/runtime-versions) — set the Node.js, Python, Go or Ruby version with `.nvmrc`, `.python-version`, `go.mod` or `.ruby-version`.
+- [Background Workers](/deploy/workers) — run queue consumers, polling loops and bots such as a [Discord bot](/guides/discord-bot) with `containerPort=0`.
 - [Scaling](/deploy/scaling) — adjust replicas, resources, and storage.
 - [Regions](/deploy/regions) — where your services run.
 - [Troubleshooting](/deploy/troubleshooting/incomplete-dockerfile) — fixes for the most common build and deploy problems.

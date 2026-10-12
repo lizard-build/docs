@@ -1,0 +1,179 @@
+---
+title: "Развертывание приложения на Go"
+description: "Хостинг приложения на Go в Lizard: lizardpack находит go.mod, собирает статический бинарник с версией Go из строки go и запускает его на порту 8080, задав PORT."
+---
+
+<span id="deploy-a-go-app" />
+
+# Развертывание приложения на Go
+
+Чтобы развернуть приложение на Go в Lizard (lizard.build), загрузите или отправьте через git модуль с файлом `go.mod`. Сборкой занимается lizardpack: он берёт версию Go из строки `go`, компилирует статический бинарник (`CGO_ENABLED=0`) и запускает его на Alpine Linux. Порт сервиса — `8080`, и Lizard передаёт его процессу в `PORT`, поэтому читайте `PORT` и слушайте на всех интерфейсах.
+
+**Статус тестов:** пример приложения ниже собирается и запускается локально с Go 1.24, а его план сборки мы проверили в lizardpack — планировщике сборки, который использует Lizard. Полный деплой по этому руководству мы ещё не проводили.
+
+<span id="before-you-start" />
+
+## Перед началом
+
+- Модуль Go с `go.mod` в директории, которую вы разворачиваете, и `go.sum`, если у модуля есть зависимости.
+- Lizard CLI с выполненным `lizard login` и тариф Pro или 7-дневный пробный период Pro (нужна карта). См. [цены](https://lizard.build/pricing).
+
+<span id="a-minimal-app" />
+
+## Минимальное приложение
+
+`go.mod`:
+
+```text
+module example.com/hello
+
+go 1.24
+```
+
+`main.go`:
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+)
+
+func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "Hello from Go on Lizard")
+	})
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "ok")
+	})
+
+	log.Printf("listening on :%s", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
+}
+```
+
+С `":"+port` сервер слушает на всех интерфейсах. Адрес вроде `127.0.0.1:8080` принимает подключения только изнутри контейнера, и деплой так и не становится работоспособным.
+
+Проверьте локально:
+
+```bash
+go run .
+curl http://localhost:8080/healthz
+```
+
+<span id="what-lizardpack-builds" />
+
+## Что собирает lizardpack
+
+| Шаг | Что происходит |
+|---|---|
+| Определение | `go.mod`, `go.work` или любой файл `.go`. Go проверяется раньше Node.js и Python. |
+| Версия Go | Строка `go` в `go.mod`, только мажорная и минорная версии: `go 1.24.3` собирается на `golang:1.24-alpine`. Без `go.mod` — Go 1.24. |
+| Сборка | `go mod download`, затем `CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w' -o /app/server <package>` |
+| Пакет main | Корневая директория; `./cmd`, если есть `cmd/main.go`; иначе первый по алфавиту `cmd/<name>/main.go` |
+| Рантайм | `alpine:3.19` с `ca-certificates` и `tzdata`. Рядом с бинарником lizardpack копирует в `/app` всю директорию исходников, поэтому относительные пути вроде `templates/` и `static/` продолжают работать. |
+| Запуск и порт | `/app/server` на порту `8080` |
+
+Сгенерированный Dockerfile:
+
+```dockerfile
+FROM golang:1.24-alpine AS build
+WORKDIR /app
+COPY go.mod go.sum* ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w' -o /app/server .
+
+FROM alpine:3.19
+RUN apk add --no-cache ca-certificates tzdata
+WORKDIR /app
+COPY --from=build /app /app
+EXPOSE 8080
+CMD ["/app/server"]
+```
+
+Чтобы получить этот образ, оставьте команды сборки и запуска сервиса пустыми. Если задана любая из них, Lizard пишет по этим командам другой Dockerfile и игнорирует строку `go`: команда `go build …` собирается на Go 1.24. Чтобы управлять каждым шагом, закоммитьте собственный `Dockerfile`; см. [Развертывание Docker-контейнера из Dockerfile](/deploy/dockerfile).
+
+<span id="deploy" />
+
+## Развертывание
+
+Из корня модуля:
+
+```bash
+lizard init --name go-app
+lizard add --service api
+lizard up --service api --port 8080
+```
+
+`lizard up` загружает директорию, собирает её на сборочных машинах Lizard и выводит URL. Docker и Go на машине, где вы запускаете команду, не нужны. Для git push to deploy [подключите репозиторий GitHub](/deploy/github) командой `lizard add -r your-org/your-app -n api`, затем проверьте, что `lizard port --service api` выводит `8080`.
+
+<span id="frameworks" />
+
+## Фреймворки
+
+- **net/http, chi, gorilla/mux:** передайте `":" + os.Getenv("PORT")` в `http.ListenAndServe`, как в примере выше.
+- **Gin:** `r.Run()` без адреса читает `PORT`, а без него использует `:8080`. Задайте в сервисе `GIN_MODE=release`.
+- **Echo, Fiber:** передайте адрес сами: `e.Start(":" + os.Getenv("PORT"))` или `app.Listen(":" + os.Getenv("PORT"))`.
+
+<span id="variables-and-databases" />
+
+## Переменные и базы данных
+
+Задайте конфигурацию в сервисе и читайте её через `os.Getenv`:
+
+```bash
+lizard secrets set GIN_MODE=release API_KEY=change-me --service api
+```
+
+Для базы данных добавьте [Managed Postgres](/addons/postgres) и передайте его приватный URL через [ссылку](/variables/references):
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
+```
+
+Затем откройте подключение своим драйвером, например `pgxpool.New(ctx, os.Getenv("DATABASE_URL"))`. Изменение переменной перезапускает сервис без пересборки.
+
+<span id="check-that-it-works" />
+
+## Проверьте, что всё работает
+
+```bash
+lizard logs --build --service api
+lizard logs --service api --tail 100
+lizard ps
+```
+
+Запросите `/healthz` по URL, который вывел `lizard up`, затем маршрут, который делает реальную работу. В логе сборки видно, какой образ `golang:` использовался.
+
+<span id="common-problems" />
+
+## Частые проблемы
+
+| Симптом | Что делать |
+|---|---|
+| `no Go files in /app` | Пакет `main` лежит не в корне и не в `cmd/`. Перенесите его или добавьте Dockerfile. |
+| Запускается не тот бинарник | Если есть несколько `cmd/<name>/main.go`, lizardpack собирает первый по алфавиту. Добавьте Dockerfile, который собирает нужный. |
+| SQLite не работает с `CGO_ENABLED=0` | Сборка отключает cgo, поэтому `mattn/go-sqlite3` работать не может. Возьмите драйвер на чистом Go, а лучше [Managed Postgres](/addons/postgres): файлы в контейнере теряются при каждом деплое. |
+| Деплой так и не становится работоспособным | Процесс должен слушать `PORT` (или `8080`) на всех интерфейсах. См. [сервис так и не становится работоспособным](/deploy/troubleshooting/service-never-healthy). |
+| Нужна более новая версия Go | Измените строку `go`, например `go mod edit -go=1.25`, и разверните снова. См. [версии рантайма](/deploy/runtime-versions). |
+
+Процесс на Go, который не отдаёт HTTP, например потребитель очереди, работает как [фоновый обработчик](/deploy/workers) с `--port 0`.
+
+<span id="related" />
+
+## См. также
+
+- [Руководства по фреймворкам](/framework-guides)
+- [Конвейер сборки](/concepts/build-pipeline)
+- [Переменные и секреты](/variables)
+- [Сетевое взаимодействие и домены](/networking)

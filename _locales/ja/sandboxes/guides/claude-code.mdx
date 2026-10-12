@@ -1,0 +1,155 @@
+---
+title: "sandbox で Claude Code を実行する"
+description: "Lizard の sandbox で Claude Code を実行: lizard agents で Claude のサブスクリプションか API キーを接続し、claude sandbox を作成して、プロンプトを送り、変更を受け取ります。"
+---
+
+<span id="run-claude-code-in-a-sandbox" />
+
+# sandbox で Claude Code を実行する
+
+Lizard (lizard.build) の sandbox で Claude Code を実行するには、まず認証情報を一度だけ接続します。`lizard agents add claude`（`claude setup-token` で発行したトークン）または `lizard agents add anthropic`（API キー）を使います。次に `claude` テンプレートから sandbox を作成し、`lizard sandbox prompt <id> --agent claude "…"` で作業を送ります。Claude Code は専用の Linux マシン上で `--dangerously-skip-permissions` 付きで動きます。確認を求めずにファイルを編集し、コマンドを実行しますが、お使いのコンピューターにはアクセスできません。
+
+**テスト状況:** このページのコマンドと動作は、2026-10-12 時点の Lizard CLI 4.0.42 とプラットフォームのエージェントランナーに基づいています。このページのために、実際の sandbox でこの手順を最初から最後まで実行してはいません。`git bundle` とパッチの手順はローカルで確認しました。
+
+<span id="before-you-start" />
+
+## 始める前に
+
+- `lizard login` でサインイン済みの Lizard CLI と、プロジェクト。フォルダーで `lizard init` を実行するか、sandbox コマンドに `-p <project>` を渡します。
+- Lizard Pro または 7 日間の Pro トライアル（カードが必要）。Sandboxes は実行中、サイズに応じて秒単位で課金されます。[制限](/platform/limits#sandbox-sizes) と [料金](https://lizard.build/pricing) を参照してください。
+- Claude のサブスクリプションを使う場合: `claude setup-token` を実行するために、お使いのコンピューターに Claude Code が必要です。
+
+<span id="connect-a-credential" />
+
+## 認証情報を接続する
+
+| 認証情報 | コマンド | 実行時に渡されるもの |
+|---|---|---|
+| Claude のサブスクリプション | `claude setup-token` を実行してから `lizard agents add claude` で `sk-ant-oat01-…` トークンを貼り付けます | `CLAUDE_CODE_OAUTH_TOKEN` |
+| Anthropic API キー | `lizard agents add anthropic` | `ANTHROPIC_API_KEY` |
+| OpenRouter API キー | `lizard agents add openrouter` | OpenRouter の Anthropic 互換エンドポイント |
+
+認証情報はプロジェクトではなく Lizard アカウントに紐づき、起動するすべての sandbox で使えます。Claude Code が使う認証情報は一度に 1 つです。複数を接続している場合は 1 つを選び、必要ならデフォルトのモデルも指定します:
+
+```bash
+lizard agents use claude --credential anthropic
+lizard agents use claude -m sonnet
+lizard agents status
+```
+
+すべてのオプションは [`lizard agents`](/cli/agents) を参照してください。
+
+<span id="create-a-sandbox" />
+
+## sandbox を作成する
+
+```bash
+lizard sandbox create -t claude --timeout 3600000
+```
+
+コマンドは `sb_abc123` のような sandbox ID を表示します。以降の手順のために変数に入れておきます: `SB=sb_abc123`。
+
+- `--timeout 3600000` で sandbox の有効期間を 1 時間にします。CLI の既定値は 5 分で、それを過ぎると Lizard は sandbox とそのファイルを、タスクの途中でも削除します。実行中の sandbox は `lizard sandbox timeout $SB 3600000` で延長できます。
+- `claude` テンプレートには Node.js 22、バージョンを固定した Claude Code、git、Python 3、ripgrep、curl、jq、unzip、Lizard CLI が入っています。Claude Code のバージョンは `lizard sandbox exec $SB -- claude --version` で確認できます。
+- 既定のサイズは Medium（4 vCPU、8 GB）です。変えるには `--size small` または `--size large` を渡します。
+
+<span id="put-your-code-in-the-sandbox" />
+
+## sandbox にコードを入れる
+
+公開リポジトリから:
+
+```bash
+lizard sandbox exec $SB -- git clone https://github.com/your-org/your-app /workspace/app
+```
+
+ローカルの git リポジトリから（プライベートリポジトリも可）:
+
+```bash
+git bundle create /tmp/app.bundle HEAD
+lizard sandbox files put $SB /tmp/app.bundle /workspace/app.bundle
+lizard sandbox exec $SB -- git clone -q /workspace/app.bundle /workspace/app
+```
+
+bundle に入るのはコミット済みのファイルだけなので、`.env` などの追跡されていないファイルはお使いのコンピューターに残ります。
+
+<span id="send-a-prompt" />
+
+## プロンプトを送る
+
+```bash
+lizard sandbox prompt $SB --agent claude --cwd /workspace/app "run the tests and fix any that fail"
+```
+
+CLI は各ツール呼び出しをストリーミング表示し、続けて Claude の回答、トークン数、会話 ID を表示します。便利なフラグ: `-m <model>`、`--effort <level>`、コマンドの出力を表示する `-v`、すぐに戻る `--no-wait`。Ctrl-C で表示を止めても Claude は作業を続けます。止めるには `lizard sandbox interrupt $SB` を実行します。
+
+同じ Claude Code セッションを続けるには、会話 ID を渡します:
+
+```bash
+lizard sandbox prompt $SB --agent claude -c conv_0123456789abcdef --cwd /workspace/app "now add a test for an empty list"
+lizard sandbox conversations $SB
+```
+
+フォローアップも含め、すべてのプロンプトで `--agent claude` と `--cwd` を渡してください。`--agent` がないと CLI は Codex に依頼し、`--cwd` がないとエージェントは `/workspace` で作業します。
+
+<span id="what-claude-code-can-reach" />
+
+## Claude Code がアクセスできる範囲
+
+- **権限。** 各ターンでは、sandbox 内で root として `--dangerously-skip-permissions` 付きの `claude -p` が実行されます。Claude は確認を求めずにファイルを編集し、パッケージをインストールし、コマンドを実行します。境界は sandbox です。
+- **ファイル。** sandbox 内のすべてにアクセスでき、お使いのコンピューター上のものには一切アクセスできません。
+- **ネットワーク。** インターネットへの送信アクセスがあるため、パッケージの取得や API の呼び出しができます。sandbox の料金には、直近 30 日間で [アカウントあたり 2 TB](/platform/limits#sandbox-egress) までの送信トラフィックが含まれます。
+- **認証情報。** 実行中、トークンは Claude Code の環境に `CLAUDE_CODE_OAUTH_TOKEN` または `ANTHROPIC_API_KEY` として置かれ、Claude Code が実行するコマンドにも引き継がれます。サブスクリプションの場合、これは `claude setup-token` で発行した有効期間の長いトークンです。実行ごとに有効期間の短いコピーが渡されるのは ChatGPT のログインだけです。sandbox で動くコードはこのトークンを読めるものと考え、不要になったら `lizard agents remove claude` で削除してください。
+- **Lizard アカウント。** 既定ではアクセスできません。sandbox を `--with-token <key>` 付きで作成すると `liz_` キーがインストールされ、sandbox 内で `lizard` が使えるようになります。たとえば Claude が作ったものをデプロイする場合です。sandbox 内のあらゆるものがこのキーを読めるため、1 つのワークスペースまたはプロジェクトに範囲を絞ったキーを使ってください。[`lizard keys`](/cli/keys) を参照してください。
+
+<span id="get-the-changes-back" />
+
+## 変更を受け取る
+
+```bash
+lizard sandbox exec $SB -- sh -c 'cd /workspace/app && git add -A && git diff --cached > /tmp/claude.patch'
+lizard sandbox files get $SB /tmp/claude.patch claude.patch
+git apply claude.patch
+```
+
+コミットする前にパッチを確認してください。Claude が起動した Web アプリを試すには、そのポートの [プレビュー URL](/sandboxes/preview-urls) を開きます。たとえば `lizard sandbox expose $SB 3000` です。
+
+<span id="use-claude-code-by-hand" />
+
+## Claude Code を手動で使う
+
+`lizard sandbox ssh $SB` は sandbox 内でシェルを開きます。`lizard agents` の認証情報は `lizard sandbox prompt` の実行にしか渡されないため、そのシェルで自分の `CLAUDE_CODE_OAUTH_TOKEN` または `ANTHROPIC_API_KEY` を export してから `claude` を実行してください。
+
+<span id="pause-or-remove-the-sandbox" />
+
+## sandbox を一時停止または削除する
+
+```bash
+lizard sandbox pause $SB
+lizard sandbox resume $SB
+lizard sandbox rm $SB
+```
+
+一時停止中の sandbox は課金されず、再開するとファイルとプロセスがそのまま戻ります。会話の状態は sandbox 内の `/workspace/.lizard-agent` に保存されます。sandbox を削除した後もファイルを残すには、作成時に `--volume` で [Persistent Volume](/sandboxes/volumes) を接続してください。
+
+<span id="common-problems" />
+
+## よくある問題
+
+| メッセージまたは症状 | 対処 |
+|---|---|
+| `Claude Code has no credential. Connect one of: …` | `lizard agents add claude` または `lizard agents add anthropic` を実行します。 |
+| `Claude rejected the credential (authentication_failed)` | トークンまたはキーが無効になっています。新しく作成して、もう一度追加してください。 |
+| `create` で Checkout リンク付きの HTTP 402 が返る | トライアルまたは Pro を開始します: `lizard billing start`。 |
+| タスクの途中で sandbox が消えた | 有効期間が切れました。次は `--timeout` を付けて作成するか、`lizard sandbox timeout` で延長してください。 |
+| 出力に Codex が出てくる | `--agent claude` なしでプロンプトが送られました。 |
+| `installing Claude Code` というステップが表示される | sandbox が `claude` テンプレートから作成されていないため、ランナーが先に npm で Claude Code をインストールしています。 |
+
+<span id="related" />
+
+## 関連項目
+
+- [sandbox で OpenCode を実行する](/sandboxes/guides/opencode)
+- [Sandboxes](/sandboxes)
+- [`lizard sandbox`](/cli/sandbox#coding-agents)
+- [コーディングエージェントからデプロイする](/guides/deploy-from-coding-agent)

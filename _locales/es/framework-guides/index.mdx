@@ -1,5 +1,5 @@
 ---
-description: "Implementa Next.js, React, Vue, Astro, Nuxt, SvelteKit, FastAPI, Django, Docusaurus, VitePress y Hugo en Lizard. Encuentra comandos de compilación, adaptadores, puertos y comprobaciones."
+description: "Implementa Next.js, Express, FastAPI, Django, Streamlit, Go, Rails, Astro, Nuxt, SvelteKit y generadores de sitios estáticos en Lizard: comandos de compilación, puertos y comprobaciones."
 ---
 
 <span id="framework-guides" />
@@ -12,7 +12,7 @@ Implementa una aplicación de framework en Lizard desde el código fuente. Elige
 
 ## Elige tu framework
 
-Estos ajustes describen las estructuras de proyecto estándar en las guías enlazadas. Los comandos asumen npm para proyectos de JavaScript. Las rutas de salida personalizadas, los adaptadores y las anulaciones de compilación pueden cambiar el resultado.
+Estos ajustes describen las estructuras de proyecto estándar en las guías enlazadas. Los comandos asumen npm para proyectos de JavaScript. Las rutas de salida personalizadas, los adaptadores y las anulaciones de compilación pueden cambiar el resultado. Si prefieres usar tu propia imagen, consulta [Implementar un contenedor Docker desde un Dockerfile](/deploy/dockerfile).
 
 | Framework | Compilación | Entorno de ejecución o salida | Puerto del servicio |
 |---|---|---|---|
@@ -23,8 +23,12 @@ Estos ajustes describen las estructuras de proyecto estándar en las guías enla
 | [Astro](/framework-guides/astro) | `npm run build` | `dist/`, o el adaptador Node standalone | `80` estático; `3000` servidor |
 | [Nuxt](/framework-guides/nuxt) | `npm run build` | `node .output/server/index.mjs` | `3000` |
 | [SvelteKit](/framework-guides/sveltekit) | `npm run build` | `node build` con adapter-node | `3000` |
+| [Node.js (Express)](/framework-guides/nodejs) | Script `build`, si existe | Script `start` | `3000` |
 | [FastAPI](/framework-guides/fastapi) | Instala las dependencias de Python | `uvicorn main:app --host 0.0.0.0 --port 8000` | `8000` |
 | [Django](/framework-guides/django) | Instala las dependencias de Python | Gunicorn con tu módulo WSGI | `8000` |
+| [Streamlit](/framework-guides/streamlit) | Instala las dependencias de Python | `streamlit run app.py` desde un Procfile | `8501` |
+| [Go](/framework-guides/go) | `go build` a un binario estático | `/app/server` | `8080` |
+| [Ruby on Rails](/framework-guides/rails) | El Dockerfile que genera Rails | Thruster y Puma, o solo Puma | `8080` en Rails 8; `3000` en Rails 7.1 y 7.2 |
 | [Docusaurus](/framework-guides/docusaurus) | `npm run build` | `build/` | `80` |
 | [VitePress](/framework-guides/vitepress) | `npm run docs:build` | `docs/.vitepress/dist/` en esta guía | `80` |
 | [Hugo](/framework-guides/hugo) | `hugo --minify` | `public/` | `80` |
@@ -33,7 +37,7 @@ Estos ajustes describen las estructuras de proyecto estándar en las guías enla
 
 ## Prepara el proyecto
 
-Ejecuta los comandos desde el directorio de la aplicación. Haz commit de los archivos fuente, la configuración y el archivo de bloqueo del paquete. Excluye `.env`, las dependencias locales y la salida de compilación local de las cargas. Los proyectos Node pueden seleccionar la versión major de Node en `.nvmrc`; el valor predeterminado actual es `22`. Esto selecciona una versión major, no una versión exacta de parche.
+Ejecuta los comandos desde el directorio de la aplicación. Haz commit de los archivos fuente, la configuración y el archivo de bloqueo del paquete. Excluye `.env`, las dependencias locales y la salida de compilación local de las cargas. Los proyectos Node pueden seleccionar la versión major de Node en `.nvmrc`; el valor predeterminado actual es `22`. Esto selecciona una versión major, no una versión exacta de parche. [Versiones del entorno de ejecución](/deploy/runtime-versions) enumera los archivos de versión para Node.js, Python, Go y Ruby.
 
 Instala Lizard CLI e inicia sesión una vez:
 

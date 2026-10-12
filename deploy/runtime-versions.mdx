@@ -1,0 +1,95 @@
+---
+title: "Set the Node.js, Python, Go or Ruby version"
+description: "Set the Node.js, Python, Go or Ruby version Lizard builds with: .nvmrc, engines.node, .python-version, requires-python, go.mod or .ruby-version."
+---
+
+# Set the Node.js, Python, Go or Ruby version
+
+Lizard (lizard.build) reads the runtime version from files in your project when lizardpack builds it: `.nvmrc` or `engines.node` for Node.js, `.python-version` or `requires-python` for Python, the `go` line of `go.mod` for Go, and `.ruby-version` or the `Gemfile` `ruby` line for Ruby. To change the version, edit that file and deploy again. Without one, Lizard uses Node.js 22, Python 3.13, Go 1.24 or Ruby 3.4.
+
+**Test status:** we checked every rule on this page on 2026-10-12 by running lizardpack, the build planner Lizard's builders run, against sample projects.
+
+## Where Lizard looks
+
+| Language | Files, first match wins | Part of the version used | Default | Base image |
+|---|---|---|---|---|
+| Node.js | `.nvmrc`, `.node-version`, `.tool-versions` (`nodejs` or `node`), `engines.node` in `package.json` | Major: `20.11.1` → `20` | `22` | `node:<major>-slim` |
+| Python | `.python-version`, `.tool-versions` (`python`), `requires-python` in `pyproject.toml` | Major and minor: `3.12.4` → `3.12` | `3.13` | `python:<x.y>-slim` |
+| Go | The `go` line in `go.mod` | Major and minor: `1.24.3` → `1.24` | `1.24` | `golang:<x.y>-alpine` to build, `alpine:3.19` to run |
+| Ruby | `.ruby-version`, the `ruby` line in `Gemfile` | Major and minor: `3.4.1` → `3.4` | `3.4` | `ruby:<x.y>-slim` |
+
+Lizard drops the patch number and builds on the official image tag for that line, so each build gets the newest patch release the tag points to at the time.
+
+These files apply only when lizardpack writes the Dockerfile. See [when Lizard ignores version files](#when-lizard-ignores-version-files).
+
+## Change the Node.js version
+
+```bash
+echo 24 > .nvmrc
+lizard up --service web
+```
+
+With a GitHub service, commit the file and push instead. Rules:
+
+- Write a number: `24`, `v24` and `24.1.0` all select Node.js 24. Lizard skips lines that start with `#`.
+- Lizard skips `lts/*` and `node` in `.nvmrc` and moves on to the next file. It uses other aliases, such as `lts/iron`, as written, and the build fails.
+- `.nvmrc` wins over `engines.node`.
+- `engines.node` gives the lowest version in its range: `>=18` builds on Node.js 18, and `^20.11.0` on Node.js 20. A range with `||`, such as `18 || 20`, fails the build.
+
+## Change the Python version
+
+```bash
+echo 3.12 > .python-version
+lizard up --service web
+```
+
+- `.python-version` must hold a version number such as `3.12` or `3.12.4`. Lizard skips lines that start with `#`. It also skips other values, such as `pypy3.10`, and moves on to the next file.
+- `requires-python = ">=3.11"` builds on Python 3.11, the lowest version in the range.
+- A range with an upper bound, such as `">=3.11,<3.14"`, produces an image name that does not exist and the build fails. Add a `.python-version` file; it wins.
+- `runtime.txt` is not read.
+
+## Change the Go version
+
+```bash
+go mod edit -go=1.25
+lizard up --service api
+```
+
+Lizard reads only the `go` line. It does not read the `toolchain` line.
+
+## Change the Ruby version
+
+```bash
+echo 3.4.1 > .ruby-version
+lizard up --service web
+```
+
+Write the bare number. `rails new` writes `ruby-3.4.1`, and Lizard does not strip the `ruby-` prefix, so the build fails. A `Gemfile` line such as `ruby "~> 3.3.0"` builds on Ruby 3.3. A Rails app that keeps its generated `Dockerfile` takes the version from that file instead; see [Deploy a Rails app](/framework-guides/rails).
+
+## When Lizard ignores version files
+
+- **Your own Dockerfile.** Its `FROM` line decides, for example `FROM node:24-slim`. See [Deploy a Docker container from a Dockerfile](/deploy/dockerfile).
+- **A build or start command on the service.** Lizard then writes a Dockerfile from the commands on a fixed image: `node:22-alpine`, `python:3.13-slim` or `golang:1.24-alpine`, chosen by the first word of the command. To return to version files, clear both:
+
+```bash
+lizard service set web --set buildCommand= --set startCommand=
+```
+
+Clearing `buildCommand` on a running service starts a rebuild by itself. Check `lizard events` before you run `lizard redeploy`, so you do not queue a second build. See the [build decision order](/concepts/build-pipeline#build-decision-order).
+
+## Check which version a build used
+
+```bash
+lizard logs --build --service web
+```
+
+The build log names the base image, such as `node:24-slim` or `python:3.12-slim`. To check the version at run time, print it when your app starts, for example `process.version` in Node.js or `sys.version` in Python, and read `lizard logs --service web`.
+
+## Related
+
+- [Build pipeline](/concepts/build-pipeline)
+- [Deploy a Node.js app](/framework-guides/nodejs)
+- [Deploy a Go app](/framework-guides/go)
+- [Deploy a Streamlit app](/framework-guides/streamlit)
+- [Deploy FastAPI](/framework-guides/fastapi)
+- [Deploy Django](/framework-guides/django)

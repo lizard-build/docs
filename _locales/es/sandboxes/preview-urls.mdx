@@ -1,0 +1,128 @@
+---
+title: "URLs de vista previa: abrir un puerto de un sandbox"
+description: "Da a un puerto de un sandbox de Lizard una URL de vista previa HTTPS privada con exposePort o lizard sandbox expose: formato de la URL, token de acceso, cookie, WebSockets y errores."
+---
+
+<span id="preview-urls-open-a-port-from-a-sandbox" />
+
+# URLs de vista previa: abrir un puerto de un sandbox
+
+Una URL de vista previa da una dirección HTTPS privada a un puerto dentro de un sandbox de Lizard (lizard.build). Inicia un servidor que escuche en `0.0.0.0` y luego llama a `sandbox.exposePort(3000)` (Python: `expose_port`) o ejecuta `lizard sandbox expose <id> 3000`. Obtienes `https://<sandbox-id>-3000.sandbox.<region>.onlizard.com/?lizard_token=…`; una solicitud sin el token de acceso del sandbox recibe HTTP 401.
+
+**Estado de las pruebas:** comprobamos esta página el 2026-10-12 con el código fuente de Lizard SDK, Lizard CLI 4.0.42 y el router de sandboxes. No hicimos una prueba en vivo nueva para ella.
+
+<span id="from-the-cli" />
+
+## Desde la CLI
+
+```bash
+lizard sandbox exec $SB -- sh -c "nohup python3 -m http.server 3000 --bind 0.0.0.0 >/tmp/http.log 2>&1 &"
+lizard sandbox expose $SB 3000
+```
+
+`expose` muestra la URL con el token incluido; ábrela en un navegador. Añade `--json` para obtener `hostname`, `url`, `port` y `accessToken` en un script. Quita la URL con `lizard sandbox unexpose $SB 3000`.
+
+<span id="from-lizard-sdk" />
+
+## Desde Lizard SDK
+
+`exposePort` devuelve la `url` para el navegador, el `hostname` solo y el `accessToken`:
+
+```ts
+import { Sandbox } from '@lizard-build/sdk';
+
+const sandbox = await Sandbox.create('base', { projectId: 'proj_123', timeoutMs: 600_000 });
+await sandbox.process.exec(
+  "nohup python3 -m http.server 3000 --bind 0.0.0.0 --directory /tmp >/tmp/http.log 2>&1 </dev/null &",
+);
+const { url, hostname, accessToken } = await sandbox.exposePort(3000);
+console.log(url); // open in a browser
+
+const res = await fetch(`https://${hostname}/`, {
+  headers: { 'X-Lizard-Access-Token': accessToken },
+});
+console.log(res.status);
+```
+
+```python
+import httpx
+from lizard import Sandbox
+
+sandbox = Sandbox.create("base", project_id="proj_123", timeout_ms=600_000)
+sandbox.process.exec_(
+    "nohup python3 -m http.server 3000 --bind 0.0.0.0 --directory /tmp >/tmp/http.log 2>&1 </dev/null &"
+)
+exposed = sandbox.expose_port(3000)
+print(exposed.url)  # open in a browser
+
+res = httpx.get(f"https://{exposed.hostname}/", headers={"X-Lizard-Access-Token": exposed.access_token})
+print(res.status_code)
+```
+
+`getHost(port)` (Python: `get_host`) también publica el puerto, pero solo devuelve el hostname y guarda el token en `sandbox.accessToken` (Python: `sandbox.access_token`). `unexpose(port)` quita la URL. Inicia el servidor antes de enviar tráfico: hasta que escuche, la URL responde 502.
+
+<span id="how-access-works" />
+
+## Cómo funciona el acceso
+
+- **Un token por sandbox.** El token pertenece al sandbox, no a un puerto: abre todos los puertos que expongas en ese sandbox y no cambia mientras el sandbox exista. Para cortar el acceso, deja de exponer el puerto o elimina el sandbox.
+- **Tres formas de enviarlo.** El parámetro de consulta `lizard_token`, la cabecera `X-Lizard-Access-Token` o la cookie `lizard_access`.
+- **Los navegadores reciben una cookie.** Cuando un navegador abre una URL con `?lizard_token=`, Lizard fija la cookie `lizard_access` para ese hostname (HttpOnly, Secure, SameSite=None, Partitioned, 30 días) y redirige a la misma dirección sin el token. Desde ese momento, los scripts de la página, las llamadas a la API y los WebSockets llevan la cookie, y el token no queda en el historial ni en las cabeceras Referer. La cookie también funciona cuando otro sitio inserta la página en un iframe.
+- **Un hostname por puerto.** Cada puerto tiene su propio hostname y su propia cookie, así que abre una vez la URL completa de cada puerto.
+- **Tu servidor nunca ve el token.** Lizard lo quita de la consulta, la cabecera y la cookie antes de reenviar la solicitud. La solicitud conserva su cabecera `Host` original.
+- **Los WebSockets funcionan.** Las solicitudes de upgrade pasan, así que funcionan los servidores de desarrollo con recarga en caliente y las interfaces de terminal.
+
+Trata una URL de vista previa como una contraseña: quien la tenga puede usar todos los puertos expuestos de ese sandbox.
+
+<span id="url-format-and-lifetime" />
+
+## Formato de la URL y duración
+
+```text
+https://<sandbox-id>-<port>.sandbox.<region>.onlizard.com
+```
+
+La URL funciona mientras el sandbox está en marcha y deja de funcionar cuando se detiene. La plataforma reserva el puerto `49983`; no puedes exponerlo. Un sandbox creado desde el SDK o la CLI dura cinco minutos por defecto; pasa un `timeoutMs` o un `--timeout` más largo para una vista previa que quieras mantener abierta. Consulta los [límites de duración](/platform/limits#sandbox-lifetime).
+
+<span id="errors" />
+
+## Errores
+
+| Estado | Mensaje | Solución |
+|---|---|---|
+| 401 | `This sandbox port is private (missing or wrong access token)` | Abre la URL completa que muestra `expose` o envía `X-Lizard-Access-Token`. |
+| 403 | `Port 3000 is not published for sandbox "…". Published: …` | Ejecuta `lizard sandbox expose` o `exposePort` para ese puerto. |
+| 404 | `No running sandbox "…"` | El sandbox no está en marcha. Revisa `lizard sandbox list`. |
+| 502 | `Sandbox is not listening on port 3000` | Inicia el servidor y haz que escuche en `0.0.0.0`, no en `127.0.0.1`. |
+
+<span id="dev-servers" />
+
+## Servidores de desarrollo
+
+La mayoría de los servidores de desarrollo escuchan en `127.0.0.1` salvo que les indiques otra cosa. Pasa el host y un puerto fijo:
+
+```bash
+npm run dev -- --host 0.0.0.0 --port 5173
+```
+
+Vite además comprueba la cabecera `Host` y responde `Blocked request. This host (…) is not allowed.` a los hosts que no conoce. Permite los hostnames del sandbox en `vite.config.js`:
+
+```js
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  server: { allowedHosts: ['.onlizard.com'] },
+});
+```
+
+Un punto al principio permite todos los subdominios. Después, expón `5173`.
+
+<span id="related" />
+
+## Ver también
+
+- [Ejecutar Claude Code en un sandbox](/sandboxes/guides/claude-code)
+- [Ejecutar OpenCode en un sandbox](/sandboxes/guides/opencode), incluida su interfaz web
+- [Inicio rápido de Sandboxes](/sandboxes/quickstart)
+- [Referencia del SDK](/sandboxes/sdk-reference)
+- [`lizard sandbox`](/cli/sandbox)

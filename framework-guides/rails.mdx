@@ -1,0 +1,125 @@
+---
+title: "Deploy a Rails app"
+description: "Deploy Ruby on Rails to Lizard with the Dockerfile Rails generates: master key, Managed Postgres, Rails 8 cache, queue and cable databases, port, checks."
+---
+
+# Deploy a Rails app
+
+Rails 7.1 and later generate a production `Dockerfile`, and Lizard (lizard.build) builds it as written: the image installs gems, precompiles assets and runs `bin/rails db:prepare` each time the server starts. Set `RAILS_MASTER_KEY` and the database URLs, then run `lizard up --port 8080` for Rails 8 (with `HTTP_PORT=8080` for Thruster) or `lizard up --port 3000` for Rails 7.1 and 7.2. Without a Dockerfile, lizardpack builds a plain Ruby image on port `3000`.
+
+**Test status:** we checked the `Dockerfile`, `bin/docker-entrypoint`, `config/puma.rb` and `database.yml` that Rails generates, Lizard's build and port rules, and lizardpack's plan for a Rails app without a Dockerfile. We have not yet deployed a Rails app end to end with this guide.
+
+## Before you start
+
+- A Rails 7.1 or later app that uses PostgreSQL (the `pg` gem) and still has the generated `Dockerfile` and `bin/docker-entrypoint`. An older app can get them from the [dockerfile-rails](https://github.com/fly-apps/dockerfile-rails) gem: `bundle add dockerfile-rails --group development`, then `bin/rails generate dockerfile`.
+- `config/master.key` on your computer, or the app's `SECRET_KEY_BASE`.
+- A `Gemfile.lock` that lists the `x86_64-linux` platform. Add it with `bundle lock --add-platform x86_64-linux` and commit the file.
+- Lizard CLI, signed in with `lizard login`, on Pro or the 7-day Pro trial (card required). See [pricing](https://lizard.build/pricing).
+
+## How Lizard builds a Rails app
+
+| Your app has | Lizard builds | Service port |
+|---|---|---|
+| The Rails 8 `Dockerfile` (`EXPOSE 80`, `CMD ["./bin/thrust", "./bin/rails", "server"]`) | Your Dockerfile, as written | `8080`, with `HTTP_PORT=8080` |
+| The Rails 7.1 or 7.2 `Dockerfile` (`EXPOSE 3000`) | Your Dockerfile, as written | `3000` |
+| No Dockerfile | lizardpack's Ruby image; see [below](#without-a-dockerfile) | `3000` |
+
+Leave the service's build and start commands empty. With either one set, Lizard writes its own Dockerfile from the commands instead of using yours, and that image has Node.js, not Ruby. A start command also replaces the image's entrypoint, so `db:prepare` would not run. See the [build decision order](/concepts/build-pipeline#build-decision-order).
+
+Rails 8 starts Thruster, which listens on port `80` and runs Puma on port `3000` behind it. The image runs as a non-root user (`USER 1000:1000`), and a non-root process may lack permission to open a port below 1024. `HTTP_PORT=8080` moves Thruster to a port it can always open.
+
+## Create the project and database
+
+From the app's root directory:
+
+```bash
+lizard init --name rails-app
+lizard add --service web
+lizard add postgres
+```
+
+[Managed Postgres](/addons/postgres) connects as the `postgres` superuser, so `db:prepare` can create the databases Rails asks for.
+
+## Set secrets and deploy (Rails 8)
+
+The production `database.yml` from Rails 8 defines four databases: `primary`, `cache`, `queue` and `cable`. `DATABASE_URL` replaces only `primary`. For the others, Rails reads `CACHE_DATABASE_URL`, `QUEUE_DATABASE_URL` and `CABLE_DATABASE_URL`. Point all four at the same Postgres with different database names:
+
+```bash
+PG='postgresql://postgres:${{postgres.PGPASSWORD}}@${{postgres.LIZARD_PRIVATE_DOMAIN}}:5432'
+lizard secrets set \
+  RAILS_MASTER_KEY="$(cat config/master.key)" \
+  DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' \
+  CACHE_DATABASE_URL="$PG/rails_cache" \
+  QUEUE_DATABASE_URL="$PG/rails_queue" \
+  CABLE_DATABASE_URL="$PG/rails_cable" \
+  HTTP_PORT=8080 \
+  SOLID_QUEUE_IN_PUMA=true \
+  --service web
+lizard up --service web --port 8080
+```
+
+- The single quotes keep `${{…}}` away from your shell. Lizard resolves these [references](/variables/references) at deploy time and uses the project's private network.
+- `SOLID_QUEUE_IN_PUMA=true` makes Puma run the Solid Queue worker, so Active Job jobs run inside the web service. Without it, queued jobs wait forever.
+- Use `SECRET_KEY_BASE` instead of `RAILS_MASTER_KEY` only if the app reads no other encrypted credentials.
+
+## Set secrets and deploy (Rails 7.1 and 7.2)
+
+These versions use one database:
+
+```bash
+lizard secrets set \
+  RAILS_MASTER_KEY="$(cat config/master.key)" \
+  DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' \
+  --service web
+lizard up --service web --port 3000
+```
+
+## What happens on each deploy
+
+`lizard up` uploads the directory. Inside a git repository it skips what `.gitignore` lists, and Rails' `.gitignore` and `.dockerignore` both exclude `config/master.key` and `.env*` files. The build precompiles assets with `SECRET_KEY_BASE_DUMMY=1`, because Lizard passes no variables to a Dockerfile build except `COMMIT_SHA`.
+
+At start, `bin/docker-entrypoint` runs `./bin/rails db:prepare`: it creates missing databases, loads the schema into new ones and runs pending migrations. It runs on every container start, including restarts. Keep migrations safe to run against both the old and the new code.
+
+For git push to deploy, push the app to GitHub and [connect the repository](/deploy/github) instead of running `lizard up`. Set the same secrets and port (`lizard port 8080 --service web`). The generated Dockerfile has a `bundle install` step, so Lizard uses it as written.
+
+## Check that it works
+
+```bash
+lizard logs --build --service web
+lizard logs --service web --tail 100
+lizard domain --service web
+```
+
+Rails 7.1 and later answer `/up` with HTTP 200 once the app boots. Open `https://<your-domain>/up`, then a page that reads from the database. The runtime log should show `db:prepare` output, then Puma starting.
+
+## Without a Dockerfile
+
+lizardpack builds a Ruby app when it finds a `Gemfile`:
+
+- Ruby version: `.ruby-version`, else the `ruby` line in `Gemfile`, else `3.4`. Only major and minor count: `3.4.1` builds on `ruby:3.4-slim`.
+- It installs `build-essential` and `libpq-dev`, then runs `bundle install`.
+- Start: the Procfile `web:` line, else `bundle exec rails server -b 0.0.0.0` when `config.ru` and `Rakefile` exist. Port `3000`.
+
+This image does not set `RAILS_ENV`, precompile assets or prepare the database, so it suits small apps and APIs better than a full Rails site. Write `.ruby-version` as a bare number such as `3.4.1`. `rails new` writes `ruby-3.4.1`, and lizardpack turns that into an image name that does not exist. See [runtime versions](/deploy/runtime-versions).
+
+## Common problems
+
+| Symptom | Fix |
+|---|---|
+| `bundle install` fails: the bundle only supports other platforms | Run `bundle lock --add-platform x86_64-linux` and commit `Gemfile.lock`. |
+| `Missing secret_key_base` or credentials fail to decrypt | Set `RAILS_MASTER_KEY` from `config/master.key` on the `web` service. |
+| Cache, queue or cable connection goes to a local socket such as `/var/run/postgresql` | Set `CACHE_DATABASE_URL`, `QUEUE_DATABASE_URL` and `CABLE_DATABASE_URL`. |
+| Logs show `bind: permission denied` for port 80 | Set `HTTP_PORT=8080` and the service port to `8080`. |
+| Deploy never becomes healthy | Check that the service port matches the table above: `lizard port --service web`. See [service never healthy](/deploy/troubleshooting/service-never-healthy). |
+| Jobs stay queued | Set `SOLID_QUEUE_IN_PUMA=true`. To run jobs apart from the web process, add a second service in [worker mode](/deploy/workers) with `dockerfilePath=Dockerfile` and `startCommand=./bin/jobs`. |
+| Uploaded files vanish after a deploy | Active Storage's `local` service writes inside the container. Use [Managed Object Storage](/addons/storage), which is S3-compatible, with the `amazon` service. |
+
+If the app uses Sidekiq or a Redis Action Cable adapter, add [Managed Redis](/addons/redis) and set `REDIS_URL='${{redis.REDIS_PRIVATE_URL}}'` on each service that needs it.
+
+## Related
+
+- [Deploy a Docker container from a Dockerfile](/deploy/dockerfile)
+- [Variables and secrets](/variables)
+- [Managed Postgres](/addons/postgres)
+- [Build pipeline](/concepts/build-pipeline)
+- [Storage and recovery](/platform/storage-and-recovery)

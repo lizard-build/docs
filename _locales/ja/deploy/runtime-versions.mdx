@@ -1,0 +1,113 @@
+---
+title: "Node.js、Python、Go、Ruby のバージョンを設定する"
+description: "Lizard がビルドに使う Node.js、Python、Go、Ruby のバージョンを設定: .nvmrc、engines.node、.python-version、requires-python、go.mod、.ruby-version。"
+---
+
+<span id="set-the-nodejs-python-go-or-ruby-version" />
+
+# Node.js、Python、Go、Ruby のバージョンを設定する
+
+lizardpack がプロジェクトをビルドするとき、Lizard (lizard.build) はプロジェクト内のファイルからランタイムのバージョンを読み取ります。Node.js では `.nvmrc` または `engines.node`、Python では `.python-version` または `requires-python`、Go では `go.mod` の `go` 行、Ruby では `.ruby-version` または `Gemfile` の `ruby` 行です。バージョンを変えるには、そのファイルを編集してもう一度デプロイします。該当するファイルがなければ、Lizard は Node.js 22、Python 3.13、Go 1.24、Ruby 3.4 を使います。
+
+**テスト状況:** 2026-10-12 に、Lizard のビルダーが実行するビルドプランナーである lizardpack をサンプルプロジェクトに対して実行し、このページのすべてのルールを確認しました。
+
+<span id="where-lizard-looks" />
+
+## Lizard が参照する場所
+
+| 言語 | ファイル（最初に一致したものを使用） | 使われるバージョンの部分 | デフォルト | ベースイメージ |
+|---|---|---|---|---|
+| Node.js | `.nvmrc`、`.node-version`、`.tool-versions`（`nodejs` または `node`）、`package.json` の `engines.node` | メジャー: `20.11.1` → `20` | `22` | `node:<major>-slim` |
+| Python | `.python-version`、`.tool-versions`（`python`）、`pyproject.toml` の `requires-python` | メジャーとマイナー: `3.12.4` → `3.12` | `3.13` | `python:<x.y>-slim` |
+| Go | `go.mod` の `go` 行 | メジャーとマイナー: `1.24.3` → `1.24` | `1.24` | ビルドに `golang:<x.y>-alpine`、実行に `alpine:3.19` |
+| Ruby | `.ruby-version`、`Gemfile` の `ruby` 行 | メジャーとマイナー: `3.4.1` → `3.4` | `3.4` | `ruby:<x.y>-slim` |
+
+Lizard はパッチ番号を切り捨て、そのバージョン系列の公式イメージタグでビルドします。そのため各ビルドでは、その時点でタグが指している最新のパッチリリースが使われます。
+
+これらのファイルが使われるのは、lizardpack が Dockerfile を生成する場合だけです。[Lizard がバージョンファイルを無視する場合](#when-lizard-ignores-version-files) を参照してください。
+
+<span id="change-the-nodejs-version" />
+
+## Node.js のバージョンを変える
+
+```bash
+echo 24 > .nvmrc
+lizard up --service web
+```
+
+GitHub のサービスでは、代わりにファイルをコミットして push します。ルール:
+
+- 数字で書きます: `24`、`v24`、`24.1.0` はいずれも Node.js 24 を選びます。Lizard は `#` で始まる行を読み飛ばします。
+- Lizard は `.nvmrc` の `lts/*` と `node` を読み飛ばし、次のファイルに進みます。`lts/iron` などのほかのエイリアスは書かれたとおりに使うため、ビルドが失敗します。
+- `.nvmrc` は `engines.node` より優先されます。
+- `engines.node` では範囲内で最も低いバージョンが使われます: `>=18` なら Node.js 18、`^20.11.0` なら Node.js 20 でビルドされます。`18 || 20` のように `||` を含む範囲では、ビルドが失敗します。
+
+<span id="change-the-python-version" />
+
+## Python のバージョンを変える
+
+```bash
+echo 3.12 > .python-version
+lizard up --service web
+```
+
+- `.python-version` には `3.12` や `3.12.4` のようなバージョン番号を書く必要があります。Lizard は `#` で始まる行を読み飛ばします。`pypy3.10` などのほかの値も読み飛ばし、次のファイルに進みます。
+- `requires-python = ">=3.11"` は、範囲内で最も低いバージョンである Python 3.11 でビルドされます。
+- `">=3.11,<3.14"` のように上限のある範囲では、存在しないイメージ名になり、ビルドが失敗します。`.python-version` ファイルを追加してください。こちらが優先されます。
+- `runtime.txt` は読み取られません。
+
+<span id="change-the-go-version" />
+
+## Go のバージョンを変える
+
+```bash
+go mod edit -go=1.25
+lizard up --service api
+```
+
+Lizard が読み取るのは `go` 行だけで、`toolchain` 行は読み取りません。
+
+<span id="change-the-ruby-version" />
+
+## Ruby のバージョンを変える
+
+```bash
+echo 3.4.1 > .ruby-version
+lizard up --service web
+```
+
+番号だけを書いてください。`rails new` は `ruby-3.4.1` と書き込みますが、Lizard は `ruby-` の接頭辞を取り除かないため、ビルドが失敗します。`Gemfile` の `ruby "~> 3.3.0"` のような行は Ruby 3.3 でビルドされます。生成された `Dockerfile` を残している Rails アプリは、代わりにそのファイルからバージョンを取得します。[Rails アプリをデプロイする](/framework-guides/rails) を参照してください。
+
+<span id="when-lizard-ignores-version-files" />
+
+## Lizard がバージョンファイルを無視する場合
+
+- **独自の Dockerfile。** その `FROM` 行で決まります。たとえば `FROM node:24-slim` です。[Dockerfile から Docker コンテナをデプロイする](/deploy/dockerfile) を参照してください。
+- **サービスのビルドコマンドまたは開始コマンド。** この場合、Lizard はコマンドから固定のイメージで Dockerfile を生成します。イメージは `node:22-alpine`、`python:3.13-slim`、`golang:1.24-alpine` のいずれかで、コマンドの最初の単語で選ばれます。バージョンファイルを使う状態に戻すには、両方をクリアします:
+
+```bash
+lizard service set web --set buildCommand= --set startCommand=
+```
+
+稼働中のサービスで `buildCommand` をクリアすると、再ビルドが自動で始まります。2 回目のビルドをキューに入れないよう、`lizard redeploy` を実行する前に `lizard events` を確認してください。[ビルドの判定順序](/concepts/build-pipeline#build-decision-order) を参照してください。
+
+<span id="check-which-version-a-build-used" />
+
+## ビルドで使われたバージョンを確認する
+
+```bash
+lizard logs --build --service web
+```
+
+ビルドログには、`node:24-slim` や `python:3.12-slim` などのベースイメージ名が表示されます。実行時のバージョンを確認するには、アプリの起動時にバージョンを出力し（たとえば Node.js なら `process.version`、Python なら `sys.version`）、`lizard logs --service web` で読みます。
+
+<span id="related" />
+
+## 関連項目
+
+- [ビルドパイプライン](/concepts/build-pipeline)
+- [Node.js アプリをデプロイする](/framework-guides/nodejs)
+- [Go アプリをデプロイする](/framework-guides/go)
+- [Streamlit アプリをデプロイする](/framework-guides/streamlit)
+- [FastAPI をデプロイする](/framework-guides/fastapi)
+- [Django をデプロイする](/framework-guides/django)

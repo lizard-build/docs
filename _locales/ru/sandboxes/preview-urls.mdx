@@ -1,0 +1,128 @@
+---
+title: "URL предпросмотра: как открыть порт из sandbox"
+description: "Дайте порту в sandbox Lizard приватный HTTPS URL предпросмотра через exposePort или lizard sandbox expose: формат URL, токен доступа, cookie, WebSocket и ошибки."
+---
+
+<span id="preview-urls-open-a-port-from-a-sandbox" />
+
+# URL предпросмотра: как открыть порт из sandbox
+
+URL предпросмотра даёт порту внутри sandbox на Lizard (lizard.build) приватный HTTPS-адрес. Запустите сервер, который слушает `0.0.0.0`, затем вызовите `sandbox.exposePort(3000)` (в Python — `expose_port`) или выполните `lizard sandbox expose <id> 3000`. Вы получите `https://<sandbox-id>-3000.sandbox.<region>.onlizard.com/?lizard_token=…`; запрос без токена доступа sandbox получает HTTP 401.
+
+**Статус тестов:** 2026-10-12 мы сверили эту страницу с исходным кодом Lizard SDK, Lizard CLI 4.0.42 и маршрутизатора sandbox. Нового живого теста для неё мы не запускали.
+
+<span id="from-the-cli" />
+
+## Из CLI
+
+```bash
+lizard sandbox exec $SB -- sh -c "nohup python3 -m http.server 3000 --bind 0.0.0.0 >/tmp/http.log 2>&1 &"
+lizard sandbox expose $SB 3000
+```
+
+`expose` выводит URL с токеном; откройте его в браузере. Добавьте `--json`, чтобы получить `hostname`, `url`, `port` и `accessToken` для скрипта. Убрать URL можно командой `lizard sandbox unexpose $SB 3000`.
+
+<span id="from-lizard-sdk" />
+
+## Из Lizard SDK
+
+`exposePort` возвращает `url` для браузера, голый `hostname` и `accessToken`:
+
+```ts
+import { Sandbox } from '@lizard-build/sdk';
+
+const sandbox = await Sandbox.create('base', { projectId: 'proj_123', timeoutMs: 600_000 });
+await sandbox.process.exec(
+  "nohup python3 -m http.server 3000 --bind 0.0.0.0 --directory /tmp >/tmp/http.log 2>&1 </dev/null &",
+);
+const { url, hostname, accessToken } = await sandbox.exposePort(3000);
+console.log(url); // open in a browser
+
+const res = await fetch(`https://${hostname}/`, {
+  headers: { 'X-Lizard-Access-Token': accessToken },
+});
+console.log(res.status);
+```
+
+```python
+import httpx
+from lizard import Sandbox
+
+sandbox = Sandbox.create("base", project_id="proj_123", timeout_ms=600_000)
+sandbox.process.exec_(
+    "nohup python3 -m http.server 3000 --bind 0.0.0.0 --directory /tmp >/tmp/http.log 2>&1 </dev/null &"
+)
+exposed = sandbox.expose_port(3000)
+print(exposed.url)  # open in a browser
+
+res = httpx.get(f"https://{exposed.hostname}/", headers={"X-Lizard-Access-Token": exposed.access_token})
+print(res.status_code)
+```
+
+`getHost(port)` (в Python — `get_host`) тоже публикует порт, но возвращает только имя хоста, а токен сохраняет в `sandbox.accessToken` (в Python — `sandbox.access_token`). `unexpose(port)` убирает URL. Запустите сервер до того, как отправлять трафик: пока он не слушает порт, URL отвечает 502.
+
+<span id="how-access-works" />
+
+## Как устроен доступ
+
+- **Один токен на sandbox.** Токен принадлежит sandbox, а не порту: он открывает каждый порт, который вы опубликовали в этом sandbox, и не меняется, пока sandbox существует. Чтобы закрыть доступ, отмените публикацию порта или удалите sandbox.
+- **Три способа передать токен.** Параметр запроса `lizard_token`, заголовок `X-Lizard-Access-Token` или cookie `lizard_access`.
+- **Браузер получает cookie.** Когда браузер открывает URL с `?lizard_token=`, Lizard ставит cookie `lizard_access` для этого имени хоста (HttpOnly, Secure, SameSite=None, Partitioned, 30 дней) и перенаправляет на тот же адрес без токена. Скрипты страницы, вызовы API и WebSocket дальше несут cookie, а токен не попадает в историю и заголовки Referer. Cookie работает и тогда, когда другой сайт встраивает страницу в iframe.
+- **Своё имя хоста для каждого порта.** У каждого порта своё имя хоста и своя cookie, поэтому полный URL каждого порта нужно один раз открыть.
+- **Ваш сервер не видит токен.** Lizard убирает его из параметра запроса, заголовка и cookie, прежде чем переслать запрос. Исходный заголовок `Host` запрос сохраняет.
+- **WebSocket работает.** Запросы на upgrade проходят, поэтому dev-серверы с горячей перезагрузкой и терминальные интерфейсы работают.
+
+Обращайтесь с URL предпросмотра как с паролем: любой, у кого он есть, может пользоваться всеми опубликованными портами этого sandbox.
+
+<span id="url-format-and-lifetime" />
+
+## Формат URL и срок действия
+
+```text
+https://<sandbox-id>-<port>.sandbox.<region>.onlizard.com
+```
+
+URL работает, пока sandbox запущен, и перестаёт работать, когда sandbox останавливается. Платформа резервирует порт `49983`; опубликовать его нельзя. Sandbox из SDK или CLI по умолчанию живёт пять минут; если предпросмотр нужен дольше, передайте больший `timeoutMs` или `--timeout`. См. [лимиты срока жизни](/platform/limits#sandbox-lifetime).
+
+<span id="errors" />
+
+## Ошибки
+
+| Статус | Сообщение | Решение |
+|---|---|---|
+| 401 | `This sandbox port is private (missing or wrong access token)` | Откройте полный URL из `expose` или отправьте `X-Lizard-Access-Token`. |
+| 403 | `Port 3000 is not published for sandbox "…". Published: …` | Выполните `lizard sandbox expose` или `exposePort` для этого порта. |
+| 404 | `No running sandbox "…"` | Sandbox не запущен. Проверьте `lizard sandbox list`. |
+| 502 | `Sandbox is not listening on port 3000` | Запустите сервер и привяжите его к `0.0.0.0`, а не к `127.0.0.1`. |
+
+<span id="dev-servers" />
+
+## Dev-серверы
+
+Большинство dev-серверов слушают `127.0.0.1`, если не указать иное. Передайте хост и фиксированный порт:
+
+```bash
+npm run dev -- --host 0.0.0.0 --port 5173
+```
+
+Vite также проверяет заголовок `Host` и отвечает `Blocked request. This host (…) is not allowed.` на запросы к незнакомым хостам. Разрешите имена хостов sandbox в `vite.config.js`:
+
+```js
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  server: { allowedHosts: ['.onlizard.com'] },
+});
+```
+
+Точка в начале разрешает все поддомены. Затем опубликуйте порт `5173`.
+
+<span id="related" />
+
+## См. также
+
+- [Запуск Claude Code в sandbox](/sandboxes/guides/claude-code)
+- [Запуск OpenCode в sandbox](/sandboxes/guides/opencode), включая его веб-интерфейс
+- [Быстрый старт Sandboxes](/sandboxes/quickstart)
+- [Справочник SDK](/sandboxes/sdk-reference)
+- [`lizard sandbox`](/cli/sandbox)

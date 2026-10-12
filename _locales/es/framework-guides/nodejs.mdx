@@ -1,0 +1,189 @@
+---
+title: "Desplegar una app de Node.js (Express)"
+description: "Aloja una app de Node.js o Express en Lizard: lizardpack lee package.json, toma la versión de Node de .nvmrc o engines, ejecuta npm start en el puerto 3000 y define PORT."
+---
+
+<span id="deploy-a-nodejs-app-express" />
+
+# Desplegar una app de Node.js (Express)
+
+Para alojar una app de Node.js en Lizard (lizard.build), despliega una carpeta con un `package.json`. lizardpack elige el gestor de paquetes según tu archivo de bloqueo, instala las dependencias, ejecuta el script `build` si existe e inicia la app con el script `start` en el puerto `3000`. Usa Node.js 22 salvo que `.nvmrc` o `engines.node` indiquen otra versión major. Lizard pasa el puerto en `PORT`; escucha en él.
+
+**Estado de las pruebas:** el ejemplo de Express de abajo funcionó localmente con Express 5.3.0, y la ruta de base de datos, con pg 8.23.1 contra PostgreSQL 14. Revisamos su plan de compilación con lizardpack, el planificador de compilación que ejecuta Lizard. Todavía no lo hemos desplegado de principio a fin con esta guía.
+
+<span id="before-you-start" />
+
+## Antes de empezar
+
+- Node.js y npm en tu equipo para crear el archivo de bloqueo y probar localmente.
+- Lizard CLI, con la sesión iniciada mediante `lizard login`, en Pro o en la prueba de Pro de 7 días (se requiere tarjeta). Consulta los [precios](https://lizard.build/pricing).
+
+Las apps de Next.js, Nuxt, Astro, SvelteKit y Vite tienen sus propias guías: consulta las [guías de frameworks](/framework-guides).
+
+<span id="a-minimal-express-app" />
+
+## Una app mínima de Express
+
+`package.json`:
+
+```json
+{
+  "name": "express-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
+```
+
+`server.js`:
+
+```js
+import express from "express";
+
+const app = express();
+const port = Number(process.env.PORT) || 3000;
+
+app.get("/", (req, res) => {
+  res.send("Hello from Express on Lizard");
+});
+
+app.get("/healthz", (req, res) => {
+  res.json({ status: "ok" });
+});
+
+app.listen(port, "0.0.0.0", () => {
+  console.log(`listening on ${port}`);
+});
+```
+
+Ejecuta `npm install` para crear `package-lock.json`, haz commit de ambos archivos y añade `node_modules` y `.env` a `.gitignore`. Pruébala localmente:
+
+```bash
+npm start
+curl http://localhost:3000/healthz
+```
+
+<span id="what-lizardpack-does-with-a-nodejs-app" />
+
+## Qué hace lizardpack con una app de Node.js
+
+| Paso | Qué ocurre |
+|---|---|
+| Gestor de paquetes | `bun.lock` o `bun.lockb`: Bun. `pnpm-lock.yaml`: pnpm. `yarn.lock`: Yarn. `package-lock.json`: `npm ci`. Sin archivo de bloqueo: `npm install`. |
+| Versión de Node.js | `.nvmrc`, luego `.node-version`, luego `.tool-versions`, luego `engines.node`. Solo la versión major, sobre `node:<major>-slim`. Predeterminada: `22`. |
+| Compilación | El script `build`, si `package.json` lo tiene, en una etapa aparte que incluye tus devDependencies |
+| Inicio | El script `start`; si no, `node <main>`; si no, el primero de `server.js`, `index.js`, `app.js`, `main.js`, `dist/index.js` |
+| Ejecución | `NODE_ENV=production`, puerto `3000` |
+
+Sin un script `build`, la imagen define `NODE_ENV=production` antes de instalar los paquetes, así que las devDependencies quedan fuera. Un script de inicio que llama a `nodemon`, `tsx` o `ts-node` desde las devDependencies falla entonces. Con TypeScript, compila en `build` e inicia la salida:
+
+```json
+{
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  }
+}
+```
+
+Los archivos de versión y sus casos límite están en [versiones del entorno de ejecución](/deploy/runtime-versions). Deja vacíos los comandos de compilación e inicio del servicio: si defines cualquiera de los dos, Lizard escribe su propio Dockerfile sobre `node:22-alpine` e ignora tus archivos de versión. Consulta el [pipeline de compilación](/concepts/build-pipeline).
+
+<span id="deploy" />
+
+## Desplegar
+
+Desde la raíz de la app:
+
+```bash
+lizard init --name node-app
+lizard add --service web
+lizard up --service web --port 3000
+```
+
+`lizard up` sube la carpeta, la compila en Lizard e imprime la URL. Dentro de un repositorio git omite lo que aparece en `.gitignore`; fuera de git omite `node_modules`, pero sube los archivos `.env`. Consulta [desplegar desde código local](/deploy/upload).
+
+Para usar git push to deploy, sube el repositorio a GitHub y conéctalo con `lizard add -r your-org/your-app -n web`. Consulta [desplegar desde GitHub](/deploy/github).
+
+<span id="set-variables" />
+
+## Configurar variables
+
+```bash
+lizard secrets set SESSION_SECRET="$(openssl rand -hex 32)" --service web
+```
+
+Lee los valores con `process.env.SESSION_SECRET`. Un cambio de variable reinicia el servicio sin volver a compilar. Consulta [variables y secretos](/variables).
+
+<span id="add-managed-postgres" />
+
+## Añadir Managed Postgres
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service web
+npm install pg
+```
+
+Las comillas simples evitan que tu shell interprete `${{…}}`; Lizard resuelve la [referencia](/variables/references) al desplegar y la convierte en la dirección de la base de datos en la red privada del proyecto. Añade un pool y una ruta a `server.js`:
+
+```js
+import pg from "pg";
+
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+
+app.get("/db", async (req, res) => {
+  const { rows } = await pool.query("SELECT now() AS now");
+  res.json(rows[0]);
+});
+```
+
+Express 5 pasa una promesa rechazada de una ruta a su manejador de errores, así que una consulta fallida devuelve HTTP 500 en lugar de tumbar el proceso. Ejecuta las migraciones desde tu equipo con la URL pública de la base de datos:
+
+```bash
+lizard run --service postgres -- npm run migrate
+```
+
+Para una caché o una cola de trabajos, añade [Managed Redis](/addons/redis) del mismo modo: `lizard add redis` y después `REDIS_URL='${{redis.REDIS_PRIVATE_URL}}'`.
+
+<span id="check-that-it-works" />
+
+## Comprobar que funciona
+
+```bash
+lizard logs --build --service web
+lizard logs --service web --tail 100
+lizard ps
+```
+
+El log de ejecución muestra `listening on 3000`. Solicita `/healthz` y `/db` en la URL que imprimió `lizard up`.
+
+<span id="common-problems" />
+
+## Problemas comunes
+
+| Síntoma | Solución |
+|---|---|
+| `npm ci` falla porque el archivo de bloqueo no está sincronizado | Ejecuta `npm install` localmente y haz commit de `package-lock.json`. |
+| `nodemon: not found` o `tsx: not found` | Esas herramientas son devDependencies y no se instalan para el inicio. Añade un paso `build` o mueve la herramienta a `dependencies`. |
+| El despliegue nunca llega a estar saludable | Escucha en `process.env.PORT`. Un puerto fijo como `5000` no coincide con el puerto del servicio. Consulta [el servicio nunca llega a estar saludable](/deploy/troubleshooting/service-never-healthy). |
+| Versión de Node.js incorrecta | Pon la versión major en `.nvmrc`, por ejemplo `24`, y vuelve a desplegar. |
+| `Cannot use import statement outside a module` | Añade `"type": "module"` a `package.json` o usa `require`. |
+
+Un proceso de Node.js que no sirve HTTP, como un consumidor de cola o un [bot de Discord](/guides/discord-bot), se ejecuta como [worker en segundo plano](/deploy/workers).
+
+<span id="related" />
+
+## Relacionado
+
+- [Guías de frameworks](/framework-guides)
+- [Versiones del entorno de ejecución](/deploy/runtime-versions)
+- [Managed Postgres](/addons/postgres)
+- [Logs](/observability/logs)

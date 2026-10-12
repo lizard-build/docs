@@ -1,0 +1,124 @@
+---
+title: "Ejecutar OpenCode en un sandbox"
+description: "Ejecuta OpenCode en un sandbox de Lizard: conecta ChatGPT o una clave de API, envía prompts con lizard sandbox prompt o abre la interfaz web de OpenCode en una URL de vista previa privada."
+---
+
+<span id="run-opencode-in-a-sandbox" />
+
+# Ejecutar OpenCode en un sandbox
+
+Para ejecutar OpenCode en un sandbox de Lizard (lizard.build), conecta una credencial con `lizard agents` (una suscripción de ChatGPT o una clave de Anthropic, OpenAI, OpenRouter o LLM Gateway), crea un sandbox desde la plantilla `opencode` y envía prompts con `lizard sandbox prompt <id> --agent opencode "…"`. Si prefieres la interfaz web de OpenCode, inicia `opencode web --hostname 0.0.0.0 --port 4096` en el sandbox y abre el puerto con `lizard sandbox expose`.
+
+**Estado de las pruebas:** los comandos salen de Lizard CLI 4.0.42 y del ejecutor de agentes de la plataforma a fecha de 2026-10-12. Comprobamos los pasos de la interfaz web con el código fuente de OpenCode 1.18.34, que sirve su interfaz y su API desde un mismo puerto, y con el del router de sandboxes de Lizard, que guarda el token de acceso en una cookie y deja pasar los WebSockets. Todavía no hemos hecho ninguno de los dos caminos de principio a fin en un sandbox real para esta página.
+
+<span id="before-you-start" />
+
+## Antes de empezar
+
+- Lizard CLI, con la sesión iniciada mediante `lizard login`, y un proyecto: ejecuta `lizard init` en una carpeta o pasa `-p <project>` a los comandos de sandbox.
+- Lizard Pro o la prueba de Pro de 7 días (requiere tarjeta). Los sandboxes se facturan por segundo según su tamaño mientras están en marcha; consulta [límites](/platform/limits#sandbox-sizes) y [precios](https://lizard.build/pricing).
+
+<span id="connect-credentials" />
+
+## Conectar credenciales
+
+| Credencial | Comando |
+|---|---|
+| Suscripción de ChatGPT | `lizard agents login chatgpt --open` |
+| Clave de API de Anthropic | `lizard agents add anthropic` |
+| Clave de API de OpenAI | `lizard agents add openai` |
+| Clave de API de OpenRouter | `lizard agents add openrouter` |
+| Clave de API de LLM Gateway | `lizard agents add llmgateway` |
+
+OpenCode recibe todas las credenciales conectadas que acepta, y cada una abre los modelos de ese proveedor. No acepta un token de suscripción de Claude; para eso, usa [Claude Code](/sandboxes/guides/claude-code). Un inicio de sesión de ChatGPT llega a una ejecución como un token de acceso de corta duración, nunca como el token de actualización. Las claves de API llegan a una ejecución como variables de entorno, por ejemplo `ANTHROPIC_API_KEY`.
+
+OpenCode nombra los modelos como `provider/model`. Fija uno predeterminado o pasa `-m` en cada prompt:
+
+```bash
+lizard agents use opencode -m openrouter/anthropic/claude-sonnet-4.5
+lizard agents status
+```
+
+Si solo tienes conectada una clave de OpenRouter y no has elegido modelo, Lizard ejecuta `openrouter/openai/gpt-5.3-codex`.
+
+<span id="create-a-sandbox" />
+
+## Crear un sandbox
+
+```bash
+lizard sandbox create -t opencode --timeout 3600000
+```
+
+Guarda el ID que muestra en una variable: `SB=sb_abc123`. La duración predeterminada de la CLI es de cinco minutos; pasado ese tiempo, Lizard elimina el sandbox y sus archivos. `--timeout 3600000` le da una hora. La plantilla `opencode` incluye Node.js 22, una versión fijada de OpenCode, git, Python 3, ripgrep, curl, jq, unzip y Lizard CLI.
+
+Copia tu código igual que con Claude Code:
+
+```bash
+lizard sandbox exec $SB -- git clone https://github.com/your-org/your-app /workspace/app
+```
+
+Para un repositorio privado o local, consulta [poner tu código en el sandbox](/sandboxes/guides/claude-code#put-your-code-in-the-sandbox).
+
+<span id="send-a-prompt" />
+
+## Enviar un prompt
+
+```bash
+lizard sandbox prompt $SB --agent opencode --cwd /workspace/app "add input validation to the signup form"
+```
+
+Cada turno ejecuta `opencode run --auto`, que aprueba toda solicitud de permiso que no esté denegada de forma explícita: OpenCode edita archivos y ejecuta comandos sin preguntar. `--effort <level>` se convierte en el `--variant` de OpenCode. Continúa una conversación con `-c <conversation-id>` y vuelve a pasar `--agent opencode` y `--cwd` en cada prompt siguiente. Ctrl-C deja de mostrar la actividad; `lizard sandbox interrupt $SB` detiene al agente.
+
+Para recuperar los cambios como parche, consulta [recuperar los cambios](/sandboxes/guides/claude-code#get-the-changes-back).
+
+<span id="open-the-opencode-web-ui" />
+
+## Abrir la interfaz web de OpenCode
+
+`opencode web` sirve la interfaz de navegador de OpenCode y su API desde un mismo puerto. Ejecútalo en el sandbox y abre ese puerto con una [URL de vista previa](/sandboxes/preview-urls).
+
+Las credenciales de `lizard agents` solo llegan a las ejecuciones de `lizard sandbox prompt`, así que este servidor necesita su propia clave. Cópiala como archivo para que no aparezca en una línea de comandos:
+
+```bash
+printf 'export ANTHROPIC_API_KEY=%s\n' "$ANTHROPIC_API_KEY" > opencode.env
+lizard sandbox files put $SB opencode.env /root/opencode.env
+rm opencode.env
+```
+
+Inicia el servidor y abre el puerto:
+
+```bash
+lizard sandbox exec $SB -- sh -c '. /root/opencode.env && cd /workspace/app && nohup opencode web --hostname 0.0.0.0 --port 4096 >/tmp/opencode.log 2>&1 </dev/null & echo $! > /tmp/opencode.pid'
+lizard sandbox expose $SB 4096
+```
+
+Abre la URL que muestra `expose`. Lleva `?lizard_token=`; Lizard pasa el token a una cookie para ese host y redirige a la misma página sin él, así que las solicitudes de la propia interfaz, su flujo de eventos y los WebSockets del terminal pasan sin problema.
+
+- Necesitas `--hostname 0.0.0.0`. OpenCode escucha en `127.0.0.1` por defecto, y entonces la URL de vista previa responde `Sandbox is not listening on port 4096`.
+- Indica un `--port` fijo. Sin él, OpenCode elige al azar un puerto libre.
+- La URL funciona como una contraseña: quien la tenga puede ejecutar comandos en el sandbox a través de OpenCode. Para pedir además una contraseña, añade `export OPENCODE_SERVER_PASSWORD=…` a `opencode.env`; el nombre de usuario es `opencode`.
+- Lee el log del servidor con `lizard sandbox exec $SB -- tail -n 50 /tmp/opencode.log`. Detén el servidor con `lizard sandbox exec $SB -- sh -c 'kill $(cat /tmp/opencode.pid)'`.
+- La interfaz se detiene cuando se detiene el sandbox. Amplía su duración con `lizard sandbox timeout $SB 3600000`.
+
+<span id="common-problems" />
+
+## Problemas comunes
+
+| Mensaje o síntoma | Solución |
+|---|---|
+| `OpenCode has no credential. Connect one of: …` | Conecta una de las credenciales de arriba con `lizard agents`. |
+| `Your ChatGPT login expired` | Vuelve a ejecutar `lizard agents login chatgpt`. |
+| La salida menciona Codex | El prompt salió sin `--agent opencode`. |
+| La URL de vista previa responde 401 | Abre la URL completa que mostró `expose`, con su `lizard_token`. Consulta [URLs de vista previa](/sandboxes/preview-urls). |
+| La URL de vista previa responde 502 | El servidor no está en marcha o escucha en `127.0.0.1`. Revisa `/tmp/opencode.log`. |
+| La interfaz web carga, pero todos los modelos fallan | El servidor no tiene clave de proveedor. Corrige `/root/opencode.env`, detén el servidor y vuelve a iniciarlo. |
+
+<span id="related" />
+
+## Ver también
+
+- [Ejecutar Claude Code en un sandbox](/sandboxes/guides/claude-code)
+- [URLs de vista previa](/sandboxes/preview-urls)
+- [`lizard agents`](/cli/agents)
+- [`lizard sandbox`](/cli/sandbox#coding-agents)
+- [Sandboxes](/sandboxes)

@@ -1,0 +1,179 @@
+---
+title: "Eine Go-App bereitstellen"
+description: "Hoste eine Go-App auf Lizard: lizardpack findet go.mod, baut mit der Go-Version aus der go-Zeile ein statisches Binary und führt es mit gesetztem PORT auf Port 8080 aus."
+---
+
+<span id="deploy-a-go-app" />
+
+# Eine Go-App bereitstellen
+
+Um eine Go-App auf Lizard (lizard.build) bereitzustellen, lade ein Modul mit einer `go.mod`-Datei hoch oder pushe es. lizardpack baut es mit der Go-Version aus der `go`-Zeile, kompiliert ein statisches Binary (`CGO_ENABLED=0`) und führt es unter Alpine Linux aus. Der Service-Port ist `8080`, und Lizard übergibt ihn deinem Prozess in `PORT`. Lies also `PORT` aus und lausche auf allen Interfaces.
+
+**Teststatus:** Die Beispiel-App unten wird lokal mit Go 1.24 gebaut und läuft, und ihren Build-Plan haben wir mit lizardpack geprüft, dem Build-Planer, den Lizard ausführt. Mit dieser Anleitung haben wir sie noch nicht vollständig bereitgestellt.
+
+<span id="before-you-start" />
+
+## Bevor du beginnst
+
+- Ein Go-Modul mit `go.mod` im Verzeichnis, das du bereitstellst, und `go.sum`, falls es Abhängigkeiten hat.
+- Lizard CLI, angemeldet mit `lizard login`, auf Pro oder in der 7-tägigen Pro-Testphase (Karte erforderlich). Siehe [Preise](https://lizard.build/pricing).
+
+<span id="a-minimal-app" />
+
+## Eine minimale App
+
+`go.mod`:
+
+```text
+module example.com/hello
+
+go 1.24
+```
+
+`main.go`:
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+)
+
+func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "Hello from Go on Lizard")
+	})
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "ok")
+	})
+
+	log.Printf("listening on :%s", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
+}
+```
+
+`":"+port` lauscht auf allen Interfaces. Eine Adresse wie `127.0.0.1:8080` nimmt nur Verbindungen aus dem Container selbst an, und das Deployment wird nie healthy.
+
+Lokal prüfen:
+
+```bash
+go run .
+curl http://localhost:8080/healthz
+```
+
+<span id="what-lizardpack-builds" />
+
+## Was lizardpack baut
+
+| Schritt | Was passiert |
+|---|---|
+| Erkennung | `go.mod`, `go.work` oder eine beliebige `.go`-Datei. lizardpack prüft Go vor Node.js und Python. |
+| Go-Version | Die `go`-Zeile in `go.mod`, nur Haupt- und Nebenversion: `go 1.24.3` baut auf `golang:1.24-alpine`. Ohne `go.mod` Go 1.24. |
+| Build | `go mod download`, danach `CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w' -o /app/server <package>` |
+| Main-Paket | Das Stammverzeichnis; `./cmd`, wenn `cmd/main.go` existiert; sonst das alphabetisch erste `cmd/<name>/main.go` |
+| Laufzeit | `alpine:3.19` mit `ca-certificates` und `tzdata`. lizardpack kopiert das ganze Quellverzeichnis neben das Binary nach `/app`, damit relative Pfade wie `templates/` und `static/` weiter funktionieren. |
+| Start und Port | `/app/server` auf Port `8080` |
+
+Das generierte Dockerfile:
+
+```dockerfile
+FROM golang:1.24-alpine AS build
+WORKDIR /app
+COPY go.mod go.sum* ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w' -o /app/server .
+
+FROM alpine:3.19
+RUN apk add --no-cache ca-certificates tzdata
+WORKDIR /app
+COPY --from=build /app /app
+EXPOSE 8080
+CMD ["/app/server"]
+```
+
+Lass Build- und Startbefehl des Service leer, um dieses Image zu bekommen. Ist einer davon gesetzt, schreibt Lizard aus diesen Befehlen ein anderes Dockerfile und ignoriert die `go`-Zeile: Ein Befehl `go build …` baut dann auf Go 1.24. Wenn du jeden Schritt selbst steuern willst, committe ein eigenes `Dockerfile`; siehe [Einen Docker-Container aus einem Dockerfile deployen](/deploy/dockerfile).
+
+<span id="deploy" />
+
+## Bereitstellen
+
+Im Stammverzeichnis des Moduls:
+
+```bash
+lizard init --name go-app
+lizard add --service api
+lizard up --service api --port 8080
+```
+
+`lizard up` lädt das Verzeichnis hoch, baut es auf den Build-Maschinen von Lizard und gibt die URL aus. Auf dem Rechner, auf dem du den Befehl ausführst, brauchst du weder Docker noch Go. Für git push to deploy [verbinde ein GitHub-Repository](/deploy/github) mit `lizard add -r your-org/your-app -n api` und prüfe dann, ob `lizard port --service api` den Wert `8080` ausgibt.
+
+<span id="frameworks" />
+
+## Frameworks
+
+- **net/http, chi, gorilla/mux:** Übergib `":" + os.Getenv("PORT")` an `http.ListenAndServe`, wie oben.
+- **Gin:** `r.Run()` ohne Adresse liest `PORT` und fällt auf `:8080` zurück. Setze `GIN_MODE=release` auf dem Service.
+- **Echo, Fiber:** Übergib die Adresse selbst: `e.Start(":" + os.Getenv("PORT"))` oder `app.Listen(":" + os.Getenv("PORT"))`.
+
+<span id="variables-and-databases" />
+
+## Variablen und Datenbanken
+
+Setze die Konfiguration auf dem Service und lies sie mit `os.Getenv`:
+
+```bash
+lizard secrets set GIN_MODE=release API_KEY=change-me --service api
+```
+
+Für eine Datenbank füge [Managed Postgres](/addons/postgres) hinzu und übergib seine private URL mit einer [Referenz](/variables/references):
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
+```
+
+Öffne die Verbindung dann mit deinem Treiber, zum Beispiel `pgxpool.New(ctx, os.Getenv("DATABASE_URL"))`. Eine Änderung an einer Variable startet den Service ohne neuen Build neu.
+
+<span id="check-that-it-works" />
+
+## Prüfen, ob es funktioniert
+
+```bash
+lizard logs --build --service api
+lizard logs --service api --tail 100
+lizard ps
+```
+
+Rufe `/healthz` unter der URL auf, die `lizard up` ausgegeben hat, und danach eine Route, die echte Arbeit erledigt. Das Build-Log zeigt das `golang:`-Image, das der Build verwendet hat.
+
+<span id="common-problems" />
+
+## Häufige Probleme
+
+| Symptom | Lösung |
+|---|---|
+| `no Go files in /app` | Das Paket `main` liegt weder im Stammverzeichnis noch unter `cmd/`. Verschiebe es oder füge ein Dockerfile hinzu. |
+| Das falsche Binary startet | Bei mehreren `cmd/<name>/main.go` baut lizardpack den alphabetisch ersten Namen. Füge ein Dockerfile hinzu, das das gewünschte Binary baut. |
+| SQLite schlägt mit `CGO_ENABLED=0` fehl | Der Build schaltet cgo ab, daher kann `mattn/go-sqlite3` nicht funktionieren. Nutze einen reinen Go-Treiber oder besser [Managed Postgres](/addons/postgres): Dateien im Container gehen bei jedem Deployment verloren. |
+| Das Deployment wird nie healthy | Der Prozess muss auf allen Interfaces auf `PORT` (oder `8080`) lauschen. Siehe [Service wird nie healthy](/deploy/troubleshooting/service-never-healthy). |
+| Du brauchst eine neuere Go-Version | Ändere die `go`-Zeile, zum Beispiel mit `go mod edit -go=1.25`, und stelle erneut bereit. Siehe [Laufzeitversionen](/deploy/runtime-versions). |
+
+Ein Go-Prozess, der kein HTTP ausliefert, etwa ein Queue-Consumer, läuft als [Hintergrund-Worker](/deploy/workers) mit `--port 0`.
+
+<span id="related" />
+
+## Siehe auch
+
+- [Framework-Anleitungen](/framework-guides)
+- [Build-Pipeline](/concepts/build-pipeline)
+- [Variablen und Secrets](/variables)
+- [Netzwerk und Domains](/networking)

@@ -1,5 +1,5 @@
 ---
-description: "Next.js、React、Vue、Astro、Nuxt、SvelteKit、FastAPI、Django、Docusaurus、VitePress、Hugo を Lizard にデプロイします。ビルドコマンド、アダプター、ポート、確認項目を確認できます。"
+description: "Next.js、Express、FastAPI、Django、Streamlit、Go、Rails、Astro、Nuxt、SvelteKit、静的サイトジェネレーターを Lizard にデプロイします。ビルドコマンド、ポート、確認項目を説明します。"
 ---
 
 <span id="framework-guides" />
@@ -12,7 +12,7 @@ description: "Next.js、React、Vue、Astro、Nuxt、SvelteKit、FastAPI、Djang
 
 ## フレームワークを選ぶ
 
-これらの設定は、リンク先のガイドにある標準的なプロジェクト構成を説明しています。コマンドは JavaScript プロジェクトでは npm を前提としています。カスタム出力パス、アダプター、ビルドのオーバーライドによって結果が変わる場合があります。
+これらの設定は、リンク先のガイドにある標準的なプロジェクト構成を説明しています。コマンドは JavaScript プロジェクトでは npm を前提としています。カスタム出力パス、アダプター、ビルドのオーバーライドによって結果が変わる場合があります。独自のイメージを使う場合は、[Dockerfile から Docker コンテナをデプロイする](/deploy/dockerfile)を参照してください。
 
 | フレームワーク | ビルド | ランタイムまたは出力 | サービスポート |
 |---|---|---|---|
@@ -23,8 +23,12 @@ description: "Next.js、React、Vue、Astro、Nuxt、SvelteKit、FastAPI、Djang
 | [Astro](/framework-guides/astro) | `npm run build` | `dist/`、または standalone Node アダプター | `80` static; `3000` server |
 | [Nuxt](/framework-guides/nuxt) | `npm run build` | `node .output/server/index.mjs` | `3000` |
 | [SvelteKit](/framework-guides/sveltekit) | `npm run build` | adapter-node を使った `node build` | `3000` |
+| [Node.js (Express)](/framework-guides/nodejs) | `build` スクリプト（ある場合） | `start` スクリプト | `3000` |
 | [FastAPI](/framework-guides/fastapi) | Python 依存関係をインストール | `uvicorn main:app --host 0.0.0.0 --port 8000` | `8000` |
 | [Django](/framework-guides/django) | Python 依存関係をインストール | 使用する WSGI モジュールで Gunicorn | `8000` |
+| [Streamlit](/framework-guides/streamlit) | Python 依存関係をインストール | Procfile から `streamlit run app.py` | `8501` |
+| [Go](/framework-guides/go) | `go build` で静的バイナリを生成 | `/app/server` | `8080` |
+| [Ruby on Rails](/framework-guides/rails) | Rails が生成する Dockerfile | Thruster と Puma、または Puma のみ | Rails 8 では `8080`、Rails 7.1 と 7.2 では `3000` |
 | [Docusaurus](/framework-guides/docusaurus) | `npm run build` | `build/` | `80` |
 | [VitePress](/framework-guides/vitepress) | `npm run docs:build` | このガイドの `docs/.vitepress/dist/` | `80` |
 | [Hugo](/framework-guides/hugo) | `hugo --minify` | `public/` | `80` |
@@ -33,7 +37,7 @@ description: "Next.js、React、Vue、Astro、Nuxt、SvelteKit、FastAPI、Djang
 
 ## プロジェクトを準備する
 
-コマンドはアプリケーションディレクトリから実行します。ソースファイル、設定、package lockfile をコミットしてください。アップロードには `.env`、ローカル依存関係、ローカルのビルド出力を含めないでください。Node プロジェクトでは `.nvmrc` で Node のメジャーバージョンを選択できます。現在のデフォルトは `22` です。これは正確なパッチリリースではなく、メジャーバージョンを選択します。
+コマンドはアプリケーションディレクトリから実行します。ソースファイル、設定、package lockfile をコミットしてください。アップロードには `.env`、ローカル依存関係、ローカルのビルド出力を含めないでください。Node プロジェクトでは `.nvmrc` で Node のメジャーバージョンを選択できます。現在のデフォルトは `22` です。これは正確なパッチリリースではなく、メジャーバージョンを選択します。Node.js、Python、Go、Ruby のバージョンファイルは [ランタイムバージョン](/deploy/runtime-versions) にまとめています。
 
 Lizard CLI をインストールし、一度サインインします:
 

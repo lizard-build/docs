@@ -1,0 +1,155 @@
+---
+title: "Развёртывание Docker-контейнера из Dockerfile"
+description: "Хостинг Docker-контейнера на Lizard: закоммитьте Dockerfile, выполните lizard up или подключите GitHub; Lizard соберёт образ, возьмёт порт из EXPOSE и отдаст сервис по HTTPS."
+---
+
+<span id="deploy-a-docker-container-from-a-dockerfile" />
+
+# Развёртывание Docker-контейнера из Dockerfile
+
+Lizard (lizard.build) запускает Docker-контейнеры, которые собирает из вашего `Dockerfile`. Положите файл в корень проекта и выполните `lizard up` или подключите репозиторий GitHub: Lizard соберёт образ на своих сборочных машинах, так что локальный Docker не нужен. Lizard берёт порт из `EXPOSE` или `--port`, передаёт его в контейнер в переменной `PORT` и отдаёт контейнер по HTTPS на домене `onlizard.com`. Готовые образы из registry Lizard не скачивает; чтобы запустить публичный образ, напишите Dockerfile из одной строки `FROM` с этим образом.
+
+**Статус тестов:** страница описывает сборщик, деплойер и CLI 4.0.42 Lizard по состоянию на 2026-10-12 и сверена с их исходным кодом. Нового деплоя для неё мы не запускали. [Руководство по Umami](/guides/umami) так же развёртывает Dockerfile из одной строки `FROM` и описывает свой тест.
+
+<span id="before-you-start" />
+
+## Перед началом
+
+- `Dockerfile` с приложением, которое слушает `0.0.0.0`. Сервер, привязанный к `127.0.0.1`, не принимает подключений извне контейнера.
+- Lizard CLI, в который вы вошли через `lizard login`, на тарифе Pro или в 7-дневном пробном периоде Pro (нужна карта). См. [цены](https://lizard.build/pricing).
+
+Если Dockerfile нет, сначала попробуйте деплой без него: lizardpack распознаёт Go, Node.js, Python, Ruby, PHP, Java, Rust и статические сайты. См. [конвейер сборки](/concepts/build-pipeline).
+
+<span id="an-example-dockerfile" />
+
+## Пример Dockerfile
+
+Для сервера на Node.js, например из руководства [Развёртывание приложения Node.js](/framework-guides/nodejs):
+
+```dockerfile
+FROM node:22-slim
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY . .
+ENV NODE_ENV=production
+EXPOSE 3000
+CMD ["node", "server.js"]
+```
+
+Добавьте `.dockerignore`, чтобы локальные файлы не попали в образ:
+
+```text
+node_modules
+.git
+.env*
+```
+
+<span id="deploy-with-lizard-up" />
+
+## Деплой через lizard up
+
+```bash
+lizard init --name my-container
+lizard add --service web
+lizard up --service web
+```
+
+`lizard up` читает первую строку `EXPOSE` в локальном `Dockerfile`, выводит `Detected port 3000 from Dockerfile` и назначает этот порт портом сервиса. Чтобы выбрать другой, передайте `--port <number>`. Загрузка всегда использует корневой `Dockerfile` как есть. Что входит в загрузку, см. в разделе [развёртывание из локального кода](/deploy/upload).
+
+<span id="deploy-from-github" />
+
+## Деплой из GitHub
+
+```bash
+lizard add -r your-org/your-app -n web
+```
+
+Каждый push в отслеживаемую ветку пересобирает образ. Lizard берёт корневой `Dockerfile`, если только тот не копирует результат, собранный где-то ещё (`COPY dist …` без шага `RUN` с `npm`, `pip`, `go build` и подобным); тогда lizardpack пишет замену. Чтобы всегда использовался ваш файл, задайте `dockerfilePath`:
+
+```bash
+lizard service set web --set dockerfilePath=Dockerfile
+```
+
+См. [изменения в Dockerfile не применяются](/deploy/troubleshooting/incomplete-dockerfile) и [развёртывание из GitHub](/deploy/github).
+
+<span id="a-dockerfile-in-a-subdirectory-or-with-another-name" />
+
+## Dockerfile в подкаталоге или с другим именем
+
+`dockerfilePath` задаётся относительно каталога сборки, который определяет `rootDirectory`. Для сервиса в монорепозитории:
+
+```bash
+lizard service set api --set rootDirectory=apps/api --set dockerfilePath=Dockerfile.prod
+```
+
+Оставьте `buildCommand` и `startCommand` пустыми у сервиса с Dockerfile. Без `dockerfilePath` любая из этих команд заставляет Lizard написать собственный Dockerfile из команд вместо вашего. Если `dockerfilePath` задан, `startCommand` всё равно заменяет `ENTRYPOINT` и `CMD` образа: Lizard запускает `sh -c "<start command>"`.
+
+<span id="which-port-lizard-routes-to" />
+
+## На какой порт Lizard направляет трафик
+
+Lizard выбирает порт сервиса в таком порядке:
+
+1. Порт, который вы задали: `lizard up --port`, `lizard port`, панель управления или строка `EXPOSE`, которую прочитал `lizard up`.
+2. `0` — это [режим воркера](/deploy/workers): ни порта, ни маршрута.
+3. Переменная `PORT`, которую вы задали у сервиса.
+4. Первый порт, который открывает собранный образ, включая порты из базового образа. Порты сортируются как текст, поэтому `3000` идёт раньше `80`.
+5. `3000`.
+
+Внутри контейнера в `PORT` лежит выбранный порт. Читайте его или слушайте тот же фиксированный порт. Чтобы позже сменить порт, выполните `lizard port 8080 --service web`, затем `lizard redeploy --service web`. См. [сеть](/networking).
+
+<span id="what-reaches-the-build" />
+
+## Что попадает в сборку
+
+- **Аргументы сборки:** только `COMMIT_SHA`. Чтобы его использовать, объявите `ARG COMMIT_SHA`. Остальные строки `ARG` сохраняют значение по умолчанию или остаются пустыми.
+- **Переменные:** переменные и секреты сервиса не попадают в сборку по Dockerfile; единственное исключение — значения `VITE_*` и `NEXT_PUBLIC_*`, описанное в разделе [переменные во время сборки](/concepts/build-pipeline#build-time-variables). Публичные значения впишите в Dockerfile или закоммитьте; секреты оставьте для времени выполнения.
+- **Базовые образы:** у сборщика нет входа в ваши registry, поэтому каждый образ во `FROM` должен быть публичным.
+- **Что меняет Lizard:** перед сборкой Lizard добавляет `ARG COMMIT_SHA` перед `COPY` с исходниками и добавляет кэш-монтирования BuildKit к шагам установки `npm`, `yarn`, `pnpm` и `bun`. Кэш-монтирования, которые вы написали сами, продолжают работать в пределах этого сервиса; опция `--mount`, записанная в кавычках, ломает сборку.
+
+Следите за сборкой командой `lizard logs --build --service web`.
+
+<span id="at-run-time" />
+
+## Во время выполнения
+
+- **Проверка здоровья:** Lizard игнорирует `HEALTHCHECK` и проверяет, что контейнер принимает TCP-подключения на порту сервиса. См. [сервис никогда не становится healthy](/deploy/troubleshooting/service-never-healthy).
+- **Пользователь:** действует `USER` из образа. У пользователя без root может не быть прав открыть порт ниже 1024, поэтому для таких образов берите `8080`, а не `80`.
+- **Переменные:** контейнер получает переменные сервиса, `PORT` и платформенные переменные `LIZARD_*`. См. [переменные и секреты](/variables).
+- **Файлы:** всё, что контейнер записал, пропадает при следующем деплое. Для данных используйте [Managed Postgres](/addons/postgres), [Managed Object Storage](/addons/storage) или другой сервис; см. [хранилище и восстановление](/platform/storage-and-recovery).
+
+<span id="run-a-public-image" />
+
+## Запуск публичного образа
+
+Lizard собирает каждый сервис из исходников, поэтому оберните публичный образ в Dockerfile:
+
+```dockerfile
+FROM ghcr.io/umami-software/umami:3.3.1
+EXPOSE 3000
+```
+
+Закрепите тег версии вместо `latest`, чтобы повторный деплой незаметно не сменил версию приложения. Так сделано в руководствах [Запуск Umami](/guides/umami) и [Запуск Flowise](/guides/flowise), где образ работает вместе с Managed Postgres.
+
+<span id="common-problems" />
+
+## Частые проблемы
+
+| Симптом | Решение |
+|---|---|
+| Правки в Dockerfile не применяются | На GitHub Lizard может счесть файл неполным; задайте `dockerfilePath`. Также проверьте, что у сервиса нет `buildCommand` или `startCommand`. |
+| Деплой так и не становится healthy | Приложение слушает другой порт или `127.0.0.1`. Сравните `lizard port --service web` с логом. |
+| `pull access denied` для базового образа | Образ приватный или имя указано неверно. Используйте публичный образ. |
+| Значение `ARG` пустое | Lizard не передаёт аргументы сборки, кроме `COMMIT_SHA`. Задайте значение по умолчанию в Dockerfile. |
+| Сервис работает, но ничего не отдаёт | Возможно, он в режиме воркера: `lizard port --service web` выводит `worker mode`. |
+
+<span id="related" />
+
+## См. также
+
+- [Конвейер сборки](/concepts/build-pipeline)
+- [Версии рантайма](/deploy/runtime-versions)
+- [Развёртывание приложения Rails](/framework-guides/rails)
+- [Фоновые воркеры](/deploy/workers)
+- [`lizard up`](/cli/up)
