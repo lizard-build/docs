@@ -5,7 +5,7 @@ description: "Add a Redis 8 instance on Lizard for caching, queues, rate limitin
 
 # Managed Redis
 
-Managed Redis on Lizard (lizard.build) is a Redis server for caching, queues, rate limiting and pub/sub. New instances run Redis 8 by default. Add one with `lizard add redis`; your services read `REDIS_PRIVATE_URL` or `REDIS_URL` through a reference such as `${{redis.REDIS_PRIVATE_URL}}`. It has no eviction policy and no append-only file, so keep only data you can rebuild in it. For an overview and prices, see the [Managed Redis page](https://lizard.build/redis).
+Managed Redis on Lizard is a Redis server for caching, queues, rate limiting and pub/sub. New instances run Redis 8 by default. Add one with `lizard add redis`; your services read `REDIS_PRIVATE_URL` or `REDIS_URL` through a reference such as `${{redis.REDIS_PRIVATE_URL}}`. It has no eviction policy and no append-only file, so keep only data you can rebuild in it. For an overview and prices, see the [Managed Redis page](https://lizard.build/redis).
 
 ## Provision
 
@@ -35,13 +35,13 @@ The reference resolves at deploy time; consumers pick up the addon's current val
 
 ## Does Managed Redis keep data?
 
-Not every write. Managed Redis has no eviction policy and no append-only file. If it runs out of memory, the instance restarts and recent writes can be lost. Use it for data you can rebuild, and keep data you cannot lose in [Managed Postgres](/addons/postgres).
+Managed Redis can lose recent writes. It has no eviction policy and no append-only file. If it runs out of memory, the instance restarts and may lose those writes. Use it for data you can rebuild, and keep data you cannot lose in [Managed Postgres](/addons/postgres).
 
 ## Common uses
 
-- **Cache** — store computed results keyed by request.
-- **Queue / worker** — pair Redis with a [worker-mode service](/deploy/workers) that consumes jobs. [Run a queue consumer](/deploy/workers#run-a-queue-consumer) walks through the redis-worker example.
-- **Rate limiting / sessions** — fast shared state across [replicas](/deploy/scaling).
+- **Cache**: store computed results keyed by request.
+- **Queue / worker**: pair Redis with a [worker-mode service](/deploy/workers) that consumes jobs. [Run a queue consumer](/deploy/workers#run-a-queue-consumer) walks through the redis-worker example.
+- **Rate limiting / sessions**: fast shared state across [replicas](/deploy/scaling).
 
 ```bash
 # A worker that drains a Redis queue
@@ -67,7 +67,7 @@ lizard scale --service redis --storage 4096
 
 ## See also
 
-- [Managed Addons](/addons) — naming, references, and the dashboard browsers.
-- [Background Workers](/deploy/workers) — pairing Redis with a queue-consuming worker.
+- [Managed Addons](/addons): naming, references, and the dashboard browsers.
+- [Background Workers](/deploy/workers): pairing Redis with a queue-consuming worker.
 
 `lizard run --service redis` starts the command on your machine with the addon's public connection values. Install `redis-cli` locally.

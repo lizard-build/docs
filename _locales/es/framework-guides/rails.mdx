@@ -114,7 +114,7 @@ Rails 7.1 y posteriores responden a `/up` con HTTP 200 en cuanto la app arranca.
 
 lizardpack compila una app de Ruby cuando encuentra un `Gemfile`:
 
-- Versión de Ruby: `.ruby-version`; si no, la línea `ruby` del `Gemfile`; si no, `3.4`. Solo cuentan major y minor: `3.4.1` se compila sobre `ruby:3.4-slim`.
+- Versión de Ruby: `.ruby-version`; si no, la línea `ruby` del `Gemfile`; si no, `3.4`. Solo cuentan las versiones principal y secundaria: `3.4.1` se compila sobre `ruby:3.4-slim`.
 - Instala `build-essential` y `libpq-dev` y luego ejecuta `bundle install`.
 - Inicio: la línea `web:` del Procfile; si no, `bundle exec rails server -b 0.0.0.0` cuando existen `config.ru` y `Rakefile`. Puerto `3000`.
 
@@ -130,7 +130,7 @@ Esta imagen no define `RAILS_ENV`, no precompila los assets ni prepara la base d
 | `Missing secret_key_base` o las credenciales no se descifran | Define `RAILS_MASTER_KEY` a partir de `config/master.key` en el servicio `web`. |
 | La conexión de caché, cola o cable va a un socket local como `/var/run/postgresql` | Define `CACHE_DATABASE_URL`, `QUEUE_DATABASE_URL` y `CABLE_DATABASE_URL`. |
 | Los logs muestran `bind: permission denied` para el puerto 80 | Define `HTTP_PORT=8080` y pon el puerto del servicio en `8080`. |
-| El despliegue nunca llega a estar saludable | Comprueba que el puerto del servicio coincide con la tabla de arriba: `lizard port --service web`. Consulta [el servicio nunca llega a estar saludable](/deploy/troubleshooting/service-never-healthy). |
+| El despliegue nunca alcanza el estado healthy | Comprueba que el puerto del servicio coincide con la tabla de arriba: `lizard port --service web`. Consulta [el servicio nunca alcanza el estado healthy](/deploy/troubleshooting/service-never-healthy). |
 | Los trabajos se quedan en cola | Define `SOLID_QUEUE_IN_PUMA=true`. Para ejecutar los trabajos fuera del proceso web, añade un segundo servicio en [modo worker](/deploy/workers) con `dockerfilePath=Dockerfile` y `startCommand=./bin/jobs`. |
 | Los archivos subidos desaparecen tras un despliegue | El servicio `local` de Active Storage escribe dentro del contenedor. Usa [Managed Object Storage](/addons/storage), que es compatible con S3, con el servicio `amazon`. |
 

@@ -1,5 +1,5 @@
 ---
-description: "lizard run は、サービスのプロジェクトシークレットとサービスシークレットを注入した状態で、あなたのマシン上でコマンドを実行します。何が注入されるか、アプリが参照する内容をどう確認するかも説明します。"
+description: "lizard run は、サービスのプロジェクトシークレットとサービスシークレットを注入した状態で、手元のマシンでコマンドを実行します。何が注入されるか、アプリが参照する内容をどう確認するかも説明します。"
 ---
 
 <span id="lizard-run" />
@@ -12,7 +12,7 @@ description: "lizard run は、サービスのプロジェクトシークレッ�
 
 ## `run` が注入するもの
 
-`lizard run` はプロジェクトのシークレットを読み込み、その上にサービスのシークレットを重ねて、それらを環境に入れた状態であなたのマシン上でコマンドを実行します。
+`lizard run` はプロジェクトのシークレットを読み込み、その上にサービスのシークレットを重ねて、それらを環境に入れた状態で手元のマシンでコマンドを実行します。
 
 - アプリサービスの場合は、保存されている値を注入します。`${{postgres.DATABASE_URL}}` のような参照は、解決された値ではなく、その文字列のまま渡されます。`PORT` や `LIZARD_*` などのプラットフォーム変数は注入されません。
 - アドオン（`--service postgres`、`--service redis`、`--service s3`）の場合は、`DATABASE_URL` などのアドオンの実際の接続値を注入します。
@@ -77,7 +77,7 @@ lizard run --service api -- node scripts/report.js
 
 ## 関連項目
 
-- [lizard ssh](/cli/ssh) — サービスへのシェルアクセスが無効になっている理由と、その代わりに使うもの
-- [lizard secrets](/cli/secrets) — `run` が注入する値の一覧表示と設定
-- [変数](/variables) — プロジェクト変数とサービス変数の定義方法および参照方法
-- [Pythonアプリホスティング](https://lizard.build/blog/python-app-hosting) — デプロイ済みデータベースに対して `manage.py` やその他のフレームワークツールを実行する方法
+- [lizard ssh](/cli/ssh)：サービスへのシェルアクセスが無効になっている理由と、その代わりに使うもの
+- [lizard secrets](/cli/secrets)：`run` が注入する値の一覧表示と設定
+- [変数](/variables)：プロジェクト変数とサービス変数の定義方法および参照方法
+- [Pythonアプリホスティング](https://lizard.build/blog/python-app-hosting)：デプロイ済みデータベースに対して `manage.py` やその他のフレームワークツールを実行する方法

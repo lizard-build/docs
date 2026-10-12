@@ -5,7 +5,7 @@ description: "Deploy a Streamlit app on Lizard: a Procfile runs streamlit run ap
 
 # Deploy a Streamlit app
 
-Lizard (lizard.build) runs a Streamlit app with the command you use locally, `streamlit run app.py`. Put it in a Procfile `web:` line with `--server.address 0.0.0.0` and a fixed port such as `8501`, then deploy with `lizard up --port 8501`. Without the Procfile, lizardpack starts `python app.py`, which prints a warning and exits instead of serving the app.
+Lizard runs a Streamlit app with the command you use locally, `streamlit run app.py`. Put it in a Procfile `web:` line with `--server.address 0.0.0.0` and a fixed port such as `8501`, then deploy with `lizard up --port 8501`. Without the Procfile, lizardpack starts `python app.py`, which prints a warning and exits instead of serving the app.
 
 **Test status:** the sample below ran locally with Streamlit 1.65.0, and the database version with psycopg 3.3.5 against PostgreSQL 14. We checked its build plan with lizardpack, the build planner Lizard runs. We have not yet deployed it end to end. The browser keeps a WebSocket open to Streamlit, and we have not yet checked that connection through Lizard's routing.
 
@@ -64,7 +64,7 @@ Streamlit opens on `http://localhost:8501`. Add `.venv/`, `.env` and `.streamlit
 | Start | The Procfile `web:` line |
 | Runtime | `PYTHONUNBUFFERED=1`, so `print` output reaches the logs at once |
 
-The service port comes from `--port` and must match `--server.port` in the Procfile. See [runtime versions](/deploy/runtime-versions) for the version rules and their edge cases.
+Set the service port with `--port` to match `--server.port` in the Procfile. See [runtime versions](/deploy/runtime-versions) for the version rules and their edge cases.
 
 ## Deploy
 

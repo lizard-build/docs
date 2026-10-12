@@ -100,7 +100,7 @@ lizard secrets set DISCORD_TOKEN="$DISCORD_TOKEN" --service bot
 lizard up --service bot --port 0
 ```
 
-- `lizard add --service bot` legt einen leeren Service an; `lizard up --service bot` füllt ihn anschließend.
+- `lizard add --service bot` legt einen leeren Service an; `lizard up --service bot` lädt anschließend den Code hoch und deployt ihn.
 - `lizard secrets set` speichert das Token nur auf dem Service **bot**. Siehe [Variablen und Secrets](/variables).
 - `--port 0` schaltet den [Worker-Modus](/deploy/workers) ein: Lizard setzt kein `PORT`, führt keinen Port-Health-Check aus und legt keine HTTP-Route an. Der Service kann trotzdem eine `onlizard.com`-Domain anzeigen, dort antwortet aber nichts.
 
@@ -117,7 +117,7 @@ lizard redeploy --service bot
 
 ### Ein Replikat pro Token
 
-Jedes Replikat öffnet mit demselben Token eine eigene Gateway-Session, und jedes antwortet auf jede Nachricht. Lass den Bot-Service deshalb bei einem Replikat. Wenn du eine neue Version eines Workers deployst, stoppt Lizard den alten Prozess, bevor es den neuen startet. Rechne also mit einer kurzen Lücke statt mit doppelten Antworten. Ein Bot auf mehr als 2.500 Servern muss das Sharding von Discord nutzen; das ist eine Änderung im Code, keine Frage von mehr Replikaten desselben Prozesses.
+Jedes Replikat öffnet mit demselben Token eine eigene Gateway-Session, und jedes antwortet auf jede Nachricht. Lass den Bot-Service deshalb bei einem Replikat. Wenn du eine neue Version eines Workers deployst, stoppt Lizard den alten Prozess, bevor es den neuen startet. Dabei ist der Bot kurz nicht erreichbar; doppelte Antworten entstehen dadurch nicht. Ein Bot auf mehr als 2.500 Servern muss das Sharding von Discord nutzen; das ist eine Änderung im Code, keine Frage von mehr Replikaten desselben Prozesses.
 
 <span id="python-bots" />
 

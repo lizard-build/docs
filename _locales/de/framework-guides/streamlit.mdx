@@ -115,7 +115,7 @@ lizard add postgres
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service web
 ```
 
-Die einfachen Anführungszeichen halten `${{…}}` von deiner Shell fern; Lizard löst die [Referenz](/variables/references) beim Deployment auf. Füge `psycopg[binary]==3.3.5` zu `requirements.txt` hinzu und öffne eine Verbindung pro Serverprozess:
+Die einfachen Anführungszeichen verhindern, dass deine Shell `${{…}}` auswertet; Lizard löst die [Referenz](/variables/references) beim Deployment auf. Füge `psycopg[binary]==3.3.5` zu `requirements.txt` hinzu und öffne eine Verbindung pro Serverprozess:
 
 ```python
 import os

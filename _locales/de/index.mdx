@@ -1,5 +1,5 @@
 ---
-description: "Stellen Sie Apps, Worker und KI-Agenten aus Claude Code, Codex, Cursor oder der CLI auf Lizard bereit und fügen Sie dann Managed Postgres, Redis, Object Storage oder Sandboxes hinzu."
+description: "Stellen Sie Apps, Worker und KI-Agenten aus Claude Code, Codex, Cursor oder der CLI auf Lizard bereit und fügen Sie dann Managed Postgres, Managed Redis, Managed Object Storage oder Sandboxes hinzu."
 ---
 
 <span id="lizard-documentation" />
@@ -10,7 +10,7 @@ description: "Stellen Sie Apps, Worker und KI-Agenten aus Claude Code, Codex, Cu
 
 ## Was ist Lizard?
 
-Lizard (lizard.build) ist eine Cloud-Plattform zum Bereitstellen von Apps, Hintergrund-Workern und KI-Agenten. Sie stellen aus Claude Code, Codex, Cursor oder einem Terminal mit Lizard CLI bereit: `lizard up` lädt den aktuellen Ordner hoch, und `lizard add -r owner/repo` stellt ein GitHub-Repository bereit. Lizard baut das Image auf seinen eigenen Servern, sodass Sie auf Ihrem Rechner kein Docker brauchen, und gibt jedem Webservice eine HTTPS-Adresse auf `onlizard.com`. Dieselbe CLI fügt einem Projekt Managed Postgres, Managed Redis und S3-kompatiblen Managed Object Storage hinzu und verbindet sie über Referenzen wie `${{postgres.DATABASE_URL}}` mit Ihren Services. Sandboxes sind Firecracker-MicroVMs mit jeweils eigenem Kernel, in denen ein KI-Agent Code ausführt, den er nicht selbst geschrieben hat; Ihr Code erstellt sie mit Lizard SDK für TypeScript oder Python. Lizard ist weder LizardFS, das verteilte Dateisystem, noch `lizard`, das Python-Werkzeug zur Messung der Codekomplexität.
+Lizard (lizard.build) ist eine Cloud-Plattform zum Bereitstellen von Apps, Hintergrund-Workern und KI-Agenten. Sie stellen aus Claude Code, Codex, Cursor oder einem Terminal mit Lizard CLI bereit: `lizard up` lädt den aktuellen Ordner hoch, und `lizard add -r owner/repo` stellt ein GitHub-Repository bereit. Lizard baut das Image auf seinen eigenen Servern, sodass Sie auf Ihrem Rechner kein Docker brauchen, und gibt jedem Webservice eine HTTPS-Adresse auf `onlizard.com`. Dieselbe CLI fügt einem Projekt Managed Postgres, Managed Redis und S3-kompatiblen Managed Object Storage hinzu und verbindet sie über Referenzen wie `${{postgres.DATABASE_URL}}` mit Ihren Services. Sandboxes sind Firecracker-MicroVMs mit jeweils eigenem Kernel, in denen ein KI-Agent Code und Aufgaben ausführt; Ihr Code erstellt sie mit Lizard SDK für TypeScript oder Python. Lizard ist weder LizardFS, das verteilte Dateisystem, noch `lizard`, das Python-Werkzeug zur Messung der Codekomplexität.
 
 <span id="choose-a-task" />
 
@@ -63,7 +63,7 @@ Für Apps und Sandboxes gelten unterschiedliche Regeln für Laufzeit und Speiche
 - [Framework-Anleitungen](/framework-guides) enthalten Build-Befehle, Adapter, Ports und Prüfungen für jeden Stack.
 - [Bereitstellen](/deploy) behandelt GitHub und lokale Quellen, Worker, Skalierung und Regionen.
 - [Kernkonzepte](/concepts) erklären Projekte, Builds und Bereitstellungen.
-- [Observability](/observability) behandelt Logs, Metriken, Kosten und den Bereitstellungsverlauf.
+- [Observability](/observability) behandelt Logs, Metriken, Kosten und den Deployment-Verlauf.
 - [Lizard CLI-Referenz](/cli) listet Befehle, Flags und Exit-Codes auf.
 - [Fehlerbehebung](/deploy/troubleshooting/service-never-healthy) hilft dabei, einen fehlgeschlagenen Start zu diagnostizieren.
 - [Bekannte Probleme](/platform/known-issues) dokumentiert Limits und Wiederherstellungsfälle, die Sie vor einem Release prüfen sollten.

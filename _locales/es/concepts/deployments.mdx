@@ -13,11 +13,11 @@ Un **despliegue** es una compilación y publicación de un servicio. Los servici
 
 ## Cómo ocurre un despliegue
 
-Un despliegue se desencadena por cualquiera de estos casos:
+Cualquiera de estas acciones inicia un despliegue:
 
 - Un **`git push`** a la rama seguida (para servicios con código fuente `github`).
-- **`lizard redeploy`** — recompila desde el commit más reciente (git) o la última carga, con las variables actuales.
-- **`lizard up`** — carga el directorio actual y lo despliega.
+- **`lizard redeploy`**: recompila desde el commit más reciente (git) o la última carga, con las variables actuales.
+- **`lizard up`**: carga el directorio actual y lo despliega.
 - Un **`service set`** que cambia un campo que afecta a la compilación.
 
 ```bash
@@ -29,17 +29,17 @@ lizard up                          # upload cwd and deploy
 
 ## Ciclo de vida
 
-1. **Compilación** — la plataforma ejecuta tu compilación (consulta [Proceso de compilación](/concepts/build-pipeline)).
-2. **Predeploy** — si están configurados tanto `preDeployCommand` como `startCommand`, el contenedor ejecuta `sh -c "<pre> && exec <start>"`. El comando de predeploy se ejecuta al inicio de cada contenedor (cada réplica, cada reinicio), así que hazlo seguro para ejecutarse muchas veces y al mismo tiempo. Sin `startCommand` se omite.
-3. **Inicio** — Lizard inicia el nuevo pod junto al anterior. Los [workers](/deploy/workers) detienen primero el pod anterior.
-4. **Comprobación de estado** — una sonda TCP comprueba el puerto de la app cada 2 segundos, y el tráfico pasa solo a un pod listo. Lizard espera unos 30 segundos; si el nuevo pod no está listo para entonces, el despliegue se marca como fallido. Los workers omiten la sonda.
-5. **Verificación** — inspecciona el estado de la publicación y llama a la URL de la aplicación. La accesibilidad del puerto no es una comprobación completa del estado de la aplicación.
+1. **Compilación**: la plataforma ejecuta tu compilación (consulta [Proceso de compilación](/concepts/build-pipeline)).
+2. **Predeploy**: si están configurados tanto `preDeployCommand` como `startCommand`, el contenedor ejecuta `sh -c "<pre> && exec <start>"`. El comando de predeploy se ejecuta al inicio de cada contenedor (cada réplica, cada reinicio), así que hazlo seguro para ejecutarse muchas veces y al mismo tiempo. Sin `startCommand` se omite.
+3. **Inicio**: Lizard inicia el nuevo pod junto al anterior. Los [workers](/deploy/workers) detienen primero el pod anterior.
+4. **Comprobación de estado**: una sonda TCP comprueba el puerto de la app cada 2 segundos, y el tráfico pasa solo a un pod listo. Lizard espera unos 30 segundos; si el nuevo pod no está listo para entonces, el despliegue se marca como fallido. Los workers omiten la sonda.
+5. **Verificación**: inspecciona el estado de la publicación y llama a la URL de la aplicación. La accesibilidad del puerto no es una comprobación completa del estado de la aplicación.
 
 <span id="streaming-output" />
 
 ## Salida en streaming
 
-Cuando ejecutas un `lizard up` no desacoplado (o `redeploy`), los registros de compilación se transmiten en vivo. Con `--json`, obtienes un evento JSON por línea:
+Cuando ejecutas un `lizard up` sin separarlo de la terminal (o `redeploy`), los registros de compilación se transmiten en vivo. Con `--json`, obtienes un evento JSON por línea:
 
 ```json
 { "event": "log", "line": "..." }
@@ -66,10 +66,10 @@ En el [panel](/dashboard), la vista de **Despliegues** muestra la cronología co
 
 | Comando | Qué hace |
 |---------|--------------|
-| `lizard restart --service <svc>` | Reinicio de la compilación **actual** — sin recompilar |
+| `lizard restart --service <svc>` | Reinicio de la compilación **actual**: sin recompilar |
 | `lizard redeploy --service <svc>` | **Compilación** nueva desde el último commit/carga, y luego publicación |
 
-Consulta [`lizard restart`](/cli/restart) y [`lizard redeploy`](/cli/redeploy). Usa `restart` para reciclar réplicas (por ejemplo, para aplicar un secreto de ejecución que no se recargó en caliente); usa `redeploy` cuando necesites una nueva compilación.
+Consulta [`lizard restart`](/cli/restart) y [`lizard redeploy`](/cli/redeploy). Usa `restart` para reiniciar réplicas (por ejemplo, para aplicar un secreto de ejecución que no se recargó en caliente); usa `redeploy` cuando necesites una nueva compilación.
 
 <span id="recovering-from-a-crash" />
 
@@ -87,7 +87,7 @@ lizard events                      # see replica status
 
 ## Cambios de configuración (sin recompilar)
 
-La mayoría de los cambios en variables de entorno y secretos se aplican sin recompilar: Lizard actualiza la configuración del servicio y lo reinicia, lo que tarda unos segundos. Los valores de tiempo de compilación (`VITE_*`, `NEXT_PUBLIC_*`) y los cambios en campos de compilación sí fuerzan una recompilación de un servicio en ejecución — consulta la [tabla de desencadenantes de recompilación](/concepts/build-pipeline#what-triggers-a-rebuild) y las [variables de tiempo de compilación](/concepts/build-pipeline#build-time-variables).
+La mayoría de los cambios en variables de entorno y secretos se aplican sin recompilar: Lizard actualiza la configuración del servicio y lo reinicia, lo que tarda unos segundos. Los valores de tiempo de compilación (`VITE_*`, `NEXT_PUBLIC_*`) y los cambios en campos de compilación sí fuerzan una recompilación de un servicio en ejecución: consulta la [tabla de desencadenantes de recompilación](/concepts/build-pipeline#what-triggers-a-rebuild) y las [variables de tiempo de compilación](/concepts/build-pipeline#build-time-variables).
 
 <span id="failed-releases-and-recovery" />
 

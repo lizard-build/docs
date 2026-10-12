@@ -13,7 +13,7 @@ description: "Run code an LLM wrote in a sandbox with Lizard SDK: a stateful Pyt
 <span id="checkpointing-a-session" />
 <span id="see-also" />
 
-A code interpreter runs code that a language model writes and hands the output back to the model. On Lizard (lizard.build), `CodeSandbox` from Lizard SDK does this inside a sandbox, a Firecracker microVM, so the code runs apart from your app and your machine. It boots the `interpreter` template, which has Python and common data libraries. Python runs in a Jupyter kernel that keeps variables between calls, and each result carries the printed output, the value of the last expression, charts as `image/png`, and any error with its traceback.
+A code interpreter runs code that a language model writes and returns the output to the model. On Lizard, `CodeSandbox` from Lizard SDK does this inside a sandbox, a Firecracker microVM, which isolates the code from your app and computer. It boots the `interpreter` template, which has Python and common data libraries. Python runs in a Jupyter kernel that keeps variables between calls, and each result carries the printed output, the value of the last expression, charts as `image/png`, and any error with its traceback.
 
 ## Run code with state
 

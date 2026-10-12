@@ -7,7 +7,7 @@ description: "exposePort または lizard sandbox expose で、Lizard の sandbo
 
 # プレビュー URL: sandbox のポートを公開する
 
-プレビュー URL は、Lizard (lizard.build) の sandbox 内のポートにプライベートな HTTPS アドレスを付与します。`0.0.0.0` で待ち受けるサーバーを起動し、`sandbox.exposePort(3000)`（Python では `expose_port`）を呼び出すか、`lizard sandbox expose <id> 3000` を実行します。`https://<sandbox-id>-3000.sandbox.<region>.onlizard.com/?lizard_token=…` が返されます。sandbox のアクセストークンのないリクエストには HTTP 401 が返されます。
+プレビュー URL は、Lizard (lizard.build) の sandbox 内のポートにプライベートな HTTPS アドレスを割り当てます。`0.0.0.0` で待ち受けるサーバーを起動し、`sandbox.exposePort(3000)`（Python では `expose_port`）を呼び出すか、`lizard sandbox expose <id> 3000` を実行します。`https://<sandbox-id>-3000.sandbox.<region>.onlizard.com/?lizard_token=…` が返されます。sandbox のアクセストークンのないリクエストには HTTP 401 が返されます。
 
 **テスト状況:** 2026-10-12 に、このページを Lizard SDK、Lizard CLI 4.0.42、sandbox ルーターのソースと照らし合わせて確認しました。このページのために新たな実地テストは行っていません。
 
@@ -70,7 +70,7 @@ print(res.status_code)
 - **ブラウザーには cookie が渡される。** ブラウザーが `?lizard_token=` 付きの URL を開くと、Lizard はそのホスト名に `lizard_access` cookie（HttpOnly、Secure、SameSite=None、Partitioned、30 日間）を設定し、トークンを外した同じアドレスにリダイレクトします。その後はページのスクリプト、API 呼び出し、WebSocket が cookie を送るため、トークンは履歴や Referer ヘッダーに残りません。ほかのサイトがページを iframe で埋め込んだ場合も cookie は機能します。
 - **ポートごとにホスト名が 1 つ。** 各ポートには専用のホスト名と専用の cookie があるため、ポートごとに完全な URL を一度開いてください。
 - **サーバーにトークンは届かない。** Lizard はリクエストを転送する前に、クエリ、ヘッダー、cookie からトークンを取り除きます。リクエストの `Host` ヘッダーは元のまま保たれます。
-- **WebSocket が使える。** アップグレードリクエストはそのまま通るため、ホットリロード付きの dev サーバーやターミナル UI も動きます。
+- **WebSocket が使える。** アップグレードリクエストはそのまま通るため、ホットリロード付きの 開発サーバーやターミナル UI も動きます。
 
 プレビュー URL はパスワードと同じように扱ってください。URL を知っている人は誰でも、その sandbox で公開されたすべてのポートを使えます。
 
@@ -99,7 +99,7 @@ URL は sandbox の実行中だけ機能し、sandbox が停止すると使え�
 
 ## dev サーバー
 
-ほとんどの dev サーバーは、指定しない限り `127.0.0.1` で待ち受けます。ホストと固定のポートを渡してください:
+ほとんどの 開発サーバーは、指定しない限り `127.0.0.1` で待ち受けます。ホストと固定のポートを渡してください:
 
 ```bash
 npm run dev -- --host 0.0.0.0 --port 5173

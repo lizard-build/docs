@@ -9,7 +9,7 @@ description: "Деплой приложения Streamlit в Lizard: Procfile з
 
 Lizard (lizard.build) запускает приложение Streamlit той же командой, что и у вас локально: `streamlit run app.py`. Поместите её в строку `web:` в Procfile с `--server.address 0.0.0.0` и фиксированным портом, например `8501`, затем разверните командой `lizard up --port 8501`. Без Procfile lizardpack запускает `python app.py`, а эта команда выводит предупреждение и завершается, не отдавая приложение.
 
-**Статус тестов:** пример ниже запускался локально со Streamlit 1.65.0, а вариант с базой данных — с psycopg 3.3.5 и PostgreSQL 14. План сборки мы проверили в lizardpack — планировщике сборки, который использует Lizard. Полный деплой мы ещё не проводили. Браузер держит открытым WebSocket к Streamlit, и это соединение через маршрутизацию Lizard мы ещё не проверяли.
+**Статус тестов:** пример ниже запускался локально со Streamlit 1.65.0, а вариант с базой данных проверили с psycopg 3.3.5 и PostgreSQL 14. План сборки мы проверили в планировщике сборки lizardpack, который использует Lizard. Полный деплой мы ещё не проводили. Браузер держит открытым WebSocket к Streamlit, и это соединение через маршрутизацию Lizard мы ещё не проверяли.
 
 <span id="before-you-start" />
 
@@ -92,7 +92,7 @@ lizard up --service web --port 8501
 
 ## Секреты и настройки
 
-`st.secrets` читает `.streamlit/secrets.toml` — файл, который не стоит загружать. В Lizard храните секреты как переменные сервиса и читайте их из окружения:
+`st.secrets` читает `.streamlit/secrets.toml`. Не загружайте этот файл. В Lizard храните секреты как переменные сервиса и читайте их из окружения:
 
 ```bash
 lizard secrets set OPENAI_API_KEY=sk-... --service web
@@ -146,7 +146,7 @@ lizard domain --service web
 curl https://<your-domain>/_stcore/health
 ```
 
-В логе появляется `You can now view your Streamlit app in your browser`, а health URL отвечает `ok`. Откройте URL приложения и измените текст в поле: приветствие должно обновиться.
+В логе появляется `You can now view your Streamlit app in your browser`, а URL проверки работоспособности отвечает `ok`. Откройте URL приложения и измените текст в поле: приветствие должно обновиться.
 
 <span id="common-problems" />
 
@@ -158,7 +158,7 @@ curl https://<your-domain>/_stcore/health
 | Деплой так и не становится работоспособным | Порт сервиса и `--server.port` различаются. Выполните `lizard port --service web`. См. [сервис так и не становится работоспособным](/deploy/troubleshooting/service-never-healthy). |
 | `ModuleNotFoundError` | Добавьте пакет в `requirements.txt` и разверните снова. |
 | `KeyError` для секрета | В сервисе `web` нет этой переменной: `lizard secrets list --service web`. |
-| Страница показывает сообщение о подключении и так и не загружается | Браузер не может удержать WebSocket к `/_stcore/stream`. Найдите этот неудачный запрос в консоли браузера, а ошибки — в `lizard logs`. |
+| Страница показывает сообщение о подключении и так и не загружается | Браузер не может удержать WebSocket к `/_stcore/stream`. Найдите этот неудачный запрос в консоли браузера, а ошибки в `lizard logs`. |
 
 <span id="related" />
 

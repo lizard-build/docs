@@ -5,7 +5,7 @@ description: "Host a Discord bot on Lizard as a background worker: a discord.js 
 
 # Host a Discord bot
 
-To host a Discord bot on Lizard (lizard.build), run it as a background worker. A gateway bot opens an outbound connection to Discord and serves no HTTP, so deploy it with `lizard up --port 0` (`containerPort=0`) and keep one replica per bot token. Lizard detects a Node.js bot from `package.json` and starts it with `npm run start`; a Python bot needs a Procfile `web:` line.
+To host a Discord bot on Lizard, run it as a background worker. A gateway bot opens an outbound connection to Discord and serves no HTTP, so deploy it with `lizard up --port 0` (`containerPort=0`) and keep one replica per bot token. Lizard detects a Node.js bot from `package.json` and starts it with `npm run start`; a Python bot needs a Procfile `web:` line.
 
 **Test status:** the example bot runs locally with discord.js 14.27.0 and stops with `TokenInvalid` when given a fake token. We checked its build plan with lizardpack, the build planner Lizard runs. We have not yet run this guide against Discord from Lizard; send a test message and check the logs before you rely on it.
 
@@ -92,7 +92,7 @@ lizard secrets set DISCORD_TOKEN="$DISCORD_TOKEN" --service bot
 lizard up --service bot --port 0
 ```
 
-- `lizard add --service bot` creates an empty service; `lizard up --service bot` then fills it.
+- `lizard add --service bot` creates an empty service; `lizard up --service bot` uploads and deploys the code to it.
 - `lizard secrets set` stores the token on the **bot** service only. See [variables and secrets](/variables).
 - `--port 0` turns on [worker mode](/deploy/workers): Lizard sets no `PORT`, runs no port health check and adds no HTTP route. The service may still show an `onlizard.com` domain, but nothing answers there.
 
@@ -107,7 +107,7 @@ lizard redeploy --service bot
 
 ### One replica per token
 
-Each replica opens its own gateway session with the same token, so each one answers every message. Keep the bot service at one replica. When you deploy a new version of a worker, Lizard stops the old process before it starts the new one, so expect a short gap rather than duplicate replies. A bot in more than 2,500 servers must use Discord's sharding; that is a code change, not more replicas of the same process.
+Each replica opens its own gateway session with the same token, so each one answers every message. Keep the bot service at one replica. When you deploy a new version of a worker, Lizard stops the old process before it starts the new one, so the bot will be briefly unavailable. A bot in more than 2,500 servers must use Discord's sharding; that is a code change, not more replicas of the same process.
 
 ## Python bots
 

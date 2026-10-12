@@ -67,7 +67,7 @@ lizard sandbox exec $SB -- git clone https://github.com/your-org/your-app /works
 lizard sandbox prompt $SB --agent opencode --cwd /workspace/app "add input validation to the signup form"
 ```
 
-各ターンでは `opencode run --auto` が実行され、明示的に拒否されていない権限リクエストはすべて承認されます。つまり OpenCode は確認を求めずにファイルを編集し、コマンドを実行します。`--effort <level>` は OpenCode の `--variant` になります。会話を続けるには `-c <conversation-id>` を渡し、フォローアップのたびに `--agent opencode` と `--cwd` も渡してください。Ctrl-C で表示が止まり、`lizard sandbox interrupt $SB` でエージェントが止まります。
+各ターンでは `opencode run --auto` が実行され、明示的に拒否されていない権限リクエストはすべて承認されます。つまり OpenCode は確認を求めずにファイルを編集し、コマンドを実行します。`--effort <level>` は OpenCode の `--variant` になります。会話を続けるには `-c <conversation-id>` を渡し、続きの依頼にも `--agent opencode` と `--cwd` も渡してください。Ctrl-C で表示が止まり、`lizard sandbox interrupt $SB` でエージェントが止まります。
 
 変更をパッチとして受け取る方法は、[変更を受け取る](/sandboxes/guides/claude-code#get-the-changes-back) を参照してください。
 
@@ -92,7 +92,7 @@ lizard sandbox exec $SB -- sh -c '. /root/opencode.env && cd /workspace/app && n
 lizard sandbox expose $SB 4096
 ```
 
-`expose` が表示した URL を開きます。URL には `?lizard_token=` が付いています。Lizard はトークンをそのホスト用の cookie に移し、トークンを外した同じページにリダイレクトします。そのため、UI 自身のリクエスト、イベントストリーム、ターミナルの WebSocket も通ります。
+`expose` が表示した URL を開きます。URL には `?lizard_token=` が付いています。Lizard はトークンをそのホスト用の cookie に移し、トークンを外した同じページにリダイレクトします。そのため、UI からのリクエスト、イベントストリーム、ターミナルの WebSocket も通ります。
 
 - `--hostname 0.0.0.0` が必要です。OpenCode は既定で `127.0.0.1` で待ち受けるため、その場合プレビュー URL は `Sandbox is not listening on port 4096` を返します。
 - `--port` は固定の値を指定してください。指定しないと、OpenCode は空いているポートをランダムに選びます。

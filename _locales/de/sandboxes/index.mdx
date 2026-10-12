@@ -18,7 +18,7 @@ description: "Führen Sie KI-generierten Code in Firecracker-MicroVMs mit Lizard
 <span id="resources--limits" />
 <span id="ways-to-drive-sandboxes" />
 
-Sandboxes auf Lizard (lizard.build) sind isolierte Linux-Maschinen, in denen ein KI-Agent Code ausführt, den er nicht selbst geschrieben hat. Jede Sandbox ist eine Firecracker-MicroVM mit eigenem Kernel. Ihr Code erstellt eine mit Lizard SDK (`@lizard-build/sdk` für TypeScript, `lizard-sdk` für Python), oder Sie führen `lizard sandbox create` in einem Terminal aus; danach führen Sie Befehle aus, lesen und schreiben Dateien und öffnen Ports. In einem Test am 2026-10-12 lag der Median der Zeit vom Erstellen einer Sandbox bis zur ersten Python-Ausgabe bei 228 ms.
+Sandboxes auf Lizard (lizard.build) sind isolierte Linux-Maschinen, in denen ein KI-Agent Code und Aufgaben ausführt. Jede Sandbox ist eine Firecracker-MicroVM mit eigenem Kernel. Ihr Code erstellt eine mit Lizard SDK (`@lizard-build/sdk` für TypeScript, `lizard-sdk` für Python), oder Sie führen `lizard sandbox create` in einem Terminal aus; danach führen Sie Befehle aus, lesen und schreiben Dateien und öffnen Ports. In einem Test am 2026-10-12 dauerte es vom Erstellen einer Sandbox bis zur ersten Python-Ausgabe im Median 228 ms.
 
 <span id="when-to-use-sandboxes" />
 
@@ -36,7 +36,7 @@ Für einen Webservice oder Worker, der dauerhaft laufen soll, stellen Sie stattd
 
 ## Wie schnell startet eine Sandbox?
 
-In einem Test am 2026-10-12 lag der Median der Zeit vom Erstellen einer Sandbox bis zur ersten Python-Ausgabe bei 228 ms, das 95. Perzentil bei 310 ms. Der Test lief 300-mal aus der Region US East von Railway gegen `us-east-1`, mit der Vorlage `base` und der Größe Small. Ergebnisse desselben Tests für E2B, Daytona und Modal stehen auf der [Sandboxes-Seite](https://lizard.build/sandboxes).
+In einem Test am 2026-10-12 dauerte es vom Erstellen einer Sandbox bis zur ersten Python-Ausgabe im Median 228 ms; das 95. Perzentil lag bei 310 ms. Der Test lief 300-mal aus der Region US East von Railway gegen `us-east-1`, mit der Vorlage `base` und der Größe Small. Ergebnisse desselben Tests für E2B, Daytona und Modal stehen auf der [Sandboxes-Seite](https://lizard.build/sandboxes).
 
 <span id="sandboxes-at-a-glance" />
 
@@ -49,7 +49,7 @@ In einem Test am 2026-10-12 lag der Median der Zeit vom Erstellen einer Sandbox 
 | Welche Vorlagen gibt es? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` und `desktop` |
 | Welche Größen gibt es? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, Standard) und Large (8 vCPU / 16 GB); siehe [Größen und Preise](/platform/limits#sandbox-sizes) |
 | Wie lange lebt eine? | Standardmäßig fünf Minuten über SDK und CLI; standardmäßig kein Ablauf über die direkte API und das Dashboard |
-| Was übersteht einen Stopp? | Nur Dateien auf einem unter `/workspace` eingebundenen [Persistent Volume](/sandboxes/volumes) |
+| Was übersteht einen Stopp? | Nur Dateien auf einem unter `/workspace` eingebundenen Volume aus [Persistent Volumes](/sandboxes/volumes) |
 | Wie viele können gleichzeitig laufen? | 100 mit Pro, 5 während der Testphase; siehe [Kontolimits](/platform/limits#sandbox-account-limits) |
 
 <span id="runtime-and-templates" />
@@ -58,7 +58,7 @@ In einem Test am 2026-10-12 lag der Median der Zeit vom Erstellen einer Sandbox 
 
 Wählen Sie eine Vorlage aus dem aktuellen Katalog: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` oder `desktop`. Die Verfügbarkeit hängt von Region und Pool-Kapazität ab. `interpreter` enthält Python und gängige Datenbibliotheken. `desktop` führt einen grafischen Desktop aus, den Sie mit `sandbox.desktop` oder `lizard sandbox desktop` steuern. Prüfen Sie die Werkzeugversionen in der Sandbox. Die öffentliche CLI bietet keinen Upload eigener Vorlagen.
 
-Eine Sandbox, die ein Pod-basiertes Persistent Volume anhängt oder einen Pod-Snapshot wiederherstellt, läuft als Kubernetes-Pod mit runc und teilt den Kernel des Hosts. `getInfo().runtime` zeigt Ihnen, welcher Fall vorliegt. Beschränken Sie Zugangsdaten und Netzwerkzugriff für nicht vertrauenswürdigen Code.
+Eine Sandbox, die ein Pod-basiertes Volume aus Persistent Volumes anhängt oder einen Pod-Snapshot wiederherstellt, läuft als Kubernetes-Pod mit runc und teilt den Kernel des Hosts. `getInfo().runtime` zeigt Ihnen, welcher Fall vorliegt. Beschränken Sie Zugangsdaten und Netzwerkzugriff für nicht vertrauenswürdigen Code.
 
 <span id="lifecycle" />
 
@@ -85,7 +85,7 @@ SDK und CLI setzen standardmäßig eine Laufzeit von fünf Minuten. Die direkte 
 
 ## Speicher und Abrechnung
 
-Dateien und laufende Prozesse bleiben verfügbar, solange die Sandbox läuft. Nach dem Stopp kann eine spätere Sandbox nur Dateien auf einem angehängten Persistent Volume unter `/workspace` wiederverwenden. Ohne Volume ist `/workspace` temporär. Ein Volume hängt jeweils an einer Sandbox und liegt auf einem einzelnen Knoten. Exportieren Sie Dateien, die einen Knotenausfall überstehen müssen.
+Dateien und laufende Prozesse bleiben verfügbar, solange die Sandbox läuft. Nach dem Stopp kann eine spätere Sandbox nur Dateien auf einem angehängten Volume aus Persistent Volumes unter `/workspace` wiederverwenden. Ohne Volume ist `/workspace` temporär. Ein Volume hängt jeweils an einer Sandbox und liegt auf einem einzelnen Knoten. Exportieren Sie Dateien, die einen Knotenausfall überstehen müssen.
 
 Jede Größe hat einen festen Stundenpreis, sekundengenau abgerechnet, solange die Sandbox läuft, Leerlauf eingeschlossen. Ausgehender Traffic ist bis [2 TB pro Konto](/platform/limits#sandbox-egress) in rollierenden 30 Tagen enthalten. Eine aus einem Snapshot wiederhergestellte Sandbox läuft mit Größe und Preis ihrer Quelle; eine aus einem Pod-Snapshot wiederhergestellte wird nach gemessener Nutzung abgerechnet. Eine pausierte Sandbox kostet nichts; Persistent Volumes werden getrennt abgerechnet, solange Sie die Daten behalten. Pausieren oder beenden Sie eine Sandbox, wenn die Aufgabe erledigt ist. Die Tarife für jede Ressource stehen auf der [Abrechnungsseite](/platform/billing) und unter [Preise](https://lizard.build/pricing).
 

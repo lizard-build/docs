@@ -6,19 +6,19 @@ description: "Claude Code、Codex、Cursor から Lizard にデプロイ: Lizard
 
 # コーディングエージェント
 
-Claude Code、Codex、Cursor などの AI コーディングエージェントは、Lizard CLI を通じて Lizard (lizard.build) にアプリをデプロイし、管理します。`npx skills add lizard-build/skill -g` で Lizard Skill を一度インストールすると、エージェントは `lizard skills get core --json` で CLI に組み込まれたガイドを読み込み、`--help --json` で任意のコマンドのフラグを読み取るため、推測に頼る必要はありません。ChatGPT や Claude など MCP で通信するクライアントは、代わりに [Lizard MCP](#lizard-mcp) を使えます。エージェントからのデプロイの全手順については、[Claude Code、Codex、Cursor からデプロイする](/guides/deploy-from-coding-agent) を参照してください。
+Claude Code、Codex、Cursor などの AI コーディングエージェントは、Lizard CLI を通じて Lizard (lizard.build) にアプリをデプロイし、管理します。`npx skills add lizard-build/skill -g` で Lizard Skill を一度インストールすると、エージェントは `lizard skills get core --json` で CLI に組み込まれたガイドを読み込み、`--help --json` で任意のコマンドのフラグを確認します。ChatGPT や Claude など MCP で通信するクライアントは、代わりに [Lizard MCP](#lizard-mcp) を使えます。エージェントからのデプロイの全手順については、[Claude Code、Codex、Cursor からデプロイする](/guides/deploy-from-coding-agent) を参照してください。
 
 <span id="the-embedded-skill" />
 
 ## 組み込みスキル
 
-正式な利用ガイドは CLI の内部にあり、CLI と一緒にバージョン管理されるため、常にインストール済みバージョンと一致します。エージェントは次でこれを読み取ります:
+CLI には、そのバージョンに対応した利用ガイドを同梱しています。エージェントは次のコマンドで読み取ります:
 
 ```bash
 lizard skills get core --json
 ```
 
-これにより `{ name, frontmatter, content, … }` が返されます — `content` には完全なガイド（ビルドパイプライン、env の優先順位、アドオン、検出、終了コード）が含まれます。関連するサブコマンド:
+これにより `{ name, frontmatter, content, … }` が返されます：`content` には完全なガイド（ビルドパイプライン、env の優先順位、アドオン、検出、終了コード）が含まれます。関連するサブコマンド:
 
 ```bash
 lizard skills list        # available embedded skills
@@ -26,13 +26,13 @@ lizard skills get core    # the core guide
 lizard skills path        # where skills are stored
 ```
 
-ガイドはバイナリに同梱されているため、`lizard upgrade` を更新するとエージェントへの指示も更新されます。
+ガイドはバイナリに同梱されているため、`lizard upgrade` を実行するとエージェントへの指示も更新されます。
 
 <span id="self-describing-commands" />
 
 ## 自己記述的なコマンド
 
-エージェントは、暗記した構文に頼る代わりに、実行時に正確なフラグの形を確認します:
+エージェントは、暗記した構文に頼る代わりに、実行時にフラグの正確な構文を確認します:
 
 ```bash
 lizard --help --json                # full command tree + exit codes
@@ -48,10 +48,10 @@ lizard <cmd> --help --json          # a specific command's schema
 典型的なエージェントのフロー:
 
 1. **ガイドを読み込む:** `lizard skills get core --json` → `content` を読む。
-2. **認証を楽観的に確認する:** ユーザーのタスクを実行し、終了コード `2` の場合は `lizard login` を実行し、表示された URL をユーザーに渡してから再試行する。
+2. **タスクの実行時に認証を確認する:** ユーザーのタスクを実行し、終了コード `2` の場合は `lizard login` を実行し、表示された URL をユーザーに渡してから再試行する。
 3. **求められたらトライアルを開始する:** 新しいアカウントにはプランがないため、最初の作成は HTTP 402（`code: "PAYMENT_REQUIRED"`、終了コード `1`）で失敗する。`lizard billing start --json` を実行し、Checkout の `url` をユーザーに渡して、カードが追加されたら再試行する。
-4. **変更前にコンテキストを解決する:** `lizard status` (cwd リンク) と `lizard ps --json` (サービス)。
-5. **ガイドに従って実行する** — `add`、`up`、`secrets`、`domain` など。常に `--json` を付けます。
+4. **変更前に対象を確認する:** `lizard status` (cwd リンク) と `lizard ps --json` (サービス)。
+5. **ガイドに従って実行する**：`add`、`up`、`secrets`、`domain` など。常に `--json` を付けます。
 
 `lizard` バイナリが存在しない場合は、最初にインストールしてください。macOS または Linux では、インストールスクリプトを使います:
 
@@ -76,16 +76,16 @@ npm install -g @lizard-build/cli
 ## エージェントが従うべき慣例
 
 - 非対話呼び出しでは、**常に `--json` を付ける**。
-- **破壊的な操作を確認する**（サービスの削除、アドオンの削除、プロジェクト全体の secret の上書き、本番再起動）際はユーザーに確認する — CLI 自身のプロンプトは TTY 上でのみ動作します。
-- デフォルトでは **secret を利用するサービスのスコープに限定する**。`--global` は、公開値であることが明確に証明できる場合にのみ使います。[変数と Secrets](/variables#scoping) を参照してください。
-- **求められていないのに Dockerfile を書かない** — lizardpack はほとんどのスタックを自動検出します。まずはデプロイを試してください。[ビルドパイプライン](/concepts/build-pipeline) を参照してください。
-- **`lizard up` を使って git 連携サービスをアップロード方式へ切り替えない** — `service set` + `redeploy` を使います。
+- サービスの削除、アドオンの削除、プロジェクト全体のシークレットの上書き、本番環境の再起動など、**破壊的な操作はユーザーに確認する**：CLI 自身のプロンプトは TTY 上でのみ動作します。
+- デフォルトでは **シークレットを利用するサービスのスコープに限定する**。`--global` は、公開してよい値だと確認できる場合にのみ使います。[変数と Secrets](/variables#scoping) を参照してください。
+- **求められていないのに Dockerfile を書かない**：lizardpack はほとんどのスタックを自動検出します。まずはデプロイを試してください。[ビルドパイプライン](/concepts/build-pipeline) を参照してください。
+- **`lizard up` を使って git 連携サービスをアップロード方式へ切り替えない**：`service set` + `redeploy` を使います。
 
 <span id="editor-integrations" />
 
 ## エディタ統合
 
-Lizard Skill は公開ブートストラップとして配布されているため、エディタやアシスタント内のエージェントは必要に応じてこれをインストールして読み込み、その後、このドキュメント全体で説明されているのと同じ CLI を操作できます。すべてのエージェント向けに一度インストールします:
+Lizard Skill は、エージェントが利用ガイドを読み込むための初期手順です。エディタやアシスタントにインストールすると、エージェントは必要なときにガイドを読み、このドキュメントで説明する CLI を操作できます。すべてのエージェント向けに一度インストールします:
 
 ```bash
 npx skills add lizard-build/skill -g
@@ -101,7 +101,7 @@ Chrome で開いているページを Claude Code や ChatGPT に編集させる
 
 ## Lizard MCP
 
-Lizard MCP を使うと、ChatGPT、Claude などの MCP クライアントから Lizard プロジェクトを管理できます。サービスとアドオンの作成、再デプロイ、ログとメトリクスの確認、secret の設定、レプリカのスケール、ドメインの割り当てができます。これはホスト型のサーバーで、次の URL で Streamable HTTP を使って通信します:
+Lizard MCP を使うと、ChatGPT、Claude などの MCP クライアントから Lizard プロジェクトを管理できます。サービスとアドオンの作成、再デプロイ、ログとメトリクスの確認、シークレットの設定、レプリカのスケール、ドメインの割り当てができます。これはホスト型のサーバーで、次の URL で Streamable HTTP を使って通信します:
 
 ```text
 https://employ-woman-g1q2.us-east-1.onlizard.com/mcp
@@ -140,7 +140,7 @@ Lizard CLI を使うエージェントと、MCP を公開するアプリケー�
 
 ## 関連項目
 
-- [`lizard skills`](/cli/skills) — 完全なコマンドリファレンス。
-- [JSON と自動化](/cli/json) — `--json` の出力とスキーマ確認。
-- [変数と Secrets](/variables#scoping) — エージェントが従うべき secret のスコープ慣例。
-- [Claude Code からアプリをデプロイする](https://lizard.build/blog/deploy-from-claude-code#a-prompt-that-defines-the-deployment-task) — 同じブートストラップを、動かすためのプロンプト付きのウォークスルーとして記述したものです。
+- [`lizard skills`](/cli/skills)：完全なコマンドリファレンス。
+- [JSON と自動化](/cli/json)：`--json` の出力とスキーマ確認。
+- [変数と Secrets](/variables#scoping)：エージェントが従うべき シークレットのスコープ慣例。
+- [Claude Code からアプリをデプロイする](https://lizard.build/blog/deploy-from-claude-code#a-prompt-that-defines-the-deployment-task)：同じ初期設定とデプロイ手順を、プロンプトの例とともに説明しています。

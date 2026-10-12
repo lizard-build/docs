@@ -7,9 +7,9 @@ description: "Дайте порту в sandbox Lizard приватный HTTPS U
 
 # URL предпросмотра: как открыть порт из sandbox
 
-URL предпросмотра даёт порту внутри sandbox на Lizard (lizard.build) приватный HTTPS-адрес. Запустите сервер, который слушает `0.0.0.0`, затем вызовите `sandbox.exposePort(3000)` (в Python — `expose_port`) или выполните `lizard sandbox expose <id> 3000`. Вы получите `https://<sandbox-id>-3000.sandbox.<region>.onlizard.com/?lizard_token=…`; запрос без токена доступа sandbox получает HTTP 401.
+URL предпросмотра даёт порту внутри sandbox на Lizard (lizard.build) приватный HTTPS-адрес. Запустите сервер, который слушает `0.0.0.0`, затем вызовите `sandbox.exposePort(3000)` (в Python: `expose_port`) или выполните `lizard sandbox expose <id> 3000`. Вы получите `https://<sandbox-id>-3000.sandbox.<region>.onlizard.com/?lizard_token=…`; запрос без токена доступа sandbox получает HTTP 401.
 
-**Статус тестов:** 2026-10-12 мы сверили эту страницу с исходным кодом Lizard SDK, Lizard CLI 4.0.42 и маршрутизатора sandbox. Нового живого теста для неё мы не запускали.
+**Статус тестов:** 2026-10-12 мы сверили эту страницу с исходным кодом Lizard SDK, Lizard CLI 4.0.42 и маршрутизатора sandbox. Нового теста в работающей среде для неё мы не запускали.
 
 <span id="from-the-cli" />
 
@@ -26,7 +26,7 @@ lizard sandbox expose $SB 3000
 
 ## Из Lizard SDK
 
-`exposePort` возвращает `url` для браузера, голый `hostname` и `accessToken`:
+`exposePort` возвращает `url` для браузера, имя хоста `hostname` и `accessToken`:
 
 ```ts
 import { Sandbox } from '@lizard-build/sdk';
@@ -59,7 +59,7 @@ res = httpx.get(f"https://{exposed.hostname}/", headers={"X-Lizard-Access-Token"
 print(res.status_code)
 ```
 
-`getHost(port)` (в Python — `get_host`) тоже публикует порт, но возвращает только имя хоста, а токен сохраняет в `sandbox.accessToken` (в Python — `sandbox.access_token`). `unexpose(port)` убирает URL. Запустите сервер до того, как отправлять трафик: пока он не слушает порт, URL отвечает 502.
+`getHost(port)` (в Python: `get_host`) тоже публикует порт, но возвращает только имя хоста, а токен сохраняет в `sandbox.accessToken` (в Python: `sandbox.access_token`). `unexpose(port)` убирает URL. Запустите сервер до того, как отправлять трафик: пока он не слушает порт, URL отвечает 502.
 
 <span id="how-access-works" />
 
@@ -67,12 +67,12 @@ print(res.status_code)
 
 - **Один токен на sandbox.** Токен принадлежит sandbox, а не порту: он открывает каждый порт, который вы опубликовали в этом sandbox, и не меняется, пока sandbox существует. Чтобы закрыть доступ, отмените публикацию порта или удалите sandbox.
 - **Три способа передать токен.** Параметр запроса `lizard_token`, заголовок `X-Lizard-Access-Token` или cookie `lizard_access`.
-- **Браузер получает cookie.** Когда браузер открывает URL с `?lizard_token=`, Lizard ставит cookie `lizard_access` для этого имени хоста (HttpOnly, Secure, SameSite=None, Partitioned, 30 дней) и перенаправляет на тот же адрес без токена. Скрипты страницы, вызовы API и WebSocket дальше несут cookie, а токен не попадает в историю и заголовки Referer. Cookie работает и тогда, когда другой сайт встраивает страницу в iframe.
+- **Браузер получает cookie.** Когда браузер открывает URL с `?lizard_token=`, Lizard ставит cookie `lizard_access` для этого имени хоста (HttpOnly, Secure, SameSite=None, Partitioned, 30 дней) и перенаправляет на тот же адрес без токена. Скрипты страницы, вызовы API и WebSocket затем передают cookie, а токен не попадает в историю и заголовки Referer. Cookie работает и тогда, когда другой сайт встраивает страницу в iframe.
 - **Своё имя хоста для каждого порта.** У каждого порта своё имя хоста и своя cookie, поэтому полный URL каждого порта нужно один раз открыть.
-- **Ваш сервер не видит токен.** Lizard убирает его из параметра запроса, заголовка и cookie, прежде чем переслать запрос. Исходный заголовок `Host` запрос сохраняет.
+- **Ваш сервер не видит токен.** Lizard убирает его из параметра запроса, заголовка и cookie, прежде чем переслать запрос. При этом исходный заголовок `Host` сохраняется.
 - **WebSocket работает.** Запросы на upgrade проходят, поэтому dev-серверы с горячей перезагрузкой и терминальные интерфейсы работают.
 
-Обращайтесь с URL предпросмотра как с паролем: любой, у кого он есть, может пользоваться всеми опубликованными портами этого sandbox.
+Храните URL предпросмотра в секрете: любой, у кого он есть, может пользоваться всеми опубликованными портами этого sandbox.
 
 <span id="url-format-and-lifetime" />
 

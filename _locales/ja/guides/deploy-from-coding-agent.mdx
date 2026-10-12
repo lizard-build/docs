@@ -7,7 +7,7 @@ description: "Lizard Skill と Lizard CLI を使って、Claude Code、Codex、�
 
 # Claude Code、Codex、Cursor からデプロイする
 
-Claude Code、Codex、Cursor は、Lizard Skill と Lizard CLI を使って、自身が構築したアプリを Lizard (lizard.build) にデプロイできます。エージェントはインストール済み CLI のガイドを読み、対象プロジェクトを確認し、ビルドを実行して、公開 URL を確認します。別途のMCPトランスポートは不要です。このガイドでは、プロンプト、ローカルソースと GitHub ソースでエージェントが実行するコマンド、そしてデプロイが成功したことを確かめるチェックを紹介します。
+Claude Code、Codex、Cursor は、Lizard Skill と Lizard CLI を使って、作成したアプリを Lizard (lizard.build) にデプロイできます。エージェントはインストール済み CLI のガイドを読み、対象プロジェクトを確認し、ビルドを実行して、公開 URL を確認します。別途の MCP トランスポートは不要です。このガイドでは、プロンプト、ローカルソースと GitHub ソースでエージェントが実行するコマンド、デプロイの成功を確かめる手順を紹介します。
 
 <span id="before-you-start" />
 
@@ -34,7 +34,7 @@ lizard up --help --json
 lizard service set --help --json
 ```
 
-Claude Code、Codex、Cursor に貼り付けると便利なプロンプトの例:
+Claude Code、Codex、Cursor に貼り付けて使えるプロンプトの例:
 
 > このアプリを Lizard でデプロイしてください。インストール済み CLI のガイドを読み、リンクされたプロジェクトとサービスを確認し、アプリのチェックを実行して、ビルド結果と動作する URL を示してください。既存の本番サービスを変更したりデータを削除したりする前には確認してください。
 
@@ -42,7 +42,7 @@ Claude Code、Codex、Cursor に貼り付けると便利なプロンプトの例
 
 ## ローカルソースをデプロイする
 
-完全なテストには、[agent-appの例](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/agent-app) を使ってください。これは Node.js 22 と `pg` 8.16.3 を使用し、port 3000 で待ち受け、Managed Postgres から 1 行読み取ります。起動時に、存在しない場合はデモ用のテーブルと行を作成します。より大きなアプリケーションでは、独自のマイグレーションプロセスを使用してください。
+完全なテストには、[agent-appの例](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/agent-app) を使ってください。これは Node.js 22 と `pg` 8.16.3 を使用し、ポート 3000 で待ち受け、Managed Postgres から 1 行読み取ります。起動時に、存在しない場合はデモ用のテーブルと行を作成します。より大きなアプリケーションでは、独自のマイグレーションプロセスを使用してください。
 
 例を専用ディレクトリにコピーし、ローカルチェックを実行します:
 

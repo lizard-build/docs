@@ -63,7 +63,7 @@ Ein Fehler im Code ist Teil des Ergebnisses, keine Exception. Fehlgeschlagene An
 | Feld | Inhalt |
 |---|---|
 | `stdout`, `stderr` | Alles, was der Code ausgegeben hat |
-| `results` | Reichhaltige Ausgabe: der Wert des letzten Ausdrucks als `text/plain`, matplotlib-Diagramme und Bilder als base64-`image/png`, HTML und andere Typen, jeweils mit `mime` und `data` |
+| `results` | Formatierte Ausgabe: der Wert des letzten Ausdrucks als `text/plain`, matplotlib-Diagramme und Bilder als base64-`image/png`, HTML und andere Typen, jeweils mit `mime` und `data` |
 | `error` | `name`, `message` und `traceback`, wenn der Code eine Exception ausgelöst hat |
 | `executionCount` | Der Zellenzähler des Kernels (Python: `execution_count`) |
 
@@ -135,7 +135,7 @@ Path("chart.png").write_bytes(base64.b64decode(png))
 - **Kontexte.** `createContext()` (Python: `create_context()`) startet einen separaten Kernel mit eigenen Variablen und eigenem Arbeitsverzeichnis; übergeben Sie ihn als `context` an `runCode`. `listContexts()`, `restartContext(ctx)` und `deleteContext(ctx)` verwalten sie. Ohne Kontext verwendet jede Sprache ihren eigenen Standardkontext.
 - **Timeouts.** `timeoutMs` (Python: `timeout_ms`) begrenzt einen Aufruf und beträgt standardmäßig 60 Sekunden. Ein Python-Kernel, der länger läuft, wird unterbrochen und behält seinen Zustand; `error.name` im Ergebnis ist `TimeoutError`.
 - **Andere Sprachen.** JavaScript und Bash laufen bei jedem Aufruf als neuer Prozess, daher bleibt kein Zustand erhalten und `results` bleibt leer. JavaScript braucht `node`, das die Vorlage `interpreter` nicht enthält.
-- **Pause und Snapshots.** Kernel leben in der Sandbox, daher behalten `pause()` und `resume()` ihre Variablen, und `snapshot()` und `fork()` kopieren sie.
+- **Pause und Snapshots.** Kernel laufen in der Sandbox, daher behalten `pause()` und `resume()` ihre Variablen, und `snapshot()` und `fork()` kopieren sie.
 
 <span id="run-commands" />
 
@@ -147,12 +147,12 @@ Path("chart.png").write_bytes(base64.b64decode(png))
 
 ## Nicht vertrauenswürdiger Code
 
-Behandeln Sie alles, was das Modell schreibt, als nicht vertrauenswürdig. Übergeben Sie `lizardToken` nur, wenn der Code Lizard CLI braucht; alles in der Sandbox kann ihn lesen, verwenden Sie in diesem Fall also einen auf den Workspace beschränkten Schlüssel. Halten Sie andere Secrets aus `envs` heraus. Eine Sandbox mit einem Pod-basierten Volume teilt den Kernel des Hosts; siehe [Laufzeit und Vorlagen](/sandboxes#runtime-and-templates).
+Behandeln Sie alles, was das Modell schreibt, als nicht vertrauenswürdig. Übergeben Sie `lizardToken` nur, wenn der Code Lizard CLI braucht; Code in der Sandbox kann ihn lesen. Verwenden Sie in diesem Fall einen Schlüssel mit Zugriff nur auf den Workspace. Halten Sie andere Secrets aus `envs` heraus. Eine Sandbox mit einem Pod-basierten Volume teilt den Kernel des Hosts; siehe [Laufzeit und Vorlagen](/sandboxes#runtime-and-templates).
 
 <span id="storage-and-billing" />
 
 ## Speicher und Abrechnung
 
-Variablen und Dateien leben nur so lange wie die Sandbox. Die Regeln für Abrechnung und Speicher stehen unter [Speicher und Abrechnung](/sandboxes#storage-and-billing); Größen und Preise unter [Limits](/platform/limits#sandbox-sizes).
+Variablen und Dateien bleiben nur so lange erhalten wie die Sandbox. Die Regeln für Abrechnung und Speicher stehen unter [Speicher und Abrechnung](/sandboxes#storage-and-billing); Größen und Preise unter [Limits](/platform/limits#sandbox-sizes).
 
 [Sandboxes-Überblick](/sandboxes) · [Schnellstart](/sandboxes/quickstart) · [SDK-Referenz](/sandboxes/sdk-reference) · [Persistent Volumes](/sandboxes/volumes) · [Sandboxes-Produktseite](https://lizard.build/sandboxes)

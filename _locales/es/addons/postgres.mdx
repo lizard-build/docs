@@ -5,7 +5,7 @@ description: "Añade una base de datos PostgreSQL 18 en Lizard, encuentra su cad
 
 # Managed Postgres
 
-Managed Postgres en Lizard (lizard.build) es una base de datos PostgreSQL que añades a un proyecto con `lizard add postgres`. Las bases de datos nuevas usan PostgreSQL 18 de forma predeterminada. Lizard pone la cadena de conexión en `DATABASE_URL` y sus partes en `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD` y `PGDATABASE`, y tus servicios las leen mediante una referencia como `${{postgres.DATABASE_PRIVATE_URL}}`. La base de datos se factura con las mismas [tarifas](/platform/billing#resource-rates) de CPU, memoria y almacenamiento que las apps, y el panel incluye un editor SQL para ella. Para una visión general y los precios, consulta la [página de Managed Postgres](https://lizard.build/postgres).
+Managed Postgres en Lizard (lizard.build) es una base de datos PostgreSQL que añades a un proyecto con `lizard add postgres`. Las bases de datos nuevas usan PostgreSQL 18 de forma predeterminada. Lizard pone la cadena de conexión en `DATABASE_URL` y sus partes en `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD` y `PGDATABASE`, y tus servicios las leen mediante una referencia como `${{postgres.DATABASE_PRIVATE_URL}}`. La base de datos se factura con las mismas [tarifas](/platform/billing#resource-rates) de CPU, memoria y almacenamiento que las apps, y el panel incluye un editor SQL para ella. Para ver un resumen y los precios, consulta la [página de Managed Postgres](https://lizard.build/postgres).
 
 <span id="provision" />
 
@@ -85,7 +85,7 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service a
 lizard redeploy --service api
 ```
 
-La referencia se resuelve en el momento del despliegue, así que cada consumidor obtiene los valores actuales del addon en su siguiente despliegue. Usa `DATABASE_URL` en su lugar para clientes fuera del proyecto. Además, todos los servicios del proyecto reciben el `DATABASE_URL` público del addon con la precedencia más baja; una referencia explícita lo sobrescribe.
+La referencia se resuelve en el momento del despliegue, así que cada consumidor obtiene los valores actuales del addon en su siguiente despliegue. Usa `DATABASE_URL` en su lugar para clientes fuera del proyecto. Además, todos los servicios del proyecto reciben el `DATABASE_URL` público del addon con la prioridad más baja; una referencia explícita lo sobrescribe.
 
 Verifica la conectividad desde tu máquina sin imprimir la cadena de conexión:
 
@@ -155,5 +155,5 @@ Consulta [almacenamiento y recuperación](/platform/storage-and-recovery) para u
 
 ## Ver también
 
-- [Managed Addons](/addons) — nomenclatura, referencias y los exploradores del panel.
-- [Referencias entre servicios](/variables/references) — sintaxis y resolución de referencias.
+- [Managed Addons](/addons): nomenclatura, referencias y los exploradores del panel.
+- [Referencias entre servicios](/variables/references): sintaxis y resolución de referencias.

@@ -7,7 +7,7 @@ description: "Разверните первое приложение на Lizard
 
 # Быстрый старт приложения
 
-Этот быстрый старт развертывает приложение на Lizard (lizard.build) за несколько минут. Установите Lizard CLI, войдите в систему, начните 7-дневный пробный период Pro, затем выполните `lizard add -r owner/repo` для репозитория GitHub или `lizard up` для локальной папки. Lizard собирает приложение на своих серверах, без локального Docker, и выдает HTTPS-адрес на `onlizard.com`. Аккаунт создается при первом запуске `lizard login`.
+По этому руководству вы развернёте приложение на Lizard (lizard.build) за несколько минут. Установите Lizard CLI, войдите в систему, начните 7-дневный пробный период Pro, затем выполните `lizard add -r owner/repo` для репозитория GitHub или `lizard up` для локальной папки. Lizard собирает приложение на своих серверах, без локального Docker, и выдает HTTPS-адрес на `onlizard.com`. Аккаунт создается при первом запуске `lizard login`.
 
 <span id="1-install-the-cli" />
 
@@ -81,7 +81,7 @@ lizard whoami
 lizard billing start
 ```
 
-Откроется Stripe Checkout, где вы добавляете карту. Пробный период включает расход на $5, и ничего не списывается, пока он не закончится. См. [Оплата](/platform/billing) и [`lizard billing`](/cli/billing).
+Откроется Stripe Checkout, где вы добавляете карту. Пробный период включает использование ресурсов на $5. До его окончания Lizard ничего не списывает. См. [Оплата](/platform/billing) и [`lizard billing`](/cli/billing).
 
 <span id="4-deploy" />
 
@@ -119,7 +119,7 @@ lizard up
 
 В любом случае, когда сборка завершится, вы получите сгенерированный URL вроде `https://your-app-x1y2z.onlizard.com`.
 
-Lizard сам определяет большинство стеков. Точные команды сборки и запуска и порт для вашего фреймворка см. в руководстве по [Next.js](/framework-guides/nextjs), [React](/framework-guides/react), [Vue](/framework-guides/vue), [Astro](/framework-guides/astro), [SvelteKit](/framework-guides/sveltekit), [Node.js](/framework-guides/nodejs), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails) или [Go](/framework-guides/go). Приложение со своим Dockerfile разворачивайте по руководству [Развертывание с Dockerfile](/deploy/dockerfile).
+Lizard сам определяет большинство стеков. Команды сборки и запуска, а также порт для вашего фреймворка см. в руководстве по [Next.js](/framework-guides/nextjs), [React](/framework-guides/react), [Vue](/framework-guides/vue), [Astro](/framework-guides/astro), [SvelteKit](/framework-guides/sveltekit), [Node.js](/framework-guides/nodejs), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails) или [Go](/framework-guides/go). Приложение со своим Dockerfile разворачивайте по руководству [Развертывание с Dockerfile](/deploy/dockerfile).
 
 <span id="5-watch-it-build-and-run" />
 
@@ -154,7 +154,7 @@ lizard redeploy --service your-app
 
 - **[Основные концепции](/concepts/architecture)** — поймите проекты, сервисы и конвейер сборки.
 - **[Развертывание из GitHub](/deploy/github)** — ветки, монорепозитории и автопереразвертывание.
-- **[Деплой](/deploy)** — все способы развертывания, а также фоновые обработчики, масштабирование и регионы.
+- **[Деплой](/deploy)**: все способы развертывания, а также фоновые обработчики, масштабирование и регионы.
 - **[Переменные и секреты](/variables)** — области видимости и приоритет.
 - **[Сеть](/networking)** — подключите свой хостнейм с автоматическим TLS.
 - **[Развертывание приложения, созданного вашим AI IDE](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — те же шаги, переданные агенту, для приложения на Google Antigravity.

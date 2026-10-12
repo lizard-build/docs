@@ -155,7 +155,7 @@ El log muestra `You can now view your Streamlit app in your browser`, y la URL d
 | Síntoma | Solución |
 |---|---|
 | El log dice `to view this Streamlit app on a browser, run it with the following command` | Falta el Procfile o no tiene línea `web:`, así que lizardpack ejecutó `python app.py`. |
-| El despliegue nunca llega a estar saludable | El puerto del servicio y `--server.port` no coinciden. Ejecuta `lizard port --service web`. Consulta [el servicio nunca llega a estar saludable](/deploy/troubleshooting/service-never-healthy). |
+| El despliegue nunca alcanza el estado healthy | El puerto del servicio y `--server.port` no coinciden. Ejecuta `lizard port --service web`. Consulta [el servicio nunca alcanza el estado healthy](/deploy/troubleshooting/service-never-healthy). |
 | `ModuleNotFoundError` | Añade el paquete a `requirements.txt` y vuelve a desplegar. |
 | `KeyError` para un secreto | Falta la variable en el servicio `web`: `lizard secrets list --service web`. |
 | La página muestra un mensaje de conexión y nunca termina de cargar | El navegador no puede mantener su WebSocket con `/_stcore/stream`. Busca esa solicitud fallida en la consola del navegador y errores en `lizard logs`. |

@@ -5,7 +5,7 @@ description: "Deploy an app from Claude Code, Codex, or Cursor with Lizard Skill
 
 # Deploy from Claude Code, Codex or Cursor
 
-Claude Code, Codex and Cursor can deploy the app they built to Lizard (lizard.build) with Lizard Skill and Lizard CLI. The agent reads the installed CLI's guide, checks the target project, runs the build and checks the live URL. It needs no separate MCP transport. This guide gives the prompt, the commands the agent runs for local and GitHub source, and the checks that prove the deploy worked.
+Claude Code, Codex and Cursor can deploy the app they built to Lizard with Lizard Skill and Lizard CLI. The agent reads the installed CLI's guide, checks the target project, runs the build and checks the live URL. It needs no separate MCP transport. Use the prompt below to deploy local or GitHub source, then check the build, public URL and database connection.
 
 ## Before you start
 
@@ -56,7 +56,7 @@ lizard up --service api --port 3000 --json
 
 Use the database's actual name if it is not `postgres`. Keep the reference quoted so the local shell does not expand it. Configure it before the first deployment. Sign in with `lizard login` only if a command reports that authentication is required.
 
-The upload path is intentional for this copied example. For an application already in GitHub, use the next section instead. A failed build exits with code 1; still inspect the terminal `failed`/`deployed` event and verify the application. See [known issues](/platform/known-issues).
+Use an upload for this copied example. For an application already in GitHub, use the next section instead. A failed build exits with code 1; still inspect the terminal `failed`/`deployed` event and verify the application. See [known issues](/platform/known-issues).
 
 ## Deploy from GitHub
 
@@ -111,7 +111,7 @@ For this test service, verify a runtime restart:
 lizard restart --service api --json
 ```
 
-Wait for the service to return to `running` in `lizard ps --json` and repeat both HTTP requests. A runtime log tail can be empty; the HTTP response is the application check. The row is stored in Managed Postgres; the service process does not store it. To check reuse of existing data, update the demo row to a distinct value in the database editor before the restart and confirm `/data` returns that value afterward.
+Wait for the service to return to `running` in `lizard ps --json` and repeat both HTTP requests. A runtime log tail can be empty; the HTTP response is the application check. Managed Postgres stores the row, so it survives the service restart. To check reuse of existing data, update the demo row to a distinct value in the database editor before the restart and confirm `/data` returns that value afterward.
 
 `logs --json` returns a log tail and exits. Read [storage and recovery](/platform/storage-and-recovery) before changing real application data.
 

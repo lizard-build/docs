@@ -5,7 +5,7 @@ description: "Host a Node.js or Express app on Lizard: lizardpack reads package.
 
 # Deploy a Node.js app (Express)
 
-To host a Node.js app on Lizard (lizard.build), deploy a folder with a `package.json`. lizardpack picks the package manager from your lock file, installs dependencies, runs the `build` script if there is one and starts the app with the `start` script on port `3000`. It uses Node.js 22 unless `.nvmrc` or `engines.node` names another major version. Lizard passes the port in `PORT`; listen on it.
+To host a Node.js app on Lizard, deploy a folder with a `package.json`. lizardpack picks the package manager from your lock file, installs dependencies, runs the `build` script if there is one and starts the app with the `start` script on port `3000`. It uses Node.js 22 unless `.nvmrc` or `engines.node` names another major version. Lizard passes the port in `PORT`; read it in your app's listener.
 
 **Test status:** the Express sample below ran locally with Express 5.3.0, and the database route with pg 8.23.1 against PostgreSQL 14. We checked its build plan with lizardpack, the build planner Lizard runs. We have not yet deployed it end to end with this guide.
 
@@ -86,7 +86,7 @@ Without a `build` script, the image sets `NODE_ENV=production` before it install
 }
 ```
 
-Version files and their edge cases are on [runtime versions](/deploy/runtime-versions). Leave the service's build and start commands empty: with either one set, Lizard writes its own Dockerfile on `node:22-alpine` and ignores your version files. See the [build pipeline](/concepts/build-pipeline).
+For version files and parsing rules, see [runtime versions](/deploy/runtime-versions). Leave the service's build and start commands empty: with either one set, Lizard writes its own Dockerfile on `node:22-alpine` and ignores your version files. See the [build pipeline](/concepts/build-pipeline).
 
 ## Deploy
 

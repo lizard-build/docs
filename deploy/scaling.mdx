@@ -5,7 +5,7 @@ description: "Add replicas or raise CPU and memory for a service, and grow addon
 
 # Scaling
 
-Scale a service horizontally (more replicas) or vertically (more CPU/memory) with `lizard scale`. Addon storage is grown the same way.
+Use `lizard scale` to add service replicas, raise CPU or memory, or grow addon storage.
 
 ## Scale a service
 
@@ -18,7 +18,7 @@ lizard scale --service api --cpu 2 --memory 2048
 |------|-----------|----------------|
 | `--replicas <n>` | apps | `1` up to your plan's [limit](/platform/limits#applications): `1` during the trial, `5` on Pro and Enterprise |
 | `--cpu <cores>` | apps and addons | whole cores: `1`, `2`, `3`, `4` |
-| `--memory <mb>` | apps and addons | `128`–`8192` MB (1 MB steps) |
+| `--memory <mb>` | apps and addons | `128` to `8192` MB (1 MB steps) |
 | `--storage <mb>` | **addons only**, grow-only | `512`, `1024`, `2048`, `4096`, `8192`, `16384` |
 
 You can combine flags in a single command. Replica changes roll out without a rebuild. CPU and memory changes restart the service with the new limits.
@@ -43,7 +43,7 @@ lizard scale --service api --cpu 4 --memory 8192
 
 ## Growing addon storage
 
-Addon data volumes are **grow-only** — you can increase storage but not shrink it:
+You can grow addon data volumes, but you cannot shrink them:
 
 ```bash
 lizard scale --service postgres --storage 8192
@@ -60,6 +60,6 @@ lizard metrics --cost     # include cost
 
 ## See also
 
-- [Observability → Metrics](/observability/metrics) — resource and cost monitoring.
-- [`lizard scale`](/cli/scale) — the full command reference.
-- [How to estimate CaaS cost](https://lizard.build/blog/container-as-a-service#how-to-estimate-caas-cost) — which meters to compare before you size a bill.
+- [Observability → Metrics](/observability/metrics): resource and cost monitoring.
+- [`lizard scale`](/cli/scale): the full command reference.
+- [How to estimate CaaS cost](https://lizard.build/blog/container-as-a-service#how-to-estimate-caas-cost): which meters to compare when estimating a bill.

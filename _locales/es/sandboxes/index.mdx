@@ -18,7 +18,7 @@ description: "Ejecuta código generado por IA en microVMs de Firecracker con Liz
 <span id="resources--limits" />
 <span id="ways-to-drive-sandboxes" />
 
-Los Sandboxes en Lizard (lizard.build) son máquinas Linux aisladas donde un agente de IA ejecuta código que no escribió. Cada sandbox es una microVM de Firecracker con su propio kernel. Tu código crea uno con Lizard SDK (`@lizard-build/sdk` para TypeScript, `lizard-sdk` para Python), o ejecutas `lizard sandbox create` en una terminal; después ejecutas comandos, lees y escribes archivos y abres puertos. En una prueba del 2026-10-12, la mediana del tiempo desde crear un sandbox hasta su primera salida de Python fue de 228 ms.
+Los Sandboxes en Lizard (lizard.build) son máquinas Linux aisladas donde un agente de IA ejecuta código y tareas. Cada sandbox es una microVM de Firecracker con su propio kernel. Tu código crea uno con Lizard SDK (`@lizard-build/sdk` para TypeScript, `lizard-sdk` para Python), o ejecutas `lizard sandbox create` en una terminal; después ejecutas comandos, lees y escribes archivos y abres puertos. En una prueba del 2026-10-12, la mediana del tiempo desde crear un sandbox hasta su primera salida de Python fue de 228 ms.
 
 <span id="when-to-use-sandboxes" />
 
@@ -49,7 +49,7 @@ En una prueba del 2026-10-12, la mediana del tiempo desde crear un sandbox hasta
 | ¿Qué plantillas hay? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` y `desktop` |
 | ¿Qué tamaños hay? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, el predeterminado) y Large (8 vCPU / 16 GB); consulta [tamaños y precios](/platform/limits#sandbox-sizes) |
 | ¿Cuánto dura uno? | Cinco minutos por defecto desde el SDK y la CLI; sin vencimiento por defecto desde la API directa y el panel |
-| ¿Qué sobrevive a una detención? | Solo los archivos de un [Persistent Volume](/sandboxes/volumes) montado en `/workspace` |
+| ¿Qué sobrevive a una detención? | Solo los archivos de un volumen de [Persistent Volumes](/sandboxes/volumes) montado en `/workspace` |
 | ¿Cuántos pueden ejecutarse a la vez? | 100 en Pro, 5 durante la prueba; consulta [límites de la cuenta](/platform/limits#sandbox-account-limits) |
 
 <span id="runtime-and-templates" />
@@ -58,7 +58,7 @@ En una prueba del 2026-10-12, la mediana del tiempo desde crear un sandbox hasta
 
 Elige una plantilla del catálogo actual: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` o `desktop`. Su disponibilidad depende de la región y de la capacidad del pool. `interpreter` incluye Python y bibliotecas de datos habituales. `desktop` ejecuta un escritorio gráfico que controlas con `sandbox.desktop` o `lizard sandbox desktop`. Comprueba las versiones dentro del sandbox. La CLI pública no permite subir plantillas propias.
 
-Un sandbox que adjunta un Persistent Volume basado en pods, o que restaura un snapshot de pod, se ejecuta como un pod de Kubernetes con el runtime runc y comparte el kernel del host. `getInfo().runtime` te indica cuál es el caso. Limita las credenciales y el acceso a la red al ejecutar código que no sea de confianza.
+Un sandbox que adjunta un volumen de Persistent Volumes basado en pods, o que restaura un snapshot de pod, se ejecuta como un pod de Kubernetes con el runtime runc y comparte el kernel del host. `getInfo().runtime` te indica cuál es el caso. Limita las credenciales y el acceso a la red al ejecutar código que no sea de confianza.
 
 <span id="lifecycle" />
 
@@ -79,15 +79,15 @@ snapshot -> new sandbox (restore)
 
 Elige un tamaño al crear un sandbox: Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, el predeterminado) o Large (8 vCPU / 16 GB). Consulta [tamaños y precios](/platform/limits#sandbox-sizes). Indica la región de forma explícita si hace falta; que aparezca en el catálogo no garantiza capacidad libre.
 
-El SDK y la CLI fijan cinco minutos de duración por defecto. La API directa y el panel no fijan caducidad por defecto. Indica la duración: `timeoutMs: 0` al crear desactiva la caducidad; un valor positivo fija un plazo. `setTimeout` acepta 1000–2147483647 ms, no cero. Los comandos no reinician el plazo. No es un temporizador de inactividad.
+El SDK y la CLI fijan cinco minutos de duración por defecto. La API directa y el panel no fijan caducidad por defecto. Indica la duración: `timeoutMs: 0` al crear desactiva la caducidad; un valor positivo fija un plazo. `setTimeout` acepta 1000 a 2147483647 ms, no cero. Los comandos no reinician el plazo. No es un temporizador de inactividad.
 
 <span id="storage-and-billing" />
 
 ## Almacenamiento y facturación
 
-Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un Persistent Volume adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
+Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un volumen de Persistent Volumes adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
 
-Cada tamaño tiene un precio fijo por hora, facturado por segundo mientras el sandbox está en marcha, incluido el tiempo inactivo. El tráfico saliente está incluido hasta [2 TB por cuenta](/platform/limits#sandbox-egress) en una ventana móvil de 30 días. Un sandbox restaurado desde un snapshot se ejecuta con el tamaño y el precio de su origen; uno restaurado desde un snapshot de pod se factura por consumo medido. Un sandbox pausado no se factura; los Persistent Volumes se facturan aparte mientras guardes los datos. Pausa o detén el sandbox cuando termine la tarea. Las tarifas de cada recurso están en la [página de facturación](/platform/billing) y en [precios](https://lizard.build/pricing).
+Cada tamaño tiene un precio fijo por hora, facturado por segundo mientras el sandbox está en marcha, incluido el tiempo inactivo. El tráfico saliente está incluido hasta [2 TB por cuenta](/platform/limits#sandbox-egress) en una ventana móvil de 30 días. Un sandbox restaurado desde un snapshot se ejecuta con el tamaño y el precio de su origen; uno restaurado desde un snapshot de pod se factura por consumo medido. Un sandbox pausado no se factura; Persistent Volumes se facturan aparte mientras guardes los datos. Pausa o detén el sandbox cuando termine la tarea. Las tarifas de cada recurso están en la [página de facturación](/platform/billing) y en [precios](https://lizard.build/pricing).
 
 <span id="guides" />
 
@@ -104,7 +104,7 @@ Cada tamaño tiene un precio fijo por hora, facturado por segundo mientras el sa
 ## Referencia
 
 - [Inicio rápido de Sandboxes](/sandboxes/quickstart): tu primer sandbox, paso a paso.
-- [Referencia de la API y el SDK de Sandbox](/sandboxes/sdk-reference): cada llamada en TypeScript y Python.
+- [Referencia de la API y el SDK de Sandboxes](/sandboxes/sdk-reference): cada llamada en TypeScript y Python.
 - [`lizard sandbox`](/cli/sandbox): crear, exec, shell, snapshots y agentes de programación desde la terminal.
 - [Panel de Sandboxes](/sandboxes/dashboard): crea, inspecciona y detén sandboxes en el navegador.
 - [Límites](/platform/limits#sandboxes): tamaños, precios, concurrencia y tráfico de salida.

@@ -15,7 +15,7 @@ description: "Lizard SDK reference for TypeScript and Python: create options, co
 <span id="see-also" />
 <span id="lifecycle-status" />
 
-Lizard SDK is the client for Sandboxes on Lizard (lizard.build): `@lizard-build/sdk` on npm for TypeScript and JavaScript, and `lizard-sdk` on PyPI for Python, imported as `lizard`. Both call the same [HTTP API](#http-api). This page lists each sandbox call by its TypeScript and Python name, with examples in both languages. For a guided first run, use the [quickstart](/sandboxes/quickstart); for what Sandboxes are, read the [overview](/sandboxes).
+Lizard SDK is the client for Sandboxes on Lizard: `@lizard-build/sdk` on npm for TypeScript and JavaScript, and `lizard-sdk` on PyPI for Python, imported as `lizard`. Both call the same [HTTP API](#http-api). Find each sandbox call below under its TypeScript and Python names, with examples in both languages. For a guided first run, use the [quickstart](/sandboxes/quickstart); for what Sandboxes are, read the [overview](/sandboxes).
 
 ## Install and authenticate
 
@@ -99,7 +99,7 @@ sandbox = Sandbox.create(
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | Set the remaining lifetime, at least 1000 ms. |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | Queue a pause or resume and return at once. |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | Wait for `paused` or `running`; throw if the pause failed. |
-| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Copy a running sandbox 1–10 times, memory and processes included. |
+| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Copy a running sandbox 1 to 10 times, memory and processes included. |
 | `sandbox.snapshot(name, { poolSize })` | `sandbox.snapshot(name, pool_size=...)` | Save memory and `/workspace` files as a private snapshot. |
 | `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | Wait until a snapshot is ready. |
 | `Sandbox.restore(snapshotId)` | `Sandbox.restore(snapshot_id)` | Start a new sandbox from a snapshot. |
@@ -136,7 +136,7 @@ if result.exit_code != 0:
 sandbox.process.exec_(["grep", "-rn", "--", user_query, "/workspace"])
 ```
 
-Command results contain stdout, stderr, and the exit code. A nonzero exit code is a result you check; request failures throw. Command timeouts are limited to 1–600 seconds. `process.exec` accepts `envs`, `workdir`, and `user`; commands run as `root` unless you pass `user`. Create-time `envs` reach every command in a Firecracker sandbox; a pod sandbox ignores them, so pass them per command there.
+Command results contain stdout, stderr, and the exit code. A nonzero exit code is a result you check; request failures throw. Command timeouts are limited to 1 to 600 seconds. `process.exec` accepts `envs`, `workdir`, and `user`; commands run as `root` unless you pass `user`. Create-time `envs` reach every command in a Firecracker sandbox; a pod sandbox ignores them, so pass them per command there.
 
 ## Files
 
@@ -282,4 +282,4 @@ The raw API creates a sandbox with no expiration unless you pass `timeoutMs`.
 
 ## Storage and billing
 
-Billing, egress, and what survives a stop are described once, in [storage and billing](/sandboxes#storage-and-billing). Sizes and hourly prices are in [limits](/platform/limits#sandbox-sizes).
+For billing, egress and files that survive a stop, see [storage and billing](/sandboxes#storage-and-billing). Sizes and hourly prices are in [limits](/platform/limits#sandbox-sizes).

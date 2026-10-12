@@ -11,7 +11,7 @@ description: "Run AI-generated code in Firecracker microVMs with Lizard SDK or L
 <span id="resources--limits" />
 <span id="ways-to-drive-sandboxes" />
 
-Sandboxes on Lizard (lizard.build) are isolated Linux machines where an AI agent runs code it did not write. Each sandbox is a Firecracker microVM with its own kernel. Your code creates one with Lizard SDK (`@lizard-build/sdk` for TypeScript, `lizard-sdk` for Python), or you run `lizard sandbox create` in a terminal; then you run commands, read and write files, and open ports. In a test on 2026-10-12, the median time from creating a sandbox to its first Python output was 228 ms.
+Sandboxes are isolated Linux machines for running code and AI agent tasks on Lizard. Each sandbox is a Firecracker microVM with its own kernel. Create one with Lizard SDK (`@lizard-build/sdk` for TypeScript, `lizard-sdk` for Python) or run `lizard sandbox create` in a terminal. You can then run commands, read and write files, and open ports. In a test on 2026-10-12, the median time from creating a sandbox to its first Python output was 228 ms.
 
 ## When to use Sandboxes
 
@@ -60,7 +60,7 @@ snapshot -> new sandbox (restore)
 
 Choose a size when you create a sandbox: Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, the default), or Large (8 vCPU / 16 GB). See [sizes and prices](/platform/limits#sandbox-sizes). Select a region explicitly when needed; a catalog entry does not guarantee free capacity.
 
-The SDK and CLI default to a five-minute lifetime. The raw API and dashboard default to no expiration. Set an explicit lifetime: `timeoutMs: 0` at creation disables expiration; a positive value sets a deadline. `setTimeout` accepts 1000–2147483647 ms, not zero. Commands do not reset the deadline. This is not an idle timer.
+The SDK and CLI default to a five-minute lifetime. The raw API and dashboard default to no expiration. Set an explicit lifetime: `timeoutMs: 0` at creation disables expiration; a positive value sets a deadline. `setTimeout` accepts 1000 to 2147483647 ms, not zero. Commands do not reset the deadline. This is not an idle timer.
 
 ## Storage and billing
 

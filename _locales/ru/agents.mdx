@@ -6,7 +6,7 @@ description: "Пусть Claude Code, Codex или Cursor развертываю
 
 # Агенты для кодирования
 
-Claude Code, Codex, Cursor и другие AI-агенты для кодирования развертывают приложения и управляют ими в Lizard (lizard.build) через Lizard CLI. Один раз установите Lizard Skill командой `npx skills add lizard-build/skill -g`; после этого агент загружает встроенное в CLI руководство командой `lizard skills get core --json` и читает флаги любой команды через `--help --json`, поэтому ему никогда не нужно угадывать. Клиенты с поддержкой MCP, например ChatGPT и Claude, могут вместо этого использовать [Lizard MCP](#lizard-mcp). Полный пример развертывания из агента — в руководстве [Развёртывание из Claude Code, Codex или Cursor](/guides/deploy-from-coding-agent).
+Claude Code, Codex, Cursor и другие AI-агенты для разработки развертывают приложения и управляют ими в Lizard (lizard.build) через Lizard CLI. Один раз установите Lizard Skill командой `npx skills add lizard-build/skill -g`; после этого агент загружает встроенное в CLI руководство командой `lizard skills get core --json` и читает флаги любой команды через `--help --json`, чтобы узнать доступные параметры. Клиенты с поддержкой MCP, например ChatGPT и Claude, могут вместо этого использовать [Lizard MCP](#lizard-mcp). Полный пример развертывания с агентом смотрите в руководстве [Развёртывание из Claude Code, Codex или Cursor](/guides/deploy-from-coding-agent).
 
 <span id="the-embedded-skill" />
 
@@ -134,7 +134,7 @@ claude mcp add --transport http lizard https://employ-woman-g1q2.us-east-1.onliz
 
 ## Хостинг собственного MCP-сервера
 
-Агент, использующий Lizard CLI, и приложение, предоставляющее MCP — это отдельные рабочие процессы. Команды CLI, описанные выше, не предоставляют MCP-транспорт. Чтобы развернуть собственный сервер с Streamable HTTP, следуйте [руководству по удаленному MCP](/guides/deploy-mcp-server).
+Работа агента через Lizard CLI и запуск приложения с MCP требуют разных действий. Команды CLI, описанные выше, не предоставляют MCP-транспорт. Чтобы развернуть собственный сервер с Streamable HTTP, следуйте [руководству по удаленному MCP](/guides/deploy-mcp-server).
 
 <span id="see-also" />
 

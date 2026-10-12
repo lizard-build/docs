@@ -28,14 +28,14 @@ description: "Создайте первый sandbox с Lizard SDK на TypeScrip
 <span id="full-example" />
 <span id="next-steps" />
 
-Этот быстрый старт создаёт sandbox с помощью Lizard SDK, запускает в нём Python, записывает файл, открывает порт и освобождает ресурсы. У каждого шага есть код на TypeScript и Python. Вам нужны аккаунт Lizard (lizard.build) на Pro или в пробном периоде, API-ключ и проект. Чтобы сначала узнать, что такое Sandboxes, прочитайте [обзор](/sandboxes).
+В этом руководстве вы создадите sandbox с помощью Lizard SDK, запустите в нём Python, запишете файл, откроете порт и освободите ресурсы. У каждого шага есть код на TypeScript и Python. Вам нужны аккаунт Lizard (lizard.build) на Pro или в пробном периоде, API-ключ и проект. Чтобы сначала узнать, что такое Sandboxes, прочитайте [обзор](/sandboxes).
 
 <a id="authenticate" />
 <span id="install-and-authenticate" />
 
 ## Установка и вход
 
-Установите Lizard SDK и создайте API-ключ в Settings → API keys или командой [`lizard keys create <name>`](/cli/keys). Сохраните его в `LIZARD_API_KEY`. Каждый sandbox принадлежит проекту; в примерах его ID передаётся как `projectId` (в Python — `project_id`), а `project` принимает также slug или имя.
+Установите Lizard SDK и создайте API-ключ в Settings → API keys или командой [`lizard keys create <name>`](/cli/keys). Сохраните его в `LIZARD_API_KEY`. Каждый sandbox принадлежит проекту; в примерах его ID передаётся как `projectId` (в Python: `project_id`), а `project` принимает также slug или имя.
 
 ```sh
 npm install @lizard-build/sdk
@@ -74,13 +74,13 @@ finally:
     sandbox.kill()
 ```
 
-Ненулевой код завершения — это результат, а не ошибка: проверяйте `exitCode` (в Python — `exit_code`) сами.
+Ненулевой код завершения возвращается в результате, а не вызывает исключение: проверяйте `exitCode` (в Python: `exit_code`) сами.
 
 <span id="files" />
 
 ## Файлы
 
-`fs.write` записывает текст или байты, `fs.read` читает текст, а `fs.readBytes` (в Python — `read_bytes`) читает байты. Файлы живут, только пока работает sandbox, если не записать их на [Persistent Volume](/sandboxes/volumes) в `/workspace`.
+`fs.write` записывает текст или байты, `fs.read` читает текст, а `fs.readBytes` (в Python: `read_bytes`) читает байты. Файлы доступны, только пока работает sandbox, если не записать их на том [Persistent Volumes](/sandboxes/volumes) в `/workspace`.
 
 ```ts
 await sandbox.fs.write("/tmp/task.py", "print(42)\n");
@@ -99,7 +99,7 @@ print(result.stdout)
 
 ## Публичные порты
 
-Запустите сервер на `0.0.0.0`, затем вызовите `exposePort(port)` (в Python — `expose_port`). Он возвращает `url`, `hostname` и `accessToken`. Порт закрыт: откройте `url` в браузере (в нём есть `?lizard_token=`) или передайте токен в заголовке `X-Lizard-Access-Token`. Запросы без токена получают 401. После остановки sandbox порт больше не обслуживается. Про dev-сервер, который собрал агент, см. [URL предпросмотра](/sandboxes/preview-urls).
+Запустите сервер на `0.0.0.0`, затем вызовите `exposePort(port)` (в Python: `expose_port`). Он возвращает `url`, `hostname` и `accessToken`. Порт закрыт: откройте `url` в браузере (в нём есть `?lizard_token=`) или передайте токен в заголовке `X-Lizard-Access-Token`. Запросы без токена получают 401. После остановки sandbox порт больше не обслуживается. Про dev-сервер, который собрал агент, см. [URL предпросмотра](/sandboxes/preview-urls).
 
 ```ts
 await sandbox.process.exec(
@@ -124,7 +124,7 @@ print(exposed.url)  # open in a browser
 
 ## Подключение к работающему sandbox
 
-Сохраните ID sandbox (`sandbox.sandboxId`, в Python — `sandbox.sandbox_id`) и вызовите `Sandbox.connect(id)` из другого процесса или в более позднем запросе, чтобы получить объект для того же sandbox. `connect` только проверяет, что sandbox существует: он не возобновляет приостановленный sandbox и выбрасывает `NotFoundError`, если sandbox уже остановлен через `kill` или его срок истёк.
+Сохраните ID sandbox (`sandbox.sandboxId`, в Python: `sandbox.sandbox_id`) и вызовите `Sandbox.connect(id)` из другого процесса или в более позднем запросе, чтобы получить объект для того же sandbox. `connect` только проверяет, что sandbox существует: он не возобновляет приостановленный sandbox и выбрасывает `NotFoundError`, если sandbox уже остановлен через `kill` или его срок истёк.
 
 ```ts
 const connected = await Sandbox.connect(sandbox.sandboxId);
@@ -169,11 +169,11 @@ const copy = await Sandbox.restore(saved.id);
 
 ## Очистка и дальнейшие шаги
 
-Вызывайте `kill()`, когда задача завершена, как это делают примеры в блоке `finally`. В Python `with Sandbox.create(...) as sandbox:` останавливает sandbox при выходе из блока. Забытый sandbox остановится по сроку жизни — через пять минут после создания, если вы не задали другой срок; см. [ресурсы и сроки жизни](/sandboxes#resources-and-timeouts).
+Вызывайте `kill()`, когда задача завершена, как это делают примеры в блоке `finally`. В Python `with Sandbox.create(...) as sandbox:` останавливает sandbox при выходе из блока. Если вы не остановите sandbox, он завершит работу через пять минут после создания либо по истечении заданного вами срока; см. [ресурсы и сроки жизни](/sandboxes#resources-and-timeouts).
 
 - Все вызовы, параметры и ошибки: [справочник по Sandbox API и SDK](/sandboxes/sdk-reference).
 - Код от LLM с сохранением состояния между вызовами: [интерпретатор кода](/sandboxes/code-interpreter).
 - Файлы, которые переживают sandbox: [Persistent Volumes](/sandboxes/volumes).
-- Агент для кодирования в sandbox: [Claude Code](/sandboxes/guides/claude-code) или [OpenCode](/sandboxes/guides/opencode).
+- Агент для разработки в sandbox: [Claude Code](/sandboxes/guides/claude-code) или [OpenCode](/sandboxes/guides/opencode).
 - Те же шаги из терминала: [`lizard sandbox`](/cli/sandbox). В браузере: [кабинет Sandboxes](/sandboxes/dashboard).
 - Размеры, цены и сколько sandbox может работать одновременно: [лимиты](/platform/limits#sandboxes). Обзор продукта и сравнение: [Sandboxes](https://lizard.build/sandboxes).

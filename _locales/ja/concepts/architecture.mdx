@@ -1,13 +1,13 @@
 ---
 title: "アーキテクチャ: workspace、project、service"
-description: "Lizard が作業を workspace、project、service にどのように整理するかに加えて、managed addons、cross-resource references、injected variables について説明します。"
+description: "Lizard の workspace、project、service の関係と、マネージドアドオン、リソース間参照、自動で設定される変数を説明します。"
 ---
 
 <span id="architecture" />
 
 # アーキテクチャ
 
-Lizard は、デプロイするすべてのものを 3 層の階層に整理し、さらに project に紐づく managed addons を提供します。
+Lizard は、デプロイするリソースを 3 層で管理します。マネージドアドオンはプロジェクトに追加します。
 
 ```
 workspace
@@ -24,20 +24,20 @@ workspace
 
 ## ワークスペース
 
-**workspace** はアカウントまたは organization のレベルです。少なくとも 1 つの workspace に所属し、課金、メンバー、project はその配下にあります。アクセスできるものを一覧表示するには、次を実行します:
+**ワークスペース** は、アカウントや組織ごとに課金、メンバー、プロジェクトをまとめる単位です。ユーザーは少なくとも 1 つに所属します。アクセスできるワークスペースを一覧表示するには、次を実行します:
 
 ```bash
 lizard workspace list
 lizard whoami        # shows your active workspace
 ```
 
-同じ project 名が複数の workspace に存在する場合に区別できるよう、多くのコマンドは `-w, --workspace <ws>` を受け付けます。
+複数のワークスペースに同名のプロジェクトがある場合に区別できるよう、多くのコマンドは `-w, --workspace <ws>` を受け付けます。
 
 <span id="project" />
 
 ## プロジェクト
 
-**project** は、workspace 内で関連する service と addons をまとめる単位です。作業ディレクトリは project に *link* され、その link（`~/.lizard/config.json` に保存されます）によって CLI は対象を判別します。
+**プロジェクト** は、ワークスペース内で関連するサービスとアドオンをまとめる単位です。作業ディレクトリをプロジェクトに *リンク* すると、CLI はそのリンクを基に対象を選びます。リンクは `~/.lizard/config.json` に保存します。
 
 ```bash
 lizard init --name my-project   # create or select a project, link the cwd
@@ -47,18 +47,18 @@ lizard unlink                   # remove the link
 lizard project list             # all projects in the workspace
 ```
 
-> **ヒント:** project には repo 名またはディレクトリ名を使い、service にはアプリらしい名前（`api`、`worker`、`web`）を使ってください。
+> **ヒント:** プロジェクトにはリポジトリ名またはディレクトリ名を使い、サービスには用途がわかる名前（`api`、`worker`、`web`）を使ってください。
 
 <span id="service" />
 
 ## サービス
 
-**service** は単一のデプロイ可能な unit です。その source は次のいずれかです:
+**サービス** はデプロイの単位です。ソースは次のいずれかです:
 
-- **`github`** — 接続された GitHub repo。追跡対象ブランチへの push により自動で再デプロイされます。
-- **`upload`** — `lizard up` でアップロードされた tarball。
+- **`github`**：接続された GitHub リポジトリ。追跡対象ブランチへの push により自動で再デプロイされます。
+- **`upload`**：`lizard up` でアップロードされた tarball。
 
-実行中の各 service は、それぞれ独立した **isolated pod** として動作し、default-deny の network policy、生成された `<name>-<suffix>.onlizard.com` domain（古い service は `<words>.<region>.onlizard.com` のまま）、自動 TLS を備えます。この分担、つまりコンテナはあなたが用意し、platform がそれを実行するという形は [container as a service](https://lizard.build/blog/container-as-a-service) であり、blog ではそれでもなお利用者側に残る責任について説明しています。service の確認と管理には次を使います:
+各サービスは **隔離された Pod** で動作します。ネットワークポリシーはデフォルトで通信を拒否し、生成ドメイン `<name>-<suffix>.onlizard.com`（古いサービスは `<words>.<region>.onlizard.com` を維持）と自動 TLS が付属します。コンテナは利用者が用意し、Lizard が実行します。この [container as a service](https://lizard.build/blog/container-as-a-service) という仕組みと、利用者が管理する範囲をブログで説明しています。サービスの確認と管理には次を使います:
 
 ```bash
 lizard ps                       # list services with status + URL
@@ -68,44 +68,44 @@ lizard service rename <new-name> --service <svc>
 lizard service delete --service <svc>
 ```
 
-サービス configuration fields は **flat** で、wire schema に 1:1 で対応しています（例: `repoUrl`、`branch`、`buildCommand`、`startCommand`、`containerPort`、`rootDirectory`）。`build.*` / `deploy.*` のようなネストはありません。完全な一覧は [`lizard service`](/cli/service) を参照してください。
+サービスの設定フィールドは **フラット** で、API のスキーマに 1:1 で対応しています（例: `repoUrl`、`branch`、`buildCommand`、`startCommand`、`containerPort`、`rootDirectory`）。`build.*` / `deploy.*` のようなネストはありません。完全な一覧は [`lizard service`](/cli/service) を参照してください。
 
 <span id="app-vs-worker-services" />
 
 ### App と worker service
 
-デフォルトでは、service はポート（デフォルトは `3000`）で待ち受けし、その domain で提供される **HTTP app** です。ポートで待ち受けしない service、たとえば queue consumer、reconciler、polling loop は、`containerPort=0` を設定して [**worker mode**](/deploy/workers) で実行する必要があります。worker はポートの注入、到達性の health check、load-balancer への登録をスキップします。
+デフォルトのサービスは、ポート（既定値は `3000`）で待ち受け、割り当てたドメインで公開する **HTTP アプリ** です。キューコンシューマー、reconciler、ポーリングループなど、ポートで待ち受けないサービスは、`containerPort=0` を設定して [**worker mode**](/deploy/workers) で実行します。ワーカーはポートの注入、ポートのヘルスチェック、ロードバランサーへの登録を行いません。
 
 <span id="managed-addons" />
 
 ## マネージドアドオン
 
-**addons** は、project ごとにプロビジョニングする Managed Postgres、Managed Redis、および Managed Object Storage（S3 互換）です:
+**アドオン** は、プロジェクトごとに作成する Managed Postgres、Managed Redis、および Managed Object Storage（S3 互換）です:
 
 ```bash
 lizard add postgres redis s3
 ```
 
-各 addon は固定された一連の環境変数を公開し、service はそれらを **reference**（`${{<addon-name>.KEY}}`）によって利用します。[Managed Addons](/addons) を参照してください。
+各アドオンは決まった環境変数を公開し、サービスはそれらを **参照**（`${{<addon-name>.KEY}}`）によって利用します。[Managed Addons](/addons) を参照してください。
 
 <span id="cross-resource-references" />
 
 ## リソース間参照
 
-任意の service または addon の値は、別の resource の環境変数から次の形式で参照できます:
+サービスまたはアドオンの値は、別のリソースの環境変数から次の形式で参照できます:
 
 ```
 ${{<name>.<KEY>}}
 ```
 
-reference はデプロイ時に、対象のマージ済み環境に対して解決されます。reference は対象の **現在の名前** と照合されます。service または addon の名前を変更した場合は、古い名前を使っているすべての reference を更新してください。存在しない対象または key への reference は空文字列に解決されます（デプロイは**失敗しません**）。失敗するのは circular references の場合だけです。
+Lizard はデプロイ時に、参照先の環境変数を統合した値を使って参照を解決します。参照先は **現在の名前** で指定します。サービスやアドオンの名前を変えた場合は、古い名前を使う参照をすべて更新してください。参照先やキーが存在しない場合は空文字列になります（デプロイは**失敗しません**）。エラーになるのは循環参照の場合だけです。
 
 ```bash
 # Wire a service to the project's Postgres
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 ```
 
-reference が解決されたことを確認します。ビルドログには空の値に解決されたすべての reference について警告が出力され、`secrets list` には保存されている内容が表示されます:
+参照の解決結果を確認してください。ビルドログには空の値になった参照の警告が出力され、`secrets list` には保存されている内容が表示されます:
 
 ```bash
 lizard logs --build --service api
@@ -116,14 +116,14 @@ lizard secrets list --service api --show
 
 ## プラットフォーム注入変数
 
-すべての service は自動的に次の変数を受け取ります（これらは上書きできません）:
+すべてのサービス は自動的に次の変数を受け取ります（これらは上書きできません）:
 
 | 変数 | 説明 |
 |----------|-------------|
 | `PORT` | アプリが待ち受けるべきポート（worker mode では省略） |
-| `LIZARD_SERVICE_NAME` | service の名前 |
-| `LIZARD_PROJECT_ID` | project ID |
-| `LIZARD_PUBLIC_DOMAIN` | service の public domain（domain が割り当てられると設定されます） |
-| `LIZARD_PRIVATE_DOMAIN` | service の private hostname `<host>.lizard.internal`。同じ project から到達できます |
+| `LIZARD_SERVICE_NAME` | サービス名 |
+| `LIZARD_PROJECT_ID` | プロジェクト ID |
+| `LIZARD_PUBLIC_DOMAIN` | サービスの公開ドメイン（ドメインの割り当て時に設定） |
+| `LIZARD_PRIVATE_DOMAIN` | サービスのプライベートホスト名 `<host>.lizard.internal`。同じプロジェクトから到達できます |
 
-これらが独自の変数とどのように相互作用するか、および完全な優先順位については [変数 & Secrets](/variables) を参照してください。
+独自の変数との関係と優先順位については [変数 & Secrets](/variables) を参照してください。

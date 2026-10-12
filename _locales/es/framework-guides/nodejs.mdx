@@ -7,7 +7,7 @@ description: "Aloja una app de Node.js o Express en Lizard: lizardpack lee packa
 
 # Desplegar una app de Node.js (Express)
 
-Para alojar una app de Node.js en Lizard (lizard.build), despliega una carpeta con un `package.json`. lizardpack elige el gestor de paquetes según tu archivo de bloqueo, instala las dependencias, ejecuta el script `build` si existe e inicia la app con el script `start` en el puerto `3000`. Usa Node.js 22 salvo que `.nvmrc` o `engines.node` indiquen otra versión major. Lizard pasa el puerto en `PORT`; escucha en él.
+Para alojar una app de Node.js en Lizard (lizard.build), despliega una carpeta con un `package.json`. lizardpack elige el gestor de paquetes según tu archivo de bloqueo, instala las dependencias, ejecuta el script `build` si existe e inicia la app con el script `start` en el puerto `3000`. Usa Node.js 22 salvo que `.nvmrc` o `engines.node` indiquen otra versión principal. Lizard pasa el puerto en `PORT`; escucha en él.
 
 **Estado de las pruebas:** el ejemplo de Express de abajo funcionó localmente con Express 5.3.0, y la ruta de base de datos, con pg 8.23.1 contra PostgreSQL 14. Revisamos su plan de compilación con lizardpack, el planificador de compilación que ejecuta Lizard. Todavía no lo hemos desplegado de principio a fin con esta guía.
 
@@ -78,7 +78,7 @@ curl http://localhost:3000/healthz
 | Paso | Qué ocurre |
 |---|---|
 | Gestor de paquetes | `bun.lock` o `bun.lockb`: Bun. `pnpm-lock.yaml`: pnpm. `yarn.lock`: Yarn. `package-lock.json`: `npm ci`. Sin archivo de bloqueo: `npm install`. |
-| Versión de Node.js | `.nvmrc`, luego `.node-version`, luego `.tool-versions`, luego `engines.node`. Solo la versión major, sobre `node:<major>-slim`. Predeterminada: `22`. |
+| Versión de Node.js | `.nvmrc`, luego `.node-version`, luego `.tool-versions`, luego `engines.node`. Solo la versión principal, sobre `node:<major>-slim`. Predeterminada: `22`. |
 | Compilación | El script `build`, si `package.json` lo tiene, en una etapa aparte que incluye tus devDependencies |
 | Inicio | El script `start`; si no, `node <main>`; si no, el primero de `server.js`, `index.js`, `app.js`, `main.js`, `dist/index.js` |
 | Ejecución | `NODE_ENV=production`, puerto `3000` |
@@ -145,7 +145,7 @@ app.get("/db", async (req, res) => {
 });
 ```
 
-Express 5 pasa una promesa rechazada de una ruta a su manejador de errores, así que una consulta fallida devuelve HTTP 500 en lugar de tumbar el proceso. Ejecuta las migraciones desde tu equipo con la URL pública de la base de datos:
+Express 5 pasa una promesa rechazada de una ruta a su manejador de errores, así que una consulta fallida devuelve HTTP 500 en lugar de detener el proceso. Ejecuta las migraciones desde tu equipo con la URL pública de la base de datos:
 
 ```bash
 lizard run --service postgres -- npm run migrate
@@ -173,8 +173,8 @@ El log de ejecución muestra `listening on 3000`. Solicita `/healthz` y `/db` en
 |---|---|
 | `npm ci` falla porque el archivo de bloqueo no está sincronizado | Ejecuta `npm install` localmente y haz commit de `package-lock.json`. |
 | `nodemon: not found` o `tsx: not found` | Esas herramientas son devDependencies y no se instalan para el inicio. Añade un paso `build` o mueve la herramienta a `dependencies`. |
-| El despliegue nunca llega a estar saludable | Escucha en `process.env.PORT`. Un puerto fijo como `5000` no coincide con el puerto del servicio. Consulta [el servicio nunca llega a estar saludable](/deploy/troubleshooting/service-never-healthy). |
-| Versión de Node.js incorrecta | Pon la versión major en `.nvmrc`, por ejemplo `24`, y vuelve a desplegar. |
+| El despliegue nunca alcanza el estado healthy | Escucha en `process.env.PORT`. Un puerto fijo como `5000` no coincide con el puerto del servicio. Consulta [el servicio nunca alcanza el estado healthy](/deploy/troubleshooting/service-never-healthy). |
+| Versión de Node.js incorrecta | Pon la versión principal en `.nvmrc`, por ejemplo `24`, y vuelve a desplegar. |
 | `Cannot use import statement outside a module` | Añade `"type": "module"` a `package.json` o usa `require`. |
 
 Un proceso de Node.js que no sirve HTTP, como un consumidor de cola o un [bot de Discord](/guides/discord-bot), se ejecuta como [worker en segundo plano](/deploy/workers).

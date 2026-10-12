@@ -5,7 +5,7 @@ description: "Install and upgrade the Lizard CLI, authenticate, and look up glob
 
 # CLI Reference
 
-Lizard CLI (`lizard`) deploys and manages apps, databases and Sandboxes on Lizard (lizard.build) from a terminal, a CI job or a coding agent. This page covers installation, global flags, exit codes, and runtime discovery. Every command has its own reference page in the sidebar — see [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets), and the rest. For an overview of what the CLI does, see the [Lizard CLI page](https://lizard.build/cli).
+Lizard CLI (`lizard`) deploys and manages apps, databases and Sandboxes on Lizard from a terminal, a CI job or a coding agent. This page covers installation, global flags, exit codes, and runtime discovery. Each command has a reference page in the sidebar. See [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets), and the rest. For an overview of what the CLI does, see the [Lizard CLI page](https://lizard.build/cli).
 
 > Reference written for Lizard CLI **v4.0.34**. Run `lizard <cmd> --help --json` for the exact, version-matched schema of any command.
 
@@ -24,7 +24,7 @@ On Windows, run `irm https://lizard.build/api/cli/install.ps1 | iex` in PowerShe
 
 On macOS and Linux, the binary from the install script also updates itself in the background, at most once every 6 hours. It skips the check when `CI` or `LIZARD_NO_UPDATE=1` is set. The Windows binary does not update itself: run the installer again. An npm install updates through npm: `lizard upgrade` prints the command.
 
-Always use the globally installed `lizard` binary — **not** `npx`. See [Quickstart](/getting-started#1-install-the-cli) for permission-error fixes.
+Use the globally installed `lizard` binary rather than `npx`. See [Quickstart](/getting-started#1-install-the-cli) for permission-error fixes.
 
 ## Authentication
 
@@ -74,7 +74,7 @@ lizard <cmd> --help --json
 lizard <cmd> <sub> --help --json     # e.g. lizard service set --help --json
 ```
 
-This always reflects your installed version — prefer it over guessing flag shapes. It is also how an agent learns the CLI without being trained on it: see [deploying from Claude Code](https://lizard.build/blog/deploy-from-claude-code).
+The output lists the arguments and flags your installed version accepts. It is also how an agent learns the CLI without being trained on it: see [deploying from Claude Code](https://lizard.build/blog/deploy-from-claude-code).
 
 ## Configuration & state
 

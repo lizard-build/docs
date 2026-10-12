@@ -72,7 +72,7 @@ print(res.status_code)
 - **Ihr Server sieht das Token nie.** Lizard entfernt es aus Query, Header und Cookie, bevor es die Anfrage weiterleitet. Die Anfrage behält ihren ursprünglichen `Host`-Header.
 - **WebSockets funktionieren.** Upgrade-Anfragen werden durchgereicht, daher funktionieren Dev-Server mit Hot Reload und Terminal-UIs.
 
-Behandeln Sie eine Vorschau-URL wie ein Passwort: Wer sie hat, kann jeden freigegebenen Port dieser Sandbox nutzen.
+Halten Sie eine Vorschau-URL geheim. Wer sie hat, kann jeden freigegebenen Port dieser Sandbox nutzen.
 
 <span id="url-format-and-lifetime" />
 
@@ -82,7 +82,7 @@ Behandeln Sie eine Vorschau-URL wie ein Passwort: Wer sie hat, kann jeden freige
 https://<sandbox-id>-<port>.sandbox.<region>.onlizard.com
 ```
 
-Die URL funktioniert, solange die Sandbox läuft, und hört auf zu funktionieren, wenn die Sandbox stoppt. Die Plattform reserviert Port `49983`; Sie können ihn nicht freigeben. Eine Sandbox aus dem SDK oder der CLI lebt standardmäßig fünf Minuten; übergeben Sie ein längeres `timeoutMs` oder `--timeout` für eine Vorschau, die offen bleiben soll. Siehe [Limits für die Lebensdauer](/platform/limits#sandbox-lifetime).
+Die URL funktioniert, solange die Sandbox läuft. Mit dem Stopp endet auch der Zugriff. Die Plattform reserviert Port `49983`; Sie können ihn nicht freigeben. Eine Sandbox aus dem SDK oder der CLI lebt standardmäßig fünf Minuten; übergeben Sie ein längeres `timeoutMs` oder `--timeout` für eine Vorschau, die offen bleiben soll. Siehe [Limits für die Lebensdauer](/platform/limits#sandbox-lifetime).
 
 <span id="errors" />
 

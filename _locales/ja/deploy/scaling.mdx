@@ -22,7 +22,7 @@ lizard scale --service api --cpu 2 --memory 2048
 |------|-----------|----------------|
 | `--replicas <n>` | apps | `1` からプランの[上限](/platform/limits#applications)まで。トライアル中は `1`、Pro と Enterprise では `5` |
 | `--cpu <cores>` | apps と addons | whole cores: `1`, `2`, `3`, `4` |
-| `--memory <mb>` | apps と addons | `128`–`8192` MB (1 MB 刻み) |
+| `--memory <mb>` | apps と addons | `128`〜`8192` MB (1 MB 刻み) |
 | `--storage <mb>` | **addons only**, grow-only | `512`, `1024`, `2048`, `4096`, `8192`, `16384` |
 
 フラグは 1 つのコマンドで組み合わせて指定できます。レプリカの変更はリビルドなしでロールアウトされます。CPU とメモリの変更では、新しい上限でサービスが再起動されます。
@@ -74,6 +74,6 @@ lizard metrics --cost     # include cost
 
 ## 関連項目
 
-- [オブザーバビリティ → Metrics](/observability/metrics) — リソースとコストの監視。
-- [`lizard scale`](/cli/scale) — 完全なコマンドリファレンス。
-- [CaaS のコストを見積もる方法](https://lizard.build/blog/container-as-a-service#how-to-estimate-caas-cost) — 請求額を見積もる前に比較すべき計測項目。
+- [オブザーバビリティ → Metrics](/observability/metrics)：リソースとコストの監視。
+- [`lizard scale`](/cli/scale)：完全なコマンドリファレンス。
+- [CaaS のコストを見積もる方法](https://lizard.build/blog/container-as-a-service#how-to-estimate-caas-cost)：請求額を見積もる前に比較すべき計測項目。

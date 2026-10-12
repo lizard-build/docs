@@ -1,5 +1,5 @@
 ---
-description: "Claude Code、Codex、Cursor または CLI から、アプリ、ワーカー、AI エージェントを Lizard にデプロイし、Managed Postgres、Redis、Object Storage、Sandboxes を追加します。"
+description: "Claude Code、Codex、Cursor または CLI から、アプリ、ワーカー、AI エージェントを Lizard にデプロイし、Managed Postgres、Managed Redis、Managed Object Storage、Sandboxes を追加します。"
 ---
 
 <span id="lizard-documentation" />
@@ -10,7 +10,7 @@ description: "Claude Code、Codex、Cursor または CLI から、アプリ、�
 
 ## Lizard とは?
 
-Lizard (lizard.build) は、アプリ、バックグラウンドワーカー、AI エージェントをデプロイするためのクラウドプラットフォームです。Claude Code、Codex、Cursor から、またはターミナルで Lizard CLI を使ってデプロイします: `lizard up` は現在のフォルダをアップロードし、`lizard add -r owner/repo` は GitHub リポジトリをデプロイします。Lizard は自社のサーバー上でイメージをビルドするため、手元のマシンに Docker は不要です。また、各 Web サービスに `onlizard.com` 上の HTTPS アドレスを割り当てます。同じ CLI で Managed Postgres、Managed Redis、S3 互換の Managed Object Storage をプロジェクトに追加し、`${{postgres.DATABASE_URL}}` のような参照を通じてサービスに接続します。Sandboxes は、それぞれ独自のカーネルを持つ Firecracker microVM で、AI エージェントが自分で書いていないコードを実行する場所です。コードからは TypeScript または Python 向けの Lizard SDK で作成します。Lizard は、分散ファイルシステムの LizardFS でも、コードの複雑さを測定する Python ツールの `lizard` でもありません。
+Lizard (lizard.build) は、アプリ、バックグラウンドワーカー、AI エージェントをデプロイするためのクラウドプラットフォームです。Claude Code、Codex、Cursor から、またはターミナルで Lizard CLI を使ってデプロイします: `lizard up` は現在のフォルダをアップロードし、`lizard add -r owner/repo` は GitHub リポジトリをデプロイします。Lizard は自社のサーバー上でイメージをビルドするため、手元のマシンに Docker は不要です。また、各 Web サービスに `onlizard.com` 上の HTTPS アドレスを割り当てます。同じ CLI で Managed Postgres、Managed Redis、S3 互換の Managed Object Storage をプロジェクトに追加し、`${{postgres.DATABASE_URL}}` のような参照を通じてサービスに接続します。Sandboxes は、それぞれ独自のカーネルを持つ Firecracker microVM で、AI エージェントがコードやタスクを実行する場所です。コードからは TypeScript または Python 向けの Lizard SDK で作成します。Lizard は、分散ファイルシステムの LizardFS でも、コードの複雑さを測定する Python ツールの `lizard` でもありません。
 
 <span id="choose-a-task" />
 
@@ -19,7 +19,7 @@ Lizard (lizard.build) は、アプリ、バックグラウンドワーカー、A
 | やりたいこと | ここから開始 |
 |---|---|
 | 最初のアプリをデプロイする | [App quickstart](/getting-started) |
-| Next.js、React、Vue、または Python アプリをデプロイする | [フレームワーク guides](/framework-guides) |
+| Next.js、React、Vue、または Python アプリをデプロイする | [フレームワークガイド](/framework-guides) |
 | Claude Code または別のコーディングエージェントからデプロイする | [コーディング エージェント ガイド](/guides/deploy-from-coding-agent) |
 | Dockerfile のあるアプリをデプロイする | [Dockerfile でデプロイする](/deploy/dockerfile) |
 | リモート MCP サーバーをホストする | [Remote MCP guide](/guides/deploy-mcp-server) |
@@ -60,7 +60,7 @@ Lizard はサーバー上でイメージをビルドするため、この方法�
 ## 適切な詳細レベルを見つける
 
 - [Guides](/guides) は、セットアップから結果確認までタスク全体を扱います。
-- [フレームワーク guides](/framework-guides) は、各スタック向けのビルドコマンド、アダプター、ポート、確認項目を示します。
+- [フレームワークガイド](/framework-guides) は、各スタック向けのビルドコマンド、アダプター、ポート、確認項目を示します。
 - [デプロイ](/deploy) は、GitHub とローカルのソース、ワーカー、スケーリング、リージョンを扱います。
 - [Core concepts](/concepts) は、プロジェクト、ビルド、デプロイについて説明します。
 - [可観測性](/observability) は、ログ、メトリクス、コスト、デプロイ履歴を扱います。

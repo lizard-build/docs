@@ -1,5 +1,5 @@
 ---
-description: "lizard run ejecuta un comando en tu máquina con el proyecto de un servicio y los secretos del servicio inyectados. Qué inyecta y cómo comprobar lo que ve la app."
+description: "lizard run ejecuta un comando en tu máquina con los secretos del proyecto y del servicio en su entorno. Qué inyecta y cómo comprobar lo que ve la app."
 ---
 
 # lizard run
@@ -39,8 +39,8 @@ lizard run [flags] -- <command>
 
 | Bandera | Descripción |
 |------|-------------|
-| `-s, --service <name>` | Servicio cuyo env se debe inyectar (por defecto, el servicio vinculado) |
-| `--no-service` | No inyectar el env del servicio, solo los secretos del proyecto |
+| `-s, --service <name>` | Servicio cuyas variables de entorno se deben cargar (por defecto, el servicio vinculado) |
+| `--no-service` | No cargar las variables de entorno del servicio, solo los secretos del proyecto |
 | `-p, --project <id>` | Proyecto (por defecto, el vinculado) |
 
 <span id="examples" />
@@ -77,7 +77,7 @@ lizard run --service api -- node scripts/report.js
 
 ## Ver también
 
-- [lizard ssh](/cli/ssh) — por qué el acceso shell a los servicios está desactivado y qué usar en su lugar
-- [lizard secrets](/cli/secrets) — lista y define los valores que inyecta `run`
-- [Variables](/variables) — cómo se definen y se referencian las variables del proyecto y del servicio
-- [Alojamiento de apps en Python](https://lizard.build/blog/python-app-hosting) — ejecutar `manage.py` y otras herramientas del framework contra una base de datos desplegada
+- [lizard ssh](/cli/ssh): por qué el acceso shell a los servicios está desactivado y qué usar en su lugar
+- [lizard secrets](/cli/secrets): lista y define los valores que inyecta `run`
+- [Variables](/variables): cómo se definen y se referencian las variables del proyecto y del servicio
+- [Alojamiento de apps en Python](https://lizard.build/blog/python-app-hosting): ejecutar `manage.py` y otras herramientas del framework contra una base de datos desplegada

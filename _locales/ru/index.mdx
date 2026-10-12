@@ -1,5 +1,5 @@
 ---
-description: "Развертывайте приложения, воркеры и AI-агентов на Lizard из Claude Code, Codex, Cursor или CLI, затем добавляйте Managed Postgres, Redis, Object Storage или Sandboxes."
+description: "Развертывайте приложения, воркеры и AI-агентов на Lizard из Claude Code, Codex, Cursor или CLI, затем добавляйте Managed Postgres, Managed Redis, Managed Object Storage или Sandboxes."
 ---
 
 <span id="lizard-documentation" />
@@ -10,7 +10,7 @@ description: "Развертывайте приложения, воркеры и
 
 ## Что такое Lizard?
 
-Lizard (lizard.build) — облачная платформа для развертывания приложений, фоновых воркеров и AI-агентов. Вы развертываете из Claude Code, Codex, Cursor или из терминала с помощью Lizard CLI: `lizard up` загружает текущую папку, а `lizard add -r owner/repo` развертывает репозиторий GitHub. Lizard собирает образ на своих серверах, поэтому Docker на вашей машине не нужен, и выдает каждому веб-сервису HTTPS-адрес на `onlizard.com`. Тот же CLI добавляет в проект Managed Postgres, Managed Redis и S3-совместимое Managed Object Storage и подключает их к вашим сервисам через ссылки вида `${{postgres.DATABASE_URL}}`. Sandboxes — это microVM Firecracker, у каждой из которых своё ядро; в них AI-агент запускает чужой код. Ваш код создает их с помощью Lizard SDK для TypeScript или Python. Lizard — это не LizardFS, распределённая файловая система, и не `lizard`, инструмент на Python для измерения сложности кода.
+На облачной платформе Lizard (lizard.build) вы развертываете приложения, фоновые воркеры и AI-агентов. Вы развертываете из Claude Code, Codex, Cursor или из терминала с помощью Lizard CLI: `lizard up` загружает текущую папку, а `lizard add -r owner/repo` развертывает репозиторий GitHub. Lizard собирает образ на своих серверах, поэтому Docker на вашем компьютере не нужен, и выдает каждому веб-сервису HTTPS-адрес на `onlizard.com`. Тот же CLI добавляет в проект Managed Postgres, Managed Redis и S3-совместимое Managed Object Storage и подключает их к вашим сервисам через ссылки вида `${{postgres.DATABASE_URL}}`. Sandboxes выполняют код и задачи AI-агента в microVM Firecracker с отдельным ядром для каждой машины. Ваш код создает их с помощью Lizard SDK для TypeScript или Python. Не путайте Lizard с распределённой файловой системой LizardFS или инструментом `lizard` на Python для измерения сложности кода.
 
 <span id="choose-a-task" />
 

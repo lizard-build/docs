@@ -17,7 +17,7 @@ Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung
 |---|---|---|
 | CPU und Arbeitsspeicher | Jedes Replikat | Drei Replikate mit einer Obergrenze von 2 vCPU / 2 GiB haben zusammen eine konfigurierte Obergrenze von 6 vCPU / 6 GiB. Das ist keine Nutzungsvorhersage. |
 | Anzahl der Replikate | Service und Tarif | Ihr Plan legt das Limit fest: 1 pro App in der Testphase von Pro, 5 in Pro nach der ersten bezahlten Rechnung und in Enterprise. Die API akzeptiert höchstens 10, was nur eine Ausnahme für das Konto erreicht. |
-| Ressourcenobergrenze des Kontos | Kontoinhaber | Ein zweites Projekt erzeugt nicht zwangsläufig ein zweites Kontingent. Fragen Sie vor der Planung eines großen Bereitstellungen nach der effektiven Kontenobergrenze. |
+| Ressourcenobergrenze des Kontos | Kontoinhaber | Ein zweites Projekt erzeugt nicht zwangsläufig ein zweites Kontingent. Fragen Sie vor der Planung eines großen Deployments nach dem geltenden Kontolimit. |
 | Worker-Modus | Service | `containerPort=0` läuft ohne HTTP-Listener oder öffentliche Load-Balancer-Route. |
 | Benutzerdefinierte Domain | Hostname | Benutzerdefinierte Wildcard-Domains werden nicht akzeptiert. Verwenden Sie einen spezifischen Hostnamen und schließen Sie die Prüfungen zu Eigentümerschaft und DNS ab. |
 
@@ -96,4 +96,4 @@ Die aktuell konfigurierten Regionen umfassen US East (Virginia), `us-east-1`, un
 
 ## Vor dem Erhöhen der Skalierung
 
-Prüfen Sie aktiven Tarif, Einstellungen pro Replikat, Kontenobergrenze, Datenbank-Verbindungslimit und Wachstum des Storage zusammen. Verwenden Sie [Skalierung](/deploy/scaling), [Metriken](/observability/metrics) und [Preise](https://lizard.build/pricing), um konfigurierte Kapazität mit der gemessenen Nutzung zu vergleichen. Die Tarife für jede Ressource stehen auf der [Abrechnungsseite](/platform/billing#resource-rates).
+Prüfen Sie aktiven Tarif, Einstellungen pro Replikat, Kontolimit, Datenbank-Verbindungslimit und Speicherwachstum zusammen. Verwenden Sie [Skalierung](/deploy/scaling), [Metriken](/observability/metrics) und [Preise](https://lizard.build/pricing), um konfigurierte Kapazität mit der gemessenen Nutzung zu vergleichen. Die Tarife für jede Ressource stehen auf der [Abrechnungsseite](/platform/billing#resource-rates).

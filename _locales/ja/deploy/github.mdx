@@ -63,8 +63,8 @@ lizard service set api \
 
 `repoUrl` が設定されると、一致する `branch` への push は GitHub webhook 経由で自動的に再デプロイされます。Lizard がリポジトリの push イベントを受け取れるように、Lizard GitHub App を接続してください（`lizard git connect`）。どの push が再デプロイをトリガーするかを絞り込むには:
 
-- **`rootDirectory`** — サブディレクトリのみをビルドします（モノレポ）。
-- **`watchPatterns`** — 一致するパスが変更された場合のみ再デプロイします。
+- **`rootDirectory`**：サブディレクトリのみをビルドします（モノレポ）。
+- **`watchPatterns`**：一致するパスが変更された場合のみ再デプロイします。
 
 ```bash
 lizard service set api --set watchPatterns='apps/api/**,packages/**'
@@ -96,9 +96,9 @@ lizard redeploy --service api
 
 ## 関連項目
 
-- [ビルド Pipeline](/concepts/build-pipeline) — スタックがどのように検出され、ビルドされるか。
-- [フレームワークガイド](/framework-guides) — [Next.js](/framework-guides/nextjs)、[Nuxt](/framework-guides/nuxt)、[Django](/framework-guides/django)、[FastAPI](/framework-guides/fastapi)、[Rails](/framework-guides/rails)、[Go](/framework-guides/go) などのビルドコマンドとポート。
-- [Dockerfile でデプロイする](/deploy/dockerfile) — リポジトリに独自の Dockerfile がある場合。
-- [ローカルコードからデプロイする](/deploy/upload) — リモートがない場合。
-- [`lizard git`](/cli/git) — `connect`、`status`、`checkout` の完全なコマンドリファレンス。
-- [アプリケーションに合わせてホストを選ぶ](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#choose-the-host-by-the-application) — エージェントが作成したリポジトリをこれに向ける方法。
+- [ビルド Pipeline](/concepts/build-pipeline)：スタックがどのように検出され、ビルドされるか。
+- [フレームワークガイド](/framework-guides)：[Next.js](/framework-guides/nextjs)、[Nuxt](/framework-guides/nuxt)、[Django](/framework-guides/django)、[FastAPI](/framework-guides/fastapi)、[Rails](/framework-guides/rails)、[Go](/framework-guides/go) などのビルドコマンドとポート。
+- [Dockerfile でデプロイする](/deploy/dockerfile)：リポジトリに独自の Dockerfile がある場合。
+- [ローカルコードからデプロイする](/deploy/upload)：リモートがない場合。
+- [`lizard git`](/cli/git)：`connect`、`status`、`checkout` の完全なコマンドリファレンス。
+- [アプリケーションに合わせてホストを選ぶ](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#choose-the-host-by-the-application)：エージェントが作成したリポジトリをこれに向ける方法。

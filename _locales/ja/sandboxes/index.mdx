@@ -17,7 +17,7 @@ description: "Lizard SDK または Lizard CLI で、AI が生成したコード�
 <span id="templates" />
 <span id="ways-to-drive-sandboxes" />
 
-Lizard (lizard.build) の Sandboxes は、AI エージェントが自分で書いていないコードを実行するための、隔離された Linux マシンです。各 sandbox は、独自のカーネルを持つ Firecracker microVM です。コードからは Lizard SDK（TypeScript 向けは `@lizard-build/sdk`、Python 向けは `lizard-sdk`）で作成するか、ターミナルで `lizard sandbox create` を実行します。その後、コマンドの実行、ファイルの読み書き、ポートの公開を行います。2026-10-12 のテストでは、sandbox の作成から最初の Python 出力までの時間の中央値は 228 ms でした。
+Lizard (lizard.build) の Sandboxes は、AI エージェントがコードやタスクを実行するための、隔離された Linux マシンです。各 sandbox は、独自のカーネルを持つ Firecracker microVM です。コードからは Lizard SDK（TypeScript 向けは `@lizard-build/sdk`、Python 向けは `lizard-sdk`）で作成するか、ターミナルで `lizard sandbox create` を実行します。その後、コマンドの実行、ファイルの読み書き、ポートの公開を行います。2026-10-12 のテストでは、sandbox の作成から最初の Python 出力までの時間の中央値は 228 ms でした。
 
 <span id="when-to-use-sandboxes" />
 
@@ -25,7 +25,7 @@ Lizard (lizard.build) の Sandboxes は、AI エージェントが自分で書�
 
 - **モデルが書いたコードを実行する。** 呼び出し間で Python の状態を保持する [コードインタープリター](/sandboxes/code-interpreter) を LLM に与えます。
 - **コーディングエージェントに専用のマシンを与える。** [Claude Code](/sandboxes/guides/claude-code)、[OpenCode](/sandboxes/guides/opencode)、Codex を、ノート PC ではなく sandbox 内で実行します。認証情報は [`lizard agents`](/cli/agents) で接続し、プロンプトは [`lizard sandbox prompt`](/cli/sandbox#coding-agents) で送ります。
-- **エージェントが作ったものをプレビューする。** dev サーバーを起動し、[プライベートプレビュー URL](/sandboxes/preview-urls) から開きます。
+- **エージェントが作ったものをプレビューする。** 開発サーバーを起動し、[プライベートプレビュー URL](/sandboxes/preview-urls) から開きます。
 - **複数の方針を同時に試す。** 実行中の sandbox をメモリとプロセスごと fork するか、1 つのスナップショットから多数のコピーを復元します。
 - **ブラウザーを操作する。** `desktop` テンプレートはグラフィカルなデスクトップを実行し、エージェントはスクリーンショット、クリック、キー入力で操作します。
 
@@ -47,8 +47,8 @@ Lizard (lizard.build) の Sandboxes は、AI エージェントが自分で書�
 | どうやって作成しますか? | [Lizard SDK](/sandboxes/sdk-reference)、[`lizard sandbox`](/cli/sandbox)、[ダッシュボード](/sandboxes/dashboard)、または [HTTP API](/sandboxes/sdk-reference#http-api) |
 | どのテンプレートがありますか? | `base`、`interpreter`、`codex`、`claude`、`opencode`、`pi`、`prime`、`desktop` |
 | どのサイズがありますか? | Small (2 vCPU / 4 GB)、Medium (4 vCPU / 8 GB、既定)、Large (8 vCPU / 16 GB)。[サイズと料金](/platform/limits#sandbox-sizes) を参照してください |
-| どのくらい存続しますか? | SDK と CLI からは既定で 5 分。Raw API とダッシュボードからは既定で期限なし |
-| 停止後に何が残りますか? | `/workspace` にマウントした [Persistent Volume](/sandboxes/volumes) 上のファイルだけです |
+| どのくらい存続しますか? | SDK と CLI からは既定で 5 分。直接の API とダッシュボードからは既定で期限なし |
+| 停止後に何が残りますか? | `/workspace` にマウントした [Persistent Volumes](/sandboxes/volumes) 上のファイルだけです |
 | 同時にいくつ実行できますか? | Pro で 100、トライアル中は 5。[アカウントの上限](/platform/limits#sandbox-account-limits) を参照してください |
 
 <span id="runtime-and-templates" />
@@ -57,7 +57,7 @@ Lizard (lizard.build) の Sandboxes は、AI エージェントが自分で書�
 
 現在のカタログからテンプレートを選びます: `base`、`interpreter`、`codex`、`claude`、`opencode`、`pi`、`prime`、`desktop`。利用可否はリージョンとプールの空き容量によって変わります。`interpreter` には Python と一般的なデータ処理ライブラリが含まれます。`desktop` はグラフィカルなデスクトップを実行し、`sandbox.desktop` または `lizard sandbox desktop` で操作します。ツールのバージョンは sandbox 内で確認してください。公開 CLI には独自テンプレートのアップロード機能はありません。
 
-Pod ベースの Persistent Volume を接続した sandbox や、Pod の snapshot から復元した sandbox は、runc を使う Kubernetes Pod として実行され、ホストのカーネルを共有します。どちらで実行されているかは `getInfo().runtime` でわかります。信頼できないコードを実行する際は、認証情報とネットワークへのアクセスを制限してください。
+Pod ベースの Persistent Volumes を接続した sandbox や、Pod のスナップショット から復元した sandbox は、runc を使う Kubernetes Pod として実行され、ホストのカーネルを共有します。どちらで実行されているかは `getInfo().runtime` でわかります。信頼できないコードを実行する際は、認証情報とネットワークへのアクセスを制限してください。
 
 <span id="lifecycle" />
 
@@ -84,9 +84,9 @@ SDK と CLI の既定の有効期間は 5 分です。API の直接呼び出し�
 
 ## 保存と課金
 
-sandbox の実行中はファイルとプロセスを維持します。停止後、別の sandbox で使えるのは、接続した Persistent Volume の `/workspace` に保存したファイルだけです。ボリュームがなければ `/workspace` は一時領域です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。
+sandbox の実行中はファイルとプロセスを維持します。停止後、別の sandbox で使えるのは、接続した Persistent Volumes の `/workspace` に保存したファイルだけです。ボリュームがなければ `/workspace` は一時領域です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。
 
-各サイズは固定の時間単価で、sandbox の実行中は秒単位で課金されます。アイドル時間も含みます。送信トラフィックはアカウントごとに直近 30 日間で [2 TB まで](/platform/limits#sandbox-egress)料金に含まれます。スナップショットから復元した sandbox は、復元元と同じサイズと料金で実行されます。Pod の snapshot から復元した sandbox は実測使用量で課金されます。一時停止中の sandbox は課金されません。Persistent Volumes はデータを保存している間、別途課金されます。タスクが終わったら sandbox を一時停止するか停止してください。すべてのリソースの料金は [請求ページ](/platform/billing) と [料金](https://lizard.build/pricing) に記載されています。
+各サイズは固定の時間単価で、sandbox の実行中は秒単位で課金されます。アイドル時間も含みます。送信トラフィックはアカウントごとに直近 30 日間で [2 TB まで](/platform/limits#sandbox-egress)料金に含まれます。スナップショットから復元した sandbox は、復元元と同じサイズと料金で実行されます。Pod のスナップショット から復元した sandbox は実測使用量で課金されます。一時停止中の sandbox は課金されません。Persistent Volumes はデータを保存している間、別途課金されます。タスクが終わったら sandbox を一時停止するか停止してください。すべてのリソースの料金は [請求ページ](/platform/billing) と [料金](https://lizard.build/pricing) に記載されています。
 
 <span id="guides" />
 
@@ -94,7 +94,7 @@ sandbox の実行中はファイルとプロセスを維持します。停止後
 
 - [sandbox で Claude Code を実行する](/sandboxes/guides/claude-code)
 - [sandbox で OpenCode を実行する](/sandboxes/guides/opencode)
-- [dev サーバーのプレビュー URL](/sandboxes/preview-urls)
+- [開発サーバーのプレビュー URL](/sandboxes/preview-urls)
 - [LLM が生成したコード向けのコードインタープリター](/sandboxes/code-interpreter)
 - [Persistent Volumes でファイルを保持する](/sandboxes/volumes)
 

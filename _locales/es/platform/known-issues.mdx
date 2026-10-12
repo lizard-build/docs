@@ -1,12 +1,12 @@
 ---
-description: "Limitaciones actuales del ciclo de vida de Sandboxes, límites de recuperación de despliegues y precedencia de la configuración de compilación que debes revisar antes de depender de un flujo de trabajo."
+description: "Limitaciones actuales del ciclo de vida de Sandboxes, límites de recuperación de despliegues y precedencia de la configuración de compilación que debes revisar antes de usar estas funciones."
 ---
 
 <span id="known-issues" />
 
 # Problemas conocidos
 
-Esta página enumera comportamientos de Lizard que debes revisar antes de depender de un flujo de trabajo: la pausa y el vencimiento de los sandboxes, los redeploys que no son rollbacks, la precedencia de Dockerfile y los problemas corregidos con la fecha en que se verificaron. Una corrección de código en revisión no es una garantía sobre un servicio en ejecución.
+Esta página enumera comportamientos de Lizard que debes revisar antes de usar estas funciones: la pausa y el vencimiento de los sandboxes, los redeploys que no son rollbacks, la precedencia de Dockerfile y los problemas corregidos con la fecha en que se verificaron. Una corrección de código en revisión no es una garantía sobre un servicio en ejecución.
 
 <span id="sandbox-pause-and-expiration" />
 
@@ -16,7 +16,7 @@ Esta página enumera comportamientos de Lizard que debes revisar antes de depend
 
 La pausa cierra las conexiones de red abiertas. Si no se pueden guardar los procesos, el sandbox sigue en marcha e indica el motivo en `pauseError`. Un sandbox pausado solo se reanuda en su propio nodo; si ese nodo falla, se pierde el estado pausado.
 
-Tras detenerse un sandbox, solo se conservan los archivos de un Persistent Volume adjunto en `/workspace`, y los volúmenes usan almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo. Consulta [almacenamiento y facturación](/sandboxes#storage-and-billing).
+Tras detenerse un sandbox, solo se conservan los archivos de un volumen de Persistent Volumes adjunto en `/workspace`, y los volúmenes usan almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo. Consulta [almacenamiento y facturación](/sandboxes#storage-and-billing).
 
 <span id="redeploy-is-not-rollback" />
 

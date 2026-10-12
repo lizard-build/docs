@@ -7,7 +7,7 @@ description: "アップロード、アセット、バックアップ向けの S3
 
 # Managed Object Storage
 
-Lizard (lizard.build) の Managed Object Storage は、アップロード、アセット、バックアップ向けの S3互換ストレージです。`lizard add s3` を実行すると、**`default` という名前のプライベートバケット** と、`S3_ENDPOINT` から `S3_REGION` までの 5 つの変数が作成されます。これらの変数は、パス形式のアドレス指定を使う任意の AWS SDK で利用できます。各アカウントは最大 16 GiB まで保存でき、保存したバイト数に対して料金を支払います。認証なしでファイルを配信するには、ダッシュボードの S3 browser からバケットを public にしてください。概要と料金については、[Managed Object Storage のページ](https://lizard.build/object-storage) を参照してください。
+Lizard (lizard.build) の Managed Object Storage は、アップロード、アセット、バックアップ向けの S3互換ストレージです。`lizard add s3` を実行すると、**`default` という名前のプライベートバケット** と、`S3_ENDPOINT` から `S3_REGION` までの 5 つの変数が作成されます。これらの変数は、パス形式のアドレス指定を使う任意の AWS SDK で利用できます。各アカウントは最大 16 GiB まで保存でき、保存したバイト数に対して料金を支払います。認証なしでファイルを配信するには、ダッシュボードの S3 browser からバケットを公開状態にしてください。概要と料金については、[Managed Object Storage のページ](https://lizard.build/object-storage) を参照してください。
 
 <span id="provision" />
 
@@ -70,7 +70,7 @@ const s3 = new S3Client({
 
 ## 公開ファイル
 
-バケットはデフォルトでプライベートです。**public** にしたバケット内のオブジェクトは、認証なしで次の 2 つの方法で配信されます:
+バケットはデフォルトでプライベートです。**公開した** バケット内のオブジェクトは、認証なしで次の 2 つの方法で配信されます:
 
 1. **Gateway URL** (ダッシュボードに表示):
    ```
@@ -82,7 +82,7 @@ const s3 = new S3Client({
    <dashboard-host>/api/s3/<addonId>/public/<bucket>/<key>
    ```
 
-`default` バケットを public にすると、そのオブジェクトは次の URL で配信されます:
+`default` バケットを公開状態にすると、そのオブジェクトは次の URL で配信されます:
 
 ```
 <dashboard-host>/api/s3/<addonId>/public/default/<key>
@@ -94,7 +94,7 @@ const s3 = new S3Client({
 
 ダッシュボードで **S3 browser** (`lizard open`) を開くと、オブジェクトのアップロードと削除、フォルダーの作成、バケットの public/private の切り替えを行えます。CLI では、`lizard s3 upload <file>` でファイルをアップロードし、`lizard s3 list` でオブジェクトを一覧表示できます。[`lizard s3`](/cli/s3) を参照してください。
 
-> **Bucket ACL の変更** (バケットを public/private にすること) はまだ CLI ではできません — ダッシュボードから管理してください。
+> **Bucket ACL の変更** (バケットを public/private にすること) はまだ CLI ではできません：ダッシュボードから管理してください。
 
 <span id="storage-limit" />
 
@@ -106,5 +106,5 @@ const s3 = new S3Client({
 
 ## 関連項目
 
-- [Managed Addons](/addons) — 命名、参照、ダッシュボードのブラウザーについて。
-- [サービス間参照](/variables/references) — 参照構文と解決方法。
+- [Managed Addons](/addons)：命名、参照、ダッシュボードのブラウザーについて。
+- [サービス間参照](/variables/references)：参照構文と解決方法。

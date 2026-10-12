@@ -82,7 +82,7 @@ sandbox = Sandbox.create(
 - `timeoutMs` es 300000 por defecto, cinco minutos. `0` desactiva la caducidad. Consulta [recursos y duración](/sandboxes#resources-and-timeouts).
 - Indica la región de forma explícita si hace falta; que aparezca en el catálogo no garantiza capacidad libre. No indiques `region` cuando adjuntes un volumen: el sandbox se ejecuta donde está el volumen.
 - `metadata` son tus propias etiquetas; `getInfo()` y `list()` las devuelven.
-- `lizardToken` escribe una clave API `liz_` dentro del sandbox para que `lizard` funcione en él. Cualquier cosa dentro del sandbox puede leer esa clave, así que pasa una limitada al workspace.
+- `lizardToken` escribe una clave API `liz_` dentro del sandbox para que `lizard` funcione en él. Cualquier proceso del sandbox puede leer esa clave, así que pasa una limitada al workspace.
 
 <span id="methods" />
 
@@ -172,7 +172,7 @@ entries = sandbox.fs.list("/app")
 png = sandbox.fs.read_bytes("/app/chart.png")
 ```
 
-Los archivos fuera de un [Persistent Volume](/sandboxes/volumes) en `/workspace` desaparecen cuando el sandbox se detiene.
+Los archivos fuera de un volumen de [Persistent Volumes](/sandboxes/volumes) en `/workspace` desaparecen cuando el sandbox se detiene.
 
 <span id="ports" />
 
@@ -245,7 +245,7 @@ for f in sandbox.fork(count=2):
 
 ## Volúmenes
 
-Adjunta un [Persistent Volume](/sandboxes/volumes) por su nombre para conservar `/workspace` entre sandboxes:
+Adjunta un volumen de [Persistent Volumes](/sandboxes/volumes) por su nombre para conservar `/workspace` entre sandboxes:
 
 ```ts
 import { Sandbox, Volume } from '@lizard-build/sdk';

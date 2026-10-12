@@ -1,5 +1,5 @@
 ---
-description: "Implementa Hugo en Lizard compilando public con hugo --minify y sirviéndolo en el puerto 80. Revisa la detección, los temas, baseURL, las rutas y el estado de las páginas faltantes."
+description: "Despliega Hugo en Lizard compilando public con hugo --minify y sirviéndolo en el puerto 80. Revisa la detección, los temas, baseURL, las rutas y el estado de las páginas que no existen."
 ---
 
 <span id="deploy-hugo-on-lizard" />
@@ -79,7 +79,7 @@ Excluye la salida generada localmente y los secretos. Para una subida, asegúrat
 
 ## Verificar el sitio implementado
 
-Abre la página principal en vivo, un artículo interno y una imagen. Revisa las URL canónicas generadas y `sitemap.xml`. Prueba el estado HTTP de una ruta inventada. Las compilaciones nuevas de Hugo sirven el HTML generado y devuelven HTTP 404 para las páginas faltantes. No se necesita un Dockerfile personalizado para el diseño simple de código fuente de esta guía. Vuelve a compilar imágenes antiguas para adoptar las reglas de enrutamiento actuales.
+Abre la página principal en vivo, un artículo interno y una imagen. Revisa las URL canónicas generadas y `sitemap.xml`. Prueba el estado HTTP de una ruta inventada. Las compilaciones nuevas de Hugo sirven el HTML generado y devuelven HTTP 404 para las páginas que no existen. No se necesita un Dockerfile personalizado para el diseño simple de código fuente de esta guía. Vuelve a compilar imágenes antiguas para adoptar las reglas de enrutamiento actuales.
 
 Usa [rutas estáticas y 404](/framework-guides/static-routing) si necesitas una política personalizada de nginx. Una etapa de compilación personalizada de Hugo debe incluir la versión de Hugo y las herramientas que requiere el tema, ejecutar `hugo --minify` y copiar `public/` en la imagen de servicio.
 

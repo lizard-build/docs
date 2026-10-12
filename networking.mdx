@@ -5,11 +5,11 @@ description: "Private networking between services at <name>.lizard.internal, gen
 
 # Networking
 
-On Lizard (lizard.build), services in the same project reach each other over a private network at `<service>.lizard.internal`, on any port, with no public domain. Every web service also gets a generated `*.onlizard.com` domain with automatic TLS the moment it deploys, and you can attach your own hostname when you're ready to go live. Managed Postgres and Managed Redis join the same private network. Jump to [private networking](#private-networking), [custom domains](#attach-a-custom-domain) or [ports](#change-the-port-your-service-listens-on).
+On Lizard, services in the same project reach each other over a private network at `<service>.lizard.internal`, on any port, with no public domain. Every web service also gets a generated `*.onlizard.com` domain with automatic TLS when it deploys. You can also attach your own hostname. Managed Postgres and Managed Redis join the same private network. Jump to [private networking](#private-networking), [custom domains](#attach-a-custom-domain) or [ports](#change-the-port-your-service-listens-on).
 
 ## Generated domains
 
-A service's default domain is created for you, in the form `<name>-<suffix>.onlizard.com`. Older services keep `<words>.<region>.onlizard.com`. Show it:
+Lizard creates a default domain for each service in the form `<name>-<suffix>.onlizard.com`. Older services keep `<words>.<region>.onlizard.com`. Show it:
 
 ```bash
 lizard domain                    # show the service's current domain
@@ -20,7 +20,7 @@ lizard domain generate           # claim a *.onlizard.com subdomain if the servi
 
 ## Attach a custom domain
 
-The hostname is a **positional argument** — there is no `add` subcommand:
+Pass the hostname as a positional argument. There is no `add` subcommand:
 
 ```bash
 lizard domain app.example.com --service web
@@ -36,7 +36,7 @@ Once DNS has propagated, activate the domain:
 lizard domain verify app.example.com --service web
 ```
 
-This checks the `TXT` record and activates the domain. TLS is provisioned automatically.
+Lizard checks the `TXT` record, activates the domain and provisions TLS.
 
 ## Remove a domain
 
@@ -56,7 +56,7 @@ lizard redeploy --service web
 
 ## Worker services
 
-A [worker-mode service](/deploy/workers) (`containerPort=0`) may still show a generated domain, but it serves nothing — there's no listener and no load-balancer route. Don't attach a custom domain to a worker.
+A [worker-mode service](/deploy/workers) (`containerPort=0`) may still show a generated domain, but it serves nothing: there's no listener and no load-balancer route. Don't attach a custom domain to a worker.
 
 ## Private networking
 
@@ -72,6 +72,6 @@ Open a service in the dashboard (`lizard open`) and go to **Settings → Network
 
 ## See also
 
-- [`lizard domain`](/cli/domain) — the full command reference.
-- [Regions](/deploy/regions) — co-locating services and addons for latency.
-- [From prototype to a SaaS people pay for](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#verify-a-real-production-flow) — where a custom domain sits among the other things a generated app still needs.
+- [`lizard domain`](/cli/domain): the full command reference.
+- [Regions](/deploy/regions): co-locating services and addons for latency.
+- [From prototype to a SaaS people pay for](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#verify-a-real-production-flow): checks for a generated app before accepting customers.

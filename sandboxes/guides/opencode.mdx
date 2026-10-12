@@ -5,7 +5,7 @@ description: "Run OpenCode in a Lizard sandbox: connect ChatGPT or an API key, s
 
 # Run OpenCode in a sandbox
 
-To run OpenCode in a sandbox on Lizard (lizard.build), connect a credential with `lizard agents` (a ChatGPT subscription, or an Anthropic, OpenAI, OpenRouter or LLM Gateway key), create a sandbox from the `opencode` template, and send prompts with `lizard sandbox prompt <id> --agent opencode "…"`. To use OpenCode's web UI instead, start `opencode web --hostname 0.0.0.0 --port 4096` in the sandbox and open the port with `lizard sandbox expose`.
+To run OpenCode in a sandbox on Lizard, connect a credential with `lizard agents` (a ChatGPT subscription, or an Anthropic, OpenAI, OpenRouter or LLM Gateway key), create a sandbox from the `opencode` template, and send prompts with `lizard sandbox prompt <id> --agent opencode "…"`. To use OpenCode's web UI instead, start `opencode web --hostname 0.0.0.0 --port 4096` in the sandbox and open the port with `lizard sandbox expose`.
 
 **Test status:** the commands come from Lizard CLI 4.0.42 and the platform's agent runner as of 2026-10-12. We checked the web UI steps against the source of OpenCode 1.18.34, which serves its UI and API from one port, and of Lizard's sandbox router, which keeps the access token in a cookie and passes WebSockets through. We have not yet run either path end to end in a live sandbox for this page.
 
@@ -24,7 +24,7 @@ To run OpenCode in a sandbox on Lizard (lizard.build), connect a credential with
 | OpenRouter API key | `lizard agents add openrouter` |
 | LLM Gateway API key | `lizard agents add llmgateway` |
 
-OpenCode gets every connected credential it accepts, and each one unlocks that provider's models. It does not take a Claude subscription token; for that, use [Claude Code](/sandboxes/guides/claude-code). A ChatGPT login reaches a run as a short-lived access token, never the refresh token. API keys reach a run as environment variables such as `ANTHROPIC_API_KEY`.
+OpenCode gets every connected credential it accepts to access those providers' models. It does not take a Claude subscription token; for that, use [Claude Code](/sandboxes/guides/claude-code). A ChatGPT login reaches a run as a short-lived access token, never the refresh token. API keys reach a run as environment variables such as `ANTHROPIC_API_KEY`.
 
 OpenCode names models `provider/model`. Set a default, or pass `-m` per prompt:
 
@@ -80,7 +80,7 @@ lizard sandbox exec $SB -- sh -c '. /root/opencode.env && cd /workspace/app && n
 lizard sandbox expose $SB 4096
 ```
 
-Open the URL that `expose` prints. It carries `?lizard_token=`; Lizard moves the token into a cookie for that host and redirects to the same page without it, so the UI's own requests, event stream and terminal WebSockets are let through.
+Open the URL that `expose` prints. It carries `?lizard_token=`; Lizard moves the token into a cookie for that host and redirects to the same page without it. The cookie authenticates the UI's requests, event stream and terminal WebSockets.
 
 - You need `--hostname 0.0.0.0`. OpenCode listens on `127.0.0.1` by default, and the preview URL then answers `Sandbox is not listening on port 4096`.
 - Give a fixed `--port`. Without one, OpenCode picks a random unused port.

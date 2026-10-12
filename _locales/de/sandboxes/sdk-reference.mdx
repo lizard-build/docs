@@ -21,7 +21,7 @@ description: "Referenz des Lizard SDK für TypeScript und Python: Erstellungsopt
 <span id="see-also" />
 <span id="lifecycle-status" />
 
-Lizard SDK ist der Client für Sandboxes auf Lizard (lizard.build): `@lizard-build/sdk` auf npm für TypeScript und JavaScript und `lizard-sdk` auf PyPI für Python, importiert als `lizard`. Beide rufen dieselbe [HTTP-API](#http-api) auf. Diese Seite listet jeden Sandbox-Aufruf mit seinem Namen in TypeScript und Python auf, mit Beispielen in beiden Sprachen. Für einen geführten ersten Durchlauf nutzen Sie den [Schnellstart](/sandboxes/quickstart); was Sandboxes sind, erklärt der [Überblick](/sandboxes).
+Lizard SDK ist der Client für Sandboxes auf Lizard (lizard.build): `@lizard-build/sdk` auf npm für TypeScript und JavaScript und `lizard-sdk` auf PyPI für Python, importiert als `lizard`. Beide rufen dieselbe [HTTP-API](#http-api) auf. Diese Seite listet jeden Sandbox-Aufruf mit seinem Namen in TypeScript und Python auf, mit Beispielen in beiden Sprachen. Für den ersten Aufruf folgen Sie dem [Schnellstart](/sandboxes/quickstart); was Sandboxes sind, erklärt der [Überblick](/sandboxes).
 
 <span id="install-and-authenticate" />
 
@@ -33,7 +33,7 @@ pip install lizard-sdk
 export LIZARD_API_KEY="<your-api-key>"
 ```
 
-Erstellen Sie unter Settings → API keys oder mit [`lizard keys create <name>`](/cli/keys) einen API-Schlüssel. Das SDK liest `LIZARD_API_KEY`; übergeben Sie `apiKey` (Python: `api_key`), um einen anderen Schlüssel zu verwenden. Jede Sandbox braucht ein Projekt: übergeben Sie `projectId` (Python: `project_id`) oder ID, Slug oder Name über `project`.
+Erstellen Sie unter Settings → API keys oder mit [`lizard keys create <name>`](/cli/keys) einen API-Schlüssel. Das SDK liest `LIZARD_API_KEY`; übergeben Sie `apiKey` (Python: `api_key`), um einen anderen Schlüssel zu verwenden. Jede Sandbox braucht ein Projekt. Übergeben Sie `projectId` (Python: `project_id`) oder ID, Slug oder Name über `project`.
 
 <span id="create-options" />
 
@@ -82,7 +82,7 @@ sandbox = Sandbox.create(
 - `timeoutMs` beträgt standardmäßig 300000, also fünf Minuten. `0` deaktiviert den Ablauf. Siehe [Ressourcen und Laufzeit](/sandboxes#resources-and-timeouts).
 - Geben Sie bei Bedarf eine Region an; ein Katalogeintrag garantiert keine freie Kapazität. Lassen Sie `region` leer, wenn Sie ein Volume anhängen: Die Sandbox läuft dort, wo das Volume liegt.
 - `metadata` sind Ihre eigenen Labels; `getInfo()` und `list()` geben sie zurück.
-- `lizardToken` schreibt einen `liz_`-API-Schlüssel in die Sandbox, damit `lizard` darin funktioniert. Alles in der Sandbox kann diesen Schlüssel lesen, übergeben Sie also einen auf den Workspace beschränkten.
+- `lizardToken` schreibt einen `liz_`-API-Schlüssel in die Sandbox, damit `lizard` darin funktioniert. Code in der Sandbox kann diesen Schlüssel lesen. Übergeben Sie daher einen Schlüssel mit Zugriff nur auf den Workspace.
 
 <span id="methods" />
 
@@ -97,12 +97,12 @@ sandbox = Sandbox.create(
 | `sandbox.process.exec(cmd, opts)` | `sandbox.process.exec_(cmd, ...)` | Shell-Befehl oder argv-Array ausführen; stdout, stderr und den Exit-Code liefern. |
 | `sandbox.process.list()` | `sandbox.process.list()` | Mit `exec` gestartete Prozesse auflisten. |
 | `sandbox.process.kill(pid, signal)` | `sandbox.process.kill(pid, signal)` | Ein Signal an einen Prozess und seine Kindprozesse senden; standardmäßig `SIGTERM`. |
-| `sandbox.fs.write(path, data)` | `sandbox.fs.write(path, data)` | Text oder Bytes schreiben; Elternverzeichnisse erstellen. |
+| `sandbox.fs.write(path, data)` | `sandbox.fs.write(path, data)` | Text oder Bytes schreiben; übergeordnete Verzeichnisse erstellen. |
 | `sandbox.fs.read(path)` | `sandbox.fs.read(path)` | UTF-8-Text lesen. |
 | `sandbox.fs.readBytes(path)` | `sandbox.fs.read_bytes(path)` | Dateibytes lesen. |
 | `sandbox.fs.list(path)` | `sandbox.fs.list(path)` | Verzeichniseinträge auflisten. |
 | `sandbox.fs.stat(path)` | `sandbox.fs.stat(path)` | Typ, Größe, Modus, Eigentümer und Änderungszeit zurückgeben. |
-| `sandbox.fs.makeDir(path)` | `sandbox.fs.make_dir(path)` | Verzeichnis und fehlende Eltern erstellen. |
+| `sandbox.fs.makeDir(path)` | `sandbox.fs.make_dir(path)` | Verzeichnis und fehlende übergeordnete Verzeichnisse erstellen. |
 | `sandbox.fs.move(from, to)` | `sandbox.fs.move(src, dst)` | Datei oder Verzeichnis verschieben. |
 | `sandbox.fs.remove(path)` | `sandbox.fs.remove(path)` | Datei oder Verzeichnis entfernen. |
 | `sandbox.exposePort(port)` | `sandbox.expose_port(port)` | Einen Port veröffentlichen; `url`, `hostname` und das Zugriffstoken zurückgeben. |
@@ -111,7 +111,7 @@ sandbox = Sandbox.create(
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | Verbleibende Laufzeit setzen, mindestens 1000 ms. |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | Pause oder Fortsetzen einreihen und sofort zurückkehren. |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | Auf `paused` oder `running` warten; einen Fehler auslösen, wenn die Pause scheitert. |
-| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Eine laufende Sandbox 1–10-mal kopieren, einschließlich Arbeitsspeicher und Prozessen. |
+| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Eine laufende Sandbox 1- bis 10-mal kopieren, einschließlich Arbeitsspeicher und Prozessen. |
 | `sandbox.snapshot(name, { poolSize })` | `sandbox.snapshot(name, pool_size=...)` | Arbeitsspeicher und `/workspace`-Dateien als privaten Snapshot speichern. |
 | `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | Warten, bis ein Snapshot bereit ist. |
 | `Sandbox.restore(snapshotId)` | `Sandbox.restore(snapshot_id)` | Neue Sandbox aus einem Snapshot starten. |
@@ -172,7 +172,7 @@ entries = sandbox.fs.list("/app")
 png = sandbox.fs.read_bytes("/app/chart.png")
 ```
 
-Dateien außerhalb eines [Persistent Volume](/sandboxes/volumes) unter `/workspace` sind nach dem Stopp der Sandbox verloren.
+Dateien außerhalb eines Volumes aus [Persistent Volumes](/sandboxes/volumes) unter `/workspace` sind nach dem Stopp der Sandbox verloren.
 
 <span id="ports" />
 
@@ -245,7 +245,7 @@ for f in sandbox.fork(count=2):
 
 ## Volumes
 
-Hängen Sie ein [Persistent Volume](/sandboxes/volumes) per Namen an, um `/workspace` zwischen Sandboxes zu behalten:
+Hängen Sie ein Volume aus [Persistent Volumes](/sandboxes/volumes) über seinen Namen an, um `/workspace` zwischen Sandboxes zu behalten:
 
 ```ts
 import { Sandbox, Volume } from '@lizard-build/sdk';

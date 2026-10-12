@@ -1,11 +1,11 @@
 ---
 title: "Managed Redis: URL de conexión y durabilidad"
-description: "Añade una instancia de Redis 8 en Lizard para caché, colas, limitación de tasa y pub/sub, conéctala por referencia y descubre qué pasa cuando se agota la memoria."
+description: "Añade una instancia de Redis 8 en Lizard para caché, colas, limitación de tasa y pub/sub, conéctala por referencia y consulta qué pasa cuando se agota la memoria."
 ---
 
 # Managed Redis
 
-Managed Redis en Lizard (lizard.build) es un servidor Redis para caché, colas, limitación de tasa y pub/sub. Las instancias nuevas usan Redis 8 de forma predeterminada. Añade una con `lizard add redis`; tus servicios leen `REDIS_PRIVATE_URL` o `REDIS_URL` mediante una referencia como `${{redis.REDIS_PRIVATE_URL}}`. No tiene política de expulsión ni append-only file, así que guarda en él solo datos que puedas reconstruir. Para una visión general y los precios, consulta la [página de Managed Redis](https://lizard.build/redis).
+Managed Redis en Lizard (lizard.build) es un servidor Redis para caché, colas, limitación de tasa y pub/sub. Las instancias nuevas usan Redis 8 de forma predeterminada. Añade una con `lizard add redis`; tus servicios leen `REDIS_PRIVATE_URL` o `REDIS_URL` mediante una referencia como `${{redis.REDIS_PRIVATE_URL}}`. No tiene política de expulsión ni append-only file, así que guarda en él solo datos que puedas reconstruir. Para ver un resumen y los precios, consulta la [página de Managed Redis](https://lizard.build/redis).
 
 <span id="provision" />
 
@@ -37,7 +37,7 @@ lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-La referencia se resuelve en el momento del despliegue; los consumidores obtienen los valores actuales del addon en su siguiente despliegue. Usa `REDIS_URL` para clientes fuera del proyecto. Todos los servicios del proyecto también reciben el `REDIS_URL` público del addon con la precedencia más baja; una referencia explícita lo sobrescribe.
+La referencia se resuelve en el momento del despliegue; los consumidores obtienen los valores actuales del addon en su siguiente despliegue. Usa `REDIS_URL` para clientes fuera del proyecto. Todos los servicios del proyecto también reciben el `REDIS_URL` público del addon con la prioridad más baja; una referencia explícita lo sobrescribe.
 
 <span id="does-managed-redis-keep-data" />
 
@@ -49,9 +49,9 @@ No todas las escrituras. Managed Redis no tiene política de expulsión ni appen
 
 ## Usos comunes
 
-- **Caché** — almacena resultados calculados indexados por solicitud.
-- **Cola / worker** — combina Redis con un [servicio en modo worker](/deploy/workers) que consume trabajos. [Ejecutar un consumidor de cola](/deploy/workers#run-a-queue-consumer) recorre el ejemplo redis-worker.
-- **Limitación de tasa / sesiones** — estado compartido rápido entre [réplicas](/deploy/scaling).
+- **Caché**: almacena resultados calculados indexados por solicitud.
+- **Cola / worker**: combina Redis con un [servicio en modo worker](/deploy/workers) que consume trabajos. [Ejecutar un consumidor de cola](/deploy/workers#run-a-queue-consumer) explica el ejemplo redis-worker.
+- **Limitación de tasa / sesiones**: estado compartido rápido entre [réplicas](/deploy/scaling).
 
 ```bash
 # A worker that drains a Redis queue
@@ -83,7 +83,7 @@ lizard scale --service redis --storage 4096
 
 ## Ver también
 
-- [Managed Addons](/addons) — nombres, referencias y los navegadores del panel.
-- [Background Workers](/deploy/workers) — combinar Redis con un worker que consume colas.
+- [Managed Addons](/addons): nombres, referencias y los navegadores del panel.
+- [Background Workers](/deploy/workers): combinar Redis con un worker que consume colas.
 
 `lizard run --service redis` inicia el comando en tu máquina con los valores de conexión públicos del addon. Instala `redis-cli` localmente.

@@ -6,7 +6,7 @@ description: "Lizard がソースをコンテナイメージに変換する方�
 
 # ビルドパイプライン
 
-ビルドは Lizard のビルドノード上で実行されます — **ローカルに Docker は不要です**。デプロイすると、プラットフォームは固定の判定順序に従って、ソースをどのようにコンテナイメージへ変換するかを決定し、その後そのイメージを分離された pod で実行します。すべての [container as a service](https://lizard.build/blog/container-as-a-service) がイメージをビルドしてくれるわけではありません。このブログでは、このカテゴリにある 3 つの形態を比較しています。
+ビルドは Lizard のビルドノード上で実行されます：**ローカルに Docker は不要です**。デプロイすると、プラットフォームは固定の判定順序に従って、ソースをどのようにコンテナイメージへ変換するかを決定し、その後そのイメージを分離された pod で実行します。すべての [container as a service](https://lizard.build/blog/container-as-a-service) がイメージをビルドしてくれるわけではありません。このブログでは、このカテゴリにある 3 つの形態を比較しています。
 
 <span id="build-decision-order" />
 
@@ -14,10 +14,10 @@ description: "Lizard がソースをコンテナイメージに変換する方�
 
 プラットフォームは次の順序で、ビルド戦略をちょうど 1 つ選びます:
 
-1. **`dockerfilePath` のリポジトリ Dockerfile** — サービスに `dockerfilePath` が設定されている場合、ビルドコマンドや開始コマンドが設定されていても、その Dockerfile が変更されずに使用されます。`startCommand` が設定されていれば、実行時には Dockerfile の `ENTRYPOINT` と `CMD` がそれに置き換えられます。[Dockerfile でデプロイする](/deploy/dockerfile) を参照してください。
-2. **合成された Dockerfile** — それ以外で、サービスに `buildCommand` および/または `startCommand` が設定されている場合（または `lizard up --build-command` / `--start-command` 経由で渡された場合）、Lizard はそれらのコマンドから Dockerfile を生成します。lizardpack は呼び出されません。
-3. **ソース内の Dockerfile** — それ以外の場合、ビルドディレクトリのルートにある `Dockerfile` が使用されます（後述の GitHub の例外を参照）。
-4. **lizardpack 自動検出** — それ以外の場合、プラットフォームはビルドパック / Dockerfile ジェネレーターである **lizardpack** を実行します。
+1. **`dockerfilePath` のリポジトリ Dockerfile**：サービスに `dockerfilePath` が設定されている場合、ビルドコマンドや開始コマンドが設定されていても、その Dockerfile が変更されずに使用されます。`startCommand` が設定されていれば、実行時には Dockerfile の `ENTRYPOINT` と `CMD` がそれに置き換えられます。[Dockerfile でデプロイする](/deploy/dockerfile) を参照してください。
+2. **合成された Dockerfile**：それ以外で、サービスに `buildCommand` および/または `startCommand` が設定されている場合（または `lizard up --build-command` / `--start-command` 経由で渡された場合）、Lizard はそれらのコマンドから Dockerfile を生成します。lizardpack は呼び出されません。
+3. **ソース内の Dockerfile**：それ以外の場合、ビルドディレクトリのルートにある `Dockerfile` が使用されます（後述の GitHub の例外を参照）。
+4. **lizardpack 自動検出**：それ以外の場合、プラットフォームはビルドパック / Dockerfile ジェネレーターである **lizardpack** を実行します。
 
 <span id="lizardpack-auto-detect" />
 
@@ -27,7 +27,7 @@ lizardpack はリポジトリを検査し、最適化されたマルチステー
 
 **Hugo → Go → Node → Python → Rust → Ruby → PHP → Java → static**
 
-本番用スクリプト、アダプター、出力パス、ポートについては [フレームワーク guides](/framework-guides) を参照してください: [Hugo](/framework-guides/hugo)、[Go](/framework-guides/go)、Node ([Node.js](/framework-guides/nodejs)、[Next.js](/framework-guides/nextjs)、[Nuxt](/framework-guides/nuxt)、[SvelteKit](/framework-guides/sveltekit)、[Astro](/framework-guides/astro)、[React](/framework-guides/react)、[Vue](/framework-guides/vue)、[Docusaurus](/framework-guides/docusaurus)、[VitePress](/framework-guides/vitepress))、Python ([Django](/framework-guides/django)、[FastAPI](/framework-guides/fastapi)、[Streamlit](/framework-guides/streamlit))、Ruby ([Rails](/framework-guides/rails))。検出はプロジェクトファイルと依存関係を使用します。複数のプロバイダーに一致するリポジトリは、この順序に従います。Node.js や Python のバージョンを固定するには、[ランタイムバージョン](/deploy/runtime-versions) を参照してください。
+本番用スクリプト、アダプター、出力パス、ポートについては [フレームワークガイド](/framework-guides) を参照してください: [Hugo](/framework-guides/hugo)、[Go](/framework-guides/go)、Node ([Node.js](/framework-guides/nodejs)、[Next.js](/framework-guides/nextjs)、[Nuxt](/framework-guides/nuxt)、[SvelteKit](/framework-guides/sveltekit)、[Astro](/framework-guides/astro)、[React](/framework-guides/react)、[Vue](/framework-guides/vue)、[Docusaurus](/framework-guides/docusaurus)、[VitePress](/framework-guides/vitepress))、Python ([Django](/framework-guides/django)、[FastAPI](/framework-guides/fastapi)、[Streamlit](/framework-guides/streamlit))、Ruby ([Rails](/framework-guides/rails))。検出はプロジェクトファイルと依存関係を調べます。複数のプロバイダーに一致する場合は、この順序で選びます。Node.js や Python のバージョンを固定するには、[ランタイムバージョン](/deploy/runtime-versions) を参照してください。
 
 この経路では:
 
@@ -52,7 +52,7 @@ lizardpack はリポジトリを検査し、最適化されたマルチステー
 | ランタイム専用フィールド（`startCommand`、`preDeployCommand`、`containerPort`、`watchPatterns`）の `service set` | ❌ 適用するには `lizard redeploy` を実行 |
 | その他の環境変数 / シークレットの変更 | ❌ クイック再起動で適用（再ビルドなし） |
 
-> **二重にビルドしないでください。** 稼働中のサービスでビルドフィールドを変更する `service set` の後は、再ビルドが自動的に発火します — その後に `lizard redeploy` を続けないでください。2 回目の冗長なビルドがキューに入ります ([理由](/deploy/troubleshooting/double-build))。クラッシュしたサービスや一度もデプロイされていないサービスは、自動では再ビルドされません。`lizard redeploy` を実行してください。
+> **二重にビルドしないでください。** 稼働中のサービスでビルドフィールドを変更する `service set` の後は、再ビルドが自動で始まります：その後に `lizard redeploy` を続けないでください。不要な 2 回目のビルドがキューに入ります ([理由](/deploy/troubleshooting/double-build))。クラッシュしたサービスや一度もデプロイされていないサービスは、自動では再ビルドされません。`lizard redeploy` を実行してください。
 
 <span id="build-time-variables" />
 
@@ -83,7 +83,7 @@ lizard events                  # deploy history + replica status
 ## ランタイムに関する注意
 
 - **Docker の `HEALTHCHECK` はありません。** ランタイムは Docker の healthcheck ループを実行しないため、`HEALTHCHECK` ディレクティブは無視されます。代わりに Lizard はポートに対して TCP プローブを実行します（[worker mode](/deploy/workers) ではスキップされます）。
-- **求められていないのに Dockerfile を書かないでください。** lizardpack はほとんどのスタックを自動検出します — まずデプロイを試し、自動ビルドが合わない場合にのみ Dockerfile を追加する（または `dockerfilePath` を設定する）ようにしてください。
+- **求められていないのに Dockerfile を書かないでください。** lizardpack はほとんどのスタックを自動検出します：まずデプロイを試し、自動ビルドが合わない場合にのみ Dockerfile を追加する（または `dockerfilePath` を設定する）ようにしてください。
 
 <span id="build-configuration-reference" />
 

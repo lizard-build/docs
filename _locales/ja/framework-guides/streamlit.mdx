@@ -9,7 +9,7 @@ description: "Streamlit アプリを Lizard にデプロイします。Procfile 
 
 Lizard (lizard.build) は、ローカルで使うのと同じコマンド `streamlit run app.py` で Streamlit アプリを実行します。このコマンドに `--server.address 0.0.0.0` と `8501` などの固定ポートを付けて Procfile の `web:` 行に書き、`lizard up --port 8501` でデプロイします。Procfile がない場合、lizardpack は `python app.py` を起動しますが、これは警告を出して終了するだけで、アプリを配信しません。
 
-**テスト状況:** 以下のサンプルは Streamlit 1.65.0 でローカルで動作し、データベース版は psycopg 3.3.5 を使って PostgreSQL 14 に対して動作しました。そのビルドプランは、Lizard が実行するビルドプランナーである lizardpack で確認しました。エンドツーエンドのデプロイはまだ行っていません。ブラウザーは Streamlit との WebSocket を開いたままにしますが、Lizard のルーティングを通したその接続はまだ確認していません。
+**テスト状況:** 以下のサンプルは Streamlit 1.65.0 を使ってローカルで動作し、データベース版は psycopg 3.3.5 を使って PostgreSQL 14 に対して動作しました。ビルドプランは、Lizard が使う lizardpack で確認しました。デプロイ手順は、まだ最初から最後まで試していません。ブラウザーは Streamlit との WebSocket を開いたままにしますが、Lizard のルーティングを通したその接続はまだ確認していません。
 
 <span id="before-you-start" />
 
@@ -72,7 +72,7 @@ Streamlit は `http://localhost:8501` で開きます。`.venv/`、`.env`、`.st
 | 起動 | Procfile の `web:` 行 |
 | ランタイム | `PYTHONUNBUFFERED=1`。`print` の出力がすぐにログに届きます |
 
-サービスポートは `--port` で決まり、Procfile の `--server.port` と一致している必要があります。バージョンのルールとそのエッジケースについては、[ランタイムバージョン](/deploy/runtime-versions)を参照してください。
+サービスポートは `--port` で決まり、Procfile の `--server.port` と一致している必要があります。バージョンのルールと注意点については、[ランタイムバージョン](/deploy/runtime-versions)を参照してください。
 
 <span id="deploy" />
 
@@ -115,7 +115,7 @@ lizard add postgres
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service web
 ```
 
-シングルクォートにより、シェルが `${{…}}` を解釈しなくなります。Lizard はデプロイ時に [参照](/variables/references) を解決します。`requirements.txt` に `psycopg[binary]==3.3.5` を追加し、サーバープロセスごとに接続を 1 つ開きます:
+シングルクォートで囲むと、シェルは `${{…}}` を解釈しません。Lizard はデプロイ時に [参照](/variables/references) を解決します。`requirements.txt` に `psycopg[binary]==3.3.5` を追加し、サーバープロセスごとに接続を 1 つ開きます:
 
 ```python
 import os

@@ -4,17 +4,17 @@ description: "Let Claude Code, Codex or Cursor deploy on Lizard: install Lizard 
 
 # Coding agents
 
-Claude Code, Codex, Cursor and other AI coding agents deploy and manage apps on Lizard (lizard.build) through Lizard CLI. Install Lizard Skill once with `npx skills add lizard-build/skill -g`; the agent then loads the guide built into the CLI with `lizard skills get core --json` and reads any command's flags with `--help --json`, so it never has to guess. Clients that speak MCP, such as ChatGPT and Claude, can use [Lizard MCP](#lizard-mcp) instead. For a full deploy run from an agent, see [Deploy from Claude Code, Codex or Cursor](/guides/deploy-from-coding-agent).
+Claude Code, Codex, Cursor and other AI coding agents deploy and manage apps on Lizard through Lizard CLI. Install Lizard Skill once with `npx skills add lizard-build/skill -g`; the agent then loads the guide built into the CLI with `lizard skills get core --json` and reads any command's flags with `--help --json`. Clients that speak MCP, such as ChatGPT and Claude, can use [Lizard MCP](#lizard-mcp) instead. For a full deploy run from an agent, see [Deploy from Claude Code, Codex or Cursor](/guides/deploy-from-coding-agent).
 
 ## The embedded skill
 
-The authoritative usage guide lives inside the CLI and is versioned with it, so it always matches the installed version. An agent reads it with:
+The CLI includes a usage guide for the installed version. An agent reads it with:
 
 ```bash
 lizard skills get core --json
 ```
 
-This returns `{ name, frontmatter, content, … }` — `content` is the complete guide (build pipeline, env precedence, addons, discovery, exit codes). Related subcommands:
+This returns `{ name, frontmatter, content, … }`: `content` is the complete guide (build pipeline, env precedence, addons, discovery, exit codes). Related subcommands:
 
 ```bash
 lizard skills list        # available embedded skills
@@ -43,7 +43,7 @@ A typical agent flow:
 2. **Check auth optimistically:** run the user's task; on exit code `2`, run `lizard login`, hand the printed URL to the user, then retry.
 3. **Start the trial if asked:** a new account has no plan, so its first create fails with HTTP 402 (`code: "PAYMENT_REQUIRED"`, exit code `1`). Run `lizard billing start --json`, hand the Checkout `url` to the user, then retry once they have added a card.
 4. **Resolve context before mutating:** `lizard status` (cwd link) and `lizard ps --json` (services).
-5. **Act** using the guide — `add`, `up`, `secrets`, `domain`, etc., always with `--json`.
+5. **Act** using the guide: `add`, `up`, `secrets`, `domain`, etc., always with `--json`.
 
 If the `lizard` binary isn't present, install it first. On macOS or Linux, use the install script:
 
@@ -66,14 +66,14 @@ npm install -g @lizard-build/cli
 ## Conventions agents should follow
 
 - **Always pass `--json`** on non-interactive calls.
-- **Confirm destructive actions** (delete service, drop addon, overwrite a project-wide secret, prod restart) with the user — the CLI's own prompts only fire on a TTY.
+- **Confirm destructive actions** (delete service, drop addon, overwrite a project-wide secret, prod restart) with the user: the CLI's own prompts only fire on a TTY.
 - **Scope secrets to the consuming service** by default; reserve `--global` for provably-public values. See [Variables & Secrets](/variables#scoping).
-- **Don't write Dockerfiles unsolicited** — lizardpack auto-detects most stacks. Try a deploy first. See [Build Pipeline](/concepts/build-pipeline).
-- **Don't use `lizard up` to switch a git-backed service to upload** — use `service set` + `redeploy`.
+- **Don't write Dockerfiles unsolicited**: lizardpack auto-detects most stacks. Try a deploy first. See [Build Pipeline](/concepts/build-pipeline).
+- **Don't use `lizard up` to switch a git-backed service to upload**: use `service set` + `redeploy`.
 
 ## Editor integrations
 
-Lizard Skill is distributed as a public bootstrap so agents in editors and assistants can install and load it on demand, then drive the same CLI described throughout these docs. Install it once for all your agents:
+Lizard Skill gives editor agents and assistants the instructions to install and use Lizard CLI. Install it once for all your agents:
 
 ```bash
 npx skills add lizard-build/skill -g
@@ -81,7 +81,7 @@ npx skills add lizard-build/skill -g
 
 It works with Claude Code, Cursor, Codex, Copilot, Gemini CLI and other agents that read the Agent Skills format. For clients that speak MCP instead of running shell commands, use [Lizard MCP](#lizard-mcp).
 
-That covers the AI IDEs too: they write and test an app but don't host it. See [deploying an app built in Google Antigravity](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat), where one prompt drives the whole deploy.
+An AI IDE can write and test an app; Lizard hosts the result. See [deploying an app built in Google Antigravity](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat) for a deploy started from the editor's chat.
 
 To let Claude Code or ChatGPT edit the page you have open in Chrome, use [Lizard Studio](/studio/getting-started).
 
@@ -122,7 +122,7 @@ An agent using Lizard CLI and an application exposing MCP are separate workflows
 
 ## See also
 
-- [`lizard skills`](/cli/skills) — the full command reference.
-- [JSON & Automation](/cli/json) — `--json` output and schema discovery.
-- [Variables & Secrets](/variables#scoping) — secret-scoping conventions agents should follow.
-- [Deploy your app from Claude Code](https://lizard.build/blog/deploy-from-claude-code#a-prompt-that-defines-the-deployment-task) — the same bootstrap written as a walkthrough, with the prompt that drives it.
+- [`lizard skills`](/cli/skills): the full command reference.
+- [JSON & Automation](/cli/json): `--json` output and schema discovery.
+- [Variables & Secrets](/variables#scoping): secret-scoping conventions agents should follow.
+- [Deploy your app from Claude Code](https://lizard.build/blog/deploy-from-claude-code#a-prompt-that-defines-the-deployment-task): installation steps and a prompt for the deploy.

@@ -5,7 +5,7 @@ description: "Deploy Ruby on Rails to Lizard with the Dockerfile Rails generates
 
 # Deploy a Rails app
 
-Rails 7.1 and later generate a production `Dockerfile`, and Lizard (lizard.build) builds it as written: the image installs gems, precompiles assets and runs `bin/rails db:prepare` each time the server starts. Set `RAILS_MASTER_KEY` and the database URLs, then run `lizard up --port 8080` for Rails 8 (with `HTTP_PORT=8080` for Thruster) or `lizard up --port 3000` for Rails 7.1 and 7.2. Without a Dockerfile, lizardpack builds a plain Ruby image on port `3000`.
+Rails 7.1 and later generate a production `Dockerfile`, and Lizard builds it as written: the image installs gems, precompiles assets and runs `bin/rails db:prepare` each time the server starts. Set `RAILS_MASTER_KEY` and the database URLs, then run `lizard up --port 8080` for Rails 8 (with `HTTP_PORT=8080` for Thruster) or `lizard up --port 3000` for Rails 7.1 and 7.2. Without a Dockerfile, lizardpack builds a plain Ruby image on port `3000`.
 
 **Test status:** we checked the `Dockerfile`, `bin/docker-entrypoint`, `config/puma.rb` and `database.yml` that Rails generates, Lizard's build and port rules, and lizardpack's plan for a Rails app without a Dockerfile. We have not yet deployed a Rails app end to end with this guide.
 
@@ -59,7 +59,7 @@ lizard up --service web --port 8080
 ```
 
 - The single quotes keep `${{…}}` away from your shell. Lizard resolves these [references](/variables/references) at deploy time and uses the project's private network.
-- `SOLID_QUEUE_IN_PUMA=true` makes Puma run the Solid Queue worker, so Active Job jobs run inside the web service. Without it, queued jobs wait forever.
+- `SOLID_QUEUE_IN_PUMA=true` makes Puma run the Solid Queue worker, so Active Job jobs run inside the web service. Without it, this web service does not process queued jobs.
 - Use `SECRET_KEY_BASE` instead of `RAILS_MASTER_KEY` only if the app reads no other encrypted credentials.
 
 ## Set secrets and deploy (Rails 7.1 and 7.2)

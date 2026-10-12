@@ -51,9 +51,9 @@ lizard redeploy --service api
 
 ## 一般的な用途
 
-- **キャッシュ** — リクエストをキーにして計算結果を保存します。
-- **キュー / ワーカー** — Redis を、ジョブを消費する [workerモードのサービス](/deploy/workers) と組み合わせます。redis-worker サンプルの手順は [キューコンシューマーを実行する](/deploy/workers#run-a-queue-consumer) で説明しています。
-- **レート制限 / セッション** — [replicas](/deploy/scaling) 間で高速に共有状態を扱います。
+- **キャッシュ**：リクエストをキーにして計算結果を保存します。
+- **キュー / ワーカー**：Redis を、ジョブを消費する [workerモードのサービス](/deploy/workers) と組み合わせます。redis-worker サンプルの手順は [キューコンシューマーを実行する](/deploy/workers#run-a-queue-consumer) で説明しています。
+- **レート制限 / セッション**：[replicas](/deploy/scaling) 間で高速に共有状態を扱います。
 
 ```bash
 # A worker that drains a Redis queue
@@ -85,7 +85,7 @@ lizard scale --service redis --storage 4096
 
 ## 関連項目
 
-- [Managed Addons](/addons) — 命名、参照、ダッシュボードブラウザーについて。
-- [Background Workers](/deploy/workers) — Redis とキューを消費するワーカーの組み合わせについて。
+- [Managed Addons](/addons)：命名、参照、ダッシュボードブラウザーについて。
+- [Background Workers](/deploy/workers)：Redis とキューを消費するワーカーの組み合わせについて。
 
 `lizard run --service redis` は、アドオンのパブリックな接続値を使って手元のマシンでコマンドを開始します。`redis-cli` をローカルにインストールしてください。

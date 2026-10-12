@@ -4,7 +4,7 @@ description: "Mount a named volume at /workspace to keep files between sandbox r
 
 # Persistent Volumes
 
-A volume in Lizard (lizard.build) keeps data after a sandbox stops. It mounts at **`/workspace`** and attaches to **one sandbox at a time**. The sandbox runs on the same node as its volume.
+Persistent Volumes keep data after a sandbox stops. Each volume mounts at **`/workspace`** and attaches to **one sandbox at a time**. The sandbox runs on the same node as its volume.
 
 ## Create and attach by name
 
@@ -49,7 +49,7 @@ finally:
 
 ## Size and price
 
-New volumes allow **1–50 GB**, in whole GB, with **5 GB** as the default. The server can override the maximum through `VOLUME_MAX_SIZE_GB`; the dashboard and CLI read the current limits and storage price from `GET /api/projects/:projectId/volume-limits`.
+New volumes allow **1 to 50 GB**, in whole GB, with **5 GB** as the default. The server can override the maximum through `VOLUME_MAX_SIZE_GB`; the dashboard and CLI read the current limits and storage price from `GET /api/projects/:projectId/volume-limits`.
 
 You pay for **used space**, not the full allocation. Existing volumes larger than the new maximum keep their size and remain accessible. Creating a new volume requires enough unreserved disk space on a healthy worker in the chosen region. If none has room, the API returns `503` with code `volume_capacity_unavailable`.
 
@@ -74,7 +74,7 @@ await Volume.delete('proj_123', 'agent-workdir'); // detach first
 
 Generated IDs and the `volumeId` / `volume_id` fields still work for existing callers. Use names in new code.
 
-Resizing works in place, also while the volume is attached. A Firecracker volume can only grow. A pod-backed volume can also shrink if at least 10% of the new size stays free.
+You can resize a volume in place while it is attached. A Firecracker volume can only grow. A pod-backed volume can also shrink if at least 10% of the new size stays free.
 
 ## CLI
 

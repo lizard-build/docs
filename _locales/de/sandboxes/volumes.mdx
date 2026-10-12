@@ -6,7 +6,7 @@ description: "Binde ein Volume mit Namen unter /workspace ein, um Dateien zwisch
 
 # Persistent Volumes
 
-Ein Volume in Lizard (lizard.build) behält Daten, nachdem eine Sandbox stoppt. Es wird unter **`/workspace`** eingebunden und kann mit **einer Sandbox gleichzeitig** verbunden sein. Die Sandbox läuft auf demselben Knoten wie ihr Volume.
+Ein Volume in Lizard (lizard.build) speichert Daten auch nach dem Stopp einer Sandbox. Es wird unter **`/workspace`** eingebunden und kann mit **einer Sandbox gleichzeitig** verbunden sein. Die Sandbox läuft auf demselben Knoten wie ihr Volume.
 
 <span id="create-and-attach-by-name" />
 
@@ -14,7 +14,7 @@ Ein Volume in Lizard (lizard.build) behält Daten, nachdem eine Sandbox stoppt. 
 
 Namen sind innerhalb eines Projekts eindeutig. Verwende Kleinbuchstaben, Ziffern und Bindestriche, bis zu 64 Zeichen. Der Name muss mit einem Buchstaben oder einer Ziffer beginnen und enden.
 
-Mit `getOrCreate` kannst du ein Volume mit Namen erneut nutzen. Die Größe gilt nur beim Erstellen eines neuen Volumes; die Größe eines bestehenden Volumes ändert sich nie. `Volume.create` meldet einen Konflikt, wenn der Name vergeben ist.
+Mit `getOrCreate` kannst du ein Volume mit Namen erneut nutzen. Die Größe gilt nur beim Erstellen eines neuen Volumes; der Aufruf ändert die Größe eines bestehenden Volumes nicht. `Volume.create` meldet einen Konflikt, wenn der Name vergeben ist.
 
 ```ts
 import { Sandbox, Volume } from '@lizard-build/sdk';
@@ -82,7 +82,7 @@ await Volume.delete('proj_123', 'agent-workdir'); // detach first
 
 Erzeugte IDs und die Felder `volumeId` / `volume_id` funktionieren weiterhin. Nutze Namen in neuem Code.
 
-Die Größenänderung erfolgt direkt am Volume, auch während es verbunden ist. Ein Firecracker-Volume kann nur wachsen. Ein Pod-basiertes Volume kann auch schrumpfen, wenn mindestens 10 % der neuen Größe frei bleiben.
+Du kannst die Größe direkt am Volume ändern, auch während es verbunden ist. Ein Firecracker-Volume kann nur wachsen. Ein Pod-basiertes Volume kann auch schrumpfen, wenn mindestens 10 % der neuen Größe frei bleiben.
 
 <span id="cli" />
 

@@ -7,7 +7,7 @@ description: "Lizard で Docker コンテナをホスト: Dockerfile をコミ�
 
 # Dockerfile から Docker コンテナをデプロイする
 
-Lizard (lizard.build) は、`Dockerfile` からビルドした Docker コンテナをホストします。ファイルをプロジェクトのルートに置いて `lizard up` を実行するか、GitHub リポジトリを接続してください。Lizard は自身のビルドマシンでイメージをビルドするため、ローカルに Docker は必要ありません。ポートは `EXPOSE` または `--port` から取得し、`PORT` でコンテナに渡して、`onlizard.com` のドメインから HTTPS でコンテナを配信します。Lizard はレジストリからビルド済みのイメージを取得しません。公開イメージを実行するには、そのイメージを `FROM` で指定する 1 行の Dockerfile を書きます。
+Lizard (lizard.build) は、`Dockerfile` からビルドした Docker コンテナをホストします。ファイルをプロジェクトのルートに置いて `lizard up` を実行するか、GitHub リポジトリを接続してください。Lizard は自社のビルドマシンでイメージをビルドするため、ローカルに Docker は必要ありません。ポートは `EXPOSE` または `--port` から取得し、`PORT` でコンテナに渡して、`onlizard.com` のドメインから HTTPS でコンテナを配信します。Lizard はレジストリからビルド済みのイメージを取得しません。公開イメージを実行するには、そのイメージを `FROM` で指定する 1 行の Dockerfile を書きます。
 
 **テスト状況:** このページは、2026-10-12 時点の Lizard のビルダー、デプロイヤー、CLI 4.0.42 について、それぞれのソースと照らし合わせて確認した内容です。このページのために新たなデプロイは行っていません。[Umami ガイド](/guides/umami) では、1 行の `FROM` Dockerfile をこの方法でデプロイし、そのテスト結果を記録しています。
 
@@ -83,7 +83,7 @@ lizard service set web --set dockerfilePath=Dockerfile
 lizard service set api --set rootDirectory=apps/api --set dockerfilePath=Dockerfile.prod
 ```
 
-Dockerfile を使うサービスでは、`buildCommand` と `startCommand` を空のままにしてください。`dockerfilePath` がない場合、どちらか一方でも設定されていると、Lizard はあなたの Dockerfile を使わず、そのコマンドから独自の Dockerfile を生成します。`dockerfilePath` を設定していても、`startCommand` はイメージの `ENTRYPOINT` と `CMD` を置き換えます。Lizard は `sh -c "<start command>"` を実行します。
+Dockerfile を使うサービスでは、`buildCommand` と `startCommand` を空のままにしてください。`dockerfilePath` がない場合、どちらか一方でも設定されていると、Lizard は指定した Dockerfile を使わず、そのコマンドから独自の Dockerfile を生成します。`dockerfilePath` を設定していても、`startCommand` はイメージの `ENTRYPOINT` と `CMD` を置き換えます。Lizard は `sh -c "<start command>"` を実行します。
 
 <span id="which-port-lizard-routes-to" />
 
@@ -123,14 +123,14 @@ Lizard は次の順序でサービスのポートを決めます:
 
 ## 公開イメージを実行する
 
-Lizard はすべてのサービスをソースからビルドするため、公開イメージは Dockerfile で包みます:
+Lizard はすべてのサービスをソースからビルドするため、公開イメージも Dockerfile のベースとして指定します:
 
 ```dockerfile
 FROM ghcr.io/umami-software/umami:3.3.1
 EXPOSE 3000
 ```
 
-`latest` ではなくバージョンタグを固定してください。そうすれば、再デプロイでアプリが知らないうちに変わることはありません。[Umami を実行する](/guides/umami) と [Flowise を実行する](/guides/flowise) では、この方法を Managed Postgres と組み合わせて使っています。
+目的のリリースを選ぶには、`latest` ではなくバージョンタグを使ってください。[Umami を実行する](/guides/umami) と [Flowise を実行する](/guides/flowise) では、この方法を Managed Postgres と組み合わせて使っています。
 
 <span id="common-problems" />
 

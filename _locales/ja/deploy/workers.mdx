@@ -6,7 +6,7 @@ description: "HTTPポートなしでキューコンシューマーとポーリ�
 
 # バックグラウンドワーカー
 
-Lizard (lizard.build) のバックグラウンドワーカーは、HTTP ポートを持たないサービスです: キューコンシューマー、更新をポーリングするボット、reconciler、ポーリングループなど。コンテナポートを `0` に設定して、たとえば `lizard up --port 0` で、**worker mode** で実行してください。ワーカーには `PORT`、readiness probe、パブリックルートが与えられないため、HTTP に応答しないことを理由に unhealthy とマークされることはありません。ジョブキューには [Managed Redis](/addons/redis) と組み合わせてください。チャットボットもワーカーです。[Telegram bot](/guides/telegram-bot) と [Discord bot](/guides/discord-bot) のガイドを参照してください。
+Lizard (lizard.build) のバックグラウンドワーカーは、HTTP ポートを持たないサービスです。 キューコンシューマー、更新をポーリングするボット、reconciler、ポーリングループなど。コンテナポートを `0` に設定して、たとえば `lizard up --port 0` で **worker mode** を有効にしてください。ワーカーには `PORT`、readiness probe、パブリックルートが与えられないため、HTTP に応答しないことを理由に unhealthy とマークされることはありません。ジョブキューには [Managed Redis](/addons/redis) と組み合わせてください。チャットボットもワーカーです。[Telegram bot](/guides/telegram-bot) と [Discord bot](/guides/discord-bot) のガイドを参照してください。
 
 <span id="what-worker-mode-changes" />
 
@@ -14,10 +14,10 @@ Lizard (lizard.build) のバックグラウンドワーカーは、HTTP ポー�
 
 `containerPort=0` の場合、プラットフォームは次のように動作します:
 
-- **`PORT` injection をスキップ** — ワーカーはどこにも bind しません。
-- **TCP readiness probe をスキップ** — 誤検知の "unhealthy" ステータスは発生しません。新しい pod が起動する前に古い pod が停止します。
+- **`PORT` injection をスキップ**：ワーカーはどこにも bind しません。
+- **TCP readiness probe をスキップ**：誤検知の "unhealthy" ステータスは発生しません。新しい pod が起動する前に古い pod が停止します。
 - 合成された Dockerfile の **`EXPOSE`** をスキップ。
-- **ロードバランサーのルート登録をスキップ** — 何も配信されません。（生成された `*.onlizard.com` ドメインがサービス上に表示される場合はありますが、応答しません。）
+- **ロードバランサーのルート登録をスキップ**：何も配信されません。（生成された `*.onlizard.com` ドメインがサービス上に表示される場合はありますが、応答しません。）
 
 <span id="enable-worker-mode" />
 
@@ -123,9 +123,9 @@ lizard run --service redis -- python jobs.py result after-restart
 
 ## 関連項目
 
-- [`lizard port`](/cli/port) — サービスのコンテナポートを表示または変更します。
-- [サービスがヘルシー状態にならない](/deploy/troubleshooting/service-never-healthy) — worker-mode で最もよくある設定ミスです。
-- [Managed Addons](/addons) — ステートフルなワークロード向けの Redis、Postgres、S3。
-- [Pythonアプリホスティング](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks) — Celery ワーカーは、コマンドだけが異なり HTTP ポートがない同じイメージです。
+- [`lizard port`](/cli/port)：サービスのコンテナポートを表示または変更します。
+- [サービスがヘルシー状態にならない](/deploy/troubleshooting/service-never-healthy)：worker-mode で最もよくある設定ミスです。
+- [Managed Addons](/addons)：ステートフルなワークロード向けの Redis、Postgres、S3。
+- [Pythonアプリホスティング](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks)：Celery ワーカーは、コマンドだけが異なり HTTP ポートがない同じイメージです。
 
 確認済みバージョン、クラウドでの結果、残っている制限については、[シナリオテストの結果](/guides/validation) を参照してください。

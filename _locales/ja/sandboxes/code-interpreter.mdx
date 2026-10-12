@@ -64,7 +64,7 @@ with CodeSandbox.create(project_id="proj_123", timeout_ms=300_000) as sandbox:
 | フィールド | 内容 |
 |---|---|
 | `stdout`、`stderr` | コードが出力したすべてのテキスト |
-| `results` | リッチ出力: `text/plain` 形式の最後の式の値、base64 の `image/png` 形式の matplotlib のグラフと画像、HTML、その他の形式。それぞれ `mime` と `data` を持ちます |
+| `results` | テキスト以外も含む出力: `text/plain` 形式の最後の式の値、base64 の `image/png` 形式の matplotlib のグラフと画像、HTML、その他の形式。それぞれ `mime` と `data` を持ちます |
 | `error` | コードが例外を発生させたときの `name`、`message`、`traceback` |
 | `executionCount` | カーネルのセルカウンター（Python では `execution_count`） |
 
@@ -112,7 +112,7 @@ def run_python(code: str) -> str:
 sandbox.kill()
 ```
 
-ここでの sandbox の有効期間は 10 分です。長い会話では `setTimeout`（Python では `set_timeout`）で延長するか、`timeoutMs: 0` を設定して sandbox を自分で kill してください。
+ここでの sandbox の有効期間は 10 分です。長い会話では `setTimeout`（Python では `set_timeout`）で延長するか、`timeoutMs: 0` を設定して sandbox を自分で停止してください。
 
 <span id="charts" />
 
@@ -148,7 +148,7 @@ Path("chart.png").write_bytes(base64.b64decode(png))
 
 ## 信頼できないコード
 
-モデルが書いたものはすべて信頼できないものとして扱ってください。コードが Lizard CLI を必要としない限り、`lizardToken` を渡さないでください。sandbox 内のあらゆるものがこれを読み取れるため、渡す場合はワークスペース単位のキーを使ってください。その他のシークレットは `envs` に入れないでください。Pod ベースのボリュームを使う sandbox はホストのカーネルを共有します。[ランタイムとテンプレート](/sandboxes#runtime-and-templates) を参照してください。
+モデルが書いたものはすべて信頼できないものとして扱ってください。コードが Lizard CLI を必要としない限り、`lizardToken` を渡さないでください。sandbox 内のどのプロセスもこれを読み取れるため、渡す場合はワークスペース単位のキーを使ってください。その他のシークレットは `envs` に入れないでください。Pod ベースのボリュームを使う sandbox はホストのカーネルを共有します。[ランタイムとテンプレート](/sandboxes#runtime-and-templates) を参照してください。
 
 <span id="storage-and-billing" />
 

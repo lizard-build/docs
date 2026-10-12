@@ -9,7 +9,7 @@ description: "Node.js や Express のアプリを Lizard でホストします�
 
 Lizard (lizard.build) で Node.js アプリをホストするには、`package.json` を含むフォルダーをデプロイします。lizardpack は lock ファイルからパッケージマネージャーを選び、依存関係をインストールし、`build` スクリプトがあれば実行して、`start` スクリプトでアプリをポート `3000` で起動します。`.nvmrc` や `engines.node` で別のメジャーバージョンを指定しない限り、Node.js 22 を使います。Lizard はポートを `PORT` で渡すので、そのポートで待ち受けてください。
 
-**テスト状況:** 以下の Express サンプルは Express 5.3.0 でローカルで動作し、データベースのルートは pg 8.23.1 を使って PostgreSQL 14 に対して動作しました。そのビルドプランは、Lizard が実行するビルドプランナーである lizardpack で確認しました。このガイドでエンドツーエンドのデプロイはまだ行っていません。
+**テスト状況:** 以下の Express サンプルは Express 5.3.0 を使ってローカルで動作し、データベースのルートは pg 8.23.1 を使って PostgreSQL 14 に対して動作しました。ビルドプランは、Lizard が使う lizardpack で確認しました。このガイドのデプロイ手順は、まだ最初から最後まで試していません。
 
 <span id="before-you-start" />
 
@@ -94,7 +94,7 @@ curl http://localhost:3000/healthz
 }
 ```
 
-バージョンファイルとそのエッジケースは [ランタイムバージョン](/deploy/runtime-versions) で説明しています。サービスのビルドコマンドと起動コマンドは空のままにしてください。どちらかが設定されていると、Lizard は `node:22-alpine` をベースに独自の Dockerfile を書き、バージョンファイルを無視します。[ビルドパイプライン](/concepts/build-pipeline)を参照してください。
+バージョンファイルと注意点は [ランタイムバージョン](/deploy/runtime-versions) で説明しています。サービスのビルドコマンドと起動コマンドは空のままにしてください。どちらかが設定されていると、Lizard は `node:22-alpine` をベースに独自の Dockerfile を生成し、バージョンファイルを無視します。[ビルドパイプライン](/concepts/build-pipeline)を参照してください。
 
 <span id="deploy" />
 
@@ -132,7 +132,7 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service w
 npm install pg
 ```
 
-シングルクォートにより、シェルが `${{…}}` を解釈しなくなります。Lizard はデプロイ時に [参照](/variables/references) を、プロジェクトのプライベートネットワーク上のデータベースのアドレスに解決します。`server.js` にプールとルートを追加します:
+シングルクォートで囲むと、シェルは `${{…}}` を解釈しません。Lizard はデプロイ時に [参照](/variables/references) を、プロジェクトのプライベートネットワーク上のデータベースのアドレスに解決します。`server.js` にプールとルートを追加します:
 
 ```js
 import pg from "pg";

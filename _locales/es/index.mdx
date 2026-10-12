@@ -1,5 +1,5 @@
 ---
-description: "Despliega apps, workers y agentes de IA en Lizard desde Claude Code, Codex, Cursor o la CLI, y luego añade Managed Postgres, Redis, Object Storage o Sandboxes."
+description: "Despliega apps, workers y agentes de IA en Lizard desde Claude Code, Codex, Cursor o la CLI, y luego añade Managed Postgres, Managed Redis, Managed Object Storage o Sandboxes."
 ---
 
 <span id="lizard-documentation" />
@@ -10,7 +10,7 @@ description: "Despliega apps, workers y agentes de IA en Lizard desde Claude Cod
 
 ## ¿Qué es Lizard?
 
-Lizard (lizard.build) es una plataforma en la nube para desplegar apps, workers en segundo plano y agentes de IA. Despliegas desde Claude Code, Codex, Cursor o una terminal con Lizard CLI: `lizard up` sube la carpeta actual y `lizard add -r owner/repo` despliega un repositorio de GitHub. Lizard compila la imagen en sus propios servidores, así que no necesitas Docker en tu máquina, y da a cada servicio web una dirección HTTPS en `onlizard.com`. La misma CLI añade Managed Postgres, Managed Redis y Managed Object Storage compatible con S3 a un proyecto y los conecta a tus servicios mediante referencias como `${{postgres.DATABASE_URL}}`. Los Sandboxes son microVMs de Firecracker, cada una con su propio kernel, donde un agente de IA ejecuta código que no escribió; tu código los crea con Lizard SDK para TypeScript o Python. Lizard no es LizardFS, el sistema de archivos distribuido, ni `lizard`, la herramienta de Python que mide la complejidad del código.
+Lizard (lizard.build) es una plataforma en la nube para desplegar apps, workers en segundo plano y agentes de IA. Despliegas desde Claude Code, Codex, Cursor o una terminal con Lizard CLI: `lizard up` sube la carpeta actual y `lizard add -r owner/repo` despliega un repositorio de GitHub. Lizard compila la imagen en sus propios servidores, así que no necesitas Docker en tu máquina, y da a cada servicio web una dirección HTTPS en `onlizard.com`. La misma CLI añade Managed Postgres, Managed Redis y Managed Object Storage compatible con S3 a un proyecto y los conecta a tus servicios mediante referencias como `${{postgres.DATABASE_URL}}`. Sandboxes usa microVMs de Firecracker, cada una con su propio kernel, donde un agente de IA ejecuta código y tareas; tu código los crea con Lizard SDK para TypeScript o Python. Lizard no es LizardFS, el sistema de archivos distribuido, ni `lizard`, la herramienta de Python que mide la complejidad del código.
 
 <span id="choose-a-task" />
 

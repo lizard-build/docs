@@ -5,7 +5,7 @@ description: "Host a Docker container on Lizard: commit a Dockerfile, run lizard
 
 # Deploy a Docker container from a Dockerfile
 
-Lizard (lizard.build) hosts Docker containers that it builds from your `Dockerfile`. Put the file at the root of your project and run `lizard up`, or connect a GitHub repository: Lizard builds the image on its own build machines, so you need no local Docker. It takes the port from `EXPOSE` or `--port`, passes it to the container in `PORT`, and serves the container over HTTPS on an `onlizard.com` domain. Lizard does not pull ready-made images from a registry; to run a public image, write a one-line Dockerfile that starts `FROM` it.
+Lizard hosts Docker containers that it builds from your `Dockerfile`. Put the file at the root of your project and run `lizard up`, or connect a GitHub repository: Lizard builds the image on its own build machines, so you need no local Docker. It takes the port from `EXPOSE` or `--port`, passes it to the container in `PORT`, and serves the container over HTTPS on an `onlizard.com` domain. Lizard does not pull ready-made images from a registry; to run a public image, write a one-line Dockerfile that starts `FROM` it.
 
 **Test status:** this page describes Lizard's builder, deployer and CLI 4.0.42 as of 2026-10-12, checked against their source. We did not run a new deploy for it. The [Umami guide](/guides/umami) deploys a one-line `FROM` Dockerfile in this way and records its test.
 
@@ -88,7 +88,7 @@ Inside the container, `PORT` holds the chosen port. Read it, or listen on the sa
 ## What reaches the build
 
 - **Build arguments:** only `COMMIT_SHA`. Declare `ARG COMMIT_SHA` to use it. Other `ARG` lines keep their default or stay empty.
-- **Variables:** service variables and secrets do not reach a Dockerfile build, with one exception for `VITE_*` and `NEXT_PUBLIC_*` values described in [build-time variables](/concepts/build-pipeline#build-time-variables). Bake public values into the Dockerfile or commit them; keep secrets for run time.
+- **Variables:** service variables and secrets do not reach a Dockerfile build, with one exception for `VITE_*` and `NEXT_PUBLIC_*` values described in [build-time variables](/concepts/build-pipeline#build-time-variables). Write public values into the Dockerfile or commit them; keep secrets for run time.
 - **Base images:** the builder has no login for your registries, so every `FROM` image must be public.
 - **Changes Lizard makes:** before building, Lizard adds `ARG COMMIT_SHA` ahead of your source `COPY` and adds BuildKit cache mounts to `npm`, `yarn`, `pnpm` and `bun` install steps. Cache mounts you write yourself keep working, scoped to this service; a `--mount` option written with quotes fails the build.
 
@@ -110,7 +110,7 @@ FROM ghcr.io/umami-software/umami:3.3.1
 EXPOSE 3000
 ```
 
-Pin a version tag rather than `latest`, so a redeploy does not change the app under you. [Run Umami](/guides/umami) and [Run Flowise](/guides/flowise) use this pattern with Managed Postgres.
+Use a version tag rather than `latest` to select the intended release. [Run Umami](/guides/umami) and [Run Flowise](/guides/flowise) use this pattern with Managed Postgres.
 
 ## Common problems
 

@@ -13,9 +13,9 @@ Run a command locally with project and service secrets injected.
 - For an app service, it injects the stored values. References such as `${{postgres.DATABASE_URL}}` arrive as that literal text, not the resolved value. Platform variables such as `PORT` and `LIZARD_*` are not injected.
 - For an addon (`--service postgres`, `--service redis`, `--service s3`), it injects the addon's real connection values, such as `DATABASE_URL`.
 
-So to run a migration or a database client locally, point `--service` at the addon, not at the app that references it.
+To run a migration or database client locally, point `--service` at the addon, not at the app that references it.
 
-`lizard ssh` into a running service is turned off (the API answers 403 "Shell access to services is disabled"). To check what the running app gets, use:
+Lizard disables `lizard ssh` into running services (the API answers 403 "Shell access to services is disabled"). To check what the running app gets, use:
 
 | Check | Command |
 |-------|---------|
@@ -59,7 +59,7 @@ lizard run --service api -- node scripts/report.js
 
 ## See also
 
-- [lizard ssh](/cli/ssh) — why shell access to services is off, and what to use instead
-- [lizard secrets](/cli/secrets) — list and set the values `run` injects
-- [Variables](/variables) — how project and service variables are defined and referenced
-- [Python app hosting](https://lizard.build/blog/python-app-hosting) — running `manage.py` and other framework tooling against a deployed database
+- [lizard ssh](/cli/ssh): why shell access to services is off, and what to use instead
+- [lizard secrets](/cli/secrets): list and set the values `run` injects
+- [Variables](/variables): how project and service variables are defined and referenced
+- [Python app hosting](https://lizard.build/blog/python-app-hosting): running `manage.py` and other framework tooling against a deployed database

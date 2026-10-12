@@ -5,7 +5,7 @@ description: "Host a Go app on Lizard: lizardpack finds go.mod, builds a static 
 
 # Deploy a Go app
 
-To deploy a Go app on Lizard (lizard.build), upload or push a module with a `go.mod` file. lizardpack builds it with the Go version from the `go` line, compiles a static binary (`CGO_ENABLED=0`) and runs it on Alpine Linux. The service port is `8080`, and Lizard passes it to your process in `PORT`, so read `PORT` and listen on all interfaces.
+To deploy a Go app on Lizard, upload or push a module with a `go.mod` file. lizardpack builds it with the Go version from the `go` line, compiles a static binary (`CGO_ENABLED=0`) and runs it on Alpine Linux. The service port is `8080`, and Lizard passes it to your process in `PORT`, so read `PORT` in your app and listen on all interfaces.
 
 **Test status:** the sample app below builds and runs locally with Go 1.24, and we checked its build plan with lizardpack, the build planner Lizard runs. We have not yet deployed it end to end with this guide.
 
@@ -92,7 +92,7 @@ EXPOSE 8080
 CMD ["/app/server"]
 ```
 
-Leave the service's build and start commands empty to get this image. With either one set, Lizard writes a different Dockerfile from those commands and ignores the `go` line: a `go build …` command builds on Go 1.24. To control every step, commit your own `Dockerfile`; see [Deploy a Docker container from a Dockerfile](/deploy/dockerfile).
+Leave the service's build and start commands empty to get this image. With either one set, Lizard writes a different Dockerfile from those commands and ignores the `go` line: a `go build …` command builds on Go 1.24. For other build steps, commit your own `Dockerfile`; see [Deploy a Docker container from a Dockerfile](/deploy/dockerfile).
 
 ## Deploy
 
@@ -145,7 +145,7 @@ Request `/healthz` on the URL that `lizard up` printed, then a route that does r
 |---|---|
 | `no Go files in /app` | The `main` package is not at the root or under `cmd/`. Move it, or add a Dockerfile. |
 | The wrong binary starts | With several `cmd/<name>/main.go`, lizardpack builds the first name in alphabetical order. Add a Dockerfile that builds the one you want. |
-| SQLite fails with `CGO_ENABLED=0` | The build turns cgo off, so `mattn/go-sqlite3` cannot work. Use a pure-Go driver, or better [Managed Postgres](/addons/postgres): container files are lost on each deploy. |
+| SQLite fails with `CGO_ENABLED=0` | The build turns cgo off, so `mattn/go-sqlite3` cannot work. Use a pure-Go driver, or [Managed Postgres](/addons/postgres): container files are lost on each deploy. |
 | Deploy never becomes healthy | The process must listen on `PORT` (or `8080`) on all interfaces. See [service never healthy](/deploy/troubleshooting/service-never-healthy). |
 | You need a newer Go | Change the `go` line, for example `go mod edit -go=1.25`, and deploy again. See [runtime versions](/deploy/runtime-versions). |
 

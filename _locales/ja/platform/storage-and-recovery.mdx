@@ -14,7 +14,7 @@ description: "アプリケーションデータと sandbox ファイルのため
 | キャッシュおよびキューデータ | Managed Redis | ワークロードが状態を再構築できるのか、独自の復旧計画が必要なのかを判断してください。Managed Redis にはエビクションポリシーも追記専用ファイル (AOF) もありません。メモリが不足すると再起動し、直近の書き込みが失われることがあります。失えないデータは Managed Postgres に保存してください。 |
 | アプリケーション間で共有されるファイル | Managed Object Storage | 自動作成される `default` bucket は非公開です。bucket を公開するのは、誰がファイルを読んでもよい場合だけにし、ダッシュボードの bucket ブラウザーから設定してください。 |
 
-sandbox のファイルには別のルールが適用されます: sandbox の終了後も残るのは、接続した Persistent Volume の `/workspace` 上のファイルだけです。[保存と課金](/sandboxes#storage-and-billing) を参照してください。
+sandbox のファイルには別のルールが適用されます: sandbox の終了後も残るのは、接続した Persistent Volumes の `/workspace` 上のファイルだけです。[保存と課金](/sandboxes#storage-and-billing) を参照してください。
 
 <span id="keep-files-after-a-sandbox-ends" />
 

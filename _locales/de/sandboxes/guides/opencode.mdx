@@ -9,7 +9,7 @@ description: "OpenCode in einer Sandbox auf Lizard ausführen: ChatGPT oder eine
 
 Um OpenCode in einer Sandbox auf Lizard (lizard.build) auszuführen, verbinden Sie Zugangsdaten mit `lizard agents` (ein ChatGPT-Abo oder einen Schlüssel für Anthropic, OpenAI, OpenRouter oder LLM Gateway), erstellen eine Sandbox aus der Vorlage `opencode` und senden Prompts mit `lizard sandbox prompt <id> --agent opencode "…"`. Wenn Sie lieber die Web-UI von OpenCode nutzen, starten Sie in der Sandbox `opencode web --hostname 0.0.0.0 --port 4096` und öffnen den Port mit `lizard sandbox expose`.
 
-**Teststatus:** Die Befehle stammen aus Lizard CLI 4.0.42 und dem Agent-Runner der Plattform mit Stand 2026-10-12. Die Schritte für die Web-UI haben wir am Quellcode von OpenCode 1.18.34 geprüft, das UI und API über einen Port ausliefert, und am Quellcode des Sandbox-Routers von Lizard, der das Zugriffstoken in einem Cookie hält und WebSockets durchlässt. Keinen der beiden Wege haben wir für diese Seite bisher von Anfang bis Ende in einer laufenden Sandbox durchgespielt.
+**Teststatus:** Die Befehle stammen aus Lizard CLI 4.0.42 und dem Agent-Runner der Plattform mit Stand 2026-10-12. Die Schritte für die Web-UI haben wir am Quellcode von OpenCode 1.18.34 geprüft, das UI und API über einen Port ausliefert, und am Quellcode des Sandbox-Routers von Lizard, der das Zugriffstoken in einem Cookie hält und WebSockets durchlässt. Wir haben bisher keinen der beiden Wege vollständig in einer laufenden Sandbox getestet.
 
 <span id="before-you-start" />
 
@@ -49,7 +49,7 @@ Ist nur ein OpenRouter-Schlüssel verbunden und kein Modell gewählt, verwendet 
 lizard sandbox create -t opencode --timeout 3600000
 ```
 
-Speichern Sie die ausgegebene ID in einer Variablen: `SB=sb_abc123`. Der Standard der CLI sind fünf Minuten Laufzeit; danach löscht Lizard die Sandbox samt Dateien. `--timeout 3600000` gibt ihr eine Stunde. Die Vorlage `opencode` enthält Node.js 22, eine fest eingestellte Version von OpenCode, git, Python 3, ripgrep, curl, jq, unzip und Lizard CLI.
+Speichern Sie die ausgegebene ID in einer Variablen: `SB=sb_abc123`. Der Standard der CLI sind fünf Minuten Laufzeit; danach löscht Lizard die Sandbox samt Dateien. `--timeout 3600000` gibt ihr eine Stunde. Die Vorlage `opencode` enthält Node.js 22, eine festgelegte Version von OpenCode, git, Python 3, ripgrep, curl, jq, unzip und Lizard CLI.
 
 Kopieren Sie Ihren Code so hinein wie bei Claude Code:
 
@@ -67,7 +67,7 @@ Für ein privates oder lokales Repository siehe [Ihren Code in die Sandbox bring
 lizard sandbox prompt $SB --agent opencode --cwd /workspace/app "add input validation to the signup form"
 ```
 
-Jeder Durchgang führt `opencode run --auto` aus, das jede Berechtigungsanfrage genehmigt, die nicht ausdrücklich verboten ist: OpenCode bearbeitet Dateien und führt Befehle aus, ohne nachzufragen. `--effort <level>` wird zu `--variant` von OpenCode. Eine Konversation setzen Sie mit `-c <conversation-id>` fort; übergeben Sie dabei bei jeder Folgefrage erneut `--agent opencode` und `--cwd`. Strg-C beendet das Zuschauen; `lizard sandbox interrupt $SB` stoppt den Agenten.
+Jeder Aufruf führt `opencode run --auto` aus, das jede Berechtigungsanfrage genehmigt, die nicht ausdrücklich verboten ist: OpenCode bearbeitet Dateien und führt Befehle aus, ohne nachzufragen. `--effort <level>` wird zu `--variant` von OpenCode. Eine Konversation setzen Sie mit `-c <conversation-id>` fort; übergeben Sie dabei bei jeder Folgefrage erneut `--agent opencode` und `--cwd`. Strg-C beendet die Anzeige; `lizard sandbox interrupt $SB` stoppt den Agenten.
 
 Wie Sie die Änderungen als Patch zurückholen, steht unter [Die Änderungen zurückholen](/sandboxes/guides/claude-code#get-the-changes-back).
 
@@ -96,9 +96,9 @@ lizard sandbox expose $SB 4096
 
 - `--hostname 0.0.0.0` ist nötig. OpenCode lauscht standardmäßig auf `127.0.0.1`, und die Vorschau-URL antwortet dann mit `Sandbox is not listening on port 4096`.
 - Geben Sie einen festen `--port` an. Ohne ihn wählt OpenCode einen zufälligen freien Port.
-- Die URL wirkt wie ein Passwort: Wer sie hat, kann über OpenCode Befehle in der Sandbox ausführen. Um zusätzlich ein Passwort zu verlangen, fügen Sie `export OPENCODE_SERVER_PASSWORD=…` in `opencode.env` ein; der Benutzername ist `opencode`.
+- Wer die URL hat, kann über OpenCode Befehle in der Sandbox ausführen. Halten Sie sie deshalb geheim. Um zusätzlich ein Passwort zu verlangen, fügen Sie `export OPENCODE_SERVER_PASSWORD=…` in `opencode.env` ein; der Benutzername ist `opencode`.
 - Das Log des Servers lesen Sie mit `lizard sandbox exec $SB -- tail -n 50 /tmp/opencode.log`. Den Server stoppen Sie mit `lizard sandbox exec $SB -- sh -c 'kill $(cat /tmp/opencode.pid)'`.
-- Die UI ist weg, sobald die Sandbox stoppt. Verlängern Sie die Laufzeit der Sandbox mit `lizard sandbox timeout $SB 3600000`.
+- Die UI ist nach dem Stopp der Sandbox nicht mehr erreichbar. Verlängern Sie die Laufzeit der Sandbox mit `lizard sandbox timeout $SB 3600000`.
 
 <span id="common-problems" />
 

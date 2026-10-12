@@ -53,7 +53,7 @@ lizard service set api \
   --set branch=main
 ```
 
-Das Ändern eines Build-Felds löst bei einem laufenden Service automatisch einen Rebuild aus — hänge danach **kein** `redeploy` an, sonst [stellst du zwei Builds in die Warteschlange](/deploy/troubleshooting/double-build). Ein abgestürzter oder noch nie bereitgestellter Service braucht `lizard redeploy`.
+Das Ändern eines Build-Felds löst bei einem laufenden Service automatisch einen Rebuild aus. Hänge danach **kein** `redeploy` an, sonst [stellst du zwei Builds in die Warteschlange](/deploy/troubleshooting/double-build). Ein abgestürzter oder noch nie bereitgestellter Service braucht `lizard redeploy`.
 
 > **Hinweis:** `lizard up` erzwingt immer `sourceType=upload`. Verwende es nicht, um einen Git-gestützten Service zu aktualisieren — pushe zum Remote oder verwende stattdessen `lizard redeploy`.
 
@@ -90,15 +90,15 @@ lizard service set api --set rootDirectory=apps/api
 lizard redeploy --service api
 ```
 
-Wenn dein aktuelles Verzeichnis eine Sub-App in einem Repo ist, dessen Elternverzeichnis bereits verknüpft ist, füge den Service im Projekt des Elternverzeichnisses hinzu und setze `rootDirectory` auf den Unterpfad des aktuellen Verzeichnisses.
+Wenn dein aktuelles Verzeichnis eine Sub-App in einem Repo ist, dessen Elternverzeichnis bereits verknüpft ist, füge den Service im Projekt des übergeordneten Verzeichnisses hinzu und setze `rootDirectory` auf den Unterpfad des aktuellen Verzeichnisses.
 
 <span id="see-also" />
 
 ## Siehe auch
 
 - [Build-Pipeline](/concepts/build-pipeline) — wie dein Stack erkannt und gebaut wird.
-- [Framework-Anleitungen](/framework-guides) — Build-Befehle und Ports für [Next.js](/framework-guides/nextjs), [Nuxt](/framework-guides/nuxt), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails), [Go](/framework-guides/go) und weitere.
-- [Mit einer Dockerfile deployen](/deploy/dockerfile) — wenn das Repo eine eigene Dockerfile hat.
+- [Framework-Anleitungen](/framework-guides): Build-Befehle und Ports für [Next.js](/framework-guides/nextjs), [Nuxt](/framework-guides/nuxt), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails), [Go](/framework-guides/go) und weitere.
+- [Mit einer Dockerfile deployen](/deploy/dockerfile): wenn das Repo ein eigenes Dockerfile hat.
 - [Von lokalem Code deployen](/deploy/upload) — wenn du kein Remote hast.
 - [`lizard git`](/cli/git) — die vollständige Befehlsreferenz für `connect`, `status` und `checkout`.
 - [Den Host nach der Anwendung wählen](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#choose-the-host-by-the-application) — wie du dies auf ein Repo verweist, das ein Agent geschrieben hat.

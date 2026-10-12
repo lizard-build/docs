@@ -9,7 +9,7 @@ description: "Aloja un bot de Discord en Lizard como worker en segundo plano: un
 
 Para alojar un bot de Discord en Lizard (lizard.build), ejecútalo como worker en segundo plano. Un bot de gateway abre una conexión saliente hacia Discord y no sirve HTTP, así que despliégalo con `lizard up --port 0` (`containerPort=0`) y mantén una réplica por token de bot. Lizard detecta un bot de Node.js a partir de `package.json` y lo inicia con `npm run start`; un bot de Python necesita una línea `web:` en un Procfile.
 
-**Estado de las pruebas:** el bot de ejemplo funciona localmente con discord.js 14.27.0 y se detiene con `TokenInvalid` cuando recibe un token falso. Revisamos su plan de compilación con lizardpack, el planificador de compilación que ejecuta Lizard. Todavía no hemos probado esta guía contra Discord desde Lizard; envía un mensaje de prueba y revisa los logs antes de confiar en ella.
+**Estado de las pruebas:** el bot de ejemplo funciona localmente con discord.js 14.27.0 y se detiene con `TokenInvalid` cuando recibe un token falso. Revisamos su plan de compilación con lizardpack, el planificador de compilación que ejecuta Lizard. Todavía no hemos probado esta guía contra Discord desde Lizard; envía un mensaje de prueba y revisa los logs antes de usarla en producción.
 
 <span id="before-you-start" />
 
@@ -100,7 +100,7 @@ lizard secrets set DISCORD_TOKEN="$DISCORD_TOKEN" --service bot
 lizard up --service bot --port 0
 ```
 
-- `lizard add --service bot` crea un servicio vacío; después, `lizard up --service bot` lo llena.
+- `lizard add --service bot` crea un servicio vacío; después, `lizard up --service bot` sube y despliega el código.
 - `lizard secrets set` guarda el token solo en el servicio **bot**. Consulta [variables y secretos](/variables).
 - `--port 0` activa el [modo worker](/deploy/workers): Lizard no define `PORT`, no ejecuta ninguna comprobación de estado del puerto y no añade ninguna ruta HTTP. El servicio puede seguir mostrando un dominio de `onlizard.com`, pero ahí no responde nada.
 

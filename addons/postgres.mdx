@@ -5,7 +5,7 @@ description: "Add a PostgreSQL 18 database on Lizard, find its connection string
 
 # Managed Postgres
 
-Managed Postgres on Lizard (lizard.build) is a PostgreSQL database that you add to a project with `lizard add postgres`. New databases run PostgreSQL 18 by default. Lizard puts the connection string in `DATABASE_URL` and the parts in `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD` and `PGDATABASE`, and your services read them through a reference such as `${{postgres.DATABASE_PRIVATE_URL}}`. The database bills at the same CPU, memory and storage [rates](/platform/billing#resource-rates) as apps, and the dashboard has a SQL editor for it. For an overview and prices, see the [Managed Postgres page](https://lizard.build/postgres).
+Managed Postgres on Lizard is a PostgreSQL database that you add to a project with `lizard add postgres`. New databases run PostgreSQL 18 by default. Lizard stores the connection string in `DATABASE_URL` and its parts in `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD` and `PGDATABASE`. Connect services with a reference such as `${{postgres.DATABASE_PRIVATE_URL}}`. The database uses the same CPU, memory and storage [rates](/platform/billing#resource-rates) as apps. You can query it in the dashboard's SQL editor. For an overview and prices, see the [Managed Postgres page](https://lizard.build/postgres).
 
 ## Provision
 
@@ -133,5 +133,5 @@ See [storage and recovery](/platform/storage-and-recovery) for a restore plan.
 
 ## See also
 
-- [Managed Addons](/addons) — naming, references, and the dashboard browsers.
-- [Cross-Service References](/variables/references) — reference syntax and resolution.
+- [Managed Addons](/addons): naming, references, and the dashboard browsers.
+- [Cross-Service References](/variables/references): reference syntax and resolution.

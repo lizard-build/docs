@@ -7,7 +7,7 @@ description: "Lizard に PostgreSQL 18 データベースを追加し、接続�
 
 # Managed Postgres
 
-Lizard (lizard.build) の Managed Postgres は、`lizard add postgres` でプロジェクトに追加する PostgreSQL データベースです。新しいデータベースはデフォルトで PostgreSQL 18 で動作します。Lizard は接続文字列を `DATABASE_URL` に、その構成要素を `PGHOST`、`PGPORT`、`PGUSER`、`PGPASSWORD`、`PGDATABASE` に格納し、サービスは `${{postgres.DATABASE_PRIVATE_URL}}` のような参照を通じてそれらを読み取ります。データベースはアプリと同じ CPU、メモリ、ストレージの [料金](/platform/billing#resource-rates) で課金され、ダッシュボードには SQL エディターが用意されています。概要と料金については、[Managed Postgres のページ](https://lizard.build/postgres) を参照してください。
+Lizard (lizard.build) の Managed Postgres は、`lizard add postgres` でプロジェクトに追加する PostgreSQL データベースです。新しいデータベースはデフォルトで PostgreSQL 18 で動作します。Lizard は接続文字列を `DATABASE_URL` に、その構成要素を `PGHOST`、`PGPORT`、`PGUSER`、`PGPASSWORD`、`PGDATABASE` に格納し、サービスは `${{postgres.DATABASE_PRIVATE_URL}}` のような参照で値を読み取ります。データベースはアプリと同じ CPU、メモリ、ストレージの [料金](/platform/billing#resource-rates) で課金され、ダッシュボードには SQL エディターが用意されています。概要と料金については、[Managed Postgres のページ](https://lizard.build/postgres) を参照してください。
 
 <span id="provision" />
 
@@ -80,16 +80,16 @@ conn = psycopg.connect(os.environ["DATABASE_URL"])
 
 ## サービスを接続
 
-コンシューマーサービスからプライベート接続文字列を参照し、再デプロイします:
+利用側のサービスからプライベート接続文字列を参照し、再デプロイします:
 
 ```bash
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-参照はデプロイ時に解決されるため、すべてのコンシューマーは次回のデプロイ時にアドオンの現在の値を取得します。プロジェクト外のクライアントには、代わりに `DATABASE_URL` を使用してください。プロジェクト内のすべてのサービスには、アドオンのパブリックな `DATABASE_URL` も最も低い優先順位で渡されます。明示的な参照はこれを上書きします。
+参照はデプロイ時に解決されるため、利用側の各サービスは次回のデプロイ時にアドオンの現在の値を取得します。プロジェクト外のクライアントには、代わりに `DATABASE_URL` を使用してください。プロジェクト内のすべてのサービスには、アドオンのパブリックな `DATABASE_URL` も最も低い優先順位で渡されます。明示的な参照はこれを上書きします。
 
-接続文字列を表示せずに、手元のマシンから接続性を確認します:
+接続文字列を表示せずに、手元のマシンから接続を確認します:
 
 ```bash
 lizard run --service postgres -- sh -c 'psql "$DATABASE_URL" -c "SELECT 1"'
@@ -101,14 +101,14 @@ lizard run --service postgres -- sh -c 'psql "$DATABASE_URL" -c "SELECT 1"'
 
 ## デプロイ時にマイグレーションを実行
 
-マイグレーションには pre-deploy コマンドを使用します。このコマンドは start コマンドも設定されている場合にだけ、すべてのコンテナの起動時に `sh -c "<pre> && exec <start>"` として実行されます。つまり、レプリカごと、再起動ごとに実行されます。マイグレーションは何度実行しても、同時に実行しても安全で、古いアプリケーション バージョンと新しいアプリケーション バージョンの両方に互換性があるようにしてください:
+マイグレーションには pre-deploy コマンドを使用します。このコマンドは start コマンドも設定されている場合にだけ、すべてのコンテナの起動時に `sh -c "<pre> && exec <start>"` として実行されます。つまり、レプリカごと、再起動ごとに実行されます。マイグレーションは何度実行しても、同時に実行しても安全で、新旧両方のアプリケーションで動くようにしてください:
 
 ```bash
 lizard service set api --set preDeployCommand="npm run migrate" --set startCommand="npm start"
 lizard redeploy --service api
 ```
 
-Django アプリの場合、コマンドは `python manage.py migrate` です。[Django ガイド](/framework-guides/django) と [Pythonアプリホスティング](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks) を参照してください。[Umami](/guides/umami) と [Flowise](/guides/flowise) のガイドでは、Managed Postgres 上で動く完全なアプリを紹介しています。
+Django アプリの場合、コマンドは `python manage.py migrate` です。[Django ガイド](/framework-guides/django) と [Pythonアプリホスティング](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks) を参照してください。[Umami](/guides/umami) と [Flowise](/guides/flowise) のガイドでは、Managed Postgres 上で動くアプリ全体の構成を紹介しています。
 
 <span id="browse-and-query-data" />
 
@@ -145,7 +145,7 @@ lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_PRIVATE_URL}}
 
 ## バックアップとリストア
 
-スケジュールされたバックアップやポイントインタイムリカバリがあるとは想定しないでください。リスクのあるマイグレーションの前には、自分でデータベースをエクスポートし、別のデータベースでリストアをテストしてください。たとえば、ローカルに `pg_dump` 18 以降がインストールされている場合は次のようにします:
+定期バックアップやポイントインタイムリカバリを利用できるとは限りません。リスクのあるマイグレーションの前には、自分でデータベースをエクスポートし、別のデータベースでリストアをテストしてください。たとえば、ローカルに `pg_dump` 18 以降がインストールされている場合は次のようにします:
 
 ```bash
 lizard run --service postgres -- sh -c 'pg_dump "$DATABASE_URL" > backup.sql'
@@ -157,5 +157,5 @@ lizard run --service postgres -- sh -c 'pg_dump "$DATABASE_URL" > backup.sql'
 
 ## 関連項目
 
-- [Managed Addons](/addons) — 命名、参照、ダッシュボードのブラウザー。
-- [サービス間参照](/variables/references) — 参照構文と解決方法。
+- [Managed Addons](/addons)：命名、参照、ダッシュボードのブラウザー。
+- [サービス間参照](/variables/references)：参照構文と解決方法。

@@ -5,7 +5,7 @@ description: "Give a port in a Lizard sandbox a private HTTPS preview URL with e
 
 # Preview URLs: open a port from a sandbox
 
-A preview URL gives a port inside a sandbox on Lizard (lizard.build) a private HTTPS address. Start a server that listens on `0.0.0.0`, then call `sandbox.exposePort(3000)` (Python: `expose_port`) or run `lizard sandbox expose <id> 3000`. You get `https://<sandbox-id>-3000.sandbox.<region>.onlizard.com/?lizard_token=…`; a request without the sandbox's access token gets HTTP 401.
+A preview URL gives a port inside a sandbox on Lizard a private HTTPS address. Start a server that listens on `0.0.0.0`, then call `sandbox.exposePort(3000)` (Python: `expose_port`) or run `lizard sandbox expose <id> 3000`. You get `https://<sandbox-id>-3000.sandbox.<region>.onlizard.com/?lizard_token=…`; a request without the sandbox's access token gets HTTP 401.
 
 **Test status:** we checked this page against the source of Lizard SDK, Lizard CLI 4.0.42 and the sandbox router on 2026-10-12. We did not run a new live test for it.
 
@@ -72,7 +72,7 @@ Treat a preview URL like a password: whoever has it can use every exposed port o
 https://<sandbox-id>-<port>.sandbox.<region>.onlizard.com
 ```
 
-The URL works while the sandbox runs and stops working when the sandbox stops. The platform reserves port `49983`; you cannot expose it. A sandbox from the SDK or CLI lives five minutes by default; pass a longer `timeoutMs` or `--timeout` for a preview you want to keep open. See [lifetime limits](/platform/limits#sandbox-lifetime).
+The URL works only while the sandbox runs. The platform reserves port `49983`; you cannot expose it. A sandbox from the SDK or CLI lives five minutes by default; pass a longer `timeoutMs` or `--timeout` for a preview you want to keep open. See [lifetime limits](/platform/limits#sandbox-lifetime).
 
 ## Errors
 

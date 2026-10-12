@@ -9,7 +9,7 @@ description: "Discord bot をバックグラウンド worker として Lizard �
 
 Lizard (lizard.build) で Discord bot をホストするには、バックグラウンド worker として実行します。gateway bot は Discord へのアウトバウンド接続を開くだけで HTTP を提供しないため、`lizard up --port 0`（`containerPort=0`）でデプロイし、bot トークンごとにレプリカを 1 つに保ってください。Lizard は `package.json` から Node.js の bot を検出し、`npm run start` で起動します。Python の bot には Procfile の `web:` 行が必要です。
 
-**テスト状況:** サンプルの bot は discord.js 14.27.0 でローカルで動作し、偽のトークンを渡すと `TokenInvalid` で停止します。そのビルドプランは、Lizard が実行するビルドプランナーである lizardpack で確認しました。このガイドを Lizard から実際の Discord に対して実行したことはまだありません。運用に使う前に、テストメッセージを送ってログを確認してください。
+**テスト状況:** サンプルの bot は discord.js 14.27.0 を使ってローカルで動作し、偽のトークンを渡すと `TokenInvalid` で停止します。ビルドプランは、Lizard が使う lizardpack で確認しました。このガイドを Lizard から実際の Discord に対して実行したことはまだありません。運用に使う前に、テストメッセージを送ってログを確認してください。
 
 <span id="before-you-start" />
 
@@ -84,7 +84,7 @@ read -rs DISCORD_TOKEN && export DISCORD_TOKEN
 npm start
 ```
 
-bot が見えるチャンネルで `!ping` と入力すると、`pong` と返ってきます。デプロイの前にローカルのコピーを停止してください。2 つのコピーが動いていると、どちらもすべてのメッセージに応答します。
+bot が閲覧できるチャンネルで `!ping` と入力すると、`pong` と返ってきます。デプロイの前にローカルのコピーを停止してください。2 つのコピーが動いていると、どちらもすべてのメッセージに応答します。
 
 <span id="deploy-as-a-worker" />
 
@@ -117,7 +117,7 @@ lizard redeploy --service bot
 
 ### トークンごとにレプリカは 1 つ
 
-各レプリカは同じトークンでそれぞれ gateway セッションを開くため、どのレプリカもすべてのメッセージに応答します。bot サービスはレプリカ 1 つのままにしてください。worker の新しいバージョンをデプロイするとき、Lizard は新しいプロセスを起動する前に古いプロセスを停止します。そのため、返信が重複するのではなく、短い空白が生じます。2,500 を超えるサーバーに参加している bot は Discord の sharding を使う必要があります。これはコードの変更であり、同じプロセスのレプリカを増やすことではありません。
+各レプリカは同じトークンでそれぞれ gateway セッションを開くため、どのレプリカもすべてのメッセージに応答します。bot サービスはレプリカ 1 つのままにしてください。worker の新しいバージョンをデプロイするとき、Lizard は新しいプロセスを起動する前に古いプロセスを停止します。そのため、返信が重複するのではなく、短時間停止します。2,500 を超えるサーバーに参加している bot は Discord の sharding を使う必要があります。これはコードの変更であり、同じプロセスのレプリカを増やすことではありません。
 
 <span id="python-bots" />
 
@@ -142,7 +142,7 @@ lizard add postgres
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service bot
 ```
 
-シングルクォートにより、シェルが `${{…}}` を解釈しなくなります。Lizard は bot の起動時に [参照](/variables/references) を解決し、変数の変更によって bot は再起動します。`pg` などのクライアントで `process.env.DATABASE_URL` を読み取って接続します。handler は 2 回実行されても安全なようにしてください。再起動によって、処理中だった作業がもう一度実行されることがあります。
+シングルクォートで囲むと、シェルは `${{…}}` を解釈しません。Lizard は bot の起動時に [参照](/variables/references) を解決し、変数の変更によって bot は再起動します。`pg` などのクライアントで `process.env.DATABASE_URL` を読み取って接続します。ハンドラーは 2 回実行されても安全なようにしてください。再起動によって、処理中だった作業がもう一度実行されることがあります。
 
 <span id="check-that-it-works" />
 

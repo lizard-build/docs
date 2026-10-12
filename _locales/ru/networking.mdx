@@ -7,7 +7,7 @@ description: "Приватная сеть между сервисами по а�
 
 # Сетевое взаимодействие
 
-В Lizard (lizard.build) сервисы одного проекта обращаются друг к другу по приватной сети по адресу `<service>.lizard.internal`, на любом порту и без публичного домена. Каждый веб-сервис также получает сгенерированный `*.onlizard.com` домен с автоматическим TLS в момент деплоя, а свой хостнейм можно подключить, когда будете готовы выйти в прод. Managed Postgres и Managed Redis входят в ту же приватную сеть. Перейти к разделам: [приватная сеть](#private-networking), [собственные домены](#attach-a-custom-domain) или [порты](#change-the-port-your-service-listens-on).
+В Lizard (lizard.build) сервисы одного проекта обращаются друг к другу по приватной сети по адресу `<service>.lizard.internal`, на любом порту и без публичного домена. Каждый веб-сервис также получает сгенерированный `*.onlizard.com` домен с автоматическим TLS в момент деплоя, а свой хостнейм можно подключить перед запуском для пользователей. Managed Postgres и Managed Redis входят в ту же приватную сеть. Перейти к разделам: [приватная сеть](#private-networking), [собственные домены](#attach-a-custom-domain) или [порты](#change-the-port-your-service-listens-on).
 
 <span id="generated-domains" />
 
@@ -26,7 +26,7 @@ lizard domain generate           # claim a *.onlizard.com subdomain if the servi
 
 ## Подключение собственного домена
 
-Хостнейм — это **позиционный аргумент**, отдельного `add` подкоманды не существует:
+Передайте хостнейм как **позиционный аргумент**; отдельной подкоманды `add` нет:
 
 ```bash
 lizard domain app.example.com --service web

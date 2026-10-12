@@ -32,7 +32,7 @@ Rails 7.1 и новее генерируют продакшен-`Dockerfile`, и
 
 Оставьте команды сборки и запуска сервиса пустыми. Если задана любая из них, Lizard вместо вашего Dockerfile пишет собственный по этим командам, и в этом образе есть Node.js, а не Ruby. Команда запуска к тому же заменяет entrypoint образа, так что `db:prepare` не выполнится. См. [порядок решений о сборке](/concepts/build-pipeline#build-decision-order).
 
-Rails 8 запускает Thruster, который слушает порт `80` и держит за собой Puma на порту `3000`. Образ работает от непривилегированного пользователя (`USER 1000:1000`), а такому процессу может не хватить прав открыть порт ниже 1024. `HTTP_PORT=8080` переносит Thruster на порт, который он всегда может открыть.
+Rails 8 запускает Thruster, который слушает порт `80` и передаёт запросы Puma на порту `3000`. Образ работает от непривилегированного пользователя (`USER 1000:1000`), а такому процессу может не хватить прав открыть порт ниже 1024. `HTTP_PORT=8080` переносит Thruster на порт, который он всегда может открыть.
 
 <span id="create-the-project-and-database" />
 
@@ -69,8 +69,8 @@ lizard up --service web --port 8080
 ```
 
 - Одинарные кавычки не дают оболочке обработать `${{…}}`. Lizard подставляет эти [ссылки](/variables/references) при деплое и использует приватную сеть проекта.
-- С `SOLID_QUEUE_IN_PUMA=true` Puma запускает обработчик Solid Queue, так что задания Active Job выполняются внутри веб-сервиса. Без этой переменной задания в очереди ждут вечно.
-- Используйте `SECRET_KEY_BASE` вместо `RAILS_MASTER_KEY`, только если приложение не читает других зашифрованных credentials.
+- С `SOLID_QUEUE_IN_PUMA=true` Puma запускает обработчик Solid Queue, так что задания Active Job выполняются внутри веб-сервиса. Без этой переменной задания остаются в очереди.
+- Используйте `SECRET_KEY_BASE` вместо `RAILS_MASTER_KEY`, только если приложение не читает других зашифрованных учётных данных.
 
 <span id="set-secrets-and-deploy-rails-71-and-72" />
 
@@ -127,11 +127,11 @@ Rails 7.1 и новее отвечают на `/up` кодом HTTP 200, как 
 | Симптом | Что делать |
 |---|---|
 | `bundle install` падает: бандл поддерживает только другие платформы | Выполните `bundle lock --add-platform x86_64-linux` и закоммитьте `Gemfile.lock`. |
-| `Missing secret_key_base` или credentials не расшифровываются | Задайте `RAILS_MASTER_KEY` из `config/master.key` в сервисе `web`. |
+| `Missing secret_key_base` или учётные данные не расшифровываются | Задайте `RAILS_MASTER_KEY` из `config/master.key` в сервисе `web`. |
 | Подключение cache, queue или cable идёт в локальный сокет вроде `/var/run/postgresql` | Задайте `CACHE_DATABASE_URL`, `QUEUE_DATABASE_URL` и `CABLE_DATABASE_URL`. |
 | В логах `bind: permission denied` для порта 80 | Задайте `HTTP_PORT=8080` и порт сервиса `8080`. |
 | Деплой так и не становится работоспособным | Проверьте, что порт сервиса совпадает с таблицей выше: `lizard port --service web`. См. [сервис так и не становится работоспособным](/deploy/troubleshooting/service-never-healthy). |
-| Задания остаются в очереди | Задайте `SOLID_QUEUE_IN_PUMA=true`. Чтобы выполнять задания отдельно от веб-процесса, добавьте второй сервис в [рабочем режиме](/deploy/workers) с `dockerfilePath=Dockerfile` и `startCommand=./bin/jobs`. |
+| Задания остаются в очереди | Задайте `SOLID_QUEUE_IN_PUMA=true`. Чтобы выполнять задания отдельно от веб-процесса, добавьте второй сервис в [режиме воркера](/deploy/workers) с `dockerfilePath=Dockerfile` и `startCommand=./bin/jobs`. |
 | Загруженные файлы пропадают после деплоя | Сервис `local` в Active Storage пишет внутрь контейнера. Используйте S3-совместимое [Managed Object Storage](/addons/storage) с сервисом `amazon`. |
 
 Если приложение использует Sidekiq или адаптер Redis для Action Cable, добавьте [Managed Redis](/addons/redis) и задайте `REDIS_URL='${{redis.REDIS_PRIVATE_URL}}'` в каждом сервисе, которому он нужен.

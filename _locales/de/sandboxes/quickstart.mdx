@@ -28,7 +28,7 @@ description: "Erstellen Sie Ihre erste Sandbox mit Lizard SDK in TypeScript oder
 <span id="full-example" />
 <span id="next-steps" />
 
-Dieser Schnellstart erstellt eine Sandbox mit Lizard SDK, führt darin Python aus, schreibt eine Datei, öffnet einen Port und räumt auf. Jeder Schritt hat Code für TypeScript und Python. Sie brauchen ein Lizard-Konto (lizard.build) mit Pro oder der Testphase, einen API-Schlüssel und ein Projekt. Was Sandboxes sind, erfahren Sie zuerst im [Überblick](/sandboxes).
+In diesem Schnellstart erstellen Sie mit Lizard SDK eine Sandbox, führen darin Python aus, schreiben eine Datei, öffnen einen Port und beenden die Sandbox. Jeder Schritt hat Code für TypeScript und Python. Sie brauchen ein Konto bei Lizard (lizard.build) mit Pro oder der Testphase, einen API-Schlüssel und ein Projekt. Was Sandboxes sind, erfahren Sie zuerst im [Überblick](/sandboxes).
 
 <a id="authenticate" />
 
@@ -75,13 +75,13 @@ finally:
     sandbox.kill()
 ```
 
-Ein Exit-Code ungleich null ist ein Ergebnis, kein Fehler: Prüfen Sie `exitCode` (Python: `exit_code`) selbst.
+Ein Exit-Code ungleich null steht im Ergebnis und löst keine Exception aus: Prüfen Sie `exitCode` (Python: `exit_code`) selbst.
 
 <span id="files" />
 
 ## Dateien
 
-Schreiben Sie Text oder Bytes mit `fs.write`, lesen Sie Text mit `fs.read` und Bytes mit `fs.readBytes` (Python: `read_bytes`). Dateien leben nur so lange wie die Sandbox, es sei denn, Sie schreiben sie auf ein [Persistent Volume](/sandboxes/volumes) unter `/workspace`.
+Schreiben Sie Text oder Bytes mit `fs.write`, lesen Sie Text mit `fs.read` und Bytes mit `fs.readBytes` (Python: `read_bytes`). Dateien bleiben nur so lange erhalten wie die Sandbox, es sei denn, Sie schreiben sie auf ein Volume aus [Persistent Volumes](/sandboxes/volumes) unter `/workspace`.
 
 ```ts
 await sandbox.fs.write("/tmp/task.py", "print(42)\n");
@@ -155,7 +155,7 @@ await sandbox.waitForStatus('running');
 
 - Eine Pause schließt offene Netzwerkverbindungen. Programme in der Sandbox müssen sich nach dem Fortsetzen neu verbinden.
 - Lassen sich die Prozesse nicht speichern, läuft die Sandbox weiter, und `waitForStatus` löst einen Fehler mit dem Grund aus. Schlägt das Fortsetzen fehl, bleibt die Sandbox mit ihrem Checkpoint pausiert; rufen Sie `resume()` erneut auf.
-- Die Frist der Lebensdauer ruht während der Pause und läuft nach dem Fortsetzen weiter. Eine pausierte Sandbox zählt nicht zum Limit laufender Sandboxes.
+- Während der Pause bleibt die restliche Laufzeit unverändert. Nach dem Fortsetzen zählt sie weiter herunter. Eine pausierte Sandbox zählt nicht zum Limit laufender Sandboxes.
 - Eine pausierte Sandbox wird auf demselben Node fortgesetzt. Fällt dieser Node aus, geht der pausierte Zustand verloren; exportieren Sie benötigte Dateien.
 
 Ein Snapshot speichert Arbeitsspeicher und `/workspace`-Dateien einer laufenden Sandbox als private Vorlage im Projekt. Jedes Restore startet eine neue Sandbox in der Region des Snapshots. Schließen Sie vor der Aufnahme Clients und Terminals und stoppen Sie Schreibvorgänge in `/workspace`. Angehängte Persistent Volumes werden nicht erfasst.
@@ -166,13 +166,13 @@ await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-Ein Snapshot einer Firecracker-Sandbox ist bereit, sobald der Aufruf zurückkehrt, und wird von der Festplatte wiederhergestellt; daher gilt `poolSize` nicht. Jedes Restore läuft in der Größe der Quelle und wird zum Stundenpreis dieser Größe abgerechnet. Ein Snapshot einer Pod-Sandbox hält warme Kopien bereit, standardmäßig fünf (eine bis zehn); ist keine bereit, kann Restore HTTP 503 zurückgeben, bis der Pool nachgefüllt ist, und die wiederhergestellte Sandbox wird nach gemessener Nutzung abgerechnet. In beiden Fällen gilt `size` nicht für ein Restore. In der CLI nutzen Sie `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` und `lizard sandbox restore <snapshot-id>`.
+Ein Snapshot einer Firecracker-Sandbox ist bereit, sobald der Aufruf zurückkehrt, und wird von der Festplatte wiederhergestellt; daher gilt `poolSize` nicht. Jede Wiederherstellung startet eine Sandbox in der Größe der Quelle. Für sie gilt der Stundenpreis dieser Größe. Ein Snapshot einer Pod-Sandbox hält warme Kopien bereit, standardmäßig fünf (eine bis zehn); ist keine bereit, kann Restore HTTP 503 zurückgeben, bis der Pool nachgefüllt ist, und die wiederhergestellte Sandbox wird nach gemessener Nutzung abgerechnet. In beiden Fällen gilt `size` nicht für ein Restore. In der CLI nutzen Sie `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` und `lizard sandbox restore <snapshot-id>`.
 
 <span id="clean-up-and-next-steps" />
 
 ## Aufräumen und nächste Schritte
 
-Rufen Sie `kill()` auf, wenn die Aufgabe erledigt ist, wie es die Beispiele in `finally` tun. In Python beendet `with Sandbox.create(...) as sandbox:` die Sandbox, wenn der Block endet. Eine vergessene Sandbox stoppt an ihrer Frist, fünf Minuten nach der Erstellung, sofern Sie keine andere Laufzeit setzen; siehe [Ressourcen und Laufzeit](/sandboxes#resources-and-timeouts).
+Rufen Sie `kill()` auf, wenn die Aufgabe erledigt ist, wie es die Beispiele in `finally` tun. In Python beendet `with Sandbox.create(...) as sandbox:` die Sandbox, wenn der Block endet. Eine nicht beendete Sandbox stoppt nach Ablauf ihrer Laufzeit, fünf Minuten nach der Erstellung, sofern Sie keine andere Laufzeit setzen; siehe [Ressourcen und Laufzeit](/sandboxes#resources-and-timeouts).
 
 - Jeder Aufruf, jede Option und jeder Fehler: [Sandbox-API- und SDK-Referenz](/sandboxes/sdk-reference).
 - Code von einem LLM mit Zustand zwischen Aufrufen: [Code Interpreter](/sandboxes/code-interpreter).

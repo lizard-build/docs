@@ -22,7 +22,7 @@ description: "Запускайте код, написанный LLM, в sandbox 
 <span id="checkpointing-a-session" />
 <span id="see-also" />
 
-Интерпретатор кода запускает код, который пишет языковая модель, и возвращает ей результат. В Lizard (lizard.build) это делает `CodeSandbox` из Lizard SDK внутри sandbox — microVM Firecracker, поэтому код выполняется отдельно от вашего приложения и вашей машины. `CodeSandbox` запускает шаблон `interpreter` с Python и основными библиотеками для работы с данными. Python работает в ядре Jupyter, которое сохраняет переменные между вызовами, а каждый результат содержит напечатанный вывод, значение последнего выражения, графики в формате `image/png` и ошибку с трассировкой, если она возникла.
+Интерпретатор кода запускает код, который пишет языковая модель, и возвращает ей результат. В Lizard (lizard.build) это делает `CodeSandbox` из Lizard SDK внутри sandbox на базе microVM Firecracker. Поэтому код выполняется отдельно от вашего приложения и компьютера. `CodeSandbox` запускает шаблон `interpreter` с Python и основными библиотеками для работы с данными. Python работает в ядре Jupyter, которое сохраняет переменные между вызовами, а каждый результат содержит напечатанный вывод, значение последнего выражения, графики в формате `image/png` и ошибку с трассировкой, если она возникла.
 
 <span id="run-code-with-state" />
 
@@ -53,22 +53,22 @@ with CodeSandbox.create(project_id="proj_123", timeout_ms=300_000) as sandbox:
     print(sandbox.run_code("1/0").error.name)  # "ZeroDivisionError"
 ```
 
-Ошибка в коде — это часть результата, а не исключение. Сбои запроса, например неверный API-ключ, выбрасывают исключение.
+Ошибка в коде возвращается в результате, а не вызывает исключение в SDK. Сбои запроса, например неверный API-ключ, выбрасывают исключение.
 
 <span id="what-does-runcode-return" />
 
 ## Что возвращает runCode?
 
-`runCode` (в Python — `run_code`) возвращает `Execution`:
+`runCode` (в Python: `run_code`) возвращает `Execution`:
 
 | Поле | Содержимое |
 |---|---|
 | `stdout`, `stderr` | Всё, что напечатал код |
 | `results` | Расширенный вывод: значение последнего выражения как `text/plain`, графики matplotlib и изображения как base64 `image/png`, HTML и другие типы, каждый с `mime` и `data` |
 | `error` | `name`, `message` и `traceback`, если код выбросил исключение |
-| `executionCount` | Счётчик ячеек ядра (в Python — `execution_count`) |
+| `executionCount` | Счётчик ячеек ядра (в Python: `execution_count`) |
 
-Передайте `onStdout`, `onStderr`, `onResult` или `onError` (в Python — `on_stdout` и т. д.), чтобы получать вывод, пока код выполняется.
+Передайте `onStdout`, `onStderr`, `onResult` или `onError` (в Python: `on_stdout` и т. д.), чтобы получать вывод, пока код выполняется.
 
 <span id="use-it-as-an-llm-tool" />
 
@@ -112,7 +112,7 @@ def run_python(code: str) -> str:
 sandbox.kill()
 ```
 
-Срок жизни sandbox здесь — десять минут. Для более длинных диалогов увеличьте его через `setTimeout` (в Python — `set_timeout`) или задайте `timeoutMs: 0` и останавливайте sandbox сами.
+В этом примере sandbox работает десять минут. Для более длинных диалогов увеличьте срок через `setTimeout` (в Python: `set_timeout`) или задайте `timeoutMs: 0` и останавливайте sandbox сами.
 
 <span id="charts" />
 
@@ -133,8 +133,8 @@ Path("chart.png").write_bytes(base64.b64decode(png))
 
 ## Контексты, таймауты и языки
 
-- **Контексты.** `createContext()` (в Python — `create_context()`) запускает отдельное ядро со своими переменными и рабочей папкой; передайте его как `context` в `runCode`. `listContexts()`, `restartContext(ctx)` и `deleteContext(ctx)` управляют контекстами. Без контекста каждый язык использует свой контекст по умолчанию.
-- **Таймауты.** `timeoutMs` (в Python — `timeout_ms`) ограничивает один вызов, по умолчанию 60 секунд. Ядро Python, которое работает дольше, прерывается и сохраняет состояние; `error.name` в результате равно `TimeoutError`.
+- **Контексты.** `createContext()` (в Python: `create_context()`) запускает отдельное ядро со своими переменными и рабочей папкой; передайте его как `context` в `runCode`. `listContexts()`, `restartContext(ctx)` и `deleteContext(ctx)` управляют контекстами. Без контекста каждый язык использует свой контекст по умолчанию.
+- **Таймауты.** `timeoutMs` (в Python: `timeout_ms`) ограничивает один вызов, по умолчанию 60 секунд. Ядро Python, которое работает дольше, прерывается и сохраняет состояние; `error.name` в результате равно `TimeoutError`.
 - **Другие языки.** JavaScript и bash выполняются как новый процесс при каждом вызове, поэтому состояние не сохраняется, а `results` остаётся пустым. Для JavaScript нужен `node`, которого нет в шаблоне `interpreter`.
 - **Пауза и снимки.** Ядра работают внутри sandbox, поэтому `pause()` и `resume()` сохраняют их переменные, а `snapshot()` и `fork()` их копируют.
 
@@ -142,7 +142,7 @@ Path("chart.png").write_bytes(base64.b64decode(png))
 
 ## Запуск команд
 
-`process.exec` создаёт отдельный процесс для каждой команды, поэтому переменные Python между вызовами не сохраняются. Используйте его для шагов в оболочке, например `pip install`, а результаты, которые понадобятся позже, сохраняйте в файлы. См. [запуск команды](/sandboxes/quickstart#run-a-command) и [справочник SDK](/sandboxes/sdk-reference#run-commands).
+`process.exec` создаёт отдельный процесс для каждой команды, поэтому переменные Python между вызовами не сохраняются. Используйте его для команд оболочки, например `pip install`, а результаты, которые понадобятся позже, сохраняйте в файлы. См. [запуск команды](/sandboxes/quickstart#run-a-command) и [справочник SDK](/sandboxes/sdk-reference#run-commands).
 
 <span id="untrusted-code" />
 
@@ -154,6 +154,6 @@ Path("chart.png").write_bytes(base64.b64decode(png))
 
 ## Хранение и оплата
 
-Переменные и файлы живут, только пока работает sandbox. Правила оплаты и хранения — в разделе [хранение и оплата](/sandboxes#storage-and-billing); размеры и цены — в [лимитах](/platform/limits#sandbox-sizes).
+Переменные и файлы доступны, только пока работает sandbox. Правила оплаты и хранения смотрите в разделе [хранение и оплата](/sandboxes#storage-and-billing); размеры и цены смотрите в [лимитах](/platform/limits#sandbox-sizes).
 
 [Обзор Sandboxes](/sandboxes) · [Быстрый старт](/sandboxes/quickstart) · [Справочник SDK](/sandboxes/sdk-reference) · [Persistent Volumes](/sandboxes/volumes) · [Страница продукта Sandboxes](https://lizard.build/sandboxes)

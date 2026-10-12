@@ -7,7 +7,7 @@ description: "S3-совместимое объектное хранилище д
 
 # Managed Object Storage
 
-Managed Object Storage в Lizard (lizard.build) — это S3-совместимое хранилище для загрузок, статических файлов и бэкапов. `lizard add s3` создаёт его вместе с **приватным бакетом под именем `default`** и пятью переменными, от `S3_ENDPOINT` до `S3_REGION`, с которыми работает любой AWS SDK при **path-style** адресации. Каждый аккаунт может хранить до 16 GiB, а платите вы за хранимые байты. Чтобы отдавать файлы без аутентификации, сделайте бакет публичным в S3-браузере дашборда. Обзор и цены — на [странице Managed Object Storage](https://lizard.build/object-storage).
+В Lizard (lizard.build) Managed Object Storage хранит файлы по протоколу S3. Используйте его для загрузок, статических файлов и бэкапов. `lizard add s3` создаёт его вместе с **приватным бакетом с именем `default`** и пятью переменными, от `S3_ENDPOINT` до `S3_REGION`, с которыми работает любой AWS SDK при **path-style** адресации. Каждый аккаунт может хранить до 16 GiB. Вы платите за хранимые байты. Чтобы отдавать файлы без аутентификации, сделайте бакет публичным в S3-браузере дашборда. Обзор и цены смотрите на [странице Managed Object Storage](https://lizard.build/object-storage).
 
 <span id="provision" />
 
@@ -76,7 +76,7 @@ const s3 = new S3Client({
    ```
    https://s3-<region>.onlizard.com/<addonId>/<bucket>/<key>
    ```
-   `<region>` — это значение `S3_REGION` (`eu-west-1` или `us-east-1`).
+   Вместо `<region>` подставьте значение `S3_REGION` (`eu-west-1` или `us-east-1`).
 2. **Platform proxy** (хост дашборда, с долгими неизменяемыми заголовками кэша):
    ```
    <dashboard-host>/api/s3/<addonId>/public/<bucket>/<key>

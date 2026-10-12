@@ -1,12 +1,12 @@
 ---
-description: "Monta un volumen con nombre en /workspace para conservar archivos entre ejecuciones de Sandbox. Límites, precios y ejemplos para TypeScript, Python y CLI."
+description: "Monta un volumen con nombre en /workspace para conservar archivos entre ejecuciones de Sandboxes. Límites, precios y ejemplos para TypeScript, Python y CLI."
 ---
 
 <span id="persistent-volumes" />
 
 # Persistent Volumes
 
-Un volumen en Lizard (lizard.build) conserva los datos cuando una Sandbox se detiene. Se monta en **`/workspace`** y se conecta a **una sola Sandbox a la vez**. La Sandbox se ejecuta en el mismo nodo que su volumen.
+Un volumen en Lizard (lizard.build) conserva los datos cuando un sandbox se detiene. Se monta en **`/workspace`** y se conecta a **una soel sandbox a la vez**. La Sandbox se ejecuta en el mismo nodo que su volumen.
 
 <span id="create-and-attach-by-name" />
 
@@ -55,7 +55,7 @@ finally:
 
 ## Tamaño y precio
 
-Los volúmenes nuevos admiten **1–50 GB**, en GB enteros, con **5 GB** por defecto. El servidor puede cambiar el máximo mediante `VOLUME_MAX_SIZE_GB`; el panel y la CLI leen los límites actuales y el precio de almacenamiento de `GET /api/projects/:projectId/volume-limits`.
+Los volúmenes nuevos admiten **1 a 50 GB**, en GB enteros, con **5 GB** por defecto. El servidor puede cambiar el máximo mediante `VOLUME_MAX_SIZE_GB`; el panel y la CLI leen los límites actuales y el precio de almacenamiento de `GET /api/projects/:projectId/volume-limits`.
 
 Pagas por el **espacio usado**, no por toda la capacidad asignada. Los volúmenes que superen el nuevo máximo mantienen su tamaño y siguen disponibles. Crear un volumen requiere suficiente espacio libre sin reservar en un nodo de trabajo sano de la región elegida. Si no hay espacio, la API devuelve `503` con el código `volume_capacity_unavailable`.
 
@@ -82,7 +82,7 @@ await Volume.delete('proj_123', 'agent-workdir'); // detach first
 
 Los ID generados y los campos `volumeId` / `volume_id` siguen funcionando. Usa nombres en el código nuevo.
 
-El cambio de tamaño se hace en el sitio, también mientras el volumen está conectado. Un volumen Firecracker solo puede crecer. Un volumen basado en pods también puede reducirse si al menos el 10% del nuevo tamaño queda libre.
+El cambio de tamaño se aplica al volumen existente, también mientras el volumen está conectado. Un volumen Firecracker solo puede crecer. Un volumen basado en pods también puede reducirse si al menos el 10% del nuevo tamaño queda libre.
 
 <span id="cli" />
 
@@ -103,16 +103,16 @@ lizard volume rm agent-workdir --project proj_123
 
 ## Panel de control
 
-Crea y conecta volúmenes con el SDK o la CLI. Cuando un proyecto tiene un volumen, **Sandboxes → Persistent Volumes** muestra el espacio usado y asignado, el estado y la Sandbox conectada. Desde ahí puedes explorar archivos, cambiar el tamaño de un volumen o eliminarlo.
+Crea y conecta volúmenes con el SDK o la CLI. Cuando un proyecto tiene un volumen, **Sandboxes → Persistent Volumes** muestra el espacio usado y asignado, el estado y el sandbox conectada. Desde ahí puedes explorar archivos, cambiar el tamaño de un volumen o eliminarlo.
 
 <span id="storage-lifecycle" />
 
 ## Ciclo de vida del almacenamiento
 
-- Detener una Sandbox o dejar que caduque desconecta su volumen y conserva los datos.
-- Un volumen conectado no puede conectarse a otra Sandbox ni eliminarse.
+- Detener un sandbox o dejar que caduque desconecta su volumen y conserva los datos.
+- Un volumen conectado no puede conectarse a otro sandbox ni eliminarse.
 - Eliminar un volumen borra sus datos. Los volúmenes usan almacenamiento local del nodo; exporta los datos que necesites tras un fallo del nodo. Consulta [almacenamiento y recuperación](/platform/storage-and-recovery).
-- Sin volumen, `/workspace` es temporal: sus archivos desaparecen cuando la Sandbox se detiene.
-- No se puede hacer fork de una Sandbox con un volumen conectado (HTTP 409), y un snapshot no captura un volumen conectado.
+- Sin volumen, `/workspace` es temporal: sus archivos desaparecen cuando el sandbox se detiene.
+- No se puede hacer fork de un sandbox con un volumen conectado (HTTP 409), y un snapshot no captura un volumen conectado.
 
-Consulta las opciones de Sandbox en la [referencia del SDK](/sandboxes/sdk-reference) y el [ciclo de vida](/sandboxes#lifecycle) para la pausa, los snapshots y fork.
+Consulta las opciones de Sandboxes en la [referencia del SDK](/sandboxes/sdk-reference) y el [ciclo de vida](/sandboxes#lifecycle) para la pausa, los snapshots y fork.

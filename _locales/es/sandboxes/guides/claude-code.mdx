@@ -9,7 +9,7 @@ description: "Ejecuta Claude Code en un sandbox de Lizard: conecta una suscripci
 
 Para ejecutar Claude Code en un sandbox de Lizard (lizard.build), conecta una credencial una sola vez con `lizard agents add claude` (un token de `claude setup-token`) o `lizard agents add anthropic` (una clave de API). Después crea un sandbox desde la plantilla `claude` y envíale trabajo con `lizard sandbox prompt <id> --agent claude "…"`. Claude Code se ejecuta en su propia máquina Linux con `--dangerously-skip-permissions`: edita archivos y ejecuta comandos sin preguntar, y no tiene acceso a tu equipo.
 
-**Estado de las pruebas:** los comandos y el comportamiento de esta página salen de Lizard CLI 4.0.42 y del ejecutor de agentes de la plataforma a fecha de 2026-10-12. No hemos hecho este recorrido de principio a fin en un sandbox real para esta página. Comprobamos en local los pasos de `git bundle` y del parche.
+**Estado de las pruebas:** los comandos y el comportamiento de esta página se basan en Lizard CLI 4.0.42 y del ejecutor de agentes de la plataforma a fecha de 2026-10-12. No hemos probado todos estos pasos de principio a fin en un sandbox real para esta página. Comprobamos en local los pasos de `git bundle` y del parche.
 
 <span id="before-you-start" />
 
@@ -96,11 +96,11 @@ Pasa `--agent claude` y `--cwd` en cada prompt, también en los siguientes. Sin 
 
 ## A qué tiene acceso Claude Code
 
-- **Permisos.** Cada turno ejecuta `claude -p` con `--dangerously-skip-permissions` como root dentro del sandbox. Claude edita archivos, instala paquetes y ejecuta comandos sin preguntar. El sandbox es el límite.
+- **Permisos.** Cada turno ejecuta `claude -p` con `--dangerously-skip-permissions` como root dentro del sandbox. Claude edita archivos, instala paquetes y ejecuta comandos sin preguntar. Estos permisos se limitan al sandbox.
 - **Archivos.** Todo lo que hay en el sandbox y nada de tu equipo.
 - **Red.** Acceso a internet de salida, para descargar paquetes y llamar a APIs. El precio del sandbox incluye el tráfico de salida hasta [2 TB por cuenta](/platform/limits#sandbox-egress) en una ventana móvil de 30 días.
 - **Tu credencial.** Durante una ejecución, el token está en el entorno de Claude Code como `CLAUDE_CODE_OAUTH_TOKEN` o `ANTHROPIC_API_KEY`, y los comandos que ejecuta lo heredan. Con una suscripción, es el token de larga duración de `claude setup-token`; solo los inicios de sesión de ChatGPT reciben una copia de corta duración en cada ejecución. Da por hecho que el código que se ejecuta en el sandbox puede leerlo, y elimínalo con `lizard agents remove claude` cuando ya no lo necesites.
-- **Tu cuenta de Lizard.** Sin acceso por defecto. Crea el sandbox con `--with-token <key>` para instalar una clave `liz_` y que `lizard` funcione dentro, por ejemplo para desplegar lo que construyó Claude. Cualquier cosa en el sandbox puede leer esa clave, así que usa una limitada a un solo workspace o proyecto; consulta [`lizard keys`](/cli/keys).
+- **Tu cuenta de Lizard.** Sin acceso por defecto. Crea el sandbox con `--with-token <key>` para instalar una clave `liz_` y que `lizard` funcione dentro, por ejemplo para desplegar lo que construyó Claude. Cualquier proceso del sandbox puede leer esa clave, así que usa una limitada a un solo workspace o proyecto; consulta [`lizard keys`](/cli/keys).
 
 <span id="get-the-changes-back" />
 
@@ -130,7 +130,7 @@ lizard sandbox resume $SB
 lizard sandbox rm $SB
 ```
 
-Lizard no factura un sandbox pausado, y al reanudarlo conserva sus archivos y procesos. El estado de las conversaciones está en `/workspace/.lizard-agent`, dentro del sandbox. Para conservar archivos después de eliminar el sandbox, adjunta un [Persistent Volume](/sandboxes/volumes) al crearlo con `--volume`.
+Lizard no factura un sandbox pausado, y al reanudarlo conserva sus archivos y procesos. El estado de las conversaciones está en `/workspace/.lizard-agent`, dentro del sandbox. Para conservar archivos después de eliminar el sandbox, adjunta un volumen de [Persistent Volumes](/sandboxes/volumes) al crearlo con `--volume`.
 
 <span id="common-problems" />
 

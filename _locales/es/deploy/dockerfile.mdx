@@ -123,14 +123,14 @@ Sigue la compilación con `lizard logs --build --service web`.
 
 ## Ejecutar una imagen pública
 
-Lizard compila cada servicio desde el código fuente, así que mete la imagen pública en un Dockerfile:
+Lizard compila cada servicio desde el código fuente, así que usa la imagen pública como base en un Dockerfile:
 
 ```dockerfile
 FROM ghcr.io/umami-software/umami:3.3.1
 EXPOSE 3000
 ```
 
-Fija una etiqueta de versión en lugar de `latest`, para que un nuevo despliegue no te cambie la app sin avisar. [Ejecutar Umami](/guides/umami) y [Ejecutar Flowise](/guides/flowise) usan este patrón con Managed Postgres.
+Usa una etiqueta de versión en lugar de `latest` para elegir la versión que quieres desplegar. [Ejecutar Umami](/guides/umami) y [Ejecutar Flowise](/guides/flowise) usan este patrón con Managed Postgres.
 
 <span id="common-problems" />
 

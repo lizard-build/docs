@@ -82,7 +82,7 @@ sandbox = Sandbox.create(
 - `timeoutMs` の既定は 300000（5 分）です。`0` は期限を無効にします。[リソースと有効期間](/sandboxes#resources-and-timeouts) を参照してください。
 - 必要に応じてリージョンを指定してください。カタログへの掲載は空き容量を保証しません。ボリュームを接続する場合は `region` を指定しないでください: sandbox はボリュームのある場所で実行されます。
 - `metadata` は独自のラベルです。`getInfo()` と `list()` がこれを返します。
-- `lizardToken` は `liz_` で始まる API キーを sandbox に書き込み、sandbox 内で `lizard` を使えるようにします。sandbox 内のあらゆるものがこのキーを読み取れるため、ワークスペース単位のキーを渡してください。
+- `lizardToken` は `liz_` で始まる API キーを sandbox に書き込み、sandbox 内で `lizard` を使えるようにします。sandbox 内のどのプロセスもこのキーを読み取れるため、ワークスペース単位のキーを渡してください。
 
 <span id="methods" />
 
@@ -122,7 +122,7 @@ sandbox = Sandbox.create(
 
 ## コマンドを実行する
 
-`process.exec`（Python では `exec_`）はコマンドを実行し、終了するまで待ちます。コマンドの実行中に出力を受け取るには、`onStdout` または `onStderr`（Python では `on_stdout`、`on_stderr`）を渡します。その場合も、呼び出しは最後に完全な結果を返します。文字列の代わりに argv 配列を渡すとシェルを経由しません。信頼できないテキストを引数として渡すには、これが安全な方法です。
+`process.exec`（Python では `exec_`）はコマンドを実行し、終了するまで待ちます。コマンドの実行中に出力を受け取るには、`onStdout` または `onStderr`（Python では `on_stdout`、`on_stderr`）を渡します。その場合も、呼び出しは最後に結果全体を返します。文字列の代わりに argv 配列を渡すとシェルを経由しません。信頼できないテキストを引数として渡すには、これが安全な方法です。
 
 ```ts
 const result = await sandbox.process.exec('npm test', {
@@ -172,7 +172,7 @@ entries = sandbox.fs.list("/app")
 png = sandbox.fs.read_bytes("/app/chart.png")
 ```
 
-`/workspace` の [Persistent Volume](/sandboxes/volumes) 以外にあるファイルは、sandbox の停止後に消えます。
+`/workspace` の [Persistent Volumes](/sandboxes/volumes) 以外にあるファイルは、sandbox の停止後に消えます。
 
 <span id="ports" />
 
@@ -239,13 +239,13 @@ for f in sandbox.fork(count=2):
 
 ## 状態を保持してコードを実行する
 
-`CodeSandbox` は `interpreter` テンプレートを起動し、`runCode`（Python では `run_code`）でコードを実行します。このテンプレートでは、Python はコンテキストごとに永続的な Jupyter カーネルで実行されるため、変数は呼び出し間で引き継がれ、結果に `image/png` のグラフを含めることができます。JavaScript と bash は、呼び出しごとに新しいプロセスとして実行されます。[コードインタープリター](/sandboxes/code-interpreter)を参照してください。
+`CodeSandbox` は `interpreter` テンプレートを起動し、`runCode`（Python では `run_code`）でコードを実行します。このテンプレートでは、Python はコンテキストごとに状態を保持する Jupyter カーネルで実行されるため、変数は呼び出し間で引き継がれ、結果に `image/png` のグラフを含めることができます。JavaScript と bash は、呼び出しごとに新しいプロセスとして実行されます。[コードインタープリター](/sandboxes/code-interpreter)を参照してください。
 
 <span id="volumes" />
 
 ## ボリューム
 
-sandbox 間で `/workspace` を保持するには、[Persistent Volume](/sandboxes/volumes) を名前で接続します:
+sandbox 間で `/workspace` を保持するには、[Persistent Volumes](/sandboxes/volumes) を名前で接続します:
 
 ```ts
 import { Sandbox, Volume } from '@lizard-build/sdk';
@@ -308,10 +308,10 @@ curl -X POST https://lizard.build/api/sandboxes \
   -d '{"template": "base", "projectId": "proj_123", "timeoutMs": 300000}'
 ```
 
-Raw API は、`timeoutMs` を渡さない限り、期限なしで sandbox を作成します。
+直接の API は、`timeoutMs` を渡さない限り、期限なしで sandbox を作成します。
 
 <span id="storage-and-billing" />
 
 ## 保存と課金
 
-課金、送信トラフィック、停止後に何が残るかは、[保存と課金](/sandboxes#storage-and-billing) にまとめて記載しています。サイズと時間単価は [制限](/platform/limits#sandbox-sizes) にあります。
+課金、送信トラフィック、停止後に何が残るかは、[保存と課金](/sandboxes#storage-and-billing) にまとめています。サイズと時間単価は [制限](/platform/limits#sandbox-sizes) にあります。

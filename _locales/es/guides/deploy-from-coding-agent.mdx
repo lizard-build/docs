@@ -7,7 +7,7 @@ description: "Despliega una app desde Claude Code, Codex o Cursor con Lizard Ski
 
 # Desplegar desde Claude Code, Codex o Cursor
 
-Claude Code, Codex y Cursor pueden desplegar en Lizard (lizard.build) la app que han creado con Lizard Skill y Lizard CLI. El agente lee la guía del CLI instalado, revisa el proyecto de destino, ejecuta la compilación y comprueba la URL en vivo. No requiere un transporte MCP independiente. Esta guía incluye el prompt, los comandos que ejecuta el agente para código fuente local y de GitHub, y las comprobaciones que demuestran que el despliegue funcionó.
+Claude Code, Codex y Cursor pueden desplegar en Lizard (lizard.build) la app que han creado con Lizard Skill y Lizard CLI. El agente lee la guía de la CLI instalada, revisa el proyecto de destino, ejecuta la compilación y comprueba la URL en vivo. No requiere un transporte MCP independiente. Esta guía incluye el prompt, los comandos que ejecuta el agente para código fuente local y de GitHub, y las comprobaciones que demuestran que el despliegue funcionó.
 
 <span id="before-you-start" />
 
@@ -27,14 +27,14 @@ lizard --help --json
 
 En Windows, ejecuta `irm https://lizard.build/api/cli/install.ps1 | iex` en PowerShell, o instálalo desde npm con `npm install -g @lizard-build/cli`.
 
-Para que la skill esté disponible para todos los agentes de tu máquina, instálala una vez con `npx skills add lizard-build/skill -g`; consulta [Agentes de programación](/agents). Lizard Skill carga instrucciones que coinciden con el CLI instalado. Para un comando concreto, lee su esquema en lugar de adivinar las opciones:
+Para que la skill esté disponible para todos los agentes de tu máquina, instálala una vez con `npx skills add lizard-build/skill -g`; consulta [Agentes de programación](/agents). Lizard Skill carga instrucciones que coinciden con la CLI instalada. Para un comando concreto, lee su esquema en lugar de adivinar las opciones:
 
 ```bash
 lizard up --help --json
 lizard service set --help --json
 ```
 
-Un prompt útil para pegar en Claude Code, Codex o Cursor es:
+Un prompt que puedes pegar en Claude Code, Codex o Cursor es:
 
 > Despliega esta app con Lizard. Lee la guía del CLI instalado, revisa el proyecto y el servicio vinculados, ejecuta las comprobaciones de la app y muestra el resultado de la compilación y una URL funcional. Pregunta antes de cambiar un servicio de producción existente o eliminar datos.
 

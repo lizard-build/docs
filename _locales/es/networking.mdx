@@ -7,7 +7,7 @@ description: "Red privada entre servicios en <name>.lizard.internal, dominios on
 
 # Redes
 
-En Lizard (lizard.build), los servicios del mismo proyecto se comunican entre sí por una red privada en `<service>.lizard.internal`, en cualquier puerto, sin un dominio público. Cada servicio web también recibe un dominio generado `*.onlizard.com` con TLS automático en el momento en que se despliega, y puedes asociar tu propio hostname cuando estés listo para salir a producción. Managed Postgres y Managed Redis se unen a la misma red privada. Ve directo a [redes privadas](#private-networking), [dominios personalizados](#attach-a-custom-domain) o [puertos](#change-the-port-your-service-listens-on).
+En Lizard (lizard.build), los servicios del mismo proyecto se comunican entre sí por una red privada en `<service>.lizard.internal`, en cualquier puerto, sin un dominio público. Cada servicio web también recibe un dominio generado `*.onlizard.com` con TLS automático en el momento en que se despliega, y puedes asociar tu propio hostname al publicar tu app. Managed Postgres y Managed Redis se unen a la misma red privada. Consulta [redes privadas](#private-networking), [dominios personalizados](#attach-a-custom-domain) o [puertos](#change-the-port-your-service-listens-on).
 
 <span id="generated-domains" />
 
@@ -26,7 +26,7 @@ lizard domain generate           # claim a *.onlizard.com subdomain if the servi
 
 ## Asociar un dominio personalizado
 
-El hostname es un **argumento posicional** — no existe un subcomando `add`:
+El hostname es un **argumento posicional**: no existe un subcomando `add`:
 
 ```bash
 lizard domain app.example.com --service web
@@ -70,7 +70,7 @@ lizard redeploy --service web
 
 ## Servicios worker
 
-Un [servicio en modo worker](/deploy/workers) (`containerPort=0`) puede seguir mostrando un dominio generado, pero no sirve nada — no hay listener ni ruta de load balancer. No asocies un dominio personalizado a un worker.
+Un [servicio en modo worker](/deploy/workers) (`containerPort=0`) puede seguir mostrando un dominio generado, pero no sirve nada: no hay listener ni ruta de load balancer. No asocies un dominio personalizado a un worker.
 
 <span id="private-networking" />
 
@@ -92,6 +92,6 @@ Abre un servicio en el dashboard (`lizard open`) y ve a **Settings → Networkin
 
 ## Ver también
 
-- [`lizard domain`](/cli/domain) — la referencia completa de comandos.
-- [Regiones](/deploy/regions) — co-ubicar servicios y addons para reducir la latencia.
-- [De prototipo a un SaaS por el que pagan](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#verify-a-real-production-flow) — dónde encaja un dominio personalizado entre las demás cosas que una app generada todavía necesita.
+- [`lizard domain`](/cli/domain): la referencia completa de comandos.
+- [Regiones](/deploy/regions): co-ubicar servicios y addons para reducir la latencia.
+- [De prototipo a un SaaS por el que pagan](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#verify-a-real-production-flow): dónde encaja un dominio personalizado entre las demás cosas que una app generada todavía necesita.

@@ -90,17 +90,17 @@ lizard sandbox prompt $SB --agent claude -c conv_0123456789abcdef --cwd /workspa
 lizard sandbox conversations $SB
 ```
 
-フォローアップも含め、すべてのプロンプトで `--agent claude` と `--cwd` を渡してください。`--agent` がないと CLI は Codex に依頼し、`--cwd` がないとエージェントは `/workspace` で作業します。
+続きの依頼も含め、すべてのプロンプトで `--agent claude` と `--cwd` を渡してください。`--agent` がないと CLI は Codex に依頼し、`--cwd` がないとエージェントは `/workspace` で作業します。
 
 <span id="what-claude-code-can-reach" />
 
 ## Claude Code がアクセスできる範囲
 
-- **権限。** 各ターンでは、sandbox 内で root として `--dangerously-skip-permissions` 付きの `claude -p` が実行されます。Claude は確認を求めずにファイルを編集し、パッケージをインストールし、コマンドを実行します。境界は sandbox です。
+- **権限。** 各ターンでは、sandbox 内で root として `--dangerously-skip-permissions` 付きの `claude -p` が実行されます。Claude は確認を求めずにファイルを編集し、パッケージをインストールし、コマンドを実行します。これらの権限は sandbox 内に限られます。
 - **ファイル。** sandbox 内のすべてにアクセスでき、お使いのコンピューター上のものには一切アクセスできません。
 - **ネットワーク。** インターネットへの送信アクセスがあるため、パッケージの取得や API の呼び出しができます。sandbox の料金には、直近 30 日間で [アカウントあたり 2 TB](/platform/limits#sandbox-egress) までの送信トラフィックが含まれます。
 - **認証情報。** 実行中、トークンは Claude Code の環境に `CLAUDE_CODE_OAUTH_TOKEN` または `ANTHROPIC_API_KEY` として置かれ、Claude Code が実行するコマンドにも引き継がれます。サブスクリプションの場合、これは `claude setup-token` で発行した有効期間の長いトークンです。実行ごとに有効期間の短いコピーが渡されるのは ChatGPT のログインだけです。sandbox で動くコードはこのトークンを読めるものと考え、不要になったら `lizard agents remove claude` で削除してください。
-- **Lizard アカウント。** 既定ではアクセスできません。sandbox を `--with-token <key>` 付きで作成すると `liz_` キーがインストールされ、sandbox 内で `lizard` が使えるようになります。たとえば Claude が作ったものをデプロイする場合です。sandbox 内のあらゆるものがこのキーを読めるため、1 つのワークスペースまたはプロジェクトに範囲を絞ったキーを使ってください。[`lizard keys`](/cli/keys) を参照してください。
+- **Lizard アカウント。** 既定ではアクセスできません。sandbox を `--with-token <key>` 付きで作成すると `liz_` キーがインストールされ、sandbox 内で `lizard` が使えるようになります。たとえば Claude が作ったものをデプロイする場合です。sandbox 内のどのプロセスもこのキーを読めるため、1 つのワークスペースまたはプロジェクトに範囲を絞ったキーを使ってください。[`lizard keys`](/cli/keys) を参照してください。
 
 <span id="get-the-changes-back" />
 
@@ -130,7 +130,7 @@ lizard sandbox resume $SB
 lizard sandbox rm $SB
 ```
 
-一時停止中の sandbox は課金されず、再開するとファイルとプロセスがそのまま戻ります。会話の状態は sandbox 内の `/workspace/.lizard-agent` に保存されます。sandbox を削除した後もファイルを残すには、作成時に `--volume` で [Persistent Volume](/sandboxes/volumes) を接続してください。
+一時停止中の sandbox は課金されず、再開するとファイルとプロセスがそのまま戻ります。会話の状態は sandbox 内の `/workspace/.lizard-agent` に保存されます。sandbox を削除した後もファイルを残すには、作成時に `--volume` で [Persistent Volumes](/sandboxes/volumes) を接続してください。
 
 <span id="common-problems" />
 

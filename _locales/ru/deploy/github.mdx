@@ -53,7 +53,7 @@ lizard service set api \
   --set branch=main
 ```
 
-Изменение поля сборки автоматически запускает пересборку работающего сервиса — **не** добавляйте `redeploy` после этого, иначе вы [поставите в очередь две сборки](/deploy/troubleshooting/double-build). Сервису, который упал или ни разу не был развёрнут, нужен `lizard redeploy`.
+Изменение поля сборки автоматически запускает пересборку работающего сервиса. **Не** добавляйте `redeploy` после этого, иначе вы [поставите в очередь две сборки](/deploy/troubleshooting/double-build). Сервису, который упал или ни разу не был развёрнут, нужен `lizard redeploy`.
 
 > **Примечание:** `lizard up` всегда принудительно включает `sourceType=upload`. Не используйте его для обновления git-сервиса — отправьте push в удалённый репозиторий или используйте `lizard redeploy`.
 
@@ -97,8 +97,8 @@ lizard redeploy --service api
 ## См. также
 
 - [Сборка Pipeline](/concepts/build-pipeline) — как стек определяется и собирается.
-- [Руководства по фреймворкам](/framework-guides) — команды сборки и порты для [Next.js](/framework-guides/nextjs), [Nuxt](/framework-guides/nuxt), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails), [Go](/framework-guides/go) и других.
-- [Развёртывание с Dockerfile](/deploy/dockerfile) — когда в репозитории есть свой Dockerfile.
+- [Руководства по фреймворкам](/framework-guides): команды сборки и порты для [Next.js](/framework-guides/nextjs), [Nuxt](/framework-guides/nuxt), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails), [Go](/framework-guides/go) и других.
+- [Развёртывание с Dockerfile](/deploy/dockerfile): когда в репозитории есть свой Dockerfile.
 - [Развернуть из локального кода](/deploy/upload) — когда нет удалённого репозитория.
 - [`lizard git`](/cli/git) — полная справочная информация по командам `connect`, `status` и `checkout`.
 - [Выбор хоста под приложение](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#choose-the-host-by-the-application) — подключение к репозиторию, написанному агентом.

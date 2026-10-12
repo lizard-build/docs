@@ -4,7 +4,7 @@ description: "Deploy Next.js on Lizard as a Node.js server. Configure next build
 
 # Deploy Next.js on Lizard
 
-Run Next.js on Lizard as a Node.js server with `next build` and `next start`. This path keeps a server available for request-time rendering, Route Handlers, and Server Actions. If every route can be built ahead of time, follow [Next.js static export](/framework-guides/nextjs/static-export) instead.
+Run Next.js on Lizard as a Node.js server with `next build` and `next start`. The server handles request-time rendering, Route Handlers, and Server Actions. If every route can be built ahead of time, follow [Next.js static export](/framework-guides/nextjs/static-export) instead.
 
 ## Build settings
 
@@ -43,7 +43,7 @@ npm run build
 npm run start
 ```
 
-In another terminal, open `http://localhost:3000` and test an inner route. If the app has an API or Server Action, exercise it too. Passing the development server check alone does not prove that the production build works.
+In another terminal, open `http://localhost:3000` and test an inner route. If the app has an API or Server Action, test it too. Passing the development server check alone does not prove that the production build works.
 
 ## Deploy
 
@@ -62,7 +62,7 @@ Lizard detects the `next` dependency and runs the build and start scripts. These
 
 ## Environment variables and data
 
-`NEXT_PUBLIC_*` values become part of the browser bundle during the build. With `lizard up`, Lizard passes no variables to the build: commit public values in `.env.production` (the `.gitignore` from `create-next-app` can exclude `.env*`; allow that file). On a [GitHub service](/deploy/github), Lizard bakes the service's `NEXT_PUBLIC_*` variables into the build; see [build-time variables](/concepts/build-pipeline#build-time-variables). Keep credentials in server-only variables and configure them for the service through [variables and secrets](/variables). No other service variables reach the build, so code that fetches data while building cannot read them. A runtime restart does not change already generated HTML or JavaScript.
+`NEXT_PUBLIC_*` values become part of the browser bundle during the build. With `lizard up`, Lizard passes no variables to the build: commit public values in `.env.production` (the `.gitignore` from `create-next-app` can exclude `.env*`; allow that file). On a [GitHub service](/deploy/github), Lizard writes the service's `NEXT_PUBLIC_*` variables into the build; see [build-time variables](/concepts/build-pipeline#build-time-variables). Keep credentials in server-only variables and configure them for the service through [variables and secrets](/variables). No other service variables reach the build, so code that fetches data while building cannot read them. A runtime restart does not change already generated HTML or JavaScript.
 
 Local cache files and uploaded files do not form a shared store across replicas. Review Next.js cache and Server Action requirements before scaling beyond one replica. Put durable app data in a database or object storage, and read [storage and recovery](/platform/storage-and-recovery).
 

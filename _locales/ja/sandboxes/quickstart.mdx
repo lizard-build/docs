@@ -82,7 +82,7 @@ finally:
 
 ## ファイル
 
-テキストまたはバイトは `fs.write` で書き込み、テキストは `fs.read` で、バイトは `fs.readBytes`（Python では `read_bytes`）で読み取ります。ファイルは sandbox が存在する間だけ残ります。ただし、`/workspace` の [Persistent Volume](/sandboxes/volumes) に書き込んだファイルは例外です。
+テキストまたはバイトは `fs.write` で書き込み、テキストは `fs.read` で、バイトは `fs.readBytes`（Python では `read_bytes`）で読み取ります。ファイルは sandbox が存在する間だけ残ります。ただし、`/workspace` の [Persistent Volumes](/sandboxes/volumes) に書き込んだファイルは例外です。
 
 ```ts
 await sandbox.fs.write("/tmp/task.py", "print(42)\n");
@@ -102,7 +102,7 @@ print(result.stdout)
 
 ## 公開ポート
 
-`0.0.0.0` で待ち受けるサーバーを起動し、`exposePort(port)`（Python では `expose_port`）を呼び出します。`url`、`hostname`、`accessToken` が返されます。ポートは非公開です。ブラウザで `url` を開く（`?lizard_token=` が付いています）か、`X-Lizard-Access-Token` ヘッダーでトークンを送信してください。トークンのないリクエストには 401 が返されます。sandbox を停止するとポートは応答しなくなります。エージェントが作った dev サーバーについては、[プレビュー URL](/sandboxes/preview-urls) を参照してください。
+`0.0.0.0` で待ち受けるサーバーを起動し、`exposePort(port)`（Python では `expose_port`）を呼び出します。`url`、`hostname`、`accessToken` が返されます。ポートは非公開です。ブラウザで `url` を開く（`?lizard_token=` が付いています）か、`X-Lizard-Access-Token` ヘッダーでトークンを送信してください。トークンのないリクエストには 401 が返されます。sandbox を停止するとポートは応答しなくなります。エージェントが作った 開発サーバーについては、[プレビュー URL](/sandboxes/preview-urls) を参照してください。
 
 ```ts
 await sandbox.process.exec(
@@ -127,7 +127,7 @@ print(exposed.url)  # open in a browser
 
 ## 実行中の sandbox への再接続
 
-sandbox ID（`sandbox.sandboxId`、Python では `sandbox.sandbox_id`）を保持しておき、別のプロセスや後のリクエストから `Sandbox.connect(id)` を呼び出すと、同じ sandbox のハンドルを取得できます。`connect` は sandbox が存在するかどうかを確認するだけです: 一時停止中の sandbox を再開せず、sandbox が kill されるか期限切れになった後は `NotFoundError` を投げます。
+sandbox ID（`sandbox.sandboxId`、Python では `sandbox.sandbox_id`）を保持しておき、別のプロセスや後のリクエストから `Sandbox.connect(id)` を呼び出すと、同じ sandbox のハンドルを取得できます。`connect` は sandbox が存在するかどうかを確認するだけです: 一時停止中の sandbox を再開せず、sandbox が停止するか期限切れになった後は `NotFoundError` を投げます。
 
 ```ts
 const connected = await Sandbox.connect(sandbox.sandboxId);
@@ -173,7 +173,7 @@ Firecracker の sandbox のスナップショットは、呼び出しが戻っ�
 
 ## 後片付けと次のステップ
 
-タスクが終わったら、例の `finally` のように `kill()` を呼び出します。Python では、`with Sandbox.create(...) as sandbox:` を使うと、ブロックを抜けるときに sandbox が kill されます。kill し忘れた sandbox は期限に達すると停止します。別の有効期間を設定しない限り、作成から 5 分後です。[リソースと有効期間](/sandboxes#resources-and-timeouts) を参照してください。
+タスクが終わったら、例の `finally` のように `kill()` を呼び出します。Python では、`with Sandbox.create(...) as sandbox:` を使うと、ブロックを抜けるときに sandbox が停止します。停止し忘れた sandbox は期限に達すると停止します。別の有効期間を設定しない限り、作成から 5 分後です。[リソースと有効期間](/sandboxes#resources-and-timeouts) を参照してください。
 
 - すべての呼び出し、オプション、エラー: [Sandbox API と SDK リファレンス](/sandboxes/sdk-reference)。
 - 呼び出し間で状態を保持する、LLM が書いたコード: [コードインタープリター](/sandboxes/code-interpreter)。

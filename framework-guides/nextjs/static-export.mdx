@@ -25,7 +25,7 @@ Keep `"build": "next build"` in `package.json`. This example uses plain exported
 
 ## Add a complete Dockerfile
 
-The Next.js auto-detection path expects a Node server. It does not switch to nginx just because the configuration exports `out/`. Add this Dockerfile at the app root; it assumes npm and a committed `package-lock.json`:
+The Next.js auto-detection path expects a Node server. Setting the output to `out/` does not switch the build to nginx. Add this Dockerfile at the app root; it assumes npm and a committed `package-lock.json`:
 
 ```dockerfile
 FROM node:22-slim AS build
@@ -68,7 +68,7 @@ npm ci
 npm run build
 ```
 
-Check that `out/index.html` and an expected inner route exist. With Docker available, test the actual server locally:
+Check that `out/index.html` and an expected inner route exist. If you have Docker, test the server locally:
 
 ```bash
 docker build -t nextjs-static .

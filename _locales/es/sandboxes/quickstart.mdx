@@ -81,7 +81,7 @@ Un código de salida distinto de cero es un resultado, no un error: comprueba t�
 
 ## Archivos
 
-Escribe texto o bytes con `fs.write`, lee texto con `fs.read` y lee bytes con `fs.readBytes` (Python: `read_bytes`). Los archivos duran solo lo que dura el sandbox, salvo que los escribas en un [Persistent Volume](/sandboxes/volumes) en `/workspace`.
+Escribe texto o bytes con `fs.write`, lee texto con `fs.read` y lee bytes con `fs.readBytes` (Python: `read_bytes`). Los archivos duran solo lo que dura el sandbox, salvo que los escribas en un volumen de [Persistent Volumes](/sandboxes/volumes) en `/workspace`.
 
 ```ts
 await sandbox.fs.write("/tmp/task.py", "print(42)\n");
@@ -126,7 +126,7 @@ print(exposed.url)  # open in a browser
 
 ## Conectar a un sandbox en ejecución
 
-Guarda el ID del sandbox (`sandbox.sandboxId`, Python: `sandbox.sandbox_id`) y llama a `Sandbox.connect(id)` desde otro proceso o en una solicitud posterior para obtener un handle del mismo sandbox. `connect` solo comprueba que el sandbox existe: no reanuda un sandbox pausado y lanza `NotFoundError` cuando el sandbox ya se detuvo con kill o venció.
+Guarda el ID del sandbox (`sandbox.sandboxId`, Python: `sandbox.sandbox_id`) y llama a `Sandbox.connect(id)` desde otro proceso o en una solicitud posterior para obtener un handle del mismo sandbox. `connect` solo comprueba que el sandbox existe: no reanuda un sandbox pausado y lanza `NotFoundError` cuando el sandbox ya se detuvo o venció.
 
 ```ts
 const connected = await Sandbox.connect(sandbox.sandboxId);
@@ -158,7 +158,7 @@ await sandbox.waitForStatus('running');
 - El plazo de vida se detiene mientras el sandbox está pausado y continúa al reanudar. Un sandbox pausado no cuenta para el límite de sandboxes en marcha.
 - Un sandbox pausado se reanuda en el mismo nodo. Si ese nodo falla, se pierde el estado pausado; exporta los archivos que necesites.
 
-Un snapshot guarda la memoria y los archivos de `/workspace` de un sandbox en marcha como plantilla privada del proyecto. Cada restore inicia un sandbox nuevo en la región del snapshot. Antes de capturar, cierra clientes y terminales y deja de escribir en `/workspace`. Los Persistent Volumes conectados no se capturan.
+Un snapshot guarda la memoria y los archivos de `/workspace` de un sandbox en marcha como plantilla privada del proyecto. Cada restauración inicia un sandbox nuevo en la región del snapshot. Antes de capturar, cierra clientes y terminales y deja de escribir en `/workspace`. Los Persistent Volumes conectados no se capturan.
 
 ```ts
 const saved = await sandbox.snapshot('my-app', { poolSize: 5 });
@@ -166,15 +166,15 @@ await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-Un snapshot de un sandbox Firecracker está listo cuando la llamada termina y se restaura desde disco, así que `poolSize` no se aplica. Cada restore se ejecuta con el tamaño del origen y se factura al precio por hora de ese tamaño. Un snapshot de un sandbox de pod mantiene copias listas, cinco por defecto (de una a diez); si no hay ninguna, restore puede devolver HTTP 503 hasta que el pool se rellene, y el sandbox restaurado se factura por consumo medido. En ambos casos `size` no se aplica a un restore. En la CLI, usa `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` y `lizard sandbox restore <snapshot-id>`.
+Un snapshot de un sandbox Firecracker está listo cuando la llamada termina y se restaura desde disco, así que `poolSize` no se aplica. Cada restauración se ejecuta con el tamaño del origen y se factura al precio por hora de ese tamaño. Un snapshot de un sandbox de pod mantiene copias listas, cinco por defecto (de una a diez); si no hay ninguna, la restauración puede devolver HTTP 503 hasta que el pool se rellene, y el sandbox restaurado se factura por consumo medido. En ambos casos `size` no se aplica a una restauración. En la CLI, usa `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` y `lizard sandbox restore <snapshot-id>`.
 
 <span id="clean-up-and-next-steps" />
 
 ## Limpieza y siguientes pasos
 
-Llama a `kill()` cuando termine la tarea, como hacen los ejemplos en `finally`. En Python, `with Sandbox.create(...) as sandbox:` detiene el sandbox al salir del bloque. Un sandbox que olvides se detiene en su plazo, cinco minutos después de crearlo salvo que fijes otra duración; consulta [recursos y duración](/sandboxes#resources-and-timeouts).
+Llama a `kill()` cuando termine la tarea, como hacen los ejemplos en `finally`. En Python, `with Sandbox.create(...) as sandbox:` detiene el sandbox al salir del bloque. Si olvidas detener un sandbox, se detiene al agotarse su duración, cinco minutos después de crearlo salvo que fijes otra duración; consulta [recursos y duración](/sandboxes#resources-and-timeouts).
 
-- Cada llamada, opción y error: [referencia de la API y el SDK de Sandbox](/sandboxes/sdk-reference).
+- Cada llamada, opción y error: [referencia de la API y el SDK de Sandboxes](/sandboxes/sdk-reference).
 - Código de un LLM con estado entre llamadas: [intérprete de código](/sandboxes/code-interpreter).
 - Archivos que sobreviven a un sandbox: [Persistent Volumes](/sandboxes/volumes).
 - Un agente de programación en un sandbox: [Claude Code](/sandboxes/guides/claude-code) u [OpenCode](/sandboxes/guides/opencode).

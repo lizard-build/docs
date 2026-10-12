@@ -14,7 +14,7 @@ Elige el almacenamiento según los datos que deben sobrevivir a un reinicio del 
 | Datos de caché y cola | Managed Redis | Decide si la carga de trabajo puede reconstruir su estado o necesita su propio plan de recuperación. Managed Redis no tiene política de expulsión ni archivo append-only: si se queda sin memoria, se reinicia y pueden perderse las escrituras recientes. Guarda en Managed Postgres los datos que no puedas perder. |
 | Archivos compartidos por aplicaciones | Managed Object Storage | El bucket `default` creado automáticamente es privado. Haz público un bucket desde el navegador de buckets del dashboard solo si cualquiera puede leer sus archivos. |
 
-Los archivos de un sandbox siguen otras reglas: solo los archivos de un Persistent Volume adjunto en `/workspace` sobreviven a un sandbox. Consulta [almacenamiento y facturación](/sandboxes#storage-and-billing).
+Los archivos de un sandbox siguen otras reglas: solo los archivos de un volumen de Persistent Volumes adjunto en `/workspace` sobreviven a un sandbox. Consulta [almacenamiento y facturación](/sandboxes#storage-and-billing).
 
 <span id="keep-files-after-a-sandbox-ends" />
 

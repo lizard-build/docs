@@ -6,7 +6,7 @@ description: "Deploy Hugo on Lizard by building public with hugo --minify and se
 
 Lizard can build a Hugo source site with `hugo --minify` and serve `public/` through nginx on port `80`. Start from the Hugo source directory, with a Hugo configuration and `content/`, rather than uploading only the generated HTML.
 
-Start with the [complete source example](https://github.com/lizard-build/docs/tree/main/_examples/hugo), which includes the configuration and files used by this recipe.
+The [complete source example](https://github.com/lizard-build/docs/tree/main/_examples/hugo) includes the configuration and files used in this guide.
 
 ## Prepare the source
 
@@ -65,7 +65,7 @@ lizard up --service web --port 80
 ```
 
 
-Exclude local generated output and secrets. For an upload, ensure theme source files actually exist in the directory you send; a remote submodule reference alone is not the theme content.
+Exclude local generated output and secrets. Include the theme's source files in the upload directory. A remote submodule reference does not include those files.
 
 ## Verify the deployed site
 

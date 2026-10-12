@@ -5,7 +5,7 @@ description: "Run Claude Code in a Lizard sandbox: connect a Claude subscription
 
 # Run Claude Code in a sandbox
 
-To run Claude Code in a sandbox on Lizard (lizard.build), connect a credential once with `lizard agents add claude` (a token from `claude setup-token`) or `lizard agents add anthropic` (an API key). Then create a sandbox from the `claude` template and send it work with `lizard sandbox prompt <id> --agent claude "…"`. Claude Code runs on its own Linux machine with `--dangerously-skip-permissions`: it edits files and runs commands without asking, and it has no access to your computer.
+To run Claude Code in a sandbox on Lizard, connect a credential once with `lizard agents add claude` (a token from `claude setup-token`) or `lizard agents add anthropic` (an API key). Then create a sandbox from the `claude` template and send it work with `lizard sandbox prompt <id> --agent claude "…"`. Claude Code runs on its own Linux machine with `--dangerously-skip-permissions`: it edits files and runs commands without asking, and it has no access to your computer.
 
 **Test status:** the commands and behaviour on this page come from Lizard CLI 4.0.42 and the platform's agent runner as of 2026-10-12. We have not run this walkthrough end to end in a live sandbox for this page. We checked the `git bundle` and patch steps locally.
 
@@ -23,7 +23,7 @@ To run Claude Code in a sandbox on Lizard (lizard.build), connect a credential o
 | Anthropic API key | `lizard agents add anthropic` | `ANTHROPIC_API_KEY` |
 | OpenRouter API key | `lizard agents add openrouter` | OpenRouter's Anthropic-compatible endpoint |
 
-Credentials belong to your Lizard account, not to a project, and every sandbox you start can use them. Claude Code uses one credential at a time. With several connected, pick one and, if you like, a default model:
+Credentials belong to your Lizard account, not to a project, and every sandbox you start can use them. Claude Code uses one credential at a time. If you connect several credentials, choose one. You can also set a default model:
 
 ```bash
 lizard agents use claude --credential anthropic
@@ -82,7 +82,7 @@ Pass `--agent claude` and `--cwd` on every prompt, follow-ups included. Without 
 
 ## What Claude Code can reach
 
-- **Permissions.** Each turn runs `claude -p` with `--dangerously-skip-permissions` as root inside the sandbox. Claude edits files, installs packages and runs commands without asking. The sandbox is the boundary.
+- **Permissions.** Each turn runs `claude -p` with `--dangerously-skip-permissions` as root inside the sandbox. Claude edits files, installs packages and runs commands without asking. These permissions apply inside the sandbox.
 - **Files.** Everything in the sandbox, and nothing on your computer.
 - **Network.** Outbound internet access, so it can fetch packages and call APIs. The sandbox price includes egress up to [2 TB per account](/platform/limits#sandbox-egress) over a rolling 30 days.
 - **Your credential.** During a run, the token sits in Claude Code's environment as `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY`, and commands it runs inherit it. For a subscription this is the long-lived token from `claude setup-token`; only ChatGPT logins get a short-lived copy per run. Assume code that runs in the sandbox can read it, and remove it with `lizard agents remove claude` when you no longer need it.

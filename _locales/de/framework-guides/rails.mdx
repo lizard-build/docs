@@ -68,8 +68,8 @@ lizard secrets set \
 lizard up --service web --port 8080
 ```
 
-- Die einfachen Anführungszeichen halten `${{…}}` von deiner Shell fern. Lizard löst diese [Referenzen](/variables/references) beim Deployment auf und nutzt das private Netzwerk des Projekts.
-- `SOLID_QUEUE_IN_PUMA=true` lässt Puma den Solid-Queue-Worker ausführen, sodass Active-Job-Jobs im Web-Service laufen. Ohne diese Variable warten Jobs in der Warteschlange für immer.
+- Die einfachen Anführungszeichen verhindern, dass deine Shell `${{…}}` auswertet. Lizard löst diese [Referenzen](/variables/references) beim Deployment auf und nutzt das private Netzwerk des Projekts.
+- `SOLID_QUEUE_IN_PUMA=true` lässt Puma den Solid-Queue-Worker ausführen, sodass Active-Job-Jobs im Web-Service laufen. Ohne diese Variable bleiben Jobs in der Warteschlange liegen.
 - Nutze `SECRET_KEY_BASE` statt `RAILS_MASTER_KEY` nur, wenn die App keine anderen verschlüsselten Credentials liest.
 
 <span id="set-secrets-and-deploy-rails-71-and-72" />
@@ -92,7 +92,7 @@ lizard up --service web --port 3000
 
 `lizard up` lädt das Verzeichnis hoch. Innerhalb eines Git-Repositorys überspringt es alles, was in `.gitignore` steht, und sowohl `.gitignore` als auch `.dockerignore` von Rails schließen `config/master.key` und `.env*`-Dateien aus. Der Build kompiliert die Assets mit `SECRET_KEY_BASE_DUMMY=1` vor, weil Lizard einem Dockerfile-Build außer `COMMIT_SHA` keine Variablen übergibt.
 
-Beim Start führt `bin/docker-entrypoint` den Befehl `./bin/rails db:prepare` aus: Er legt fehlende Datenbanken an, lädt das Schema in neue Datenbanken und führt ausstehende Migrationen aus. Das passiert bei jedem Containerstart, auch bei Neustarts. Halte Migrationen so, dass sie sowohl mit dem alten als auch mit dem neuen Code sicher laufen.
+Beim Start führt `bin/docker-entrypoint` den Befehl `./bin/rails db:prepare` aus: Er legt fehlende Datenbanken an, lädt das Schema in neue Datenbanken und führt ausstehende Migrationen aus. Das passiert bei jedem Containerstart, auch bei Neustarts. Schreibe Migrationen so, dass sie sowohl mit dem alten als auch mit dem neuen Code sicher laufen.
 
 Für git push to deploy pushe die App zu GitHub und [verbinde das Repository](/deploy/github), statt `lizard up` auszuführen. Setze dieselben Secrets und denselben Port (`lizard port 8080 --service web`). Das generierte Dockerfile hat einen Schritt `bundle install`, daher nutzt Lizard es unverändert.
 

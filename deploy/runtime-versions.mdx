@@ -5,7 +5,7 @@ description: "Set the Node.js, Python, Go or Ruby version Lizard builds with: .n
 
 # Set the Node.js, Python, Go or Ruby version
 
-Lizard (lizard.build) reads the runtime version from files in your project when lizardpack builds it: `.nvmrc` or `engines.node` for Node.js, `.python-version` or `requires-python` for Python, the `go` line of `go.mod` for Go, and `.ruby-version` or the `Gemfile` `ruby` line for Ruby. To change the version, edit that file and deploy again. Without one, Lizard uses Node.js 22, Python 3.13, Go 1.24 or Ruby 3.4.
+Lizard reads the runtime version from files in your project when lizardpack builds it: `.nvmrc` or `engines.node` for Node.js, `.python-version` or `requires-python` for Python, the `go` line of `go.mod` for Go, and `.ruby-version` or the `Gemfile` `ruby` line for Ruby. To change the version, edit that file and deploy again. Without one, Lizard uses Node.js 22, Python 3.13, Go 1.24 or Ruby 3.4.
 
 **Test status:** we checked every rule on this page on 2026-10-12 by running lizardpack, the build planner Lizard's builders run, against sample projects.
 
@@ -18,7 +18,7 @@ Lizard (lizard.build) reads the runtime version from files in your project when 
 | Go | The `go` line in `go.mod` | Major and minor: `1.24.3` → `1.24` | `1.24` | `golang:<x.y>-alpine` to build, `alpine:3.19` to run |
 | Ruby | `.ruby-version`, the `ruby` line in `Gemfile` | Major and minor: `3.4.1` → `3.4` | `3.4` | `ruby:<x.y>-slim` |
 
-Lizard drops the patch number and builds on the official image tag for that line, so each build gets the newest patch release the tag points to at the time.
+Lizard uses the official image tag for the major or major/minor version and drops the patch number. Each build gets the patch release that tag points to when the build runs.
 
 These files apply only when lizardpack writes the Dockerfile. See [when Lizard ignores version files](#when-lizard-ignores-version-files).
 

@@ -9,7 +9,7 @@ description: "Claude Code in einer Sandbox auf Lizard ausführen: Claude-Abo ode
 
 Um Claude Code in einer Sandbox auf Lizard (lizard.build) auszuführen, verbinden Sie einmalig Zugangsdaten mit `lizard agents add claude` (ein Token aus `claude setup-token`) oder `lizard agents add anthropic` (ein API-Schlüssel). Erstellen Sie dann eine Sandbox aus der Vorlage `claude` und schicken Sie ihr Aufgaben mit `lizard sandbox prompt <id> --agent claude "…"`. Claude Code läuft auf einer eigenen Linux-Maschine mit `--dangerously-skip-permissions`: Es bearbeitet Dateien und führt Befehle aus, ohne nachzufragen, und hat keinen Zugriff auf Ihren Rechner.
 
-**Teststatus:** Die Befehle und das Verhalten auf dieser Seite stammen aus Lizard CLI 4.0.42 und dem Agent-Runner der Plattform mit Stand 2026-10-12. Wir haben diese Anleitung für diese Seite nicht von Anfang bis Ende in einer laufenden Sandbox durchgespielt. Die Schritte mit `git bundle` und dem Patch haben wir lokal geprüft.
+**Teststatus:** Die Befehle und das Verhalten auf dieser Seite stammen aus Lizard CLI 4.0.42 und dem Agent-Runner der Plattform mit Stand 2026-10-12. Wir haben diese Anleitung noch nicht vollständig in einer laufenden Sandbox getestet. Die Schritte mit `git bundle` und dem Patch haben wir lokal geprüft.
 
 <span id="before-you-start" />
 
@@ -50,7 +50,7 @@ lizard sandbox create -t claude --timeout 3600000
 Der Befehl gibt die Sandbox-ID aus, etwa `sb_abc123`. Speichern Sie sie für die folgenden Schritte in einer Variablen: `SB=sb_abc123`.
 
 - `--timeout 3600000` gibt der Sandbox eine Stunde. Der Standard der CLI sind fünf Minuten; danach löscht Lizard die Sandbox samt Dateien, auch mitten in einer Aufgabe. Eine laufende Sandbox verlängern Sie mit `lizard sandbox timeout $SB 3600000`.
-- Die Vorlage `claude` enthält Node.js 22, eine fest eingestellte Version von Claude Code, git, Python 3, ripgrep, curl, jq, unzip und Lizard CLI. Die Version von Claude Code prüfen Sie mit `lizard sandbox exec $SB -- claude --version`.
+- Die Vorlage `claude` enthält Node.js 22, eine festgelegte Version von Claude Code, git, Python 3, ripgrep, curl, jq, unzip und Lizard CLI. Die Version von Claude Code prüfen Sie mit `lizard sandbox exec $SB -- claude --version`.
 - Die Standardgröße ist Medium (4 vCPU, 8 GB). Mit `--size small` oder `--size large` ändern Sie sie.
 
 <span id="put-your-code-in-the-sandbox" />
@@ -81,7 +81,7 @@ Ein Bundle enthält nur committete Dateien, daher bleiben `.env` und andere nich
 lizard sandbox prompt $SB --agent claude --cwd /workspace/app "run the tests and fix any that fail"
 ```
 
-Die CLI streamt jeden Tool-Aufruf, danach Claudes Antwort, die Anzahl der Tokens und die Konversations-ID. Nützliche Flags: `-m <model>`, `--effort <level>`, `-v`, um die Befehlsausgabe anzuzeigen, und `--no-wait`, um sofort zurückzukehren. Strg-C beendet das Zuschauen; Claude arbeitet weiter. Stoppen Sie Claude mit `lizard sandbox interrupt $SB`.
+Die CLI streamt jeden Tool-Aufruf, danach Claudes Antwort, die Anzahl der Tokens und die Konversations-ID. Nützliche Flags: `-m <model>`, `--effort <level>`, `-v`, um die Befehlsausgabe anzuzeigen, und `--no-wait`, um sofort zurückzukehren. Strg-C beendet die Anzeige; Claude arbeitet weiter. Stoppen Sie Claude mit `lizard sandbox interrupt $SB`.
 
 Um dieselbe Sitzung von Claude Code fortzusetzen, übergeben Sie die Konversations-ID:
 
@@ -96,7 +96,7 @@ lizard sandbox conversations $SB
 
 ## Worauf Claude Code zugreifen kann
 
-- **Berechtigungen.** Jeder Durchgang führt `claude -p` mit `--dangerously-skip-permissions` als root in der Sandbox aus. Claude bearbeitet Dateien, installiert Pakete und führt Befehle aus, ohne nachzufragen. Die Grenze ist die Sandbox.
+- **Berechtigungen.** Jeder Aufruf führt `claude -p` mit `--dangerously-skip-permissions` als root in der Sandbox aus. Claude bearbeitet Dateien, installiert Pakete und führt Befehle aus, ohne nachzufragen. Die Grenze ist die Sandbox.
 - **Dateien.** Alles in der Sandbox und nichts auf Ihrem Rechner.
 - **Netzwerk.** Ausgehender Internetzugang, sodass es Pakete laden und APIs aufrufen kann. Im Sandbox-Preis ist ausgehender Traffic bis [2 TB pro Konto](/platform/limits#sandbox-egress) in rollierenden 30 Tagen enthalten.
 - **Ihre Zugangsdaten.** Während eines Laufs liegt das Token in der Umgebung von Claude Code als `CLAUDE_CODE_OAUTH_TOKEN` oder `ANTHROPIC_API_KEY`, und Befehle, die es ausführt, erben es. Bei einem Abo ist das das langlebige Token aus `claude setup-token`; nur ChatGPT-Logins erhalten pro Lauf eine kurzlebige Kopie. Gehen Sie davon aus, dass Code in der Sandbox es lesen kann, und entfernen Sie es mit `lizard agents remove claude`, wenn Sie es nicht mehr brauchen.
@@ -130,7 +130,7 @@ lizard sandbox resume $SB
 lizard sandbox rm $SB
 ```
 
-Lizard rechnet eine pausierte Sandbox nicht ab, und sie läuft mit ihren Dateien und Prozessen weiter, wenn Sie sie fortsetzen. Der Zustand der Konversationen liegt in `/workspace/.lizard-agent` in der Sandbox. Um Dateien nach dem Entfernen der Sandbox zu behalten, hängen Sie beim Erstellen mit `--volume` ein [Persistent Volume](/sandboxes/volumes) an.
+Lizard rechnet eine pausierte Sandbox nicht ab, und sie läuft mit ihren Dateien und Prozessen weiter, wenn Sie sie fortsetzen. Der Zustand der Konversationen liegt in `/workspace/.lizard-agent` in der Sandbox. Um Dateien nach dem Entfernen der Sandbox zu behalten, hängen Sie beim Erstellen mit `--volume` ein Volume aus [Persistent Volumes](/sandboxes/volumes) an.
 
 <span id="common-problems" />
 

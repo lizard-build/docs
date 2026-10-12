@@ -5,7 +5,7 @@ description: "App replica limits, sandbox sizes and hourly prices, how many sand
 
 # Limits
 
-On Lizard (lizard.build), an app runs up to 5 replicas per service after the first paid Pro invoice, and 1 during the trial. Pro runs up to 100 sandboxes at once and starts up to 24 a minute; the trial allows 5 at once. Sandbox sizes run from Small (2 vCPU / 4 GB) to Large (8 vCPU / 16 GB), and sandbox egress is included up to 2 TB per account over a rolling 30 days. Limits depend on the resource, plan, and account: a per-replica setting is not the total available to a service or an account. Check your current plan and the result of the create or scale request before sizing a workload.
+On Lizard, an app runs up to 5 replicas per service after the first paid Pro invoice, and 1 during the trial. Pro runs up to 100 sandboxes at once and starts up to 24 a minute; the trial allows 5 at once. Sandbox sizes run from Small (2 vCPU / 4 GB) to Large (8 vCPU / 16 GB), and sandbox egress is included up to 2 TB per account over a rolling 30 days. Limits depend on the resource, plan, and account: a per-replica setting is not the total available to a service or an account. Check your plan and the result of the create or scale request before choosing resources.
 
 ## Applications
 
@@ -45,7 +45,7 @@ These limits cap how many sandboxes an account runs at once and how fast it star
 | Pro | 100 | 24 | 120 | 400 |
 | Enterprise | Custom | Custom | Custom | Custom |
 
-- Limits are counted per account owner, across all of the owner's workspaces. A second workspace does not add a second allowance.
+- Lizard counts limits per account owner, across all of the owner's workspaces. A second workspace does not add a second allowance.
 - Running means running or resuming. A paused sandbox does not count; resuming one needs a free slot.
 - A start is a new sandbox. A resume is not a start. A create that fails on Lizard's side does not count.
 - Over a limit, create and resume return HTTP 429 with `code` set to `SANDBOX_LIMIT_REACHED` (running) or `SANDBOX_RATE_LIMITED` (starts). A start-rate refusal includes a `Retry-After` header.

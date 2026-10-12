@@ -6,7 +6,7 @@ description: "Lass Claude Code, Codex oder Cursor auf Lizard deployen: Installie
 
 # Coding-Agents
 
-Claude Code, Codex, Cursor und andere KI-Coding-Agents deployen und verwalten Apps auf Lizard (lizard.build) über Lizard CLI. Installiere Lizard Skill einmal mit `npx skills add lizard-build/skill -g`; der Agent lädt dann mit `lizard skills get core --json` die in die CLI eingebaute Anleitung und liest die Flags jedes Befehls mit `--help --json`, sodass er nie raten muss. Clients, die MCP sprechen, etwa ChatGPT und Claude, können stattdessen [Lizard MCP](#lizard-mcp) verwenden. Einen vollständigen Deploy aus einem Agenten zeigt [Deploy aus Claude Code, Codex oder Cursor](/guides/deploy-from-coding-agent).
+Claude Code, Codex, Cursor und andere KI-Coding-Agents deployen und verwalten Apps auf Lizard (lizard.build) über Lizard CLI. Installiere Lizard Skill einmal mit `npx skills add lizard-build/skill -g`; der Agent lädt dann mit `lizard skills get core --json` die in die CLI eingebaute Anleitung und liest die Flags jedes Befehls mit `--help --json` und kennt so die verfügbaren Optionen. Clients mit MCP-Unterstützung, etwa ChatGPT und Claude, können stattdessen [Lizard MCP](#lizard-mcp) verwenden. Einen vollständigen Deploy mit einem Agenten zeigt [Deploy aus Claude Code, Codex oder Cursor](/guides/deploy-from-coding-agent).
 
 <span id="the-embedded-skill" />
 
@@ -91,7 +91,7 @@ Lizard Skill wird als öffentliches Bootstrap verteilt, damit Agents in Editoren
 npx skills add lizard-build/skill -g
 ```
 
-Es funktioniert mit Claude Code, Cursor, Codex, Copilot, Gemini CLI und anderen Agents, die das Agent-Skills-Format lesen. Für Clients, die MCP sprechen, statt Shell-Befehle auszuführen, verwende [Lizard MCP](#lizard-mcp).
+Es funktioniert mit Claude Code, Cursor, Codex, Copilot, Gemini CLI und anderen Agents, die das Agent-Skills-Format lesen. Für Clients, die MCP statt Shell-Befehlen verwenden, nutze [Lizard MCP](#lizard-mcp).
 
 Das gilt auch für KI-IDEs: Sie schreiben und testen eine App, hosten sie aber nicht. Siehe [Deployment einer in Google Antigravity gebauten App](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat), wo ein einziger Prompt das gesamte Deployment steuert.
 

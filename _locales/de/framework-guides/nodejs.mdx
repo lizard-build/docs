@@ -132,7 +132,7 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service w
 npm install pg
 ```
 
-Die einfachen Anführungszeichen halten `${{…}}` von deiner Shell fern; Lizard löst die [Referenz](/variables/references) beim Deployment zur Adresse der Datenbank im privaten Netzwerk des Projekts auf. Füge `server.js` einen Pool und eine Route hinzu:
+Die einfachen Anführungszeichen verhindern, dass deine Shell `${{…}}` auswertet; Lizard löst die [Referenz](/variables/references) beim Deployment zur Adresse der Datenbank im privaten Netzwerk des Projekts auf. Füge `server.js` einen Pool und eine Route hinzu:
 
 ```js
 import pg from "pg";

@@ -30,7 +30,7 @@ lizard up                          # upload cwd and deploy
 ## Ablauf
 
 1. **Build** — die Plattform führt Ihren Build aus (siehe [Build-Pipeline](/concepts/build-pipeline)).
-2. **Vor dem Bereitstellen** — wenn sowohl `preDeployCommand` als auch `startCommand` gesetzt sind, führt der Container `sh -c "<pre> && exec <start>"` aus. Der Pre-Deploy-Befehl läuft beim Start jedes Containers (jedes Replikat, jeder Neustart). Machen Sie ihn daher so, dass er sich gefahrlos mehrfach und gleichzeitig ausführen lässt. Ohne `startCommand` wird er übersprungen.
+2. **Vor dem Bereitstellen**: Wenn sowohl `preDeployCommand` als auch `startCommand` gesetzt sind, führt der Container `sh -c "<pre> && exec <start>"` aus. Der Pre-Deploy-Befehl läuft beim Start jedes Containers (jedes Replikat, jeder Neustart). Machen Sie ihn daher so, dass er sich gefahrlos mehrfach und gleichzeitig ausführen lässt. Ohne `startCommand` wird er übersprungen.
 3. **Start** — Lizard startet den neuen Pod neben dem alten. Bei [Workers](/deploy/workers) wird zuerst der alte Pod gestoppt.
 4. **Health-Checks** — eine TCP-Probe prüft alle 2 Sekunden den Port der App, und Traffic wird erst auf einen bereiten Pod umgeschaltet. Lizard wartet darauf etwa 30 Sekunden; ist der neue Pod bis dahin nicht bereit, wird das Deployment als fehlgeschlagen markiert. Workers überspringen die Probe.
 5. **Prüfen** — prüfen Sie den Release-Status und rufen Sie die Anwendungs-URL auf. Die Erreichbarkeit des Ports ist kein vollständiger Health-Checks der Anwendung.
@@ -87,7 +87,7 @@ lizard events                      # see replica status
 
 ## Konfigurationsänderungen (kein Neuaufbau)
 
-Die meisten Änderungen an Umgebungsvariablen und Secrets werden ohne Neuaufbau übernommen: Lizard aktualisiert die Konfiguration des Service und startet ihn neu, was einige Sekunden dauert. Build-Zeit-Werte (`VITE_*`, `NEXT_PUBLIC_*`) und Änderungen an Build-Feldern erzwingen bei einem laufenden Service jedoch einen Neuaufbau — siehe die [Tabelle der Rebuild-Auslöser](/concepts/build-pipeline#what-triggers-a-rebuild) und [Build-Zeit-Variablen](/concepts/build-pipeline#build-time-variables).
+Die meisten Änderungen an Umgebungsvariablen und Secrets werden ohne Neuaufbau übernommen: Lizard aktualisiert die Konfiguration des Service und startet ihn neu, was einige Sekunden dauert. Build-Zeit-Werte (`VITE_*`, `NEXT_PUBLIC_*`) und Änderungen an Build-Feldern erzwingen bei einem laufenden Service jedoch einen Neuaufbau. Siehe die [Tabelle der Rebuild-Auslöser](/concepts/build-pipeline#what-triggers-a-rebuild) und [Build-Zeit-Variablen](/concepts/build-pipeline#build-time-variables).
 
 <span id="failed-releases-and-recovery" />
 
