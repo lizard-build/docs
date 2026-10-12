@@ -1,10 +1,13 @@
 ---
-description: "Fügen Sie eine Managed Redis-Instanz für Caching, Warteschlangen, Rate Limiting und Pub/Sub hinzu und verbinden Sie sie mit einem einzigen Verweis mit einem Service."
+title: "Managed Redis: Verbindungs-URL und Persistenz"
+description: "Fügen Sie auf Lizard eine Redis-8-Instanz für Caching, Warteschlangen, Rate Limiting und Pub/Sub hinzu, verbinden Sie sie per Verweis und erfahren Sie, was passiert, wenn der Arbeitsspeicher ausgeht."
 ---
+
+<span id="managed-redis" />
 
 # Managed Redis
 
-Eine Managed Redis-Instanz für Caching, Warteschlangen, Rate Limiting und Pub/Sub.
+Managed Redis auf Lizard (lizard.build) ist ein Redis-Server für Caching, Warteschlangen, Rate Limiting und Pub/Sub. Neue Instanzen laufen standardmäßig mit Redis 8. Fügen Sie eine mit `lizard add redis` hinzu; Ihre Services lesen `REDIS_PRIVATE_URL` oder `REDIS_URL` über einen Verweis wie `${{redis.REDIS_PRIVATE_URL}}`. Sie hat keine Eviction-Richtlinie und keine Append-only-Datei, speichern Sie darin also nur Daten, die sich neu aufbauen lassen. Einen Überblick und die Preise finden Sie auf der [Managed-Redis-Seite](https://lizard.build/redis).
 
 <span id="provision" />
 
@@ -25,6 +28,8 @@ Das erste Redis-Add-on heißt `redis`, daher funktioniert `${{redis.REDIS_URL}}`
 | `REDIS_URL` | Vollständige Verbindungszeichenfolge über den öffentlichen Endpunkt (`redis://…`) |
 | `REDIS_PRIVATE_URL` | Verbindungszeichenfolge über das private Netzwerk des Projekts (`<name>.lizard.internal:6379`) |
 
+Beide Zeichenfolgen haben die Form `redis://default:<password>@<host>:<port>`. Die private funktioniert nur von Services im selben Projekt aus; siehe [privates Netzwerk](/networking#private-networking).
+
 <span id="connect-a-service" />
 
 ## Einen Service verbinden
@@ -37,17 +42,18 @@ lizard redeploy --service api
 Der Verweis wird beim Bereitstellen aufgelöst; Verbraucher übernehmen die aktuellen Werte des Addons bei ihrem nächsten Deploy. Verwenden Sie `REDIS_URL` für Clients außerhalb des Projekts. Jeder Service im Projekt erhält außerdem die öffentliche `REDIS_URL` des Addons mit der niedrigsten Priorität; ein expliziter Verweis überschreibt sie.
 
 <span id="memory-and-durability" />
+<span id="does-managed-redis-keep-data" />
 
-## Arbeitsspeicher und Persistenz
+## Behält Managed Redis Daten?
 
-Managed Redis hat keine Eviction-Richtlinie und keine Append-only-Datei. Wenn der Arbeitsspeicher ausgeht, startet die Instanz neu, und kürzlich geschriebene Daten können verloren gehen. Verwenden Sie sie für Daten, die sich neu aufbauen lassen, und speichern Sie Daten, die Sie nicht verlieren dürfen, in [Managed Postgres](/addons/postgres).
+Nicht jeden Schreibvorgang. Managed Redis hat keine Eviction-Richtlinie und keine Append-only-Datei. Wenn der Arbeitsspeicher ausgeht, startet die Instanz neu, und kürzlich geschriebene Daten können verloren gehen. Verwenden Sie sie für Daten, die sich neu aufbauen lassen, und speichern Sie Daten, die Sie nicht verlieren dürfen, in [Managed Postgres](/addons/postgres).
 
 <span id="common-uses" />
 
 ## Häufige Anwendungsfälle
 
 - **Cache** — speichert berechnete Ergebnisse anhand der Anfrage.
-- **Warteschlange / Worker** — kombinieren Sie Redis mit einem [Service im Worker-Modus](/deploy/workers), der Jobs verarbeitet.
+- **Warteschlange / Worker** — kombinieren Sie Redis mit einem [Service im Worker-Modus](/deploy/workers), der Jobs verarbeitet. [Einen Queue-Consumer ausführen](/deploy/workers#run-a-queue-consumer) zeigt das Beispiel redis-worker Schritt für Schritt.
 - **Rate Limiting / Sitzungen** — schneller gemeinsam genutzter Status über [Replikate](/deploy/scaling) hinweg.
 
 ```bash

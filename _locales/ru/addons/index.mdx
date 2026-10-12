@@ -1,4 +1,5 @@
 ---
+title: "Управляемые дополнения: Postgres, Redis и Object Storage"
 description: "Создайте управляемые Postgres, Redis и S3-совместимое хранилище одной командой lizard add, а затем подключите их к сервисам по ссылке."
 ---
 
@@ -6,7 +7,7 @@ description: "Создайте управляемые Postgres, Redis и S3-со
 
 # Управляемые дополнения
 
-Lizard создаёт **Managed Postgres**, **Managed Redis** и S3-совместимое **Managed Object Storage** одной командой. Каждое дополнение существует в рамках вашего проекта, предоставляет фиксированный набор переменных окружения и подключается к сервисам через [ссылки](/concepts/architecture#cross-resource-references).
+Управляемые дополнения — это базы данных и хранилище, которые Lizard (lizard.build) запускает внутри вашего проекта: **Managed Postgres**, **Managed Redis** и S3-совместимое **Managed Object Storage**. `lizard add postgres redis s3` создаёт все три одной командой. Каждое дополнение предоставляет фиксированный набор переменных окружения, например `DATABASE_URL`, а ваши сервисы читают их через [ссылки](/concepts/architecture#cross-resource-references) вида `${{postgres.DATABASE_URL}}`. Используйте дополнения, когда приложению нужны данные, которые переживут развёртывание или перезапуск.
 
 <span id="provision-an-addon" />
 

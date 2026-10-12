@@ -1,12 +1,16 @@
 ---
-description: "アプリをデプロイし、ワーカーを実行し、Managed Postgres を接続し、または Sandboxes でコードを実行します。タスクを選び、ガイドに従い、制限を確認してください。"
+description: "Claude Code、Codex、Cursor または CLI から、アプリ、ワーカー、AI エージェントを Lizard にデプロイし、Managed Postgres、Redis、Object Storage、Sandboxes を追加します。"
 ---
 
 <span id="lizard-documentation" />
 
 # Lizard ドキュメント
 
-Lizard は GitHub リポジトリまたはローカルフォルダからアプリケーションをビルドして実行します。Lizard CLI またはダッシュボードを使って、Web サービスをデプロイし、バックグラウンドワーカーを実行し、Managed Postgres または Managed Redis を接続し、ログを確認できます。Lizard SDK を使うと、コード実行用の Sandboxes を作成できます。
+<span id="what-is-lizard" />
+
+## Lizard とは?
+
+Lizard (lizard.build) は、アプリ、バックグラウンドワーカー、AI エージェントをデプロイするためのクラウドプラットフォームです。Claude Code、Codex、Cursor から、またはターミナルで Lizard CLI を使ってデプロイします: `lizard up` は現在のフォルダをアップロードし、`lizard add -r owner/repo` は GitHub リポジトリをデプロイします。Lizard は自社のサーバー上でイメージをビルドするため、手元のマシンに Docker は不要です。また、各 Web サービスに `onlizard.com` 上の HTTPS アドレスを割り当てます。同じ CLI で Managed Postgres、Managed Redis、S3 互換の Managed Object Storage をプロジェクトに追加し、`${{postgres.DATABASE_URL}}` のような参照を通じてサービスに接続します。Sandboxes は、それぞれ独自のカーネルを持つ Firecracker microVM で、AI エージェントが自分で書いていないコードを実行する場所です。コードからは TypeScript または Python 向けの Lizard SDK で作成します。Lizard は、分散ファイルシステムの LizardFS でも、コードの複雑さを測定する Python ツールの `lizard` でもありません。
 
 <span id="choose-a-task" />
 
@@ -17,11 +21,14 @@ Lizard は GitHub リポジトリまたはローカルフォルダからアプ�
 | 最初のアプリをデプロイする | [App quickstart](/getting-started) |
 | Next.js、React、Vue、または Python アプリをデプロイする | [フレームワーク guides](/framework-guides) |
 | Claude Code または別のコーディングエージェントからデプロイする | [コーディング エージェント ガイド](/guides/deploy-from-coding-agent) |
+| Dockerfile のあるアプリをデプロイする | [Dockerfile でデプロイする](/deploy/dockerfile) |
 | リモート MCP サーバーをホストする | [Remote MCP guide](/guides/deploy-mcp-server) |
-| Telegram bot を動かし続ける | [Telegramワーカーガイド](/guides/telegram-bot) |
+| Telegram bot または Discord bot を動かし続ける | [Telegram ガイド](/guides/telegram-bot) または [Discord ガイド](/guides/discord-bot) |
 | データベースを接続する | [Managed Postgres](/addons/postgres) |
 | 生成されたコードを別環境で実行する | [Sandboxes quickstart](/sandboxes/quickstart) |
+| sandbox 内で Claude Code を実行する | [sandbox 内の Claude Code](/sandboxes/guides/claude-code) |
 | sandbox 終了後もファイルを保持する | [Persistent Volumes](/sandboxes/volumes) |
+| Claude Code または ChatGPT でページを視覚的に編集する | [Lizard Studio](/studio/getting-started) |
 
 <span id="deploy-an-app" />
 
@@ -54,7 +61,9 @@ Lizard はサーバー上でイメージをビルドするため、この方法�
 
 - [Guides](/guides) は、セットアップから結果確認までタスク全体を扱います。
 - [フレームワーク guides](/framework-guides) は、各スタック向けのビルドコマンド、アダプター、ポート、確認項目を示します。
-- [Core concepts](/concepts/architecture) は、プロジェクト、ビルド、デプロイについて説明します。
+- [デプロイ](/deploy) は、GitHub とローカルのソース、ワーカー、スケーリング、リージョンを扱います。
+- [Core concepts](/concepts) は、プロジェクト、ビルド、デプロイについて説明します。
+- [可観測性](/observability) は、ログ、メトリクス、コスト、デプロイ履歴を扱います。
 - [Lizard CLIリファレンス](/cli) は、コマンド、フラグ、終了コードを一覧表示します。
 - [Troubleshooting](/deploy/troubleshooting/service-never-healthy) は、起動失敗の診断に役立ちます。
 - [Known issues](/platform/known-issues) は、リリース前に確認すべき制限事項と復旧ケースを記録しています。

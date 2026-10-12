@@ -1,10 +1,13 @@
 ---
+title: "Managed Object Storage: S3-kompatible Buckets"
 description: "S3-kompatibler Objektspeicher für Uploads, Assets und Backups. Erhalten Sie einen privaten Standard-Bucket und Verbindungsvariablen mit einem einzigen lizard add s3."
 ---
 
+<span id="managed-object-storage" />
+
 # Managed Object Storage
 
-Managed Object Storage ist S3-kompatibler Speicher für Uploads, Assets und Backups. Die Bereitstellung eines `s3`-Add-ons erstellt außerdem einen **privaten Bucket namens `default`**. Um Dateien ohne Authentifizierung bereitzustellen, machen Sie ihn im S3-Browser des Dashboards öffentlich.
+Managed Object Storage auf Lizard (lizard.build) ist S3-kompatibler Speicher für Uploads, Assets und Backups. `lizard add s3` erstellt ihn mit einem **privaten Bucket namens `default`** und fünf Variablen, von `S3_ENDPOINT` bis `S3_REGION`, die jedes AWS SDK mit Path-Style-Adressierung verwenden kann. Jedes Konto kann bis zu 16 GiB speichern, und Sie zahlen für die gespeicherten Bytes. Um Dateien ohne Authentifizierung bereitzustellen, machen Sie den Bucket im S3-Browser des Dashboards öffentlich. Einen Überblick und die Preise finden Sie auf der [Managed-Object-Storage-Seite](https://lizard.build/object-storage).
 
 <span id="provision" />
 
@@ -89,7 +92,7 @@ Sobald Sie den Bucket `default` öffentlich machen, werden seine Objekte bereitg
 
 ## Objekte durchsuchen
 
-Öffnen Sie den **S3-Browser** im Dashboard (`lizard open`), um Objekte hochzuladen und zu löschen, Ordner zu erstellen und Buckets öffentlich oder privat zu machen. In der CLI lädt `lizard s3 upload <file>` eine Datei hoch und `lizard s3 list` listet Objekte auf.
+Öffnen Sie den **S3-Browser** im Dashboard (`lizard open`), um Objekte hochzuladen und zu löschen, Ordner zu erstellen und Buckets öffentlich oder privat zu machen. In der CLI lädt `lizard s3 upload <file>` eine Datei hoch und `lizard s3 list` listet Objekte auf; siehe [`lizard s3`](/cli/s3).
 
 > **Bucket-ACL-Änderungen** (einen Bucket öffentlich/privat machen) sind in der CLI noch nicht verfügbar — verwalten Sie sie im Dashboard.
 

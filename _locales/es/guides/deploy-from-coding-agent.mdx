@@ -1,12 +1,13 @@
 ---
+title: "Desplegar desde Claude Code, Codex o Cursor"
 description: "Despliega una app desde Claude Code, Codex o Cursor con Lizard Skill y Lizard CLI. Elige GitHub o código fuente local, conecta una base de datos y verifica el resultado."
 ---
 
-<span id="deploy-from-a-coding-agent" />
+<span id="deploy-from-claude-code-codex-or-cursor" />
 
-# Desplegar desde un agente de código
+# Desplegar desde Claude Code, Codex o Cursor
 
-Un agente de código puede usar Lizard Skill y Lizard CLI para desplegar la app que ha creado. El agente lee la guía del CLI instalado, revisa el proyecto de destino, ejecuta la compilación e inspecciona el resultado. Esto no requiere un transporte MCP independiente.
+Claude Code, Codex y Cursor pueden desplegar en Lizard (lizard.build) la app que han creado con Lizard Skill y Lizard CLI. El agente lee la guía del CLI instalado, revisa el proyecto de destino, ejecuta la compilación y comprueba la URL en vivo. No requiere un transporte MCP independiente. Esta guía incluye el prompt, los comandos que ejecuta el agente para código fuente local y de GitHub, y las comprobaciones que demuestran que el despliegue funcionó.
 
 <span id="before-you-start" />
 
@@ -26,14 +27,14 @@ lizard --help --json
 
 En Windows, ejecuta `irm https://lizard.build/api/cli/install.ps1 | iex` en PowerShell, o instálalo desde npm con `npm install -g @lizard-build/cli`.
 
-Lizard Skill carga instrucciones que coinciden con el CLI instalado. Para un comando concreto, lee su esquema en lugar de adivinar las opciones:
+Para que la skill esté disponible para todos los agentes de tu máquina, instálala una vez con `npx skills add lizard-build/skill -g`; consulta [Agentes de programación](/agents). Lizard Skill carga instrucciones que coinciden con el CLI instalado. Para un comando concreto, lee su esquema en lugar de adivinar las opciones:
 
 ```bash
 lizard up --help --json
 lizard service set --help --json
 ```
 
-Un prompt útil es:
+Un prompt útil para pegar en Claude Code, Codex o Cursor es:
 
 > Despliega esta app con Lizard. Lee la guía del CLI instalado, revisa el proyecto y el servicio vinculados, ejecuta las comprobaciones de la app y muestra el resultado de la compilación y una URL funcional. Pregunta antes de cambiar un servicio de producción existente o eliminar datos.
 
@@ -137,5 +138,7 @@ Usa el código de salida y el error JSON del comando fallido. Un error de compil
 ## Límites y coste
 
 Un agente puede crear recursos facturables mediante el mismo CLI que una persona. Revisa [límites](/platform/limits) y [precios](https://lizard.build/pricing), y limita las credenciales al proyecto y a los servicios que necesita.
+
+Para ejecutar el propio agente en otra máquina en lugar de tu portátil, consulta [Claude Code en un sandbox](/sandboxes/guides/claude-code).
 
 Consulta [resultados de pruebas de escenarios](/guides/validation) para ver las versiones comprobadas, los resultados en la nube y los límites restantes.

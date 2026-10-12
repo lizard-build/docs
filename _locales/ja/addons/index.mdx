@@ -1,4 +1,5 @@
 ---
+title: "Managed Addons: Postgres、Redis、Object Storage"
 description: "1 つの lizard add コマンドでマネージド Postgres、Redis、S3 互換ストレージをプロビジョニングし、その後参照によってサービスに接続します。"
 ---
 
@@ -6,7 +7,7 @@ description: "1 つの lizard add コマンドでマネージド Postgres、Redi
 
 # マネージドアドオン
 
-Lizard は、単一のコマンドで **Managed Postgres**、**Managed Redis**、S3 互換の **Managed Object Storage** をプロビジョニングします。各アドオンはプロジェクト内に作成され、固定の環境変数セットを公開し、サービスから [参照](/concepts/architecture#cross-resource-references) を通じて利用されます。
+マネージドアドオンは、Lizard (lizard.build) がプロジェクト内で実行するデータベースとストレージです: **Managed Postgres**、**Managed Redis**、S3 互換の **Managed Object Storage**。`lizard add postgres redis s3` を実行すると、1 つのコマンドで 3 つすべてが作成されます。各アドオンは `DATABASE_URL` などの固定の環境変数セットを公開し、サービスは `${{postgres.DATABASE_URL}}` のような [参照](/concepts/architecture#cross-resource-references) を通じてそれらを読み取ります。デプロイや再起動の後も残るデータがアプリに必要な場合に使ってください。
 
 <span id="provision-an-addon" />
 

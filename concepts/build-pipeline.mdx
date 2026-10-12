@@ -10,7 +10,7 @@ Builds run on Lizard's build nodes — **you don't need Docker locally**. When y
 
 The platform picks exactly one build strategy, in this order:
 
-1. **Repo Dockerfile at `dockerfilePath`** — if `dockerfilePath` is set on the service, that Dockerfile is used unchanged, even when build or start commands are also set. A set `startCommand` still replaces the Dockerfile's `CMD` at run time.
+1. **Repo Dockerfile at `dockerfilePath`** — if `dockerfilePath` is set on the service, that Dockerfile is used unchanged, even when build or start commands are also set. A set `startCommand` still replaces the Dockerfile's `ENTRYPOINT` and `CMD` at run time. See [Deploy with a Dockerfile](/deploy/dockerfile).
 2. **Synthesized Dockerfile** — otherwise, if `buildCommand` and/or `startCommand` are set on the service (or passed via `lizard up --build-command` / `--start-command`), Lizard generates a Dockerfile from those commands. lizardpack is not invoked.
 3. **Dockerfile in the source** — otherwise a `Dockerfile` at the root of the build directory is used (see the GitHub exception below).
 4. **lizardpack auto-detect** — otherwise the platform runs **lizardpack**, its buildpack/Dockerfile generator.
@@ -21,7 +21,7 @@ lizardpack inspects your repo and builds an optimized multi-stage image. Support
 
 **Hugo → Go → Node → Python → Rust → Ruby → PHP → Java → static**
 
-See [Framework guides](/framework-guides) for production scripts, adapters, output paths, and ports. Detection uses project files and dependencies; a repository that matches several providers follows this order.
+See [Framework guides](/framework-guides) for production scripts, adapters, output paths, and ports: [Hugo](/framework-guides/hugo), [Go](/framework-guides/go), Node ([Node.js](/framework-guides/nodejs), [Next.js](/framework-guides/nextjs), [Nuxt](/framework-guides/nuxt), [SvelteKit](/framework-guides/sveltekit), [Astro](/framework-guides/astro), [React](/framework-guides/react), [Vue](/framework-guides/vue), [Docusaurus](/framework-guides/docusaurus), [VitePress](/framework-guides/vitepress)), Python ([Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Streamlit](/framework-guides/streamlit)) and Ruby ([Rails](/framework-guides/rails)). Detection uses project files and dependencies; a repository that matches several providers follows this order. To pin a Node.js or Python version, see [runtime versions](/deploy/runtime-versions).
 
 On this path:
 
@@ -44,7 +44,7 @@ On this path:
 | `service set` of runtime-only fields (`startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns`) | ❌ run `lizard redeploy` to apply |
 | Any other env var / secret change | ❌ applied on a quick restart (no rebuild) |
 
-> **Don't double-build.** After a `service set` that changes a build field on a running service, the rebuild fires automatically — don't chain a `lizard redeploy` after it, or you'll queue a second redundant build. A crashed or never-deployed service does not rebuild on its own; run `lizard redeploy`.
+> **Don't double-build.** After a `service set` that changes a build field on a running service, the rebuild fires automatically — don't chain a `lizard redeploy` after it, or you'll queue a second redundant build ([why](/deploy/troubleshooting/double-build)). A crashed or never-deployed service does not rebuild on its own; run `lizard redeploy`.
 
 ## Build-time variables
 
@@ -76,7 +76,7 @@ If a build fails, read `lizard logs --build`, fix the cause (in your repo, or by
 | Field | Description |
 |-------|-------------|
 | `buildCommand` | Command to build your app → selects the **synthesized Dockerfile** path unless `dockerfilePath` is set |
-| `startCommand` | Command to start your app at runtime; replaces the image's `CMD` |
+| `startCommand` | Command to start your app at runtime; replaces the image's `ENTRYPOINT` and `CMD` |
 | `preDeployCommand` | Runs at the start of every container (each replica, each restart), before `startCommand`; only runs when `startCommand` is set. Make it safe to run many times and at the same time |
 | `dockerfilePath` | Path to a repo Dockerfile to use **verbatim**; wins over `buildCommand` / `startCommand` for the image build |
 | `rootDirectory` | Subdirectory to build from (monorepos) |

@@ -6,7 +6,7 @@ description: "HTTPポートなしでキューコンシューマーとポーリ�
 
 # バックグラウンドワーカー
 
-すべてのサービスが HTTP を提供するわけではありません。キューコンシューマー、reconciler、cron 風のポーリングループ、その他のバックグラウンドワークロードはポートを listen しません。コンテナポートを `0` に設定して、**worker mode** で実行してください。
+Lizard (lizard.build) のバックグラウンドワーカーは、HTTP ポートを持たないサービスです: キューコンシューマー、更新をポーリングするボット、reconciler、ポーリングループなど。コンテナポートを `0` に設定して、たとえば `lizard up --port 0` で、**worker mode** で実行してください。ワーカーには `PORT`、readiness probe、パブリックルートが与えられないため、HTTP に応答しないことを理由に unhealthy とマークされることはありません。ジョブキューには [Managed Redis](/addons/redis) と組み合わせてください。チャットボットもワーカーです。[Telegram bot](/guides/telegram-bot) と [Discord bot](/guides/discord-bot) のガイドを参照してください。
 
 <span id="what-worker-mode-changes" />
 

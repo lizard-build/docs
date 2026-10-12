@@ -1,4 +1,5 @@
 ---
+title: "Lizard CLI リファレンス: インストール、フラグ、終了コード"
 description: "Lizard CLI をインストールおよびアップグレードし、認証し、すべてのコマンドのグローバルフラグ、終了コード、実行時スキーマ検出を確認します。"
 ---
 
@@ -6,7 +7,7 @@ description: "Lizard CLI をインストールおよびアップグレードし�
 
 # CLI リファレンス
 
-`lizard` CLI はプラットフォームへの主要なインターフェースです。このページでは、インストール、グローバルフラグ、終了コード、実行時検出について扱います。各コマンドにはサイドバーに専用のリファレンスページがあります — [`lizard up`](/cli/up)、[`lizard service`](/cli/service)、[`lizard secrets`](/cli/secrets) などを参照してください。
+Lizard CLI (`lizard`) は、ターミナル、CI ジョブ、コーディングエージェントから Lizard (lizard.build) 上のアプリ、データベース、Sandboxes をデプロイして管理します。このページでは、インストール、グローバルフラグ、終了コード、実行時検出について扱います。各コマンドにはサイドバーに専用のリファレンスページがあります — [`lizard up`](/cli/up)、[`lizard service`](/cli/service)、[`lizard secrets`](/cli/secrets) などを参照してください。CLI でできることの概要については、[Lizard CLI のページ](https://lizard.build/cli) を参照してください。
 
 > Lizard CLI **v4.0.34** を基準に書かれたリファレンスです。任意のコマンドの正確でバージョン一致のスキーマを確認するには、`lizard <cmd> --help --json` を実行してください。
 
@@ -20,6 +21,8 @@ lizard --version
 lizard upgrade            # update to the latest version
 lizard upgrade --check    # check without installing
 ```
+
+フラグについては [`lizard upgrade`](/cli/upgrade) を参照してください。
 
 Windows では、PowerShell で `irm https://lizard.build/api/cli/install.ps1 | iex` を実行します。Node.js があれば、代わりに `npm install -g @lizard-build/cli` で npm からインストールすることもできます。
 
@@ -37,6 +40,8 @@ lizard login --token liz_xxx  # API key auth
 lizard logout
 lizard whoami                 # current user, workspace, linked project
 ```
+
+リファレンスページ: [`lizard login`](/cli/login)、[`lizard logout`](/cli/logout)、[`lizard whoami`](/cli/whoami)、およびワークスペースの一覧表示と作成を行う [`lizard workspace`](/cli/workspace)。
 
 API キーは `liz_` で始まります。[`lizard keys create <name>`](/cli/keys) で作成できます。CI では、`login` を実行する代わりに、環境変数に `LIZARD_TOKEN`（または `LIZARD_API_KEY`）を設定してください。
 
@@ -88,8 +93,9 @@ lizard <cmd> <sub> --help --json     # e.g. lizard service set --help --json
 ## 設定と状態
 
 - CLI は認証情報と現在のディレクトリのプロジェクトリンクを `~/.lizard/config.json` に保存します。
-- `lizard status` は cwd の workspace/project/service リンクを表示します（認証不要）。
-- `lizard config apply` は `lizard-config.json` ファイルをプロジェクトに適用します（プレビューには `--dry-run` を使用）。
+- [`lizard status`](/cli/status) は cwd の workspace/project/service リンクを表示します（認証不要）。[`lizard link`](/cli/link) はこのリンクを設定し、[`lizard unlink`](/cli/unlink) は削除し、[`lizard project`](/cli/project) はプロジェクトの一覧表示、作成、削除を行います。
+- [`lizard config apply`](/cli/config) は `lizard-config.json` ファイルをプロジェクトに適用します（プレビューには `--dry-run` を使用）。
+- [`lizard open`](/cli/open) はリンクされたプロジェクトをダッシュボードで開き、[`lizard docs`](/cli/docs) はこのドキュメントを開きます。
 
 <span id="environment-variables" />
 

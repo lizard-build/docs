@@ -1,10 +1,13 @@
 ---
+title: "Managed Object Storage: S3互換バケット"
 description: "アップロード、アセット、バックアップ向けの S3互換オブジェクトストレージ。lizard add s3 を 1 回実行するだけで、プライベートな default バケットと接続変数を取得できます。"
 ---
 
+<span id="managed-object-storage" />
+
 # Managed Object Storage
 
-Managed Object Storage は、アップロード、アセット、バックアップ向けの S3互換ストレージです。`s3` アドオンをプロビジョニングすると、**`default` という名前のプライベートバケット** も作成されます。認証なしでファイルを配信するには、ダッシュボードの S3 browser からバケットを public にしてください。
+Lizard (lizard.build) の Managed Object Storage は、アップロード、アセット、バックアップ向けの S3互換ストレージです。`lizard add s3` を実行すると、**`default` という名前のプライベートバケット** と、`S3_ENDPOINT` から `S3_REGION` までの 5 つの変数が作成されます。これらの変数は、パス形式のアドレス指定を使う任意の AWS SDK で利用できます。各アカウントは最大 16 GiB まで保存でき、保存したバイト数に対して料金を支払います。認証なしでファイルを配信するには、ダッシュボードの S3 browser からバケットを public にしてください。概要と料金については、[Managed Object Storage のページ](https://lizard.build/object-storage) を参照してください。
 
 <span id="provision" />
 
@@ -89,7 +92,7 @@ const s3 = new S3Client({
 
 ## オブジェクトの参照
 
-ダッシュボードで **S3 browser** (`lizard open`) を開くと、オブジェクトのアップロードと削除、フォルダーの作成、バケットの public/private の切り替えを行えます。CLI では、`lizard s3 upload <file>` でファイルをアップロードし、`lizard s3 list` でオブジェクトを一覧表示できます。
+ダッシュボードで **S3 browser** (`lizard open`) を開くと、オブジェクトのアップロードと削除、フォルダーの作成、バケットの public/private の切り替えを行えます。CLI では、`lizard s3 upload <file>` でファイルをアップロードし、`lizard s3 list` でオブジェクトを一覧表示できます。[`lizard s3`](/cli/s3) を参照してください。
 
 > **Bucket ACL の変更** (バケットを public/private にすること) はまだ CLI ではできません — ダッシュボードから管理してください。
 

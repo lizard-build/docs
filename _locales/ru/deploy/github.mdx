@@ -1,4 +1,5 @@
 ---
+title: "Развёртывание из GitHub: git push to deploy"
 description: "Подключите репозиторий GitHub, чтобы каждый push в отслеживаемую ветку запускал сборку и переразвёртывание, включая приватные репозитории, смену веток и монорепозитории."
 ---
 
@@ -6,7 +7,7 @@ description: "Подключите репозиторий GitHub, чтобы к�
 
 # Развёртывание из GitHub
 
-Подключение репозитория GitHub — рекомендуемый способ запуска приложения на Lizard: каждый push в отслеживаемую ветку автоматически собирает и переразвёртывает приложение.
+Подключите репозиторий GitHub, и Lizard (lizard.build) будет собирать и переразвёртывать ваше приложение при каждом push в отслеживаемую ветку: git push to deploy. Выполните `lizard add -r owner/repo`, чтобы создать сервис; для приватного репозитория сначала подключите Lizard GitHub App командой `lizard git connect`. Это рекомендуемый способ запуска приложения, код которого хранится в GitHub. Для кода без удалённого репозитория используйте [развёртывание из локального кода](/deploy/upload).
 
 <span id="create-a-service-from-a-repo" />
 
@@ -52,7 +53,7 @@ lizard service set api \
   --set branch=main
 ```
 
-Изменение поля сборки автоматически запускает пересборку работающего сервиса — **не** добавляйте `redeploy` после этого. Сервису, который упал или ни разу не был развёрнут, нужен `lizard redeploy`.
+Изменение поля сборки автоматически запускает пересборку работающего сервиса — **не** добавляйте `redeploy` после этого, иначе вы [поставите в очередь две сборки](/deploy/troubleshooting/double-build). Сервису, который упал или ни разу не был развёрнут, нужен `lizard redeploy`.
 
 > **Примечание:** `lizard up` всегда принудительно включает `sourceType=upload`. Не используйте его для обновления git-сервиса — отправьте push в удалённый репозиторий или используйте `lizard redeploy`.
 
@@ -96,6 +97,8 @@ lizard redeploy --service api
 ## См. также
 
 - [Сборка Pipeline](/concepts/build-pipeline) — как стек определяется и собирается.
+- [Руководства по фреймворкам](/framework-guides) — команды сборки и порты для [Next.js](/framework-guides/nextjs), [Nuxt](/framework-guides/nuxt), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails), [Go](/framework-guides/go) и других.
+- [Развёртывание с Dockerfile](/deploy/dockerfile) — когда в репозитории есть свой Dockerfile.
 - [Развернуть из локального кода](/deploy/upload) — когда нет удалённого репозитория.
 - [`lizard git`](/cli/git) — полная справочная информация по командам `connect`, `status` и `checkout`.
 - [Выбор хоста под приложение](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#choose-the-host-by-the-application) — подключение к репозиторию, написанному агентом.

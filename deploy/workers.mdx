@@ -4,7 +4,7 @@ description: "Run queue consumers and polling loops with no HTTP port. What cont
 
 # Background Workers
 
-Not every service serves HTTP. Queue consumers, reconcilers, cron-style polling loops, and other background workloads don't listen on a port — run them in **worker mode** by setting the container port to `0`.
+A background worker on Lizard (lizard.build) is a service with no HTTP port: a queue consumer, a bot that polls for updates, a reconciler, or a polling loop. Run it in **worker mode** by setting the container port to `0`, for example with `lizard up --port 0`. The worker gets no `PORT`, no readiness probe and no public route, so it is never marked unhealthy for not answering HTTP. Pair it with [Managed Redis](/addons/redis) for a job queue. Chat bots are workers too; see the [Telegram bot](/guides/telegram-bot) and [Discord bot](/guides/discord-bot) guides.
 
 ## What worker mode changes
 

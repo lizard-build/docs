@@ -1,10 +1,11 @@
 ---
+title: "Lizard CLI reference: install, flags, exit codes"
 description: "Install and upgrade the Lizard CLI, authenticate, and look up global flags, exit codes, and runtime schema discovery for every command."
 ---
 
 # CLI Reference
 
-The `lizard` CLI is the primary interface to the platform. This page covers installation, global flags, exit codes, and runtime discovery. Every command has its own reference page in the sidebar — see [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets), and the rest.
+Lizard CLI (`lizard`) deploys and manages apps, databases and Sandboxes on Lizard (lizard.build) from a terminal, a CI job or a coding agent. This page covers installation, global flags, exit codes, and runtime discovery. Every command has its own reference page in the sidebar — see [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets), and the rest. For an overview of what the CLI does, see the [Lizard CLI page](https://lizard.build/cli).
 
 > Reference written for Lizard CLI **v4.0.34**. Run `lizard <cmd> --help --json` for the exact, version-matched schema of any command.
 
@@ -16,6 +17,8 @@ lizard --version
 lizard upgrade            # update to the latest version
 lizard upgrade --check    # check without installing
 ```
+
+See [`lizard upgrade`](/cli/upgrade) for the flags.
 
 On Windows, run `irm https://lizard.build/api/cli/install.ps1 | iex` in PowerShell. With Node.js you can install from npm instead: `npm install -g @lizard-build/cli`.
 
@@ -31,6 +34,8 @@ lizard login --token liz_xxx  # API key auth
 lizard logout
 lizard whoami                 # current user, workspace, linked project
 ```
+
+Reference pages: [`lizard login`](/cli/login), [`lizard logout`](/cli/logout), [`lizard whoami`](/cli/whoami), and [`lizard workspace`](/cli/workspace) to list and create workspaces.
 
 API keys start with `liz_`. Create one with [`lizard keys create <name>`](/cli/keys). In CI, set `LIZARD_TOKEN` (or `LIZARD_API_KEY`) in the environment instead of running `login`.
 
@@ -74,8 +79,9 @@ This always reflects your installed version — prefer it over guessing flag sha
 ## Configuration & state
 
 - The CLI stores auth and the current directory's project link in `~/.lizard/config.json`.
-- `lizard status` shows the cwd's workspace/project/service link (no auth required).
-- `lizard config apply` applies a `lizard-config.json` file to a project (use `--dry-run` to preview).
+- [`lizard status`](/cli/status) shows the cwd's workspace/project/service link (no auth required). [`lizard link`](/cli/link) sets that link, [`lizard unlink`](/cli/unlink) removes it, and [`lizard project`](/cli/project) lists, creates, and deletes projects.
+- [`lizard config apply`](/cli/config) applies a `lizard-config.json` file to a project (use `--dry-run` to preview).
+- [`lizard open`](/cli/open) opens the linked project in the dashboard, and [`lizard docs`](/cli/docs) opens these docs.
 
 ## Environment variables
 

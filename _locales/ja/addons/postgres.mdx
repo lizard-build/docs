@@ -1,10 +1,13 @@
 ---
-description: "Lizard でマネージド PostgreSQL データベースをプロビジョニングし、参照でサービスに接続し、デプロイ時にマイグレーションを実行し、ストレージを拡張します。"
+title: "Managed Postgres: 接続文字列とセットアップ"
+description: "Lizard に PostgreSQL 18 データベースを追加し、接続文字列と PG 変数を確認し、参照でサービスに接続し、マイグレーションを実行してストレージを拡張します。"
 ---
+
+<span id="managed-postgres" />
 
 # Managed Postgres
 
-1 つのコマンドでプロビジョニングされ、参照によってサービスに接続されるマネージド PostgreSQL データベースです。
+Lizard (lizard.build) の Managed Postgres は、`lizard add postgres` でプロジェクトに追加する PostgreSQL データベースです。新しいデータベースはデフォルトで PostgreSQL 18 で動作します。Lizard は接続文字列を `DATABASE_URL` に、その構成要素を `PGHOST`、`PGPORT`、`PGUSER`、`PGPASSWORD`、`PGDATABASE` に格納し、サービスは `${{postgres.DATABASE_PRIVATE_URL}}` のような参照を通じてそれらを読み取ります。データベースはアプリと同じ CPU、メモリ、ストレージの [料金](/platform/billing#resource-rates) で課金され、ダッシュボードには SQL エディターが用意されています。概要と料金については、[Managed Postgres のページ](https://lizard.build/postgres) を参照してください。
 
 <span id="provision" />
 
@@ -35,6 +38,44 @@ lizard add postgres
 | `POSTGRES_DB` | データベースのエイリアス |
 | `POSTGRES_PASSWORD` | パスワードのエイリアス |
 
+<span id="postgres-connection-string" />
+
+## Postgres 接続文字列
+
+各データベースには 2 つの接続文字列があります。どちらもユーザー `postgres` とデータベース `postgres` を使用します:
+
+| 変数 | 使用元 | 形式 |
+|---|---|---|
+| `DATABASE_PRIVATE_URL` | 同じプロジェクト内のサービス | `postgresql://postgres:<password>@<name>.lizard.internal:5432/postgres` |
+| `DATABASE_URL` | 手元のマシン、CI、または別のプロジェクトのサービス | `postgresql://postgres:<password>@<host>:<port>/postgres` |
+
+`<name>` はプロジェクト内でのデータベースの名前で、最初のデータベースでは `postgres` です。パブリックなホストとポートは Lizard がデータベースの作成時に割り当てるため、手入力せずに `DATABASE_URL`、`PGHOST`、`PGPORT` から読み取ってください。プライベートアドレスはプロジェクト内でのみ機能します。[プライベートネットワーク](/networking#private-networking) を参照してください。
+
+ほとんどのドライバーは、この文字列をそのまま受け付けます:
+
+```js
+// Node.js with pg
+import pg from 'pg';
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+```
+
+```python
+# Python with psycopg
+import os, psycopg
+conn = psycopg.connect(os.environ["DATABASE_URL"])
+```
+
+`psql` やその他の libpq ツールは `PG*` 変数を読み取るため、引数なしで接続できます。
+
+<span id="how-do-i-see-the-connection-string" />
+
+### 接続文字列はどこで確認できますか?
+
+- **ダッシュボード:** プロジェクトでデータベースを開きます。**Overview** タブには、`DATABASE_URL` とプライベート URL がコピーボタン付きで表示されます。**Secrets** タブには、すべての接続変数と、サービスに貼り付ける `${{…}}` 参照が一覧表示されます。
+- **CLI:** `lizard run --service postgres -- printenv DATABASE_URL` はパブリックな接続文字列を出力します。パスワードが含まれているため、ログやチャットに貼り付けないでください。
+
+この文字列は認証情報です。シークレットにコピーするのではなく、参照でサービスから指定してください。そうすれば、サービスはデプロイのたびに現在の値を受け取ります。
+
 <span id="connect-a-service" />
 
 ## サービスを接続
@@ -54,6 +95,8 @@ lizard redeploy --service api
 lizard run --service postgres -- sh -c 'psql "$DATABASE_URL" -c "SELECT 1"'
 ```
 
+`lizard run --service postgres` は、データベースのパブリックな接続値を使って手元のマシンでコマンドを実行するため、ローカルに `psql` がインストールされている必要があります。`lizard run --service api` では、`${{…}}` 参照がそのままの文字列として渡されます。[`lizard run`](/cli/run) を参照してください。
+
 <span id="run-migrations-on-deploy" />
 
 ## デプロイ時にマイグレーションを実行
@@ -65,7 +108,7 @@ lizard service set api --set preDeployCommand="npm run migrate" --set startComma
 lizard redeploy --service api
 ```
 
-Django アプリの場合、コマンドは `python manage.py migrate` です。[Pythonアプリホスティング](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks) を参照してください。
+Django アプリの場合、コマンドは `python manage.py migrate` です。[Django ガイド](/framework-guides/django) と [Pythonアプリホスティング](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks) を参照してください。[Umami](/guides/umami) と [Flowise](/guides/flowise) のガイドでは、Managed Postgres 上で動く完全なアプリを紹介しています。
 
 <span id="browse-and-query-data" />
 
@@ -98,11 +141,21 @@ lizard add postgres
 lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_PRIVATE_URL}}' --service api
 ```
 
+<span id="backups-and-restore" />
+
+## バックアップとリストア
+
+スケジュールされたバックアップやポイントインタイムリカバリがあるとは想定しないでください。リスクのあるマイグレーションの前には、自分でデータベースをエクスポートし、別のデータベースでリストアをテストしてください。たとえば、ローカルに `pg_dump` 18 以降がインストールされている場合は次のようにします:
+
+```bash
+lizard run --service postgres -- sh -c 'pg_dump "$DATABASE_URL" > backup.sql'
+```
+
+リストアの計画については、[ストレージとリカバリ](/platform/storage-and-recovery) を参照してください。
+
 <span id="see-also" />
 
 ## 関連項目
 
 - [Managed Addons](/addons) — 命名、参照、ダッシュボードのブラウザー。
 - [サービス間参照](/variables/references) — 参照構文と解決方法。
-
-バックアップとリストアの計画については、[ストレージとリカバリ](/platform/storage-and-recovery) を参照してください。`lizard run --service postgres` は、アドオンのパブリックな接続値を使って手元のマシンでコマンドを実行します。ローカルに `psql` がインストールされている必要があります。`lizard run --service api` では、`${{…}}` 参照がそのままの文字列として渡されます。

@@ -1,4 +1,5 @@
 ---
+title: "Bereitstellungen: Lebenszyklus, Neustarts und Wiederherstellung"
 description: "Der Bereitstellen-Lebenszyklus auf Lizard: was einen Build auslöst, wie der Traffic auf fehlerfreie Replikate umgeschaltet wird und wie sich Neustarts von Redeploys unterscheiden."
 ---
 
@@ -68,7 +69,7 @@ Im [Dashboard](/dashboard) zeigt die Ansicht **Bereitstellungen** die vollständ
 | `lizard restart --service <svc>` | Neustart des **aktuellen** Builds — kein Neuaufbau |
 | `lizard redeploy --service <svc>` | Neuer **Build** vom neuesten Commit/Upload, dann Release |
 
-Verwenden Sie `restart`, um Replikate neu zu starten (z. B. um ein Runtime-Secret zu übernehmen, das nicht per Hot-Reload geladen wurde); verwenden Sie `redeploy`, wenn Sie einen neuen Build benötigen.
+Siehe [`lizard restart`](/cli/restart) und [`lizard redeploy`](/cli/redeploy). Verwenden Sie `restart`, um Replikate neu zu starten (z. B. um ein Runtime-Secret zu übernehmen, das nicht per Hot-Reload geladen wurde); verwenden Sie `redeploy`, wenn Sie einen neuen Build benötigen.
 
 <span id="recovering-from-a-crash" />
 

@@ -1,12 +1,13 @@
 ---
-description: "Instala la Lizard CLI, inicia sesión y lanza tu primera app desde un repositorio de GitHub o una carpeta local en unos minutos; luego añade una base de datos."
+title: "Inicio rápido de apps: despliega tu primera app"
+description: "Despliega tu primera app en Lizard en unos minutos: instala Lizard CLI, inicia sesión, empieza la prueba de Pro de 7 días y luego despliega un repositorio de GitHub o una carpeta local."
 ---
 
 <span id="app-quickstart" />
 
 # Inicio rápido de apps
 
-Lanza tu primera app en Lizard en unos minutos. Se crea una cuenta de Lizard automáticamente la primera vez que `lizard login`. Instalarás Lizard CLI, iniciarás sesión, empezarás la prueba de Pro y desplegarás, ya sea directamente desde un repositorio de GitHub o desde un directorio local.
+Este inicio rápido despliega una app en Lizard (lizard.build) en unos minutos. Instala Lizard CLI, inicia sesión, empieza la prueba de Pro de 7 días y luego ejecuta `lizard add -r owner/repo` para un repositorio de GitHub o `lizard up` para una carpeta local. Lizard compila la app en sus servidores, sin Docker local, y devuelve una URL HTTPS en `onlizard.com`. Tu cuenta se crea la primera vez que ejecutas `lizard login`.
 
 <span id="1-install-the-cli" />
 
@@ -80,7 +81,7 @@ Una cuenta nueva no tiene plan, así que crear cualquier cosa devuelve HTTP 402 
 lizard billing start
 ```
 
-Esto abre Stripe Checkout, donde añades una tarjeta. La prueba incluye $5 en créditos de prueba y no se cobra nada hasta que termina. Consulta [Facturación](/platform/billing).
+Esto abre Stripe Checkout, donde añades una tarjeta. La prueba incluye $5 de uso y no se cobra nada hasta que termina. Consulta [Facturación](/platform/billing) y [`lizard billing`](/cli/billing).
 
 <span id="4-deploy" />
 
@@ -98,7 +99,7 @@ Si tu código está en GitHub, crea un servicio directamente desde el repositori
 lizard add -r your-org/your-app
 ```
 
-A partir de entonces, los pushes a la rama seguida volverán a desplegar automáticamente. Para repositorios privados, conecta primero la GitHub App:
+A partir de entonces, los pushes a la rama seguida volverán a desplegar automáticamente. Para repositorios privados, conecta primero la GitHub App con [`lizard git`](/cli/git):
 
 ```bash
 lizard git connect
@@ -118,6 +119,8 @@ Si el directorio aún no está vinculado a un proyecto, `up` creará o seleccion
 
 De cualquier forma, cuando termine la compilación obtendrás una URL generada como `https://your-app-x1y2z.onlizard.com`.
 
+Lizard detecta la mayoría de los stacks por sí solo. Para el comando de compilación, el comando de inicio y el puerto exactos de tu framework, consulta la guía de [Next.js](/framework-guides/nextjs), [React](/framework-guides/react), [Vue](/framework-guides/vue), [Astro](/framework-guides/astro), [SvelteKit](/framework-guides/sveltekit), [Node.js](/framework-guides/nodejs), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails) o [Go](/framework-guides/go). Una app con su propio Dockerfile sigue [Desplegar con un Dockerfile](/deploy/dockerfile).
+
 <span id="5-watch-it-build-and-run" />
 
 ## 5. Observa cómo compila y se ejecuta
@@ -128,6 +131,8 @@ lizard logs        # last runtime log lines
 lizard logs --build  # the most recent build's logs
 lizard open        # open the project in the dashboard
 ```
+
+[`lizard open`](/cli/open) muestra el mismo proyecto en el [panel](/dashboard). Para métricas, costos e historial de despliegues, consulta [Observabilidad](/observability).
 
 <span id="6-add-a-database-optional" />
 
@@ -149,6 +154,7 @@ La referencia `${{postgres.DATABASE_PRIVATE_URL}}` se resuelve en el momento del
 
 - **[Conceptos básicos](/concepts/architecture)** — entiende los proyectos, servicios y el pipeline de compilación.
 - **[Desplegar desde GitHub](/deploy/github)** — ramas, monorepos y redespliegues automáticos.
+- **[Despliegue](/deploy)** — todas las formas de desplegar, además de workers, escalado y regiones.
 - **[Variables y secretos](/variables)** — alcance y precedencia.
 - **[Redes](/networking)** — adjunta tu propio hostname con TLS automático.
 - **[Desplegar una app que creó tu IDE con IA](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — los mismos pasos, pero entregados a un agente en su lugar, para una app escrita en Google Antigravity.

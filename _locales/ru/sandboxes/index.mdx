@@ -1,8 +1,11 @@
 ---
-description: "Runtime Sandboxes, шаблоны, жизненный цикл, лимиты, хранение и оплата."
+title: "Sandboxes для AI-агентов"
+description: "Запускайте сгенерированный AI код в microVM Firecracker с Lizard SDK или Lizard CLI: когда нужны Sandboxes, время запуска, шаблоны, размеры, жизненный цикл и хранение."
 ---
 
-# Sandboxes
+<span id="sandboxes-for-ai-agents" />
+
+# Sandboxes для AI-агентов
 
 <span id="песочницы" />
 <span id="когда-использовать-песочницу" />
@@ -13,15 +16,52 @@ description: "Runtime Sandboxes, шаблоны, жизненный цикл, л
 <span id="when-to-use-a-sandbox" />
 <span id="what-makes-them-fast" />
 <span id="templates" />
-<span id="lifecycle" />
 <span id="resources--limits" />
 <span id="ways-to-drive-sandboxes" />
 
-Sandboxes запускают короткие команды и задачи агентов в виде microVM Firecracker, у каждой из которых своё ядро. Sandbox, к которому подключён Persistent Volume на базе pod или который восстановлен из снимка pod, работает как pod Kubernetes с runtime runc и использует ядро хоста. Какой вариант используется, показывает `getInfo().runtime`. Ограничивайте доступ к ключам и сети при запуске недоверенного кода.
+Sandboxes в Lizard (lizard.build) — это изолированные Linux-машины, в которых AI-агент запускает чужой код. Каждый sandbox — это microVM Firecracker со своим ядром. Ваш код создаёт sandbox с помощью Lizard SDK (`@lizard-build/sdk` для TypeScript, `lizard-sdk` для Python), или вы выполняете `lizard sandbox create` в терминале; затем вы запускаете команды, читаете и записываете файлы и открываете порты. В тесте 2026-10-12 медианное время от создания sandbox до первого вывода Python составило 228 мс.
+
+<span id="when-to-use-sandboxes" />
+
+## Когда использовать Sandboxes
+
+- **Запускайте код, который написала модель.** Дайте LLM [интерпретатор кода](/sandboxes/code-interpreter), который сохраняет состояние Python между вызовами.
+- **Дайте агенту для кодирования свою машину.** Запускайте [Claude Code](/sandboxes/guides/claude-code), [OpenCode](/sandboxes/guides/opencode) или Codex в sandbox, а не на своём ноутбуке. Подключите его учётные данные через [`lizard agents`](/cli/agents) и отправляйте промпты через [`lizard sandbox prompt`](/cli/sandbox#coding-agents).
+- **Смотрите, что собрал агент.** Запустите dev-сервер и откройте его по [приватному URL предпросмотра](/sandboxes/preview-urls).
+- **Пробуйте несколько вариантов сразу.** Скопируйте работающий sandbox через fork вместе с памятью и процессами или восстановите много копий из одного снимка.
+- **Управляйте браузером.** Шаблон `desktop` запускает графический рабочий стол, которым агент управляет через скриншоты, клики и нажатия клавиш.
+
+Для веб-сервиса или воркера, который должен работать постоянно, разверните приложение; см. [быстрый старт приложения](/getting-started).
+
+<span id="how-fast-does-a-sandbox-start" />
+
+## Как быстро запускается sandbox?
+
+В тесте 2026-10-12 медианное время от создания sandbox до первого вывода Python составило 228 мс, а 95-й перцентиль — 310 мс. Тест запускали 300 раз из региона US East в Railway на `us-east-1`, с шаблоном `base` и размером Small. Результаты того же теста для E2B, Daytona и Modal — на [странице Sandboxes](https://lizard.build/sandboxes).
+
+<span id="sandboxes-at-a-glance" />
+
+## Кратко о Sandboxes
+
+| Вопрос | Ответ |
+|---|---|
+| Что выполняет код? | microVM Firecracker со своим ядром; исключение описано в разделе [runtime и шаблоны](#runtime-and-templates) |
+| Как создать sandbox? | [Lizard SDK](/sandboxes/sdk-reference), [`lizard sandbox`](/cli/sandbox), [кабинет](/sandboxes/dashboard) или [HTTP API](/sandboxes/sdk-reference#http-api) |
+| Какие есть шаблоны? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` и `desktop` |
+| Какие есть размеры? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, по умолчанию) и Large (8 vCPU / 16 GB); см. [размеры и цены](/platform/limits#sandbox-sizes) |
+| Сколько живёт sandbox? | По умолчанию пять минут при создании из SDK и CLI; без срока по умолчанию из прямого API и кабинета |
+| Что сохраняется после остановки? | Только файлы на [Persistent Volume](/sandboxes/volumes), подключённом в `/workspace` |
+| Сколько sandbox может работать одновременно? | 100 на Pro, 5 в пробном периоде; см. [лимиты аккаунта](/platform/limits#sandbox-account-limits) |
+
+<span id="runtime-and-templates" />
 
 ## Runtime и шаблоны
 
 Выбирайте шаблон из текущего каталога: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` или `desktop`. Наличие зависит от региона и свободных ресурсов пула. `interpreter` содержит Python и основные библиотеки для работы с данными. `desktop` запускает графический рабочий стол, которым вы управляете через `sandbox.desktop` или `lizard sandbox desktop`. Проверяйте версии программ внутри sandbox. Публичный CLI не поддерживает загрузку своих шаблонов.
+
+Sandbox, к которому подключён Persistent Volume на базе pod или который восстановлен из снимка pod, работает как pod Kubernetes с runtime runc и использует ядро хоста. Какой вариант используется, показывает `getInfo().runtime`. Ограничивайте доступ к ключам и сети при запуске недоверенного кода.
+
+<span id="lifecycle" />
 
 ## Жизненный цикл
 
@@ -34,30 +74,38 @@ running -> new sandboxes (fork)
 snapshot -> new sandbox (restore)
 ```
 
+<span id="resources-and-timeouts" />
+
 ## Ресурсы и сроки жизни
 
 Выберите размер при создании sandbox: Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, по умолчанию) или Large (8 vCPU / 16 GB). См. [размеры и цены](/platform/limits#sandbox-sizes). При необходимости укажите регион явно; наличие региона в каталоге не гарантирует свободные ресурсы.
 
 SDK и CLI по умолчанию задают срок жизни пять минут. Прямой API и кабинет по умолчанию не задают срок. Укажите его явно: `timeoutMs: 0` при создании отключает истечение срока; положительное значение задаёт срок жизни. `setTimeout` принимает 1000–2147483647 мс, но не ноль. Команды не продлевают срок. Это не таймер простоя.
 
+<span id="storage-and-billing" />
+
 ## Хранение и оплата
 
 Файлы и процессы доступны, пока sandbox работает. После остановки следующий sandbox может получить только файлы, записанные на подключённый Persistent Volume в `/workspace`. Без тома `/workspace` — временная папка. Том подключается только к одному sandbox и хранится на одном узле; отдельно сохраняйте файлы, которые должны пережить потерю узла.
 
-У каждого размера фиксированная почасовая цена; оплата идёт посекундно, пока sandbox работает, включая простой. Исходящий трафик входит в цену до [2 TB на аккаунт](/platform/limits#sandbox-egress) за скользящие 30 дней. Sandbox, восстановленный из снимка, работает с размером и ценой исходного sandbox; восстановленный из снимка pod оплачивается по измеренному расходу. За приостановленный sandbox плата не берётся; Persistent Volumes оплачиваются отдельно, пока вы храните данные. Ставьте sandbox на паузу или останавливайте его, когда задача завершена.
+У каждого размера фиксированная почасовая цена; оплата идёт посекундно, пока sandbox работает, включая простой. Исходящий трафик входит в цену до [2 TB на аккаунт](/platform/limits#sandbox-egress) за скользящие 30 дней. Sandbox, восстановленный из снимка, работает с размером и ценой исходного sandbox; восстановленный из снимка pod оплачивается по измеренному расходу. За приостановленный sandbox плата не берётся; Persistent Volumes оплачиваются отдельно, пока вы храните данные. Ставьте sandbox на паузу или останавливайте его, когда задача завершена. Ставки на все ресурсы — на [странице оплаты](/platform/billing) и в [ценах](https://lizard.build/pricing).
 
-```ts
-import { Sandbox } from '@lizard-build/sdk';
+<span id="guides" />
 
-const sandbox = await Sandbox.create('interpreter', {
-  projectId: 'proj_123', timeoutMs: 300_000,
-});
-try {
-  const result = await sandbox.process.exec("python -c 'print(2 ** 10)'");
-  console.log(result.stdout, result.stderr, result.exitCode);
-} finally {
-  await sandbox.kill();
-}
-```
+## Руководства
 
-[Быстрый старт](/sandboxes/quickstart) · [Справочник SDK](/sandboxes/sdk-reference) · [Запуск Python](/sandboxes/code-interpreter) · [Кабинет](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)
+- [Запуск Claude Code в sandbox](/sandboxes/guides/claude-code)
+- [Запуск OpenCode в sandbox](/sandboxes/guides/opencode)
+- [URL предпросмотра для dev-сервера](/sandboxes/preview-urls)
+- [Интерпретатор для кода, сгенерированного LLM](/sandboxes/code-interpreter)
+- [Сохранение файлов с Persistent Volumes](/sandboxes/volumes)
+
+<span id="reference" />
+
+## Справочник
+
+- [Быстрый старт Sandboxes](/sandboxes/quickstart): первый sandbox шаг за шагом.
+- [Справочник по Sandbox API и SDK](/sandboxes/sdk-reference): все вызовы на TypeScript и Python.
+- [`lizard sandbox`](/cli/sandbox): создание, exec, оболочка, снимки и агенты для кодирования из терминала.
+- [Кабинет Sandboxes](/sandboxes/dashboard): создание, просмотр и остановка sandbox в браузере.
+- [Лимиты](/platform/limits#sandboxes): размеры, цены, число одновременно работающих sandbox и исходящий трафик.

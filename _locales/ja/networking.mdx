@@ -1,12 +1,13 @@
 ---
-description: "すべてのサービスには、自動 TLS 付きの onlizard.com ドメインが付与されます。カスタムホスト名を追加し、DNS を検証し、ポートを変更し、ほかのサービスにプライベートに接続し、またはドメインを削除できます。"
+title: "ネットワーキング: プライベートネットワーク、ドメイン、ポート"
+description: "<name>.lizard.internal でのサービス間プライベートネットワーク、TLS 付きの生成済み onlizard.com ドメイン、カスタムドメイン、DNS チェック、コンテナポート。"
 ---
 
 <span id="networking" />
 
 # ネットワーキング
 
-すべてのサービスは、リージョンに関係なく、デプロイされた瞬間に自動 TLS 付きの生成済み `*.onlizard.com` ドメインを取得します。本番公開の準備ができたら、独自のホスト名を追加してください。
+Lizard (lizard.build) では、同じプロジェクト内のサービスは、公開ドメインなしで、任意のポートを使って `<service>.lizard.internal` のプライベートネットワーク経由で互いに接続できます。また、すべての Web サービスはデプロイされた瞬間に自動 TLS 付きの生成済み `*.onlizard.com` ドメインを取得し、本番公開の準備ができたら独自のホスト名を追加できます。Managed Postgres と Managed Redis も同じプライベートネットワークに参加します。[プライベートネットワーク](#private-networking)、[カスタムドメイン](#attach-a-custom-domain)、[ポート](#change-the-port-your-service-listens-on) に移動できます。
 
 <span id="generated-domains" />
 
@@ -75,7 +76,7 @@ lizard redeploy --service web
 
 ## プライベートネットワーク
 
-同じプロジェクト内のサービスは、公開ドメインなしで `<service>.lizard.internal` を使って互いに接続でき、そのサービスが listen している任意のポートを使えます。ホスト名は `${{api.LIZARD_PRIVATE_DOMAIN}}` として参照します。Managed Postgres と Managed Redis は、同じネットワーク上で `DATABASE_PRIVATE_URL` と `REDIS_PRIVATE_URL` を公開します。これらの名前はプロジェクト内でのみ解決されます。
+同じプロジェクト内のサービスは、公開ドメインなしで `<service>.lizard.internal` を使って互いに接続でき、そのサービスが listen している任意のポートを使えます。ホスト名は `${{api.LIZARD_PRIVATE_DOMAIN}}` として参照します。Managed Postgres と Managed Redis は、同じネットワーク上で `DATABASE_PRIVATE_URL` と `REDIS_PRIVATE_URL` を公開します。[Postgres 接続文字列](/addons/postgres#postgres-connection-string) を参照してください。これらの名前はプロジェクト内でのみ解決され、ほかのプロジェクトのサービスはこれらのアドレスに到達できません。トラフィックは Lizard のネットワーク内にとどまるため、サービス間ではプレーンな `http://` で問題ありません。
 
 ```bash
 lizard secrets set API_URL='http://${{api.LIZARD_PRIVATE_DOMAIN}}:8080' --service web

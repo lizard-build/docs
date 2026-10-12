@@ -1,12 +1,12 @@
 ---
-description: "Controla Lizard desde un agente de programación con IA: lee Lizard Skill, descubre los esquemas de comandos con --json, despliega mediante Lizard CLI o conecta un cliente MCP a Lizard MCP."
+description: "Deja que Claude Code, Codex o Cursor desplieguen en Lizard: instala Lizard Skill, lee los esquemas de comandos con --json o conecta un cliente MCP a Lizard MCP."
 ---
 
 <span id="coding-agents" />
 
 # Agentes de programación
 
-Lizard está diseñado para ser manejado por agentes de programación con IA tan fácilmente como por humanos. Lizard CLI incluye una **skill integrada** que le enseña a un agente toda la plataforma, y cada comando es **autodescriptivo** mediante `--json` para que los agentes nunca tengan que adivinar.
+Claude Code, Codex, Cursor y otros agentes de programación con IA despliegan y gestionan apps en Lizard (lizard.build) mediante Lizard CLI. Instala Lizard Skill una vez con `npx skills add lizard-build/skill -g`; después, el agente carga la guía integrada en la CLI con `lizard skills get core --json` y lee los flags de cualquier comando con `--help --json`, así que nunca tiene que adivinar. Los clientes que hablan MCP, como ChatGPT y Claude, pueden usar [Lizard MCP](#lizard-mcp) en su lugar. Para un despliegue completo desde un agente, consulta [Desplegar desde Claude Code, Codex o Cursor](/guides/deploy-from-coding-agent).
 
 <span id="the-embedded-skill" />
 
@@ -94,6 +94,8 @@ npx skills add lizard-build/skill -g
 Funciona con Claude Code, Cursor, Codex, Copilot, Gemini CLI y otros agentes que leen el formato Agent Skills. Para los clientes que usan MCP en lugar de ejecutar comandos de shell, usa [Lizard MCP](#lizard-mcp).
 
 Eso también cubre los IDE con IA: escriben y prueban una app, pero no la alojan. Consulta [desplegar una app creada en Google Antigravity](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat), donde un solo prompt impulsa todo el despliegue.
+
+Para que Claude Code o ChatGPT editen la página que tienes abierta en Chrome, usa [Lizard Studio](/studio/getting-started).
 
 <span id="lizard-mcp" />
 

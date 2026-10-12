@@ -1,10 +1,13 @@
 ---
-description: "キャッシュ、キュー、レート制限、pub/sub のために Managed Redis インスタンスを追加し、単一の参照でサービスに接続します。"
+title: "Managed Redis: 接続 URL と永続性"
+description: "キャッシュ、キュー、レート制限、pub/sub のために Lizard に Redis 8 インスタンスを追加し、参照で接続して、メモリ不足時に何が起きるかを確認します。"
 ---
+
+<span id="managed-redis" />
 
 # Managed Redis
 
-キャッシュ、キュー、レート制限、pub/sub のためのマネージド Redis インスタンスです。
+Lizard (lizard.build) の Managed Redis は、キャッシュ、キュー、レート制限、pub/sub のための Redis サーバーです。新しいインスタンスはデフォルトで Redis 8 で動作します。`lizard add redis` で追加すると、サービスは `${{redis.REDIS_PRIVATE_URL}}` のような参照を通じて `REDIS_PRIVATE_URL` または `REDIS_URL` を読み取ります。エビクションポリシーも追記専用ファイルもないため、再構築できるデータだけを保存してください。概要と料金については、[Managed Redis のページ](https://lizard.build/redis) を参照してください。
 
 <span id="provision" />
 
@@ -25,6 +28,8 @@ lizard add redis
 | `REDIS_URL` | パブリックエンドポイント経由の完全な接続文字列 (`redis://…`) |
 | `REDIS_PRIVATE_URL` | プロジェクトのプライベートネットワーク経由の接続文字列 (`<name>.lizard.internal:6379`) |
 
+どちらの文字列も `redis://default:<password>@<host>:<port>` という形式です。プライベートな文字列は、同じプロジェクト内のサービスからのみ使えます。[プライベートネットワーク](/networking#private-networking) を参照してください。
+
 <span id="connect-a-service" />
 
 ## サービスを接続する
@@ -36,18 +41,18 @@ lizard redeploy --service api
 
 参照はデプロイ時に解決されます。利用側のサービスは、次のデプロイでアドオンの現在の値を取得します。プロジェクト外のクライアントには `REDIS_URL` を使ってください。プロジェクト内のすべてのサービスには、アドオンのパブリックな `REDIS_URL` も最も低い優先度で渡されます。明示的な参照はこれを上書きします。
 
-<span id="memory-and-durability" />
+<span id="does-managed-redis-keep-data" />
 
-## メモリと永続性
+## Managed Redis はデータを保持しますか?
 
-Managed Redis にはエビクションポリシーも追記専用ファイル (AOF) もありません。メモリが不足するとインスタンスが再起動し、直近の書き込みが失われることがあります。再構築できるデータに使い、失えないデータは [Managed Postgres](/addons/postgres) に保存してください。
+すべての書き込みが保持されるわけではありません。Managed Redis にはエビクションポリシーも追記専用ファイル (AOF) もありません。メモリが不足するとインスタンスが再起動し、直近の書き込みが失われることがあります。再構築できるデータに使い、失えないデータは [Managed Postgres](/addons/postgres) に保存してください。
 
 <span id="common-uses" />
 
 ## 一般的な用途
 
 - **キャッシュ** — リクエストをキーにして計算結果を保存します。
-- **キュー / ワーカー** — Redis を、ジョブを消費する [workerモードのサービス](/deploy/workers) と組み合わせます。
+- **キュー / ワーカー** — Redis を、ジョブを消費する [workerモードのサービス](/deploy/workers) と組み合わせます。redis-worker サンプルの手順は [キューコンシューマーを実行する](/deploy/workers#run-a-queue-consumer) で説明しています。
 - **レート制限 / セッション** — [replicas](/deploy/scaling) 間で高速に共有状態を扱います。
 
 ```bash

@@ -1,8 +1,11 @@
 ---
-description: "Lizard SDK の対応メソッドと現在のランタイムの制限。"
+title: "Sandbox API と SDK リファレンス"
+description: "TypeScript と Python の Lizard SDK リファレンス: 作成オプション、コマンド、ファイル、ポート、一時停止、スナップショット、fork、エラー、HTTP API をコード例付きで解説します。"
 ---
 
-# SDK リファレンス
+<span id="sandbox-api-and-sdk-reference" />
+
+# Sandbox API と SDK リファレンス
 
 <span id="インストールと認証" />
 <span id="lizard" />
@@ -18,7 +21,21 @@ description: "Lizard SDK の対応メソッドと現在のランタイムの制�
 <span id="see-also" />
 <span id="lifecycle-status" />
 
-Lizard SDK をインストールし、Settings → API keys で API キーを作成します。`LIZARD_API_KEY` に保存してください。各 sandbox にはプロジェクトが必要です。`projectId`（Python では `project_id`）、または `project` に ID、slug、名前を渡します。
+Lizard SDK は、Lizard (lizard.build) の Sandboxes 用クライアントです: TypeScript と JavaScript 向けには npm の `@lizard-build/sdk`、Python 向けには PyPI の `lizard-sdk`（`lizard` としてインポート）があります。どちらも同じ [HTTP API](#http-api) を呼び出します。このページでは、sandbox の各呼び出しを TypeScript と Python の名前で一覧にし、両方の言語の例を示します。手順に沿って最初の実行を試すには [クイックスタート](/sandboxes/quickstart) を、Sandboxes とは何かについては [概要](/sandboxes) を読んでください。
+
+<span id="install-and-authenticate" />
+
+## インストールと認証
+
+```sh
+npm install @lizard-build/sdk
+pip install lizard-sdk
+export LIZARD_API_KEY="<your-api-key>"
+```
+
+Settings → API keys で、または [`lizard keys create <name>`](/cli/keys) で API キーを作成します。SDK は `LIZARD_API_KEY` を読み取ります。別のキーを使うには `apiKey`（Python では `api_key`）を渡します。各 sandbox にはプロジェクトが必要です。`projectId`（Python では `project_id`）、または `project` に ID、slug、名前を渡します。
+
+<span id="create-options" />
 
 ## 作成オプション
 
@@ -35,60 +52,266 @@ Lizard SDK をインストールし、Settings → API keys で API キーを作
 | `lizardToken` | `lizard_token` |
 | `apiKey` | `api_key` |
 
-現在のカタログからテンプレートを選びます: `base`、`interpreter`、`codex`、`claude`、`opencode`、`pi`、`prime`、`desktop`。利用可否はリージョンとプールの空き容量によって変わります。`interpreter` には Python と一般的なデータ処理ライブラリが含まれます。`desktop` はグラフィカルなデスクトップを実行し、`sandbox.desktop` または `lizard sandbox desktop` で操作します。ツールのバージョンは sandbox 内で確認してください。公開 CLI には独自テンプレートのアップロード機能はありません。
+```ts
+import { Sandbox } from '@lizard-build/sdk';
 
-SDK と CLI の既定の有効期間は 5 分です。API の直接呼び出しとダッシュボードでは、既定で期限を設けません。有効期間を明示してください。作成時の `timeoutMs: 0` は期限を無効にし、正の値は期限を設定します。`setTimeout` は 1000～2147483647 ミリ秒を受け付け、0 は指定できません。コマンド実行で期限は延長されません。アイドル時間のタイマーではありません。
+const sandbox = await Sandbox.create('base', {
+  projectId: 'proj_123',
+  size: 'small',
+  timeoutMs: 10 * 60 * 1000,
+  envs: { MODE: 'test' },
+  metadata: { task: 'report-42' },
+});
+```
+
+```python
+from lizard import Sandbox
+
+sandbox = Sandbox.create(
+    "base",
+    project_id="proj_123",
+    size="small",
+    timeout_ms=10 * 60 * 1000,
+    envs={"MODE": "test"},
+    metadata={"task": "report-42"},
+)
+```
+
+- 最初の引数は、[ランタイムとテンプレート](/sandboxes#runtime-and-templates) にあるカタログのテンプレートです。指定しない場合、SDK は `base` を起動します。
+- `size` は `'small'`、`'medium'`、`'large'` のいずれかで、それぞれ 2 vCPU / 4 GB、4 vCPU / 8 GB (既定)、8 vCPU / 16 GB です。[サイズと料金](/platform/limits#sandbox-sizes)を参照してください。スナップショットから復元した sandbox には `size` は適用されず、元の sandbox のサイズで動作します。
+- `timeoutMs` の既定は 300000（5 分）です。`0` は期限を無効にします。[リソースと有効期間](/sandboxes#resources-and-timeouts) を参照してください。
+- 必要に応じてリージョンを指定してください。カタログへの掲載は空き容量を保証しません。ボリュームを接続する場合は `region` を指定しないでください: sandbox はボリュームのある場所で実行されます。
+- `metadata` は独自のラベルです。`getInfo()` と `list()` がこれを返します。
+- `lizardToken` は `liz_` で始まる API キーを sandbox に書き込み、sandbox 内で `lizard` を使えるようにします。sandbox 内のあらゆるものがこのキーを読み取れるため、ワークスペース単位のキーを渡してください。
+
+<span id="methods" />
 
 ## メソッド
 
-| API (TypeScript) | メソッド |
-|---|---|
-| `Sandbox.create(template, options)` | カタログのテンプレートからプロジェクト内に作成。 |
-| `Sandbox.connect(sandboxId)` | 既存の sandbox に接続。自動再開はしません。 |
-| `Sandbox.list()` | アクセスできる Sandboxes を一覧表示。状態を確認してください。 |
-| `sandbox.getInfo()` | 状態とメタデータを取得。 |
-| `sandbox.process.exec(cmd)` | シェルコマンドを実行し、stdout、stderr、exitCode を返す。 |
-| `sandbox.fs.write(path, data)` | テキストまたはバイトを書き込み、親ディレクトリを作成。 |
-| `sandbox.fs.read(path)` | UTF-8 テキストを読み取る。 |
-| `sandbox.fs.readBytes(path)` | ファイルのバイトを読み取る。 |
-| `sandbox.fs.list(path)` | ディレクトリの項目を一覧表示。 |
-| `sandbox.fs.makeDir(path)` | ディレクトリと不足する親を作成。 |
-| `sandbox.fs.remove(path)` | ファイルまたはディレクトリを削除。 |
-| `sandbox.exposePort(port)` | ポートを公開し、`url`、`hostname`、`accessToken` を返す。 |
-| `sandbox.getHost(port)` | ポートを公開してホスト名を返す。リクエストには `sandbox.accessToken` が必要。 |
-| `sandbox.setTimeout(ms)` | 残りの有効期間を設定。最小 1000 ミリ秒。 |
-| `sandbox.pause()` / `sandbox.resume()` | 一時停止または再開をキューに入れ、すぐに戻る。 |
-| `sandbox.waitForStatus(status)` | `paused` または `running` を待つ。一時停止に失敗した場合はエラーを投げる。 |
-| `sandbox.fork({ count })` | 実行中の sandbox を、メモリとプロセスを含めてコピー。 |
-| `sandbox.snapshot(name, { poolSize })` | メモリと `/workspace` のファイルを非公開スナップショットとして保存。 |
-| `Sandbox.waitForSnapshot(snapshotId)` | スナップショットの準備完了を待つ。 |
-| `Sandbox.restore(snapshotId)` | 待機中のコピーから新しい sandbox を起動。 |
-| `sandbox.kill()` | sandbox を停止し、ボリュームを切り離す。 |
+| TypeScript | Python | 機能 |
+|---|---|---|
+| `Sandbox.create(template, options)` | `Sandbox.create(template, ...)` | カタログのテンプレートからプロジェクト内に作成。 |
+| `Sandbox.connect(sandboxId)` | `Sandbox.connect(sandbox_id)` | 既存の sandbox に接続。自動再開はしません。 |
+| `Sandbox.list({ projectId })` | `Sandbox.list(project_id=...)` | アクセスできる Sandboxes を一覧表示。状態を確認してください。 |
+| `sandbox.getInfo()` | `sandbox.get_info()` | 状態、ランタイム、メタデータを取得。 |
+| `sandbox.process.exec(cmd, opts)` | `sandbox.process.exec_(cmd, ...)` | シェルコマンドまたは argv 配列を実行し、stdout、stderr、終了コードを返す。 |
+| `sandbox.process.list()` | `sandbox.process.list()` | `exec` で起動したプロセスを一覧表示。 |
+| `sandbox.process.kill(pid, signal)` | `sandbox.process.kill(pid, signal)` | プロセスとその子プロセスにシグナルを送る。既定は `SIGTERM`。 |
+| `sandbox.fs.write(path, data)` | `sandbox.fs.write(path, data)` | テキストまたはバイトを書き込み、親ディレクトリを作成。 |
+| `sandbox.fs.read(path)` | `sandbox.fs.read(path)` | UTF-8 テキストを読み取る。 |
+| `sandbox.fs.readBytes(path)` | `sandbox.fs.read_bytes(path)` | ファイルのバイトを読み取る。 |
+| `sandbox.fs.list(path)` | `sandbox.fs.list(path)` | ディレクトリの項目を一覧表示。 |
+| `sandbox.fs.stat(path)` | `sandbox.fs.stat(path)` | 種類、サイズ、モード、所有者、更新日時を返す。 |
+| `sandbox.fs.makeDir(path)` | `sandbox.fs.make_dir(path)` | ディレクトリと不足する親を作成。 |
+| `sandbox.fs.move(from, to)` | `sandbox.fs.move(src, dst)` | ファイルまたはディレクトリを移動。 |
+| `sandbox.fs.remove(path)` | `sandbox.fs.remove(path)` | ファイルまたはディレクトリを削除。 |
+| `sandbox.exposePort(port)` | `sandbox.expose_port(port)` | ポートを公開し、`url`、`hostname`、アクセストークンを返す。 |
+| `sandbox.getHost(port)` | `sandbox.get_host(port)` | ポートを公開してホスト名を返す。リクエストには `sandbox.accessToken` が必要。 |
+| `sandbox.unexpose(port)` | `sandbox.unexpose(port)` | 公開したポートを削除。 |
+| `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | 残りの有効期間を設定。最小 1000 ミリ秒。 |
+| `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | 一時停止または再開をキューに入れ、すぐに戻る。 |
+| `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | `paused` または `running` を待つ。一時停止に失敗した場合はエラーを投げる。 |
+| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | 実行中の sandbox を、メモリとプロセスを含めて 1～10 個コピー。 |
+| `sandbox.snapshot(name, { poolSize })` | `sandbox.snapshot(name, pool_size=...)` | メモリと `/workspace` のファイルを非公開スナップショットとして保存。 |
+| `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | スナップショットの準備完了を待つ。 |
+| `Sandbox.restore(snapshotId)` | `Sandbox.restore(snapshot_id)` | スナップショットから新しい sandbox を起動。 |
+| `Sandbox.deleteSnapshot(snapshotId)` | `Sandbox.delete_snapshot(snapshot_id)` | スナップショットを削除。そこから復元した sandbox は実行を続ける。 |
+| `sandbox.kill()` | `sandbox.kill()` | sandbox を停止し、ボリュームを切り離す。 |
 
-Python: `exec_`, `get_info`, `expose_port`, `get_host`, `access_token`, `set_timeout`, `sandbox_id`, `read_bytes`, `make_dir`, `wait_for_status`, `wait_for_snapshot`, `pool_size`.
+<span id="run-commands" />
 
-## 現在のランタイムの制限
+## コマンドを実行する
 
-コマンドの結果には stdout、stderr、終了コードが含まれます。タイムアウトは 1～600 秒です。`process.exec` は `envs`、`workdir`、`user` を受け付けます。作成時の `envs` は、Firecracker の sandbox ではすべてのコマンドに渡されます。pod の sandbox では無視されるため、コマンドごとに渡してください。`getInfo()` と `list()` は作成時の `metadata` を返します。
+`process.exec`（Python では `exec_`）はコマンドを実行し、終了するまで待ちます。コマンドの実行中に出力を受け取るには、`onStdout` または `onStderr`（Python では `on_stdout`、`on_stderr`）を渡します。その場合も、呼び出しは最後に完全な結果を返します。文字列の代わりに argv 配列を渡すとシェルを経由しません。信頼できないテキストを引数として渡すには、これが安全な方法です。
 
-`fs.write` はテキストまたはバイトを書き込み、`fs.read` はテキストを読み取ります。バイナリファイルはバイトとして書き込み、`fs.readBytes`（Python では `read_bytes`）で読み戻します。
+```ts
+const result = await sandbox.process.exec('npm test', {
+  workdir: '/app',
+  envs: { NODE_ENV: 'test' },
+  timeoutMs: 120_000,
+  onStdout: (chunk) => process.stdout.write(chunk),
+});
+if (result.exitCode !== 0) throw new Error(result.stderr);
 
-`size` (`'small'`、`'medium'`、`'large'`) で 2 vCPU / 4 GB、4 vCPU / 8 GB (既定)、8 vCPU / 16 GB を選べます。[サイズと料金](/platform/limits#sandbox-sizes)を参照してください。スナップショットから復元した sandbox には `size` は適用されず、元の sandbox のサイズで動作します。必要に応じてリージョンを指定してください。カタログへの掲載は空き容量を保証しません。
+await sandbox.process.exec(['grep', '-rn', '--', userQuery, '/workspace']);
+```
+
+```python
+result = sandbox.process.exec_(
+    "npm test",
+    workdir="/app",
+    envs={"NODE_ENV": "test"},
+    timeout_ms=120_000,
+    on_stdout=lambda chunk: print(chunk, end=""),
+)
+if result.exit_code != 0:
+    raise RuntimeError(result.stderr)
+
+sandbox.process.exec_(["grep", "-rn", "--", user_query, "/workspace"])
+```
+
+コマンドの結果には stdout、stderr、終了コードが含まれます。0 以外の終了コードは自分で確認する結果であり、リクエストの失敗は例外を投げます。タイムアウトは 1～600 秒です。`process.exec` は `envs`、`workdir`、`user` を受け付けます。`user` を渡さない限り、コマンドは `root` として実行されます。作成時の `envs` は、Firecracker の sandbox ではすべてのコマンドに渡されます。pod の sandbox では無視されるため、コマンドごとに渡してください。
+
+<span id="files" />
+
+## ファイル
+
+`fs.write` はテキストまたはバイトを書き込み、`fs.read` はテキストを読み取ります。バイナリファイルはバイトとして書き込み、`fs.readBytes`（Python では `read_bytes`）で読み戻します。絶対パスを使ってください。存在しないパスは `NotFoundError` を投げます。
+
+```ts
+await sandbox.fs.write('/app/data.csv', 'x,y\n1,2\n');
+const text = await sandbox.fs.read('/app/data.csv');
+const entries = await sandbox.fs.list('/app');
+const png = await sandbox.fs.readBytes('/app/chart.png');
+```
+
+```python
+sandbox.fs.write("/app/data.csv", "x,y\n1,2\n")
+text = sandbox.fs.read("/app/data.csv")
+entries = sandbox.fs.list("/app")
+png = sandbox.fs.read_bytes("/app/chart.png")
+```
+
+`/workspace` の [Persistent Volume](/sandboxes/volumes) 以外にあるファイルは、sandbox の停止後に消えます。
+
+<span id="ports" />
+
+## ポート
+
+sandbox 内で `0.0.0.0` 上のサーバーを起動し、そのポートを公開します。すべてのリクエストにはアクセストークンが必要です。`X-Lizard-Access-Token` ヘッダーで送るか、ブラウザーでは一度だけ `?lizard_token=` として渡します。[プレビュー URL](/sandboxes/preview-urls) を参照してください。
+
+```ts
+const { url, hostname, accessToken } = await sandbox.exposePort(3000);
+console.log(url); // open in a browser; it carries the token
+await fetch(`https://${hostname}/api`, { headers: { 'X-Lizard-Access-Token': accessToken } });
+await sandbox.unexpose(3000);
+```
+
+```python
+import httpx
+
+exposed = sandbox.expose_port(3000)
+print(exposed.url)  # open in a browser; it carries the token
+httpx.get(f"https://{exposed.hostname}/api", headers={"X-Lizard-Access-Token": exposed.access_token})
+sandbox.unexpose(3000)
+```
+
+<span id="pause-snapshot-and-fork" />
+
+## 一時停止、スナップショット、fork
+
+これらの呼び出しは、ファイルだけでなくメモリと実行中のプロセスも保持します。それぞれで何が保持されるか、復元がどう課金されるか、何が失敗するかは [クイックスタート](/sandboxes/quickstart#pause-and-resume) で説明しています。
+
+```ts
+await sandbox.pause();
+await sandbox.waitForStatus('paused');
+await sandbox.resume();
+await sandbox.waitForStatus('running');
+
+const saved = await sandbox.snapshot('ready-env');
+const copy = await Sandbox.restore(saved.id);
+
+for (const f of await sandbox.fork({ count: 2 })) {
+  if (f.sandbox) await f.sandbox.process.exec('echo hi');
+  else console.warn('fork failed:', f.error);
+}
+```
+
+```python
+sandbox.pause()
+sandbox.wait_for_status("paused")
+sandbox.resume()
+sandbox.wait_for_status("running")
+
+saved = sandbox.snapshot("ready-env")
+copy = Sandbox.restore(saved["id"])
+
+for f in sandbox.fork(count=2):
+    if f.sandbox:
+        f.sandbox.process.exec_("echo hi")
+    else:
+        print("fork failed:", f.error)
+```
+
+`fork` はコピーごとに 1 つのエントリを返します: 新しい sandbox、またはアカウントの sandbox 上限などのエラーです。各コピーは元の sandbox と同じように課金されます。
 
 <span id="run-code-with-state" />
 
 ## 状態を保持してコードを実行する
 
-`CodeSandbox` は `interpreter` テンプレートを起動し、`runCode`（Python では `run_code`）でコードを実行します。このテンプレートでは、Python はコンテキストごとに永続的な Jupyter カーネルで実行されるため、変数は呼び出し間で引き継がれ、結果に `image/png` のグラフを含めることができます。JavaScript と bash は、呼び出しごとに新しいプロセスとして実行されます。[Python の実行](/sandboxes/code-interpreter)を参照してください。
+`CodeSandbox` は `interpreter` テンプレートを起動し、`runCode`（Python では `run_code`）でコードを実行します。このテンプレートでは、Python はコンテキストごとに永続的な Jupyter カーネルで実行されるため、変数は呼び出し間で引き継がれ、結果に `image/png` のグラフを含めることができます。JavaScript と bash は、呼び出しごとに新しいプロセスとして実行されます。[コードインタープリター](/sandboxes/code-interpreter)を参照してください。
+
+<span id="volumes" />
+
+## ボリューム
+
+sandbox 間で `/workspace` を保持するには、[Persistent Volume](/sandboxes/volumes) を名前で接続します:
+
+```ts
+import { Sandbox, Volume } from '@lizard-build/sdk';
+
+await Volume.getOrCreate('proj_123', 'agent-workdir', { sizeGb: 10 });
+const sandbox = await Sandbox.create('base', { projectId: 'proj_123', volumeName: 'agent-workdir' });
+```
+
+```python
+from lizard import Sandbox, Volume
+
+Volume.get_or_create("proj_123", "agent-workdir", size_gb=10)
+sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workdir")
+```
+
+<span id="unsupported-apis" />
 
 ## 未対応の API
 
 ファイル監視はまだ利用できません。`sandbox.fork()` は、ボリュームが接続されている場合は 409 を、pod として実行される sandbox では 501 を返します。`Sandbox.connect` は一時停止中や停止済みの sandbox を再開しません。一時停止中の sandbox には `resume()` を呼び出してください。SSH プロトコルでのアクセスはできません。`lizard sandbox ssh` は CLI の認証情報で対話型シェルを開きます。
 
+<span id="errors" />
+
+## エラー
+
+API の失敗時には、以下のエラーが投げられます（Python では raise されます）。各エラーは HTTP ステータスと、API が送った場合は `code` を持ちます。
+
+| エラー | 意味 |
+|---|---|
+| `PaymentRequiredError` | HTTP 402: 何かを作成する前に、アカウントで Pro を開始するか請求書を支払う必要があります。`url` は開くべきページです。 |
+| `AuthenticationError` | HTTP 401 または 403: キーが無効か、アクセス権がありません。 |
+| `NotFoundError` | HTTP 404: sandbox、ファイル、スナップショットが存在しないか、期限切れです。 |
+| `ConflictError` | HTTP 409: ボリュームが接続された sandbox の fork など、状態の競合。 |
+| `TimeoutError` | HTTP 408 または 504。 |
+| `LizardError` | 未対応の操作を含む、その他の API の失敗。 |
+
+同時に実行する sandbox が多すぎる場合や、起動が多すぎる場合は HTTP 429 が返ります。[アカウントの上限](/platform/limits#sandbox-account-limits) を参照してください。
+
+<span id="http-api" />
+
+## HTTP API
+
+SDK は `https://lizard.build` にある Lizard の REST API を呼び出します。API キーは `Authorization: Bearer liz_...` として、または `X-API-Key` ヘッダーで送ります。
+
+| 呼び出し | リクエスト |
+|---|---|
+| 作成 | `template`、`projectId`、`size`、`timeoutMs`、`envs`、`metadata`、`region`、`volumeName` を指定して `POST /api/sandboxes`。`sandboxId` 付きで 201 を返します |
+| 状態の取得 | `GET /api/sandboxes/{id}` |
+| 一覧 | `GET /api/sandboxes`、または 1 つのプロジェクトについては `GET /api/projects/{projectId}/sandboxes` |
+| コマンドの実行 | `cmd`、`envs`、`workdir`、`user`、`timeoutMs` を指定して `POST /api/sandboxes/{id}/exec`。`stdout`、`stderr`、`exitCode` を返します |
+| 有効期間の変更 | `timeoutMs` を指定して `POST /api/sandboxes/{id}/timeout` |
+| 一時停止または再開 | `POST /api/sandboxes/{id}/pause`、`POST /api/sandboxes/{id}/resume` |
+| ポートの公開 | `POST /api/sandboxes/{id}/expose/{port}`。同じパスへの `DELETE` で削除します |
+| 停止 | `DELETE /api/sandboxes/{id}` |
+
+```bash
+curl -X POST https://lizard.build/api/sandboxes \
+  -H "Authorization: Bearer $LIZARD_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"template": "base", "projectId": "proj_123", "timeoutMs": 300000}'
+```
+
+Raw API は、`timeoutMs` を渡さない限り、期限なしで sandbox を作成します。
+
+<span id="storage-and-billing" />
+
 ## 保存と課金
 
-sandbox の実行中はファイルとプロセスを維持します。停止後、別の sandbox で使えるのは、接続した Persistent Volume の `/workspace` に保存したファイルだけです。ボリュームがなければ `/workspace` は一時領域です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。
-
-各サイズは固定の時間単価で、sandbox の実行中は秒単位で課金されます。アイドル時間も含みます。送信トラフィックはアカウントごとに直近 30 日間で [2 TB まで](/platform/limits#sandbox-egress)料金に含まれます。スナップショットから復元した sandbox は、元の sandbox と同じサイズと料金で動作します。pod スナップショットから復元した sandbox は実測使用量で課金されます。一時停止中の sandbox は課金されません。Persistent Volumes はデータを保存している間、別途課金されます。タスクが終わったら sandbox を一時停止するか停止してください。
-
-[クイックスタート](/sandboxes/quickstart) · [SDK リファレンス](/sandboxes/sdk-reference) · [Python の実行](/sandboxes/code-interpreter) · [ダッシュボード](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)
+課金、送信トラフィック、停止後に何が残るかは、[保存と課金](/sandboxes#storage-and-billing) にまとめて記載しています。サイズと時間単価は [制限](/platform/limits#sandbox-sizes) にあります。

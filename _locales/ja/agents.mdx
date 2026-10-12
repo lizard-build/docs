@@ -1,12 +1,12 @@
 ---
-description: "AIコーディングエージェントから Lizard を操作: Lizard Skill を読み込み、--json でコマンドスキーマを確認し、Lizard CLI でデプロイするか、MCP クライアントを Lizard MCP に接続します。"
+description: "Claude Code、Codex、Cursor から Lizard にデプロイ: Lizard Skill をインストールし、--json でコマンドスキーマを読み取るか、MCP クライアントを Lizard MCP に接続します。"
 ---
 
 <span id="coding-agents" />
 
 # コーディングエージェント
 
-Lizard は、人間と同じくらい簡単に AI コーディングエージェントから操作できるよう設計されています。Lizard CLI には、エージェントにプラットフォーム全体を教える **組み込みスキル** が含まれており、すべてのコマンドは `--json` によって **自己記述的** なので、エージェントが推測に頼る必要はありません。
+Claude Code、Codex、Cursor などの AI コーディングエージェントは、Lizard CLI を通じて Lizard (lizard.build) にアプリをデプロイし、管理します。`npx skills add lizard-build/skill -g` で Lizard Skill を一度インストールすると、エージェントは `lizard skills get core --json` で CLI に組み込まれたガイドを読み込み、`--help --json` で任意のコマンドのフラグを読み取るため、推測に頼る必要はありません。ChatGPT や Claude など MCP で通信するクライアントは、代わりに [Lizard MCP](#lizard-mcp) を使えます。エージェントからのデプロイの全手順については、[Claude Code、Codex、Cursor からデプロイする](/guides/deploy-from-coding-agent) を参照してください。
 
 <span id="the-embedded-skill" />
 
@@ -94,6 +94,10 @@ npx skills add lizard-build/skill -g
 Claude Code、Cursor、Codex、Copilot、Gemini CLI のほか、Agent Skills 形式を読み込むエージェントで動作します。シェルコマンドを実行する代わりに MCP で通信するクライアントには、[Lizard MCP](#lizard-mcp) を使ってください。
 
 これは AI IDE にも当てはまります。アプリの作成やテストは行っても、ホスティングはしません。[Google Antigravity で構築したアプリをデプロイする](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat) を参照してください。1 つのプロンプトでデプロイ全体を実行します。
+
+Chrome で開いているページを Claude Code や ChatGPT に編集させるには、[Lizard Studio](/studio/getting-started) を使ってください。
+
+<span id="lizard-mcp" />
 
 ## Lizard MCP
 

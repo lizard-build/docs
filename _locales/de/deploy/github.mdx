@@ -1,4 +1,5 @@
 ---
+title: "Von GitHub deployen: git push to deploy"
 description: "Verbinde ein GitHub-Repo, damit jeder Push in den verfolgten Branch einen Build auslöst und neu bereitstellt – einschließlich privater Repos, Branch-Wechseln und Monorepos."
 ---
 
@@ -6,7 +7,7 @@ description: "Verbinde ein GitHub-Repo, damit jeder Push in den verfolgten Branc
 
 # Von GitHub deployen
 
-Ein GitHub-Repo zu verbinden ist der empfohlene Weg, eine App auf Lizard auszuführen: Jeder Push in den verfolgten Branch baut automatisch neu und stellt erneut bereit.
+Verbinde ein GitHub-Repository, und Lizard (lizard.build) baut und deployt deine App bei jedem Push in den verfolgten Branch neu: git push to deploy. Führe `lizard add -r owner/repo` aus, um den Service zu erstellen; bei einem privaten Repository verbinde zuerst die Lizard GitHub App mit `lizard git connect`. Das ist der empfohlene Weg, eine App auszuführen, die du auf GitHub verwaltest. Für Code ohne Remote [deploye stattdessen von lokalem Code](/deploy/upload).
 
 <span id="create-a-service-from-a-repo" />
 
@@ -25,6 +26,8 @@ Dadurch wird ein `github`-source-Service erstellt, das Repo geklont, der Stack a
 | `-v, --variables <K=V>` | Eine Umgebungsvariable setzen; mehrfach verwendbar |
 | `--region <code>` | Region für das Deployment |
 | `--no-deploy` | Das Repo verbinden, aber den ersten Build überspringen |
+
+<span id="private-repositories" />
 
 ## Private Repositories
 
@@ -50,7 +53,7 @@ lizard service set api \
   --set branch=main
 ```
 
-Das Ändern eines Build-Felds löst bei einem laufenden Service automatisch einen Rebuild aus — hänge danach **kein** `redeploy` an. Ein abgestürzter oder noch nie bereitgestellter Service braucht `lizard redeploy`.
+Das Ändern eines Build-Felds löst bei einem laufenden Service automatisch einen Rebuild aus — hänge danach **kein** `redeploy` an, sonst [stellst du zwei Builds in die Warteschlange](/deploy/troubleshooting/double-build). Ein abgestürzter oder noch nie bereitgestellter Service braucht `lizard redeploy`.
 
 > **Hinweis:** `lizard up` erzwingt immer `sourceType=upload`. Verwende es nicht, um einen Git-gestützten Service zu aktualisieren — pushe zum Remote oder verwende stattdessen `lizard redeploy`.
 
@@ -75,6 +78,8 @@ lizard service set api --set watchPatterns='apps/api/**,packages/**'
 lizard git checkout api staging      # move the `api` service to the `staging` branch and redeploy
 ```
 
+<span id="monorepos" />
+
 ## Monorepos
 
 Für ein Repo, das mehrere Apps enthält, erstelle einen Service pro App und setze dessen `rootDirectory` auf den Unterpfad:
@@ -92,6 +97,8 @@ Wenn dein aktuelles Verzeichnis eine Sub-App in einem Repo ist, dessen Elternver
 ## Siehe auch
 
 - [Build-Pipeline](/concepts/build-pipeline) — wie dein Stack erkannt und gebaut wird.
+- [Framework-Anleitungen](/framework-guides) — Build-Befehle und Ports für [Next.js](/framework-guides/nextjs), [Nuxt](/framework-guides/nuxt), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails), [Go](/framework-guides/go) und weitere.
+- [Mit einer Dockerfile deployen](/deploy/dockerfile) — wenn das Repo eine eigene Dockerfile hat.
 - [Von lokalem Code deployen](/deploy/upload) — wenn du kein Remote hast.
 - [`lizard git`](/cli/git) — die vollständige Befehlsreferenz für `connect`, `status` und `checkout`.
 - [Den Host nach der Anwendung wählen](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#choose-the-host-by-the-application) — wie du dies auf ein Repo verweist, das ein Agent geschrieben hat.

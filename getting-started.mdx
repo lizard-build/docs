@@ -1,10 +1,11 @@
 ---
-description: "Install the lizard CLI, log in, and ship your first app from a GitHub repo or a local folder in a few minutes, then add a database."
+title: "App quickstart: deploy your first app"
+description: "Deploy your first app to Lizard in a few minutes: install Lizard CLI, sign in, start the 7-day Pro trial, then deploy a GitHub repo or a local folder."
 ---
 
 # App quickstart
 
-Ship your first app to Lizard in a few minutes. A Lizard account is created automatically the first time you `lizard login`. You'll install Lizard CLI, log in, start the Pro trial, and deploy — either straight from a GitHub repo or from a local directory.
+This quickstart deploys an app to Lizard (lizard.build) in a few minutes. Install Lizard CLI, sign in, start the 7-day Pro trial, then run `lizard add -r owner/repo` for a GitHub repository or `lizard up` for a local folder. Lizard builds the app on its servers, with no local Docker, and returns an HTTPS URL on `onlizard.com`. Your account is created the first time you run `lizard login`.
 
 ## 1. Install the CLI
 
@@ -72,7 +73,7 @@ A new account has no plan, so creating anything returns HTTP 402 with a Checkout
 lizard billing start
 ```
 
-This opens Stripe Checkout, where you add a card. The trial includes $5 in trial credits, and nothing is charged until it ends. See [Billing](/platform/billing).
+This opens Stripe Checkout, where you add a card. The trial includes $5 of usage, and nothing is charged until it ends. See [Billing](/platform/billing) and [`lizard billing`](/cli/billing).
 
 ## 4. Deploy
 
@@ -86,7 +87,7 @@ If your code is on GitHub, create a service straight from the repo. Lizard clone
 lizard add -r your-org/your-app
 ```
 
-Pushes to the tracked branch will auto-redeploy from then on. For private repos, connect the GitHub App first:
+Pushes to the tracked branch will auto-redeploy from then on. For private repos, connect the GitHub App first with [`lizard git`](/cli/git):
 
 ```bash
 lizard git connect
@@ -104,6 +105,8 @@ If the directory isn't linked to a project yet, `up` will create or select one i
 
 Either way, when the build finishes you'll get a generated URL like `https://your-app-x1y2z.onlizard.com`.
 
+Lizard detects most stacks on its own. For the exact build command, start command and port of your framework, see the guide for [Next.js](/framework-guides/nextjs), [React](/framework-guides/react), [Vue](/framework-guides/vue), [Astro](/framework-guides/astro), [SvelteKit](/framework-guides/sveltekit), [Node.js](/framework-guides/nodejs), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails) or [Go](/framework-guides/go). An app with its own Dockerfile follows [Deploy with a Dockerfile](/deploy/dockerfile).
+
 ## 5. Watch it build and run
 
 ```bash
@@ -112,6 +115,8 @@ lizard logs        # last runtime log lines
 lizard logs --build  # the most recent build's logs
 lizard open        # open the project in the dashboard
 ```
+
+[`lizard open`](/cli/open) shows the same project in the [dashboard](/dashboard). For metrics, cost and deploy history, see [Observability](/observability).
 
 ## 6. Add a database (optional)
 
@@ -129,6 +134,7 @@ The `${{postgres.DATABASE_PRIVATE_URL}}` reference is resolved at deploy time an
 
 - **[Core Concepts](/concepts/architecture)** — understand projects, services, and the build pipeline.
 - **[Deploying from GitHub](/deploy/github)** — branches, monorepos, and auto-redeploys.
+- **[Deploy](/deploy)** — every deploy path, plus workers, scaling, and regions.
 - **[Variables & Secrets](/variables)** — scoping and precedence.
 - **[Networking](/networking)** — attach your own hostname with automatic TLS.
 - **[Deploying an app your AI IDE built](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — the same steps handed to an agent instead, for an app written in Google Antigravity.

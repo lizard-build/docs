@@ -6,8 +6,6 @@ description: "Elige el almacenamiento para los datos de la aplicación y los arc
 
 # Almacenamiento y recuperación
 
-<span id="plan-a-database-restore" />
-
 Elige el almacenamiento según los datos que deben sobrevivir a un reinicio del proceso, un nuevo despliegue o un fallo del host. Son eventos diferentes. El almacenamiento persistente no proporciona por sí solo una copia de seguridad, un punto de restauración ni alta disponibilidad.
 
 | Datos | Dónde mantenerla | Límite |
@@ -16,15 +14,17 @@ Elige el almacenamiento según los datos que deben sobrevivir a un reinicio del 
 | Datos de caché y cola | Managed Redis | Decide si la carga de trabajo puede reconstruir su estado o necesita su propio plan de recuperación. Managed Redis no tiene política de expulsión ni archivo append-only: si se queda sin memoria, se reinicia y pueden perderse las escrituras recientes. Guarda en Managed Postgres los datos que no puedas perder. |
 | Archivos compartidos por aplicaciones | Managed Object Storage | El bucket `default` creado automáticamente es privado. Haz público un bucket desde el navegador de buckets del dashboard solo si cualquiera puede leer sus archivos. |
 
-<span id="keep-files-after-a-sandbox-ends" />
+Los archivos de un sandbox siguen otras reglas: solo los archivos de un Persistent Volume adjunto en `/workspace` sobreviven a un sandbox. Consulta [almacenamiento y facturación](/sandboxes#storage-and-billing).
 
-Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un volumen persistente adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
+<span id="keep-files-after-a-sandbox-ends" />
 
 ## Conservar archivos después de que termine un sandbox
 
 La pestaña Persistent Volumes permite gestionar volúmenes con nombre y sus conexiones. Adjunta un volumen al crear el sandbox y escribe en `/workspace`. Detén el sandbox actual antes de adjuntar el volumen a otro.
 
 [Persistent Volumes](/sandboxes/volumes)
+
+<span id="plan-a-database-restore" />
 
 ## Planificar una restauración de base de datos
 

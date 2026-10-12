@@ -1,8 +1,11 @@
 ---
-description: "Sandboxes: Laufzeit, Vorlagen, Lebenszyklus, Limits, Speicher und Abrechnung."
+title: "Sandboxes für KI-Agenten"
+description: "Führen Sie KI-generierten Code in Firecracker-MicroVMs mit Lizard SDK oder Lizard CLI aus: wann Sandboxes passen, Startzeit, Vorlagen, Größen, Lebenszyklus und Speicher."
 ---
 
-# Sandboxes
+<span id="sandboxes-for-ai-agents" />
+
+# Sandboxes für KI-Agenten
 
 <span id="wann-sie-eine-sandbox-verwenden-sollten" />
 <span id="was-sie-schnell-macht" />
@@ -12,15 +15,52 @@ description: "Sandboxes: Laufzeit, Vorlagen, Lebenszyklus, Limits, Speicher und 
 <span id="when-to-use-a-sandbox" />
 <span id="what-makes-them-fast" />
 <span id="templates" />
-<span id="lifecycle" />
 <span id="resources--limits" />
 <span id="ways-to-drive-sandboxes" />
 
-Sandboxes führen kurze Befehle und Agentenaufgaben als Firecracker-MicroVMs aus, jeweils mit eigenem Kernel. Eine Sandbox, die ein Pod-basiertes Persistent Volume anhängt oder einen Pod-Snapshot wiederherstellt, läuft als Kubernetes-Pod mit runc und teilt den Kernel des Hosts. `getInfo().runtime` zeigt Ihnen, welcher Fall vorliegt. Beschränken Sie Zugangsdaten und Netzwerkzugriff für nicht vertrauenswürdigen Code.
+Sandboxes auf Lizard (lizard.build) sind isolierte Linux-Maschinen, in denen ein KI-Agent Code ausführt, den er nicht selbst geschrieben hat. Jede Sandbox ist eine Firecracker-MicroVM mit eigenem Kernel. Ihr Code erstellt eine mit Lizard SDK (`@lizard-build/sdk` für TypeScript, `lizard-sdk` für Python), oder Sie führen `lizard sandbox create` in einem Terminal aus; danach führen Sie Befehle aus, lesen und schreiben Dateien und öffnen Ports. In einem Test am 2026-10-12 lag der Median der Zeit vom Erstellen einer Sandbox bis zur ersten Python-Ausgabe bei 228 ms.
+
+<span id="when-to-use-sandboxes" />
+
+## Wann Sie Sandboxes verwenden
+
+- **Code ausführen, den ein Modell geschrieben hat.** Geben Sie einem LLM einen [Code Interpreter](/sandboxes/code-interpreter), der den Python-Zustand zwischen Aufrufen behält.
+- **Einem Coding-Agenten eine eigene Maschine geben.** Führen Sie [Claude Code](/sandboxes/guides/claude-code), [OpenCode](/sandboxes/guides/opencode) oder Codex in einer Sandbox statt auf Ihrem Laptop aus. Verbinden Sie seine Zugangsdaten mit [`lizard agents`](/cli/agents) und senden Sie Prompts mit [`lizard sandbox prompt`](/cli/sandbox#coding-agents).
+- **Ansehen, was der Agent gebaut hat.** Starten Sie einen Dev-Server und öffnen Sie ihn über eine [private Vorschau-URL](/sandboxes/preview-urls).
+- **Mehrere Wege gleichzeitig ausprobieren.** Forken Sie eine laufende Sandbox einschließlich Arbeitsspeicher und Prozessen, oder stellen Sie viele Kopien aus einem Snapshot wieder her.
+- **Einen Browser steuern.** Die Vorlage `desktop` führt einen grafischen Desktop aus, den ein Agent mit Screenshots, Klicks und Tasten steuert.
+
+Für einen Webservice oder Worker, der dauerhaft laufen soll, stellen Sie stattdessen eine App bereit; siehe den [App-Schnellstart](/getting-started).
+
+<span id="how-fast-does-a-sandbox-start" />
+
+## Wie schnell startet eine Sandbox?
+
+In einem Test am 2026-10-12 lag der Median der Zeit vom Erstellen einer Sandbox bis zur ersten Python-Ausgabe bei 228 ms, das 95. Perzentil bei 310 ms. Der Test lief 300-mal aus der Region US East von Railway gegen `us-east-1`, mit der Vorlage `base` und der Größe Small. Ergebnisse desselben Tests für E2B, Daytona und Modal stehen auf der [Sandboxes-Seite](https://lizard.build/sandboxes).
+
+<span id="sandboxes-at-a-glance" />
+
+## Sandboxes auf einen Blick
+
+| Frage | Antwort |
+|---|---|
+| Was führt den Code aus? | Eine Firecracker-MicroVM mit eigenem Kernel; siehe die Ausnahme unter [Laufzeit und Vorlagen](#runtime-and-templates) |
+| Wie erstelle ich eine? | [Lizard SDK](/sandboxes/sdk-reference), [`lizard sandbox`](/cli/sandbox), das [Dashboard](/sandboxes/dashboard) oder die [HTTP-API](/sandboxes/sdk-reference#http-api) |
+| Welche Vorlagen gibt es? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` und `desktop` |
+| Welche Größen gibt es? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, Standard) und Large (8 vCPU / 16 GB); siehe [Größen und Preise](/platform/limits#sandbox-sizes) |
+| Wie lange lebt eine? | Standardmäßig fünf Minuten über SDK und CLI; standardmäßig kein Ablauf über die direkte API und das Dashboard |
+| Was übersteht einen Stopp? | Nur Dateien auf einem unter `/workspace` eingebundenen [Persistent Volume](/sandboxes/volumes) |
+| Wie viele können gleichzeitig laufen? | 100 mit Pro, 5 während der Testphase; siehe [Kontolimits](/platform/limits#sandbox-account-limits) |
+
+<span id="runtime-and-templates" />
 
 ## Laufzeit und Vorlagen
 
 Wählen Sie eine Vorlage aus dem aktuellen Katalog: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` oder `desktop`. Die Verfügbarkeit hängt von Region und Pool-Kapazität ab. `interpreter` enthält Python und gängige Datenbibliotheken. `desktop` führt einen grafischen Desktop aus, den Sie mit `sandbox.desktop` oder `lizard sandbox desktop` steuern. Prüfen Sie die Werkzeugversionen in der Sandbox. Die öffentliche CLI bietet keinen Upload eigener Vorlagen.
+
+Eine Sandbox, die ein Pod-basiertes Persistent Volume anhängt oder einen Pod-Snapshot wiederherstellt, läuft als Kubernetes-Pod mit runc und teilt den Kernel des Hosts. `getInfo().runtime` zeigt Ihnen, welcher Fall vorliegt. Beschränken Sie Zugangsdaten und Netzwerkzugriff für nicht vertrauenswürdigen Code.
+
+<span id="lifecycle" />
 
 ## Lebenszyklus
 
@@ -33,30 +73,38 @@ running -> new sandboxes (fork)
 snapshot -> new sandbox (restore)
 ```
 
+<span id="resources-and-timeouts" />
+
 ## Ressourcen und Laufzeit
 
 Wählen Sie beim Erstellen eine Größe: Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, Standard) oder Large (8 vCPU / 16 GB). Siehe [Größen und Preise](/platform/limits#sandbox-sizes). Geben Sie bei Bedarf eine Region an; ein Katalogeintrag garantiert keine freie Kapazität.
 
 SDK und CLI setzen standardmäßig eine Laufzeit von fünf Minuten. Die direkte API und das Dashboard setzen standardmäßig kein Ablaufdatum. Geben Sie die Laufzeit ausdrücklich an: `timeoutMs: 0` bei der Erstellung deaktiviert den Ablauf; ein positiver Wert setzt eine Frist. `setTimeout` akzeptiert 1000–2147483647 ms, nicht null. Befehle verlängern die Frist nicht. Dies ist kein Leerlauf-Timer.
 
+<span id="storage-and-billing" />
+
 ## Speicher und Abrechnung
 
 Dateien und laufende Prozesse bleiben verfügbar, solange die Sandbox läuft. Nach dem Stopp kann eine spätere Sandbox nur Dateien auf einem angehängten Persistent Volume unter `/workspace` wiederverwenden. Ohne Volume ist `/workspace` temporär. Ein Volume hängt jeweils an einer Sandbox und liegt auf einem einzelnen Knoten. Exportieren Sie Dateien, die einen Knotenausfall überstehen müssen.
 
-Jede Größe hat einen festen Stundenpreis, sekundengenau abgerechnet, solange die Sandbox läuft, Leerlauf eingeschlossen. Ausgehender Traffic ist bis [2 TB pro Konto](/platform/limits#sandbox-egress) in rollierenden 30 Tagen enthalten. Eine aus einem Snapshot wiederhergestellte Sandbox läuft mit Größe und Preis ihrer Quelle; eine aus einem Pod-Snapshot wiederhergestellte wird nach gemessener Nutzung abgerechnet. Eine pausierte Sandbox kostet nichts; Persistent Volumes werden getrennt abgerechnet, solange Sie die Daten behalten. Pausieren oder beenden Sie eine Sandbox, wenn die Aufgabe erledigt ist.
+Jede Größe hat einen festen Stundenpreis, sekundengenau abgerechnet, solange die Sandbox läuft, Leerlauf eingeschlossen. Ausgehender Traffic ist bis [2 TB pro Konto](/platform/limits#sandbox-egress) in rollierenden 30 Tagen enthalten. Eine aus einem Snapshot wiederhergestellte Sandbox läuft mit Größe und Preis ihrer Quelle; eine aus einem Pod-Snapshot wiederhergestellte wird nach gemessener Nutzung abgerechnet. Eine pausierte Sandbox kostet nichts; Persistent Volumes werden getrennt abgerechnet, solange Sie die Daten behalten. Pausieren oder beenden Sie eine Sandbox, wenn die Aufgabe erledigt ist. Die Tarife für jede Ressource stehen auf der [Abrechnungsseite](/platform/billing) und unter [Preise](https://lizard.build/pricing).
 
-```ts
-import { Sandbox } from '@lizard-build/sdk';
+<span id="guides" />
 
-const sandbox = await Sandbox.create('interpreter', {
-  projectId: 'proj_123', timeoutMs: 300_000,
-});
-try {
-  const result = await sandbox.process.exec("python -c 'print(2 ** 10)'");
-  console.log(result.stdout, result.stderr, result.exitCode);
-} finally {
-  await sandbox.kill();
-}
-```
+## Anleitungen
 
-[Schnellstart](/sandboxes/quickstart) · [SDK-Referenz](/sandboxes/sdk-reference) · [Python ausführen](/sandboxes/code-interpreter) · [Dashboard](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)
+- [Claude Code in einer Sandbox ausführen](/sandboxes/guides/claude-code)
+- [OpenCode in einer Sandbox ausführen](/sandboxes/guides/opencode)
+- [Vorschau-URLs für einen Dev-Server](/sandboxes/preview-urls)
+- [Code Interpreter für LLM-generierten Code](/sandboxes/code-interpreter)
+- [Dateien mit Persistent Volumes behalten](/sandboxes/volumes)
+
+<span id="reference" />
+
+## Referenz
+
+- [Sandboxes-Schnellstart](/sandboxes/quickstart): Ihre erste Sandbox, Schritt für Schritt.
+- [Sandbox-API- und SDK-Referenz](/sandboxes/sdk-reference): jeder Aufruf in TypeScript und Python.
+- [`lizard sandbox`](/cli/sandbox): Erstellen, exec, Shell, Snapshots und Coding-Agents aus dem Terminal.
+- [Sandboxes-Dashboard](/sandboxes/dashboard): Sandboxes im Browser erstellen, prüfen und stoppen.
+- [Limits](/platform/limits#sandboxes): Größen, Preise, Parallelität und ausgehender Traffic.

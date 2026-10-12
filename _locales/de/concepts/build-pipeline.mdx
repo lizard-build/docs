@@ -2,6 +2,8 @@
 description: "Wie Lizard Quellcode in ein Container-Image verwandelt: synthetisierte Dockerfile, Dockerfile aus dem Repo oder automatische Erkennung durch lizardpack – und was einen Neuaufbau auslöst."
 ---
 
+<span id="build-pipeline" />
+
 # Build-Pipeline
 
 Builds laufen auf den Build-Nodes von Lizard — **du brauchst Docker lokal nicht**. Beim Bereitstellen entscheidet die Plattform anhand einer festen Reihenfolge, wie dein Quellcode in ein Container-Image umgewandelt wird, und führt dieses Image dann in einem isolierten Pod aus. Nicht jeder [container as a service](https://lizard.build/blog/container-as-a-service) baut das Image für dich; der Blog vergleicht die drei Varianten, in denen diese Kategorie vorkommt.
@@ -12,7 +14,7 @@ Builds laufen auf den Build-Nodes von Lizard — **du brauchst Docker lokal nich
 
 Die Plattform wählt genau eine Build-Strategie, in dieser Reihenfolge:
 
-1. **Dockerfile aus dem Repo unter `dockerfilePath`** — wenn `dockerfilePath` im Service gesetzt ist, wird diese Dockerfile unverändert verwendet, auch wenn zusätzlich Build- oder Startbefehle gesetzt sind. Ein gesetztes `startCommand` ersetzt zur Laufzeit weiterhin das `CMD` der Dockerfile.
+1. **Dockerfile aus dem Repo unter `dockerfilePath`** — wenn `dockerfilePath` im Service gesetzt ist, wird diese Dockerfile unverändert verwendet, auch wenn zusätzlich Build- oder Startbefehle gesetzt sind. Ein gesetztes `startCommand` ersetzt zur Laufzeit weiterhin `ENTRYPOINT` und `CMD` der Dockerfile. Siehe [Mit einer Dockerfile deployen](/deploy/dockerfile).
 2. **Synthetisierte Dockerfile** — andernfalls, wenn `buildCommand` und/oder `startCommand` im Service gesetzt sind (oder per `lizard up --build-command` / `--start-command` übergeben werden), erzeugt Lizard daraus eine Dockerfile. lizardpack wird nicht aufgerufen.
 3. **Dockerfile im Quellcode** — andernfalls wird eine `Dockerfile` im Stammverzeichnis des Build-Verzeichnisses verwendet (siehe die GitHub-Ausnahme unten).
 4. **Automatische Erkennung durch lizardpack** — andernfalls führt die Plattform **lizardpack** aus, den eigenen Buildpack-/Dockerfile-Generator.
@@ -25,7 +27,7 @@ lizardpack prüft dein Repo und baut ein optimiertes Multi-Stage-Image. Unterst�
 
 **Hugo → Go → Node → Python → Rust → Ruby → PHP → Java → static**
 
-Siehe [Framework guides](/framework-guides) für Produktionsskripte, Adapter, Ausgabepfade und Ports. Die Erkennung nutzt Projektdateien und Abhängigkeiten; ein Repository, das zu mehreren Providern passt, folgt dieser Reihenfolge.
+Siehe [Framework guides](/framework-guides) für Produktionsskripte, Adapter, Ausgabepfade und Ports: [Hugo](/framework-guides/hugo), [Go](/framework-guides/go), Node ([Node.js](/framework-guides/nodejs), [Next.js](/framework-guides/nextjs), [Nuxt](/framework-guides/nuxt), [SvelteKit](/framework-guides/sveltekit), [Astro](/framework-guides/astro), [React](/framework-guides/react), [Vue](/framework-guides/vue), [Docusaurus](/framework-guides/docusaurus), [VitePress](/framework-guides/vitepress)), Python ([Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Streamlit](/framework-guides/streamlit)) und Ruby ([Rails](/framework-guides/rails)). Die Erkennung nutzt Projektdateien und Abhängigkeiten; ein Repository, das zu mehreren Providern passt, folgt dieser Reihenfolge. Wie du eine Node.js- oder Python-Version festlegst, steht unter [Laufzeitversionen](/deploy/runtime-versions).
 
 Auf diesem Pfad gilt:
 
@@ -50,7 +52,7 @@ Auf diesem Pfad gilt:
 | `service set` von reinen Laufzeitfeldern (`startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns`) | ❌ führe `lizard redeploy` aus, damit es angewendet wird |
 | Jede andere Änderung an Umgebungsvariablen / Secrets | ❌ wird bei einem schnellen Neustart angewendet (kein Neuaufbau) |
 
-> **Nicht doppelt bauen.** Nach einem `service set`, das bei einem laufenden Service ein Build-Feld ändert, startet der Neuaufbau automatisch — hänge nicht noch ein `lizard redeploy` direkt danach an, sonst stellst du einen zweiten, überflüssigen Build in die Warteschlange. Ein abgestürzter oder noch nie bereitgestellter Service wird nicht von selbst neu gebaut; führe `lizard redeploy` aus.
+> **Nicht doppelt bauen.** Nach einem `service set`, das bei einem laufenden Service ein Build-Feld ändert, startet der Neuaufbau automatisch — hänge nicht noch ein `lizard redeploy` direkt danach an, sonst stellst du einen zweiten, überflüssigen Build in die Warteschlange ([warum](/deploy/troubleshooting/double-build)). Ein abgestürzter oder noch nie bereitgestellter Service wird nicht von selbst neu gebaut; führe `lizard redeploy` aus.
 
 <span id="build-time-variables" />
 
@@ -90,7 +92,7 @@ Wenn ein Build fehlschlägt, lies `lizard logs --build`, behebe die Ursache (in 
 | Feld | Beschreibung |
 |-------|-------------|
 | `buildCommand` | Befehl zum Bauen deiner App → wählt den Pfad **synthetisierte Dockerfile**, sofern `dockerfilePath` nicht gesetzt ist |
-| `startCommand` | Befehl zum Starten deiner App zur Laufzeit; ersetzt das `CMD` des Images |
+| `startCommand` | Befehl zum Starten deiner App zur Laufzeit; ersetzt `ENTRYPOINT` und `CMD` des Images |
 | `preDeployCommand` | Wird zu Beginn jedes Containers ausgeführt (jedes Replikat, jeder Neustart), vor `startCommand`; läuft nur, wenn `startCommand` gesetzt ist. Sorge dafür, dass er sich mehrfach und gleichzeitig sicher ausführen lässt |
 | `dockerfilePath` | Pfad zu einer Dockerfile im Repo, die **unverändert** verwendet wird; hat beim Image-Build Vorrang vor `buildCommand` / `startCommand` |
 | `rootDirectory` | Unterverzeichnis, aus dem gebaut wird (Monorepos) |

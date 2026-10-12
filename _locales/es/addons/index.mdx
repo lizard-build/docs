@@ -1,4 +1,5 @@
 ---
+title: "Addons gestionados: Postgres, Redis y almacenamiento de objetos"
 description: "Aprovisiona Postgres, Redis y almacenamiento compatible con S3 gestionados con un solo comando lizard add, y luego conéctalos a los servicios por referencia."
 ---
 
@@ -6,7 +7,7 @@ description: "Aprovisiona Postgres, Redis y almacenamiento compatible con S3 ges
 
 # Addons gestionados
 
-Lizard aprovisiona **Managed Postgres**, **Managed Redis** y **Managed Object Storage** compatible con S3 con un solo comando. Cada addon vive en tu proyecto, expone un conjunto fijo de variables de entorno y lo consumen tus servicios mediante [referencias](/concepts/architecture#cross-resource-references).
+Los addons gestionados son las bases de datos y el almacenamiento que Lizard (lizard.build) ejecuta dentro de tu proyecto: **Managed Postgres**, **Managed Redis** y **Managed Object Storage** compatible con S3. `lizard add postgres redis s3` crea los tres con un solo comando. Cada addon expone un conjunto fijo de variables de entorno, como `DATABASE_URL`, y tus servicios las leen mediante [referencias](/concepts/architecture#cross-resource-references) como `${{postgres.DATABASE_URL}}`. Úsalos cuando una app necesite datos que sobrevivan a un deploy o a un reinicio.
 
 <span id="provision-an-addon" />
 

@@ -1,10 +1,11 @@
 ---
+title: "Deploy from GitHub: git push to deploy"
 description: "Connect a GitHub repo so every push to the tracked branch builds and redeploys, including private repos, branch switching, and monorepos."
 ---
 
 # Deploy from GitHub
 
-Connecting a GitHub repo is the recommended way to run an app on Lizard: every push to the tracked branch auto-builds and redeploys.
+Connect a GitHub repository and Lizard (lizard.build) builds and redeploys your app on every push to the tracked branch: git push to deploy. Run `lizard add -r owner/repo` to create the service; for a private repository, connect the Lizard GitHub App first with `lizard git connect`. This is the recommended way to run an app you keep in GitHub. For code with no remote, [deploy from local code](/deploy/upload) instead.
 
 ## Create a service from a repo
 
@@ -44,7 +45,7 @@ lizard service set api \
   --set branch=main
 ```
 
-Changing a build field auto-rebuilds a running service — **don't** chain a `redeploy` after it. A crashed or never-deployed service needs `lizard redeploy`.
+Changing a build field auto-rebuilds a running service — **don't** chain a `redeploy` after it, or you [queue two builds](/deploy/troubleshooting/double-build). A crashed or never-deployed service needs `lizard redeploy`.
 
 > **Note:** `lizard up` always forces `sourceType=upload`. Don't use it to update a git-backed service — push to the remote or use `lizard redeploy` instead.
 
@@ -80,6 +81,8 @@ If your current directory is a sub-app inside a repo whose parent is already lin
 ## See also
 
 - [Build Pipeline](/concepts/build-pipeline) — how your stack is detected and built.
+- [Framework guides](/framework-guides) — build commands and ports for [Next.js](/framework-guides/nextjs), [Nuxt](/framework-guides/nuxt), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails), [Go](/framework-guides/go) and more.
+- [Deploy with a Dockerfile](/deploy/dockerfile) — when the repo has its own Dockerfile.
 - [Deploy from Local Code](/deploy/upload) — when you don't have a remote.
 - [`lizard git`](/cli/git) — the full command reference for `connect`, `status`, and `checkout`.
 - [Choose the host by the application](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#choose-the-host-by-the-application) — pointing this at a repo an agent wrote.

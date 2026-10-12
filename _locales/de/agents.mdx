@@ -1,10 +1,12 @@
 ---
-description: "Steuere Lizard über einen KI-Coding-Agenten: Lies Lizard Skill, ermittle Befehlsschemata mit --json, deploye über Lizard CLI oder verbinde einen MCP-Client mit Lizard MCP."
+description: "Lass Claude Code, Codex oder Cursor auf Lizard deployen: Installiere Lizard Skill, lies Befehlsschemata mit --json oder verbinde einen MCP-Client mit Lizard MCP."
 ---
+
+<span id="coding-agents" />
 
 # Coding-Agents
 
-Lizard ist so konzipiert, dass es sich von KI-Coding-Agents genauso einfach steuern lässt wie von Menschen. Lizard CLI enthält ein **eingebettetes Skill**, das einem Agenten die gesamte Plattform vermittelt, und jeder Befehl ist über `--json` **selbstbeschreibend**, sodass Agents nie raten müssen.
+Claude Code, Codex, Cursor und andere KI-Coding-Agents deployen und verwalten Apps auf Lizard (lizard.build) über Lizard CLI. Installiere Lizard Skill einmal mit `npx skills add lizard-build/skill -g`; der Agent lädt dann mit `lizard skills get core --json` die in die CLI eingebaute Anleitung und liest die Flags jedes Befehls mit `--help --json`, sodass er nie raten muss. Clients, die MCP sprechen, etwa ChatGPT und Claude, können stattdessen [Lizard MCP](#lizard-mcp) verwenden. Einen vollständigen Deploy aus einem Agenten zeigt [Deploy aus Claude Code, Codex oder Cursor](/guides/deploy-from-coding-agent).
 
 <span id="the-embedded-skill" />
 
@@ -92,6 +94,8 @@ npx skills add lizard-build/skill -g
 Es funktioniert mit Claude Code, Cursor, Codex, Copilot, Gemini CLI und anderen Agents, die das Agent-Skills-Format lesen. Für Clients, die MCP sprechen, statt Shell-Befehle auszuführen, verwende [Lizard MCP](#lizard-mcp).
 
 Das gilt auch für KI-IDEs: Sie schreiben und testen eine App, hosten sie aber nicht. Siehe [Deployment einer in Google Antigravity gebauten App](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat), wo ein einziger Prompt das gesamte Deployment steuert.
+
+Damit Claude Code oder ChatGPT die Seite bearbeiten kann, die du in Chrome geöffnet hast, verwende [Lizard Studio](/studio/getting-started).
 
 <span id="lizard-mcp" />
 

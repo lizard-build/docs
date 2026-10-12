@@ -6,8 +6,6 @@ description: "アプリケーションデータと sandbox ファイルのため
 
 # ストレージと復旧
 
-<span id="plan-a-database-restore" />
-
 プロセスの再起動、新しいデプロイ、またはホスト障害をまたいで保持する必要があるデータに応じてストレージを選択してください。これらはそれぞれ異なるイベントです。永続ストレージ自体は、バックアップ、復元ポイント、高可用性を提供しません。
 
 | データ | 保管場所 | 境界 |
@@ -16,15 +14,17 @@ description: "アプリケーションデータと sandbox ファイルのため
 | キャッシュおよびキューデータ | Managed Redis | ワークロードが状態を再構築できるのか、独自の復旧計画が必要なのかを判断してください。Managed Redis にはエビクションポリシーも追記専用ファイル (AOF) もありません。メモリが不足すると再起動し、直近の書き込みが失われることがあります。失えないデータは Managed Postgres に保存してください。 |
 | アプリケーション間で共有されるファイル | Managed Object Storage | 自動作成される `default` bucket は非公開です。bucket を公開するのは、誰がファイルを読んでもよい場合だけにし、ダッシュボードの bucket ブラウザーから設定してください。 |
 
-<span id="keep-files-after-a-sandbox-ends" />
+sandbox のファイルには別のルールが適用されます: sandbox の終了後も残るのは、接続した Persistent Volume の `/workspace` 上のファイルだけです。[保存と課金](/sandboxes#storage-and-billing) を参照してください。
 
-sandbox の実行中はファイルとプロセスを維持します。停止後、別の sandbox で使えるのは、接続した永続ボリュームの `/workspace` に保存したファイルだけです。ボリュームがなければ `/workspace` は一時領域です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。
+<span id="keep-files-after-a-sandbox-ends" />
 
 ## sandbox の終了後もファイルを保持する
 
 Persistent Volumes タブで名前付きボリュームと接続を管理します。sandbox の作成時にボリュームを接続し、`/workspace` に書き込んでください。別の sandbox に接続する前に、現在の sandbox を停止します。
 
 [Persistent Volumes](/sandboxes/volumes)
+
+<span id="plan-a-database-restore" />
 
 ## データベースの復元を計画する
 

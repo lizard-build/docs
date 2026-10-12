@@ -1,10 +1,10 @@
 ---
-description: "Drive Lizard from an AI coding agent: read Lizard Skill, discover command schemas with --json, deploy through Lizard CLI, or connect an MCP client to Lizard MCP."
+description: "Let Claude Code, Codex or Cursor deploy on Lizard: install Lizard Skill, read command schemas with --json, or connect an MCP client to Lizard MCP."
 ---
 
 # Coding agents
 
-Lizard is designed to be driven by AI coding agents as easily as by humans. Lizard CLI ships an **embedded skill** that teaches an agent the whole platform, and every command is **self-describing** via `--json` so agents never have to guess.
+Claude Code, Codex, Cursor and other AI coding agents deploy and manage apps on Lizard (lizard.build) through Lizard CLI. Install Lizard Skill once with `npx skills add lizard-build/skill -g`; the agent then loads the guide built into the CLI with `lizard skills get core --json` and reads any command's flags with `--help --json`, so it never has to guess. Clients that speak MCP, such as ChatGPT and Claude, can use [Lizard MCP](#lizard-mcp) instead. For a full deploy run from an agent, see [Deploy from Claude Code, Codex or Cursor](/guides/deploy-from-coding-agent).
 
 ## The embedded skill
 
@@ -82,6 +82,8 @@ npx skills add lizard-build/skill -g
 It works with Claude Code, Cursor, Codex, Copilot, Gemini CLI and other agents that read the Agent Skills format. For clients that speak MCP instead of running shell commands, use [Lizard MCP](#lizard-mcp).
 
 That covers the AI IDEs too: they write and test an app but don't host it. See [deploying an app built in Google Antigravity](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat), where one prompt drives the whole deploy.
+
+To let Claude Code or ChatGPT edit the page you have open in Chrome, use [Lizard Studio](/studio/getting-started).
 
 ## Lizard MCP
 

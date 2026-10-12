@@ -1,10 +1,11 @@
 ---
-description: "Add a managed Redis instance for caching, queues, rate limiting, and pub/sub, and connect it to a service with a single reference."
+title: "Managed Redis: connection URL and durability"
+description: "Add a Redis 8 instance on Lizard for caching, queues, rate limiting and pub/sub, connect it by reference, and learn what happens when memory runs out."
 ---
 
 # Managed Redis
 
-A managed Redis instance for caching, queues, rate limiting, and pub/sub.
+Managed Redis on Lizard (lizard.build) is a Redis server for caching, queues, rate limiting and pub/sub. New instances run Redis 8 by default. Add one with `lizard add redis`; your services read `REDIS_PRIVATE_URL` or `REDIS_URL` through a reference such as `${{redis.REDIS_PRIVATE_URL}}`. It has no eviction policy and no append-only file, so keep only data you can rebuild in it. For an overview and prices, see the [Managed Redis page](https://lizard.build/redis).
 
 ## Provision
 
@@ -21,6 +22,8 @@ The first Redis addon is named `redis`, so `${{redis.REDIS_URL}}` works immediat
 | `REDIS_URL` | Full connection string over the public endpoint (`redis://…`) |
 | `REDIS_PRIVATE_URL` | Connection string over the project's private network (`<name>.lizard.internal:6379`) |
 
+Both strings use the form `redis://default:<password>@<host>:<port>`. The private one works only from services in the same project; see [private networking](/networking#private-networking).
+
 ## Connect a service
 
 ```bash
@@ -30,14 +33,14 @@ lizard redeploy --service api
 
 The reference resolves at deploy time; consumers pick up the addon's current values on their next deploy. Use `REDIS_URL` for clients outside the project. Every service in the project also gets the addon's public `REDIS_URL` at the lowest precedence; an explicit reference overrides it.
 
-## Memory and durability
+## Does Managed Redis keep data?
 
-Managed Redis has no eviction policy and no append-only file. If it runs out of memory, the instance restarts and recent writes can be lost. Use it for data you can rebuild, and keep data you cannot lose in [Managed Postgres](/addons/postgres).
+Not every write. Managed Redis has no eviction policy and no append-only file. If it runs out of memory, the instance restarts and recent writes can be lost. Use it for data you can rebuild, and keep data you cannot lose in [Managed Postgres](/addons/postgres).
 
 ## Common uses
 
 - **Cache** — store computed results keyed by request.
-- **Queue / worker** — pair Redis with a [worker-mode service](/deploy/workers) that consumes jobs.
+- **Queue / worker** — pair Redis with a [worker-mode service](/deploy/workers) that consumes jobs. [Run a queue consumer](/deploy/workers#run-a-queue-consumer) walks through the redis-worker example.
 - **Rate limiting / sessions** — fast shared state across [replicas](/deploy/scaling).
 
 ```bash

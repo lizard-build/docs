@@ -1,10 +1,11 @@
 ---
-description: "Añade una instancia de Managed Redis para caché, colas, limitación de tasa y pub/sub, y conéctala a un servicio con una sola referencia."
+title: "Managed Redis: URL de conexión y durabilidad"
+description: "Añade una instancia de Redis 8 en Lizard para caché, colas, limitación de tasa y pub/sub, conéctala por referencia y descubre qué pasa cuando se agota la memoria."
 ---
 
 # Managed Redis
 
-Una instancia de Managed Redis para caché, colas, limitación de tasa y pub/sub.
+Managed Redis en Lizard (lizard.build) es un servidor Redis para caché, colas, limitación de tasa y pub/sub. Las instancias nuevas usan Redis 8 de forma predeterminada. Añade una con `lizard add redis`; tus servicios leen `REDIS_PRIVATE_URL` o `REDIS_URL` mediante una referencia como `${{redis.REDIS_PRIVATE_URL}}`. No tiene política de expulsión ni append-only file, así que guarda en él solo datos que puedas reconstruir. Para una visión general y los precios, consulta la [página de Managed Redis](https://lizard.build/redis).
 
 <span id="provision" />
 
@@ -25,6 +26,8 @@ El primer addon de Redis se llama `redis`, así que `${{redis.REDIS_URL}}` funci
 | `REDIS_URL` | Cadena de conexión completa a través del endpoint público (`redis://…`) |
 | `REDIS_PRIVATE_URL` | Cadena de conexión a través de la red privada del proyecto (`<name>.lizard.internal:6379`) |
 
+Ambas cadenas tienen la forma `redis://default:<password>@<host>:<port>`. La privada solo funciona desde servicios del mismo proyecto; consulta [red privada](/networking#private-networking).
+
 <span id="connect-a-service" />
 
 ## Conectar un servicio
@@ -36,18 +39,18 @@ lizard redeploy --service api
 
 La referencia se resuelve en el momento del despliegue; los consumidores obtienen los valores actuales del addon en su siguiente despliegue. Usa `REDIS_URL` para clientes fuera del proyecto. Todos los servicios del proyecto también reciben el `REDIS_URL` público del addon con la precedencia más baja; una referencia explícita lo sobrescribe.
 
-<span id="memory-and-durability" />
+<span id="does-managed-redis-keep-data" />
 
-## Memoria y durabilidad
+## ¿Managed Redis conserva los datos?
 
-Managed Redis no tiene política de expulsión ni append-only file. Si se queda sin memoria, la instancia se reinicia y se pueden perder escrituras recientes. Úsalo para datos que puedas reconstruir, y guarda los datos que no puedas perder en [Managed Postgres](/addons/postgres).
+No todas las escrituras. Managed Redis no tiene política de expulsión ni append-only file. Si se queda sin memoria, la instancia se reinicia y se pueden perder escrituras recientes. Úsalo para datos que puedas reconstruir, y guarda los datos que no puedas perder en [Managed Postgres](/addons/postgres).
 
 <span id="common-uses" />
 
 ## Usos comunes
 
 - **Caché** — almacena resultados calculados indexados por solicitud.
-- **Cola / worker** — combina Redis con un [servicio en modo worker](/deploy/workers) que consume trabajos.
+- **Cola / worker** — combina Redis con un [servicio en modo worker](/deploy/workers) que consume trabajos. [Ejecutar un consumidor de cola](/deploy/workers#run-a-queue-consumer) recorre el ejemplo redis-worker.
 - **Limitación de tasa / sesiones** — estado compartido rápido entre [réplicas](/deploy/scaling).
 
 ```bash

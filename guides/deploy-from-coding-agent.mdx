@@ -1,10 +1,11 @@
 ---
+title: "Deploy from Claude Code, Codex or Cursor"
 description: "Deploy an app from Claude Code, Codex, or Cursor with Lizard Skill and Lizard CLI. Choose GitHub or local source, connect a database, and verify the result."
 ---
 
-# Deploy from a coding agent
+# Deploy from Claude Code, Codex or Cursor
 
-A coding agent can use Lizard Skill and Lizard CLI to deploy the app it has built. The agent reads the installed CLI's guide, checks the target project, runs the build, and inspects the result. This does not require a separate MCP transport.
+Claude Code, Codex and Cursor can deploy the app they built to Lizard (lizard.build) with Lizard Skill and Lizard CLI. The agent reads the installed CLI's guide, checks the target project, runs the build and checks the live URL. It needs no separate MCP transport. This guide gives the prompt, the commands the agent runs for local and GitHub source, and the checks that prove the deploy worked.
 
 ## Before you start
 
@@ -20,14 +21,14 @@ lizard --help --json
 
 On Windows, run `irm https://lizard.build/api/cli/install.ps1 | iex` in PowerShell, or install from npm with `npm install -g @lizard-build/cli`.
 
-Lizard Skill loads instructions that match the installed CLI. For a specific command, read its schema rather than guessing flags:
+To make the skill available to every agent on your machine, install it once with `npx skills add lizard-build/skill -g`; see [Coding agents](/agents). Lizard Skill loads instructions that match the installed CLI. For a specific command, read its schema rather than guessing flags:
 
 ```bash
 lizard up --help --json
 lizard service set --help --json
 ```
 
-A useful prompt is:
+A useful prompt to paste into Claude Code, Codex or Cursor is:
 
 > Deploy this app with Lizard. Read the installed CLI guide, check the linked project and service, run the app's checks, and show the build result and a working URL. Ask before changing an existing production service or deleting data.
 
@@ -121,5 +122,7 @@ Use the exit code and JSON error from the failed command. A compile error, a pro
 ## Limits and cost
 
 An agent can create billable resources through the same CLI as a person. Check [limits](/platform/limits) and [pricing](https://lizard.build/pricing), and scope credentials to the project and services it needs.
+
+To run the agent itself on a separate machine instead of your laptop, see [Claude Code in a sandbox](/sandboxes/guides/claude-code).
 
 See [scenario test results](/guides/validation) for checked versions, cloud results and remaining limits.

@@ -1,4 +1,5 @@
 ---
+title: "Deployments: lifecycle, restarts and recovery"
 description: "The deploy lifecycle on Lizard: what triggers a build, how traffic shifts to healthy replicas, and how restarts differ from redeploys."
 ---
 
@@ -56,7 +57,7 @@ In the [dashboard](/dashboard), the **Deployments** view shows the full timeline
 | `lizard restart --service <svc>` | Restart of the **current** build — no rebuild |
 | `lizard redeploy --service <svc>` | Fresh **build** from latest commit/upload, then release |
 
-Use `restart` to recycle replicas (e.g. to pick up a runtime secret that didn't hot-reload); use `redeploy` when you need a new build.
+See [`lizard restart`](/cli/restart) and [`lizard redeploy`](/cli/redeploy). Use `restart` to recycle replicas (e.g. to pick up a runtime secret that didn't hot-reload); use `redeploy` when you need a new build.
 
 ## Recovering from a crash
 

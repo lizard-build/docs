@@ -1,8 +1,11 @@
 ---
-description: "Создание и просмотр Sandboxes, выбор шаблонов и управление томами."
+title: "Кабинет Sandboxes"
+description: "Создавайте, просматривайте, ставьте на паузу и останавливайте Sandboxes в кабинете Lizard: выбирайте шаблон, регион, размер и срок жизни, открывайте терминал и управляйте томами."
 ---
 
-# Кабинет
+<span id="sandboxes-dashboard" />
+
+# Кабинет Sandboxes
 
 <span id="панель-sandboxes" />
 <span id="получение-api-ключа" />
@@ -11,7 +14,6 @@ description: "Создание и просмотр Sandboxes, выбор шаб�
 <span id="жизненный-цикл" />
 <span id="снимки" />
 <span id="тома" />
-<span id="sandboxes-dashboard" />
 <span id="getting-an-api-key" />
 <span id="create-a-sandbox" />
 <span id="inspect-a-running-sandbox" />
@@ -19,17 +21,23 @@ description: "Создание и просмотр Sandboxes, выбор шаб�
 <span id="snapshots" />
 <span id="volumes" />
 
-Откройте проект и выберите Sandboxes. При создании выберите шаблон из каталога, регион и размер: Small, Medium (по умолчанию) или Large. Регион по умолчанию не обязательно ближайший. Выберите срок жизни в поле **Delete after**: 15 минут, 1 час, 4 часа, 1 день, 7 дней или Never (по умолчанию).
+Кабинет позволяет создавать Sandboxes и управлять ими без кода. Откройте проект и выберите Sandboxes. При создании выберите шаблон из каталога, регион и размер: Small, Medium (по умолчанию) или Large. Регион по умолчанию не обязательно ближайший. Выберите срок жизни в поле **Delete after**: 15 минут, 1 час, 4 часа, 1 день, 7 дней или Never (по умолчанию).
 
-## Установка и вход
+<span id="api-keys" />
 
-Установите Lizard SDK и создайте API-ключ в Settings → API keys. Сохраните его в `LIZARD_API_KEY`. Каждому sandbox нужен проект: передайте `projectId` (в Python — `project_id`) или ID, slug либо имя через `project`.
+## API-ключи
+
+Чтобы создавать sandbox из кода, создайте API-ключ в Settings → API keys и сохраните его в `LIZARD_API_KEY`. Его используют Lizard SDK и [HTTP API](/sandboxes/sdk-reference#http-api); см. [быстрый старт](/sandboxes/quickstart).
+
+<span id="inspect-and-stop" />
 
 ## Просмотр и остановка
 
 Карточка показывает статус, шаблон, регион, измеренный расход ресурсов и открытые порты. В её заголовке есть кнопки Pause и Resume, а вкладка Terminal открывает оболочку в работающем sandbox.
 
-У каждого размера фиксированная почасовая цена; оплата идёт посекундно, пока sandbox работает, включая простой. Исходящий трафик входит в цену до [2 TB на аккаунт](/platform/limits#sandbox-egress) за скользящие 30 дней. Sandbox, восстановленный из снимка, работает с размером и ценой исходного sandbox; восстановленный из снимка пода оплачивается по измеренному расходу. За приостановленный sandbox плата не берётся; Persistent Volumes оплачиваются отдельно, пока вы храните данные. Ставьте sandbox на паузу или останавливайте его, когда задача завершена.
+Работающий sandbox оплачивается посекундно по почасовой цене своего размера, включая простой; за приостановленный плата не берётся, поэтому ставьте sandbox на паузу или останавливайте его, когда задача завершена. См. [хранение и оплату](/sandboxes#storage-and-billing).
+
+<span id="templates-and-volumes" />
 
 ## Шаблоны и тома
 
@@ -37,4 +45,4 @@ description: "Создание и просмотр Sandboxes, выбор шаб�
 
 Создавайте и подключайте тома через SDK или CLI; в форме создания нет параметра тома. Вкладка Persistent Volumes появляется, когда в проекте есть том. Она показывает размер каждого тома и подключённый sandbox, а также позволяет просматривать файлы, менять размер или удалять том. Остановите текущий sandbox перед подключением тома к другому.
 
-[Быстрый старт](/sandboxes/quickstart) · [Справочник SDK](/sandboxes/sdk-reference) · [Запуск Python](/sandboxes/code-interpreter) · [Кабинет](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)
+[Обзор Sandboxes](/sandboxes) · [Быстрый старт](/sandboxes/quickstart) · [Справочник SDK](/sandboxes/sdk-reference) · [Интерпретатор кода](/sandboxes/code-interpreter) · [Persistent Volumes](/sandboxes/volumes)

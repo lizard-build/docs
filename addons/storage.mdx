@@ -1,10 +1,11 @@
 ---
+title: "Managed Object Storage: S3-compatible buckets"
 description: "S3-compatible object storage for uploads, assets, and backups. Get a private default bucket and connection variables from one lizard add s3."
 ---
 
 # Managed Object Storage
 
-Managed Object Storage is S3-compatible storage for uploads, assets, and backups. Provisioning an `s3` addon also creates a **private bucket named `default`**. To serve files without authentication, make it public from the dashboard's S3 browser.
+Managed Object Storage on Lizard (lizard.build) is S3-compatible storage for uploads, assets, and backups. `lizard add s3` creates it with a **private bucket named `default`** and five variables, from `S3_ENDPOINT` to `S3_REGION`, that any AWS SDK can use with path-style addressing. Each account can store up to 16 GiB, and you pay for the bytes you store. To serve files without authentication, make the bucket public from the dashboard's S3 browser. For an overview and prices, see the [Managed Object Storage page](https://lizard.build/object-storage).
 
 ## Provision
 
@@ -77,7 +78,7 @@ Once you make the `default` bucket public, its objects are served at:
 
 ## Browse objects
 
-Open the **S3 browser** in the dashboard (`lizard open`) to upload and delete objects, create folders, and make buckets public or private. From the CLI, `lizard s3 upload <file>` uploads a file and `lizard s3 list` lists objects.
+Open the **S3 browser** in the dashboard (`lizard open`) to upload and delete objects, create folders, and make buckets public or private. From the CLI, `lizard s3 upload <file>` uploads a file and `lizard s3 list` lists objects; see [`lizard s3`](/cli/s3).
 
 > **Bucket ACL changes** (making a bucket public/private) aren't on the CLI yet — manage them from the dashboard.
 

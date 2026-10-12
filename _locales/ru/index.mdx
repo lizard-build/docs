@@ -1,12 +1,16 @@
 ---
-description: "Разверните приложение, запустите воркер, подключите Managed Postgres или выполните код в Sandboxes. Выберите задачу, следуйте руководству и проверьте лимиты."
+description: "Развертывайте приложения, воркеры и AI-агентов на Lizard из Claude Code, Codex, Cursor или CLI, затем добавляйте Managed Postgres, Redis, Object Storage или Sandboxes."
 ---
 
 <span id="lizard-documentation" />
 
 # Документация Lizard
 
-Lizard собирает и запускает приложения из репозитория GitHub или локальной папки. Используйте Lizard CLI или дашборд, чтобы развернуть веб-сервис, запустить фоновый воркер, подключить Managed Postgres или Managed Redis, и просматривать логи. Используйте Lizard SDK для создания Sandboxes для выполнения кода.
+<span id="what-is-lizard" />
+
+## Что такое Lizard?
+
+Lizard (lizard.build) — облачная платформа для развертывания приложений, фоновых воркеров и AI-агентов. Вы развертываете из Claude Code, Codex, Cursor или из терминала с помощью Lizard CLI: `lizard up` загружает текущую папку, а `lizard add -r owner/repo` развертывает репозиторий GitHub. Lizard собирает образ на своих серверах, поэтому Docker на вашей машине не нужен, и выдает каждому веб-сервису HTTPS-адрес на `onlizard.com`. Тот же CLI добавляет в проект Managed Postgres, Managed Redis и S3-совместимое Managed Object Storage и подключает их к вашим сервисам через ссылки вида `${{postgres.DATABASE_URL}}`. Sandboxes — это microVM Firecracker, у каждой из которых своё ядро; в них AI-агент запускает чужой код. Ваш код создает их с помощью Lizard SDK для TypeScript или Python. Lizard — это не LizardFS, распределённая файловая система, и не `lizard`, инструмент на Python для измерения сложности кода.
 
 <span id="choose-a-task" />
 
@@ -17,11 +21,14 @@ Lizard собирает и запускает приложения из репо
 | Развернуть первое приложение | [Быстрый старт приложения](/getting-started) |
 | Развернуть Next.js, React, Vue или Python-приложение | [Руководства по фреймворкам](/framework-guides) |
 | Развернуть из Claude Code или другого кодинг-агента | [Руководство по кодинг-агентам](/guides/deploy-from-coding-agent) |
+| Развернуть приложение с Dockerfile | [Развертывание с Dockerfile](/deploy/dockerfile) |
 | Хостить удалённый MCP-сервер | [Руководство по Remote MCP](/guides/deploy-mcp-server) |
-| Держать Telegram-бота запущенным | [Руководство по Telegram-воркеру](/guides/telegram-bot) |
+| Держать Telegram- или Discord-бота запущенным | [Руководство по Telegram](/guides/telegram-bot) или [руководство по Discord](/guides/discord-bot) |
 | Подключить базу данных | [Managed Postgres](/addons/postgres) |
 | Запускать сгенерированный код в отдельной среде | [Быстрый старт Sandboxes](/sandboxes/quickstart) |
+| Запустить Claude Code внутри sandbox | [Claude Code в sandbox](/sandboxes/guides/claude-code) |
 | Сохранять файлы после завершения sandbox | [Persistent Volumes](/sandboxes/volumes) |
+| Визуально редактировать страницу с помощью Claude Code или ChatGPT | [Lizard Studio](/studio/getting-started) |
 
 <span id="deploy-an-app" />
 
@@ -54,7 +61,9 @@ Lizard собирает образ на своих серверах, поэто�
 
 - [Гайды](/guides) охватывают задачу от настройки до проверки результата.
 - [Руководства по фреймворкам](/framework-guides) дают команды сборки, адаптеры, порты и проверки для каждого стека.
-- [Основные концепции](/concepts/architecture) объясняют проекты, сборки и деплои.
+- [Деплой](/deploy) описывает источники из GitHub и локального кода, воркеры, масштабирование и регионы.
+- [Основные концепции](/concepts) объясняют проекты, сборки и деплои.
+- [Наблюдаемость](/observability) охватывает логи, метрики, стоимость и историю деплоев.
 - [Справочник Lizard CLI](/cli) перечисляет команды, флаги и коды выхода.
 - [Устранение неполадок](/deploy/troubleshooting/service-never-healthy) помогает диагностировать неудачный запуск.
 - [Известные проблемы](/platform/known-issues) фиксируют ограничения и случаи восстановления, которые нужно проверить перед релизом.

@@ -1,8 +1,11 @@
 ---
-description: "Eine Sandbox erstellen, Python ausführen, Dateien nutzen und Ressourcen freigeben."
+title: "Sandboxes-Schnellstart: Code aus Python oder JavaScript ausführen"
+description: "Erstellen Sie Ihre erste Sandbox mit Lizard SDK in TypeScript oder Python: API-Schlüssel setzen, Befehl ausführen, Datei schreiben, Port öffnen, neu verbinden, pausieren und aufräumen."
 ---
 
-# Schnellstart
+<span id="sandboxes-quickstart" />
+
+# Sandboxes-Schnellstart
 
 <span id="sandboxes-schnellstart" />
 <span id="installieren" />
@@ -25,12 +28,15 @@ description: "Eine Sandbox erstellen, Python ausführen, Dateien nutzen und Ress
 <span id="full-example" />
 <span id="next-steps" />
 
+Dieser Schnellstart erstellt eine Sandbox mit Lizard SDK, führt darin Python aus, schreibt eine Datei, öffnet einen Port und räumt auf. Jeder Schritt hat Code für TypeScript und Python. Sie brauchen ein Lizard-Konto (lizard.build) mit Pro oder der Testphase, einen API-Schlüssel und ein Projekt. Was Sandboxes sind, erfahren Sie zuerst im [Überblick](/sandboxes).
+
 <a id="authenticate" />
 
+<span id="install-and-authenticate" />
 
 ## Installation und Anmeldung
 
-Installieren Sie das Lizard SDK und erstellen Sie unter Settings → API keys einen API-Schlüssel. Speichern Sie ihn in `LIZARD_API_KEY`. Jede Sandbox braucht ein Projekt: übergeben Sie `projectId` (Python: `project_id`) oder ID, Slug oder Name über `project`.
+Installieren Sie das Lizard SDK und erstellen Sie unter Settings → API keys oder mit [`lizard keys create <name>`](/cli/keys) einen API-Schlüssel. Speichern Sie ihn in `LIZARD_API_KEY`. Jede Sandbox gehört zu einem Projekt; die Beispiele übergeben dessen ID als `projectId` (Python: `project_id`), und `project` akzeptiert auch einen Slug oder Namen.
 
 ```sh
 npm install @lizard-build/sdk
@@ -38,7 +44,11 @@ pip install lizard-sdk
 export LIZARD_API_KEY="<your-api-key>"
 ```
 
+<span id="run-a-command" />
+
 ## Befehl ausführen
+
+`Sandbox.create` startet eine Sandbox aus einer Vorlage, hier `interpreter`, die Python und gängige Datenbibliotheken enthält. `timeoutMs` legt ihre Laufzeit fest; der Standard im SDK sind fünf Minuten.
 
 ```ts
 import { Sandbox } from '@lizard-build/sdk';
@@ -65,11 +75,13 @@ finally:
     sandbox.kill()
 ```
 
+Ein Exit-Code ungleich null ist ein Ergebnis, kein Fehler: Prüfen Sie `exitCode` (Python: `exit_code`) selbst.
+
+<span id="files" />
+
 ## Dateien
 
-`fs.write` schreibt Text oder Bytes; `fs.read` liest Text. Für binäre Dateien schreiben Sie Bytes und lesen sie mit `fs.readBytes` (Python: `read_bytes`) wieder aus.
-
-Dateien und laufende Prozesse bleiben verfügbar, solange die Sandbox läuft. Nach dem Stopp kann eine spätere Sandbox nur Dateien auf einem angehängten Persistent Volume unter `/workspace` wiederverwenden. Ohne Volume ist `/workspace` temporär. Ein Volume hängt jeweils an einer Sandbox und liegt auf einem einzelnen Knoten. Exportieren Sie Dateien, die einen Knotenausfall überstehen müssen.
+Schreiben Sie Text oder Bytes mit `fs.write`, lesen Sie Text mit `fs.read` und Bytes mit `fs.readBytes` (Python: `read_bytes`). Dateien leben nur so lange wie die Sandbox, es sei denn, Sie schreiben sie auf ein [Persistent Volume](/sandboxes/volumes) unter `/workspace`.
 
 ```ts
 await sandbox.fs.write("/tmp/task.py", "print(42)\n");
@@ -77,11 +89,19 @@ const result = await sandbox.process.exec("python /tmp/task.py");
 console.log(result.stdout);
 ```
 
+```python
+sandbox.fs.write("/tmp/task.py", "print(42)\n")
+result = sandbox.process.exec_("python /tmp/task.py")
+print(result.stdout)
+```
+
 <a id="exposing-a-port" />
+
+<span id="public-ports" />
 
 ## Öffentliche Ports
 
-Starten Sie einen Server auf `0.0.0.0` und rufen Sie dann `exposePort(port)` auf (Python: `expose_port`). Der Aufruf gibt `url`, `hostname` und `accessToken` zurück. Der Port ist privat: Öffnen Sie `url` im Browser (sie enthält `?lizard_token=`) oder senden Sie das Token im Header `X-Lizard-Access-Token`. Anfragen ohne Token erhalten 401. Nach dem Stopp bedient die Sandbox den Port nicht mehr.
+Starten Sie einen Server auf `0.0.0.0` und rufen Sie dann `exposePort(port)` auf (Python: `expose_port`). Der Aufruf gibt `url`, `hostname` und `accessToken` zurück. Der Port ist privat: Öffnen Sie `url` im Browser (sie enthält `?lizard_token=`) oder senden Sie das Token im Header `X-Lizard-Access-Token`. Anfragen ohne Token erhalten 401. Nach dem Stopp bedient die Sandbox den Port nicht mehr. Für einen Dev-Server, den ein Agent gebaut hat, siehe [Vorschau-URLs](/sandboxes/preview-urls).
 
 ```ts
 await sandbox.process.exec(
@@ -94,16 +114,33 @@ const res = await fetch(`https://${hostname}/`, {
 });
 ```
 
+```python
+sandbox.process.exec_(
+    "nohup python -m http.server 3000 --bind 0.0.0.0 --directory /tmp >/tmp/http.log 2>&1 </dev/null &"
+)
+exposed = sandbox.expose_port(3000)
+print(exposed.url)  # open in a browser
+```
+
+<span id="reconnect-to-a-running-sandbox" />
+
 ## Mit einer laufenden Sandbox verbinden
 
-Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, ohne ihren Zustand zu ändern; eine pausierte oder gestoppte Sandbox wird dadurch nicht fortgesetzt. Pause, Fortsetzen, Snapshot und Restore sind verfügbar; siehe [Pause, Fortsetzen und Snapshots](/sandboxes/quickstart#pause-and-resume). `fork` kopiert eine laufende Sandbox samt Arbeitsspeicher und Prozessen; bei angehängtem Volume gibt es 409 zurück, bei einer Sandbox, die als Pod läuft, 501. Dateiüberwachung ist noch nicht verfügbar. `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten. Zugriff über das SSH-Protokoll gibt es nicht, daher funktionieren SSH-Clients, `scp` und Portweiterleitung nicht.
+Merken Sie sich die Sandbox-ID (`sandbox.sandboxId`, Python: `sandbox.sandbox_id`) und rufen Sie `Sandbox.connect(id)` aus einem anderen Prozess oder einer späteren Anfrage auf, um ein Handle auf dieselbe Sandbox zu erhalten. `connect` prüft nur, ob die Sandbox existiert: Eine pausierte Sandbox wird dadurch nicht fortgesetzt, und sobald die Sandbox beendet oder abgelaufen ist, löst der Aufruf `NotFoundError` aus.
 
 ```ts
 const connected = await Sandbox.connect(sandbox.sandboxId);
 console.log(await connected.getInfo());
 ```
 
+```python
+connected = Sandbox.connect(sandbox.sandbox_id)
+print(connected.get_info())
+```
+
 <a id="pause-and-resume" />
+
+<span id="pause-resume-and-snapshots" />
 
 ## Pause, Fortsetzen und Snapshots
 
@@ -131,10 +168,15 @@ const copy = await Sandbox.restore(saved.id);
 
 Ein Snapshot einer Firecracker-Sandbox ist bereit, sobald der Aufruf zurückkehrt, und wird von der Festplatte wiederhergestellt; daher gilt `poolSize` nicht. Jedes Restore läuft in der Größe der Quelle und wird zum Stundenpreis dieser Größe abgerechnet. Ein Snapshot einer Pod-Sandbox hält warme Kopien bereit, standardmäßig fünf (eine bis zehn); ist keine bereit, kann Restore HTTP 503 zurückgeben, bis der Pool nachgefüllt ist, und die wiederhergestellte Sandbox wird nach gemessener Nutzung abgerechnet. In beiden Fällen gilt `size` nicht für ein Restore. In der CLI nutzen Sie `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` und `lizard sandbox restore <snapshot-id>`.
 
-## Aktuelle Laufzeitlimits
+<span id="clean-up-and-next-steps" />
 
-SDK und CLI setzen standardmäßig eine Laufzeit von fünf Minuten. Die direkte API und das Dashboard setzen standardmäßig kein Ablaufdatum. Geben Sie die Laufzeit ausdrücklich an: `timeoutMs: 0` bei der Erstellung deaktiviert den Ablauf; ein positiver Wert setzt eine Frist. `setTimeout` akzeptiert 1000–2147483647 ms, nicht null. Befehle verlängern die Frist nicht. Dies ist kein Leerlauf-Timer.
+## Aufräumen und nächste Schritte
 
-Befehlsergebnisse enthalten stdout, stderr und den Exit-Code. Befehls-Timeouts liegen zwischen 1 und 600 Sekunden. `process.exec` akzeptiert `envs`, `workdir` und `user`. `envs` bei der Erstellung gelangen in einer Firecracker-Sandbox an jeden Befehl; eine Pod-Sandbox ignoriert sie, übergeben Sie sie dort daher pro Befehl. `getInfo()` und `list()` geben die bei der Erstellung gesetzten `metadata` zurück.
+Rufen Sie `kill()` auf, wenn die Aufgabe erledigt ist, wie es die Beispiele in `finally` tun. In Python beendet `with Sandbox.create(...) as sandbox:` die Sandbox, wenn der Block endet. Eine vergessene Sandbox stoppt an ihrer Frist, fünf Minuten nach der Erstellung, sofern Sie keine andere Laufzeit setzen; siehe [Ressourcen und Laufzeit](/sandboxes#resources-and-timeouts).
 
-[Schnellstart](/sandboxes/quickstart) · [SDK-Referenz](/sandboxes/sdk-reference) · [Python ausführen](/sandboxes/code-interpreter) · [Dashboard](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)
+- Jeder Aufruf, jede Option und jeder Fehler: [Sandbox-API- und SDK-Referenz](/sandboxes/sdk-reference).
+- Code von einem LLM mit Zustand zwischen Aufrufen: [Code Interpreter](/sandboxes/code-interpreter).
+- Dateien, die eine Sandbox überdauern: [Persistent Volumes](/sandboxes/volumes).
+- Ein Coding-Agent in einer Sandbox: [Claude Code](/sandboxes/guides/claude-code) oder [OpenCode](/sandboxes/guides/opencode).
+- Dieselben Schritte aus einem Terminal: [`lizard sandbox`](/cli/sandbox). Im Browser: das [Sandboxes-Dashboard](/sandboxes/dashboard).
+- Größen, Preise und wie viele Sandboxes gleichzeitig laufen können: [Limits](/platform/limits#sandboxes). Produktüberblick und Vergleich: [Sandboxes](https://lizard.build/sandboxes).

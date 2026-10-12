@@ -1,4 +1,5 @@
 ---
+title: "GitHub からデプロイ: git push to deploy"
 description: "GitHub リポジトリを接続すると、追跡対象ブランチへのすべての push でビルドと再デプロイが行われます。プライベートリポジトリ、ブランチ切り替え、モノレポにも対応しています。"
 ---
 
@@ -6,7 +7,7 @@ description: "GitHub リポジトリを接続すると、追跡対象ブラン�
 
 # GitHub からデプロイ
 
-GitHub リポジトリを接続することは、Lizard でアプリを実行するための推奨方法です。追跡対象ブランチへのすべての push で、自動的にビルドと再デプロイが行われます。
+GitHub リポジトリを接続すると、Lizard (lizard.build) は追跡対象ブランチへの push のたびにアプリをビルドして再デプロイします: git push to deploy。`lizard add -r owner/repo` を実行してサービスを作成します。プライベートリポジトリの場合は、先に `lizard git connect` で Lizard GitHub App を接続してください。GitHub で管理しているアプリを実行するには、これが推奨方法です。リモートのないコードの場合は、代わりに [ローカルコードからデプロイ](/deploy/upload) してください。
 
 <span id="create-a-service-from-a-repo" />
 
@@ -52,7 +53,7 @@ lizard service set api \
   --set branch=main
 ```
 
-稼働中のサービスでビルド項目を変更すると自動的に再ビルドされます。**その後に** `redeploy` **をつなげないでください**。クラッシュしたサービスや一度もデプロイされていないサービスには `lizard redeploy` が必要です。
+稼働中のサービスでビルド項目を変更すると自動的に再ビルドされます。**その後に** `redeploy` **をつなげないでください**。つなげると [ビルドが 2 回キューに入ります](/deploy/troubleshooting/double-build)。クラッシュしたサービスや一度もデプロイされていないサービスには `lizard redeploy` が必要です。
 
 > **Note:** `lizard up` は常に `sourceType=upload` を強制します。git バックエンドのサービス更新には使わないでください。リモートへ push するか、代わりに `lizard redeploy` を使用してください。
 
@@ -96,6 +97,8 @@ lizard redeploy --service api
 ## 関連項目
 
 - [ビルド Pipeline](/concepts/build-pipeline) — スタックがどのように検出され、ビルドされるか。
+- [フレームワークガイド](/framework-guides) — [Next.js](/framework-guides/nextjs)、[Nuxt](/framework-guides/nuxt)、[Django](/framework-guides/django)、[FastAPI](/framework-guides/fastapi)、[Rails](/framework-guides/rails)、[Go](/framework-guides/go) などのビルドコマンドとポート。
+- [Dockerfile でデプロイする](/deploy/dockerfile) — リポジトリに独自の Dockerfile がある場合。
 - [ローカルコードからデプロイする](/deploy/upload) — リモートがない場合。
 - [`lizard git`](/cli/git) — `connect`、`status`、`checkout` の完全なコマンドリファレンス。
 - [アプリケーションに合わせてホストを選ぶ](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#choose-the-host-by-the-application) — エージェントが作成したリポジトリをこれに向ける方法。

@@ -1,4 +1,5 @@
 ---
+title: "Despliegues: ciclo de vida, reinicios y recuperación"
 description: "El ciclo de despliegue en Lizard: qué desencadena una compilación, cómo el tráfico cambia a réplicas en buen estado y en qué se diferencian los reinicios de los redespliegues."
 ---
 
@@ -68,7 +69,7 @@ En el [panel](/dashboard), la vista de **Despliegues** muestra la cronología co
 | `lizard restart --service <svc>` | Reinicio de la compilación **actual** — sin recompilar |
 | `lizard redeploy --service <svc>` | **Compilación** nueva desde el último commit/carga, y luego publicación |
 
-Usa `restart` para reciclar réplicas (por ejemplo, para aplicar un secreto de ejecución que no se recargó en caliente); usa `redeploy` cuando necesites una nueva compilación.
+Consulta [`lizard restart`](/cli/restart) y [`lizard redeploy`](/cli/redeploy). Usa `restart` para reciclar réplicas (por ejemplo, para aplicar un secreto de ejecución que no se recargó en caliente); usa `redeploy` cuando necesites una nueva compilación.
 
 <span id="recovering-from-a-crash" />
 

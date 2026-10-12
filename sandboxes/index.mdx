@@ -1,8 +1,9 @@
 ---
-description: "Current Sandboxes runtime, templates, lifecycle, resource limits, storage, and billing."
+title: "Sandboxes for AI agents"
+description: "Run AI-generated code in Firecracker microVMs with Lizard SDK or Lizard CLI: when to use Sandboxes, startup time, templates, sizes, lifecycle and storage."
 ---
 
-# Sandboxes
+# Sandboxes for AI agents
 
 <span id="when-to-use-a-sandbox" />
 <span id="what-makes-them-fast" />
@@ -10,11 +11,39 @@ description: "Current Sandboxes runtime, templates, lifecycle, resource limits, 
 <span id="resources--limits" />
 <span id="ways-to-drive-sandboxes" />
 
-Sandboxes run short-lived commands and agent tasks as Firecracker microVMs, each with its own kernel. A sandbox that attaches a pod-backed Persistent Volume, or restores a pod snapshot, runs as a Kubernetes pod with the runc runtime and shares the host kernel. `getInfo().runtime` tells you which. Restrict credentials and network access when running code you do not trust.
+Sandboxes on Lizard (lizard.build) are isolated Linux machines where an AI agent runs code it did not write. Each sandbox is a Firecracker microVM with its own kernel. Your code creates one with Lizard SDK (`@lizard-build/sdk` for TypeScript, `lizard-sdk` for Python), or you run `lizard sandbox create` in a terminal; then you run commands, read and write files, and open ports. In a test on 2026-10-12, the median time from creating a sandbox to its first Python output was 228 ms.
+
+## When to use Sandboxes
+
+- **Run code a model wrote.** Give an LLM a [code interpreter](/sandboxes/code-interpreter) that keeps Python state between calls.
+- **Give a coding agent its own machine.** Run [Claude Code](/sandboxes/guides/claude-code), [OpenCode](/sandboxes/guides/opencode) or Codex in a sandbox instead of on your laptop. Connect its credentials with [`lizard agents`](/cli/agents) and send prompts with [`lizard sandbox prompt`](/cli/sandbox#coding-agents).
+- **Preview what the agent built.** Start a dev server and open it through a [private preview URL](/sandboxes/preview-urls).
+- **Try several paths at once.** Fork a running sandbox, memory and processes included, or restore many copies from one snapshot.
+- **Drive a browser.** The `desktop` template runs a graphical desktop that an agent controls with screenshots, clicks and keys.
+
+For a web service or worker that should keep running, deploy an app instead; see the [app quickstart](/getting-started).
+
+## How fast does a sandbox start?
+
+In a test on 2026-10-12, the median time from creating a sandbox to its first Python output was 228 ms, and the 95th percentile was 310 ms. The test ran 300 times from Railway's US East region against `us-east-1`, with the `base` template and the Small size. Results of the same test for E2B, Daytona and Modal are on the [Sandboxes page](https://lizard.build/sandboxes).
+
+## Sandboxes at a glance
+
+| Question | Answer |
+|---|---|
+| What runs the code? | A Firecracker microVM with its own kernel; see the exception under [runtime and templates](#runtime-and-templates) |
+| How do I create one? | [Lizard SDK](/sandboxes/sdk-reference), [`lizard sandbox`](/cli/sandbox), the [dashboard](/sandboxes/dashboard), or the [HTTP API](/sandboxes/sdk-reference#http-api) |
+| Which templates exist? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` and `desktop` |
+| What sizes are there? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, the default) and Large (8 vCPU / 16 GB); see [sizes and prices](/platform/limits#sandbox-sizes) |
+| How long does one live? | Five minutes by default from the SDK and CLI; no expiration by default from the raw API and dashboard |
+| What survives a stop? | Only files on a [Persistent Volume](/sandboxes/volumes) mounted at `/workspace` |
+| How many can run at once? | 100 on Pro, 5 during the trial; see [account limits](/platform/limits#sandbox-account-limits) |
 
 ## Runtime and templates
 
 Choose a template from the current catalog: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, or `desktop`. Availability depends on the region and pool capacity. `interpreter` includes Python and common data libraries. `desktop` runs a graphical desktop that you drive with `sandbox.desktop` or `lizard sandbox desktop`. Check tool versions inside your sandbox. The public CLI does not provide a custom-template upload flow.
+
+A sandbox that attaches a pod-backed Persistent Volume, or restores a pod snapshot, runs as a Kubernetes pod with the runc runtime and shares the host kernel. `getInfo().runtime` tells you which. Restrict credentials and network access when running code you do not trust.
 
 ## Lifecycle
 
@@ -37,20 +66,20 @@ The SDK and CLI default to a five-minute lifetime. The raw API and dashboard def
 
 Files and running processes remain available while the sandbox runs. After it stops, only files written to an attached Persistent Volume at `/workspace` can be reused by a later sandbox. Without a volume, `/workspace` is temporary. Each volume attaches to one sandbox at a time and uses node-local storage; export files that must survive node loss.
 
-Each size has a flat hourly price, billed by the second while the sandbox runs, idle time included. Egress is included up to [2 TB per account](/platform/limits#sandbox-egress) over a rolling 30 days. A sandbox restored from a snapshot runs at its source's size and price; one restored from a pod snapshot is billed by measured usage. A paused sandbox is not billed; Persistent Volumes bill separately while you keep the data. Pause or kill a sandbox when the task ends.
+Each size has a flat hourly price, billed by the second while the sandbox runs, idle time included. Egress is included up to [2 TB per account](/platform/limits#sandbox-egress) over a rolling 30 days. A sandbox restored from a snapshot runs at its source's size and price; one restored from a pod snapshot is billed by measured usage. A paused sandbox is not billed; Persistent Volumes bill separately while you keep the data. Pause or kill a sandbox when the task ends. Rates for every resource are on the [billing page](/platform/billing) and [pricing](https://lizard.build/pricing).
 
-```ts
-import { Sandbox } from '@lizard-build/sdk';
+## Guides
 
-const sandbox = await Sandbox.create('interpreter', {
-  projectId: 'proj_123', timeoutMs: 300_000,
-});
-try {
-  const result = await sandbox.process.exec("python -c 'print(2 ** 10)'");
-  console.log(result.stdout, result.stderr, result.exitCode);
-} finally {
-  await sandbox.kill();
-}
-```
+- [Run Claude Code in a sandbox](/sandboxes/guides/claude-code)
+- [Run OpenCode in a sandbox](/sandboxes/guides/opencode)
+- [Preview URLs for a dev server](/sandboxes/preview-urls)
+- [Code interpreter for LLM-generated code](/sandboxes/code-interpreter)
+- [Keep files with Persistent Volumes](/sandboxes/volumes)
 
-[Quickstart](/sandboxes/quickstart) · [SDK reference](/sandboxes/sdk-reference) · [Run Python](/sandboxes/code-interpreter) · [Dashboard](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)
+## Reference
+
+- [Sandboxes quickstart](/sandboxes/quickstart): your first sandbox, step by step.
+- [Sandbox API and SDK reference](/sandboxes/sdk-reference): every call in TypeScript and Python.
+- [`lizard sandbox`](/cli/sandbox): create, exec, shell, snapshots and coding agents from the terminal.
+- [Sandboxes dashboard](/sandboxes/dashboard): create, inspect and stop sandboxes in the browser.
+- [Limits](/platform/limits#sandboxes): sizes, prices, concurrency and egress.

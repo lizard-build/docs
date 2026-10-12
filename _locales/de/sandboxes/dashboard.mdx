@@ -1,8 +1,11 @@
 ---
-description: "Sandboxes erstellen und prüfen, Vorlagen wählen und Volumes verwalten."
+title: "Sandboxes-Dashboard"
+description: "Sandboxes im Lizard-Dashboard erstellen, prüfen, pausieren und stoppen: Vorlage, Region, Größe und Laufzeit wählen, ein Terminal öffnen und Volumes verwalten."
 ---
 
-# Dashboard
+<span id="sandboxes-dashboard" />
+
+# Sandboxes-Dashboard
 
 <span id="sandboxes-dashboard" />
 <span id="api-schlüssel-abrufen" />
@@ -16,17 +19,23 @@ description: "Sandboxes erstellen und prüfen, Vorlagen wählen und Volumes verw
 <span id="inspect-a-running-sandbox" />
 <span id="lifecycle" />
 
-Öffnen Sie ein Projekt und wählen Sie Sandboxes. Wählen Sie beim Erstellen eine Vorlage, eine Region und eine Größe: Small, Medium (Standard) oder Large. Die Standardregion ist nicht zwingend die nächste. Wählen Sie unter **Delete after** eine Laufzeit: 15 Minuten, 1 Stunde, 4 Stunden, 1 Tag, 7 Tage oder Never (Standard).
+Im Dashboard erstellen und verwalten Sie Sandboxes ohne Code. Öffnen Sie ein Projekt und wählen Sie Sandboxes. Wählen Sie beim Erstellen eine Vorlage, eine Region und eine Größe: Small, Medium (Standard) oder Large. Die Standardregion ist nicht zwingend die nächste. Wählen Sie unter **Delete after** eine Laufzeit: 15 Minuten, 1 Stunde, 4 Stunden, 1 Tag, 7 Tage oder Never (Standard).
 
-## Installation und Anmeldung
+<span id="api-keys" />
 
-Installieren Sie das Lizard SDK und erstellen Sie unter Settings → API keys einen API-Schlüssel. Speichern Sie ihn in `LIZARD_API_KEY`. Jede Sandbox braucht ein Projekt: übergeben Sie `projectId` (Python: `project_id`) oder ID, Slug oder Name über `project`.
+## API-Schlüssel
+
+Um Sandboxes aus Code zu erstellen, erstellen Sie unter Settings → API keys einen API-Schlüssel und speichern ihn in `LIZARD_API_KEY`. Lizard SDK und die [HTTP-API](/sandboxes/sdk-reference#http-api) lesen ihn; siehe den [Schnellstart](/sandboxes/quickstart).
+
+<span id="inspect-and-stop" />
 
 ## Prüfen und stoppen
 
 Die Detailansicht zeigt Status, Vorlage, Region, gemessene Nutzung und offene Ports. Im Kopfbereich stehen die Schaltflächen Pause und Resume, und der Reiter Terminal öffnet eine Shell in einer laufenden Sandbox.
 
-Jede Größe hat einen festen Stundenpreis, sekundengenau abgerechnet, solange die Sandbox läuft, Leerlauf eingeschlossen. Ausgehender Traffic ist bis [2 TB pro Konto](/platform/limits#sandbox-egress) in rollierenden 30 Tagen enthalten. Eine aus einem Snapshot wiederhergestellte Sandbox läuft mit Größe und Preis ihrer Quelle; eine aus einem Pod-Snapshot wiederhergestellte wird nach gemessener Nutzung abgerechnet. Eine pausierte Sandbox kostet nichts; Persistent Volumes werden getrennt abgerechnet, solange Sie die Daten behalten. Pausieren oder beenden Sie eine Sandbox, wenn die Aufgabe erledigt ist.
+Eine laufende Sandbox wird sekundengenau zum Stundenpreis ihrer Größe abgerechnet, Leerlauf eingeschlossen; eine pausierte nicht. Pausieren oder beenden Sie sie daher, wenn die Aufgabe erledigt ist. Siehe [Speicher und Abrechnung](/sandboxes#storage-and-billing).
+
+<span id="templates-and-volumes" />
 
 ## Vorlagen und Volumes
 
@@ -34,4 +43,4 @@ Der Reiter Templates zeigt Plattformvorlagen und die privaten Snapshots Ihres Pr
 
 Volumes erstellen und hängen Sie mit dem SDK oder der CLI an; das Erstellungsformular bietet keine Volume-Option. Der Reiter Persistent Volumes erscheint, sobald ein Projekt ein Volume hat. Er zeigt Größe und angehängte Sandbox jedes Volumes und erlaubt es, Dateien zu durchsuchen, die Größe zu ändern oder das Volume zu löschen. Stoppen Sie die aktuelle Sandbox, bevor Sie das Volume an eine andere hängen.
 
-[Schnellstart](/sandboxes/quickstart) · [SDK-Referenz](/sandboxes/sdk-reference) · [Python ausführen](/sandboxes/code-interpreter) · [Dashboard](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)
+[Sandboxes-Überblick](/sandboxes) · [Schnellstart](/sandboxes/quickstart) · [SDK-Referenz](/sandboxes/sdk-reference) · [Code Interpreter](/sandboxes/code-interpreter) · [Persistent Volumes](/sandboxes/volumes)

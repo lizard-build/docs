@@ -1,12 +1,12 @@
 ---
-description: "Управляйте Lizard с помощью AI-агента для кодирования: читайте Lizard Skill, узнавайте схемы команд через --json, развертывайте через Lizard CLI или подключите MCP-клиент к Lizard MCP."
+description: "Пусть Claude Code, Codex или Cursor развертывают приложения на Lizard: установите Lizard Skill, читайте схемы команд через --json или подключите MCP-клиент к Lizard MCP."
 ---
 
 <span id="coding-agents" />
 
 # Агенты для кодирования
 
-Lizard спроектирован так, чтобы им можно было управлять от AI-агентов для кодирования так же легко, как людьми. В Lizard CLI встроен **встроенный навык (skill)**, который обучает агента всей платформе, а каждая команда **самоописывается** через `--json`, поэтому агентам никогда не нужно угадывать.
+Claude Code, Codex, Cursor и другие AI-агенты для кодирования развертывают приложения и управляют ими в Lizard (lizard.build) через Lizard CLI. Один раз установите Lizard Skill командой `npx skills add lizard-build/skill -g`; после этого агент загружает встроенное в CLI руководство командой `lizard skills get core --json` и читает флаги любой команды через `--help --json`, поэтому ему никогда не нужно угадывать. Клиенты с поддержкой MCP, например ChatGPT и Claude, могут вместо этого использовать [Lizard MCP](#lizard-mcp). Полный пример развертывания из агента — в руководстве [Развёртывание из Claude Code, Codex или Cursor](/guides/deploy-from-coding-agent).
 
 <span id="the-embedded-skill" />
 
@@ -94,6 +94,8 @@ npx skills add lizard-build/skill -g
 Он работает с Claude Code, Cursor, Codex, Copilot, Gemini CLI и другими агентами, которые читают формат Agent Skills. Для клиентов, которые работают через MCP, а не выполняют shell-команды, используйте [Lizard MCP](#lizard-mcp).
 
 Это относится и к AI IDE: они пишут и тестируют приложение, но не хостят его. См. [развертывание приложения, созданного в Google Antigravity](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat), где весь деплой выполняется одним промптом.
+
+Чтобы Claude Code или ChatGPT могли редактировать страницу, открытую в Chrome, используйте [Lizard Studio](/studio/getting-started).
 
 <span id="lizard-mcp" />
 

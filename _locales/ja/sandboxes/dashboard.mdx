@@ -1,8 +1,11 @@
 ---
-description: "Sandboxes の作成と確認、テンプレートの選択、ボリューム管理。"
+title: "Sandboxes ダッシュボード"
+description: "Lizard のダッシュボードで Sandboxes を作成、確認、一時停止、停止: テンプレート、リージョン、サイズ、有効期間を選び、ターミナルを開き、ボリュームを管理します。"
 ---
 
-# ダッシュボード
+<span id="sandboxes-dashboard" />
+
+# Sandboxes ダッシュボード
 
 <span id="sandboxes-ダッシュボード" />
 <span id="api-キーを取得する" />
@@ -11,7 +14,6 @@ description: "Sandboxes の作成と確認、テンプレートの選択、ボ�
 <span id="ライフサイクル" />
 <span id="スナップショット" />
 <span id="ボリューム" />
-<span id="sandboxes-dashboard" />
 <span id="getting-an-api-key" />
 <span id="create-a-sandbox" />
 <span id="inspect-a-running-sandbox" />
@@ -19,17 +21,23 @@ description: "Sandboxes の作成と確認、テンプレートの選択、ボ�
 <span id="snapshots" />
 <span id="volumes" />
 
-プロジェクトを開き、Sandboxes を選びます。作成時にテンプレート、リージョン、サイズ (Small、Medium (既定)、Large) を選択してください。既定のリージョンが最寄りとは限りません。**Delete after** で有効期間を選びます: 15 分、1 時間、4 時間、1 日、7 日、Never (既定)。
+ダッシュボードを使うと、コードを書かずに Sandboxes を作成して管理できます。プロジェクトを開き、Sandboxes を選びます。作成時にテンプレート、リージョン、サイズ (Small、Medium (既定)、Large) を選択してください。既定のリージョンが最寄りとは限りません。**Delete after** で有効期間を選びます: 15 分、1 時間、4 時間、1 日、7 日、Never (既定)。
 
-## インストールと認証
+<span id="api-keys" />
 
-Lizard SDK をインストールし、Settings → API keys で API キーを作成します。`LIZARD_API_KEY` に保存してください。各 sandbox にはプロジェクトが必要です。`projectId`（Python では `project_id`）、または `project` に ID、slug、名前を渡します。
+## API キー
+
+コードから sandbox を作成するには、Settings → API keys で API キーを作成し、`LIZARD_API_KEY` に保存します。Lizard SDK と [HTTP API](/sandboxes/sdk-reference#http-api) はこのキーを読み取ります。[クイックスタート](/sandboxes/quickstart) を参照してください。
+
+<span id="inspect-and-stop" />
 
 ## 確認と停止
 
 詳細画面には状態、テンプレート、リージョン、実測使用量、公開ポートが表示されます。ヘッダーには Pause と Resume のボタンがあり、Terminal タブでは実行中の sandbox のシェルを開けます。
 
-各サイズは固定の時間単価で、sandbox の実行中は秒単位で課金されます。アイドル時間も含みます。送信トラフィックはアカウントごとに直近 30 日間で [2 TB まで](/platform/limits#sandbox-egress)料金に含まれます。スナップショットから復元した sandbox は、元の sandbox と同じサイズと料金で動作します。pod スナップショットから復元した sandbox は実測使用量で課金されます。一時停止中の sandbox は課金されません。Persistent Volumes はデータを保存している間、別途課金されます。タスクが終わったら sandbox を一時停止するか停止してください。
+実行中の sandbox は、サイズごとの時間単価で秒単位で課金されます。アイドル時間も含みます。一時停止中の sandbox は課金されないため、タスクが終わったら一時停止するか停止してください。[保存と課金](/sandboxes#storage-and-billing) を参照してください。
+
+<span id="templates-and-volumes" />
 
 ## テンプレートとボリューム
 
@@ -37,4 +45,4 @@ Templates タブには、プラットフォームのテンプレートとプロ�
 
 ボリュームの作成と接続は SDK または CLI で行います。作成フォームにはボリュームの項目がありません。Persistent Volumes タブは、プロジェクトにボリュームができると表示されます。各ボリュームのサイズと接続先の sandbox が表示され、ファイルの閲覧、サイズ変更、削除ができます。別の sandbox に接続する前に、現在の sandbox を停止します。
 
-[クイックスタート](/sandboxes/quickstart) · [SDK リファレンス](/sandboxes/sdk-reference) · [Python の実行](/sandboxes/code-interpreter) · [ダッシュボード](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)
+[Sandboxes の概要](/sandboxes) · [クイックスタート](/sandboxes/quickstart) · [SDK リファレンス](/sandboxes/sdk-reference) · [コードインタープリター](/sandboxes/code-interpreter) · [Persistent Volumes](/sandboxes/volumes)

@@ -1,5 +1,5 @@
 ---
-description: "Erstelle ein Volume mit Namen und binde es unter /workspace ein, um Daten zwischen Sandbox-Läufen zu behalten. Größen, Preise und Beispiele für TypeScript, Python und CLI."
+description: "Binde ein Volume mit Namen unter /workspace ein, um Dateien zwischen Sandbox-Läufen zu behalten. Größen, Preise und Beispiele für TypeScript, Python und CLI."
 ---
 
 <span id="persistent-volumes" />
@@ -113,8 +113,7 @@ Erstelle und verbinde Volumes mit dem SDK oder der CLI. Sobald ein Projekt ein V
 - Ein verbundenes Volume kann weder mit einer anderen Sandbox verbunden noch gelöscht werden.
 - Das Löschen eines Volumes entfernt seine Daten. Volumes nutzen lokalen Speicher des Knotens; exportiere Daten, die du nach einem Knotenausfall brauchst. Siehe [Speicherung und Wiederherstellung](/platform/storage-and-recovery).
 
-Sandbox-Optionen stehen in der [SDK-Referenz](/sandboxes/sdk-reference).
+- Ohne Volume ist `/workspace` temporär: Seine Dateien sind weg, wenn die Sandbox stoppt.
+- Eine Sandbox mit verbundenem Volume kann nicht geforkt werden (HTTP 409), und ein Snapshot erfasst kein verbundenes Volume.
 
-Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, ohne ihren Zustand zu ändern; eine pausierte oder gestoppte Sandbox wird dadurch nicht fortgesetzt. Pause, Fortsetzen, Snapshot und Restore sind verfügbar; siehe [Pause, Fortsetzen und Snapshots](/sandboxes/quickstart#pause-and-resume). `fork` kopiert eine laufende Sandbox einschließlich Arbeitsspeicher und Prozessen; es gibt 409 zurück, wenn ein Volume verbunden ist, und 501 bei einer Sandbox, die als Pod läuft. Dateiüberwachung ist noch nicht verfügbar. `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten. Zugriff über das SSH-Protokoll gibt es nicht, daher funktionieren SSH-Clients, `scp` und Portweiterleitung nicht.
-
-Dateien und laufende Prozesse bleiben verfügbar, solange die Sandbox läuft. Nach dem Stopp kann eine spätere Sandbox nur Dateien auf einem angehängten Persistent Volume unter `/workspace` wiederverwenden. Ohne Volume ist `/workspace` temporär. Ein Volume hängt jeweils an einer Sandbox und liegt auf einem einzelnen Knoten. Exportieren Sie Dateien, die einen Knotenausfall überstehen müssen.
+Sandbox-Optionen stehen in der [SDK-Referenz](/sandboxes/sdk-reference), Pause, Snapshots und Fork im [Lebenszyklus](/sandboxes#lifecycle).

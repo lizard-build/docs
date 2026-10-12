@@ -14,7 +14,7 @@ description: "Lizard がソースをコンテナイメージに変換する方�
 
 プラットフォームは次の順序で、ビルド戦略をちょうど 1 つ選びます:
 
-1. **`dockerfilePath` のリポジトリ Dockerfile** — サービスに `dockerfilePath` が設定されている場合、ビルドコマンドや開始コマンドが設定されていても、その Dockerfile が変更されずに使用されます。`startCommand` が設定されていれば、実行時には Dockerfile の `CMD` がそれに置き換えられます。
+1. **`dockerfilePath` のリポジトリ Dockerfile** — サービスに `dockerfilePath` が設定されている場合、ビルドコマンドや開始コマンドが設定されていても、その Dockerfile が変更されずに使用されます。`startCommand` が設定されていれば、実行時には Dockerfile の `ENTRYPOINT` と `CMD` がそれに置き換えられます。[Dockerfile でデプロイする](/deploy/dockerfile) を参照してください。
 2. **合成された Dockerfile** — それ以外で、サービスに `buildCommand` および/または `startCommand` が設定されている場合（または `lizard up --build-command` / `--start-command` 経由で渡された場合）、Lizard はそれらのコマンドから Dockerfile を生成します。lizardpack は呼び出されません。
 3. **ソース内の Dockerfile** — それ以外の場合、ビルドディレクトリのルートにある `Dockerfile` が使用されます（後述の GitHub の例外を参照）。
 4. **lizardpack 自動検出** — それ以外の場合、プラットフォームはビルドパック / Dockerfile ジェネレーターである **lizardpack** を実行します。
@@ -27,7 +27,7 @@ lizardpack はリポジトリを検査し、最適化されたマルチステー
 
 **Hugo → Go → Node → Python → Rust → Ruby → PHP → Java → static**
 
-本番用スクリプト、アダプター、出力パス、ポートについては [フレームワーク guides](/framework-guides) を参照してください。検出はプロジェクトファイルと依存関係を使用します。複数のプロバイダーに一致するリポジトリは、この順序に従います。
+本番用スクリプト、アダプター、出力パス、ポートについては [フレームワーク guides](/framework-guides) を参照してください: [Hugo](/framework-guides/hugo)、[Go](/framework-guides/go)、Node ([Node.js](/framework-guides/nodejs)、[Next.js](/framework-guides/nextjs)、[Nuxt](/framework-guides/nuxt)、[SvelteKit](/framework-guides/sveltekit)、[Astro](/framework-guides/astro)、[React](/framework-guides/react)、[Vue](/framework-guides/vue)、[Docusaurus](/framework-guides/docusaurus)、[VitePress](/framework-guides/vitepress))、Python ([Django](/framework-guides/django)、[FastAPI](/framework-guides/fastapi)、[Streamlit](/framework-guides/streamlit))、Ruby ([Rails](/framework-guides/rails))。検出はプロジェクトファイルと依存関係を使用します。複数のプロバイダーに一致するリポジトリは、この順序に従います。Node.js や Python のバージョンを固定するには、[ランタイムバージョン](/deploy/runtime-versions) を参照してください。
 
 この経路では:
 
@@ -52,7 +52,7 @@ lizardpack はリポジトリを検査し、最適化されたマルチステー
 | ランタイム専用フィールド（`startCommand`、`preDeployCommand`、`containerPort`、`watchPatterns`）の `service set` | ❌ 適用するには `lizard redeploy` を実行 |
 | その他の環境変数 / シークレットの変更 | ❌ クイック再起動で適用（再ビルドなし） |
 
-> **二重にビルドしないでください。** 稼働中のサービスでビルドフィールドを変更する `service set` の後は、再ビルドが自動的に発火します — その後に `lizard redeploy` を続けないでください。2 回目の冗長なビルドがキューに入ります。クラッシュしたサービスや一度もデプロイされていないサービスは、自動では再ビルドされません。`lizard redeploy` を実行してください。
+> **二重にビルドしないでください。** 稼働中のサービスでビルドフィールドを変更する `service set` の後は、再ビルドが自動的に発火します — その後に `lizard redeploy` を続けないでください。2 回目の冗長なビルドがキューに入ります ([理由](/deploy/troubleshooting/double-build))。クラッシュしたサービスや一度もデプロイされていないサービスは、自動では再ビルドされません。`lizard redeploy` を実行してください。
 
 <span id="build-time-variables" />
 
@@ -92,7 +92,7 @@ lizard events                  # deploy history + replica status
 | フィールド | 説明 |
 |-------|-------------|
 | `buildCommand` | アプリをビルドするコマンド → `dockerfilePath` が設定されていない限り、**合成された Dockerfile** 経路を選択 |
-| `startCommand` | ランタイムでアプリを起動するコマンド。イメージの `CMD` を置き換えます |
+| `startCommand` | ランタイムでアプリを起動するコマンド。イメージの `ENTRYPOINT` と `CMD` を置き換えます |
 | `preDeployCommand` | すべてのコンテナの起動時（レプリカごと、再起動ごと）に、`startCommand` の前に実行されます。`startCommand` が設定されている場合のみ実行されます。何度実行しても、同時に実行しても安全なようにしてください |
 | `dockerfilePath` | **そのまま**使用する、リポジトリ内 Dockerfile へのパス。イメージのビルドでは `buildCommand` / `startCommand` より優先されます |
 | `rootDirectory` | ビルド元のサブディレクトリ（モノレポ） |

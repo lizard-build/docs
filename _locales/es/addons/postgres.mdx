@@ -1,10 +1,11 @@
 ---
-description: "Aprovisiona una base de datos PostgreSQL gestionada en Lizard, conéctala a un servicio por referencia, ejecuta migraciones al desplegar y amplía su almacenamiento."
+title: "Managed Postgres: cadena de conexión y configuración"
+description: "Añade una base de datos PostgreSQL 18 en Lizard, encuentra su cadena de conexión y sus variables PG, conecta servicios por referencia, ejecuta migraciones y amplía el almacenamiento."
 ---
 
 # Managed Postgres
 
-Una base de datos PostgreSQL gestionada, aprovisionada con un solo comando y conectada a tus servicios por referencia.
+Managed Postgres en Lizard (lizard.build) es una base de datos PostgreSQL que añades a un proyecto con `lizard add postgres`. Las bases de datos nuevas usan PostgreSQL 18 de forma predeterminada. Lizard pone la cadena de conexión en `DATABASE_URL` y sus partes en `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD` y `PGDATABASE`, y tus servicios las leen mediante una referencia como `${{postgres.DATABASE_PRIVATE_URL}}`. La base de datos se factura con las mismas [tarifas](/platform/billing#resource-rates) de CPU, memoria y almacenamiento que las apps, y el panel incluye un editor SQL para ella. Para una visión general y los precios, consulta la [página de Managed Postgres](https://lizard.build/postgres).
 
 <span id="provision" />
 
@@ -35,6 +36,44 @@ El addon expone un conjunto estándar de variables de conexión:
 | `POSTGRES_DB` | Alias de la base de datos |
 | `POSTGRES_PASSWORD` | Alias de la contraseña |
 
+<span id="postgres-connection-string" />
+
+## Cadena de conexión de Postgres
+
+Cada base de datos tiene dos cadenas de conexión. Ambas usan el usuario `postgres` y la base de datos `postgres`:
+
+| Variable | Úsala desde | Formato |
+|---|---|---|
+| `DATABASE_PRIVATE_URL` | Servicios del mismo proyecto | `postgresql://postgres:<password>@<name>.lizard.internal:5432/postgres` |
+| `DATABASE_URL` | Tu máquina, CI o un servicio de otro proyecto | `postgresql://postgres:<password>@<host>:<port>/postgres` |
+
+`<name>` es el nombre de la base de datos en el proyecto: `postgres` para la primera. Lizard asigna el host y el puerto públicos al crear la base de datos, así que léelos de `DATABASE_URL`, `PGHOST` y `PGPORT` en lugar de escribirlos a mano. La dirección privada solo funciona dentro del proyecto; consulta [red privada](/networking#private-networking).
+
+La mayoría de los drivers aceptan la cadena tal cual:
+
+```js
+// Node.js with pg
+import pg from 'pg';
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+```
+
+```python
+# Python with psycopg
+import os, psycopg
+conn = psycopg.connect(os.environ["DATABASE_URL"])
+```
+
+`psql` y otras herramientas de libpq leen las variables `PG*`, así que se conectan sin argumentos.
+
+<span id="how-do-i-see-the-connection-string" />
+
+### ¿Cómo veo la cadena de conexión?
+
+- **Panel:** abre la base de datos en tu proyecto. La pestaña **Overview** muestra `DATABASE_URL` y la URL privada con botones para copiarlas. La pestaña **Secrets** lista todas las variables de conexión y la referencia `${{…}}` que debes pegar en un servicio.
+- **CLI:** `lizard run --service postgres -- printenv DATABASE_URL` imprime la cadena pública. Contiene la contraseña, así que no la pegues en logs ni en chats.
+
+La cadena es una credencial. Conecta los servicios a ella con una referencia en lugar de copiarla en un secreto, para que reciban el valor actual en cada despliegue.
+
 <span id="connect-a-service" />
 
 ## Conectar un servicio
@@ -54,6 +93,8 @@ Verifica la conectividad desde tu máquina sin imprimir la cadena de conexión:
 lizard run --service postgres -- sh -c 'psql "$DATABASE_URL" -c "SELECT 1"'
 ```
 
+`lizard run --service postgres` ejecuta el comando en tu máquina con los valores de conexión públicos de la base de datos, así que requiere tener `psql` instalado localmente. `lizard run --service api` pasaría las referencias `${{…}}` como texto literal; consulta [`lizard run`](/cli/run).
+
 <span id="run-migrations-on-deploy" />
 
 ## Ejecutar migraciones al desplegar
@@ -65,7 +106,7 @@ lizard service set api --set preDeployCommand="npm run migrate" --set startComma
 lizard redeploy --service api
 ```
 
-Para una app de Django, el comando es `python manage.py migrate`; consulta [hosting de apps Python](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks).
+Para una app de Django, el comando es `python manage.py migrate`; consulta la [guía de Django](/framework-guides/django) y [hosting de apps Python](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks). Las guías de [Umami](/guides/umami) y [Flowise](/guides/flowise) muestran apps completas sobre Managed Postgres.
 
 <span id="browse-and-query-data" />
 
@@ -98,11 +139,21 @@ lizard add postgres
 lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_PRIVATE_URL}}' --service api
 ```
 
+<span id="backups-and-restore" />
+
+## Copias de seguridad y restauración
+
+No des por hecho que hay copias de seguridad programadas ni recuperación a un punto en el tiempo. Antes de una migración arriesgada, exporta tú mismo la base de datos y prueba la restauración en una base de datos aparte. Por ejemplo, con `pg_dump` 18 o posterior instalado localmente:
+
+```bash
+lizard run --service postgres -- sh -c 'pg_dump "$DATABASE_URL" > backup.sql'
+```
+
+Consulta [almacenamiento y recuperación](/platform/storage-and-recovery) para un plan de restauración.
+
 <span id="see-also" />
 
 ## Ver también
 
 - [Managed Addons](/addons) — nomenclatura, referencias y los exploradores del panel.
 - [Referencias entre servicios](/variables/references) — sintaxis y resolución de referencias.
-
-Consulta [almacenamiento y recuperación](/platform/storage-and-recovery) para planificar copias de seguridad y restauración. `lizard run --service postgres` ejecuta el comando en tu máquina con los valores de conexión públicos del addon; requiere tener `psql` instalado localmente. `lizard run --service api` pasaría las referencias `${{…}}` como texto literal.

@@ -14,7 +14,7 @@ description: "Как Lizard превращает исходный код в об
 
 Платформа выбирает ровно одну стратегию сборки, в таком порядке:
 
-1. **Dockerfile из репозитория по пути `dockerfilePath`** — если на сервисе задан `dockerfilePath`, этот Dockerfile используется без изменений, даже если заданы также команды сборки или запуска. Заданный `startCommand` по-прежнему заменяет `CMD` из Dockerfile во время выполнения.
+1. **Dockerfile из репозитория по пути `dockerfilePath`** — если на сервисе задан `dockerfilePath`, этот Dockerfile используется без изменений, даже если заданы также команды сборки или запуска. Заданный `startCommand` по-прежнему заменяет `ENTRYPOINT` и `CMD` из Dockerfile во время выполнения. См. [Развёртывание с Dockerfile](/deploy/dockerfile).
 2. **Синтезированный Dockerfile** — иначе, если на сервисе заданы `buildCommand` и/или `startCommand` (или переданы через `lizard up --build-command` / `--start-command`), Lizard генерирует Dockerfile из этих команд. lizardpack не вызывается.
 3. **Dockerfile в исходном коде** — иначе используется `Dockerfile` в корне директории сборки (см. исключение для GitHub ниже).
 4. **Автоопределение lizardpack** — иначе платформа запускает **lizardpack**, свой генератор Dockerfile / buildpack.
@@ -27,7 +27,7 @@ lizardpack анализирует ваш репозиторий и собира�
 
 **Hugo → Go → Node → Python → Rust → Ruby → PHP → Java → static**
 
-См. [Руководства по фреймворкам](/framework-guides) для продакшн-скриптов, адаптеров, путей вывода и портов. Определение использует файлы проекта и зависимости; репозиторий, подходящий под несколько провайдеров, следует этому порядку.
+См. [Руководства по фреймворкам](/framework-guides) для продакшн-скриптов, адаптеров, путей вывода и портов: [Hugo](/framework-guides/hugo), [Go](/framework-guides/go), Node ([Node.js](/framework-guides/nodejs), [Next.js](/framework-guides/nextjs), [Nuxt](/framework-guides/nuxt), [SvelteKit](/framework-guides/sveltekit), [Astro](/framework-guides/astro), [React](/framework-guides/react), [Vue](/framework-guides/vue), [Docusaurus](/framework-guides/docusaurus), [VitePress](/framework-guides/vitepress)), Python ([Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Streamlit](/framework-guides/streamlit)) и Ruby ([Rails](/framework-guides/rails)). Определение использует файлы проекта и зависимости; репозиторий, подходящий под несколько провайдеров, следует этому порядку. Как закрепить версию Node.js или Python, см. в разделе [версии runtime](/deploy/runtime-versions).
 
 На этом пути:
 
@@ -52,7 +52,7 @@ lizardpack анализирует ваш репозиторий и собира�
 | `service set` полей только времени выполнения (`startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns`) | ❌ запустите `lizard redeploy` для применения |
 | Любое другое изменение переменной окружения / секрета | ❌ применяется при быстром перезапуске (без пересборки) |
 
-> **Не дублируйте сборку.** После `service set`, меняющего поле сборки на запущенном сервисе, пересборка запускается автоматически — не ставьте в цепочку `lizard redeploy` после этого, иначе поставите в очередь вторую избыточную сборку. Упавший или ни разу не развёрнутый сервис сам не пересобирается; запустите `lizard redeploy`.
+> **Не дублируйте сборку.** После `service set`, меняющего поле сборки на запущенном сервисе, пересборка запускается автоматически — не ставьте в цепочку `lizard redeploy` после этого, иначе поставите в очередь вторую избыточную сборку ([почему](/deploy/troubleshooting/double-build)). Упавший или ни разу не развёрнутый сервис сам не пересобирается; запустите `lizard redeploy`.
 
 <span id="build-time-variables" />
 
@@ -92,7 +92,7 @@ lizard events                  # deploy history + replica status
 | Поле | Описание |
 |------|----------|
 | `buildCommand` | Команда сборки вашего приложения → выбирает путь **синтезированного Dockerfile**, если не задан `dockerfilePath` |
-| `startCommand` | Команда запуска приложения во время выполнения; заменяет `CMD` образа |
+| `startCommand` | Команда запуска приложения во время выполнения; заменяет `ENTRYPOINT` и `CMD` образа |
 | `preDeployCommand` | Выполняется в начале каждого контейнера (каждая реплика, каждый перезапуск) перед `startCommand`; выполняется, только если задан `startCommand`. Сделайте её безопасной для многократного и одновременного запуска |
 | `dockerfilePath` | Путь к Dockerfile в репозитории для использования **как есть**; при сборке образа имеет приоритет над `buildCommand` / `startCommand` |
 | `rootDirectory` | Поддиректория для сборки (монорепозитории) |

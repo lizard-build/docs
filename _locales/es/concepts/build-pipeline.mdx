@@ -14,7 +14,7 @@ Las compilaciones se ejecutan en los nodos de compilación de Lizard — **no ne
 
 La plataforma elige exactamente una estrategia de compilación, en este orden:
 
-1. **Dockerfile del repositorio en `dockerfilePath`** — si `dockerfilePath` está configurado en el servicio, ese Dockerfile se usa sin cambios, incluso cuando también se han configurado comandos de compilación o de inicio. Un `startCommand` configurado sigue reemplazando el `CMD` del Dockerfile en runtime.
+1. **Dockerfile del repositorio en `dockerfilePath`** — si `dockerfilePath` está configurado en el servicio, ese Dockerfile se usa sin cambios, incluso cuando también se han configurado comandos de compilación o de inicio. Un `startCommand` configurado sigue reemplazando el `ENTRYPOINT` y el `CMD` del Dockerfile en runtime. Consulta [Desplegar con un Dockerfile](/deploy/dockerfile).
 2. **Dockerfile sintetizado** — en caso contrario, si `buildCommand` y/o `startCommand` están configurados en el servicio (o se pasan mediante `lizard up --build-command` / `--start-command`), Lizard genera un Dockerfile a partir de esos comandos. lizardpack no se invoca.
 3. **Dockerfile en el código fuente** — en caso contrario se usa un `Dockerfile` en la raíz del directorio de compilación (consulta la excepción de GitHub más abajo).
 4. **Autodetección de lizardpack** — en caso contrario, la plataforma ejecuta **lizardpack**, su generador de buildpacks/Dockerfile.
@@ -27,7 +27,7 @@ lizardpack inspecciona tu repositorio y construye una imagen optimizada de múlt
 
 **Hugo → Go → Node → Python → Rust → Ruby → PHP → Java → static**
 
-Consulta las [Guías de frameworks](/framework-guides) para ver scripts de producción, adaptadores, rutas de salida y puertos. La detección usa archivos del proyecto y dependencias; un repositorio que coincida con varios proveedores sigue este orden.
+Consulta las [Guías de frameworks](/framework-guides) para ver scripts de producción, adaptadores, rutas de salida y puertos: [Hugo](/framework-guides/hugo), [Go](/framework-guides/go), Node ([Node.js](/framework-guides/nodejs), [Next.js](/framework-guides/nextjs), [Nuxt](/framework-guides/nuxt), [SvelteKit](/framework-guides/sveltekit), [Astro](/framework-guides/astro), [React](/framework-guides/react), [Vue](/framework-guides/vue), [Docusaurus](/framework-guides/docusaurus), [VitePress](/framework-guides/vitepress)), Python ([Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Streamlit](/framework-guides/streamlit)) y Ruby ([Rails](/framework-guides/rails)). La detección usa archivos del proyecto y dependencias; un repositorio que coincida con varios proveedores sigue este orden. Para fijar una versión de Node.js o Python, consulta [versiones del runtime](/deploy/runtime-versions).
 
 En esta ruta:
 
@@ -52,7 +52,7 @@ En esta ruta:
 | `service set` de campos solo de runtime (`startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns`) | ❌ ejecuta `lizard redeploy` para aplicar |
 | Cualquier otro cambio de variable de entorno / secreto | ❌ se aplica con un reinicio rápido (sin reconstrucción) |
 
-> **No compiles dos veces.** Después de un `service set` que cambia un campo de compilación en un servicio en ejecución, la reconstrucción se activa automáticamente — no encadenes un `lizard redeploy` después, o pondrás en cola una segunda compilación redundante. Un servicio que se ha bloqueado o que nunca se ha desplegado no se reconstruye por sí solo; ejecuta `lizard redeploy`.
+> **No compiles dos veces.** Después de un `service set` que cambia un campo de compilación en un servicio en ejecución, la reconstrucción se activa automáticamente — no encadenes un `lizard redeploy` después, o pondrás en cola una segunda compilación redundante ([por qué](/deploy/troubleshooting/double-build)). Un servicio que se ha bloqueado o que nunca se ha desplegado no se reconstruye por sí solo; ejecuta `lizard redeploy`.
 
 <span id="build-time-variables" />
 
@@ -92,7 +92,7 @@ Si una compilación falla, lee `lizard logs --build`, corrige la causa (en tu re
 | Campo | Descripción |
 |-------|-------------|
 | `buildCommand` | Comando para compilar tu aplicación → selecciona la ruta de **Dockerfile sintetizado** a menos que `dockerfilePath` esté configurado |
-| `startCommand` | Comando para iniciar tu aplicación en runtime; reemplaza el `CMD` de la imagen |
+| `startCommand` | Comando para iniciar tu aplicación en runtime; reemplaza el `ENTRYPOINT` y el `CMD` de la imagen |
 | `preDeployCommand` | Se ejecuta al inicio de cada contenedor (cada réplica, cada reinicio), antes de `startCommand`; solo se ejecuta cuando `startCommand` está configurado. Haz que sea seguro ejecutarlo muchas veces y al mismo tiempo |
 | `dockerfilePath` | Ruta a un Dockerfile del repositorio para usar **literalmente**; prevalece sobre `buildCommand` / `startCommand` en la compilación de la imagen |
 | `rootDirectory` | Subdirectorio desde el que compilar (monorepos) |
