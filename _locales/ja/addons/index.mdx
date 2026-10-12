@@ -1,12 +1,13 @@
 ---
-description: "1 つの lizard add コマンドでマネージド Postgres、Redis、S3 互換ストレージをプロビジョニングし、その後参照によってサービスに接続します。"
+title: "Managed Addons: Postgres、Redis、Object Storage"
+description: "1 つの lizard add コマンドで Managed Postgres、Managed Redis、S3 互換の Managed Object Storage を作成し、参照でサービスに接続します。"
 ---
 
 <span id="managed-addons" />
 
 # マネージドアドオン
 
-Lizard は、単一のコマンドで **Managed Postgres**、**Managed Redis**、S3 互換の **Managed Object Storage** をプロビジョニングします。各アドオンはプロジェクト内に作成され、固定の環境変数セットを公開し、サービスから [参照](/concepts/architecture#cross-resource-references) を通じて利用されます。
+マネージドアドオンは、Lizard (lizard.build) がプロジェクト内で実行するデータベースとストレージで、**Managed Postgres**、**Managed Redis**、S3 互換の **Managed Object Storage** を使えます。`lizard add postgres redis s3` を実行すると、1 つのコマンドで 3 つすべてが作成されます。各アドオンは `DATABASE_URL` などの固定の環境変数セットを公開し、サービスは `${{postgres.DATABASE_URL}}` のような [参照](/concepts/architecture#cross-resource-references) で値を読み取ります。デプロイや再起動の後もデータを残したいアプリで使ってください。
 
 <span id="provision-an-addon" />
 
@@ -22,7 +23,7 @@ lizard add --list              # show available types
 
 ## 命名
 
-特定の種類の **最初の** アドオンは、その種類そのものを名前として受け取ります。つまり、`${{postgres.DATABASE_URL}}` はそのまますぐに動作します。同じ種類の追加アドオンには、`postgres-autumn-bear` のような生成された名前が付きます。削除したアドオンは 3 日間ゴミ箱で名前を保持するため、その期間内に追加した新しいアドオンには生成された名前が付きます。古いアドオンを復元するか、参照を新しい名前に向け直してください。
+各種類の **最初の** アドオンには、その種類の名前が付きます。つまり、`${{postgres.DATABASE_URL}}` はそのまま使えます。同じ種類の追加アドオンには、`postgres-autumn-bear` のような生成された名前が付きます。削除したアドオンは 3 日間ゴミ箱で名前を保持するため、その期間内に追加した新しいアドオンには生成された名前が付きます。古いアドオンを復元するか、参照を新しい名前に向け直してください。
 
 種類エイリアスへのフォールバックはありません。参照では、アドオンの **現在の** 名前を使う必要があります。アドオン名を変更すると古い名前への参照は壊れるため、名前の変更後に参照を更新してください:
 
@@ -42,7 +43,7 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-Lizard は、実行中のすべての Postgres と Redis アドオンの `DATABASE_URL` と `REDIS_URL` を、プロジェクト内のすべてのサービスに最も低い優先順位で注入します。明示的な参照はこれらを上書きし、特定のアドオンを選びます。同じプロジェクト内のサービスでは、プライベート URL を使うことをおすすめします:
+Lizard は、実行中のすべての Postgres と Redis アドオンの `DATABASE_URL` と `REDIS_URL` を、プロジェクト内のすべてのサービスに最も低い優先順位で注入します。明示的な参照はこれらを上書きし、特定のアドオンを選びます。同じプロジェクト内のサービスでは、プライベート URL を使ってください:
 
 ```bash
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
@@ -66,13 +67,13 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service a
 
 ## ダッシュボードブラウザー
 
-[dashboard](/dashboard) には各アドオン用のデータブラウザーが用意されています。Postgres には SQL/テーブルエディター、Redis にはキーブラウザー、S3 にはバケット/オブジェクトブラウザーがあり、Lizard を離れずにデータを確認して編集できます。
+[dashboard](/dashboard) には各アドオン用のデータブラウザーが用意されています。Postgres には SQL/テーブルエディター、Redis にはキーブラウザー、S3 にはバケット/オブジェクトブラウザーがあり、Lizard 内でデータを確認・編集できます。
 
 <span id="storage" />
 
 ## ストレージ
 
-Postgres と Redis のデータボリュームは **増加専用** です。容量の増加は次のコマンドで行います:
+Postgres と Redis のデータボリュームは **拡張のみ可能** です。次のコマンドで容量を増やします:
 
 ```bash
 lizard scale --service postgres --storage 8192

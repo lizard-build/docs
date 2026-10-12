@@ -1,5 +1,5 @@
 ---
-description: "Deploy Nuxt on Lizard with Nitro's node-server preset. Add a production start script, run the generated server on port 3000, and check routes and runtime config."
+description: "Deploy Nuxt on Lizard with Nitro's node-server preset. Add a production start script, run the server on port 3000, and check routes and runtime config."
 ---
 
 # Deploy Nuxt on Lizard
@@ -88,7 +88,7 @@ export default defineNuxtConfig({
 });
 ```
 
-Add unlinked or dynamic routes to `routes` when the crawler cannot discover them. Run `npm run build` and check that `.output/public/index.html` and your inner route files exist. In the test with Nuxt 4.5.2, keeping `preset: 'node-server'` while switching only to `nuxt generate` produced the fallback pages without the site's routes. A successful build alone did not establish that the export contained the site.
+Add unlinked or dynamic routes to `routes` when the crawler cannot discover them. Run `npm run build` and check that `.output/public/index.html` and your inner route files exist. In the test with Nuxt 4.5.2, keeping `preset: 'node-server'` while switching only to `nuxt generate` produced the fallback pages without the site's routes. The build succeeded even though the export lacked the site's routes.
 
 Use the Dockerfile and nginx configuration in [static routes and 404s](/framework-guides/static-routing), with build script `build`, output directory `.output/public`, and service port `80`. The static container does not run Nuxt server routes or read runtime config for already generated pages.
 

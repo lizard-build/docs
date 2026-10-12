@@ -1,12 +1,14 @@
 ---
+title: "Aus Claude Code, Codex oder Cursor bereitstellen"
 description: "Stelle eine App aus Claude Code, Codex oder Cursor mit Lizard Skill und Lizard CLI bereit. Wähle GitHub oder lokalen Quellcode, verbinde eine Datenbank und überprüfe das Ergebnis."
 ---
 
 <span id="deploy-from-a-coding-agent" />
+<span id="deploy-from-claude-code-codex-or-cursor" />
 
-# Bereitstellung aus einem Coding-Agent
+# Bereitstellung aus Claude Code, Codex oder Cursor
 
-Ein Coding-Agent kann Lizard Skill und Lizard CLI verwenden, um die von ihm erstellte App bereitzustellen. Der Agent liest die Anleitung der installierten CLI, prüft das Zielprojekt, führt den Build aus und kontrolliert das Ergebnis. Dafür ist kein separater MCP-Transport erforderlich.
+Claude Code, Codex und Cursor können die App, die sie gebaut haben, mit Lizard Skill und Lizard CLI auf Lizard (lizard.build) bereitstellen. Der Agent liest die Anleitung der installierten CLI, prüft das Zielprojekt, führt den Build aus und prüft die Live-URL. Er braucht keinen separaten MCP-Transport. Diese Anleitung enthält den Prompt, die Befehle, die der Agent für lokalen und GitHub-Quellcode ausführt, und die Prüfungen, die zeigen, dass die Bereitstellung funktioniert hat.
 
 <span id="before-you-start" />
 
@@ -26,14 +28,14 @@ lizard --help --json
 
 Führe unter Windows `irm https://lizard.build/api/cli/install.ps1 | iex` in PowerShell aus oder installiere über npm mit `npm install -g @lizard-build/cli`.
 
-Lizard Skill lädt Anweisungen, die zur installierten CLI passen. Lies für einen bestimmten Befehl dessen Schema, statt Flags zu raten:
+Damit Lizard Skill jedem Agenten auf deinem Rechner zur Verfügung steht, installiere es einmal mit `npx skills add lizard-build/skill -g`; siehe [Coding-Agents](/agents). Lizard Skill lädt Anweisungen, die zur installierten CLI passen. Lies für einen bestimmten Befehl dessen Schema, statt Flags zu raten:
 
 ```bash
 lizard up --help --json
 lizard service set --help --json
 ```
 
-Ein nützlicher Prompt ist:
+Ein nützlicher Prompt zum Einfügen in Claude Code, Codex oder Cursor ist:
 
 > Stelle diese App mit Lizard bereit. Lies die Anleitung der installierten CLI, prüfe das verknüpfte Projekt und den Service, führe die Prüfungen der App aus und zeige das Build-Ergebnis sowie eine funktionierende URL. Frage nach, bevor du einen bestehenden Produktions-Service änderst oder Daten löschst.
 
@@ -137,5 +139,7 @@ Verwende den Exit-Code und den JSON-Fehler des fehlgeschlagenen Befehls. Ein Com
 ## Limits und Kosten
 
 Ein Agent kann über dieselbe CLI wie eine Person kostenpflichtige Ressourcen erstellen. Prüfe [Limits](/platform/limits) und [Preise](https://lizard.build/pricing), und beschränke Credentials auf das Projekt und die Services, die es benötigt.
+
+Um den Agenten selbst auf einer separaten Maschine statt auf deinem Laptop auszuführen, siehe [Claude Code in einer Sandbox](/sandboxes/guides/claude-code).
 
 Siehe [Ergebnisse der Szenariotests](/guides/validation) für geprüfte Versionen, Cloud-Ergebnisse und verbleibende Limits.

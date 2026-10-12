@@ -1,10 +1,13 @@
 ---
-description: "Prüfen Sie vor dem Deployment die Replikatlimits von Apps, Ressourcen und Timeouts von Sandboxes, Regionen und den Geltungsbereich von Kontingenten auf Kontoebene."
+title: "Limits: App-Replikate, Sandbox-Größen und Kontingente"
+description: "Replikatlimits für Apps, Sandbox-Größen und Stundenpreise, wie viele Sandboxes gleichzeitig laufen können, Startraten, ausgehender Traffic, Laufzeiten und Regionen auf Lizard."
 ---
+
+<span id="limits" />
 
 # Limits
 
-Limits hängen von der Ressource, dem Tarif und dem Konto ab. Eine Einstellung pro Replikat entspricht nicht der insgesamt für einen Service oder ein Konto verfügbaren Kapazität. Prüfen Sie Ihren aktuellen Tarif und das Ergebnis der Erstellungs- oder Skalierungsanfrage, bevor Sie eine Workload dimensionieren.
+Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung mit bis zu 5 Replikaten pro Service, während der Testphase mit 1. Pro führt bis zu 100 Sandboxes gleichzeitig aus und startet bis zu 24 pro Minute; die Testphase erlaubt 5 gleichzeitig. Die Sandbox-Größen reichen von Small (2 vCPU / 4 GB) bis Large (8 vCPU / 16 GB), und ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum von 30 Tagen inklusive. Limits hängen von der Ressource, dem Tarif und dem Konto ab: Eine Einstellung pro Replikat entspricht nicht der insgesamt für einen Service oder ein Konto verfügbaren Kapazität. Prüfen Sie Ihren aktuellen Tarif und das Ergebnis der Erstellungs- oder Skalierungsanfrage, bevor Sie eine Workload dimensionieren.
 
 <span id="applications" />
 
@@ -14,15 +17,19 @@ Limits hängen von der Ressource, dem Tarif und dem Konto ab. Eine Einstellung p
 |---|---|---|
 | CPU und Arbeitsspeicher | Jedes Replikat | Drei Replikate mit einer Obergrenze von 2 vCPU / 2 GiB haben zusammen eine konfigurierte Obergrenze von 6 vCPU / 6 GiB. Das ist keine Nutzungsvorhersage. |
 | Anzahl der Replikate | Service und Tarif | Ihr Plan legt das Limit fest: 1 pro App in der Testphase von Pro, 5 in Pro nach der ersten bezahlten Rechnung und in Enterprise. Die API akzeptiert höchstens 10, was nur eine Ausnahme für das Konto erreicht. |
-| Ressourcenobergrenze des Kontos | Kontoinhaber | Ein zweites Projekt erzeugt nicht zwangsläufig ein zweites Kontingent. Fragen Sie vor der Planung eines großen Bereitstellungen nach der effektiven Kontenobergrenze. |
+| Ressourcenobergrenze des Kontos | Kontoinhaber | Ein zweites Projekt erzeugt nicht zwangsläufig ein zweites Kontingent. Fragen Sie vor der Planung eines großen Deployments nach dem geltenden Kontolimit. |
 | Worker-Modus | Service | `containerPort=0` läuft ohne HTTP-Listener oder öffentliche Load-Balancer-Route. |
 | Benutzerdefinierte Domain | Hostname | Benutzerdefinierte Wildcard-Domains werden nicht akzeptiert. Verwenden Sie einen spezifischen Hostnamen und schließen Sie die Prüfungen zu Eigentümerschaft und DNS ab. |
 
-Sandboxes führen kurze Befehle und Agentenaufgaben als Firecracker-microVMs aus, jeweils mit eigenem Kernel. Eine Sandbox, die ein vorhandenes Pod-basiertes Persistent Volume anbindet oder einen älteren Pod-Snapshot wiederherstellt, läuft als Kubernetes-Pod mit runc und teilt den Kernel des Hosts. `getInfo().runtime` im Lizard SDK zeigt, welcher Fall vorliegt. Beschränken Sie Zugangsdaten und Netzwerkzugriff für nicht vertrauenswürdigen Code.
+<span id="sandboxes" />
 
 ## Sandboxes
 
+[Sandboxes](/sandboxes) führen kurze Befehle und Agentenaufgaben als Firecracker-microVMs aus. Die folgenden Limits gelten für jede Sandbox, die ein Konto ausführt.
+
 <span id="sandbox-sizes" />
+
+<span id="sizes" />
 
 ### Größen
 
@@ -35,6 +42,8 @@ Sandboxes führen kurze Befehle und Agentenaufgaben als Firecracker-microVMs aus
 CPU und Arbeitsspeicher sind im Preis enthalten. Persistent Volumes werden separat abgerechnet.
 
 <span id="sandbox-account-limits" />
+
+<span id="account-limits" />
 
 ### Kontolimits
 
@@ -54,11 +63,15 @@ Diese Limits begrenzen, wie viele Sandboxes ein Konto gleichzeitig ausführt und
 
 <span id="sandbox-egress" />
 
+<span id="network-egress" />
+
 ### Ausgehender Netzwerkverkehr
 
 Ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum von 30 Tagen inklusive, gezählt über alle Sandboxes des Kontos. Darüber hinaus verlieren die Sandboxes des Kontos ihren ausgehenden Netzwerkzugang, bis die 30-Tage-Summe wieder unter 2 TB liegt. Es fallen keine zusätzlichen Kosten an.
 
 <span id="sandbox-lifetime" />
+
+<span id="lifetime" />
 
 ### Laufzeit
 
@@ -71,18 +84,16 @@ Ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum 
 | Laufzeit aktualisieren | Mindestens 1000 ms; kein Idle-Timer |
 | Anbindung von Persistent Volumes | Jeweils nur eine Sandbox, auf dem Node des Volumes |
 
-SDK und CLI setzen standardmäßig eine Laufzeit von fünf Minuten. Die direkte API und das Dashboard setzen standardmäßig kein Ablaufdatum. Geben Sie die Laufzeit ausdrücklich an: `timeoutMs: 0` bei der Erstellung deaktiviert den Ablauf; ein positiver Wert setzt eine Frist. `setTimeout` akzeptiert 1000–2147483647 ms, nicht null. Befehle verlängern die Frist nicht. Dies ist kein Leerlauf-Timer.
-
-Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, ohne ihren Zustand zu ändern; eine pausierte oder gestoppte Sandbox wird dadurch nicht fortgesetzt. Pause, Fortsetzen, Snapshot und Restore sind verfügbar; siehe [Pause, Fortsetzen und Snapshots](/sandboxes/quickstart#pause-and-resume). Fork (`sandbox.fork({ count })`) funktioniert bei Firecracker-Sandboxes; bei angebundenem Volume gibt es HTTP 409 zurück, bei einer Pod-Sandbox HTTP 501. `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten. Zugriff über das SSH-Protokoll gibt es nicht, daher funktionieren SSH-Clients, `scp` und Portweiterleitung nicht.
+Auch die CLI setzt standardmäßig fünf Minuten; das Dashboard setzt standardmäßig kein Ablaufdatum. Befehle verlängern die Frist nicht. Zu Pause, Snapshots, Fork und dazu, was jeweils erhalten bleibt, siehe den [Lebenszyklus](/sandboxes#lifecycle) von Sandboxes.
 
 <span id="regions" />
 
 ## Regionen
 
-Die aktuell konfigurierten Regionen umfassen US East (Virginia), `us-east-1`, und EU West (Limburg), `eu-west-lim-a`. Eine Region im Katalog garantiert nicht, dass für jede Ressource Kapazität verfügbar ist. Prüfen Sie die Regionsauswahl beim Erstellen der Ressource; eine Sandbox, die ein vorhandenes Volume verwendet, muss auf dem Node dieses Volumes laufen.
+Die aktuell konfigurierten Regionen umfassen US East (Virginia), `us-east-1`, und EU West (Limburg), `eu-west-lim-a`. Eine Region im Katalog garantiert nicht, dass für jede Ressource Kapazität verfügbar ist. Prüfen Sie die Regionsauswahl beim Erstellen der Ressource; eine Sandbox, die ein vorhandenes Volume verwendet, muss auf dem Node dieses Volumes laufen. [`lizard regions`](/cli/regions) listet die für Ihr Konto verfügbaren Regionen auf; siehe [Regionen](/deploy/regions).
 
 <span id="before-increasing-scale" />
 
 ## Vor dem Erhöhen der Skalierung
 
-Prüfen Sie aktiven Tarif, Einstellungen pro Replikat, Kontenobergrenze, Datenbank-Verbindungslimit und Wachstum des Storage zusammen. Verwenden Sie [Skalierung](/deploy/scaling), [Metriken](/observability/metrics) und [Preise](https://lizard.build/pricing), um konfigurierte Kapazität mit der gemessenen Nutzung zu vergleichen.
+Prüfen Sie aktiven Tarif, Einstellungen pro Replikat, Kontolimit, Datenbank-Verbindungslimit und Speicherwachstum zusammen. Verwenden Sie [Skalierung](/deploy/scaling), [Metriken](/observability/metrics) und [Preise](https://lizard.build/pricing), um konfigurierte Kapazität mit der gemessenen Nutzung zu vergleichen. Die Tarife für jede Ressource stehen auf der [Abrechnungsseite](/platform/billing#resource-rates).

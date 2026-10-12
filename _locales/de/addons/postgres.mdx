@@ -1,10 +1,13 @@
 ---
-description: "Stellen Sie auf Lizard eine verwaltete PostgreSQL-Datenbank bereit, verbinden Sie sie per Referenz mit einem Service, führen Sie Migrationen beim Bereitstellen aus und erweitern Sie ihren Speicher."
+title: "Managed Postgres: Verbindungszeichenfolge und Einrichtung"
+description: "Fügen Sie auf Lizard eine PostgreSQL-18-Datenbank hinzu, finden Sie ihre Verbindungszeichenfolge und PG-Variablen, verbinden Sie Services per Referenz, führen Sie Migrationen aus und erweitern Sie den Speicher."
 ---
+
+<span id="managed-postgres" />
 
 # Managed Postgres
 
-Eine verwaltete PostgreSQL-Datenbank, mit einem einzigen Befehl bereitgestellt und per Referenz mit Ihren Services verbunden.
+Managed Postgres auf Lizard (lizard.build) ist eine PostgreSQL-Datenbank, die Sie mit `lizard add postgres` zu einem Projekt hinzufügen. Neue Datenbanken laufen standardmäßig mit PostgreSQL 18. Lizard legt die Verbindungszeichenfolge in `DATABASE_URL` und ihre Bestandteile in `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD` und `PGDATABASE` ab, und Ihre Services lesen sie über eine Referenz wie `${{postgres.DATABASE_PRIVATE_URL}}`. Für CPU, Arbeitsspeicher und Speicher der Datenbank zahlen Sie dieselben [Tarife](/platform/billing#resource-rates) wie für Apps. Im Dashboard können Sie die Datenbank mit einem SQL-Editor abfragen. Einen Überblick und die Preise finden Sie auf der [Seite zu Managed Postgres](https://lizard.build/postgres).
 
 <span id="provision" />
 
@@ -35,18 +38,56 @@ Das Add-on stellt einen Standardsatz an Verbindungsvariablen bereit:
 | `POSTGRES_DB` | Alias für die Datenbank |
 | `POSTGRES_PASSWORD` | Alias für das Passwort |
 
+<span id="postgres-connection-string" />
+
+## Postgres-Verbindungszeichenfolge
+
+Jede Datenbank hat zwei Verbindungszeichenfolgen. Beide verwenden den Benutzer `postgres` und die Datenbank `postgres`:
+
+| Variable | Zugriff von | Format |
+|---|---|---|
+| `DATABASE_PRIVATE_URL` | Services im selben Projekt | `postgresql://postgres:<password>@<name>.lizard.internal:5432/postgres` |
+| `DATABASE_URL` | Ihrem Rechner, CI oder einem Service in einem anderen Projekt | `postgresql://postgres:<password>@<host>:<port>/postgres` |
+
+`<name>` ist der Name der Datenbank im Projekt, `postgres` für die erste. Lizard vergibt den öffentlichen Host und Port beim Erstellen der Datenbank. Lesen Sie sie daher aus `DATABASE_URL`, `PGHOST` und `PGPORT`, statt sie abzutippen. Die private Adresse funktioniert nur innerhalb des Projekts; siehe [privates Netzwerk](/networking#private-networking).
+
+Die meisten Treiber übernehmen die Zeichenfolge unverändert:
+
+```js
+// Node.js with pg
+import pg from 'pg';
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+```
+
+```python
+# Python with psycopg
+import os, psycopg
+conn = psycopg.connect(os.environ["DATABASE_URL"])
+```
+
+`psql` und andere libpq-Werkzeuge lesen die `PG*`-Variablen und verbinden sich daher ohne Argumente.
+
+<span id="how-do-i-see-the-connection-string" />
+
+### Wie sehe ich die Verbindungszeichenfolge?
+
+- **Dashboard:** Öffnen Sie die Datenbank in Ihrem Projekt. Der Tab **Overview** zeigt `DATABASE_URL` und die private URL mit Kopier-Schaltflächen. Der Tab **Secrets** listet jede Verbindungsvariable und die `${{…}}`-Referenz, die Sie in einen Service einfügen.
+- **CLI:** `lizard run --service postgres -- printenv DATABASE_URL` gibt die öffentliche Zeichenfolge aus. Sie enthält das Passwort, fügen Sie sie also nicht in Logs oder Chats ein.
+
+Die Zeichenfolge enthält Zugangsdaten. Verwenden Sie in Services eine Referenz auf die Zeichenfolge. So erhalten sie bei jedem Deploy den aktuellen Wert, ohne dass Sie ihn in ein Secret kopieren müssen.
+
 <span id="connect-a-service" />
 
 ## Einen Service verbinden
 
-Referenzieren Sie die private Verbindungszeichenfolge aus dem konsumierenden Service und deployen Sie erneut:
+Referenzieren Sie die private Verbindungszeichenfolge im Service, der die Datenbank nutzt, und deployen Sie erneut:
 
 ```bash
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-Die Referenz wird zur Bereitstellen-Zeit aufgelöst, daher übernimmt jeder konsumierende Service die aktuellen Werte des Add-ons beim nächsten Bereitstellen. Verwenden Sie stattdessen `DATABASE_URL` für Clients außerhalb des Projekts. Jeder Service im Projekt erhält außerdem die öffentliche `DATABASE_URL` des Add-ons mit der niedrigsten Priorität; eine explizite Referenz überschreibt sie.
+Lizard löst die Referenz beim Deployment auf. Der Service erhält dabei die aktuellen Werte des Add-ons. Verwenden Sie stattdessen `DATABASE_URL` für Clients außerhalb des Projekts. Jeder Service im Projekt erhält außerdem die öffentliche `DATABASE_URL` des Add-ons mit der niedrigsten Priorität; eine explizite Referenz überschreibt sie.
 
 Prüfen Sie die Verbindung von Ihrem Rechner aus, ohne die Verbindungszeichenfolge auszugeben:
 
@@ -54,18 +95,20 @@ Prüfen Sie die Verbindung von Ihrem Rechner aus, ohne die Verbindungszeichenfol
 lizard run --service postgres -- sh -c 'psql "$DATABASE_URL" -c "SELECT 1"'
 ```
 
+`lizard run --service postgres` führt den Befehl auf Ihrem Rechner mit den öffentlichen Verbindungswerten der Datenbank aus; dafür muss `psql` lokal installiert sein. `lizard run --service api` würde `${{…}}`-Referenzen als unveränderten Text weitergeben; siehe [`lizard run`](/cli/run).
+
 <span id="run-migrations-on-deploy" />
 
 ## Migrationen beim Bereitstellen ausführen
 
-Verwenden Sie für Migrationen einen Pre-Bereitstellen-Befehl. Er wird nur ausgeführt, wenn auch ein Startbefehl gesetzt ist, und zwar als `sh -c "<pre> && exec <start>"` beim Start jedes Containers: jedes Replikats, jedes Neustarts. Gestalten Sie Migrationen so, dass sie sicher mehrfach und gleichzeitig ausgeführt werden können und sowohl mit der alten als auch mit der neuen Anwendungsversion kompatibel sind:
+Verwenden Sie für Migrationen einen Befehl vor dem Deployment. Er wird nur ausgeführt, wenn auch ein Startbefehl gesetzt ist, und zwar als `sh -c "<pre> && exec <start>"` beim Start jedes Containers: jedes Replikats, jedes Neustarts. Gestalten Sie Migrationen so, dass sie sicher mehrfach und gleichzeitig ausgeführt werden können und sowohl mit der alten als auch mit der neuen Anwendungsversion kompatibel sind:
 
 ```bash
 lizard service set api --set preDeployCommand="npm run migrate" --set startCommand="npm start"
 lizard redeploy --service api
 ```
 
-Für eine Django-App lautet der Befehl `python manage.py migrate`; siehe [Python-App-Hosting](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks).
+Für eine Django-App lautet der Befehl `python manage.py migrate`; siehe den [Django-Leitfaden](/framework-guides/django) und [Python-App-Hosting](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks). Die Leitfäden zu [Umami](/guides/umami) und [Flowise](/guides/flowise) zeigen vollständige Apps auf Managed Postgres.
 
 <span id="browse-and-query-data" />
 
@@ -98,11 +141,21 @@ lizard add postgres
 lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_PRIVATE_URL}}' --service api
 ```
 
+<span id="backups-and-restore" />
+
+## Backups und Wiederherstellung
+
+Gehen Sie nicht von geplanten Backups oder Point-in-Time-Recovery aus. Exportieren Sie die Datenbank vor einer riskanten Migration selbst und testen Sie die Wiederherstellung in einer separaten Datenbank. Zum Beispiel mit lokal installiertem `pg_dump` 18 oder neuer:
+
+```bash
+lizard run --service postgres -- sh -c 'pg_dump "$DATABASE_URL" > backup.sql'
+```
+
+Siehe [Speicher und Wiederherstellung](/platform/storage-and-recovery) für einen Plan zur Wiederherstellung.
+
 <span id="see-also" />
 
 ## Siehe auch
 
 - [Managed Addons](/addons) — Benennung, Referenzen und die Dashboard-Browser.
 - [Service-übergreifende Referenzen](/variables/references) — Referenzsyntax und Auflösung.
-
-Siehe [Speicher und Wiederherstellung](/platform/storage-and-recovery) für die Planung von Backup und Wiederherstellung. `lizard run --service postgres` führt den Befehl auf Ihrem Rechner mit den öffentlichen Verbindungswerten des Add-ons aus; dafür muss `psql` lokal installiert sein. `lizard run --service api` würde `${{…}}`-Referenzen als Literaltext durchreichen.

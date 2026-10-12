@@ -1,8 +1,11 @@
 ---
-description: "Запускайте команды Python в шаблоне interpreter через Lizard SDK."
+title: "API интерпретатора кода для кода, который пишет LLM"
+description: "Запускайте код, написанный LLM, в sandbox через Lizard SDK: ядро Python с сохранением состояния, графики в PNG, ошибки с трассировкой, таймауты и пример инструмента для LLM."
 ---
 
-# Запуск Python
+<span id="code-interpreter-api-for-llm-generated-code" />
+
+# API интерпретатора кода для кода, который пишет LLM
 
 <span id="интерпретатор-кода" />
 <span id="запуск-кода" />
@@ -19,16 +22,22 @@ description: "Запускайте команды Python в шаблоне inter
 <span id="checkpointing-a-session" />
 <span id="see-also" />
 
-Запускайте Python в шаблоне `interpreter`. `CodeSandbox` сохраняет состояние между вызовами: Python выполняется в постоянном ядре Jupyter для каждого контекста, а результаты могут включать значение последнего выражения и графики в формате `image/png`.
+Интерпретатор кода запускает код, который пишет языковая модель, и возвращает ей результат. В Lizard (lizard.build) это делает `CodeSandbox` из Lizard SDK внутри sandbox на базе microVM Firecracker. Поэтому код выполняется отдельно от вашего приложения и компьютера. `CodeSandbox` запускает шаблон `interpreter` с Python и основными библиотеками для работы с данными. Python работает в ядре Jupyter, которое сохраняет переменные между вызовами, а каждый результат содержит напечатанный вывод, значение последнего выражения, графики в формате `image/png` и ошибку с трассировкой, если она возникла.
+
+<span id="run-code-with-state" />
+
+## Запуск кода с сохранением состояния
 
 ```ts
 import { CodeSandbox } from '@lizard-build/sdk';
 
 const sandbox = await CodeSandbox.create({ projectId: 'proj_123', timeoutMs: 300_000 });
 try {
-  await sandbox.runCode('x = 21');
-  const run = await sandbox.runCode('x * 2');
-  console.log(run.results[0]?.data, run.stdout, run.error);
+  await sandbox.runCode('import pandas as pd\ndf = pd.DataFrame({"x": [1, 2, 3]})');
+  const run = await sandbox.runCode('df.x.sum()');
+  console.log(run.results[0]?.data); // "6"
+  const bad = await sandbox.runCode('1/0');
+  console.log(bad.error?.name); // "ZeroDivisionError"
 } finally {
   await sandbox.kill();
 }
@@ -37,48 +46,114 @@ try {
 ```python
 from lizard import CodeSandbox
 
-sandbox = CodeSandbox.create(project_id="proj_123", timeout_ms=300_000)
-try:
-    sandbox.run_code("x = 21")
-    run = sandbox.run_code("x * 2")
-    print(run.results[0].data, run.stdout, run.error)
-finally:
-    sandbox.kill()
+with CodeSandbox.create(project_id="proj_123", timeout_ms=300_000) as sandbox:
+    sandbox.run_code('import pandas as pd\ndf = pd.DataFrame({"x": [1, 2, 3]})')
+    run = sandbox.run_code("df.x.sum()")
+    print(run.results[0].data)  # "6"
+    print(sandbox.run_code("1/0").error.name)  # "ZeroDivisionError"
 ```
 
-`createContext()` (Python: `create_context()`) запускает отдельное ядро со своими переменными. JavaScript и bash выполняются как новый процесс при каждом вызове.
+Ошибка в коде возвращается в результате, а не вызывает исключение в SDK. Сбои запроса, например неверный API-ключ, выбрасывают исключение.
 
-## Запуск команд
+<span id="what-does-runcode-return" />
 
-`process.exec` создаёт отдельный процесс для каждой команды, поэтому переменные Python между вызовами не сохраняются. Записывайте промежуточные результаты в файлы. Метод возвращает stdout, stderr и код завершения.
+## Что возвращает runCode?
+
+`runCode` (в Python: `run_code`) возвращает `Execution`:
+
+| Поле | Содержимое |
+|---|---|
+| `stdout`, `stderr` | Всё, что напечатал код |
+| `results` | Расширенный вывод: значение последнего выражения как `text/plain`, графики matplotlib и изображения как base64 `image/png`, HTML и другие типы, каждый с `mime` и `data` |
+| `error` | `name`, `message` и `traceback`, если код выбросил исключение |
+| `executionCount` | Счётчик ячеек ядра (в Python: `execution_count`) |
+
+Передайте `onStdout`, `onStderr`, `onResult` или `onError` (в Python: `on_stdout` и т. д.), чтобы получать вывод, пока код выполняется.
+
+<span id="use-it-as-an-llm-tool" />
+
+## Использование как инструмента LLM
+
+Дайте модели один инструмент, например `run_python` с единственным строковым аргументом `code`. Когда модель вызывает его, выполните код в sandbox и отправьте текст обратно как результат инструмента. Держите один sandbox на весь диалог, чтобы переменные модели сохранялись между вызовами.
 
 ```ts
-import { Sandbox } from '@lizard-build/sdk';
+import { CodeSandbox } from '@lizard-build/sdk';
 
-const sandbox = await Sandbox.create('interpreter', {
-  projectId: 'proj_123', timeoutMs: 300_000,
-});
-try {
-  const result = await sandbox.process.exec("python -c 'print(2 ** 10)'");
-  console.log(result.stdout, result.stderr, result.exitCode);
-} finally {
-  await sandbox.kill();
+const sandbox = await CodeSandbox.create({ projectId: 'proj_123', timeoutMs: 600_000 });
+
+// Call this when the model asks to run Python. Return the text to send back to it.
+async function runPython(code: string): Promise<string> {
+  const run = await sandbox.runCode(code, { timeoutMs: 30_000 });
+  if (run.error) return `${run.error.name}: ${run.error.message}\n${run.error.traceback}`;
+  const values = run.results.flatMap((r) =>
+    r.type === 'result' && r.mime === 'text/plain' ? [r.data] : [],
+  );
+  return [run.stdout, ...values].filter(Boolean).join('\n');
 }
+
+// When the conversation ends:
+await sandbox.kill();
 ```
 
 ```python
-from lizard import Sandbox
+from lizard import CodeSandbox
 
-sandbox = Sandbox.create("interpreter", project_id="proj_123", timeout_ms=300_000)
-try:
-    result = sandbox.process.exec_("python -c 'print(2 ** 10)'")
-    print(result.stdout, result.stderr, result.exit_code)
-finally:
-    sandbox.kill()
+sandbox = CodeSandbox.create(project_id="proj_123", timeout_ms=600_000)
+
+def run_python(code: str) -> str:
+    """Call this when the model asks to run Python. Return the text to send back to it."""
+    run = sandbox.run_code(code, timeout_ms=30_000)
+    if run.error:
+        return f"{run.error.name}: {run.error.message}\n{run.error.traceback}"
+    values = [r.data for r in run.results if r.mime == "text/plain"]
+    return "\n".join(filter(None, [run.stdout, *values]))
+
+# When the conversation ends:
+sandbox.kill()
 ```
+
+В этом примере sandbox работает десять минут. Для более длинных диалогов увеличьте срок через `setTimeout` (в Python: `set_timeout`) или задайте `timeoutMs: 0` и останавливайте sandbox сами.
+
+<span id="charts" />
+
+## Графики
+
+Когда код рисует график matplotlib, в `results` появляется элемент с `mime`, равным `image/png`, и изображением в base64 в `data`:
+
+```python
+import base64
+from pathlib import Path
+
+run = sandbox.run_code("import matplotlib.pyplot as plt\nplt.plot([1, 4, 9])\nplt.show()")
+png = next(r.data for r in run.results if r.mime == "image/png")
+Path("chart.png").write_bytes(base64.b64decode(png))
+```
+
+<span id="contexts-timeouts-and-languages" />
+
+## Контексты, таймауты и языки
+
+- **Контексты.** `createContext()` (в Python: `create_context()`) запускает отдельное ядро со своими переменными и рабочей папкой; передайте его как `context` в `runCode`. `listContexts()`, `restartContext(ctx)` и `deleteContext(ctx)` управляют контекстами. Без контекста каждый язык использует свой контекст по умолчанию.
+- **Таймауты.** `timeoutMs` (в Python: `timeout_ms`) ограничивает один вызов, по умолчанию 60 секунд. Ядро Python, которое работает дольше, прерывается и сохраняет состояние; `error.name` в результате равно `TimeoutError`.
+- **Другие языки.** JavaScript и bash выполняются как новый процесс при каждом вызове, поэтому состояние не сохраняется, а `results` остаётся пустым. Для JavaScript нужен `node`, которого нет в шаблоне `interpreter`.
+- **Пауза и снимки.** Ядра работают внутри sandbox, поэтому `pause()` и `resume()` сохраняют их переменные, а `snapshot()` и `fork()` их копируют.
+
+<span id="run-commands" />
+
+## Запуск команд
+
+`process.exec` создаёт отдельный процесс для каждой команды, поэтому переменные Python между вызовами не сохраняются. Используйте его для команд оболочки, например `pip install`, а результаты, которые понадобятся позже, сохраняйте в файлы. См. [запуск команды](/sandboxes/quickstart#run-a-command) и [справочник SDK](/sandboxes/sdk-reference#run-commands).
+
+<span id="untrusted-code" />
+
+## Недоверенный код
+
+Считайте недоверенным всё, что пишет модель. Не передавайте `lizardToken`, если коду не нужен Lizard CLI; этот ключ может прочитать всё, что работает в sandbox, поэтому в таком случае используйте ключ с доступом только к рабочему пространству. Не кладите другие секреты в `envs`. Sandbox с томом на базе pod использует ядро хоста; см. [runtime и шаблоны](/sandboxes#runtime-and-templates).
+
+<span id="storage-and-billing" />
 
 ## Хранение и оплата
 
-Файлы и процессы доступны, пока sandbox работает. После остановки следующий sandbox может получить только файлы, записанные на подключённый Persistent Volume в `/workspace`. Без тома `/workspace` — временная папка. Том подключается только к одному sandbox и хранится на одном узле; отдельно сохраняйте файлы, которые должны пережить потерю узла.
+Переменные и файлы доступны, только пока работает sandbox. Правила оплаты и хранения смотрите в разделе [хранение и оплата](/sandboxes#storage-and-billing); размеры и цены смотрите в [лимитах](/platform/limits#sandbox-sizes).
 
-[Быстрый старт](/sandboxes/quickstart) · [Справочник SDK](/sandboxes/sdk-reference) · [Запуск Python](/sandboxes/code-interpreter) · [Кабинет](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)
+[Обзор Sandboxes](/sandboxes) · [Быстрый старт](/sandboxes/quickstart) · [Справочник SDK](/sandboxes/sdk-reference) · [Persistent Volumes](/sandboxes/volumes) · [Страница продукта Sandboxes](https://lizard.build/sandboxes)

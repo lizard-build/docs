@@ -1,8 +1,11 @@
 ---
-description: "Runtime, plantillas, ciclo de vida, límites, almacenamiento y facturación de Sandboxes."
+title: "Sandboxes para agentes de IA"
+description: "Ejecuta código generado por IA en microVMs de Firecracker con Lizard SDK o Lizard CLI: cuándo usar Sandboxes, tiempo de arranque, plantillas, tamaños, ciclo de vida y almacenamiento."
 ---
 
-# Sandboxes
+<span id="sandboxes-for-ai-agents" />
+
+# Sandboxes para agentes de IA
 
 <span id="cuándo-usar-un-sandbox" />
 <span id="qué-los-hace-rápidos" />
@@ -12,15 +15,52 @@ description: "Runtime, plantillas, ciclo de vida, límites, almacenamiento y fac
 <span id="when-to-use-a-sandbox" />
 <span id="what-makes-them-fast" />
 <span id="templates" />
-<span id="lifecycle" />
 <span id="resources--limits" />
 <span id="ways-to-drive-sandboxes" />
 
-Sandboxes ejecuta comandos breves y tareas de agentes como microVMs de Firecracker, cada una con su propio kernel. Un sandbox que adjunta un Persistent Volume basado en pods, o que restaura un snapshot de pod, se ejecuta como un pod de Kubernetes con el runtime runc y comparte el kernel del host. `getInfo().runtime` te indica cuál es el caso. Limita las credenciales y el acceso a la red al ejecutar código que no sea de confianza.
+Los Sandboxes en Lizard (lizard.build) son máquinas Linux aisladas donde un agente de IA ejecuta código y tareas. Cada sandbox es una microVM de Firecracker con su propio kernel. Tu código crea uno con Lizard SDK (`@lizard-build/sdk` para TypeScript, `lizard-sdk` para Python), o ejecutas `lizard sandbox create` en una terminal; después ejecutas comandos, lees y escribes archivos y abres puertos. En una prueba del 2026-10-12, la mediana del tiempo desde crear un sandbox hasta su primera salida de Python fue de 228 ms.
+
+<span id="when-to-use-sandboxes" />
+
+## Cuándo usar Sandboxes
+
+- **Ejecuta código que escribió un modelo.** Dale a un LLM un [intérprete de código](/sandboxes/code-interpreter) que conserva el estado de Python entre llamadas.
+- **Dale a un agente de programación su propia máquina.** Ejecuta [Claude Code](/sandboxes/guides/claude-code), [OpenCode](/sandboxes/guides/opencode) o Codex en un sandbox en lugar de en tu portátil. Conecta sus credenciales con [`lizard agents`](/cli/agents) y envía prompts con [`lizard sandbox prompt`](/cli/sandbox#coding-agents).
+- **Previsualiza lo que construyó el agente.** Inicia un servidor de desarrollo y ábrelo mediante una [URL de vista previa privada](/sandboxes/preview-urls).
+- **Prueba varios caminos a la vez.** Haz fork de un sandbox en marcha, con su memoria y sus procesos, o restaura muchas copias desde un snapshot.
+- **Controla un navegador.** La plantilla `desktop` ejecuta un escritorio gráfico que un agente controla con capturas de pantalla, clics y teclas.
+
+Para un servicio web o un worker que deba seguir en marcha, despliega una app; consulta el [inicio rápido de apps](/getting-started).
+
+<span id="how-fast-does-a-sandbox-start" />
+
+## ¿Cuánto tarda en arrancar un sandbox?
+
+En una prueba del 2026-10-12, la mediana del tiempo desde crear un sandbox hasta su primera salida de Python fue de 228 ms, y el percentil 95 fue de 310 ms. La prueba se ejecutó 300 veces desde la región US East de Railway contra `us-east-1`, con la plantilla `base` y el tamaño Small. Los resultados de la misma prueba para E2B, Daytona y Modal están en la [página de Sandboxes](https://lizard.build/sandboxes).
+
+<span id="sandboxes-at-a-glance" />
+
+## Sandboxes de un vistazo
+
+| Pregunta | Respuesta |
+|---|---|
+| ¿Qué ejecuta el código? | Una microVM de Firecracker con su propio kernel; consulta la excepción en [runtime y plantillas](#runtime-and-templates) |
+| ¿Cómo creo uno? | [Lizard SDK](/sandboxes/sdk-reference), [`lizard sandbox`](/cli/sandbox), el [panel](/sandboxes/dashboard) o la [API HTTP](/sandboxes/sdk-reference#http-api) |
+| ¿Qué plantillas hay? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` y `desktop` |
+| ¿Qué tamaños hay? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, el predeterminado) y Large (8 vCPU / 16 GB); consulta [tamaños y precios](/platform/limits#sandbox-sizes) |
+| ¿Cuánto dura uno? | Cinco minutos por defecto desde el SDK y la CLI; sin vencimiento por defecto desde la API directa y el panel |
+| ¿Qué sobrevive a una detención? | Solo los archivos de un volumen de [Persistent Volumes](/sandboxes/volumes) montado en `/workspace` |
+| ¿Cuántos pueden ejecutarse a la vez? | 100 en Pro, 5 durante la prueba; consulta [límites de la cuenta](/platform/limits#sandbox-account-limits) |
+
+<span id="runtime-and-templates" />
 
 ## Runtime y plantillas
 
 Elige una plantilla del catálogo actual: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` o `desktop`. Su disponibilidad depende de la región y de la capacidad del pool. `interpreter` incluye Python y bibliotecas de datos habituales. `desktop` ejecuta un escritorio gráfico que controlas con `sandbox.desktop` o `lizard sandbox desktop`. Comprueba las versiones dentro del sandbox. La CLI pública no permite subir plantillas propias.
+
+Un sandbox que adjunta un volumen de Persistent Volumes basado en pods, o que restaura un snapshot de pod, se ejecuta como un pod de Kubernetes con el runtime runc y comparte el kernel del host. `getInfo().runtime` te indica cuál es el caso. Limita las credenciales y el acceso a la red al ejecutar código que no sea de confianza.
+
+<span id="lifecycle" />
 
 ## Ciclo de vida
 
@@ -33,30 +73,38 @@ running -> new sandboxes (fork)
 snapshot -> new sandbox (restore)
 ```
 
+<span id="resources-and-timeouts" />
+
 ## Recursos y duración
 
 Elige un tamaño al crear un sandbox: Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, el predeterminado) o Large (8 vCPU / 16 GB). Consulta [tamaños y precios](/platform/limits#sandbox-sizes). Indica la región de forma explícita si hace falta; que aparezca en el catálogo no garantiza capacidad libre.
 
-El SDK y la CLI fijan cinco minutos de duración por defecto. La API directa y el panel no fijan caducidad por defecto. Indica la duración: `timeoutMs: 0` al crear desactiva la caducidad; un valor positivo fija un plazo. `setTimeout` acepta 1000–2147483647 ms, no cero. Los comandos no reinician el plazo. No es un temporizador de inactividad.
+El SDK y la CLI fijan cinco minutos de duración por defecto. La API directa y el panel no fijan caducidad por defecto. Indica la duración: `timeoutMs: 0` al crear desactiva la caducidad; un valor positivo fija un plazo. `setTimeout` acepta 1000 a 2147483647 ms, no cero. Los comandos no reinician el plazo. No es un temporizador de inactividad.
+
+<span id="storage-and-billing" />
 
 ## Almacenamiento y facturación
 
-Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un Persistent Volume adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
+Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un volumen de Persistent Volumes adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
 
-Cada tamaño tiene un precio fijo por hora, facturado por segundo mientras el sandbox está en marcha, incluido el tiempo inactivo. El tráfico saliente está incluido hasta [2 TB por cuenta](/platform/limits#sandbox-egress) en una ventana móvil de 30 días. Un sandbox restaurado desde un snapshot se ejecuta con el tamaño y el precio de su origen; uno restaurado desde un snapshot de pod se factura por consumo medido. Un sandbox pausado no se factura; los Persistent Volumes se facturan aparte mientras guardes los datos. Pausa o detén el sandbox cuando termine la tarea.
+Cada tamaño tiene un precio fijo por hora, facturado por segundo mientras el sandbox está en marcha, incluido el tiempo inactivo. El tráfico saliente está incluido hasta [2 TB por cuenta](/platform/limits#sandbox-egress) en una ventana móvil de 30 días. Un sandbox restaurado desde un snapshot se ejecuta con el tamaño y el precio de su origen; uno restaurado desde un snapshot de pod se factura por consumo medido. Un sandbox pausado no se factura; Persistent Volumes se facturan aparte mientras guardes los datos. Pausa o detén el sandbox cuando termine la tarea. Las tarifas de cada recurso están en la [página de facturación](/platform/billing) y en [precios](https://lizard.build/pricing).
 
-```ts
-import { Sandbox } from '@lizard-build/sdk';
+<span id="guides" />
 
-const sandbox = await Sandbox.create('interpreter', {
-  projectId: 'proj_123', timeoutMs: 300_000,
-});
-try {
-  const result = await sandbox.process.exec("python -c 'print(2 ** 10)'");
-  console.log(result.stdout, result.stderr, result.exitCode);
-} finally {
-  await sandbox.kill();
-}
-```
+## Guías
 
-[Inicio rápido](/sandboxes/quickstart) · [Referencia del SDK](/sandboxes/sdk-reference) · [Ejecutar Python](/sandboxes/code-interpreter) · [Panel](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)
+- [Ejecutar Claude Code en un sandbox](/sandboxes/guides/claude-code)
+- [Ejecutar OpenCode en un sandbox](/sandboxes/guides/opencode)
+- [URLs de vista previa para un servidor de desarrollo](/sandboxes/preview-urls)
+- [Intérprete de código para código generado por LLM](/sandboxes/code-interpreter)
+- [Conservar archivos con Persistent Volumes](/sandboxes/volumes)
+
+<span id="reference" />
+
+## Referencia
+
+- [Inicio rápido de Sandboxes](/sandboxes/quickstart): tu primer sandbox, paso a paso.
+- [Referencia de la API y el SDK de Sandboxes](/sandboxes/sdk-reference): cada llamada en TypeScript y Python.
+- [`lizard sandbox`](/cli/sandbox): crear, exec, shell, snapshots y agentes de programación desde la terminal.
+- [Panel de Sandboxes](/sandboxes/dashboard): crea, inspecciona y detén sandboxes en el navegador.
+- [Límites](/platform/limits#sandboxes): tamaños, precios, concurrencia y tráfico de salida.

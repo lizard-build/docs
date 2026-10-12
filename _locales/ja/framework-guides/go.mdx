@@ -1,0 +1,179 @@
+---
+title: "Go アプリをデプロイする"
+description: "Lizard で Go アプリをホストします。lizardpack は go.mod を見つけ、go 行の Go バージョンで静的バイナリをビルドし、PORT を設定してポート 8080 で実行します。"
+---
+
+<span id="deploy-a-go-app" />
+
+# Go アプリをデプロイする
+
+Lizard (lizard.build) に Go アプリをデプロイするには、`go.mod` ファイルを含むモジュールをアップロードするか push します。lizardpack は `go` 行の Go バージョンでビルドし、静的バイナリ（`CGO_ENABLED=0`）をコンパイルして Alpine Linux 上で実行します。サービスポートは `8080` で、Lizard はそれを `PORT` でプロセスに渡します。`PORT` を読み取り、すべてのインターフェースで待ち受けてください。
+
+**テスト状況:** 以下のサンプルアプリは Go 1.24 を使ってローカルでビルド・実行でき、ビルドプランは、Lizard が使う lizardpack で確認しました。このガイドのデプロイ手順は、まだ最初から最後まで試していません。
+
+<span id="before-you-start" />
+
+## 始める前に
+
+- デプロイするディレクトリに `go.mod` があり、依存関係がある場合は `go.sum` もある Go モジュール。
+- `lizard login` でサインイン済みで、Pro または 7 日間の Pro トライアル（カードが必要）を利用している Lizard CLI。[料金](https://lizard.build/pricing)を参照してください。
+
+<span id="a-minimal-app" />
+
+## 最小構成のアプリ
+
+`go.mod`:
+
+```text
+module example.com/hello
+
+go 1.24
+```
+
+`main.go`:
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+)
+
+func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "Hello from Go on Lizard")
+	})
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "ok")
+	})
+
+	log.Printf("listening on :%s", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
+}
+```
+
+`":"+port` はすべてのインターフェースで待ち受けます。`127.0.0.1:8080` のようなアドレスではコンテナ内からの接続しか受け付けず、デプロイはいつまでも healthy になりません。
+
+ローカルで確認します:
+
+```bash
+go run .
+curl http://localhost:8080/healthz
+```
+
+<span id="what-lizardpack-builds" />
+
+## lizardpack がビルドするもの
+
+| ステップ | 内容 |
+|---|---|
+| 検出 | `go.mod`、`go.work`、または任意の `.go` ファイル。lizardpack は Node.js や Python より先に Go を確認します。 |
+| Go のバージョン | `go.mod` の `go` 行。使われるのはメジャーとマイナーだけで、`go 1.24.3` は `golang:1.24-alpine` 上でビルドされます。`go.mod` がない場合は Go 1.24。 |
+| ビルド | `go mod download` の後に `CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w' -o /app/server <package>` |
+| main パッケージ | ルートディレクトリ。`cmd/main.go` がある場合は `./cmd`。それ以外は、アルファベット順で最初の `cmd/<name>/main.go` |
+| ランタイム | `ca-certificates` と `tzdata` を含む `alpine:3.19`。lizardpack はソースディレクトリ全体をバイナリと並べて `/app` にコピーするため、`templates/` や `static/` などの相対パスもそのまま使えます。 |
+| 起動とポート | ポート `8080` で `/app/server` |
+
+生成される Dockerfile:
+
+```dockerfile
+FROM golang:1.24-alpine AS build
+WORKDIR /app
+COPY go.mod go.sum* ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w' -o /app/server .
+
+FROM alpine:3.19
+RUN apk add --no-cache ca-certificates tzdata
+WORKDIR /app
+COPY --from=build /app /app
+EXPOSE 8080
+CMD ["/app/server"]
+```
+
+このイメージを使うには、サービスのビルドコマンドと起動コマンドを空のままにしてください。どちらかが設定されていると、Lizard はそのコマンドから別の Dockerfile を生成し、`go` 行を無視します。その場合、`go build …` コマンドは Go 1.24 でビルドされます。すべてのステップを自分で制御するには、独自の `Dockerfile` をコミットしてください。[Dockerfile から Docker コンテナをデプロイする](/deploy/dockerfile)を参照してください。
+
+<span id="deploy" />
+
+## デプロイ
+
+モジュールのルートから実行します:
+
+```bash
+lizard init --name go-app
+lizard add --service api
+lizard up --service api --port 8080
+```
+
+`lizard up` はディレクトリをアップロードし、Lizard のビルドマシンでビルドして URL を表示します。コマンドを実行するマシンに Docker や Go は必要ありません。git push to deploy を使う場合は、`lizard add -r your-org/your-app -n api` で [GitHub リポジトリを接続](/deploy/github) し、`lizard port --service api` が `8080` を表示することを確認してください。
+
+<span id="frameworks" />
+
+## フレームワーク
+
+- **net/http、chi、gorilla/mux:** 上の例のように、`http.ListenAndServe` に `":" + os.Getenv("PORT")` を渡します。
+- **Gin:** アドレスなしの `r.Run()` は `PORT` を読み取り、なければ `:8080` を使います。サービスに `GIN_MODE=release` を設定してください。
+- **Echo、Fiber:** アドレスを自分で渡します。`e.Start(":" + os.Getenv("PORT"))` または `app.Listen(":" + os.Getenv("PORT"))` を使ってください。
+
+<span id="variables-and-databases" />
+
+## 変数とデータベース
+
+サービスに設定を追加し、`os.Getenv` で読み取ります:
+
+```bash
+lizard secrets set GIN_MODE=release API_KEY=change-me --service api
+```
+
+データベースには [Managed Postgres](/addons/postgres) を追加し、[参照](/variables/references) を使ってそのプライベート URL を渡します:
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
+```
+
+その後、`pgxpool.New(ctx, os.Getenv("DATABASE_URL"))` のようにドライバーで接続します。変数を変更すると、再ビルドなしでサービスが再起動します。
+
+<span id="check-that-it-works" />
+
+## 動作を確認する
+
+```bash
+lizard logs --build --service api
+lizard logs --service api --tail 100
+lizard ps
+```
+
+`lizard up` が表示した URL で `/healthz` をリクエストし、続いて実際の処理を行うルートをリクエストします。ビルドログには、ビルドに使われた `golang:` イメージが表示されます。
+
+<span id="common-problems" />
+
+## よくある問題
+
+| 症状 | 対処 |
+|---|---|
+| `no Go files in /app` | `main` パッケージがルートにも `cmd/` の下にもありません。移動するか、Dockerfile を追加します。 |
+| 違うバイナリが起動する | `cmd/<name>/main.go` が複数ある場合、lizardpack はアルファベット順で最初の名前をビルドします。目的のバイナリをビルドする Dockerfile を追加してください。 |
+| `CGO_ENABLED=0` で SQLite が失敗する | ビルドで cgo が無効になるため、`mattn/go-sqlite3` は動作しません。pure Go のドライバーを使うか、できれば [Managed Postgres](/addons/postgres) を使ってください。コンテナ内のファイルはデプロイのたびに失われます。 |
+| デプロイがいつまでも healthy にならない | プロセスは `PORT`（または `8080`）で、すべてのインターフェースに対して待ち受ける必要があります。[サービスが healthy にならない](/deploy/troubleshooting/service-never-healthy)を参照してください。 |
+| より新しい Go が必要 | `go mod edit -go=1.25` などで `go` 行を変更し、もう一度デプロイします。[ランタイムバージョン](/deploy/runtime-versions)を参照してください。 |
+
+キューコンシューマーのように HTTP を提供しない Go プロセスは、`--port 0` を付けて [バックグラウンドワーカー](/deploy/workers) として実行します。
+
+<span id="related" />
+
+## 関連項目
+
+- [フレームワークガイド](/framework-guides)
+- [ビルドパイプライン](/concepts/build-pipeline)
+- [変数とシークレット](/variables)
+- [ネットワークとドメイン](/networking)

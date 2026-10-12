@@ -1,10 +1,11 @@
 ---
+title: "Regions: where services and addons run"
 description: "Pick where your services and addons run, co-locate stateful resources to cut latency, and see which hostnames services and object storage get."
 ---
 
 # Regions
 
-Services and addons are provisioned in a region. List the regions available to your account and pick one at create time.
+Lizard runs services, addons and Sandboxes in regions such as US East (`us-east-1`) and EU West (`eu-west-lim-a`). You pick the region when you create a resource; without `--region`, `lizard add` creates it in `us-east-1`. Put a service and its databases in the same region to keep latency low. [`lizard regions`](/cli/regions) lists the regions open to your account.
 
 ## List regions
 
@@ -23,7 +24,7 @@ lizard add postgres --region <code>
 lizard up --region <code>          # new services only
 ```
 
-Projects have no default region. Without `--region`, `lizard add` creates in `us-east-1`, and `lizard up` creates a new service in the region of the API server that handles the request. Pass `--region` to choose.
+Projects have no default region. Without `--region`, `lizard add` creates resources in `us-east-1`, and `lizard up` creates a new service in the region of the API server that handles the request. Pass `--region` to choose.
 
 > **Co-locate stateful resources.** Put a service and the addons it talks to (Managed Postgres, Managed Redis, Managed Object Storage) in the **same region** to keep latency low and avoid cross-region data charges.
 

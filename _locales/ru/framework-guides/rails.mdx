@@ -1,0 +1,147 @@
+---
+title: "Развертывание приложения Rails"
+description: "Деплой Ruby on Rails в Lizard через Dockerfile, который генерирует Rails: master key, Managed Postgres, базы cache, queue и cable в Rails 8, порт, проверки."
+---
+
+<span id="deploy-a-rails-app" />
+
+# Развертывание приложения Rails
+
+Rails 7.1 и новее генерируют продакшен-`Dockerfile`, и Lizard (lizard.build) собирает его как есть: образ ставит гемы, прекомпилирует ассеты и выполняет `bin/rails db:prepare` при каждом запуске сервера. Задайте `RAILS_MASTER_KEY` и URL баз данных, затем выполните `lizard up --port 8080` для Rails 8 (с `HTTP_PORT=8080` для Thruster) или `lizard up --port 3000` для Rails 7.1 и 7.2. Без Dockerfile lizardpack собирает обычный образ Ruby на порту `3000`.
+
+**Статус тестов:** мы проверили `Dockerfile`, `bin/docker-entrypoint`, `config/puma.rb` и `database.yml`, которые генерирует Rails, правила сборки и портов в Lizard, а также план lizardpack для приложения Rails без Dockerfile. Полный деплой приложения Rails по этому руководству мы ещё не проводили.
+
+<span id="before-you-start" />
+
+## Перед началом
+
+- Приложение на Rails 7.1 или новее, которое использует PostgreSQL (гем `pg`) и в котором остались сгенерированные `Dockerfile` и `bin/docker-entrypoint`. Более старое приложение может получить их из гема [dockerfile-rails](https://github.com/fly-apps/dockerfile-rails): `bundle add dockerfile-rails --group development`, затем `bin/rails generate dockerfile`.
+- `config/master.key` на вашем компьютере или `SECRET_KEY_BASE` приложения.
+- `Gemfile.lock`, в котором указана платформа `x86_64-linux`. Добавьте её командой `bundle lock --add-platform x86_64-linux` и закоммитьте файл.
+- Lizard CLI с выполненным `lizard login` и тариф Pro или 7-дневный пробный период Pro (нужна карта). См. [цены](https://lizard.build/pricing).
+
+<span id="how-lizard-builds-a-rails-app" />
+
+## Как Lizard собирает приложение Rails
+
+| В приложении есть | Lizard собирает | Порт сервиса |
+|---|---|---|
+| `Dockerfile` от Rails 8 (`EXPOSE 80`, `CMD ["./bin/thrust", "./bin/rails", "server"]`) | Ваш Dockerfile как есть | `8080` с `HTTP_PORT=8080` |
+| `Dockerfile` от Rails 7.1 или 7.2 (`EXPOSE 3000`) | Ваш Dockerfile как есть | `3000` |
+| Нет Dockerfile | Образ Ruby от lizardpack; см. [ниже](#without-a-dockerfile) | `3000` |
+
+Оставьте команды сборки и запуска сервиса пустыми. Если задана любая из них, Lizard вместо вашего Dockerfile пишет собственный по этим командам, и в этом образе есть Node.js, а не Ruby. Команда запуска к тому же заменяет entrypoint образа, так что `db:prepare` не выполнится. См. [порядок решений о сборке](/concepts/build-pipeline#build-decision-order).
+
+Rails 8 запускает Thruster, который слушает порт `80` и передаёт запросы Puma на порту `3000`. Образ работает от непривилегированного пользователя (`USER 1000:1000`), а такому процессу может не хватить прав открыть порт ниже 1024. `HTTP_PORT=8080` переносит Thruster на порт, который он всегда может открыть.
+
+<span id="create-the-project-and-database" />
+
+## Создайте проект и базу данных
+
+Из корневой директории приложения:
+
+```bash
+lizard init --name rails-app
+lizard add --service web
+lizard add postgres
+```
+
+[Managed Postgres](/addons/postgres) подключается как суперпользователь `postgres`, поэтому `db:prepare` может создать базы данных, которые запрашивает Rails.
+
+<span id="set-secrets-and-deploy-rails-8" />
+
+## Задайте секреты и разверните (Rails 8)
+
+Продакшен-`database.yml` из Rails 8 описывает четыре базы данных: `primary`, `cache`, `queue` и `cable`. `DATABASE_URL` заменяет только `primary`. Для остальных Rails читает `CACHE_DATABASE_URL`, `QUEUE_DATABASE_URL` и `CABLE_DATABASE_URL`. Направьте все четыре на один и тот же Postgres с разными именами баз данных:
+
+```bash
+PG='postgresql://postgres:${{postgres.PGPASSWORD}}@${{postgres.LIZARD_PRIVATE_DOMAIN}}:5432'
+lizard secrets set \
+  RAILS_MASTER_KEY="$(cat config/master.key)" \
+  DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' \
+  CACHE_DATABASE_URL="$PG/rails_cache" \
+  QUEUE_DATABASE_URL="$PG/rails_queue" \
+  CABLE_DATABASE_URL="$PG/rails_cable" \
+  HTTP_PORT=8080 \
+  SOLID_QUEUE_IN_PUMA=true \
+  --service web
+lizard up --service web --port 8080
+```
+
+- Одинарные кавычки не дают оболочке обработать `${{…}}`. Lizard подставляет эти [ссылки](/variables/references) при деплое и использует приватную сеть проекта.
+- С `SOLID_QUEUE_IN_PUMA=true` Puma запускает обработчик Solid Queue, так что задания Active Job выполняются внутри веб-сервиса. Без этой переменной задания остаются в очереди.
+- Используйте `SECRET_KEY_BASE` вместо `RAILS_MASTER_KEY`, только если приложение не читает других зашифрованных учётных данных.
+
+<span id="set-secrets-and-deploy-rails-71-and-72" />
+
+## Задайте секреты и разверните (Rails 7.1 и 7.2)
+
+В этих версиях одна база данных:
+
+```bash
+lizard secrets set \
+  RAILS_MASTER_KEY="$(cat config/master.key)" \
+  DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' \
+  --service web
+lizard up --service web --port 3000
+```
+
+<span id="what-happens-on-each-deploy" />
+
+## Что происходит при каждом деплое
+
+`lizard up` загружает директорию. Внутри git-репозитория он пропускает всё, что перечислено в `.gitignore`, а `.gitignore` и `.dockerignore` из Rails оба исключают `config/master.key` и файлы `.env*`. Сборка прекомпилирует ассеты с `SECRET_KEY_BASE_DUMMY=1`, потому что Lizard не передаёт в сборку по Dockerfile никаких переменных, кроме `COMMIT_SHA`.
+
+При запуске `bin/docker-entrypoint` выполняет `./bin/rails db:prepare`: создаёт недостающие базы данных, загружает схему в новые и применяет ещё не выполненные миграции. Это происходит при каждом старте контейнера, включая перезапуски. Пишите миграции так, чтобы они были безопасны и для старого, и для нового кода.
+
+Для git push to deploy отправьте приложение на GitHub и [подключите репозиторий](/deploy/github) вместо запуска `lizard up`. Задайте те же секреты и порт (`lizard port 8080 --service web`). В сгенерированном Dockerfile есть шаг `bundle install`, поэтому Lizard использует его как есть.
+
+<span id="check-that-it-works" />
+
+## Проверьте, что всё работает
+
+```bash
+lizard logs --build --service web
+lizard logs --service web --tail 100
+lizard domain --service web
+```
+
+Rails 7.1 и новее отвечают на `/up` кодом HTTP 200, как только приложение загрузится. Откройте `https://<your-domain>/up`, затем страницу, которая читает из базы данных. В логах рантайма должен появиться вывод `db:prepare`, а затем запуск Puma.
+
+<span id="without-a-dockerfile" />
+
+## Без Dockerfile
+
+Если lizardpack находит `Gemfile`, он собирает приложение Ruby:
+
+- Версия Ruby: `.ruby-version`, иначе строка `ruby` в `Gemfile`, иначе `3.4`. Учитываются только мажорная и минорная версии: `3.4.1` собирается на `ruby:3.4-slim`.
+- Он ставит `build-essential` и `libpq-dev`, затем выполняет `bundle install`.
+- Запуск: строка `web:` из Procfile, иначе `bundle exec rails server -b 0.0.0.0`, если есть `config.ru` и `Rakefile`. Порт `3000`.
+
+Этот образ не задаёт `RAILS_ENV`, не прекомпилирует ассеты и не готовит базу данных, поэтому он лучше подходит для небольших приложений и API, чем для полноценного сайта на Rails. Пишите в `.ruby-version` только номер, например `3.4.1`. `rails new` записывает `ruby-3.4.1`, и lizardpack превращает это в имя несуществующего образа. См. [версии рантайма](/deploy/runtime-versions).
+
+<span id="common-problems" />
+
+## Частые проблемы
+
+| Симптом | Что делать |
+|---|---|
+| `bundle install` падает: бандл поддерживает только другие платформы | Выполните `bundle lock --add-platform x86_64-linux` и закоммитьте `Gemfile.lock`. |
+| `Missing secret_key_base` или учётные данные не расшифровываются | Задайте `RAILS_MASTER_KEY` из `config/master.key` в сервисе `web`. |
+| Подключение cache, queue или cable идёт в локальный сокет вроде `/var/run/postgresql` | Задайте `CACHE_DATABASE_URL`, `QUEUE_DATABASE_URL` и `CABLE_DATABASE_URL`. |
+| В логах `bind: permission denied` для порта 80 | Задайте `HTTP_PORT=8080` и порт сервиса `8080`. |
+| Деплой так и не становится работоспособным | Проверьте, что порт сервиса совпадает с таблицей выше: `lizard port --service web`. См. [сервис так и не становится работоспособным](/deploy/troubleshooting/service-never-healthy). |
+| Задания остаются в очереди | Задайте `SOLID_QUEUE_IN_PUMA=true`. Чтобы выполнять задания отдельно от веб-процесса, добавьте второй сервис в [режиме воркера](/deploy/workers) с `dockerfilePath=Dockerfile` и `startCommand=./bin/jobs`. |
+| Загруженные файлы пропадают после деплоя | Сервис `local` в Active Storage пишет внутрь контейнера. Используйте S3-совместимое [Managed Object Storage](/addons/storage) с сервисом `amazon`. |
+
+Если приложение использует Sidekiq или адаптер Redis для Action Cable, добавьте [Managed Redis](/addons/redis) и задайте `REDIS_URL='${{redis.REDIS_PRIVATE_URL}}'` в каждом сервисе, которому он нужен.
+
+<span id="related" />
+
+## См. также
+
+- [Развертывание Docker-контейнера из Dockerfile](/deploy/dockerfile)
+- [Переменные и секреты](/variables)
+- [Managed Postgres](/addons/postgres)
+- [Конвейер сборки](/concepts/build-pipeline)
+- [Хранилище и восстановление](/platform/storage-and-recovery)

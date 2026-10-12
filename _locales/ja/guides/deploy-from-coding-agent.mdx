@@ -1,12 +1,13 @@
 ---
+title: "Claude Code、Codex、Cursor からデプロイする"
 description: "Lizard Skill と Lizard CLI を使って、Claude Code、Codex、または Cursor からアプリをデプロイします。GitHub またはローカルソースを選択し、データベースを接続して、結果を確認します。"
 ---
 
-<span id="deploy-from-a-coding-agent" />
+<span id="deploy-from-claude-code-codex-or-cursor" />
 
-# コーディングエージェントからデプロイする
+# Claude Code、Codex、Cursor からデプロイする
 
-コーディングエージェントは、Lizard Skill と Lizard CLI を使って、自身が構築したアプリをデプロイできます。エージェントはインストール済み CLI のガイドを読み、対象プロジェクトを確認し、ビルドを実行して、結果を確認します。これに別途のMCPトランスポートは不要です。
+Claude Code、Codex、Cursor は、Lizard Skill と Lizard CLI を使って、作成したアプリを Lizard (lizard.build) にデプロイできます。エージェントはインストール済み CLI のガイドを読み、対象プロジェクトを確認し、ビルドを実行して、公開 URL を確認します。別途の MCP トランスポートは不要です。このガイドでは、プロンプト、ローカルソースと GitHub ソースでエージェントが実行するコマンド、デプロイの成功を確かめる手順を紹介します。
 
 <span id="before-you-start" />
 
@@ -26,14 +27,14 @@ lizard --help --json
 
 Windows では、PowerShell で `irm https://lizard.build/api/cli/install.ps1 | iex` を実行するか、`npm install -g @lizard-build/cli` で npm からインストールします。
 
-Lizard Skill は、インストール済み CLI に一致する手順を読み込みます。特定のコマンドについては、フラグを推測せず、そのスキーマを読んでください:
+マシン上のすべてのエージェントでスキルを使えるようにするには、`npx skills add lizard-build/skill -g` で一度インストールしてください。[コーディングエージェント](/agents) を参照してください。Lizard Skill は、インストール済み CLI に一致する手順を読み込みます。特定のコマンドについては、フラグを推測せず、そのスキーマを読んでください:
 
 ```bash
 lizard up --help --json
 lizard service set --help --json
 ```
 
-便利なプロンプトの例:
+Claude Code、Codex、Cursor に貼り付けて使えるプロンプトの例:
 
 > このアプリを Lizard でデプロイしてください。インストール済み CLI のガイドを読み、リンクされたプロジェクトとサービスを確認し、アプリのチェックを実行して、ビルド結果と動作する URL を示してください。既存の本番サービスを変更したりデータを削除したりする前には確認してください。
 
@@ -41,7 +42,7 @@ lizard service set --help --json
 
 ## ローカルソースをデプロイする
 
-完全なテストには、[agent-appの例](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/agent-app) を使ってください。これは Node.js 22 と `pg` 8.16.3 を使用し、port 3000 で待ち受け、Managed Postgres から 1 行読み取ります。起動時に、存在しない場合はデモ用のテーブルと行を作成します。より大きなアプリケーションでは、独自のマイグレーションプロセスを使用してください。
+完全なテストには、[agent-appの例](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/agent-app) を使ってください。これは Node.js 22 と `pg` 8.16.3 を使用し、ポート 3000 で待ち受け、Managed Postgres から 1 行読み取ります。起動時に、存在しない場合はデモ用のテーブルと行を作成します。より大きなアプリケーションでは、独自のマイグレーションプロセスを使用してください。
 
 例を専用ディレクトリにコピーし、ローカルチェックを実行します:
 
@@ -137,5 +138,7 @@ lizard restart --service api --json
 ## 制限とコスト
 
 エージェントは、人と同じ CLI を通じて課金対象リソースを作成できます。[limits](/platform/limits) と [pricing](https://lizard.build/pricing) を確認し、必要なプロジェクトとサービスに認証情報の範囲を限定してください。
+
+エージェント自体をノート PC ではなく別のマシンで実行するには、[sandbox 内の Claude Code](/sandboxes/guides/claude-code) を参照してください。
 
 確認済みバージョン、クラウド結果、残っている制限については、[シナリオテストの結果](/guides/validation) を参照してください。

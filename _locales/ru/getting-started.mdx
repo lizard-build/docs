@@ -1,12 +1,13 @@
 ---
-description: "Установите Lizard CLI, войдите в систему и отправьте свое первое приложение из репозитория GitHub или локальной папки за несколько минут, а затем добавьте базу данных."
+title: "Быстрый старт приложения: разверните первое приложение"
+description: "Разверните первое приложение на Lizard за несколько минут: установите Lizard CLI, войдите в систему, начните 7-дневный пробный период Pro и разверните репозиторий GitHub или локальную папку."
 ---
 
 <span id="app-quickstart" />
 
 # Быстрый старт приложения
 
-Отправьте свое первое приложение на Lizard за несколько минут. Аккаунт Lizard создается автоматически при первом запуске `lizard login`. Вы установите Lizard CLI, войдете в систему, начнете пробный период Pro и выполните развертывание — прямо из репозитория GitHub или из локальной директории.
+По этому руководству вы развернёте приложение на Lizard (lizard.build) за несколько минут. Установите Lizard CLI, войдите в систему, начните 7-дневный пробный период Pro, затем выполните `lizard add -r owner/repo` для репозитория GitHub или `lizard up` для локальной папки. Lizard собирает приложение на своих серверах, без локального Docker, и выдает HTTPS-адрес на `onlizard.com`. Аккаунт создается при первом запуске `lizard login`.
 
 <span id="1-install-the-cli" />
 
@@ -80,7 +81,7 @@ lizard whoami
 lizard billing start
 ```
 
-Откроется Stripe Checkout, где вы добавляете карту. Пробный период включает $5 пробных кредитов, и ничего не списывается, пока он не закончится. См. [Оплата](/platform/billing).
+Откроется Stripe Checkout, где вы добавляете карту. Пробный период включает использование ресурсов на $5. До его окончания Lizard ничего не списывает. См. [Оплата](/platform/billing) и [`lizard billing`](/cli/billing).
 
 <span id="4-deploy" />
 
@@ -98,7 +99,7 @@ lizard billing start
 lizard add -r your-org/your-app
 ```
 
-Пуши в отслеживаемую ветку будут автоматически переразвертывать приложение. Для приватных репозиториев сначала подключите GitHub App:
+Пуши в отслеживаемую ветку будут автоматически переразвертывать приложение. Для приватных репозиториев сначала подключите GitHub App через [`lizard git`](/cli/git):
 
 ```bash
 lizard git connect
@@ -118,6 +119,8 @@ lizard up
 
 В любом случае, когда сборка завершится, вы получите сгенерированный URL вроде `https://your-app-x1y2z.onlizard.com`.
 
+Lizard сам определяет большинство стеков. Команды сборки и запуска, а также порт для вашего фреймворка см. в руководстве по [Next.js](/framework-guides/nextjs), [React](/framework-guides/react), [Vue](/framework-guides/vue), [Astro](/framework-guides/astro), [SvelteKit](/framework-guides/sveltekit), [Node.js](/framework-guides/nodejs), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails) или [Go](/framework-guides/go). Приложение со своим Dockerfile разворачивайте по руководству [Развертывание с Dockerfile](/deploy/dockerfile).
+
 <span id="5-watch-it-build-and-run" />
 
 ## 5. Следите за сборкой и работой
@@ -128,6 +131,8 @@ lizard logs        # last runtime log lines
 lizard logs --build  # the most recent build's logs
 lizard open        # open the project in the dashboard
 ```
+
+[`lizard open`](/cli/open) показывает тот же проект в [дашборде](/dashboard). Метрики, стоимость и историю деплоев см. в разделе [Наблюдаемость](/observability).
 
 <span id="6-add-a-database-optional" />
 
@@ -149,6 +154,7 @@ lizard redeploy --service your-app
 
 - **[Основные концепции](/concepts/architecture)** — поймите проекты, сервисы и конвейер сборки.
 - **[Развертывание из GitHub](/deploy/github)** — ветки, монорепозитории и автопереразвертывание.
+- **[Деплой](/deploy)**: все способы развертывания, а также фоновые обработчики, масштабирование и регионы.
 - **[Переменные и секреты](/variables)** — области видимости и приоритет.
 - **[Сеть](/networking)** — подключите свой хостнейм с автоматическим TLS.
 - **[Развертывание приложения, созданного вашим AI IDE](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — те же шаги, переданные агенту, для приложения на Google Antigravity.

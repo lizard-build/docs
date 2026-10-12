@@ -1,4 +1,5 @@
 ---
+title: "Справочник Lizard CLI: установка, флаги, коды выхода"
 description: "Установите и обновите Lizard CLI, выполните аутентификацию, а также изучите глобальные флаги, коды выхода и автоматическое обнаружение схемы для каждой команды."
 ---
 
@@ -6,7 +7,7 @@ description: "Установите и обновите Lizard CLI, выполн�
 
 # Справочник по CLI
 
-`lizard` CLI — это основной интерфейс платформы. Эта страница охватывает установку, глобальные флаги, коды выхода и автоматическое обнаружение. У каждой команды есть собственная справочная страница в боковой панели — см. [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets) и остальные.
+Lizard CLI (`lizard`) развёртывает приложения, базы данных и Sandboxes в Lizard (lizard.build) и управляет ими из терминала, CI или агента для разработки. Эта страница охватывает установку, глобальные флаги, коды выхода и автоматическое обнаружение. У каждой команды есть собственная справочная страница в боковой панели. См. [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets) и остальные. Обзор возможностей CLI смотрите на [странице Lizard CLI](https://lizard.build/cli).
 
 > Справочник написан для Lizard CLI **v4.0.34**. Выполните `lizard <cmd> --help --json` для получения точной схемы, соответствующей версии, для любой команды.
 
@@ -20,6 +21,8 @@ lizard --version
 lizard upgrade            # update to the latest version
 lizard upgrade --check    # check without installing
 ```
+
+Флаги описаны на странице [`lizard upgrade`](/cli/upgrade).
 
 На Windows выполните `irm https://lizard.build/api/cli/install.ps1 | iex` в PowerShell. С Node.js можно установить CLI из npm: `npm install -g @lizard-build/cli`.
 
@@ -37,6 +40,8 @@ lizard login --token liz_xxx  # API key auth
 lizard logout
 lizard whoami                 # current user, workspace, linked project
 ```
+
+Справочные страницы: [`lizard login`](/cli/login), [`lizard logout`](/cli/logout), [`lizard whoami`](/cli/whoami) и [`lizard workspace`](/cli/workspace): список и создание рабочих областей.
 
 API-ключи начинаются с `liz_`. Создайте ключ командой [`lizard keys create <name>`](/cli/keys). В CI задайте `LIZARD_TOKEN` (или `LIZARD_API_KEY`) в переменных окружения вместо запуска `login`.
 
@@ -88,8 +93,9 @@ lizard <cmd> <sub> --help --json     # e.g. lizard service set --help --json
 ## Конфигурация и состояние
 
 - CLI хранит аутентификацию и ссылку на проект текущей директории в `~/.lizard/config.json`.
-- `lizard status` показывает ссылку на рабочую область/проект/сервис текущей директории (аутентификация не требуется).
-- `lizard config apply` применяет файл `lizard-config.json` к проекту (используйте `--dry-run` для предварительного просмотра).
+- [`lizard status`](/cli/status) показывает ссылку на рабочую область/проект/сервис текущей директории (аутентификация не требуется). [`lizard link`](/cli/link) задаёт эту ссылку, [`lizard unlink`](/cli/unlink) удаляет её, а [`lizard project`](/cli/project) выводит список проектов, создаёт и удаляет их.
+- [`lizard config apply`](/cli/config) применяет файл `lizard-config.json` к проекту (используйте `--dry-run` для предварительного просмотра).
+- [`lizard open`](/cli/open) открывает связанный проект в дашборде, а [`lizard docs`](/cli/docs) открывает эту документацию.
 
 <span id="environment-variables" />
 

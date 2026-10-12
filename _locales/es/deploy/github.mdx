@@ -1,4 +1,5 @@
 ---
+title: "Desplegar desde GitHub: git push to deploy"
 description: "Conecta un repositorio de GitHub para que cada push a la rama seguida haga build y redespliegue, incluyendo repositorios privados, cambio de ramas y monorepos."
 ---
 
@@ -6,7 +7,7 @@ description: "Conecta un repositorio de GitHub para que cada push a la rama segu
 
 # Desplegar desde GitHub
 
-Conectar un repositorio de GitHub es la forma recomendada de ejecutar una app en Lizard: cada push a la rama seguida hace build y redespliega automáticamente.
+Conecta un repositorio de GitHub y Lizard (lizard.build) compila y vuelve a desplegar tu app en cada push a la rama seguida: git push to deploy. Ejecuta `lizard add -r owner/repo` para crear el servicio; para un repositorio privado, conecta primero la GitHub App de Lizard con `lizard git connect`. Es la forma recomendada de ejecutar una app que guardas en GitHub. Para código sin remoto, [despliega desde código local](/deploy/upload).
 
 <span id="create-a-service-from-a-repo" />
 
@@ -16,7 +17,7 @@ Conectar un repositorio de GitHub es la forma recomendada de ejecutar una app en
 lizard add -r your-org/your-app
 ```
 
-Esto crea un servicio con origen `github`, clona el repositorio, detecta automáticamente el stack ([lizardpack](/concepts/build-pipeline)), hace el build y devuelve una URL activa. Banderas útiles:
+Esto crea un servicio con origen `github`, clona el repositorio, detecta automáticamente el stack ([lizardpack](/concepts/build-pipeline)), compila y devuelve una URL activa. Banderas útiles:
 
 | Bandera | Propósito |
 |------|---------|
@@ -52,9 +53,9 @@ lizard service set api \
   --set branch=main
 ```
 
-Cambiar un campo de build activa automáticamente un rebuild de un servicio en ejecución — **no** encadenes un `redeploy` después. Un servicio que se ha caído o que nunca se ha desplegado necesita `lizard redeploy`.
+Cambiar un campo de build activa automáticamente un rebuild de un servicio en ejecución: **no** encadenes un `redeploy` después, o [pondrás en cola dos builds](/deploy/troubleshooting/double-build). Un servicio que se ha caído o que nunca se ha desplegado necesita `lizard redeploy`.
 
-> **Nota:** `lizard up` siempre fuerza `sourceType=upload`. No lo uses para actualizar un servicio respaldado por git — haz push al remoto o usa `lizard redeploy` en su lugar.
+> **Nota:** `lizard up` siempre fuerza `sourceType=upload`. No lo uses para actualizar un servicio respaldado por git: haz push al remoto o usa `lizard redeploy` en su lugar.
 
 <span id="auto-redeploy-on-push" />
 
@@ -62,8 +63,8 @@ Cambiar un campo de build activa automáticamente un rebuild de un servicio en e
 
 Una vez que `repoUrl` está configurado, los push a la `branch` correspondiente redespliegan automáticamente mediante el webhook de GitHub. Conecta la GitHub App de Lizard (`lizard git connect`) para que Lizard reciba los eventos de push del repositorio. Para limitar qué push activan un redespliegue:
 
-- **`rootDirectory`** — solo hace build de un subdirectorio (monorepos).
-- **`watchPatterns`** — solo redespliega cuando cambian rutas coincidentes.
+- **`rootDirectory`**: solo compila un subdirectorio (monorepos).
+- **`watchPatterns`**: solo redespliega cuando cambian rutas coincidentes.
 
 ```bash
 lizard service set api --set watchPatterns='apps/api/**,packages/**'
@@ -93,7 +94,9 @@ Si tu directorio actual es una subapp dentro de un repositorio cuyo directorio p
 
 ## Ver también
 
-- [Proceso de compilación](/concepts/build-pipeline) — cómo se detecta y se hace build de tu stack.
-- [Desplegar desde código local](/deploy/upload) — cuando no tienes un remoto.
-- [`lizard git`](/cli/git) — la referencia completa de comandos para `connect`, `status` y `checkout`.
-- [Elige el host según la aplicación](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#choose-the-host-by-the-application) — cómo apuntar esto a un repositorio que escribió un agente.
+- [Proceso de compilación](/concepts/build-pipeline): cómo detecta y compila Lizard tu stack.
+- [Guías de frameworks](/framework-guides): comandos de build y puertos para [Next.js](/framework-guides/nextjs), [Nuxt](/framework-guides/nuxt), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails), [Go](/framework-guides/go) y más.
+- [Desplegar con un Dockerfile](/deploy/dockerfile): cuando el repositorio tiene su propio Dockerfile.
+- [Desplegar desde código local](/deploy/upload): cuando no tienes un remoto.
+- [`lizard git`](/cli/git): la referencia completa de comandos para `connect`, `status` y `checkout`.
+- [Elige el host según la aplicación](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#choose-the-host-by-the-application): cómo desplegar un repositorio creado por un agente.

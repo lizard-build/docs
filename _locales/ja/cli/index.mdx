@@ -1,14 +1,15 @@
 ---
-description: "Lizard CLI をインストールおよびアップグレードし、認証し、すべてのコマンドのグローバルフラグ、終了コード、実行時スキーマ検出を確認します。"
+title: "Lizard CLI リファレンス: インストール、フラグ、終了コード"
+description: "Lizard CLI をインストール・更新し、認証し、すべてのコマンドのグローバルフラグ、終了コード、実行時スキーマ検出を確認します。"
 ---
 
 <span id="cli-reference" />
 
 # CLI リファレンス
 
-`lizard` CLI はプラットフォームへの主要なインターフェースです。このページでは、インストール、グローバルフラグ、終了コード、実行時検出について扱います。各コマンドにはサイドバーに専用のリファレンスページがあります — [`lizard up`](/cli/up)、[`lizard service`](/cli/service)、[`lizard secrets`](/cli/secrets) などを参照してください。
+Lizard CLI (`lizard`) は、ターミナル、CI ジョブ、コーディングエージェントから Lizard (lizard.build) 上のアプリ、データベース、Sandboxes をデプロイして管理します。このページでは、インストール、グローバルフラグ、終了コード、実行時検出について扱います。各コマンドのリファレンスはサイドバーから開けます。[`lizard up`](/cli/up)、[`lizard service`](/cli/service)、[`lizard secrets`](/cli/secrets) などを参照してください。CLI でできることの概要については、[Lizard CLI のページ](https://lizard.build/cli) を参照してください。
 
-> Lizard CLI **v4.0.34** を基準に書かれたリファレンスです。任意のコマンドの正確でバージョン一致のスキーマを確認するには、`lizard <cmd> --help --json` を実行してください。
+> Lizard CLI **v4.0.34** を基準に書かれたリファレンスです。任意のコマンドのインストール済みバージョンの正確なスキーマを確認するには、`lizard <cmd> --help --json` を実行してください。
 
 <span id="install--upgrade" />
 
@@ -21,11 +22,13 @@ lizard upgrade            # update to the latest version
 lizard upgrade --check    # check without installing
 ```
 
+フラグについては [`lizard upgrade`](/cli/upgrade) を参照してください。
+
 Windows では、PowerShell で `irm https://lizard.build/api/cli/install.ps1 | iex` を実行します。Node.js があれば、代わりに `npm install -g @lizard-build/cli` で npm からインストールすることもできます。
 
 macOS と Linux では、インストールスクリプトで入れたバイナリは、バックグラウンドで自動更新もされます（最大で 6 時間に 1 回）。`CI` または `LIZARD_NO_UPDATE=1` が設定されているときは、更新の確認を行いません。Windows のバイナリは自動更新されないため、インストーラーをもう一度実行してください。npm でインストールした場合は npm で更新します。そのコマンドは `lizard upgrade` が表示します。
 
-必ずグローバルにインストールされた `lizard` バイナリを使用してください — `npx` ではありません。権限エラーの修正については [Quickstart](/getting-started#1-install-the-cli) を参照してください。
+必ずグローバルにインストールした `lizard` バイナリを使ってください。`npx` は使わないでください。権限エラーの修正については [Quickstart](/getting-started#1-install-the-cli) を参照してください。
 
 <span id="authentication" />
 
@@ -37,6 +40,8 @@ lizard login --token liz_xxx  # API key auth
 lizard logout
 lizard whoami                 # current user, workspace, linked project
 ```
+
+リファレンスページ: [`lizard login`](/cli/login)、[`lizard logout`](/cli/logout)、[`lizard whoami`](/cli/whoami)、およびワークスペースの一覧表示と作成を行う [`lizard workspace`](/cli/workspace)。
 
 API キーは `liz_` で始まります。[`lizard keys create <name>`](/cli/keys) で作成できます。CI では、`login` を実行する代わりに、環境変数に `LIZARD_TOKEN`（または `LIZARD_API_KEY`）を設定してください。
 
@@ -68,7 +73,7 @@ API キーは `liz_` で始まります。[`lizard keys create <name>`](/cli/key
 
 ## 実行時検出
 
-CLI は自己文書化されています。完全なコマンドツリー、グローバルフラグ、終了コードを確認するには、次を実行します。
+CLI のヘルプでコマンドの仕様を確認できます。完全なコマンドツリー、グローバルフラグ、終了コードを確認するには、次を実行します。
 
 ```bash
 lizard --help --json
@@ -81,15 +86,16 @@ lizard <cmd> --help --json
 lizard <cmd> <sub> --help --json     # e.g. lizard service set --help --json
 ```
 
-これは常にインストール済みのバージョンを反映します — フラグの形式を推測するよりこちらを優先してください。また、これはエージェントが CLI について事前学習されていなくても CLI を学習する方法でもあります: [Claude Code からのデプロイ](https://lizard.build/blog/deploy-from-claude-code) を参照してください。
+インストール済みバージョンの情報を返すため、フラグの構文はこの出力で確認してください。エージェントも、事前学習なしでこの情報を使って CLI を操作できます。 [Claude Code からのデプロイ](https://lizard.build/blog/deploy-from-claude-code) を参照してください。
 
 <span id="configuration--state" />
 
 ## 設定と状態
 
 - CLI は認証情報と現在のディレクトリのプロジェクトリンクを `~/.lizard/config.json` に保存します。
-- `lizard status` は cwd の workspace/project/service リンクを表示します（認証不要）。
-- `lizard config apply` は `lizard-config.json` ファイルをプロジェクトに適用します（プレビューには `--dry-run` を使用）。
+- [`lizard status`](/cli/status) は cwd の workspace/project/service リンクを表示します（認証不要）。[`lizard link`](/cli/link) はこのリンクを設定し、[`lizard unlink`](/cli/unlink) は削除し、[`lizard project`](/cli/project) はプロジェクトの一覧表示、作成、削除を行います。
+- [`lizard config apply`](/cli/config) は `lizard-config.json` ファイルをプロジェクトに適用します（プレビューには `--dry-run` を使用）。
+- [`lizard open`](/cli/open) はリンクされたプロジェクトをダッシュボードで開き、[`lizard docs`](/cli/docs) はこのドキュメントを開きます。
 
 <span id="environment-variables" />
 

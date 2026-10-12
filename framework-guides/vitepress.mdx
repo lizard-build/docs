@@ -1,12 +1,12 @@
 ---
-description: "Deploy VitePress on Lizard with docs:build, the correct .vitepress/dist directory, nginx, and port 80. Configure clean URLs and verify documentation routes and 404s."
+description: "Deploy VitePress on Lizard with docs:build, the .vitepress/dist directory, nginx and port 80. Configure clean URLs and verify documentation routes and 404s."
 ---
 
 # Deploy VitePress on Lizard
 
 Lizard can build a VitePress documentation site and serve the generated HTML through nginx on port `80`. Match the npm script and output directory to your docs root: `vitepress build docs` writes `docs/.vitepress/dist`, while `vitepress build` writes `.vitepress/dist`.
 
-Start with the [complete source example](https://github.com/lizard-build/docs/tree/main/_examples/vitepress), which includes the configuration and files used by this recipe.
+The [complete source example](https://github.com/lizard-build/docs/tree/main/_examples/vitepress) includes the configuration and files used in this guide.
 
 ## Set the build script
 
@@ -30,7 +30,7 @@ For Markdown files in `docs/`, keep these scripts in `package.json`:
 | Production server | nginx |
 | Service port | `80` |
 
-The detector finds a script containing `vitepress build` and uses its root argument. Keep that script direct and unambiguous. Shell wrappers, several matching scripts, or a custom `outDir` need explicit build configuration or a Dockerfile.
+The detector finds a script containing `vitepress build` and uses its root argument. Use a script that calls the build command directly. Shell wrappers, several matching scripts, or a custom `outDir` need explicit build configuration or a Dockerfile.
 
 ## Check the site locally
 

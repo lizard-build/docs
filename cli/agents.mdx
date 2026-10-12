@@ -16,7 +16,7 @@ lizard agents remove <credential>
 lizard agents use <agent> [flags]
 ```
 
-Credentials belong to your account: connect one once and every sandbox can run agents on it. The platform keeps the long-lived token and hands a sandbox a short-lived access token for each run. These commands accept `-p, --project` but ignore it.
+Credentials belong to your account. Connect a credential once to use it for agent runs in any sandbox. For a ChatGPT login, the platform keeps the long-lived token and hands a sandbox a short-lived access token for each run. Lizard passes API keys and the stored Claude subscription token unchanged in each run's environment. Use credentials you can revoke. These commands accept `-p, --project` but ignore it.
 
 ## Agents and credentials
 
@@ -94,5 +94,5 @@ lizard agents use codex --credential openai --effort high
 
 ## See also
 
-- [lizard sandbox](/cli/sandbox#coding-agents) — `sandbox prompt`, `conversations`, and `interrupt`
-- [Sandboxes](/sandboxes) — templates and lifecycle
+- [lizard sandbox](/cli/sandbox#coding-agents): `sandbox prompt`, `conversations`, and `interrupt`
+- [Sandboxes](/sandboxes): templates and lifecycle

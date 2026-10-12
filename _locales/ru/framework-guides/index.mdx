@@ -1,5 +1,5 @@
 ---
-description: "Разверните Next.js, React, Vue, Astro, Nuxt, SvelteKit, FastAPI, Django, Docusaurus, VitePress и Hugo на Lizard. Найдите команды сборки, адаптеры, порты и проверки."
+description: "Разверните Next.js, Express, FastAPI, Django, Streamlit, Go, Rails, Astro, Nuxt, SvelteKit и генераторы статических сайтов на Lizard: команды сборки, порты и проверки."
 ---
 
 <span id="framework-guides" />
@@ -12,7 +12,7 @@ description: "Разверните Next.js, React, Vue, Astro, Nuxt, SvelteKit, 
 
 ## Выберите фреймворк
 
-Эти настройки описывают стандартную структуру проектов в связанных руководствах. Команды подразумевают npm для JavaScript-проектов. Пользовательские пути вывода, адаптеры и переопределения сборки могут изменить результат.
+Эти настройки описывают стандартную структуру проектов в руководствах по ссылкам ниже. Команды подразумевают npm для JavaScript-проектов. Пользовательские пути вывода, адаптеры и переопределения сборки могут изменить результат. Чтобы вместо этого собрать собственный образ, см. [Развертывание Docker-контейнера из Dockerfile](/deploy/dockerfile).
 
 | Фреймворк | Сборка | Среда выполнения или вывод | Порт сервиса |
 |---|---|---|---|
@@ -23,8 +23,12 @@ description: "Разверните Next.js, React, Vue, Astro, Nuxt, SvelteKit, 
 | [Astro](/framework-guides/astro) | `npm run build` | `dist/` или автономный Node-адаптер | `80` статический; `3000` сервер |
 | [Nuxt](/framework-guides/nuxt) | `npm run build` | `node .output/server/index.mjs` | `3000` |
 | [SvelteKit](/framework-guides/sveltekit) | `npm run build` | `node build` с adapter-node | `3000` |
+| [Node.js (Express)](/framework-guides/nodejs) | Скрипт `build`, если он есть | Скрипт `start` | `3000` |
 | [FastAPI](/framework-guides/fastapi) | Установка Python-зависимостей | `uvicorn main:app --host 0.0.0.0 --port 8000` | `8000` |
 | [Django](/framework-guides/django) | Установка Python-зависимостей | Gunicorn с вашим WSGI-модулем | `8000` |
+| [Streamlit](/framework-guides/streamlit) | Установка Python-зависимостей | `streamlit run app.py` из Procfile | `8501` |
+| [Go](/framework-guides/go) | `go build` в статический бинарник | `/app/server` | `8080` |
+| [Ruby on Rails](/framework-guides/rails) | Dockerfile, который генерирует Rails | Thruster и Puma или только Puma | `8080` в Rails 8; `3000` в Rails 7.1 и 7.2 |
 | [Docusaurus](/framework-guides/docusaurus) | `npm run build` | `build/` | `80` |
 | [VitePress](/framework-guides/vitepress) | `npm run docs:build` | `docs/.vitepress/dist/` в этом руководстве | `80` |
 | [Hugo](/framework-guides/hugo) | `hugo --minify` | `public/` | `80` |
@@ -33,7 +37,7 @@ description: "Разверните Next.js, React, Vue, Astro, Nuxt, SvelteKit, 
 
 ## Подготовка проекта
 
-Выполняйте команды из директории приложения. Закоммитьте исходные файлы, конфигурацию и lockfile пакетов. Исключите `.env`, локальные зависимости и локальные артефакты сборки из загрузки. Node-проекты могут выбрать мажорную версию Node в `.nvmrc`; текущее значение по умолчанию — `22`. Это выбирает мажорную версию, а не конкретный патч-релиз.
+Выполняйте команды из директории приложения. Закоммитьте исходные файлы, конфигурацию и lockfile пакетов. Исключите `.env`, локальные зависимости и локальные артефакты сборки из загрузки. Node-проекты могут выбрать мажорную версию Node в `.nvmrc`; по умолчанию используется `22`. Это выбирает мажорную версию, а не конкретный патч-релиз. Файлы версий для Node.js, Python, Go и Ruby перечислены на странице [версии рантайма](/deploy/runtime-versions).
 
 Установите Lizard CLI и войдите один раз:
 
@@ -58,7 +62,7 @@ Lizard CLI 0.3.95 и новее исключают метаданные архи
 
 ## Согласованность настроек сборки
 
-В этих руководствах используется определение через lizardpack, если не требуется Dockerfile. Существующие `buildCommand` или `startCommand` имеют приоритет над определением и Dockerfile репозитория; заданный `dockerfilePath` имеет приоритет над обоими. Проверьте [порядок решений о сборке](/concepts/build-pipeline#build-decision-order) перед сменой метода сборки. Задайте скрипты в `package.json`, когда об этом сказано в руководстве; добавление CLI-переопределения — это другой путь сборки.
+В этих руководствах используется определение через lizardpack, если не требуется Dockerfile. Существующие `buildCommand` или `startCommand` имеют приоритет над определением и Dockerfile репозитория; заданный `dockerfilePath` имеет приоритет над обоими. Проверьте [порядок решений о сборке](/concepts/build-pipeline#build-decision-order) перед сменой метода сборки. Задайте скрипты в `package.json`, когда об этом сказано в руководстве; переопределение через CLI меняет способ сборки.
 
 <span id="check-a-release" />
 

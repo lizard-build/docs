@@ -18,13 +18,17 @@ Wählen Sie den Speicher danach aus, welche Daten einen Prozessneustart, ein neu
 
 <span id="keep-files-after-a-sandbox-ends" />
 
-Dateien und laufende Prozesse bleiben verfügbar, solange die Sandbox läuft. Nach dem Stopp kann eine spätere Sandbox nur Dateien auf einem angehängten Persistent Volume unter `/workspace` wiederverwenden. Ohne Volume ist `/workspace` temporär. Ein Volume hängt jeweils an einer Sandbox und liegt auf einem einzelnen Knoten. Exportieren Sie Dateien, die einen Knotenausfall überstehen müssen.
+Für Sandbox-Dateien gelten andere Regeln: Nur Dateien auf einem angehängten Volume aus Persistent Volumes unter `/workspace` überdauern eine Sandbox. Siehe [Speicher und Abrechnung](/sandboxes#storage-and-billing).
+
+<span id="keep-files-after-a-sandbox-ends" />
 
 ## Dateien nach dem Ende einer Sandbox behalten
 
 Der Reiter Persistent Volumes verwaltet benannte Volumes und ihre Verbindungen. Hängen Sie ein Volume bei der Erstellung an und schreiben Sie nach `/workspace`. Stoppen Sie die aktuelle Sandbox, bevor Sie das Volume an eine andere hängen.
 
 [Persistent Volumes](/sandboxes/volumes)
+
+<span id="plan-a-database-restore" />
 
 ## Wiederherstellung einer Datenbank planen
 

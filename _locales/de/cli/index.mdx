@@ -1,4 +1,5 @@
 ---
+title: "Lizard CLI-Referenz: Installation, Flags, Exit-Codes"
 description: "Installiere und aktualisiere die Lizard CLI, authentifiziere dich und schlage globale Flags, Exit-Codes und die Laufzeit-Schema-Erkennung für jeden Befehl nach."
 ---
 
@@ -6,7 +7,7 @@ description: "Installiere und aktualisiere die Lizard CLI, authentifiziere dich 
 
 # CLI-Referenz
 
-Die `lizard` CLI ist die primäre Schnittstelle zur Plattform. Diese Seite behandelt Installation, globale Flags, Exit-Codes und Laufzeit-Erkennung. Jeder Befehl hat seine eigene Referenzseite in der Seitenleiste — siehe [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets) und die übrigen.
+Lizard CLI (`lizard`) deployt und verwaltet Apps, Datenbanken und Sandboxes auf Lizard (lizard.build) aus einem Terminal, einem CI-Job oder einem Coding-Agenten. Diese Seite behandelt Installation, globale Flags, Exit-Codes und Laufzeit-Erkennung. Jeder Befehl hat seine eigene Referenzseite in der Seitenleiste. Siehe [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets) und die übrigen. Einen Überblick darüber, was die CLI kann, gibt die [Seite zu Lizard CLI](https://lizard.build/cli).
 
 > Referenz geschrieben für Lizard CLI **v4.0.34**. Führe `lizard <cmd> --help --json` aus, um das exakte, versionspassende Schema eines beliebigen Befehls zu sehen.
 
@@ -20,6 +21,8 @@ lizard --version
 lizard upgrade            # update to the latest version
 lizard upgrade --check    # check without installing
 ```
+
+Die Flags findest du unter [`lizard upgrade`](/cli/upgrade).
 
 Unter Windows führe `irm https://lizard.build/api/cli/install.ps1 | iex` in PowerShell aus. Mit Node.js kannst du stattdessen über npm installieren: `npm install -g @lizard-build/cli`.
 
@@ -38,6 +41,8 @@ lizard logout
 lizard whoami                 # current user, workspace, linked project
 ```
 
+Referenzseiten: [`lizard login`](/cli/login), [`lizard logout`](/cli/logout), [`lizard whoami`](/cli/whoami) und [`lizard workspace`](/cli/workspace) zum Auflisten und Erstellen von Workspaces.
+
 API-Keys beginnen mit `liz_`. Erstelle einen mit [`lizard keys create <name>`](/cli/keys). In CI solltest du `LIZARD_TOKEN` (oder `LIZARD_API_KEY`) in der Umgebung setzen, statt `login` auszuführen.
 
 <span id="global-flags" />
@@ -50,6 +55,8 @@ API-Keys beginnen mit `liz_`. Erstelle einen mit [`lizard keys create <name>`](/
 | `--json` | Maschinell lesbare Ausgabe. Mit `--help` kombinieren, um das Schema eines Befehls auszugeben |
 
 Die meisten Befehle akzeptieren außerdem `-p, --project` und `-s, --service`, um statt der verknüpften Ressource eine bestimmte Ressource anzusteuern. `init`, `link` und `project` akzeptieren zusätzlich `-w, --workspace`. `lizard add` verwendet immer das verknüpfte Projekt.
+
+<span id="exit-codes" />
 
 ## Exit-Codes
 
@@ -86,8 +93,9 @@ Das entspricht immer deiner installierten Version — ziehe es Vermutungen über
 ## Konfiguration & Status
 
 - Die CLI speichert Authentifizierung und die Projektverknüpfung des aktuellen Verzeichnisses in `~/.lizard/config.json`.
-- `lizard status` zeigt die Workspace-/Projekt-/Service-Verknüpfung des cwd an (keine Authentifizierung erforderlich).
-- `lizard config apply` wendet eine `lizard-config.json`-Datei auf ein Projekt an (verwende `--dry-run` für eine Vorschau).
+- [`lizard status`](/cli/status) zeigt die Workspace-/Projekt-/Service-Verknüpfung des cwd an (keine Authentifizierung erforderlich). [`lizard link`](/cli/link) setzt diese Verknüpfung, [`lizard unlink`](/cli/unlink) entfernt sie, und [`lizard project`](/cli/project) listet, erstellt und löscht Projekte.
+- [`lizard config apply`](/cli/config) wendet eine `lizard-config.json`-Datei auf ein Projekt an (verwende `--dry-run` für eine Vorschau).
+- [`lizard open`](/cli/open) öffnet das verknüpfte Projekt im Dashboard, und [`lizard docs`](/cli/docs) öffnet diese Dokumentation.
 
 <span id="environment-variables" />
 

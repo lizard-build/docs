@@ -1,12 +1,13 @@
 ---
-description: "Instala y actualiza la Lizard CLI, autentícate y consulta las banderas globales, los códigos de salida y el descubrimiento del esquema en tiempo de ejecución para cada comando."
+title: "Referencia de Lizard CLI: instalación, banderas y códigos de salida"
+description: "Instala y actualiza Lizard CLI, autentícate y consulta las banderas globales, los códigos de salida y el descubrimiento del esquema en tiempo de ejecución para cada comando."
 ---
 
 <span id="cli-reference" />
 
 # Referencia de CLI
 
-La CLI de `lizard` es la interfaz principal de la plataforma. Esta página cubre la instalación, las banderas globales, los códigos de salida y el descubrimiento en tiempo de ejecución. Cada comando tiene su propia página de referencia en la barra lateral: consulta [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets) y el resto.
+Lizard CLI (`lizard`) despliega y gestiona apps, bases de datos y Sandboxes en Lizard (lizard.build) desde una terminal, un job de CI o un agente de programación. Esta página explica la instalación, las banderas globales, los códigos de salida y el descubrimiento en tiempo de ejecución. Cada comando tiene su propia página de referencia en la barra lateral: consulta [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets) y el resto. Para una visión general de lo que hace la CLI, consulta la [página de Lizard CLI](https://lizard.build/cli).
 
 > Referencia escrita para Lizard CLI **v4.0.34**. Ejecuta `lizard <cmd> --help --json` para obtener el esquema exacto de cualquier comando, correspondiente a tu versión.
 
@@ -20,6 +21,8 @@ lizard --version
 lizard upgrade            # update to the latest version
 lizard upgrade --check    # check without installing
 ```
+
+Consulta [`lizard upgrade`](/cli/upgrade) para ver las banderas.
 
 En Windows, ejecuta `irm https://lizard.build/api/cli/install.ps1 | iex` en PowerShell. Con Node.js puedes instalar desde npm en su lugar: `npm install -g @lizard-build/cli`.
 
@@ -37,6 +40,8 @@ lizard login --token liz_xxx  # API key auth
 lizard logout
 lizard whoami                 # current user, workspace, linked project
 ```
+
+Páginas de referencia: [`lizard login`](/cli/login), [`lizard logout`](/cli/logout), [`lizard whoami`](/cli/whoami) y [`lizard workspace`](/cli/workspace) para listar y crear workspaces.
 
 Las claves de API empiezan por `liz_`. Crea una con [`lizard keys create <name>`](/cli/keys). En CI, configura `LIZARD_TOKEN` (o `LIZARD_API_KEY`) en el entorno en lugar de ejecutar `login`.
 
@@ -81,15 +86,16 @@ lizard <cmd> --help --json
 lizard <cmd> <sub> --help --json     # e.g. lizard service set --help --json
 ```
 
-Esto siempre refleja tu versión instalada; es preferible a adivinar la forma de las banderas. También es como un agente aprende la CLI sin haber sido entrenado con ella: consulta [despliegue desde Claude Code](https://lizard.build/blog/deploy-from-claude-code).
+Esto siempre refleja tu versión instalada; úsalo para consultar la sintaxis de las banderas. También es como un agente aprende la CLI sin haber sido entrenado con ella: consulta [despliegue desde Claude Code](https://lizard.build/blog/deploy-from-claude-code).
 
 <span id="configuration--state" />
 
 ## Configuración y estado
 
 - La CLI almacena la autenticación y el enlace del proyecto del directorio actual en `~/.lizard/config.json`.
-- `lizard status` muestra el enlace de workspace/proyecto/servicio del cwd (no requiere autenticación).
-- `lizard config apply` aplica un archivo `lizard-config.json` a un proyecto (usa `--dry-run` para previsualizar).
+- [`lizard status`](/cli/status) muestra el enlace de workspace/proyecto/servicio del cwd (no requiere autenticación). [`lizard link`](/cli/link) establece ese enlace, [`lizard unlink`](/cli/unlink) lo elimina y [`lizard project`](/cli/project) lista, crea y elimina proyectos.
+- [`lizard config apply`](/cli/config) aplica un archivo `lizard-config.json` a un proyecto (usa `--dry-run` para previsualizar).
+- [`lizard open`](/cli/open) abre el proyecto enlazado en el panel, y [`lizard docs`](/cli/docs) abre esta documentación.
 
 <span id="environment-variables" />
 

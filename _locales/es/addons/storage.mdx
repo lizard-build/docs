@@ -1,4 +1,5 @@
 ---
+title: "Managed Object Storage: buckets compatibles con S3"
 description: "Almacenamiento de objetos compatible con S3 para cargas, recursos y copias de seguridad. Obtén un bucket predeterminado privado y variables de conexión con un solo lizard add s3."
 ---
 
@@ -6,7 +7,7 @@ description: "Almacenamiento de objetos compatible con S3 para cargas, recursos 
 
 # Managed Object Storage
 
-Managed Object Storage es almacenamiento compatible con S3 para cargas, recursos y copias de seguridad. Al aprovisionar un addon `s3` también se crea un **bucket privado llamado `default`**. Para servir archivos sin autenticación, hazlo público desde el navegador S3 del panel.
+Managed Object Storage en Lizard (lizard.build) es almacenamiento compatible con S3 para cargas, recursos y copias de seguridad. `lizard add s3` lo crea con un **bucket privado llamado `default`** y cinco variables, de `S3_ENDPOINT` a `S3_REGION`, que cualquier AWS SDK puede usar con direccionamiento de estilo ruta (path-style). Cada cuenta puede almacenar hasta 16 GiB, y pagas por los bytes que almacenas. Para servir archivos sin autenticación, haz público el bucket desde el navegador S3 del panel. Para ver un resumen y los precios, consulta la [página de Managed Object Storage](https://lizard.build/object-storage).
 
 <span id="provision" />
 
@@ -49,7 +50,7 @@ lizard redeploy --service api
 
 ## Usar un AWS SDK
 
-El endpoint es compatible con S3. Configura direccionamiento de **estilo path**:
+El endpoint es compatible con S3. Configura el direccionamiento **path-style**:
 
 ```ts
 import { S3Client } from "@aws-sdk/client-s3";
@@ -91,7 +92,7 @@ Una vez que hagas público el bucket `default`, sus objetos se sirven en:
 
 ## Explorar objetos
 
-Abre el **navegador S3** en el panel (`lizard open`) para cargar y eliminar objetos, crear carpetas y hacer buckets públicos o privados. Desde la CLI, `lizard s3 upload <file>` carga un archivo y `lizard s3 list` lista los objetos.
+Abre el **navegador S3** en el panel (`lizard open`) para cargar y eliminar objetos, crear carpetas y hacer buckets públicos o privados. Desde la CLI, `lizard s3 upload <file>` carga un archivo y `lizard s3 list` lista los objetos; consulta [`lizard s3`](/cli/s3).
 
 > **Los cambios de ACL del bucket** (hacer un bucket público/privado) todavía no están en la CLI; gestiónalos desde el panel.
 
@@ -105,5 +106,5 @@ Cada cuenta puede almacenar hasta 16 GiB de objetos entre sus addons de Managed 
 
 ## Ver también
 
-- [Addons gestionados](/addons) — nombres, referencias y los navegadores del panel.
-- [Referencias entre servicios](/variables/references) — sintaxis de referencias y resolución.
+- [Addons gestionados](/addons): nombres, referencias y los navegadores del panel.
+- [Referencias entre servicios](/variables/references): sintaxis de referencias y resolución.

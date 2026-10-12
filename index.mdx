@@ -1,10 +1,12 @@
 ---
-description: "Deploy an app, run a worker, connect Managed Postgres, or run code in Sandboxes. Choose a task, follow a guide, and check the limits."
+description: "Deploy apps, workers and AI agents to Lizard from Claude Code, Codex, Cursor or the CLI, then add Managed Postgres, Redis, Object Storage or Sandboxes."
 ---
 
 # Lizard documentation
 
-Lizard builds and runs applications from a GitHub repository or a local folder. Use Lizard CLI or the dashboard to deploy a web service, run a background worker, connect Managed Postgres or Managed Redis, and inspect logs. Use Lizard SDK to create Sandboxes for code execution.
+## What is Lizard?
+
+Lizard is a cloud platform for deploying apps, background workers and AI agents. You deploy from Claude Code, Codex, Cursor or a terminal with Lizard CLI: `lizard up` uploads the current folder, and `lizard add -r owner/repo` deploys a GitHub repository. Lizard builds the image on its servers and gives each web service an HTTPS address on `onlizard.com`. You do not need Docker on your machine. Add Managed Postgres, Managed Redis or S3-compatible Managed Object Storage with the same CLI. Connect them to services through references such as `${{postgres.DATABASE_URL}}`. Sandboxes let AI agents run code in Firecracker microVMs, each with its own kernel. Create them from your code with Lizard SDK for TypeScript or Python. Lizard is not LizardFS, the distributed file system, and not `lizard`, the Python tool that measures code complexity.
 
 ## Choose a task
 
@@ -13,11 +15,14 @@ Lizard builds and runs applications from a GitHub repository or a local folder. 
 | Deploy my first app | [App quickstart](/getting-started) |
 | Deploy Next.js, React, Vue, or a Python app | [Framework guides](/framework-guides) |
 | Deploy from Claude Code or another coding agent | [Coding agent guide](/guides/deploy-from-coding-agent) |
+| Deploy an app that has a Dockerfile | [Deploy with a Dockerfile](/deploy/dockerfile) |
 | Host a remote MCP server | [Remote MCP guide](/guides/deploy-mcp-server) |
-| Keep a Telegram bot running | [Telegram worker guide](/guides/telegram-bot) |
+| Keep a Telegram or Discord bot running | [Telegram guide](/guides/telegram-bot) or [Discord guide](/guides/discord-bot) |
 | Connect a database | [Managed Postgres](/addons/postgres) |
 | Run generated code in a separate environment | [Sandboxes quickstart](/sandboxes/quickstart) |
+| Run Claude Code inside a sandbox | [Claude Code in a sandbox](/sandboxes/guides/claude-code) |
 | Keep files after a sandbox ends | [Persistent Volumes](/sandboxes/volumes) |
+| Edit a page visually with Claude Code or ChatGPT | [Lizard Studio](/studio/getting-started) |
 
 ## Deploy an app
 
@@ -44,7 +49,9 @@ Apps and Sandboxes have different runtime and storage rules. Read [limits](/plat
 
 - [Guides](/guides) cover a task from setup to a check of the result.
 - [Framework guides](/framework-guides) give build commands, adapters, ports, and checks for each stack.
-- [Core concepts](/concepts/architecture) explain projects, builds, and deployments.
+- [Deploy](/deploy) covers GitHub and local sources, workers, scaling, and regions.
+- [Core concepts](/concepts) explain projects, builds, and deployments.
+- [Observability](/observability) covers logs, metrics, cost, and deploy history.
 - [Lizard CLI reference](/cli) lists commands, flags, and exit codes.
 - [Troubleshooting](/deploy/troubleshooting/service-never-healthy) helps diagnose a failed start.
 - [Known issues](/platform/known-issues) records limits and recovery cases to check before a release.

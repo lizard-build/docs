@@ -1,0 +1,112 @@
+---
+title: "Preview URLs: open a port from a sandbox"
+description: "Give a port in a Lizard sandbox a private HTTPS preview URL with exposePort or lizard sandbox expose: URL format, access token, cookie, WebSockets and errors."
+---
+
+# Preview URLs: open a port from a sandbox
+
+A preview URL gives a port inside a sandbox on Lizard a private HTTPS address. Start a server that listens on `0.0.0.0`, then call `sandbox.exposePort(3000)` (Python: `expose_port`) or run `lizard sandbox expose <id> 3000`. You get `https://<sandbox-id>-3000.sandbox.<region>.onlizard.com/?lizard_token=…`; a request without the sandbox's access token gets HTTP 401.
+
+**Test status:** we checked this page against the source of Lizard SDK, Lizard CLI 4.0.42 and the sandbox router on 2026-10-12. We did not run a new live test for it.
+
+## From the CLI
+
+```bash
+lizard sandbox exec $SB -- sh -c "nohup python3 -m http.server 3000 --bind 0.0.0.0 >/tmp/http.log 2>&1 &"
+lizard sandbox expose $SB 3000
+```
+
+`expose` prints the URL with the token in it; open it in a browser. Add `--json` to get `hostname`, `url`, `port` and `accessToken` for a script. Remove the URL with `lizard sandbox unexpose $SB 3000`.
+
+## From Lizard SDK
+
+`exposePort` returns the browser `url`, the bare `hostname` and the `accessToken`:
+
+```ts
+import { Sandbox } from '@lizard-build/sdk';
+
+const sandbox = await Sandbox.create('base', { projectId: 'proj_123', timeoutMs: 600_000 });
+await sandbox.process.exec(
+  "nohup python3 -m http.server 3000 --bind 0.0.0.0 --directory /tmp >/tmp/http.log 2>&1 </dev/null &",
+);
+const { url, hostname, accessToken } = await sandbox.exposePort(3000);
+console.log(url); // open in a browser
+
+const res = await fetch(`https://${hostname}/`, {
+  headers: { 'X-Lizard-Access-Token': accessToken },
+});
+console.log(res.status);
+```
+
+```python
+import httpx
+from lizard import Sandbox
+
+sandbox = Sandbox.create("base", project_id="proj_123", timeout_ms=600_000)
+sandbox.process.exec_(
+    "nohup python3 -m http.server 3000 --bind 0.0.0.0 --directory /tmp >/tmp/http.log 2>&1 </dev/null &"
+)
+exposed = sandbox.expose_port(3000)
+print(exposed.url)  # open in a browser
+
+res = httpx.get(f"https://{exposed.hostname}/", headers={"X-Lizard-Access-Token": exposed.access_token})
+print(res.status_code)
+```
+
+`getHost(port)` (Python: `get_host`) publishes the port too, but returns only the hostname and stores the token on `sandbox.accessToken` (Python: `sandbox.access_token`). `unexpose(port)` removes the URL. Start the server before you send traffic: until it listens, the URL answers 502.
+
+## How access works
+
+- **One token per sandbox.** The token belongs to the sandbox, not to a port: it opens every port you expose on that sandbox and does not change while the sandbox exists. To cut off access, unexpose the port or remove the sandbox.
+- **Three ways to send it.** The `lizard_token` query parameter, the `X-Lizard-Access-Token` header, or the `lizard_access` cookie.
+- **Browsers get a cookie.** When a browser opens a URL with `?lizard_token=`, Lizard sets the `lizard_access` cookie for that hostname (HttpOnly, Secure, SameSite=None, Partitioned, 30 days) and redirects to the same address without the token. The page's scripts, API calls and WebSockets then carry the cookie, and the token stays out of history and Referer headers. The cookie also works when another site embeds the page in an iframe.
+- **One hostname per port.** Each port has its own hostname and its own cookie, so open each port's full URL once.
+- **Your server never sees the token.** Lizard removes it from the query, header and cookie before it forwards the request. The request keeps its original `Host` header.
+- **WebSockets work.** Upgrade requests pass through, so dev servers with hot reload and terminal UIs work.
+
+Treat a preview URL like a password: whoever has it can use every exposed port of that sandbox.
+
+## URL format and lifetime
+
+```text
+https://<sandbox-id>-<port>.sandbox.<region>.onlizard.com
+```
+
+The URL works only while the sandbox runs. The platform reserves port `49983`; you cannot expose it. A sandbox from the SDK or CLI lives five minutes by default; pass a longer `timeoutMs` or `--timeout` for a preview you want to keep open. See [lifetime limits](/platform/limits#sandbox-lifetime).
+
+## Errors
+
+| Status | Message | Fix |
+|---|---|---|
+| 401 | `This sandbox port is private (missing or wrong access token)` | Open the full URL from `expose`, or send `X-Lizard-Access-Token`. |
+| 403 | `Port 3000 is not published for sandbox "…". Published: …` | Run `lizard sandbox expose` or `exposePort` for that port. |
+| 404 | `No running sandbox "…"` | The sandbox is not running. Check `lizard sandbox list`. |
+| 502 | `Sandbox is not listening on port 3000` | Start the server, and bind it to `0.0.0.0`, not `127.0.0.1`. |
+
+## Dev servers
+
+Most dev servers listen on `127.0.0.1` unless you tell them otherwise. Pass the host and a fixed port:
+
+```bash
+npm run dev -- --host 0.0.0.0 --port 5173
+```
+
+Vite also checks the `Host` header and answers `Blocked request. This host (…) is not allowed.` for hosts it does not know. Allow the sandbox hostnames in `vite.config.js`:
+
+```js
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  server: { allowedHosts: ['.onlizard.com'] },
+});
+```
+
+A leading dot allows every subdomain. Then expose `5173`.
+
+## Related
+
+- [Run Claude Code in a sandbox](/sandboxes/guides/claude-code)
+- [Run OpenCode in a sandbox](/sandboxes/guides/opencode), including its web UI
+- [Sandboxes quickstart](/sandboxes/quickstart)
+- [SDK reference](/sandboxes/sdk-reference)
+- [`lizard sandbox`](/cli/sandbox)

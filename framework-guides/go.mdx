@@ -1,0 +1,159 @@
+---
+title: "Deploy a Go app"
+description: "Host a Go app on Lizard: lizardpack finds go.mod, builds a static binary with the Go version from the go line, and runs it on port 8080 with PORT set."
+---
+
+# Deploy a Go app
+
+To deploy a Go app on Lizard, upload or push a module with a `go.mod` file. lizardpack builds it with the Go version from the `go` line, compiles a static binary (`CGO_ENABLED=0`) and runs it on Alpine Linux. The service port is `8080`, and Lizard passes it to your process in `PORT`, so read `PORT` in your app and listen on all interfaces.
+
+**Test status:** the sample app below builds and runs locally with Go 1.24, and we checked its build plan with lizardpack, the build planner Lizard runs. We have not yet deployed it end to end with this guide.
+
+## Before you start
+
+- A Go module with `go.mod` at the directory you deploy, and `go.sum` if it has dependencies.
+- Lizard CLI, signed in with `lizard login`, on Pro or the 7-day Pro trial (card required). See [pricing](https://lizard.build/pricing).
+
+## A minimal app
+
+`go.mod`:
+
+```text
+module example.com/hello
+
+go 1.24
+```
+
+`main.go`:
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+)
+
+func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "Hello from Go on Lizard")
+	})
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "ok")
+	})
+
+	log.Printf("listening on :%s", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
+}
+```
+
+`":"+port` listens on every interface. An address such as `127.0.0.1:8080` only accepts connections from inside the container, and the deploy never becomes healthy.
+
+Check it locally:
+
+```bash
+go run .
+curl http://localhost:8080/healthz
+```
+
+## What lizardpack builds
+
+| Step | What happens |
+|---|---|
+| Detection | `go.mod`, `go.work` or any `.go` file. lizardpack checks Go before Node.js and Python. |
+| Go version | The `go` line in `go.mod`, major and minor only: `go 1.24.3` builds on `golang:1.24-alpine`. Without `go.mod`, Go 1.24. |
+| Build | `go mod download`, then `CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w' -o /app/server <package>` |
+| Main package | The root directory; `./cmd` if `cmd/main.go` exists; else the first `cmd/<name>/main.go` in alphabetical order |
+| Runtime | `alpine:3.19` with `ca-certificates` and `tzdata`. lizardpack copies the whole source directory to `/app` next to the binary, so relative paths such as `templates/` and `static/` still work. |
+| Start and port | `/app/server` on port `8080` |
+
+The generated Dockerfile:
+
+```dockerfile
+FROM golang:1.24-alpine AS build
+WORKDIR /app
+COPY go.mod go.sum* ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w' -o /app/server .
+
+FROM alpine:3.19
+RUN apk add --no-cache ca-certificates tzdata
+WORKDIR /app
+COPY --from=build /app /app
+EXPOSE 8080
+CMD ["/app/server"]
+```
+
+Leave the service's build and start commands empty to get this image. With either one set, Lizard writes a different Dockerfile from those commands and ignores the `go` line: a `go build …` command builds on Go 1.24. For other build steps, commit your own `Dockerfile`; see [Deploy a Docker container from a Dockerfile](/deploy/dockerfile).
+
+## Deploy
+
+From the module's root:
+
+```bash
+lizard init --name go-app
+lizard add --service api
+lizard up --service api --port 8080
+```
+
+`lizard up` uploads the directory, builds it on Lizard's build machines and prints the URL. You do not need Docker or Go on the machine that runs the command. For git push to deploy, [connect a GitHub repository](/deploy/github) with `lizard add -r your-org/your-app -n api`, then check that `lizard port --service api` prints `8080`.
+
+## Frameworks
+
+- **net/http, chi, gorilla/mux:** pass `":" + os.Getenv("PORT")` to `http.ListenAndServe`, as above.
+- **Gin:** `r.Run()` with no address reads `PORT` and falls back to `:8080`. Set `GIN_MODE=release` on the service.
+- **Echo, Fiber:** pass the address yourself: `e.Start(":" + os.Getenv("PORT"))` or `app.Listen(":" + os.Getenv("PORT"))`.
+
+## Variables and databases
+
+Set configuration on the service and read it with `os.Getenv`:
+
+```bash
+lizard secrets set GIN_MODE=release API_KEY=change-me --service api
+```
+
+For a database, add [Managed Postgres](/addons/postgres) and pass its private URL with a [reference](/variables/references):
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
+```
+
+Then open it with your driver, for example `pgxpool.New(ctx, os.Getenv("DATABASE_URL"))`. A variable change restarts the service without a rebuild.
+
+## Check that it works
+
+```bash
+lizard logs --build --service api
+lizard logs --service api --tail 100
+lizard ps
+```
+
+Request `/healthz` on the URL that `lizard up` printed, then a route that does real work. The build log shows the `golang:` image the build used.
+
+## Common problems
+
+| Symptom | Fix |
+|---|---|
+| `no Go files in /app` | The `main` package is not at the root or under `cmd/`. Move it, or add a Dockerfile. |
+| The wrong binary starts | With several `cmd/<name>/main.go`, lizardpack builds the first name in alphabetical order. Add a Dockerfile that builds the one you want. |
+| SQLite fails with `CGO_ENABLED=0` | The build turns cgo off, so `mattn/go-sqlite3` cannot work. Use a pure-Go driver, or [Managed Postgres](/addons/postgres): container files are lost on each deploy. |
+| Deploy never becomes healthy | The process must listen on `PORT` (or `8080`) on all interfaces. See [service never healthy](/deploy/troubleshooting/service-never-healthy). |
+| You need a newer Go | Change the `go` line, for example `go mod edit -go=1.25`, and deploy again. See [runtime versions](/deploy/runtime-versions). |
+
+A Go process that serves no HTTP, such as a queue consumer, runs as a [background worker](/deploy/workers) with `--port 0`.
+
+## Related
+
+- [Framework guides](/framework-guides)
+- [Build pipeline](/concepts/build-pipeline)
+- [Variables and secrets](/variables)
+- [Networking and domains](/networking)

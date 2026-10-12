@@ -1,8 +1,11 @@
 ---
-description: "Методы Lizard SDK и ограничения текущего runtime."
+title: "Справочник по Sandbox API и SDK"
+description: "Справочник Lizard SDK для TypeScript и Python: параметры создания, команды, файлы, порты, пауза, снимки, fork, ошибки и HTTP API, с примерами кода."
 ---
 
-# Справочник SDK
+<span id="sandbox-api-and-sdk-reference" />
+
+# Справочник по Sandbox API и SDK
 
 <span id="установка-и-аутентификация" />
 <span id="lizard" />
@@ -18,7 +21,21 @@ description: "Методы Lizard SDK и ограничения текущего
 <span id="see-also" />
 <span id="lifecycle-status" />
 
-Установите Lizard SDK и создайте API-ключ в Settings → API keys. Сохраните его в `LIZARD_API_KEY`. Каждому sandbox нужен проект: передайте `projectId` (в Python — `project_id`) или ID, slug либо имя через `project`.
+С Lizard SDK вы управляете Sandboxes в Lizard (lizard.build) из кода: `@lizard-build/sdk` в npm для TypeScript и JavaScript и `lizard-sdk` в PyPI для Python, который импортируется как `lizard`. Оба клиента вызывают один и тот же [HTTP API](#http-api). На этой странице перечислены все вызовы для sandbox с именами в TypeScript и Python и примерами на обоих языках. Для первого запуска по шагам используйте [быстрый старт](/sandboxes/quickstart); что такое Sandboxes, описано в [обзоре](/sandboxes).
+
+<span id="install-and-authenticate" />
+
+## Установка и вход
+
+```sh
+npm install @lizard-build/sdk
+pip install lizard-sdk
+export LIZARD_API_KEY="<your-api-key>"
+```
+
+Создайте API-ключ в Settings → API keys или командой [`lizard keys create <name>`](/cli/keys). SDK читает `LIZARD_API_KEY`; чтобы использовать другой ключ, передайте `apiKey` (в Python: `api_key`). Каждому sandbox нужен проект: передайте `projectId` (в Python: `project_id`) или ID, slug либо имя через `project`.
+
+<span id="create-options" />
 
 ## Параметры создания
 
@@ -35,58 +52,264 @@ description: "Методы Lizard SDK и ограничения текущего
 | `lizardToken` | `lizard_token` |
 | `apiKey` | `api_key` |
 
-Выбирайте шаблон из текущего каталога: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` или `desktop`. Наличие зависит от региона и свободных ресурсов пула. `interpreter` содержит Python и основные библиотеки для работы с данными. `desktop` запускает графический рабочий стол, которым вы управляете через `sandbox.desktop` или `lizard sandbox desktop`. Проверяйте версии программ внутри sandbox. Публичный CLI не поддерживает загрузку своих шаблонов.
+```ts
+import { Sandbox } from '@lizard-build/sdk';
 
-SDK и CLI по умолчанию задают срок жизни пять минут. Прямой API и кабинет по умолчанию не задают срок. Укажите его явно: `timeoutMs: 0` при создании отключает истечение срока; положительное значение задаёт срок жизни. `setTimeout` принимает 1000–2147483647 мс, но не ноль. Команды не продлевают срок. Это не таймер простоя.
+const sandbox = await Sandbox.create('base', {
+  projectId: 'proj_123',
+  size: 'small',
+  timeoutMs: 10 * 60 * 1000,
+  envs: { MODE: 'test' },
+  metadata: { task: 'report-42' },
+});
+```
+
+```python
+from lizard import Sandbox
+
+sandbox = Sandbox.create(
+    "base",
+    project_id="proj_123",
+    size="small",
+    timeout_ms=10 * 60 * 1000,
+    envs={"MODE": "test"},
+    metadata={"task": "report-42"},
+)
+```
+
+- Первым аргументом передайте шаблон из каталога в разделе [runtime и шаблоны](/sandboxes#runtime-and-templates). Без него SDK запускает `base`.
+- `size` принимает `'small'`, `'medium'` или `'large'`: 2 vCPU / 4 GB, 4 vCPU / 8 GB (по умолчанию) или 8 vCPU / 16 GB; см. [размеры и цены](/platform/limits#sandbox-sizes). Для sandbox, восстановленного из снимка, `size` не действует: он работает с размером источника.
+- `timeoutMs` по умолчанию равен 300000, то есть пяти минутам. `0` отключает истечение срока. См. [ресурсы и сроки жизни](/sandboxes#resources-and-timeouts).
+- При необходимости укажите регион явно; наличие региона в каталоге не гарантирует свободные ресурсы. Не задавайте `region`, если подключаете том: sandbox запустится там, где находится том.
+- В `metadata` укажите свои метки; их возвращают `getInfo()` и `list()`.
+- `lizardToken` записывает в sandbox API-ключ `liz_`, чтобы внутри работал `lizard`. Этот ключ может прочитать всё, что работает в sandbox, поэтому передавайте ключ с доступом только к рабочему пространству.
+
+<span id="methods" />
 
 ## Методы
 
-| API (TypeScript) | Методы |
-|---|---|
-| `Sandbox.create(template, options)` | Создать в проекте из шаблона каталога. |
-| `Sandbox.connect(sandboxId)` | Подключиться к существующему sandbox без возобновления. |
-| `Sandbox.list()` | Получить список доступных Sandboxes; проверяйте их статус. |
-| `sandbox.getInfo()` | Получить статус и сведения. |
-| `sandbox.process.exec(cmd)` | Выполнить shell-команду; вернуть stdout, stderr и exitCode. |
-| `sandbox.fs.write(path, data)` | Записать текст или байты; создать родительские папки. |
-| `sandbox.fs.read(path)` | Прочитать текст UTF-8. |
-| `sandbox.fs.readBytes(path)` | Прочитать байты файла. |
-| `sandbox.fs.list(path)` | Получить список файлов и папок. |
-| `sandbox.fs.makeDir(path)` | Создать папку и её родителей. |
-| `sandbox.fs.remove(path)` | Удалить файл или папку. |
-| `sandbox.exposePort(port)` | Опубликовать порт; вернуть `url`, `hostname` и `accessToken`. |
-| `sandbox.getHost(port)` | Опубликовать порт и вернуть его имя хоста; для запросов нужен `sandbox.accessToken`. |
-| `sandbox.setTimeout(ms)` | Задать оставшийся срок жизни, минимум 1000 мс. |
-| `sandbox.pause()` / `sandbox.resume()` | Поставить паузу или возобновление в очередь и сразу вернуть ответ. |
-| `sandbox.waitForStatus(status)` | Дождаться `paused` или `running`; выбросить ошибку, если пауза не удалась. |
-| `sandbox.fork({ count })` | Скопировать работающий sandbox вместе с памятью и процессами. |
-| `sandbox.snapshot(name, { poolSize })` | Сохранить память и файлы `/workspace` в приватный снимок. |
-| `Sandbox.waitForSnapshot(snapshotId)` | Дождаться готовности снимка. |
-| `Sandbox.restore(snapshotId)` | Запустить новый sandbox из готовой копии. |
-| `sandbox.kill()` | Остановить sandbox и отключить том. |
+| TypeScript | Python | Что делает |
+|---|---|---|
+| `Sandbox.create(template, options)` | `Sandbox.create(template, ...)` | Создать в проекте из шаблона каталога. |
+| `Sandbox.connect(sandboxId)` | `Sandbox.connect(sandbox_id)` | Подключиться к существующему sandbox без возобновления. |
+| `Sandbox.list({ projectId })` | `Sandbox.list(project_id=...)` | Получить список доступных Sandboxes; проверяйте их статус. |
+| `sandbox.getInfo()` | `sandbox.get_info()` | Получить статус, runtime и сведения. |
+| `sandbox.process.exec(cmd, opts)` | `sandbox.process.exec_(cmd, ...)` | Выполнить shell-команду или массив argv; вернуть stdout, stderr и код завершения. |
+| `sandbox.process.list()` | `sandbox.process.list()` | Получить список процессов, запущенных через `exec`. |
+| `sandbox.process.kill(pid, signal)` | `sandbox.process.kill(pid, signal)` | Отправить сигнал процессу и его дочерним процессам; по умолчанию `SIGTERM`. |
+| `sandbox.fs.write(path, data)` | `sandbox.fs.write(path, data)` | Записать текст или байты; создать родительские папки. |
+| `sandbox.fs.read(path)` | `sandbox.fs.read(path)` | Прочитать текст UTF-8. |
+| `sandbox.fs.readBytes(path)` | `sandbox.fs.read_bytes(path)` | Прочитать байты файла. |
+| `sandbox.fs.list(path)` | `sandbox.fs.list(path)` | Получить список файлов и папок. |
+| `sandbox.fs.stat(path)` | `sandbox.fs.stat(path)` | Вернуть тип, размер, права, владельца и время изменения. |
+| `sandbox.fs.makeDir(path)` | `sandbox.fs.make_dir(path)` | Создать папку и недостающие родительские папки. |
+| `sandbox.fs.move(from, to)` | `sandbox.fs.move(src, dst)` | Переместить файл или папку. |
+| `sandbox.fs.remove(path)` | `sandbox.fs.remove(path)` | Удалить файл или папку. |
+| `sandbox.exposePort(port)` | `sandbox.expose_port(port)` | Опубликовать порт; вернуть `url`, `hostname` и токен доступа. |
+| `sandbox.getHost(port)` | `sandbox.get_host(port)` | Опубликовать порт и вернуть его имя хоста; для запросов нужен `sandbox.accessToken`. |
+| `sandbox.unexpose(port)` | `sandbox.unexpose(port)` | Убрать опубликованный порт. |
+| `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | Задать оставшийся срок жизни, минимум 1000 мс. |
+| `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | Поставить паузу или возобновление в очередь и сразу вернуть ответ. |
+| `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | Дождаться `paused` или `running`; выбросить ошибку, если пауза не удалась. |
+| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Скопировать работающий sandbox от 1 до 10 раз вместе с памятью и процессами. |
+| `sandbox.snapshot(name, { poolSize })` | `sandbox.snapshot(name, pool_size=...)` | Сохранить память и файлы `/workspace` в приватный снимок. |
+| `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | Дождаться готовности снимка. |
+| `Sandbox.restore(snapshotId)` | `Sandbox.restore(snapshot_id)` | Запустить новый sandbox из снимка. |
+| `Sandbox.deleteSnapshot(snapshotId)` | `Sandbox.delete_snapshot(snapshot_id)` | Удалить снимок; sandbox, восстановленные из него, продолжают работать. |
+| `sandbox.kill()` | `sandbox.kill()` | Остановить sandbox и отключить том. |
 
-Python: `exec_`, `get_info`, `expose_port`, `get_host`, `access_token`, `set_timeout`, `sandbox_id`, `read_bytes`, `make_dir`, `wait_for_status`, `wait_for_snapshot`, `pool_size`.
+<span id="run-commands" />
 
-## Текущие ограничения runtime
+## Запуск команд
 
-Результат команды содержит stdout, stderr и код завершения. Таймаут команды ограничен 1–600 секундами. `process.exec` принимает `envs`, `workdir` и `user`. Параметр `envs`, заданный при создании, доступен каждой команде в sandbox на Firecracker; sandbox в виде pod его игнорирует, поэтому там передавайте переменные в каждой команде. `getInfo()` и `list()` возвращают `metadata`, заданные при создании.
+`process.exec` (в Python: `exec_`) запускает команду и ждёт её завершения. Передайте `onStdout` или `onStderr` (в Python: `on_stdout`, `on_stderr`), чтобы получать вывод, пока команда выполняется; вызов всё равно вернёт полный результат в конце. Передайте массив argv вместо строки, чтобы обойти оболочку: так безопасно передавать недоверенный текст как аргумент.
 
-`fs.write` записывает текст или байты, а `fs.read` читает текст. Для двоичных файлов записывайте байты и читайте их обратно через `fs.readBytes` (в Python — `read_bytes`).
+```ts
+const result = await sandbox.process.exec('npm test', {
+  workdir: '/app',
+  envs: { NODE_ENV: 'test' },
+  timeoutMs: 120_000,
+  onStdout: (chunk) => process.stdout.write(chunk),
+});
+if (result.exitCode !== 0) throw new Error(result.stderr);
 
-Передайте `size` (`'small'`, `'medium'` или `'large'`), чтобы выбрать 2 vCPU / 4 GB, 4 vCPU / 8 GB (по умолчанию) или 8 vCPU / 16 GB; см. [размеры и цены](/platform/limits#sandbox-sizes). Для sandbox, восстановленного из снимка, `size` не действует: он работает с размером источника. При необходимости укажите регион явно; наличие региона в каталоге не гарантирует свободные ресурсы.
+await sandbox.process.exec(['grep', '-rn', '--', userQuery, '/workspace']);
+```
+
+```python
+result = sandbox.process.exec_(
+    "npm test",
+    workdir="/app",
+    envs={"NODE_ENV": "test"},
+    timeout_ms=120_000,
+    on_stdout=lambda chunk: print(chunk, end=""),
+)
+if result.exit_code != 0:
+    raise RuntimeError(result.stderr)
+
+sandbox.process.exec_(["grep", "-rn", "--", user_query, "/workspace"])
+```
+
+Результат команды содержит stdout, stderr и код завершения. Ненулевой код завершения возвращается в результате; проверяйте его сами. Сбои запроса выбрасывают исключение. Таймаут команды составляет от 1 до 600 секунд. `process.exec` принимает `envs`, `workdir` и `user`; команды выполняются от `root`, если не передать `user`. Параметр `envs`, заданный при создании, доступен каждой команде в sandbox на Firecracker; sandbox в виде pod его игнорирует, поэтому там передавайте переменные в каждой команде.
+
+<span id="files" />
+
+## Файлы
+
+`fs.write` записывает текст или байты, а `fs.read` читает текст. Для двоичных файлов записывайте байты и читайте их обратно через `fs.readBytes` (в Python: `read_bytes`). Используйте абсолютные пути. Если пути нет, выбрасывается `NotFoundError`.
+
+```ts
+await sandbox.fs.write('/app/data.csv', 'x,y\n1,2\n');
+const text = await sandbox.fs.read('/app/data.csv');
+const entries = await sandbox.fs.list('/app');
+const png = await sandbox.fs.readBytes('/app/chart.png');
+```
+
+```python
+sandbox.fs.write("/app/data.csv", "x,y\n1,2\n")
+text = sandbox.fs.read("/app/data.csv")
+entries = sandbox.fs.list("/app")
+png = sandbox.fs.read_bytes("/app/chart.png")
+```
+
+Файлы вне тома [Persistent Volumes](/sandboxes/volumes) в `/workspace` пропадают после остановки sandbox.
+
+<span id="ports" />
+
+## Порты
+
+Запустите сервер на `0.0.0.0` внутри sandbox, затем опубликуйте его порт. Каждому запросу нужен токен доступа: в заголовке `X-Lizard-Access-Token` или один раз как `?lizard_token=` в браузере. См. [URL предпросмотра](/sandboxes/preview-urls).
+
+```ts
+const { url, hostname, accessToken } = await sandbox.exposePort(3000);
+console.log(url); // open in a browser; it carries the token
+await fetch(`https://${hostname}/api`, { headers: { 'X-Lizard-Access-Token': accessToken } });
+await sandbox.unexpose(3000);
+```
+
+```python
+import httpx
+
+exposed = sandbox.expose_port(3000)
+print(exposed.url)  # open in a browser; it carries the token
+httpx.get(f"https://{exposed.hostname}/api", headers={"X-Lizard-Access-Token": exposed.access_token})
+sandbox.unexpose(3000)
+```
+
+<span id="pause-snapshot-and-fork" />
+
+## Пауза, снимки и fork
+
+Эти вызовы сохраняют память и запущенные процессы, а не только файлы. В [быстром старте](/sandboxes/quickstart#pause-and-resume) описано, что сохраняет каждый из них, как оплачиваются восстановленные sandbox и что может не сработать.
+
+```ts
+await sandbox.pause();
+await sandbox.waitForStatus('paused');
+await sandbox.resume();
+await sandbox.waitForStatus('running');
+
+const saved = await sandbox.snapshot('ready-env');
+const copy = await Sandbox.restore(saved.id);
+
+for (const f of await sandbox.fork({ count: 2 })) {
+  if (f.sandbox) await f.sandbox.process.exec('echo hi');
+  else console.warn('fork failed:', f.error);
+}
+```
+
+```python
+sandbox.pause()
+sandbox.wait_for_status("paused")
+sandbox.resume()
+sandbox.wait_for_status("running")
+
+saved = sandbox.snapshot("ready-env")
+copy = Sandbox.restore(saved["id"])
+
+for f in sandbox.fork(count=2):
+    if f.sandbox:
+        f.sandbox.process.exec_("echo hi")
+    else:
+        print("fork failed:", f.error)
+```
+
+`fork` возвращает по одной записи на каждую копию: новый sandbox или ошибку, например из-за лимита sandbox в аккаунте. Каждая копия оплачивается так же, как источник.
+
+<span id="run-code-with-state" />
 
 ## Запуск кода с сохранением состояния
 
-`CodeSandbox` запускает шаблон `interpreter` и выполняет код через `runCode` (в Python — `run_code`). В этом шаблоне Python работает в постоянном ядре Jupyter для каждого контекста, поэтому переменные сохраняются между вызовами, а результаты могут включать графики в виде `image/png`. JavaScript и bash при каждом вызове запускаются как новый процесс. См. [Запуск Python](/sandboxes/code-interpreter).
+`CodeSandbox` запускает шаблон `interpreter` и выполняет код через `runCode` (в Python: `run_code`). В этом шаблоне Python работает в постоянном ядре Jupyter для каждого контекста, поэтому переменные сохраняются между вызовами, а результаты могут включать графики в виде `image/png`. JavaScript и bash при каждом вызове запускаются как новый процесс. См. [интерпретатор кода](/sandboxes/code-interpreter).
+
+<span id="volumes" />
+
+## Тома
+
+Подключите том [Persistent Volumes](/sandboxes/volumes) по имени, чтобы сохранять `/workspace` между sandbox:
+
+```ts
+import { Sandbox, Volume } from '@lizard-build/sdk';
+
+await Volume.getOrCreate('proj_123', 'agent-workdir', { sizeGb: 10 });
+const sandbox = await Sandbox.create('base', { projectId: 'proj_123', volumeName: 'agent-workdir' });
+```
+
+```python
+from lizard import Sandbox, Volume
+
+Volume.get_or_create("proj_123", "agent-workdir", size_gb=10)
+sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workdir")
+```
+
+<span id="unsupported-apis" />
 
 ## Недоступные API
 
 Наблюдение за файлами пока недоступно. `sandbox.fork()` возвращает 409, если подключён том, и 501 для sandbox, работающего как pod. `Sandbox.connect` не возобновляет приостановленный или остановленный sandbox; для приостановленного вызовите `resume()`. Доступа по протоколу SSH нет; `lizard sandbox ssh` открывает интерактивную оболочку с учётными данными CLI.
 
+<span id="errors" />
+
+## Ошибки
+
+При сбоях API SDK выбрасывает эти ошибки (в Python: исключения). У каждой есть HTTP-статус и `code`, если API его передал.
+
+| Ошибка | Значение |
+|---|---|
+| `PaymentRequiredError` | HTTP 402: аккаунту нужно подключить Pro или оплатить счёт, прежде чем что-то создавать. В `url` указан адрес страницы, которую нужно открыть. |
+| `AuthenticationError` | HTTP 401 или 403: неверный ключ или нет доступа. |
+| `NotFoundError` | HTTP 404: sandbox, файл или снимок не существует либо его срок истёк. |
+| `ConflictError` | HTTP 409: конфликт состояния, например fork sandbox с томом. |
+| `TimeoutError` | HTTP 408 или 504. |
+| `LizardError` | Другие сбои API, включая неподдерживаемые операции. |
+
+Если одновременно работает слишком много sandbox или запусков слишком много, API возвращает HTTP 429; см. [лимиты аккаунта](/platform/limits#sandbox-account-limits).
+
+## HTTP API
+
+SDK обращается к REST API Lizard по адресу `https://lizard.build`. Передавайте API-ключ как `Authorization: Bearer liz_...` или в заголовке `X-API-Key`.
+
+| Вызов | Запрос |
+|---|---|
+| Создание | `POST /api/sandboxes` с `template`, `projectId`, `size`, `timeoutMs`, `envs`, `metadata`, `region`, `volumeName`; возвращает 201 с `sandboxId` |
+| Статус | `GET /api/sandboxes/{id}` |
+| Список | `GET /api/sandboxes` или `GET /api/projects/{projectId}/sandboxes` для одного проекта |
+| Запуск команды | `POST /api/sandboxes/{id}/exec` с `cmd`, `envs`, `workdir`, `user`, `timeoutMs`; возвращает `stdout`, `stderr`, `exitCode` |
+| Изменение срока жизни | `POST /api/sandboxes/{id}/timeout` с `timeoutMs` |
+| Пауза или возобновление | `POST /api/sandboxes/{id}/pause`, `POST /api/sandboxes/{id}/resume` |
+| Публикация порта | `POST /api/sandboxes/{id}/expose/{port}`; `DELETE` по тому же пути убирает его |
+| Остановка | `DELETE /api/sandboxes/{id}` |
+
+```bash
+curl -X POST https://lizard.build/api/sandboxes \
+  -H "Authorization: Bearer $LIZARD_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"template": "base", "projectId": "proj_123", "timeoutMs": 300000}'
+```
+
+Прямой API создаёт sandbox без срока жизни, если не передать `timeoutMs`.
+
+<span id="storage-and-billing" />
+
 ## Хранение и оплата
 
-Файлы и процессы доступны, пока sandbox работает. После остановки следующий sandbox может получить только файлы, записанные на подключённый Persistent Volume в `/workspace`. Без тома `/workspace` — временная папка. Том подключается только к одному sandbox и хранится на одном узле; отдельно сохраняйте файлы, которые должны пережить потерю узла.
-
-У каждого размера фиксированная почасовая цена; оплата идёт посекундно, пока sandbox работает, включая простой. Исходящий трафик входит в цену до [2 TB на аккаунт](/platform/limits#sandbox-egress) за скользящие 30 дней. Sandbox, восстановленный из снимка, работает с размером и по цене источника; восстановленный из снимка pod оплачивается по измеренному расходу. За приостановленный sandbox плата не берётся; Persistent Volumes оплачиваются отдельно, пока вы храните данные. Ставьте sandbox на паузу или останавливайте его, когда задача завершена.
-
-[Быстрый старт](/sandboxes/quickstart) · [Справочник SDK](/sandboxes/sdk-reference) · [Запуск Python](/sandboxes/code-interpreter) · [Кабинет](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)
+Оплата, исходящий трафик и то, что сохраняется после остановки, описаны в разделе [хранение и оплата](/sandboxes#storage-and-billing). Размеры и почасовые цены смотрите в [лимитах](/platform/limits#sandbox-sizes).

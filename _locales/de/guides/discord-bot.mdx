@@ -1,0 +1,183 @@
+---
+title: "Einen Discord-Bot hosten"
+description: "Hoste einen Discord-Bot auf Lizard als Hintergrund-Worker: ein discord.js-Beispiel, das Bot-Token als Secret, Worker-Modus ohne Port, ein Replikat, Logs."
+---
+
+<span id="host-a-discord-bot" />
+
+# Einen Discord-Bot hosten
+
+Um einen Discord-Bot auf Lizard (lizard.build) zu hosten, führst du ihn als Hintergrund-Worker aus. Ein Gateway-Bot baut eine ausgehende Verbindung zu Discord auf und liefert kein HTTP aus. Deploye ihn deshalb mit `lizard up --port 0` (`containerPort=0`) und betreibe pro Bot-Token genau ein Replikat. Lizard erkennt einen Node.js-Bot an der `package.json` und startet ihn mit `npm run start`; ein Python-Bot braucht eine `web:`-Zeile in einem Procfile.
+
+**Teststatus:** Der Beispiel-Bot läuft lokal mit discord.js 14.27.0 und beendet sich mit `TokenInvalid`, wenn er ein gefälschtes Token bekommt. Seinen Build-Plan haben wir mit lizardpack geprüft, dem Build-Planer, den Lizard ausführt. Diese Anleitung haben wir noch nicht von Lizard aus gegen Discord getestet; sende eine Testnachricht und prüfe die Logs, bevor du dich darauf verlässt.
+
+<span id="before-you-start" />
+
+## Bevor du beginnst
+
+- **Ein Bot-Token.** Erstelle im [Discord Developer Portal](https://discord.com/developers/applications) eine Application, öffne **Bot** und klicke auf **Reset Token**. Halte das Token geheim: Wer es hat, steuert den Bot.
+- **Der Message Content Intent.** Das Beispiel liest `!ping`, also aktiviere **Message Content Intent** unter **Bot → Privileged Gateway Intents**. Ein Bot, der nur auf Slash-Befehle antwortet, braucht ihn nicht.
+- **Der Bot auf einem Server.** Wähle unter **OAuth2 → URL Generator** den Scope `bot` und die Berechtigungen **View Channels**, **Send Messages** und **Read Message History** aus, öffne dann die URL und wähle einen Server.
+- **Lizard CLI und ein Tarif.** Installiere die CLI und führe `lizard login` aus. Services laufen auf Lizard Pro oder in der 7-tägigen Testphase (Karte erforderlich); siehe [Preise](https://lizard.build/pricing).
+
+<span id="write-the-bot" />
+
+## Den Bot schreiben
+
+Lege einen Ordner mit zwei Dateien an.
+
+`package.json`:
+
+```json
+{
+  "name": "discord-bot",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.27.0"
+  }
+}
+```
+
+`bot.js`:
+
+```js
+import { Client, Events, GatewayIntentBits } from "discord.js";
+
+const token = process.env.DISCORD_TOKEN;
+if (!token) {
+  console.error("DISCORD_TOKEN is not set");
+  process.exit(1);
+}
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
+});
+
+client.once(Events.ClientReady, (ready) => {
+  console.log(`Logged in as ${ready.user.tag}`);
+});
+
+client.on(Events.MessageCreate, async (message) => {
+  if (message.author.bot) return;
+  if (message.content === "!ping") {
+    await message.reply("pong");
+  }
+});
+
+client.login(token);
+```
+
+Führe `npm install` aus, um `package-lock.json` zu erzeugen, und lass die Lock-Datei neben `package.json` liegen: Mit ihr installiert Lizard per `npm ci`. Lege eine `.gitignore` mit `node_modules` und `.env` an.
+
+Um den Bot auf deinem Rechner auszuprobieren, füge das Token ein, ohne es in einer Datei zu speichern, und starte ihn dann:
+
+```bash
+read -rs DISCORD_TOKEN && export DISCORD_TOKEN
+npm start
+```
+
+Schreib `!ping` in einen Kanal, den der Bot sehen kann; er antwortet mit `pong`. Beende die lokale Kopie, bevor du deployst. Laufen zwei Kopien, antworten beide auf jede Nachricht.
+
+<span id="deploy-as-a-worker" />
+
+## Als Worker deployen
+
+Im Ordner des Bots:
+
+```bash
+lizard init --name discord-bot
+lizard add --service bot
+read -rs DISCORD_TOKEN
+lizard secrets set DISCORD_TOKEN="$DISCORD_TOKEN" --service bot
+lizard up --service bot --port 0
+```
+
+- `lizard add --service bot` legt einen leeren Service an; `lizard up --service bot` lädt anschließend den Code hoch und deployt ihn.
+- `lizard secrets set` speichert das Token nur auf dem Service **bot**. Siehe [Variablen und Secrets](/variables).
+- `--port 0` schaltet den [Worker-Modus](/deploy/workers) ein: Lizard setzt kein `PORT`, führt keinen Port-Health-Check aus und legt keine HTTP-Route an. Der Service kann trotzdem eine `onlizard.com`-Domain anzeigen, dort antwortet aber nichts.
+
+Innerhalb eines Git-Repositorys überspringt `lizard up` alles, was in `.gitignore` steht. Außerhalb von Git lädt es `.env`-Dateien hoch. Halte das Token daher aus Dateien in diesem Ordner heraus oder führe zuerst `git init` aus. Siehe [Aus lokalem Code deployen](/deploy/upload).
+
+Wenn du stattdessen git push to deploy nutzen möchtest, pushe den Ordner zu GitHub, [verbinde das Repository](/deploy/github) und stelle den Service dann auf den Worker-Modus um:
+
+```bash
+lizard port 0 --service bot
+lizard redeploy --service bot
+```
+
+<span id="one-replica-per-token" />
+
+### Ein Replikat pro Token
+
+Jedes Replikat öffnet mit demselben Token eine eigene Gateway-Session, und jedes antwortet auf jede Nachricht. Lass den Bot-Service deshalb bei einem Replikat. Wenn du eine neue Version eines Workers deployst, stoppt Lizard den alten Prozess, bevor es den neuen startet. Dabei ist der Bot kurz nicht erreichbar; doppelte Antworten entstehen dadurch nicht. Ein Bot auf mehr als 2.500 Servern muss das Sharding von Discord nutzen; das ist eine Änderung im Code, keine Frage von mehr Replikaten desselben Prozesses.
+
+<span id="python-bots" />
+
+## Python-Bots
+
+Trage discord.py in `requirements.txt` ein und lege ein `Procfile` an:
+
+```text
+web: python bot.py
+```
+
+lizardpack liest nur die `web:`-Zeile eines Procfiles, auch bei einem Worker, und ignoriert eine `worker:`-Zeile. Ohne Procfile führt es `python main.py` aus; ein Bot in `main.py` braucht also kein Procfile. Deploye mit denselben Befehlen und `--port 0`. Wie du die Python-Version wählst, steht unter [Laufzeitversionen](/deploy/runtime-versions).
+
+<span id="keep-data-in-managed-postgres" />
+
+## Daten in Managed Postgres speichern
+
+Dateien, die im Container geschrieben werden, gehen beim nächsten Deployment verloren. Speichere Einstellungen, Punktestände oder Warteschlangen in [Managed Postgres](/addons/postgres):
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service bot
+```
+
+Die einfachen Anführungszeichen verhindern, dass deine Shell `${{…}}` auswertet; Lizard löst die [Referenz](/variables/references) beim Start des Bots auf, und die Änderung der Variable startet ihn neu. Lies `process.env.DATABASE_URL` mit einem Client wie `pg`. Schreibe Handler so, dass sie gefahrlos zweimal laufen können: Ein Neustart kann Arbeit wiederholen, die gerade lief.
+
+<span id="check-that-it-works" />
+
+## Prüfen, ob es funktioniert
+
+```bash
+lizard port --service bot
+lizard logs --service bot --tail 50
+lizard ps
+```
+
+`lizard port` gibt `worker mode` aus. Im Log stehen `Logged in as` und der Name des Bots. Schreib dann `!ping` auf deinem Server und warte auf genau ein `pong`. Auch ein Worker, der als laufend markiert ist, braucht diese Prüfung: Der Prozess kann laufen, während Discord ihn abweist.
+
+<span id="common-problems" />
+
+## Häufige Probleme
+
+| Symptom | Lösung |
+|---|---|
+| `An invalid token was provided`, danach Neustarts | Setze das Token im Developer Portal zurück und setze `DISCORD_TOKEN` erneut auf dem Bot-Service. |
+| `Privileged intent provided is not enabled or whitelisted` | Aktiviere **Message Content Intent** oder entferne `GatewayIntentBits.MessageContent` aus dem Code. |
+| Der Bot ist online, ignoriert aber `!ping` | Ohne den Intent kommt der Nachrichteninhalt leer an. Prüfe außerdem, ob der Bot in diesem Kanal lesen und schreiben darf. |
+| Jede Nachricht bekommt zwei Antworten | Eine weitere Kopie nutzt das Token: ein lokaler Prozess, ein zweites Replikat oder ein anderer Host. Prüfe `lizard ps`. |
+| Das Deployment wartet auf einen Health-Check | Der Service ist nicht im Worker-Modus. Führe `lizard port 0 --service bot` und dann `lizard redeploy --service bot` aus. |
+| `DISCORD_TOKEN is not set` | Das Secret liegt auf einem anderen Service oder auf dem Projekt. Führe `lizard secrets list --service bot` aus. |
+
+Ein Bot, der nur über eine **Interactions Endpoint URL** auf Slash-Befehle antwortet, ist dagegen ein HTTP-Service: Deploye ihn mit einem echten Port und gib Discord seine HTTPS-URL.
+
+<span id="related" />
+
+## Siehe auch
+
+- [Hintergrund-Worker](/deploy/workers)
+- [Einen Telegram-Bot ausführen](/guides/telegram-bot)
+- [Eine Node.js-App bereitstellen](/framework-guides/nodejs)
+- [Logs](/observability/logs)
+- [Limits](/platform/limits)
+- [discord.js-Leitfaden](https://discordjs.guide/)

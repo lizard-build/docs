@@ -1,14 +1,15 @@
 ---
-description: "Every service gets an onlizard.com domain with automatic TLS. Attach a custom hostname, verify DNS, change the port, reach other services privately, or remove a domain."
+title: "Networking: private networking, domains and ports"
+description: "Private networking between services at <name>.lizard.internal, generated onlizard.com domains with TLS, custom domains, DNS checks and container ports."
 ---
 
 # Networking
 
-Every service gets a generated `*.onlizard.com` domain with automatic TLS the moment it deploys, regardless of region. Attach your own hostname when you're ready to go live.
+On Lizard, services in the same project reach each other over a private network at `<service>.lizard.internal`, on any port, with no public domain. Every web service also gets a generated `*.onlizard.com` domain with automatic TLS when it deploys. You can also attach your own hostname. Managed Postgres and Managed Redis join the same private network. Jump to [private networking](#private-networking), [custom domains](#attach-a-custom-domain) or [ports](#change-the-port-your-service-listens-on).
 
 ## Generated domains
 
-A service's default domain is created for you, in the form `<name>-<suffix>.onlizard.com`. Older services keep `<words>.<region>.onlizard.com`. Show it:
+Lizard creates a default domain for each service in the form `<name>-<suffix>.onlizard.com`. Older services keep `<words>.<region>.onlizard.com`. Show it:
 
 ```bash
 lizard domain                    # show the service's current domain
@@ -19,7 +20,7 @@ lizard domain generate           # claim a *.onlizard.com subdomain if the servi
 
 ## Attach a custom domain
 
-The hostname is a **positional argument** — there is no `add` subcommand:
+Pass the hostname as a positional argument. There is no `add` subcommand:
 
 ```bash
 lizard domain app.example.com --service web
@@ -35,7 +36,7 @@ Once DNS has propagated, activate the domain:
 lizard domain verify app.example.com --service web
 ```
 
-This checks the `TXT` record and activates the domain. TLS is provisioned automatically.
+Lizard checks the `TXT` record, activates the domain and provisions TLS.
 
 ## Remove a domain
 
@@ -55,11 +56,11 @@ lizard redeploy --service web
 
 ## Worker services
 
-A [worker-mode service](/deploy/workers) (`containerPort=0`) may still show a generated domain, but it serves nothing — there's no listener and no load-balancer route. Don't attach a custom domain to a worker.
+A [worker-mode service](/deploy/workers) (`containerPort=0`) may still show a generated domain, but it serves nothing: there's no listener and no load-balancer route. Don't attach a custom domain to a worker.
 
 ## Private networking
 
-Services in the same project reach each other at `<service>.lizard.internal`, on any port the service listens on, without a public domain. Reference the hostname as `${{api.LIZARD_PRIVATE_DOMAIN}}`. Managed Postgres and Managed Redis expose `DATABASE_PRIVATE_URL` and `REDIS_PRIVATE_URL` on the same network. These names resolve only inside the project.
+Services in the same project reach each other at `<service>.lizard.internal`, on any port the service listens on, without a public domain. Reference the hostname as `${{api.LIZARD_PRIVATE_DOMAIN}}`. Managed Postgres and Managed Redis expose `DATABASE_PRIVATE_URL` and `REDIS_PRIVATE_URL` on the same network; see the [Postgres connection string](/addons/postgres#postgres-connection-string). These names resolve only inside the project, and services in other projects cannot reach these addresses. Traffic stays inside Lizard's network, so plain `http://` is fine between services.
 
 ```bash
 lizard secrets set API_URL='http://${{api.LIZARD_PRIVATE_DOMAIN}}:8080' --service web
@@ -71,6 +72,6 @@ Open a service in the dashboard (`lizard open`) and go to **Settings → Network
 
 ## See also
 
-- [`lizard domain`](/cli/domain) — the full command reference.
-- [Regions](/deploy/regions) — co-locating services and addons for latency.
-- [From prototype to a SaaS people pay for](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#verify-a-real-production-flow) — where a custom domain sits among the other things a generated app still needs.
+- [`lizard domain`](/cli/domain): the full command reference.
+- [Regions](/deploy/regions): co-locating services and addons for latency.
+- [From prototype to a SaaS people pay for](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#verify-a-real-production-flow): checks for a generated app before accepting customers.

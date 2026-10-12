@@ -1,12 +1,13 @@
 ---
-description: "Installieren Sie die lizard CLI, melden Sie sich an und stellen Sie Ihre erste App in wenigen Minuten aus einem GitHub-Repo oder einem lokalen Ordner bereit, und fügen Sie dann eine Datenbank hinzu."
+title: "App-Schnellstart: Ihre erste App bereitstellen"
+description: "Stellen Sie Ihre erste App in wenigen Minuten auf Lizard bereit: Lizard CLI installieren, anmelden, die 7-tägige Pro-Testphase starten und dann ein GitHub-Repo oder einen lokalen Ordner bereitstellen."
 ---
 
 <span id="app-quickstart" />
 
 # App-Schnellstart
 
-Stellen Sie Ihre erste App in wenigen Minuten auf Lizard bereit. Ein Lizard-Konto wird automatisch erstellt, wenn Sie zum ersten Mal `lizard login`. Sie installieren Lizard CLI, melden sich an, starten die Pro-Testphase und stellen dann bereit — entweder direkt aus einem GitHub-Repo oder aus einem lokalen Verzeichnis.
+Mit diesem Schnellstart stellen Sie in wenigen Minuten eine App auf Lizard (lizard.build) bereit. Installieren Sie Lizard CLI, melden Sie sich an, starten Sie die 7-tägige Pro-Testphase und führen Sie dann `lizard add -r owner/repo` für ein GitHub-Repository oder `lizard up` für einen lokalen Ordner aus. Lizard baut die App auf seinen Servern, ohne lokales Docker, und liefert eine HTTPS-URL auf `onlizard.com`. Ihr Konto wird erstellt, wenn Sie zum ersten Mal `lizard login` ausführen.
 
 <span id="1-install-the-cli" />
 
@@ -80,7 +81,7 @@ Ein neues Konto hat keinen Plan, daher gibt das Erstellen von Ressourcen HTTP 40
 lizard billing start
 ```
 
-Dadurch wird Stripe Checkout geöffnet, wo Sie eine Karte hinzufügen. Die Testphase enthält $5 Testguthaben, und es wird nichts abgebucht, bis sie endet. Siehe [Abrechnung](/platform/billing).
+Dadurch wird Stripe Checkout geöffnet, wo Sie eine Karte hinzufügen. Die Testphase enthält Nutzung im Wert von $5. Bis zu ihrem Ende bucht Lizard nichts ab. Siehe [Abrechnung](/platform/billing) und [`lizard billing`](/cli/billing).
 
 <span id="4-deploy" />
 
@@ -98,7 +99,7 @@ Wenn Ihr Code auf GitHub liegt, erstellen Sie einen Service direkt aus dem Repo.
 lizard add -r your-org/your-app
 ```
 
-Pushes auf den verfolgten Branch lösen ab dann automatisch eine erneute Bereitstellung aus. Bei privaten Repos verbinden Sie zuerst die GitHub App:
+Pushes auf den verfolgten Branch lösen ab dann automatisch eine erneute Bereitstellung aus. Bei privaten Repos verbinden Sie zuerst die GitHub App mit [`lizard git`](/cli/git):
 
 ```bash
 lizard git connect
@@ -118,6 +119,8 @@ Wenn das Verzeichnis noch nicht mit einem Projekt verknüpft ist, erstellt oder 
 
 In beiden Fällen erhalten Sie nach Abschluss des Builds eine generierte URL wie `https://your-app-x1y2z.onlizard.com`.
 
+Lizard erkennt die meisten Stacks selbst. Den genauen Build-Befehl, Startbefehl und Port Ihres Frameworks finden Sie in der Anleitung für [Next.js](/framework-guides/nextjs), [React](/framework-guides/react), [Vue](/framework-guides/vue), [Astro](/framework-guides/astro), [SvelteKit](/framework-guides/sveltekit), [Node.js](/framework-guides/nodejs), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails) oder [Go](/framework-guides/go). Für eine App mit eigenem Dockerfile folgen Sie [Mit einer Dockerfile bereitstellen](/deploy/dockerfile).
+
 <span id="5-watch-it-build-and-run" />
 
 ## 5. Build und Ausführung beobachten
@@ -128,6 +131,8 @@ lizard logs        # last runtime log lines
 lizard logs --build  # the most recent build's logs
 lizard open        # open the project in the dashboard
 ```
+
+[`lizard open`](/cli/open) zeigt dasselbe Projekt im [Dashboard](/dashboard). Metriken, Kosten und den Deployment-Verlauf finden Sie unter [Observability](/observability).
 
 <span id="6-add-a-database-optional" />
 
@@ -149,6 +154,7 @@ Die Referenz `${{postgres.DATABASE_PRIVATE_URL}}` wird beim Bereitstellen aufgel
 
 - **[Grundkonzepte](/concepts/architecture)** — Projekte, Services und die Build-Pipeline verstehen.
 - **[Bereitstellung über GitHub](/deploy/github)** — Branches, Monorepos und automatische erneute Bereitstellungen.
+- **[Bereitstellen](/deploy)**: alle Wege zur Bereitstellung, dazu Worker, Skalierung und Regionen.
 - **[Variablen & Secrets](/variables)** — Geltungsbereich und Priorität.
 - **[Netzwerk](/networking)** — Ihren eigenen Hostnamen mit automatischem TLS verbinden.
 - **[Eine App bereitstellen, die Ihre AI IDE erstellt hat](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — dieselben Schritte, nur stattdessen an einen Agenten übergeben, für eine in Google Antigravity geschriebene App.

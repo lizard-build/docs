@@ -1,8 +1,11 @@
 ---
-description: "Lizard SDK と interpreter テンプレートで Python コマンドを実行。"
+title: "LLM が生成したコード向けのコードインタープリター API"
+description: "LLM が書いたコードを Lizard SDK で sandbox 内で実行: 状態を保持する Python カーネル、PNG 形式のグラフ、トレースバック付きのエラー、タイムアウト、LLM ツールの例。"
 ---
 
-# Python の実行
+<span id="code-interpreter-api-for-llm-generated-code" />
+
+# LLM が生成したコード向けのコードインタープリター API
 
 <span id="コード-インタープリタ" />
 <span id="コードを実行する" />
@@ -19,16 +22,22 @@ description: "Lizard SDK と interpreter テンプレートで Python コマン�
 <span id="checkpointing-a-session" />
 <span id="see-also" />
 
-`interpreter` テンプレートで Python を実行します。`CodeSandbox` は呼び出し間で状態を保持します。Python はコンテキストごとに永続的な Jupyter カーネルで実行され、結果には最後の式の値や `image/png` 形式のグラフを含めることができます。
+コードインタープリターは、言語モデルが書いたコードを実行し、その出力をモデルに返します。Lizard (lizard.build) では、Lizard SDK の `CodeSandbox` がこれを sandbox（Firecracker microVM）の中で行うため、コードはアプリや手元のマシンから切り離されて実行されます。`CodeSandbox` は、Python と一般的なデータ処理ライブラリを含む `interpreter` テンプレートを起動します。Python は呼び出し間で変数を保持する Jupyter カーネルで実行され、各結果には出力されたテキスト、最後の式の値、`image/png` 形式のグラフ、そしてエラーがあればそのトレースバックが含まれます。
+
+<span id="run-code-with-state" />
+
+## 状態を保持してコードを実行する
 
 ```ts
 import { CodeSandbox } from '@lizard-build/sdk';
 
 const sandbox = await CodeSandbox.create({ projectId: 'proj_123', timeoutMs: 300_000 });
 try {
-  await sandbox.runCode('x = 21');
-  const run = await sandbox.runCode('x * 2');
-  console.log(run.results[0]?.data, run.stdout, run.error);
+  await sandbox.runCode('import pandas as pd\ndf = pd.DataFrame({"x": [1, 2, 3]})');
+  const run = await sandbox.runCode('df.x.sum()');
+  console.log(run.results[0]?.data); // "6"
+  const bad = await sandbox.runCode('1/0');
+  console.log(bad.error?.name); // "ZeroDivisionError"
 } finally {
   await sandbox.kill();
 }
@@ -37,48 +46,114 @@ try {
 ```python
 from lizard import CodeSandbox
 
-sandbox = CodeSandbox.create(project_id="proj_123", timeout_ms=300_000)
-try:
-    sandbox.run_code("x = 21")
-    run = sandbox.run_code("x * 2")
-    print(run.results[0].data, run.stdout, run.error)
-finally:
-    sandbox.kill()
+with CodeSandbox.create(project_id="proj_123", timeout_ms=300_000) as sandbox:
+    sandbox.run_code('import pandas as pd\ndf = pd.DataFrame({"x": [1, 2, 3]})')
+    run = sandbox.run_code("df.x.sum()")
+    print(run.results[0].data)  # "6"
+    print(sandbox.run_code("1/0").error.name)  # "ZeroDivisionError"
 ```
 
-`createContext()`（Python では `create_context()`）は、独自の変数を持つ別のカーネルを起動します。JavaScript と bash は、呼び出しのたびに新しいプロセスとして実行されます。
+コードのエラーは結果の一部であり、例外ではありません。不正な API キーなど、リクエスト自体の失敗は例外を投げます。
 
-## コマンドを実行する
+<span id="what-does-runcode-return" />
 
-`process.exec` はコマンドごとに別のプロセスを起動するため、Python の変数は呼び出し間で保持されません。中間結果はファイルに保存してください。stdout、stderr、終了コードを返します。
+## runCode は何を返しますか?
+
+`runCode`（Python では `run_code`）は `Execution` を返します:
+
+| フィールド | 内容 |
+|---|---|
+| `stdout`、`stderr` | コードが出力したすべてのテキスト |
+| `results` | テキスト以外も含む出力: `text/plain` 形式の最後の式の値、base64 の `image/png` 形式の matplotlib のグラフと画像、HTML、その他の形式。それぞれ `mime` と `data` を持ちます |
+| `error` | コードが例外を発生させたときの `name`、`message`、`traceback` |
+| `executionCount` | カーネルのセルカウンター（Python では `execution_count`） |
+
+コードの実行中に出力を受け取るには、`onStdout`、`onStderr`、`onResult`、`onError`（Python では `on_stdout` など）を渡します。
+
+<span id="use-it-as-an-llm-tool" />
+
+## LLM ツールとして使う
+
+モデルに 1 つのツールを与えます。たとえば、文字列の引数 `code` を 1 つだけ取る `run_python` です。モデルがこれを呼び出したら、sandbox でコードを実行し、そのテキストをツールの結果として返します。モデルの変数が呼び出し間で保持されるように、会話全体で 1 つの sandbox を使い続けてください。
 
 ```ts
-import { Sandbox } from '@lizard-build/sdk';
+import { CodeSandbox } from '@lizard-build/sdk';
 
-const sandbox = await Sandbox.create('interpreter', {
-  projectId: 'proj_123', timeoutMs: 300_000,
-});
-try {
-  const result = await sandbox.process.exec("python -c 'print(2 ** 10)'");
-  console.log(result.stdout, result.stderr, result.exitCode);
-} finally {
-  await sandbox.kill();
+const sandbox = await CodeSandbox.create({ projectId: 'proj_123', timeoutMs: 600_000 });
+
+// Call this when the model asks to run Python. Return the text to send back to it.
+async function runPython(code: string): Promise<string> {
+  const run = await sandbox.runCode(code, { timeoutMs: 30_000 });
+  if (run.error) return `${run.error.name}: ${run.error.message}\n${run.error.traceback}`;
+  const values = run.results.flatMap((r) =>
+    r.type === 'result' && r.mime === 'text/plain' ? [r.data] : [],
+  );
+  return [run.stdout, ...values].filter(Boolean).join('\n');
 }
+
+// When the conversation ends:
+await sandbox.kill();
 ```
 
 ```python
-from lizard import Sandbox
+from lizard import CodeSandbox
 
-sandbox = Sandbox.create("interpreter", project_id="proj_123", timeout_ms=300_000)
-try:
-    result = sandbox.process.exec_("python -c 'print(2 ** 10)'")
-    print(result.stdout, result.stderr, result.exit_code)
-finally:
-    sandbox.kill()
+sandbox = CodeSandbox.create(project_id="proj_123", timeout_ms=600_000)
+
+def run_python(code: str) -> str:
+    """Call this when the model asks to run Python. Return the text to send back to it."""
+    run = sandbox.run_code(code, timeout_ms=30_000)
+    if run.error:
+        return f"{run.error.name}: {run.error.message}\n{run.error.traceback}"
+    values = [r.data for r in run.results if r.mime == "text/plain"]
+    return "\n".join(filter(None, [run.stdout, *values]))
+
+# When the conversation ends:
+sandbox.kill()
 ```
+
+ここでの sandbox の有効期間は 10 分です。長い会話では `setTimeout`（Python では `set_timeout`）で延長するか、`timeoutMs: 0` を設定して sandbox を自分で停止してください。
+
+<span id="charts" />
+
+## グラフ
+
+コードが matplotlib のグラフを描画すると、`results` には `mime` が `image/png` で、`data` に base64 の画像を持つ項目が入ります:
+
+```python
+import base64
+from pathlib import Path
+
+run = sandbox.run_code("import matplotlib.pyplot as plt\nplt.plot([1, 4, 9])\nplt.show()")
+png = next(r.data for r in run.results if r.mime == "image/png")
+Path("chart.png").write_bytes(base64.b64decode(png))
+```
+
+<span id="contexts-timeouts-and-languages" />
+
+## コンテキスト、タイムアウト、言語
+
+- **コンテキスト。** `createContext()`（Python では `create_context()`）は、独自の変数と作業ディレクトリを持つ別のカーネルを起動します。これを `context` として `runCode` に渡します。`listContexts()`、`restartContext(ctx)`、`deleteContext(ctx)` で管理します。コンテキストを指定しない場合、各言語はそれぞれの既定のコンテキストを使います。
+- **タイムアウト。** `timeoutMs`（Python では `timeout_ms`）は 1 回の呼び出しの上限で、既定は 60 秒です。上限を超えた Python カーネルは中断されますが、状態は保持されます。結果の `error.name` は `TimeoutError` になります。
+- **その他の言語。** JavaScript と bash は呼び出しのたびに新しいプロセスとして実行されるため、状態は引き継がれず、`results` は空のままです。JavaScript には `node` が必要ですが、`interpreter` テンプレートには含まれていません。
+- **一時停止とスナップショット。** カーネルは sandbox の中で動作するため、`pause()` と `resume()` は変数を保持し、`snapshot()` と `fork()` は変数をコピーします。
+
+<span id="run-commands" />
+
+## コマンドを実行する
+
+`process.exec` はコマンドごとに別のプロセスを起動するため、Python の変数は呼び出し間で保持されません。`pip install` などのシェルの手順に使い、後で必要な結果はファイルに保存してください。[コマンドの実行](/sandboxes/quickstart#run-a-command) と [SDK リファレンス](/sandboxes/sdk-reference#run-commands) を参照してください。
+
+<span id="untrusted-code" />
+
+## 信頼できないコード
+
+モデルが書いたものはすべて信頼できないものとして扱ってください。コードが Lizard CLI を必要としない限り、`lizardToken` を渡さないでください。sandbox 内のどのプロセスもこれを読み取れるため、渡す場合はワークスペース単位のキーを使ってください。その他のシークレットは `envs` に入れないでください。Pod ベースのボリュームを使う sandbox はホストのカーネルを共有します。[ランタイムとテンプレート](/sandboxes#runtime-and-templates) を参照してください。
+
+<span id="storage-and-billing" />
 
 ## 保存と課金
 
-sandbox の実行中はファイルとプロセスを維持します。停止後、別の sandbox で使えるのは、接続した Persistent Volume の `/workspace` に保存したファイルだけです。ボリュームがなければ `/workspace` は一時領域です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。
+変数とファイルは sandbox が存在する間だけ残ります。課金と保存のルールは [保存と課金](/sandboxes#storage-and-billing) に、サイズと料金は [制限](/platform/limits#sandbox-sizes) にあります。
 
-[クイックスタート](/sandboxes/quickstart) · [SDK リファレンス](/sandboxes/sdk-reference) · [Python の実行](/sandboxes/code-interpreter) · [ダッシュボード](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)
+[Sandboxes の概要](/sandboxes) · [クイックスタート](/sandboxes/quickstart) · [SDK リファレンス](/sandboxes/sdk-reference) · [Persistent Volumes](/sandboxes/volumes) · [Sandboxes 製品ページ](https://lizard.build/sandboxes)

@@ -1,0 +1,108 @@
+---
+title: "Run OpenCode in a sandbox"
+description: "Run OpenCode in a Lizard sandbox: connect ChatGPT or an API key, send prompts with lizard sandbox prompt, or open OpenCode's web UI on a private preview URL."
+---
+
+# Run OpenCode in a sandbox
+
+To run OpenCode in a sandbox on Lizard, connect a credential with `lizard agents` (a ChatGPT subscription, or an Anthropic, OpenAI, OpenRouter or LLM Gateway key), create a sandbox from the `opencode` template, and send prompts with `lizard sandbox prompt <id> --agent opencode "…"`. To use OpenCode's web UI instead, start `opencode web --hostname 0.0.0.0 --port 4096` in the sandbox and open the port with `lizard sandbox expose`.
+
+**Test status:** the commands come from Lizard CLI 4.0.42 and the platform's agent runner as of 2026-10-12. We checked the web UI steps against the source of OpenCode 1.18.34, which serves its UI and API from one port, and of Lizard's sandbox router, which keeps the access token in a cookie and passes WebSockets through. We have not yet run either path end to end in a live sandbox for this page.
+
+## Before you start
+
+- Lizard CLI, signed in with `lizard login`, and a project: run `lizard init` in a folder, or pass `-p <project>` to the sandbox commands.
+- Lizard Pro or the 7-day Pro trial (card required). Sandboxes bill per second by size while they run; see [limits](/platform/limits#sandbox-sizes) and [pricing](https://lizard.build/pricing).
+
+## Connect credentials
+
+| Credential | Command |
+|---|---|
+| ChatGPT subscription | `lizard agents login chatgpt --open` |
+| Anthropic API key | `lizard agents add anthropic` |
+| OpenAI API key | `lizard agents add openai` |
+| OpenRouter API key | `lizard agents add openrouter` |
+| LLM Gateway API key | `lizard agents add llmgateway` |
+
+OpenCode gets every connected credential it accepts to access those providers' models. It does not take a Claude subscription token; for that, use [Claude Code](/sandboxes/guides/claude-code). A ChatGPT login reaches a run as a short-lived access token, never the refresh token. API keys reach a run as environment variables such as `ANTHROPIC_API_KEY`.
+
+OpenCode names models `provider/model`. Set a default, or pass `-m` per prompt:
+
+```bash
+lizard agents use opencode -m openrouter/anthropic/claude-sonnet-4.5
+lizard agents status
+```
+
+With only an OpenRouter key connected and no model chosen, Lizard runs `openrouter/openai/gpt-5.3-codex`.
+
+## Create a sandbox
+
+```bash
+lizard sandbox create -t opencode --timeout 3600000
+```
+
+Keep the printed ID in a variable: `SB=sb_abc123`. The CLI default lifetime is five minutes, after which Lizard deletes the sandbox and its files; `--timeout 3600000` gives it one hour. The `opencode` template has Node.js 22, a pinned OpenCode release, git, Python 3, ripgrep, curl, jq, unzip and Lizard CLI.
+
+Copy your code in the same way as for Claude Code:
+
+```bash
+lizard sandbox exec $SB -- git clone https://github.com/your-org/your-app /workspace/app
+```
+
+For a private or local repository, see [put your code in the sandbox](/sandboxes/guides/claude-code#put-your-code-in-the-sandbox).
+
+## Send a prompt
+
+```bash
+lizard sandbox prompt $SB --agent opencode --cwd /workspace/app "add input validation to the signup form"
+```
+
+Each turn runs `opencode run --auto`, which approves every permission request that is not explicitly denied: OpenCode edits files and runs commands without asking. `--effort <level>` becomes OpenCode's `--variant`. Continue a conversation with `-c <conversation-id>`, and pass `--agent opencode` and `--cwd` again on every follow-up. Ctrl-C stops watching; `lizard sandbox interrupt $SB` stops the agent.
+
+To get the changes back as a patch, see [get the changes back](/sandboxes/guides/claude-code#get-the-changes-back).
+
+## Open the OpenCode web UI
+
+`opencode web` serves OpenCode's browser interface and its API from one port. Run it in the sandbox and open that port through a [preview URL](/sandboxes/preview-urls).
+
+Credentials from `lizard agents` reach only `lizard sandbox prompt` runs, so this server needs its own key. Copy it in as a file, so it does not appear in a command line:
+
+```bash
+printf 'export ANTHROPIC_API_KEY=%s\n' "$ANTHROPIC_API_KEY" > opencode.env
+lizard sandbox files put $SB opencode.env /root/opencode.env
+rm opencode.env
+```
+
+Start the server and open the port:
+
+```bash
+lizard sandbox exec $SB -- sh -c '. /root/opencode.env && cd /workspace/app && nohup opencode web --hostname 0.0.0.0 --port 4096 >/tmp/opencode.log 2>&1 </dev/null & echo $! > /tmp/opencode.pid'
+lizard sandbox expose $SB 4096
+```
+
+Open the URL that `expose` prints. It carries `?lizard_token=`; Lizard moves the token into a cookie for that host and redirects to the same page without it. The cookie authenticates the UI's requests, event stream and terminal WebSockets.
+
+- You need `--hostname 0.0.0.0`. OpenCode listens on `127.0.0.1` by default, and the preview URL then answers `Sandbox is not listening on port 4096`.
+- Give a fixed `--port`. Without one, OpenCode picks a random unused port.
+- The URL works like a password: whoever has it can run commands in the sandbox through OpenCode. To require a password as well, add `export OPENCODE_SERVER_PASSWORD=…` to `opencode.env`; the user name is `opencode`.
+- Read the server's log with `lizard sandbox exec $SB -- tail -n 50 /tmp/opencode.log`. Stop the server with `lizard sandbox exec $SB -- sh -c 'kill $(cat /tmp/opencode.pid)'`.
+- The UI stops when the sandbox stops. Extend it with `lizard sandbox timeout $SB 3600000`.
+
+## Common problems
+
+| Message or symptom | Fix |
+|---|---|
+| `OpenCode has no credential. Connect one of: …` | Connect one of the credentials above with `lizard agents`. |
+| `Your ChatGPT login expired` | Run `lizard agents login chatgpt` again. |
+| The output mentions Codex | The prompt went out without `--agent opencode`. |
+| Preview URL answers 401 | Open the full URL that `expose` printed, with its `lizard_token`. See [preview URLs](/sandboxes/preview-urls). |
+| Preview URL answers 502 | The server is not running or listens on `127.0.0.1`. Check `/tmp/opencode.log`. |
+| The web UI loads but every model fails | The server has no provider key. Fix `/root/opencode.env`, stop the server and start it again. |
+
+## Related
+
+- [Run Claude Code in a sandbox](/sandboxes/guides/claude-code)
+- [Preview URLs](/sandboxes/preview-urls)
+- [`lizard agents`](/cli/agents)
+- [`lizard sandbox`](/cli/sandbox#coding-agents)
+- [Sandboxes](/sandboxes)

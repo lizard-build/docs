@@ -1,0 +1,169 @@
+---
+title: "Deploy a Node.js app (Express)"
+description: "Host a Node.js or Express app on Lizard: lizardpack reads package.json, picks Node from .nvmrc or engines, runs npm start on port 3000 and sets PORT."
+---
+
+# Deploy a Node.js app (Express)
+
+To host a Node.js app on Lizard, deploy a folder with a `package.json`. lizardpack picks the package manager from your lock file, installs dependencies, runs the `build` script if there is one and starts the app with the `start` script on port `3000`. It uses Node.js 22 unless `.nvmrc` or `engines.node` names another major version. Lizard passes the port in `PORT`; read it in your app's listener.
+
+**Test status:** the Express sample below ran locally with Express 5.3.0, and the database route with pg 8.23.1 against PostgreSQL 14. We checked its build plan with lizardpack, the build planner Lizard runs. We have not yet deployed it end to end with this guide.
+
+## Before you start
+
+- Node.js and npm on your computer to create the lock file and test locally.
+- Lizard CLI, signed in with `lizard login`, on Pro or the 7-day Pro trial (card required). See [pricing](https://lizard.build/pricing).
+
+Next.js, Nuxt, Astro, SvelteKit and Vite apps have their own guides: see [framework guides](/framework-guides).
+
+## A minimal Express app
+
+`package.json`:
+
+```json
+{
+  "name": "express-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
+```
+
+`server.js`:
+
+```js
+import express from "express";
+
+const app = express();
+const port = Number(process.env.PORT) || 3000;
+
+app.get("/", (req, res) => {
+  res.send("Hello from Express on Lizard");
+});
+
+app.get("/healthz", (req, res) => {
+  res.json({ status: "ok" });
+});
+
+app.listen(port, "0.0.0.0", () => {
+  console.log(`listening on ${port}`);
+});
+```
+
+Run `npm install` to create `package-lock.json`, commit both files, and add `node_modules` and `.env` to `.gitignore`. Check it locally:
+
+```bash
+npm start
+curl http://localhost:3000/healthz
+```
+
+## What lizardpack does with a Node.js app
+
+| Step | What happens |
+|---|---|
+| Package manager | `bun.lock` or `bun.lockb`: Bun. `pnpm-lock.yaml`: pnpm. `yarn.lock`: Yarn. `package-lock.json`: `npm ci`. No lock file: `npm install`. |
+| Node.js version | `.nvmrc`, then `.node-version`, then `.tool-versions`, then `engines.node`. Major version only, on `node:<major>-slim`. Default `22`. |
+| Build | The `build` script, if `package.json` has one, in a separate stage that has your devDependencies |
+| Start | The `start` script; else `node <main>`; else the first of `server.js`, `index.js`, `app.js`, `main.js`, `dist/index.js` |
+| Runtime | `NODE_ENV=production`, port `3000` |
+
+Without a `build` script, the image sets `NODE_ENV=production` before it installs packages, so devDependencies are left out. A start script that calls `nodemon`, `tsx` or `ts-node` from devDependencies then fails. For TypeScript, compile in `build` and start the output:
+
+```json
+{
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  }
+}
+```
+
+For version files and parsing rules, see [runtime versions](/deploy/runtime-versions). Leave the service's build and start commands empty: with either one set, Lizard writes its own Dockerfile on `node:22-alpine` and ignores your version files. See the [build pipeline](/concepts/build-pipeline).
+
+## Deploy
+
+From the app's root:
+
+```bash
+lizard init --name node-app
+lizard add --service web
+lizard up --service web --port 3000
+```
+
+`lizard up` uploads the folder, builds it on Lizard and prints the URL. Inside a git repository it skips what `.gitignore` lists; outside git it skips `node_modules` but uploads `.env` files. See [deploy from local code](/deploy/upload).
+
+For git push to deploy, push the repository to GitHub and connect it with `lizard add -r your-org/your-app -n web`. See [deploy from GitHub](/deploy/github).
+
+## Set variables
+
+```bash
+lizard secrets set SESSION_SECRET="$(openssl rand -hex 32)" --service web
+```
+
+Read values with `process.env.SESSION_SECRET`. A variable change restarts the service without a rebuild. See [variables and secrets](/variables).
+
+## Add Managed Postgres
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service web
+npm install pg
+```
+
+The single quotes keep `${{…}}` away from your shell; Lizard resolves the [reference](/variables/references) at deploy time to the database's address on the project's private network. Add a pool and a route to `server.js`:
+
+```js
+import pg from "pg";
+
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+
+app.get("/db", async (req, res) => {
+  const { rows } = await pool.query("SELECT now() AS now");
+  res.json(rows[0]);
+});
+```
+
+Express 5 passes a rejected promise from a route to its error handler, so a failed query returns HTTP 500 instead of crashing the process. Run migrations from your computer with the database's public URL:
+
+```bash
+lizard run --service postgres -- npm run migrate
+```
+
+For a cache or a job queue, add [Managed Redis](/addons/redis) the same way: `lizard add redis`, then `REDIS_URL='${{redis.REDIS_PRIVATE_URL}}'`.
+
+## Check that it works
+
+```bash
+lizard logs --build --service web
+lizard logs --service web --tail 100
+lizard ps
+```
+
+The runtime log shows `listening on 3000`. Request `/healthz` and `/db` on the URL that `lizard up` printed.
+
+## Common problems
+
+| Symptom | Fix |
+|---|---|
+| `npm ci` fails because the lock file is out of sync | Run `npm install` locally and commit `package-lock.json`. |
+| `nodemon: not found` or `tsx: not found` | Those tools are devDependencies and are not installed for start. Add a `build` step, or move the tool to `dependencies`. |
+| Deploy never becomes healthy | Listen on `process.env.PORT`. A fixed port such as `5000` does not match the service port. See [service never healthy](/deploy/troubleshooting/service-never-healthy). |
+| Wrong Node.js version | Put the major version in `.nvmrc`, for example `24`, and deploy again. |
+| `Cannot use import statement outside a module` | Add `"type": "module"` to `package.json`, or use `require`. |
+
+A Node.js process that serves no HTTP, such as a queue consumer or a [Discord bot](/guides/discord-bot), runs as a [background worker](/deploy/workers).
+
+## Related
+
+- [Framework guides](/framework-guides)
+- [Runtime versions](/deploy/runtime-versions)
+- [Managed Postgres](/addons/postgres)
+- [Logs](/observability/logs)

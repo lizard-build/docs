@@ -18,7 +18,7 @@ lizard agents remove <credential>
 lizard agents use <agent> [flags]
 ```
 
-認証情報はアカウントに紐づきます。一度接続すれば、すべての sandbox でその認証情報を使ってエージェントを実行できます。プラットフォームは有効期間の長いトークンを保持し、実行のたびに有効期間の短いアクセストークンを sandbox に渡します。これらのコマンドは `-p, --project` を受け付けますが、無視します。
+認証情報はアカウントに紐づきます。一度接続すれば、すべての sandbox でその認証情報を使ってエージェントを実行できます。ChatGPT ログインの場合、プラットフォームは有効期間の長いトークンを保持し、実行のたびに有効期間の短いアクセストークンを sandbox に渡します。API キーと Claude サブスクリプションのトークンは、保存されたままの形で、実行時の環境変数として sandbox に渡ります。そのため、無効にできるキーを使ってください。これらのコマンドは `-p, --project` を受け付けますが、無視します。
 
 <span id="agents-and-credentials" />
 
@@ -110,5 +110,5 @@ lizard agents use codex --credential openai --effort high
 
 ## 関連項目
 
-- [lizard sandbox](/cli/sandbox#coding-agents) — `sandbox prompt`、`conversations`、`interrupt`
-- [Sandboxes](/sandboxes) — テンプレートとライフサイクル
+- [lizard sandbox](/cli/sandbox#coding-agents)：`sandbox prompt`、`conversations`、`interrupt`
+- [Sandboxes](/sandboxes)：テンプレートとライフサイクル

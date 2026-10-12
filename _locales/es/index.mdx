@@ -1,12 +1,16 @@
 ---
-description: "Despliega una app, ejecuta un worker, conecta Managed Postgres o ejecuta código en Sandboxes. Elige una tarea, sigue una guía y revisa los límites."
+description: "Despliega apps, workers y agentes de IA en Lizard desde Claude Code, Codex, Cursor o la CLI, y luego añade Managed Postgres, Managed Redis, Managed Object Storage o Sandboxes."
 ---
 
 <span id="lizard-documentation" />
 
 # Documentación de Lizard
 
-Lizard compila y ejecuta aplicaciones desde un repositorio de GitHub o una carpeta local. Usa Lizard CLI o el panel para desplegar un servicio web, ejecutar un worker en segundo plano, conectar Managed Postgres o Managed Redis, e inspeccionar logs. Usa Lizard SDK para crear Sandboxes para la ejecución de código.
+<span id="what-is-lizard" />
+
+## ¿Qué es Lizard?
+
+Lizard (lizard.build) es una plataforma en la nube para desplegar apps, workers en segundo plano y agentes de IA. Despliegas desde Claude Code, Codex, Cursor o una terminal con Lizard CLI: `lizard up` sube la carpeta actual y `lizard add -r owner/repo` despliega un repositorio de GitHub. Lizard compila la imagen en sus propios servidores, así que no necesitas Docker en tu máquina, y da a cada servicio web una dirección HTTPS en `onlizard.com`. La misma CLI añade Managed Postgres, Managed Redis y Managed Object Storage compatible con S3 a un proyecto y los conecta a tus servicios mediante referencias como `${{postgres.DATABASE_URL}}`. Sandboxes usa microVMs de Firecracker, cada una con su propio kernel, donde un agente de IA ejecuta código y tareas; tu código los crea con Lizard SDK para TypeScript o Python. Lizard no es LizardFS, el sistema de archivos distribuido, ni `lizard`, la herramienta de Python que mide la complejidad del código.
 
 <span id="choose-a-task" />
 
@@ -17,11 +21,14 @@ Lizard compila y ejecuta aplicaciones desde un repositorio de GitHub o una carpe
 | Desplegar mi primera app | [Guía rápida de apps](/getting-started) |
 | Desplegar Next.js, React, Vue o una app de Python | [Guías de frameworks](/framework-guides) |
 | Desplegar desde Claude Code u otro agente de programación | [Guía de agentes de programación](/guides/deploy-from-coding-agent) |
+| Desplegar una app que tiene un Dockerfile | [Desplegar con un Dockerfile](/deploy/dockerfile) |
 | Alojar un servidor MCP remoto | [Guía de MCP remoto](/guides/deploy-mcp-server) |
-| Mantener un bot de Telegram en ejecución | [Guía de workers de Telegram](/guides/telegram-bot) |
+| Mantener un bot de Telegram o Discord en ejecución | [Guía de Telegram](/guides/telegram-bot) o [guía de Discord](/guides/discord-bot) |
 | Conectar una base de datos | [Managed Postgres](/addons/postgres) |
 | Ejecutar código generado en un entorno separado | [Guía rápida de Sandboxes](/sandboxes/quickstart) |
+| Ejecutar Claude Code dentro de un sandbox | [Claude Code en un sandbox](/sandboxes/guides/claude-code) |
 | Conservar archivos después de que termine un sandbox | [Persistent Volumes](/sandboxes/volumes) |
+| Editar una página visualmente con Claude Code o ChatGPT | [Lizard Studio](/studio/getting-started) |
 
 <span id="deploy-an-app" />
 
@@ -54,7 +61,9 @@ Las apps y Sandboxes tienen reglas distintas de ejecución y almacenamiento. Lee
 
 - [Guías](/guides) cubren una tarea desde la configuración hasta la comprobación del resultado.
 - [Guías de frameworks](/framework-guides) ofrecen comandos de compilación, adaptadores, puertos y comprobaciones para cada stack.
-- [Conceptos básicos](/concepts/architecture) explican proyectos, compilaciones y despliegues.
+- [Despliegue](/deploy) cubre fuentes de GitHub y locales, workers, escalado y regiones.
+- [Conceptos básicos](/concepts) explican proyectos, compilaciones y despliegues.
+- [Observabilidad](/observability) cubre logs, métricas, costos e historial de despliegues.
 - [Referencia de Lizard CLI](/cli) enumera comandos, flags y códigos de salida.
 - [Solución de problemas](/deploy/troubleshooting/service-never-healthy) ayuda a diagnosticar un inicio fallido.
 - [Problemas conocidos](/platform/known-issues) registra límites y casos de recuperación que conviene revisar antes de una versión.

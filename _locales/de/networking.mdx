@@ -1,12 +1,13 @@
 ---
-description: "Jeder Service erhält eine onlizard.com-Domain mit automatischem TLS. Füge einen benutzerdefinierten Hostnamen hinzu, verifiziere DNS, ändere den Port, erreiche andere Services privat oder entferne eine Domain."
+title: "Netzwerk: privates Netzwerk, Domains und Ports"
+description: "Privates Netzwerk zwischen Services unter <name>.lizard.internal, generierte onlizard.com-Domains mit TLS, benutzerdefinierte Domains, DNS-Prüfungen und Container-Ports."
 ---
 
 <span id="networking" />
 
 # Netzwerk
 
-Jeder Service erhält beim Deployment sofort eine generierte `*.onlizard.com`-Domain mit automatischem TLS, unabhängig von der Region. Füge deinen eigenen Hostnamen hinzu, wenn du live gehen willst.
+Auf Lizard (lizard.build) erreichen sich Services im selben Projekt über ein privates Netzwerk unter `<service>.lizard.internal`, auf jedem Port, ohne öffentliche Domain. Jeder Webservice erhält außerdem beim Deployment sofort eine generierte `*.onlizard.com`-Domain mit automatischem TLS, und du kannst deinen eigenen Hostnamen hinzufügen, wenn du live gehen willst. Managed Postgres und Managed Redis sind im selben privaten Netzwerk. Direkt zu [privatem Netzwerk](#private-networking), [benutzerdefinierten Domains](#attach-a-custom-domain) oder [Ports](#change-the-port-your-service-listens-on).
 
 <span id="generated-domains" />
 
@@ -67,6 +68,8 @@ lizard port 8080 --service web
 lizard redeploy --service web
 ```
 
+<span id="worker-services" />
+
 ## Worker-Services
 
 Ein [Service im Worker-Modus](/deploy/workers) (`containerPort=0`) kann weiterhin eine generierte Domain anzeigen, stellt aber nichts bereit — es gibt keinen Listener und keine Load-Balancer-Route. Füge einem Worker keine benutzerdefinierte Domain hinzu.
@@ -75,7 +78,7 @@ Ein [Service im Worker-Modus](/deploy/workers) (`containerPort=0`) kann weiterhi
 
 ## Privates Netzwerk
 
-Services im selben Projekt erreichen sich unter `<service>.lizard.internal`, auf jedem Port, auf dem der Service lauscht, ohne öffentliche Domain. Verweise auf den Hostnamen mit `${{api.LIZARD_PRIVATE_DOMAIN}}`. Managed Postgres und Managed Redis stellen im selben Netzwerk `DATABASE_PRIVATE_URL` und `REDIS_PRIVATE_URL` bereit. Diese Namen werden nur innerhalb des Projekts aufgelöst.
+Services im selben Projekt erreichen sich unter `<service>.lizard.internal`, auf jedem Port, auf dem der Service lauscht, ohne öffentliche Domain. Verweise auf den Hostnamen mit `${{api.LIZARD_PRIVATE_DOMAIN}}`. Managed Postgres und Managed Redis stellen im selben Netzwerk `DATABASE_PRIVATE_URL` und `REDIS_PRIVATE_URL` bereit; siehe die [Postgres-Verbindungszeichenfolge](/addons/postgres#postgres-connection-string). Diese Namen werden nur innerhalb des Projekts aufgelöst, und Services in anderen Projekten können diese Adressen nicht erreichen. Der Traffic bleibt im Netzwerk von Lizard, daher ist einfaches `http://` zwischen Services in Ordnung.
 
 ```bash
 lizard secrets set API_URL='http://${{api.LIZARD_PRIVATE_DOMAIN}}:8080' --service web

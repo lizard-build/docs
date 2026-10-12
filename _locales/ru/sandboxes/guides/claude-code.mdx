@@ -1,0 +1,155 @@
+---
+title: "Запуск Claude Code в sandbox"
+description: "Запустите Claude Code в sandbox Lizard: подключите подписку Claude или API-ключ через lizard agents, создайте sandbox из шаблона claude, отправляйте промпты и забирайте изменения."
+---
+
+<span id="run-claude-code-in-a-sandbox" />
+
+# Запуск Claude Code в sandbox
+
+Чтобы запустить Claude Code в sandbox на Lizard (lizard.build), один раз подключите учётные данные: `lizard agents add claude` (токен из `claude setup-token`) или `lizard agents add anthropic` (API-ключ). Затем создайте sandbox из шаблона `claude` и отправляйте ему задачи командой `lizard sandbox prompt <id> --agent claude "…"`. Claude Code работает на отдельной Linux-машине с флагом `--dangerously-skip-permissions`: он правит файлы и выполняет команды без подтверждения, а доступа к вашему компьютеру у него нет.
+
+**Статус тестов:** команды и поведение на этой странице взяты из Lizard CLI 4.0.42 и раннера агентов платформы по состоянию на 2026-10-12. Для этой страницы мы не прогоняли сценарий целиком в работающем sandbox. Шаги с `git bundle` и патчем мы проверили локально.
+
+<span id="before-you-start" />
+
+## Перед началом
+
+- Lizard CLI, в который вы вошли через `lizard login`, и проект: выполните `lizard init` в папке или передавайте `-p <project>` командам sandbox.
+- Lizard Pro или 7-дневный пробный период Pro (нужна карта). Sandboxes оплачиваются посекундно по размеру, пока работают; см. [лимиты](/platform/limits#sandbox-sizes) и [цены](https://lizard.build/pricing).
+- Для подписки Claude: Claude Code на вашем компьютере, чтобы выполнить `claude setup-token`.
+
+<span id="connect-a-credential" />
+
+## Подключение учётных данных
+
+| Учётные данные | Команда | Что получает запуск |
+|---|---|---|
+| Подписка Claude | `claude setup-token`, затем `lizard agents add claude` и вставьте токен `sk-ant-oat01-…` | `CLAUDE_CODE_OAUTH_TOKEN` |
+| API-ключ Anthropic | `lizard agents add anthropic` | `ANTHROPIC_API_KEY` |
+| API-ключ OpenRouter | `lizard agents add openrouter` | Anthropic-совместимый эндпоинт OpenRouter |
+
+Учётные данные принадлежат вашему аккаунту Lizard, а не проекту, и ими может пользоваться любой ваш sandbox. Claude Code работает с одними учётными данными за раз. Если подключено несколько, выберите нужные и, при желании, модель по умолчанию:
+
+```bash
+lizard agents use claude --credential anthropic
+lizard agents use claude -m sonnet
+lizard agents status
+```
+
+Все параметры описаны в [`lizard agents`](/cli/agents).
+
+<span id="create-a-sandbox" />
+
+## Создание sandbox
+
+```bash
+lizard sandbox create -t claude --timeout 3600000
+```
+
+Команда выводит ID sandbox, например `sb_abc123`. Сохраните его в переменной для следующих шагов: `SB=sb_abc123`.
+
+- `--timeout 3600000` даёт sandbox один час. В CLI по умолчанию это пять минут, после чего Lizard удаляет sandbox вместе с файлами, даже посреди задачи. Продлить работающий sandbox можно командой `lizard sandbox timeout $SB 3600000`.
+- В шаблоне `claude` есть Node.js 22, закреплённый релиз Claude Code, git, Python 3, ripgrep, curl, jq, unzip и Lizard CLI. Версию Claude Code покажет `lizard sandbox exec $SB -- claude --version`.
+- По умолчанию используется размер Medium (4 vCPU, 8 ГБ). Чтобы изменить его, передайте `--size small` или `--size large`.
+
+<span id="put-your-code-in-the-sandbox" />
+
+## Перенос кода в sandbox
+
+Из публичного репозитория:
+
+```bash
+lizard sandbox exec $SB -- git clone https://github.com/your-org/your-app /workspace/app
+```
+
+Из локального git-репозитория, в том числе приватного:
+
+```bash
+git bundle create /tmp/app.bundle HEAD
+lizard sandbox files put $SB /tmp/app.bundle /workspace/app.bundle
+lizard sandbox exec $SB -- git clone -q /workspace/app.bundle /workspace/app
+```
+
+В bundle попадают только закоммиченные файлы, поэтому `.env` и другие неотслеживаемые файлы остаются на вашем компьютере.
+
+<span id="send-a-prompt" />
+
+## Отправка промпта
+
+```bash
+lizard sandbox prompt $SB --agent claude --cwd /workspace/app "run the tests and fix any that fail"
+```
+
+CLI выводит потоком каждый вызов инструмента, затем ответ Claude, число токенов и ID беседы. Полезные флаги: `-m <model>`, `--effort <level>`, `-v`, чтобы показать вывод команд, и `--no-wait`, чтобы вернуться сразу. Ctrl-C прекращает наблюдение, а Claude продолжает работу. Остановить его можно командой `lizard sandbox interrupt $SB`.
+
+Чтобы продолжить ту же сессию Claude Code, передайте ID беседы:
+
+```bash
+lizard sandbox prompt $SB --agent claude -c conv_0123456789abcdef --cwd /workspace/app "now add a test for an empty list"
+lizard sandbox conversations $SB
+```
+
+Передавайте `--agent claude` и `--cwd` в каждом промпте, в том числе в последующих. Без `--agent` CLI обращается к Codex, а без `--cwd` агент работает в `/workspace`.
+
+<span id="what-claude-code-can-reach" />
+
+## К чему у Claude Code есть доступ
+
+- **Права.** Каждый запрос запускает `claude -p` с `--dangerously-skip-permissions` от root внутри sandbox. Claude правит файлы, ставит пакеты и выполняет команды без подтверждения. Эти действия ограничены sandbox.
+- **Файлы.** Всё, что есть в sandbox, и ничего на вашем компьютере.
+- **Сеть.** Исходящий доступ в интернет, так что агент может скачивать пакеты и вызывать API. В цену sandbox входит исходящий трафик до [2 ТБ на аккаунт](/platform/limits#sandbox-egress) за скользящие 30 дней.
+- **Ваши учётные данные.** Во время запуска токен лежит в окружении Claude Code как `CLAUDE_CODE_OAUTH_TOKEN` или `ANTHROPIC_API_KEY`, и запущенные им команды его наследуют. Для подписки это долгоживущий токен из `claude setup-token`; только для входа через ChatGPT Lizard выдаёт короткоживущий токен на каждый запуск. Исходите из того, что код в sandbox может его прочитать, и удалите его командой `lizard agents remove claude`, когда он станет не нужен.
+- **Ваш аккаунт Lizard.** По умолчанию доступа нет. Создайте sandbox с `--with-token <key>`, чтобы установить в нём ключ `liz_` и `lizard` работал внутри, например для деплоя того, что собрал Claude. Этот ключ может прочитать всё, что работает в sandbox, поэтому берите ключ с доступом к одному рабочему пространству или проекту; см. [`lizard keys`](/cli/keys).
+
+<span id="get-the-changes-back" />
+
+## Как забрать изменения
+
+```bash
+lizard sandbox exec $SB -- sh -c 'cd /workspace/app && git add -A && git diff --cached > /tmp/claude.patch'
+lizard sandbox files get $SB /tmp/claude.patch claude.patch
+git apply claude.patch
+```
+
+Просмотрите патч, прежде чем коммитить. Чтобы проверить веб-приложение, которое запустил Claude, откройте [URL предпросмотра](/sandboxes/preview-urls) для его порта, например `lizard sandbox expose $SB 3000`.
+
+<span id="use-claude-code-by-hand" />
+
+## Работа с Claude Code вручную
+
+`lizard sandbox ssh $SB` открывает оболочку в sandbox. Учётные данные из `lizard agents` получают только запуски `lizard sandbox prompt`, поэтому экспортируйте в этой оболочке свой `CLAUDE_CODE_OAUTH_TOKEN` или `ANTHROPIC_API_KEY`, затем запустите `claude`.
+
+<span id="pause-or-remove-the-sandbox" />
+
+## Пауза и удаление sandbox
+
+```bash
+lizard sandbox pause $SB
+lizard sandbox resume $SB
+lizard sandbox rm $SB
+```
+
+Lizard не берёт плату за приостановленный sandbox, а после возобновления в нём остаются файлы и процессы. Состояние бесед хранится в `/workspace/.lizard-agent` внутри sandbox. Чтобы файлы пережили удаление sandbox, подключите том [Persistent Volumes](/sandboxes/volumes) при создании через `--volume`.
+
+<span id="common-problems" />
+
+## Частые проблемы
+
+| Сообщение или симптом | Решение |
+|---|---|
+| `Claude Code has no credential. Connect one of: …` | Выполните `lizard agents add claude` или `lizard agents add anthropic`. |
+| `Claude rejected the credential (authentication_failed)` | Токен или ключ больше не действует. Создайте новый и добавьте его снова. |
+| HTTP 402 со ссылкой на Checkout при `create` | Начните пробный период или Pro: `lizard billing start`. |
+| Sandbox пропал посреди задачи | Истёк его срок жизни. Создайте следующий с `--timeout` или продлите срок командой `lizard sandbox timeout`. |
+| В выводе упоминается Codex | Промпт ушёл без `--agent claude`. |
+| На одном из шагов написано `installing Claude Code` | Sandbox создан не из шаблона `claude`, поэтому раннер сначала ставит Claude Code через npm. |
+
+<span id="related" />
+
+## См. также
+
+- [Запуск OpenCode в sandbox](/sandboxes/guides/opencode)
+- [Sandboxes](/sandboxes)
+- [`lizard sandbox`](/cli/sandbox#coding-agents)
+- [Деплой из кодинг-агента](/guides/deploy-from-coding-agent)

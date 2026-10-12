@@ -1,0 +1,171 @@
+---
+title: "Desplegar una app de Streamlit"
+description: "Despliega una app de Streamlit en Lizard: un Procfile ejecuta streamlit run app.py en 0.0.0.0:8501, requirements.txt fija Streamlit y los secretos vienen de variables."
+---
+
+<span id="deploy-a-streamlit-app" />
+
+# Desplegar una app de Streamlit
+
+Lizard (lizard.build) ejecuta una app de Streamlit con el mismo comando que usas localmente, `streamlit run app.py`. Ponlo en una línea `web:` de un Procfile con `--server.address 0.0.0.0` y un puerto fijo como `8501`, y luego despliega con `lizard up --port 8501`. Sin el Procfile, lizardpack inicia `python app.py`, que imprime una advertencia y termina en lugar de servir la app.
+
+**Estado de las pruebas:** el ejemplo de abajo funcionó localmente con Streamlit 1.65.0, y la versión con base de datos, con psycopg 3.3.5 contra PostgreSQL 14. Revisamos su plan de compilación con lizardpack, el planificador de compilación que ejecuta Lizard. Todavía no lo hemos desplegado de principio a fin. El navegador mantiene un WebSocket abierto con Streamlit, y todavía no hemos comprobado esa conexión a través del enrutamiento de Lizard.
+
+<span id="before-you-start" />
+
+## Antes de empezar
+
+- Python 3 en tu equipo para probar la app.
+- Lizard CLI, con la sesión iniciada mediante `lizard login`, en Pro o en la prueba de Pro de 7 días (se requiere tarjeta). Consulta los [precios](https://lizard.build/pricing).
+
+<span id="a-minimal-app" />
+
+## Una app mínima
+
+`app.py`:
+
+```python
+import streamlit as st
+
+st.title("Hello from Streamlit on Lizard")
+name = st.text_input("Your name", "world")
+st.write(f"Hello, {name}!")
+```
+
+`requirements.txt`:
+
+```text
+streamlit==1.65.0
+```
+
+`.python-version`:
+
+```text
+3.13
+```
+
+`Procfile`:
+
+```text
+web: streamlit run app.py --server.port 8501 --server.address 0.0.0.0
+```
+
+Ejecútala localmente:
+
+```bash
+python -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+Streamlit se abre en `http://localhost:8501`. Añade `.venv/`, `.env` y `.streamlit/secrets.toml` a `.gitignore`.
+
+<span id="what-lizardpack-builds" />
+
+## Qué compila lizardpack
+
+| Paso | Qué ocurre |
+|---|---|
+| Detección | `requirements.txt`, `pyproject.toml`, `Pipfile` o cualquier archivo `.py` |
+| Versión de Python | `.python-version`, luego `.tool-versions`, luego `requires-python` en `pyproject.toml`; solo major y minor, sobre `python:<x.y>-slim`. Predeterminada: `3.13`. |
+| Instalación | `pip install -r requirements.txt`; uv, Poetry o Pipenv cuando está su archivo de bloqueo o de configuración |
+| Inicio | La línea `web:` del Procfile |
+| Ejecución | `PYTHONUNBUFFERED=1`, así que la salida de `print` llega a los logs al momento |
+
+El puerto del servicio viene de `--port` y debe coincidir con `--server.port` en el Procfile. Consulta [versiones del entorno de ejecución](/deploy/runtime-versions) para ver las reglas de versión y sus casos límite.
+
+<span id="deploy" />
+
+## Desplegar
+
+Desde la carpeta de la app:
+
+```bash
+lizard init --name streamlit-app
+lizard add --service web
+lizard up --service web --port 8501
+```
+
+`lizard up` sube la carpeta, la compila en Lizard e imprime la URL. Dentro de un repositorio git omite lo que aparece en `.gitignore`; fuera de git sube los archivos `.env`. Para usar git push to deploy, [conecta un repositorio de GitHub](/deploy/github) y configura el puerto con `lizard port 8501 --service web`.
+
+<span id="secrets-and-settings" />
+
+## Secretos y configuración
+
+`st.secrets` lee `.streamlit/secrets.toml`, un archivo que no deberías subir. En Lizard, guarda los secretos como variables del servicio y léelos del entorno:
+
+```bash
+lizard secrets set OPENAI_API_KEY=sk-... --service web
+```
+
+```python
+import os
+
+api_key = os.environ["OPENAI_API_KEY"]
+```
+
+Un cambio de variable reinicia la app sin volver a compilar. Consulta [variables y secretos](/variables).
+
+<span id="add-managed-postgres" />
+
+## Añadir Managed Postgres
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service web
+```
+
+Las comillas simples evitan que tu shell interprete `${{…}}`; Lizard resuelve la [referencia](/variables/references) al desplegar. Añade `psycopg[binary]==3.3.5` a `requirements.txt` y abre una conexión por cada proceso del servidor:
+
+```python
+import os
+
+import psycopg
+import streamlit as st
+
+
+@st.cache_resource
+def get_conn():
+    return psycopg.connect(os.environ["DATABASE_URL"], autocommit=True)
+
+
+with get_conn().cursor() as cur:
+    cur.execute("SELECT now()")
+    st.write("Database time:", cur.fetchone()[0])
+```
+
+`st.cache_resource` conserva la conexión entre reejecuciones y sesiones del navegador. Guarda los datos en [Managed Postgres](/addons/postgres) o en [Managed Object Storage](/addons/storage): los archivos que la app escribe dentro del contenedor se pierden en el siguiente despliegue.
+
+<span id="check-that-it-works" />
+
+## Comprobar que funciona
+
+```bash
+lizard logs --service web --tail 100
+lizard domain --service web
+curl https://<your-domain>/_stcore/health
+```
+
+El log muestra `You can now view your Streamlit app in your browser`, y la URL de estado responde `ok`. Abre la URL de la app y cambia el cuadro de texto: el saludo debería actualizarse.
+
+<span id="common-problems" />
+
+## Problemas comunes
+
+| Síntoma | Solución |
+|---|---|
+| El log dice `to view this Streamlit app on a browser, run it with the following command` | Falta el Procfile o no tiene línea `web:`, así que lizardpack ejecutó `python app.py`. |
+| El despliegue nunca alcanza el estado healthy | El puerto del servicio y `--server.port` no coinciden. Ejecuta `lizard port --service web`. Consulta [el servicio nunca alcanza el estado healthy](/deploy/troubleshooting/service-never-healthy). |
+| `ModuleNotFoundError` | Añade el paquete a `requirements.txt` y vuelve a desplegar. |
+| `KeyError` para un secreto | Falta la variable en el servicio `web`: `lizard secrets list --service web`. |
+| La página muestra un mensaje de conexión y nunca termina de cargar | El navegador no puede mantener su WebSocket con `/_stcore/stream`. Busca esa solicitud fallida en la consola del navegador y errores en `lizard logs`. |
+
+<span id="related" />
+
+## Relacionado
+
+- [Guías de frameworks](/framework-guides)
+- [Desplegar FastAPI](/framework-guides/fastapi)
+- [Versiones del entorno de ejecución](/deploy/runtime-versions)
+- [Managed Postgres](/addons/postgres)
+- [Logs](/observability/logs)

@@ -1,10 +1,11 @@
 ---
-description: "Check app replica limits, Sandboxes resources and timeouts, regions, and the scope of account quotas before deployment."
+title: "Limits: app replicas, sandbox sizes and quotas"
+description: "App replica limits, sandbox sizes and hourly prices, how many sandboxes can run at once, start rates, egress, lifetimes and regions on Lizard."
 ---
 
 # Limits
 
-Limits depend on the resource, plan, and account. A per-replica setting is not the total available to a service or an account. Check your current plan and the result of the create or scale request before sizing a workload.
+On Lizard, an app runs up to 5 replicas per service after the first paid Pro invoice, and 1 during the trial. Pro runs up to 100 sandboxes at once and starts up to 24 a minute; the trial allows 5 at once. Sandbox sizes run from Small (2 vCPU / 4 GB) to Large (8 vCPU / 16 GB), and sandbox egress is included up to 2 TB per account over a rolling 30 days. Limits depend on the resource, plan, and account: a per-replica setting is not the total available to a service or an account. Check your plan and the result of the create or scale request before choosing resources.
 
 ## Applications
 
@@ -16,9 +17,9 @@ Limits depend on the resource, plan, and account. A per-replica setting is not t
 | Worker mode | Service | `containerPort=0` runs without an HTTP listener or public load-balancer route. |
 | Custom domain | Hostname | Wildcard custom domains are not accepted. Use a specific hostname and complete ownership and DNS checks. |
 
-Sandboxes run short-lived commands and agent tasks as Firecracker microVMs, each with its own kernel. A sandbox that attaches an existing pod-backed persistent volume, or restores an older pod snapshot, runs as a Kubernetes pod with the runc runtime and shares the host kernel. `getInfo().runtime` in Lizard SDK tells which. Restrict credentials and network access when running code you do not trust.
-
 ## Sandboxes
+
+[Sandboxes](/sandboxes) run short-lived commands and agent tasks as Firecracker microVMs. The limits below apply to every sandbox an account runs.
 
 <span id="sandbox-sizes" />
 
@@ -44,7 +45,7 @@ These limits cap how many sandboxes an account runs at once and how fast it star
 | Pro | 100 | 24 | 120 | 400 |
 | Enterprise | Custom | Custom | Custom | Custom |
 
-- Limits are counted per account owner, across all of the owner's workspaces. A second workspace does not add a second allowance.
+- Lizard counts limits per account owner, across all of the owner's workspaces. A second workspace does not add a second allowance.
 - Running means running or resuming. A paused sandbox does not count; resuming one needs a free slot.
 - A start is a new sandbox. A resume is not a start. A create that fails on Lizard's side does not count.
 - Over a limit, create and resume return HTTP 429 with `code` set to `SANDBOX_LIMIT_REACHED` (running) or `SANDBOX_RATE_LIMITED` (starts). A start-rate refusal includes a `Retry-After` header.
@@ -69,14 +70,12 @@ Sandbox egress is included up to 2 TB per account over a rolling 30 days, counte
 | Updating a lifetime | At least 1000 ms; it is not an idle timer |
 | Persistent volume attachment | One sandbox at a time, on the volume's node |
 
-The SDK and CLI default to a five-minute lifetime. The raw API and dashboard default to no expiration. Set an explicit lifetime: `timeoutMs: 0` at creation disables expiration; a positive value sets a deadline. `setTimeout` accepts 1000–2147483647 ms, not zero. Commands do not reset the deadline. This is not an idle timer.
-
-Create a sandbox, run commands, then call `kill`. `connect` attaches to an existing sandbox without changing its state, so it does not resume a paused or stopped sandbox. Pause, resume, snapshot, and restore are available; see [Pause, resume, and snapshots](/sandboxes/quickstart#pause-and-resume). Fork (`sandbox.fork({ count })`) works on Firecracker sandboxes; it returns HTTP 409 when a volume is attached and HTTP 501 for a pod sandbox. `lizard sandbox ssh` opens an interactive shell with your CLI credentials. SSH protocol access is not available, so SSH clients, `scp`, and port forwarding do not work.
+The CLI also defaults to five minutes; the dashboard defaults to no expiration. Commands do not reset the deadline. For pause, snapshots, fork and what each one keeps, see the sandbox [lifecycle](/sandboxes#lifecycle).
 
 ## Regions
 
-The current configured regions include US East (Virginia), `us-east-1`, and EU West (Limburg), `eu-west-lim-a`. A region in the catalog does not guarantee available capacity for every resource. Check region choices when creating the resource; a sandbox using an existing volume must run on that volume's node.
+The current configured regions include US East (Virginia), `us-east-1`, and EU West (Limburg), `eu-west-lim-a`. A region in the catalog does not guarantee available capacity for every resource. Check region choices when creating the resource; a sandbox using an existing volume must run on that volume's node. [`lizard regions`](/cli/regions) lists the regions open to your account; see [regions](/deploy/regions).
 
 ## Before increasing scale
 
-Check the active plan, per-replica settings, account cap, database connection limit, and storage growth together. Use [scaling](/deploy/scaling), [metrics](/observability/metrics), and [pricing](https://lizard.build/pricing) to compare configured capacity with measured usage.
+Check the active plan, per-replica settings, account cap, database connection limit, and storage growth together. Use [scaling](/deploy/scaling), [metrics](/observability/metrics), and [pricing](https://lizard.build/pricing) to compare configured capacity with measured usage. Rates for every resource are on the [billing page](/platform/billing#resource-rates).

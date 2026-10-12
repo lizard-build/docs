@@ -1,4 +1,5 @@
 ---
+title: "Arquitectura: workspaces, proyectos y servicios"
 description: "Cómo Lizard organiza el trabajo en workspaces, proyectos y servicios, además de addons gestionados, referencias entre recursos y variables inyectadas."
 ---
 
@@ -23,20 +24,20 @@ workspace
 
 ## Espacio de trabajo
 
-Un **workspace** es el nivel de cuenta u organización. Perteneces al menos a uno, y la facturación, los miembros y los proyectos dependen de él. Lista los que puedes acceder:
+Un **workspace** es el nivel de cuenta u organización. Perteneces al menos a uno, y la facturación, los miembros y los proyectos dependen de él. Lista aquellos a los que tienes acceso:
 
 ```bash
 lizard workspace list
 lizard whoami        # shows your active workspace
 ```
 
-Muchos comandos aceptan `-w, --workspace <ws>` para desambiguar cuando el mismo nombre de proyecto existe en más de un workspace.
+Muchos comandos aceptan `-w, --workspace <ws>` para distinguir proyectos cuando el mismo nombre de proyecto existe en más de un workspace.
 
 <span id="project" />
 
 ## Proyecto
 
-Un **proyecto** agrupa servicios y addons relacionados dentro de un workspace. Tu directorio de trabajo queda *vinculado* a un proyecto, y ese vínculo (almacenado en `~/.lizard/config.json`) es como la CLI sabe a qué estás apuntando.
+Un **proyecto** agrupa servicios y addons relacionados dentro de un workspace. Tu directorio de trabajo queda *vinculado* a un proyecto, y ese vínculo (almacenado en `~/.lizard/config.json`) indica a la CLI qué proyecto debe usar.
 
 ```bash
 lizard init --name my-project   # create or select a project, link the cwd
@@ -54,10 +55,10 @@ lizard project list             # all projects in the workspace
 
 Un **servicio** es una sola unidad desplegable. Su origen es uno de estos:
 
-- **`github`** — un repositorio de GitHub conectado. Los pushes a la rama seguida vuelven a desplegar automáticamente.
-- **`upload`** — un tarball subido con `lizard up`.
+- **`github`**: un repositorio de GitHub conectado. Los pushes a la rama seguida vuelven a desplegar automáticamente.
+- **`upload`**: un tarball subido con `lizard up`.
 
-Cada servicio en ejecución corre como su propio **pod aislado** con una política de red de denegación por defecto, un dominio `<name>-<suffix>.onlizard.com` generado (los servicios más antiguos conservan `<words>.<region>.onlizard.com`) y TLS automático. Esa separación — tú aportas el contenedor, la plataforma lo ejecuta — es [container as a service](https://lizard.build/blog/container-as-a-service), y el blog explica de qué sigues teniendo que ocuparte. Inspecciona y gestiona servicios con:
+Cada servicio se ejecuta en su propio **pod aislado** con una política de red de denegación por defecto, un dominio `<name>-<suffix>.onlizard.com` generado (los servicios más antiguos conservan `<words>.<region>.onlizard.com`) y TLS automático. Tú aportas el contenedor y Lizard lo ejecuta. Este modelo se llama [container as a service](https://lizard.build/blog/container-as-a-service), y el blog explica de qué sigues teniendo que ocuparte. Inspecciona y gestiona servicios con:
 
 ```bash
 lizard ps                       # list services with status + URL
@@ -67,13 +68,13 @@ lizard service rename <new-name> --service <svc>
 lizard service delete --service <svc>
 ```
 
-Los campos de configuración del servicio son **planos** y se asignan 1:1 al esquema en el wire (p. ej. `repoUrl`, `branch`, `buildCommand`, `startCommand`, `containerPort`, `rootDirectory`). No existe anidamiento de `build.*` / `deploy.*`. Consulta [`lizard service`](/cli/service) para ver la lista completa.
+Los campos de configuración del servicio son **planos** y se asignan 1:1 al esquema de la API (p. ej. `repoUrl`, `branch`, `buildCommand`, `startCommand`, `containerPort`, `rootDirectory`). No existe anidamiento de `build.*` / `deploy.*`. Consulta [`lizard service`](/cli/service) para ver la lista completa.
 
 <span id="app-vs-worker-services" />
 
 ### Servicios app vs. worker
 
-Por defecto, un servicio es una **app HTTP** que escucha en un puerto (`3000` por defecto) y se sirve en su dominio. Un servicio que no escucha en un puerto — un consumidor de colas, reconciliador o bucle de sondeo — debe ejecutarse en [**modo worker**](/deploy/workers) configurando `containerPort=0`. Los workers omiten la inyección de puerto, la comprobación de salud de accesibilidad y el registro en el balanceador de carga.
+Por defecto, un servicio es una **app HTTP** que escucha en un puerto (`3000` por defecto) y se sirve en su dominio. Un servicio que no escucha en un puerto, como un consumidor de colas, reconciliador o bucle de sondeo, debe ejecutarse en [**modo worker**](/deploy/workers) configurando `containerPort=0`. Los workers omiten la inyección de puerto, la comprobación de accesibilidad del puerto y el registro en el balanceador de carga.
 
 <span id="managed-addons" />
 

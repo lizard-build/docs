@@ -1,0 +1,147 @@
+---
+title: "Rails アプリをデプロイする"
+description: "Rails が生成する Dockerfile で Ruby on Rails を Lizard にデプロイします。master key、Managed Postgres、Rails 8 の cache・queue・cable データベース、ポート、確認方法を説明します。"
+---
+
+<span id="deploy-a-rails-app" />
+
+# Rails アプリをデプロイする
+
+Rails 7.1 以降は本番用の `Dockerfile` を生成し、Lizard (lizard.build) はその内容どおりにビルドします。このイメージは gem をインストールし、アセットをプリコンパイルし、サーバーが起動するたびに `bin/rails db:prepare` を実行します。`RAILS_MASTER_KEY` とデータベース URL を設定し、Rails 8 では `lizard up --port 8080`（Thruster 用に `HTTP_PORT=8080` も設定）、Rails 7.1 と 7.2 では `lizard up --port 3000` を実行します。Dockerfile がない場合、lizardpack はポート `3000` で動くシンプルな Ruby イメージをビルドします。
+
+**テスト状況:** Rails が生成する `Dockerfile`、`bin/docker-entrypoint`、`config/puma.rb`、`database.yml`、Lizard のビルドとポートのルール、そして Dockerfile のない Rails アプリに対する lizardpack のプランを確認しました。このガイドの Rails デプロイ手順は、まだ最初から最後まで試していません。
+
+<span id="before-you-start" />
+
+## 始める前に
+
+- PostgreSQL（`pg` gem）を使い、生成された `Dockerfile` と `bin/docker-entrypoint` が残っている Rails 7.1 以降のアプリ。古いアプリでは、[dockerfile-rails](https://github.com/fly-apps/dockerfile-rails) gem でこれらを生成できます。`bundle add dockerfile-rails --group development` を実行してから、`bin/rails generate dockerfile` を実行してください。
+- 手元のコンピューターにある `config/master.key`、またはアプリの `SECRET_KEY_BASE`。
+- `x86_64-linux` プラットフォームを含む `Gemfile.lock`。`bundle lock --add-platform x86_64-linux` で追加し、ファイルをコミットします。
+- `lizard login` でサインイン済みで、Pro または 7 日間の Pro トライアル（カードが必要）を利用している Lizard CLI。[料金](https://lizard.build/pricing)を参照してください。
+
+<span id="how-lizard-builds-a-rails-app" />
+
+## Lizard が Rails アプリをビルドする方法
+
+| アプリにあるもの | Lizard がビルドするもの | サービスポート |
+|---|---|---|
+| Rails 8 の `Dockerfile`（`EXPOSE 80`、`CMD ["./bin/thrust", "./bin/rails", "server"]`） | アプリの Dockerfile をそのまま | `8080`（`HTTP_PORT=8080` を設定） |
+| Rails 7.1 または 7.2 の `Dockerfile`（`EXPOSE 3000`） | アプリの Dockerfile をそのまま | `3000` |
+| Dockerfile なし | lizardpack の Ruby イメージ。[後述](#without-a-dockerfile)を参照 | `3000` |
+
+サービスのビルドコマンドと起動コマンドは空のままにしてください。どちらかが設定されていると、Lizard はアプリの Dockerfile を使わずに、そのコマンドから独自の Dockerfile を生成します。そのイメージに入っているのは Ruby ではなく Node.js です。起動コマンドはイメージの entrypoint も置き換えるため、`db:prepare` が実行されなくなります。[ビルド決定順序](/concepts/build-pipeline#build-decision-order)を参照してください。
+
+Rails 8 は Thruster を起動します。Thruster はポート `80` で待ち受け、その背後のポート `3000` で Puma を実行します。イメージは非 root ユーザー（`USER 1000:1000`）で動作し、非 root プロセスには 1024 未満のポートを開く権限がない場合があります。`HTTP_PORT=8080` を設定すると、Thruster は常に開けるポートに移ります。
+
+<span id="create-the-project-and-database" />
+
+## プロジェクトとデータベースを作成する
+
+アプリのルートディレクトリから実行します:
+
+```bash
+lizard init --name rails-app
+lizard add --service web
+lizard add postgres
+```
+
+[Managed Postgres](/addons/postgres) は `postgres` スーパーユーザーとして接続するため、`db:prepare` は Rails が求めるデータベースを作成できます。
+
+<span id="set-secrets-and-deploy-rails-8" />
+
+## シークレットを設定してデプロイする（Rails 8）
+
+Rails 8 の本番用 `database.yml` は、`primary`、`cache`、`queue`、`cable` の 4 つのデータベースを定義しています。`DATABASE_URL` が置き換えるのは `primary` だけです。それ以外について、Rails は `CACHE_DATABASE_URL`、`QUEUE_DATABASE_URL`、`CABLE_DATABASE_URL` を読み取ります。4 つすべてを、データベース名を変えて同じ Postgres に向けてください:
+
+```bash
+PG='postgresql://postgres:${{postgres.PGPASSWORD}}@${{postgres.LIZARD_PRIVATE_DOMAIN}}:5432'
+lizard secrets set \
+  RAILS_MASTER_KEY="$(cat config/master.key)" \
+  DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' \
+  CACHE_DATABASE_URL="$PG/rails_cache" \
+  QUEUE_DATABASE_URL="$PG/rails_queue" \
+  CABLE_DATABASE_URL="$PG/rails_cable" \
+  HTTP_PORT=8080 \
+  SOLID_QUEUE_IN_PUMA=true \
+  --service web
+lizard up --service web --port 8080
+```
+
+- シングルクォートで囲むと、シェルは `${{…}}` を解釈しません。Lizard はこれらの [参照](/variables/references) をデプロイ時に解決し、プロジェクトのプライベートネットワークを使います。
+- `SOLID_QUEUE_IN_PUMA=true` を設定すると Puma が Solid Queue の worker を実行するため、Active Job のジョブは web サービスの中で実行されます。設定しないと、キューに入ったジョブはいつまでも待ち続けます。
+- `RAILS_MASTER_KEY` の代わりに `SECRET_KEY_BASE` を使うのは、アプリがほかの暗号化された credentials を読まない場合だけにしてください。
+
+<span id="set-secrets-and-deploy-rails-71-and-72" />
+
+## シークレットを設定してデプロイする（Rails 7.1 と 7.2）
+
+これらのバージョンはデータベースを 1 つだけ使います:
+
+```bash
+lizard secrets set \
+  RAILS_MASTER_KEY="$(cat config/master.key)" \
+  DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' \
+  --service web
+lizard up --service web --port 3000
+```
+
+<span id="what-happens-on-each-deploy" />
+
+## デプロイのたびに行われること
+
+`lizard up` はディレクトリをアップロードします。git リポジトリ内では `.gitignore` に書かれたものをスキップします。Rails の `.gitignore` と `.dockerignore` は、どちらも `config/master.key` と `.env*` ファイルを除外しています。Lizard は Dockerfile のビルドに `COMMIT_SHA` 以外の変数を渡さないため、ビルドは `SECRET_KEY_BASE_DUMMY=1` でアセットをプリコンパイルします。
+
+起動時に、`bin/docker-entrypoint` は `./bin/rails db:prepare` を実行します。これは存在しないデータベースを作成し、新しいデータベースにスキーマを読み込み、保留中のマイグレーションを実行します。再起動を含め、コンテナが起動するたびに実行されます。マイグレーションは、新旧両方のコードで安全に実行できるようにしてください。
+
+git push to deploy を使う場合は、`lizard up` を実行する代わりに、アプリを GitHub に push して [リポジトリを接続](/deploy/github) します。同じシークレットとポートを設定してください（`lizard port 8080 --service web`）。生成された Dockerfile には `bundle install` のステップがあるため、Lizard はその内容どおりに使います。
+
+<span id="check-that-it-works" />
+
+## 動作を確認する
+
+```bash
+lizard logs --build --service web
+lizard logs --service web --tail 100
+lizard domain --service web
+```
+
+Rails 7.1 以降は、アプリが起動すると `/up` に HTTP 200 で応答します。`https://<your-domain>/up` を開き、続いてデータベースから読み取るページを開いてください。ランタイムログには `db:prepare` の出力が表示され、その後に Puma の起動が表示されるはずです。
+
+<span id="without-a-dockerfile" />
+
+## Dockerfile がない場合
+
+lizardpack は `Gemfile` を見つけると Ruby アプリとしてビルドします:
+
+- Ruby のバージョン: `.ruby-version`、なければ `Gemfile` の `ruby` 行、それもなければ `3.4`。使われるのはメジャーとマイナーだけで、`3.4.1` は `ruby:3.4-slim` 上でビルドされます。
+- `build-essential` と `libpq-dev` をインストールしてから、`bundle install` を実行します。
+- 起動: Procfile の `web:` 行。なければ、`config.ru` と `Rakefile` がある場合に `bundle exec rails server -b 0.0.0.0`。ポートは `3000` です。
+
+このイメージは `RAILS_ENV` を設定せず、アセットのプリコンパイルもデータベースの準備も行わないため、本格的な Rails サイトよりも小さなアプリや API に向いています。`.ruby-version` には `3.4.1` のように数字だけを書いてください。`rails new` は `ruby-3.4.1` と書き込み、lizardpack はそれを存在しないイメージ名に変えてしまいます。[ランタイムバージョン](/deploy/runtime-versions)を参照してください。
+
+<span id="common-problems" />
+
+## よくある問題
+
+| 症状 | 対処 |
+|---|---|
+| `bundle install` が失敗し、bundle がほかのプラットフォームにしか対応していないと表示される | `bundle lock --add-platform x86_64-linux` を実行し、`Gemfile.lock` をコミットします。 |
+| `Missing secret_key_base`、または credentials の復号に失敗する | `web` サービスに、`config/master.key` の値で `RAILS_MASTER_KEY` を設定します。 |
+| cache、queue、cable の接続が `/var/run/postgresql` などのローカルソケットに向かう | `CACHE_DATABASE_URL`、`QUEUE_DATABASE_URL`、`CABLE_DATABASE_URL` を設定します。 |
+| ログにポート 80 の `bind: permission denied` が表示される | `HTTP_PORT=8080` を設定し、サービスポートを `8080` にします。 |
+| デプロイがいつまでも healthy にならない | サービスポートが上の表と一致しているか確認します: `lizard port --service web`。[サービスが healthy にならない](/deploy/troubleshooting/service-never-healthy)を参照してください。 |
+| ジョブがキューに残ったままになる | `SOLID_QUEUE_IN_PUMA=true` を設定します。web プロセスとは別にジョブを実行するには、`dockerfilePath=Dockerfile` と `startCommand=./bin/jobs` を指定した 2 つ目のサービスを [worker mode](/deploy/workers) で追加します。 |
+| アップロードしたファイルがデプロイ後に消える | Active Storage の `local` サービスはコンテナ内に書き込みます。S3 互換の [Managed Object Storage](/addons/storage) を `amazon` サービスで使ってください。 |
+
+アプリが Sidekiq や Redis の Action Cable アダプターを使う場合は、[Managed Redis](/addons/redis) を追加し、必要な各サービスに `REDIS_URL='${{redis.REDIS_PRIVATE_URL}}'` を設定してください。
+
+<span id="related" />
+
+## 関連項目
+
+- [Dockerfile から Docker コンテナをデプロイする](/deploy/dockerfile)
+- [変数とシークレット](/variables)
+- [Managed Postgres](/addons/postgres)
+- [ビルドパイプライン](/concepts/build-pipeline)
+- [ストレージと復旧](/platform/storage-and-recovery)

@@ -1,12 +1,16 @@
 ---
-description: "Stellen Sie eine App bereit, führen Sie einen Worker aus, verbinden Sie Managed Postgres oder führen Sie Code in Sandboxes aus. Wählen Sie eine Aufgabe, folgen Sie einer Anleitung und prüfen Sie die Limits."
+description: "Stellen Sie Apps, Worker und KI-Agenten aus Claude Code, Codex, Cursor oder der CLI auf Lizard bereit und fügen Sie dann Managed Postgres, Managed Redis, Managed Object Storage oder Sandboxes hinzu."
 ---
 
 <span id="lizard-documentation" />
 
 # Lizard-Dokumentation
 
-Lizard erstellt und betreibt Anwendungen aus einem GitHub-Repository oder einem lokalen Ordner. Verwenden Sie Lizard CLI oder das Dashboard, um einen Webservice bereitzustellen, einen Hintergrund-Worker auszuführen, Managed Postgres oder Managed Redis zu verbinden und Logs zu prüfen. Verwenden Sie Lizard SDK, um Sandboxes für die Codeausführung zu erstellen.
+<span id="what-is-lizard" />
+
+## Was ist Lizard?
+
+Lizard (lizard.build) ist eine Cloud-Plattform zum Bereitstellen von Apps, Hintergrund-Workern und KI-Agenten. Sie stellen aus Claude Code, Codex, Cursor oder einem Terminal mit Lizard CLI bereit: `lizard up` lädt den aktuellen Ordner hoch, und `lizard add -r owner/repo` stellt ein GitHub-Repository bereit. Lizard baut das Image auf seinen eigenen Servern, sodass Sie auf Ihrem Rechner kein Docker brauchen, und gibt jedem Webservice eine HTTPS-Adresse auf `onlizard.com`. Dieselbe CLI fügt einem Projekt Managed Postgres, Managed Redis und S3-kompatiblen Managed Object Storage hinzu und verbindet sie über Referenzen wie `${{postgres.DATABASE_URL}}` mit Ihren Services. Sandboxes sind Firecracker-MicroVMs mit jeweils eigenem Kernel, in denen ein KI-Agent Code und Aufgaben ausführt; Ihr Code erstellt sie mit Lizard SDK für TypeScript oder Python. Lizard ist weder LizardFS, das verteilte Dateisystem, noch `lizard`, das Python-Werkzeug zur Messung der Codekomplexität.
 
 <span id="choose-a-task" />
 
@@ -17,11 +21,14 @@ Lizard erstellt und betreibt Anwendungen aus einem GitHub-Repository oder einem 
 | Meine erste App bereitstellen | [App-Schnellstart](/getting-started) |
 | Next.js, React, Vue oder eine Python-App bereitstellen | [Framework-Anleitungen](/framework-guides) |
 | Über Claude Code oder einen anderen Coding-Agenten bereitstellen | [Anleitung für Coding-Agenten](/guides/deploy-from-coding-agent) |
+| Eine App mit Dockerfile bereitstellen | [Mit einer Dockerfile bereitstellen](/deploy/dockerfile) |
 | Einen Remote-MCP-Server hosten | [Remote-MCP-Anleitung](/guides/deploy-mcp-server) |
-| Einen Telegram-Bot dauerhaft ausführen | [Telegram-Worker-Anleitung](/guides/telegram-bot) |
+| Einen Telegram- oder Discord-Bot dauerhaft ausführen | [Telegram-Anleitung](/guides/telegram-bot) oder [Discord-Anleitung](/guides/discord-bot) |
 | Eine Datenbank verbinden | [Managed Postgres](/addons/postgres) |
 | Generierten Code in einer separaten Umgebung ausführen | [Sandboxes-Schnellstart](/sandboxes/quickstart) |
+| Claude Code in einer Sandbox ausführen | [Claude Code in einer Sandbox](/sandboxes/guides/claude-code) |
 | Dateien nach dem Ende einer Sandbox behalten | [Persistent Volumes](/sandboxes/volumes) |
+| Eine Seite mit Claude Code oder ChatGPT visuell bearbeiten | [Lizard Studio](/studio/getting-started) |
 
 <span id="deploy-an-app" />
 
@@ -54,7 +61,9 @@ Für Apps und Sandboxes gelten unterschiedliche Regeln für Laufzeit und Speiche
 
 - [Anleitungen](/guides) behandeln eine Aufgabe von der Einrichtung bis zur Prüfung des Ergebnisses.
 - [Framework-Anleitungen](/framework-guides) enthalten Build-Befehle, Adapter, Ports und Prüfungen für jeden Stack.
-- [Kernkonzepte](/concepts/architecture) erklären Projekte, Builds und Bereitstellungen.
+- [Bereitstellen](/deploy) behandelt GitHub und lokale Quellen, Worker, Skalierung und Regionen.
+- [Kernkonzepte](/concepts) erklären Projekte, Builds und Bereitstellungen.
+- [Observability](/observability) behandelt Logs, Metriken, Kosten und den Deployment-Verlauf.
 - [Lizard CLI-Referenz](/cli) listet Befehle, Flags und Exit-Codes auf.
 - [Fehlerbehebung](/deploy/troubleshooting/service-never-healthy) hilft dabei, einen fehlgeschlagenen Start zu diagnostizieren.
 - [Bekannte Probleme](/platform/known-issues) dokumentiert Limits und Wiederherstellungsfälle, die Sie vor einem Release prüfen sollten.

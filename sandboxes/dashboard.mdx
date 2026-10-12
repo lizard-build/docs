@@ -1,8 +1,9 @@
 ---
-description: "Create and inspect Sandboxes, choose templates, and manage volumes."
+title: "Sandboxes dashboard"
+description: "Create, inspect, pause and stop Sandboxes in the Lizard dashboard: pick a template, region, size and lifetime, open a terminal, and manage volumes."
 ---
 
-# Dashboard
+# Sandboxes dashboard
 
 <span id="sandboxes-dashboard" />
 <span id="getting-an-api-key" />
@@ -12,17 +13,17 @@ description: "Create and inspect Sandboxes, choose templates, and manage volumes
 <span id="snapshots" />
 <span id="volumes" />
 
-Open a project and select Sandboxes. Create a sandbox with a template from the catalog, a region, and a size: Small, Medium (the default), or Large. The default region is not a nearest-region guarantee. Pick a lifetime under **Delete after**: 15 minutes, 1 hour, 4 hours, 1 day, 7 days, or Never (the default).
+The dashboard lets you create and manage Sandboxes without code. Open a project and select Sandboxes. Create a sandbox with a template from the catalog, a region, and a size: Small, Medium (the default), or Large. Choose the region you need; the default may not be the nearest one. Pick a lifetime under **Delete after**: 15 minutes, 1 hour, 4 hours, 1 day, 7 days, or Never (the default).
 
-## Install and authenticate
+## API keys
 
-Install the Lizard SDK and create an API key in Settings → API keys. Store it in `LIZARD_API_KEY`. Each sandbox needs a project: pass `projectId` (Python: `project_id`) or resolve an ID, slug, or name with `project`.
+To create sandboxes from code, create an API key in Settings → API keys and store it in `LIZARD_API_KEY`. Lizard SDK and the [HTTP API](/sandboxes/sdk-reference#http-api) read it; see the [quickstart](/sandboxes/quickstart).
 
 ## Inspect and stop
 
 The detail view shows status, template, region, measured usage, and exposed ports. Its header has Pause and Resume buttons, and the Terminal tab opens a shell in a running sandbox.
 
-Each size has a flat hourly price, billed by the second while the sandbox runs, idle time included. Egress is included up to [2 TB per account](/platform/limits#sandbox-egress) over a rolling 30 days. A sandbox restored from a snapshot runs at its source's size and price; one restored from a pod snapshot is billed by measured usage. A paused sandbox is not billed; Persistent Volumes bill separately while you keep the data. Pause or kill a sandbox when the task ends.
+A running sandbox bills by the second at its size's hourly price, idle time included; a paused one does not, so pause or kill it when the task ends. See [storage and billing](/sandboxes#storage-and-billing).
 
 ## Templates and volumes
 
@@ -30,4 +31,4 @@ The Templates tab lists platform templates and your project's private snapshots;
 
 Create and attach volumes with the SDK or CLI; the create form has no volume option. The Persistent Volumes tab appears once a project has a volume. It shows each volume's size and attached sandbox, and lets you browse files, resize, or delete it. Stop the current sandbox before attaching the volume to another.
 
-[Quickstart](/sandboxes/quickstart) · [SDK reference](/sandboxes/sdk-reference) · [Run Python](/sandboxes/code-interpreter) · [Dashboard](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)
+[Sandboxes overview](/sandboxes) · [Quickstart](/sandboxes/quickstart) · [SDK reference](/sandboxes/sdk-reference) · [Code interpreter](/sandboxes/code-interpreter) · [Persistent Volumes](/sandboxes/volumes)

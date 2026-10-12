@@ -1,0 +1,183 @@
+---
+title: "Хостинг Discord-бота"
+description: "Хостинг Discord-бота на Lizard как фонового обработчика: пример на discord.js, токен бота в секрете, режим воркера без порта, одна реплика, логи."
+---
+
+<span id="host-a-discord-bot" />
+
+# Хостинг Discord-бота
+
+Чтобы разместить Discord-бота на Lizard (lizard.build), запустите его как фоновый обработчик. Бот, работающий через Discord Gateway, сам открывает исходящее соединение с Discord и не отдаёт HTTP, поэтому разверните его командой `lizard up --port 0` (`containerPort=0`) и держите одну реплику на каждый токен бота. Lizard распознаёт бота на Node.js по `package.json` и запускает его через `npm run start`; боту на Python нужна строка `web:` в Procfile.
+
+**Статус тестов:** пример бота запускается локально с discord.js 14.27.0, а с ненастоящим токеном завершается ошибкой `TokenInvalid`. План сборки мы проверили в планировщике сборки lizardpack, который использует Lizard. С Discord из Lizard мы это руководство ещё не проверяли: прежде чем на него полагаться, отправьте тестовое сообщение и посмотрите логи.
+
+<span id="before-you-start" />
+
+## Перед началом
+
+- **Токен бота.** В [Discord Developer Portal](https://discord.com/developers/applications) создайте приложение, откройте **Bot** и нажмите **Reset Token**. Никому не показывайте токен: у кого он есть, тот и управляет ботом.
+- **Intent Message Content.** Пример читает `!ping`, поэтому включите **Message Content Intent** в разделе **Bot → Privileged Gateway Intents**. Боту, который отвечает только на слеш-команды, этот intent не нужен.
+- **Бот на сервере.** В **OAuth2 → URL Generator** отметьте scope `bot` и права **View Channels**, **Send Messages** и **Read Message History**, затем откройте полученный URL и выберите сервер.
+- **Lizard CLI и тариф.** Установите CLI и выполните `lizard login`. Сервисы работают на Lizard Pro или в его 7-дневном пробном периоде (нужна карта); см. [цены](https://lizard.build/pricing).
+
+<span id="write-the-bot" />
+
+## Напишите бота
+
+Создайте папку с двумя файлами.
+
+`package.json`:
+
+```json
+{
+  "name": "discord-bot",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.27.0"
+  }
+}
+```
+
+`bot.js`:
+
+```js
+import { Client, Events, GatewayIntentBits } from "discord.js";
+
+const token = process.env.DISCORD_TOKEN;
+if (!token) {
+  console.error("DISCORD_TOKEN is not set");
+  process.exit(1);
+}
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
+});
+
+client.once(Events.ClientReady, (ready) => {
+  console.log(`Logged in as ${ready.user.tag}`);
+});
+
+client.on(Events.MessageCreate, async (message) => {
+  if (message.author.bot) return;
+  if (message.content === "!ping") {
+    await message.reply("pong");
+  }
+});
+
+client.login(token);
+```
+
+Выполните `npm install`, чтобы создать `package-lock.json`, и держите lock-файл рядом с `package.json`: с ним Lizard ставит зависимости через `npm ci`. Добавьте `.gitignore` с `node_modules` и `.env`.
+
+Чтобы попробовать бота на своём компьютере, вставьте токен, не сохраняя его в файл, и запустите бота:
+
+```bash
+read -rs DISCORD_TOKEN && export DISCORD_TOKEN
+npm start
+```
+
+Напишите `!ping` в канале, который видит бот. Он ответит `pong`. Перед деплоем остановите локальную копию: если запущены две копии, на каждое сообщение отвечают обе.
+
+<span id="deploy-as-a-worker" />
+
+## Деплой как фоновый обработчик
+
+Из папки бота:
+
+```bash
+lizard init --name discord-bot
+lizard add --service bot
+read -rs DISCORD_TOKEN
+lizard secrets set DISCORD_TOKEN="$DISCORD_TOKEN" --service bot
+lizard up --service bot --port 0
+```
+
+- `lizard add --service bot` создаёт пустой сервис, а `lizard up --service bot` затем загружает код и запускает деплой.
+- `lizard secrets set` сохраняет токен только в сервисе **bot**. См. [переменные и секреты](/variables).
+- `--port 0` включает [режим воркера](/deploy/workers): Lizard не задаёт `PORT`, не проверяет порт и не добавляет HTTP-маршрут. У сервиса всё ещё может отображаться домен `onlizard.com`, но по нему никто не ответит.
+
+Внутри git-репозитория `lizard up` пропускает всё, что перечислено в `.gitignore`. Вне git он загружает файлы `.env`, поэтому не храните токен в файлах этой папки или сначала выполните `git init`. См. [развертывание из локального кода](/deploy/upload).
+
+Чтобы вместо этого пользоваться git push to deploy, отправьте папку на GitHub и [подключите репозиторий](/deploy/github), затем переключите сервис в режим воркера:
+
+```bash
+lizard port 0 --service bot
+lizard redeploy --service bot
+```
+
+<span id="one-replica-per-token" />
+
+### Одна реплика на токен
+
+Каждая реплика открывает собственную сессию Gateway с тем же токеном, поэтому каждая отвечает на каждое сообщение. Держите сервис бота на одной реплике. При деплое новой версии обработчика Lizard останавливает старый процесс до запуска нового. При этом бот ненадолго перестанет отвечать; двойных ответов не будет. Боту, который состоит более чем на 2500 серверах, нужен шардинг Discord; это изменение кода, а не дополнительные реплики того же процесса.
+
+<span id="python-bots" />
+
+## Боты на Python
+
+Для бота на discord.py укажите пакет в `requirements.txt` и добавьте `Procfile`:
+
+```text
+web: python bot.py
+```
+
+Из Procfile lizardpack читает только строку `web:`, даже для фонового обработчика, а строку `worker:` игнорирует. Без Procfile он запускает `python main.py`, так что боту в `main.py` Procfile не нужен. Разворачивайте теми же командами с `--port 0`. Как выбрать версию Python, см. в разделе [версии рантайма](/deploy/runtime-versions).
+
+<span id="keep-data-in-managed-postgres" />
+
+## Храните данные в Managed Postgres
+
+Файлы, записанные внутри контейнера, пропадают при следующем деплое. Храните настройки, очки или очереди в [Managed Postgres](/addons/postgres):
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service bot
+```
+
+Одинарные кавычки не дают оболочке обработать `${{…}}`; Lizard подставляет [ссылку](/variables/references) при запуске бота, а изменение переменной перезапускает его. Читайте `process.env.DATABASE_URL` клиентом вроде `pg`. Обработчики должны допускать повторный запуск без ошибок: после перезапуска может повториться работа, которая шла в тот момент.
+
+<span id="check-that-it-works" />
+
+## Проверьте, что всё работает
+
+```bash
+lizard port --service bot
+lizard logs --service bot --tail 50
+lizard ps
+```
+
+`lizard port` выводит `worker mode`. В логе видно `Logged in as` и имя бота. Затем напишите `!ping` на своём сервере и дождитесь одного `pong`. Даже если обработчик помечен как запущенный, эта проверка нужна: процесс может работать, пока Discord его отклоняет.
+
+<span id="common-problems" />
+
+## Частые проблемы
+
+| Симптом | Что делать |
+|---|---|
+| `An invalid token was provided`, затем перезапуски | Сбросьте токен в Developer Portal и снова задайте `DISCORD_TOKEN` в сервисе бота. |
+| `Privileged intent provided is not enabled or whitelisted` | Включите **Message Content Intent** или уберите `GatewayIntentBits.MessageContent` из кода. |
+| Бот в сети, но не реагирует на `!ping` | Без intent текст сообщений приходит пустым. Также проверьте, что бот может видеть канал и писать в него. |
+| На каждое сообщение приходит два ответа | Токен использует другая копия: локальный процесс, вторая реплика или другой хостинг. Проверьте `lizard ps`. |
+| Деплой ждёт проверки работоспособности | Сервис не в режиме воркера. Выполните `lizard port 0 --service bot`, затем `lizard redeploy --service bot`. |
+| `DISCORD_TOKEN is not set` | Секрет задан в другом сервисе или на уровне проекта. Выполните `lizard secrets list --service bot`. |
+
+Бот, который отвечает только на слеш-команды через **Interactions Endpoint URL**, работает как HTTP-сервис: разверните его с HTTP-портом и укажите Discord его HTTPS-URL.
+
+<span id="related" />
+
+## См. также
+
+- [Фоновые обработчики](/deploy/workers)
+- [Запуск Telegram-бота](/guides/telegram-bot)
+- [Развертывание приложения Node.js](/framework-guides/nodejs)
+- [Логи](/observability/logs)
+- [Лимиты](/platform/limits)
+- [Руководство discord.js](https://discordjs.guide/)

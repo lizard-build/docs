@@ -1,5 +1,5 @@
 ---
-description: "Deploy Next.js, React, Vue, Astro, Nuxt, SvelteKit, FastAPI, Django, Docusaurus, VitePress, and Hugo on Lizard. Find build commands, adapters, ports, and checks."
+description: "Deploy Next.js, Express, FastAPI, Django, Streamlit, Go, Rails, Astro, Nuxt, SvelteKit and static site generators on Lizard: build commands, ports and checks."
 ---
 
 # Framework guides
@@ -8,7 +8,7 @@ Deploy a framework app on Lizard from source. Choose your framework and renderin
 
 ## Choose your framework
 
-These settings describe the standard project layouts in the linked guides. Commands assume npm for JavaScript projects. Custom output paths, adapters, and build overrides can change the result.
+These settings describe the standard project layouts in the linked guides. Commands assume npm for JavaScript projects. Custom output paths, adapters, and build overrides can change the result. To bring your own image instead, see [Deploy a Docker container from a Dockerfile](/deploy/dockerfile).
 
 | Framework | Build | Runtime or output | Service port |
 |---|---|---|---|
@@ -19,15 +19,19 @@ These settings describe the standard project layouts in the linked guides. Comma
 | [Astro](/framework-guides/astro) | `npm run build` | `dist/`, or the standalone Node adapter | `80` static; `3000` server |
 | [Nuxt](/framework-guides/nuxt) | `npm run build` | `node .output/server/index.mjs` | `3000` |
 | [SvelteKit](/framework-guides/sveltekit) | `npm run build` | `node build` with adapter-node | `3000` |
+| [Node.js (Express)](/framework-guides/nodejs) | `build` script, if any | `start` script | `3000` |
 | [FastAPI](/framework-guides/fastapi) | Install Python dependencies | `uvicorn main:app --host 0.0.0.0 --port 8000` | `8000` |
 | [Django](/framework-guides/django) | Install Python dependencies | Gunicorn with your WSGI module | `8000` |
+| [Streamlit](/framework-guides/streamlit) | Install Python dependencies | `streamlit run app.py` from a Procfile | `8501` |
+| [Go](/framework-guides/go) | `go build` to a static binary | `/app/server` | `8080` |
+| [Ruby on Rails](/framework-guides/rails) | The Dockerfile Rails generates | Thruster and Puma, or Puma alone | `8080` on Rails 8; `3000` on Rails 7.1 and 7.2 |
 | [Docusaurus](/framework-guides/docusaurus) | `npm run build` | `build/` | `80` |
 | [VitePress](/framework-guides/vitepress) | `npm run docs:build` | `docs/.vitepress/dist/` in this guide | `80` |
 | [Hugo](/framework-guides/hugo) | `hugo --minify` | `public/` | `80` |
 
 ## Prepare the project
 
-Run commands from the application directory. Commit source files, configuration, and the package lockfile. Exclude `.env`, local dependencies, and local build output from uploads. Node projects can select the Node major version in `.nvmrc`; the current default is `22`. This selects a major version, not an exact patch release.
+Run commands from the application directory. Commit source files, configuration, and the package lockfile. Exclude `.env`, local dependencies, and local build output from uploads. Node projects can select the Node major version in `.nvmrc`; the current default is `22`. This selects a major version, not an exact patch release. [Runtime versions](/deploy/runtime-versions) lists the version files for Node.js, Python, Go and Ruby.
 
 Install Lizard CLI and sign in once:
 
@@ -54,6 +58,6 @@ These guides use lizardpack detection unless they call for a Dockerfile. Existin
 
 Read build logs, runtime logs, and the active URL. Test an inner route, a missing route, and any API or form action. A process that opens its port can still serve a broken page. For generated sites, use [static routes and 404s](/framework-guides/static-routing) to avoid returning the home page with HTTP 200 for every unknown URL.
 
-Runtime support does not imply shared caches, persistent local files, or every framework version. See [limits](/platform/limits), [storage and recovery](/platform/storage-and-recovery), and [known issues](/platform/known-issues) when your app relies on those features.
+Check shared caches, persistent local files and framework versions separately from runtime support. See [limits](/platform/limits), [storage and recovery](/platform/storage-and-recovery), and [known issues](/platform/known-issues) when your app relies on those features.
 
 See [tested versions and cloud results](/framework-guides/validation) for the September 9, 2026 deployment checks and their limits.

@@ -1,4 +1,5 @@
 ---
+title: "Deployments: lifecycle, restarts and recovery"
 description: "The deploy lifecycle on Lizard: what triggers a build, how traffic shifts to healthy replicas, and how restarts differ from redeploys."
 ---
 
@@ -8,11 +9,11 @@ A **deployment** is one build-and-release of a service. Services run as Kubernet
 
 ## How a deploy happens
 
-A deployment is triggered by any of:
+These actions start a deployment:
 
 - A **`git push`** to the tracked branch (for `github`-source services).
-- **`lizard redeploy`** — rebuild from the latest commit (git) or last upload, with current variables.
-- **`lizard up`** — upload the current directory and deploy it.
+- **`lizard redeploy`**: rebuild from the latest commit (git) or last upload, with current variables.
+- **`lizard up`**: upload the current directory and deploy it.
 - A **`service set`** that changes a build-affecting field.
 
 ```bash
@@ -22,11 +23,11 @@ lizard up                          # upload cwd and deploy
 
 ## Lifecycle
 
-1. **Build** — the platform runs your build (see [Build Pipeline](/concepts/build-pipeline)).
-2. **Pre-deploy** — if both `preDeployCommand` and `startCommand` are set, the container runs `sh -c "<pre> && exec <start>"`. The pre-deploy command runs at the start of every container (each replica, each restart), so make it safe to run many times and at the same time. Without `startCommand` it is skipped.
-3. **Start** — Lizard starts the new pod next to the old one. [Workers](/deploy/workers) stop the old pod first.
-4. **Health check** — a TCP probe checks the app's port every 2 seconds, and traffic moves only to a ready pod. Lizard waits about 30 seconds for it; if the new pod is not ready by then, the deploy is marked failed. Workers skip the probe.
-5. **Verify** — inspect the release status and call the application URL. Port reachability is not a full application health check.
+1. **Build**: the platform runs your build (see [Build Pipeline](/concepts/build-pipeline)).
+2. **Pre-deploy**: if both `preDeployCommand` and `startCommand` are set, the container runs `sh -c "<pre> && exec <start>"`. The pre-deploy command runs at the start of every container (each replica, each restart), so make it safe to run many times and at the same time. Without `startCommand` it is skipped.
+3. **Start**: Lizard starts the new pod next to the old one. [Workers](/deploy/workers) stop the old pod first.
+4. **Health check**: a TCP probe checks the app's port every 2 seconds, and traffic moves only to a ready pod. Lizard waits about 30 seconds for it; if the new pod is not ready by then, the deploy is marked failed. Workers skip the probe.
+5. **Verify**: inspect the release status and call the application URL. Port reachability is not a full application health check.
 
 ## Streaming output
 
@@ -37,7 +38,7 @@ When you run a non-detached `lizard up` (or `redeploy`), build logs stream live.
 { "event": "deployed", "status": "...", "url": "https://..." }
 ```
 
-terminating in `deployed`, `failed`, or `deploying`. Use `--detach` to start the deploy and return immediately without streaming.
+The final event is `deployed`, `failed`, or `deploying`. Use `--detach` to start the deploy and return immediately without streaming.
 
 ## Inspecting history
 
@@ -53,10 +54,10 @@ In the [dashboard](/dashboard), the **Deployments** view shows the full timeline
 
 | Command | What it does |
 |---------|--------------|
-| `lizard restart --service <svc>` | Restart of the **current** build — no rebuild |
+| `lizard restart --service <svc>` | Restart of the **current** build: no rebuild |
 | `lizard redeploy --service <svc>` | Fresh **build** from latest commit/upload, then release |
 
-Use `restart` to recycle replicas (e.g. to pick up a runtime secret that didn't hot-reload); use `redeploy` when you need a new build.
+See [`lizard restart`](/cli/restart) and [`lizard redeploy`](/cli/redeploy). Use `restart` to restart replicas (e.g. to pick up a runtime secret that didn't hot-reload); use `redeploy` when you need a new build.
 
 ## Recovering from a crash
 
@@ -70,7 +71,7 @@ lizard events                      # see replica status
 
 ## Config changes (no rebuild)
 
-Most environment variable and secret changes apply without a rebuild: Lizard updates the service's config and restarts it, which takes a few seconds. Build-time values (`VITE_*`, `NEXT_PUBLIC_*`) and build-field changes do force a rebuild of a running service — see the [rebuild triggers table](/concepts/build-pipeline#what-triggers-a-rebuild) and [build-time variables](/concepts/build-pipeline#build-time-variables).
+Most environment variable and secret changes apply without a rebuild: Lizard updates the service's config and restarts it, which takes a few seconds. Build-time values (`VITE_*`, `NEXT_PUBLIC_*`) and build-field changes do force a rebuild of a running service: see the [rebuild triggers table](/concepts/build-pipeline#what-triggers-a-rebuild) and [build-time variables](/concepts/build-pipeline#build-time-variables).
 
 ## Failed releases and recovery
 

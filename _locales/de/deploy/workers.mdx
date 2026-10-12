@@ -6,7 +6,7 @@ description: "Führen Sie Queue-Consumer und Polling-Schleifen ohne HTTP-Port au
 
 # Hintergrund-Worker
 
-Nicht jeder Dienst stellt HTTP bereit. Queue-Consumer, Reconciler, Cron-artige Polling-Schleifen und andere Hintergrund-Workloads lauschen nicht auf einem Port — führen Sie sie im **Worker-Modus** aus, indem Sie den Container-Port auf `0` setzen.
+Ein Hintergrund-Worker auf Lizard (lizard.build) ist ein Service ohne HTTP-Port: ein Queue-Consumer, ein Bot, der nach Updates fragt, ein Reconciler oder eine Polling-Schleife. Führen Sie ihn im **Worker-Modus** aus, indem Sie den Container-Port auf `0` setzen, zum Beispiel mit `lizard up --port 0`. Der Worker erhält keinen `PORT`, keine Readiness-Prüfung und keine öffentliche Route, sodass er nie als „unhealthy“ markiert wird, weil er nicht auf HTTP antwortet. Kombinieren Sie ihn mit [Managed Redis](/addons/redis) für eine Job-Warteschlange. Chat-Bots sind ebenfalls Worker; siehe die Anleitungen für [Telegram-Bots](/guides/telegram-bot) und [Discord-Bots](/guides/discord-bot).
 
 <span id="what-worker-mode-changes" />
 

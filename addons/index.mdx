@@ -1,10 +1,11 @@
 ---
+title: "Managed Addons: Postgres, Redis and Object Storage"
 description: "Provision managed Postgres, Redis, and S3-compatible storage with one lizard add command, then wire them into services by reference."
 ---
 
 # Managed Addons
 
-Lizard provisions **Managed Postgres**, **Managed Redis**, and S3-compatible **Managed Object Storage** with a single command. Each addon lives in your project, exposes a fixed set of environment variables, and is consumed by your services through [references](/concepts/architecture#cross-resource-references).
+Lizard runs three managed addons in your project: Managed Postgres, Managed Redis, and S3-compatible Managed Object Storage. `lizard add postgres redis s3` creates all three in one command. Each addon exposes a fixed set of environment variables, such as `DATABASE_URL`, and your services read them through [references](/concepts/architecture#cross-resource-references) such as `${{postgres.DATABASE_URL}}`. Use them when an app needs data that outlives a deploy or a restart.
 
 ## Provision an addon
 
@@ -16,7 +17,7 @@ lizard add --list              # show available types
 
 ## Naming
 
-The **first** addon of a given type gets the bare type as its name — so `${{postgres.DATABASE_URL}}` works out of the box. Additional addons of the same type get a generated name like `postgres-autumn-bear`. A deleted addon keeps its name in the trash for 3 days, so a new addon added in that window gets a generated name; restore the old one or point references at the new name.
+The first addon of each type uses the type as its name, so `${{postgres.DATABASE_URL}}` works without extra setup. Additional addons of the same type get a generated name like `postgres-autumn-bear`. A deleted addon keeps its name in the trash for 3 days, so a new addon added in that window gets a generated name; restore the old one or point references at the new name.
 
 There's no type-alias fallback: a reference must use the addon's **current** name. Renaming an addon breaks references to the old name, so update them after a rename:
 
@@ -54,7 +55,7 @@ See [Secret scoping](/variables#scoping).
 
 ## Dashboard browsers
 
-The [dashboard](/dashboard) ships a data browser for each addon — a SQL/table editor for Postgres, a key browser for Redis, and a bucket/object browser for S3 — so you can inspect and edit data without leaving Lizard.
+Inspect and edit addon data in the [dashboard](/dashboard). It has a SQL/table editor for Managed Postgres, a key browser for Managed Redis, and a bucket/object browser for Managed Object Storage.
 
 ## Storage
 
@@ -70,4 +71,4 @@ lizard scale --service postgres --storage 8192
 - [Managed Redis](/addons/redis)
 - [Managed Object Storage](/addons/storage)
 
-For why a prototype usually needs all three at once, see [make data and configuration explicit](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#make-data-and-configuration-explicit).
+For help choosing data services and setting their variables, see [make data and configuration explicit](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#make-data-and-configuration-explicit).

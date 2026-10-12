@@ -1,10 +1,11 @@
 ---
+title: "Architecture: workspaces, projects and services"
 description: "How Lizard organizes work into workspaces, projects, and services, plus managed addons, cross-resource references, and injected variables."
 ---
 
 # Architecture
 
-Lizard organizes everything you deploy into a three-level hierarchy, plus managed addons that attach to a project.
+Lizard groups services into projects and projects into workspaces. Managed addons belong to a project.
 
 ```
 workspace
@@ -46,10 +47,10 @@ lizard project list             # all projects in the workspace
 
 A **service** is a single deployable unit. Its source is one of:
 
-- **`github`** — a connected GitHub repo. Pushes to the tracked branch auto-redeploy.
-- **`upload`** — a tarball uploaded with `lizard up`.
+- **`github`**: a connected GitHub repo. Pushes to the tracked branch auto-redeploy.
+- **`upload`**: a tarball uploaded with `lizard up`.
 
-Each running service runs as its own **isolated pod** with a default-deny network policy, a generated `<name>-<suffix>.onlizard.com` domain (older services keep `<words>.<region>.onlizard.com`), and automatic TLS. That split — you bring the container, the platform runs it — is [container as a service](https://lizard.build/blog/container-as-a-service), and the blog covers what it still leaves you holding. Inspect and manage services with:
+Each running service runs as its own **isolated pod** with a default-deny network policy, a generated `<name>-<suffix>.onlizard.com` domain (older services keep `<words>.<region>.onlizard.com`), and automatic TLS. This is [container as a service](https://lizard.build/blog/container-as-a-service): you supply the container and Lizard runs it. The blog explains which tasks remain yours. Inspect and manage services with:
 
 ```bash
 lizard ps                       # list services with status + URL
@@ -63,7 +64,7 @@ Service configuration fields are **flat** and map 1:1 to the wire schema (e.g. `
 
 ### App vs. worker services
 
-By default a service is an **HTTP app** that listens on a port (default `3000`) and is served at its domain. A service that doesn't listen on a port — a queue consumer, reconciler, or polling loop — should run in [**worker mode**](/deploy/workers) by setting `containerPort=0`. Workers skip port injection, the reachability health check, and load-balancer registration.
+By default a service is an **HTTP app** that listens on a port (default `3000`) and is served at its domain. A service that doesn't listen on a port, such as a queue consumer, reconciler, or polling loop, should run in [**worker mode**](/deploy/workers) by setting `containerPort=0`. Workers skip port injection, the reachability health check, and load-balancer registration.
 
 ## Managed addons
 
@@ -77,7 +78,7 @@ Each addon exposes a fixed set of environment variables that your services consu
 
 ## Cross-resource references
 
-Any service or addon value can be referenced from another resource's environment using:
+To read a service or addon value from another resource's environment, use:
 
 ```
 ${{<name>.<KEY>}}
@@ -99,7 +100,7 @@ lizard secrets list --service api --show
 
 ## Platform-injected variables
 
-Every service automatically receives these variables (they cannot be overridden):
+Lizard sets these variables on every service; you cannot override them:
 
 | Variable | Description |
 |----------|-------------|

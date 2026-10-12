@@ -6,7 +6,7 @@ description: "Ejecuta consumidores de colas y bucles de sondeo sin puerto HTTP. 
 
 # Workers en segundo plano
 
-No todos los servicios sirven HTTP. Los consumidores de colas, reconcilers, bucles de sondeo estilo cron y otras cargas de trabajo en segundo plano no escuchan en un puerto: ejecútalos en **modo worker** configurando el puerto del contenedor en `0`.
+Un worker en segundo plano en Lizard (lizard.build) es un servicio sin puerto HTTP: un consumidor de colas, un bot que consulta si hay actualizaciones, un reconciler o un bucle de sondeo. Ejecútalo en **modo worker** configurando el puerto del contenedor en `0`, por ejemplo con `lizard up --port 0`. El worker no recibe `PORT`, ni sonda de preparación, ni ruta pública, así que nunca se marca como "unhealthy" por no responder HTTP. Combínalo con [Managed Redis](/addons/redis) para una cola de trabajos. Los bots de chat también son workers; consulta las guías de [bot de Telegram](/guides/telegram-bot) y [bot de Discord](/guides/discord-bot).
 
 <span id="what-worker-mode-changes" />
 
@@ -14,10 +14,10 @@ No todos los servicios sirven HTTP. Los consumidores de colas, reconcilers, bucl
 
 Cuando `containerPort=0`, la plataforma:
 
-- **Omite la inyección de `PORT`** — el worker no se enlaza en ningún sitio.
-- **Omite la sonda de preparación TCP** — sin estado "unhealthy" por falsos positivos. El pod antiguo se detiene antes de que arranque el nuevo.
+- **Omite la inyección de `PORT`**: el worker no se enlaza en ningún sitio.
+- **Omite la sonda de preparación TCP**: sin estado "unhealthy" por falsos positivos. El pod antiguo se detiene antes de que arranque el nuevo.
 - **Omite `EXPOSE`** en el Dockerfile sintetizado.
-- **Omite el registro de rutas del balanceador de carga** — no se sirve nada. (Puede que siga apareciendo un dominio `*.onlizard.com` generado en el servicio, pero no responderá.)
+- **Omite el registro de rutas del balanceador de carga**: no se sirve nada. (Puede que siga apareciendo un dominio `*.onlizard.com` generado en el servicio, pero no responderá.)
 
 <span id="enable-worker-mode" />
 
@@ -123,9 +123,9 @@ Esta demo solo acepta los trabajos JSON creados por `jobs.py`. No implementa una
 
 ## Ver también
 
-- [`lizard port`](/cli/port) — muestra o cambia el puerto del contenedor de un servicio.
-- [El servicio nunca llega a healthy](/deploy/troubleshooting/service-never-healthy) — la configuración incorrecta del modo worker más común.
-- [Managed Addons](/addons) — Redis, Postgres y S3 para cargas de trabajo con estado.
-- [Hosting de apps Python](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks) — un worker de Celery es la misma imagen con un comando distinto y sin puerto HTTP.
+- [`lizard port`](/cli/port): muestra o cambia el puerto del contenedor de un servicio.
+- [El servicio nunca llega a healthy](/deploy/troubleshooting/service-never-healthy): la configuración incorrecta del modo worker más común.
+- [Managed Addons](/addons): Redis, Postgres y S3 para cargas de trabajo con estado.
+- [Hosting de apps Python](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks): un worker de Celery es la misma imagen con un comando distinto y sin puerto HTTP.
 
 Consulta los [resultados de pruebas del escenario](/guides/validation) para ver versiones comprobadas, resultados en la nube y limitaciones restantes.

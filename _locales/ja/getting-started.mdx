@@ -1,12 +1,13 @@
 ---
-description: "lizard CLI をインストールし、ログインして、GitHub リポジトリまたはローカルフォルダから数分で最初のアプリを公開し、その後データベースを追加します。"
+title: "アプリ クイックスタート: 最初のアプリをデプロイする"
+description: "数分で最初のアプリを Lizard にデプロイ: Lizard CLI をインストールしてサインインし、7 日間の Pro トライアルを開始してから、GitHub リポジトリまたはローカルフォルダをデプロイします。"
 ---
 
 <span id="app-quickstart" />
 
 # アプリ クイックスタート
 
-数分で最初のアプリを Lizard に公開できます。`lizard login` した最初のタイミングで、Lizard アカウントは自動的に作成されます。Lizard CLI をインストールしてログインし、Pro トライアルを開始してからデプロイします。方法は GitHub リポジトリから直接行うか、ローカルディレクトリから行うかのどちらかです。
+このクイックスタートでは、数分でアプリを Lizard (lizard.build) にデプロイします。Lizard CLI をインストールしてサインインし、7 日間の Pro トライアルを開始してから、GitHub リポジトリなら `lizard add -r owner/repo`、ローカルフォルダなら `lizard up` を実行します。Lizard はローカルの Docker なしで自社のサーバー上でアプリをビルドし、`onlizard.com` 上の HTTPS URL を返します。アカウントは、最初に `lizard login` を実行したときに作成されます。
 
 <span id="1-install-the-cli" />
 
@@ -80,7 +81,7 @@ lizard whoami
 lizard billing start
 ```
 
-Stripe Checkout が開くので、カードを登録します。トライアルには $5 のトライアルクレジットが含まれ、終了まで何も請求されません。[請求](/platform/billing)を参照してください。
+Stripe Checkout が開くので、カードを登録します。トライアルには $5 分の利用枠が含まれ、終了まで何も請求されません。[請求](/platform/billing) と [`lizard billing`](/cli/billing) を参照してください。
 
 <span id="4-deploy" />
 
@@ -98,7 +99,7 @@ Stripe Checkout が開くので、カードを登録します。トライアル�
 lizard add -r your-org/your-app
 ```
 
-以後、その追跡ブランチへの push によって自動的に再デプロイされます。プライベートリポジトリの場合は、先に GitHub App を接続してください:
+以後、その追跡ブランチへの push によって自動的に再デプロイされます。プライベートリポジトリの場合は、先に [`lizard git`](/cli/git) で GitHub App を接続してください:
 
 ```bash
 lizard git connect
@@ -118,6 +119,8 @@ lizard up
 
 どちらの場合でも、ビルドが完了すると `https://your-app-x1y2z.onlizard.com` のような生成済み URL が取得できます。
 
+Lizard はほとんどのスタックを自動で検出します。お使いのフレームワークの正確なビルドコマンド、start コマンド、ポートについては、[Next.js](/framework-guides/nextjs)、[React](/framework-guides/react)、[Vue](/framework-guides/vue)、[Astro](/framework-guides/astro)、[SvelteKit](/framework-guides/sveltekit)、[Node.js](/framework-guides/nodejs)、[Django](/framework-guides/django)、[FastAPI](/framework-guides/fastapi)、[Rails](/framework-guides/rails)、[Go](/framework-guides/go) のガイドを参照してください。独自の Dockerfile を持つアプリは [Dockerfile でデプロイする](/deploy/dockerfile) に従ってください。
+
 <span id="5-watch-it-build-and-run" />
 
 ## 5. ビルドと実行を確認する
@@ -128,6 +131,8 @@ lizard logs        # last runtime log lines
 lizard logs --build  # the most recent build's logs
 lizard open        # open the project in the dashboard
 ```
+
+[`lizard open`](/cli/open) は同じプロジェクトを [ダッシュボード](/dashboard) で表示します。メトリクス、コスト、デプロイ履歴については [可観測性](/observability) を参照してください。
 
 <span id="6-add-a-database-optional" />
 
@@ -147,11 +152,12 @@ lizard redeploy --service your-app
 
 ## 次のステップ
 
-- **[Core 概念](/concepts/architecture)** — プロジェクト、サービス、ビルドパイプラインを理解します。
-- **[GitHubからのデプロイ](/deploy/github)** — ブランチ、モノレポ、自動再デプロイ。
-- **[変数 & Secrets](/variables)** — スコープと優先順位。
-- **[Networking](/networking)** — 自動 TLS で独自のホスト名を接続します。
-- **[AI IDEが構築したアプリをデプロイする](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)** — Google Antigravity で書かれたアプリについて、同じ手順を代わりにエージェントに渡します。
+- **[Core 概念](/concepts/architecture)**：プロジェクト、サービス、ビルドパイプラインを理解します。
+- **[GitHubからのデプロイ](/deploy/github)**：ブランチ、モノレポ、自動再デプロイ。
+- **[デプロイ](/deploy)**：すべてのデプロイ方法に加え、ワーカー、スケーリング、リージョン。
+- **[変数 & Secrets](/variables)**：スコープと優先順位。
+- **[Networking](/networking)**：自動 TLS で独自のホスト名を接続します。
+- **[AI IDEが構築したアプリをデプロイする](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production)**：Google Antigravity で書かれたアプリについて、同じ手順を代わりにエージェントに渡します。
 
 <span id="hosting-costs" />
 

@@ -1,0 +1,171 @@
+---
+title: "Развертывание приложения Streamlit"
+description: "Деплой приложения Streamlit в Lizard: Procfile запускает streamlit run app.py на 0.0.0.0:8501, requirements.txt фиксирует версию Streamlit, секреты берутся из переменных."
+---
+
+<span id="deploy-a-streamlit-app" />
+
+# Развертывание приложения Streamlit
+
+Lizard (lizard.build) запускает приложение Streamlit той же командой, что и у вас локально: `streamlit run app.py`. Поместите её в строку `web:` в Procfile с `--server.address 0.0.0.0` и фиксированным портом, например `8501`, затем разверните командой `lizard up --port 8501`. Без Procfile lizardpack запускает `python app.py`, а эта команда выводит предупреждение и завершается, не отдавая приложение.
+
+**Статус тестов:** пример ниже запускался локально со Streamlit 1.65.0, а вариант с базой данных проверили с psycopg 3.3.5 и PostgreSQL 14. План сборки мы проверили в планировщике сборки lizardpack, который использует Lizard. Полный деплой мы ещё не проводили. Браузер держит открытым WebSocket к Streamlit, и это соединение через маршрутизацию Lizard мы ещё не проверяли.
+
+<span id="before-you-start" />
+
+## Перед началом
+
+- Python 3 на вашем компьютере, чтобы проверить приложение.
+- Lizard CLI с выполненным `lizard login` и тариф Pro или 7-дневный пробный период Pro (нужна карта). См. [цены](https://lizard.build/pricing).
+
+<span id="a-minimal-app" />
+
+## Минимальное приложение
+
+`app.py`:
+
+```python
+import streamlit as st
+
+st.title("Hello from Streamlit on Lizard")
+name = st.text_input("Your name", "world")
+st.write(f"Hello, {name}!")
+```
+
+`requirements.txt`:
+
+```text
+streamlit==1.65.0
+```
+
+`.python-version`:
+
+```text
+3.13
+```
+
+`Procfile`:
+
+```text
+web: streamlit run app.py --server.port 8501 --server.address 0.0.0.0
+```
+
+Запустите локально:
+
+```bash
+python -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+Streamlit откроется на `http://localhost:8501`. Добавьте `.venv/`, `.env` и `.streamlit/secrets.toml` в `.gitignore`.
+
+<span id="what-lizardpack-builds" />
+
+## Что собирает lizardpack
+
+| Шаг | Что происходит |
+|---|---|
+| Определение | `requirements.txt`, `pyproject.toml`, `Pipfile` или любой файл `.py` |
+| Версия Python | `.python-version`, затем `.tool-versions`, затем `requires-python` в `pyproject.toml`; только мажорная и минорная версии, на образе `python:<x.y>-slim`. По умолчанию `3.13`. |
+| Установка | `pip install -r requirements.txt`; uv, Poetry или Pipenv, если есть их lock-файл или файл конфигурации |
+| Запуск | Строка `web:` из Procfile |
+| Рантайм | `PYTHONUNBUFFERED=1`, поэтому вывод `print` сразу попадает в логи |
+
+Порт сервиса берётся из `--port` и должен совпадать с `--server.port` в Procfile. Правила выбора версии и их особые случаи описаны на странице [версии рантайма](/deploy/runtime-versions).
+
+<span id="deploy" />
+
+## Развертывание
+
+Из папки приложения:
+
+```bash
+lizard init --name streamlit-app
+lizard add --service web
+lizard up --service web --port 8501
+```
+
+`lizard up` загружает папку, собирает её на Lizard и выводит URL. Внутри git-репозитория он пропускает всё, что перечислено в `.gitignore`; вне git загружает файлы `.env`. Для git push to deploy [подключите репозиторий GitHub](/deploy/github) и задайте порт командой `lizard port 8501 --service web`.
+
+<span id="secrets-and-settings" />
+
+## Секреты и настройки
+
+`st.secrets` читает `.streamlit/secrets.toml`. Не загружайте этот файл. В Lizard храните секреты как переменные сервиса и читайте их из окружения:
+
+```bash
+lizard secrets set OPENAI_API_KEY=sk-... --service web
+```
+
+```python
+import os
+
+api_key = os.environ["OPENAI_API_KEY"]
+```
+
+Изменение переменной перезапускает приложение без пересборки. См. [переменные и секреты](/variables).
+
+<span id="add-managed-postgres" />
+
+## Подключите Managed Postgres
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service web
+```
+
+Одинарные кавычки не дают оболочке обработать `${{…}}`; Lizard подставляет [ссылку](/variables/references) при деплое. Добавьте `psycopg[binary]==3.3.5` в `requirements.txt` и открывайте одно соединение на серверный процесс:
+
+```python
+import os
+
+import psycopg
+import streamlit as st
+
+
+@st.cache_resource
+def get_conn():
+    return psycopg.connect(os.environ["DATABASE_URL"], autocommit=True)
+
+
+with get_conn().cursor() as cur:
+    cur.execute("SELECT now()")
+    st.write("Database time:", cur.fetchone()[0])
+```
+
+`st.cache_resource` сохраняет соединение между перезапусками скрипта и сессиями браузера. Храните данные в [Managed Postgres](/addons/postgres) или [Managed Object Storage](/addons/storage): файлы, которые приложение пишет внутри контейнера, пропадают при следующем деплое.
+
+<span id="check-that-it-works" />
+
+## Проверьте, что всё работает
+
+```bash
+lizard logs --service web --tail 100
+lizard domain --service web
+curl https://<your-domain>/_stcore/health
+```
+
+В логе появляется `You can now view your Streamlit app in your browser`, а URL проверки работоспособности отвечает `ok`. Откройте URL приложения и измените текст в поле: приветствие должно обновиться.
+
+<span id="common-problems" />
+
+## Частые проблемы
+
+| Симптом | Что делать |
+|---|---|
+| В логе `to view this Streamlit app on a browser, run it with the following command` | Procfile нет или в нём нет строки `web:`, поэтому lizardpack запустил `python app.py`. |
+| Деплой так и не становится работоспособным | Порт сервиса и `--server.port` различаются. Выполните `lizard port --service web`. См. [сервис так и не становится работоспособным](/deploy/troubleshooting/service-never-healthy). |
+| `ModuleNotFoundError` | Добавьте пакет в `requirements.txt` и разверните снова. |
+| `KeyError` для секрета | В сервисе `web` нет этой переменной: `lizard secrets list --service web`. |
+| Страница показывает сообщение о подключении и так и не загружается | Браузер не может удержать WebSocket к `/_stcore/stream`. Найдите этот неудачный запрос в консоли браузера, а ошибки в `lizard logs`. |
+
+<span id="related" />
+
+## См. также
+
+- [Руководства по фреймворкам](/framework-guides)
+- [Развертывание FastAPI](/framework-guides/fastapi)
+- [Версии рантайма](/deploy/runtime-versions)
+- [Managed Postgres](/addons/postgres)
+- [Логи](/observability/logs)

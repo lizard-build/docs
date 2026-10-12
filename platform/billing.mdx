@@ -1,10 +1,11 @@
 ---
+title: "Billing: Pro plan, trial and usage rates"
 description: "Lizard Pro costs $19 a month with $19 in monthly credits. How the trial, pay as you go usage, limits, failed payments, cancelling and Enterprise work."
 ---
 
 # Billing
 
-Lizard (lizard.build) has one self-serve plan, Pro. It costs $19 a month and comes with $19 in monthly credits. The credits pay for usage across the platform: apps, Sandboxes, Managed Postgres, Managed Redis, Managed Object Storage, Persistent Volumes and outgoing traffic. Once you use your credits, you pay as you go at the published rates.
+Lizard has one self-serve plan, Pro. It costs $19 a month and comes with $19 in monthly credits. The credits cover apps, Sandboxes, Managed Postgres, Managed Redis, Managed Object Storage, Persistent Volumes and outgoing traffic. Once you use your credits, you pay as you go at the published rates.
 
 Manage your plan on the **Billing** page in account settings or with [`lizard billing`](/cli/billing). The plan belongs to the workspace owner. Usage in every workspace you own counts toward your plan, and members add no seat fee.
 
@@ -42,11 +43,11 @@ Prices are in US dollars.
 
 Incoming traffic is free. Apps, Managed Postgres and Managed Redis use these rates. Sandboxes have a flat hourly price for each size; see [Sandbox sizes](/platform/limits#sandbox-sizes).
 
-For example, one vCPU and 1 GB of memory used for one hour cost $0.0375192 in compute. Storage and outgoing traffic can add to that. See [pricing](https://lizard.build/pricing) for the full offer.
+For example, one vCPU and 1 GB of memory used for one hour cost $0.0375192 in compute. Storage and outgoing traffic can add to that. See [pricing](https://lizard.build/pricing) for all rates and plan terms.
 
 ## Trial
 
-A new account can look around, but it needs Pro to create apps, Sandboxes, databases or volumes. Pro starts with a 7-day trial and $5 in trial credits. You add a card to start it; Apple Pay works too. Nothing is charged when the trial starts. When it ends, Pro begins at $19 a month unless you cancel first.
+You can browse with a new account, but you need Pro to create apps, Sandboxes, databases or volumes. Pro starts with a 7-day trial and $5 in trial credits. You add a card to start it; Apple Pay works too. Nothing is charged when the trial starts. When it ends, Pro begins at $19 a month unless you cancel first.
 
 Each account and each card gets one trial. If the account had one before, Pro starts at once and charges $19 that day. If the card had one, the trial does not start and nothing is charged; start Pro at $19 on the Billing page.
 
@@ -54,7 +55,7 @@ The trial includes every Pro feature, with lower [limits](#limits) until your fi
 
 ### When trial credits run out
 
-- When your trial credits are used up, running resources pause and you cannot create new ones. Their data is kept.
+- When you use all your trial credits, Lizard pauses running resources and blocks new ones. It keeps their data.
 - To go on, choose **Start Pro now** on the Billing page or run `lizard billing start-now`. This ends the trial, charges $19 and starts your first paid month with $19 in credits. Paused apps and databases start again once the payment goes through.
 
 Unused trial credits end with the trial. They do not move to the paid month.
@@ -93,7 +94,7 @@ Cancel at any time on the Billing page, in the Stripe customer portal, or with `
 
 Until the end date, you can undo the cancel on the Billing page or with `lizard billing resume`.
 
-When Pro ends, you can no longer create resources, and running ones pause. Their data is kept. To use them again, start Pro on the Billing page. A second trial is not available, so Pro starts at once at $19.
+When Pro ends, Lizard blocks new resources and pauses running ones. It keeps their data. To use them again, start Pro on the Billing page. A second trial is not available, so Pro starts at once at $19.
 
 ## Enterprise
 

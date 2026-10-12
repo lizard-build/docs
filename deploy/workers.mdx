@@ -4,16 +4,16 @@ description: "Run queue consumers and polling loops with no HTTP port. What cont
 
 # Background Workers
 
-Not every service serves HTTP. Queue consumers, reconcilers, cron-style polling loops, and other background workloads don't listen on a port — run them in **worker mode** by setting the container port to `0`.
+A background worker on Lizard is a service with no HTTP port: a queue consumer, a bot that polls for updates, a reconciler, or a polling loop. Run it in **worker mode** by setting the container port to `0`, for example with `lizard up --port 0`. The worker gets no `PORT`, no readiness probe and no public route, so it is never marked unhealthy for not answering HTTP. Pair it with [Managed Redis](/addons/redis) for a job queue. Chat bots are workers too; see the [Telegram bot](/guides/telegram-bot) and [Discord bot](/guides/discord-bot) guides.
 
 ## What worker mode changes
 
 When `containerPort=0`, the platform:
 
-- **Skips `PORT` injection** — the worker doesn't bind anywhere.
-- **Skips the TCP readiness probe** — no false-positive "unhealthy" status. The old pod stops before the new one starts.
+- **Skips `PORT` injection**: the worker doesn't bind anywhere.
+- **Skips the TCP readiness probe**: no false-positive "unhealthy" status. The old pod stops before the new one starts.
 - **Skips `EXPOSE`** in the synthesized Dockerfile.
-- **Skips load-balancer route registration** — nothing is served. (A generated `*.onlizard.com` domain may still appear on the service, but it won't respond.)
+- **Skips load-balancer route registration**: nothing is served. (A generated `*.onlizard.com` domain may still appear on the service, but it won't respond.)
 
 ## Enable worker mode
 
@@ -30,7 +30,7 @@ lizard port 0 --service worker
 lizard service set worker --set containerPort=0
 ```
 
-Worker mode is a hard switch — a redeploy is needed for the port change to take effect.
+Redeploy after changing the port to apply worker mode.
 
 ## Check the current port
 
@@ -38,11 +38,11 @@ Worker mode is a hard switch — a redeploy is needed for the port change to tak
 lizard port --service worker
 ```
 
-Prints the current container port, or `worker mode` when it's `0`.
+The command prints the current container port, or `worker mode` when it's `0`.
 
 ## When *not* to use worker mode
 
-Don't use worker mode for a regular HTTP service that's just slow to start. Worker mode disables the reachability check entirely, so it will **hide** "the listener never came up" bugs. If your service is meant to serve traffic, keep a real port and fix the startup instead.
+Don't use worker mode for a regular HTTP service that's just slow to start. Worker mode disables the reachability check entirely, so it will not detect a server that fails to listen. If your service is meant to serve traffic, keep a real port and fix the startup instead.
 
 ## Run a queue consumer
 
@@ -105,9 +105,9 @@ This demo only accepts the JSON jobs created by `jobs.py`. It does not implement
 
 ## See also
 
-- [`lizard port`](/cli/port) — show or change a service's container port.
-- [Service never becomes healthy](/deploy/troubleshooting/service-never-healthy) — the most common worker-mode misconfiguration.
-- [Managed Addons](/addons) — Redis, Postgres, and S3 for stateful workloads.
-- [Python app hosting](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks) — a Celery worker is the same image with a different command and no HTTP port.
+- [`lizard port`](/cli/port): show or change a service's container port.
+- [Service never becomes healthy](/deploy/troubleshooting/service-never-healthy): the most common worker-mode misconfiguration.
+- [Managed Addons](/addons): Redis, Postgres, and S3 for stateful workloads.
+- [Python app hosting](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks): a Celery worker is the same image with a different command and no HTTP port.
 
 See [scenario test results](/guides/validation) for checked versions, cloud results and remaining limits.

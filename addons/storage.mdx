@@ -1,10 +1,11 @@
 ---
+title: "Managed Object Storage: S3-compatible buckets"
 description: "S3-compatible object storage for uploads, assets, and backups. Get a private default bucket and connection variables from one lizard add s3."
 ---
 
 # Managed Object Storage
 
-Managed Object Storage is S3-compatible storage for uploads, assets, and backups. Provisioning an `s3` addon also creates a **private bucket named `default`**. To serve files without authentication, make it public from the dashboard's S3 browser.
+Managed Object Storage on Lizard is S3-compatible storage for uploads, assets, and backups. `lizard add s3` creates a private bucket named `default` and five connection variables, from `S3_ENDPOINT` to `S3_REGION`. Use them with any AWS SDK and path-style addressing. Each account can store up to 16 GiB, and you pay for the bytes you store. To serve files without authentication, make the bucket public from the dashboard's S3 browser. For an overview and prices, see the [Managed Object Storage page](https://lizard.build/object-storage).
 
 ## Provision
 
@@ -12,7 +13,7 @@ Managed Object Storage is S3-compatible storage for uploads, assets, and backups
 lizard add s3
 ```
 
-The first S3 addon is named `s3`, so `${{s3.S3_ENDPOINT}}` and friends work immediately.
+The first Managed Object Storage addon is named `s3`, so references such as `${{s3.S3_ENDPOINT}}` work immediately.
 
 ## Environment variables
 
@@ -57,7 +58,7 @@ const s3 = new S3Client({
 
 ## Public files
 
-Buckets are private by default. Objects in a bucket you make **public** are served without authentication two ways:
+Buckets are private by default. Once you make a bucket public, anyone can read its objects through either address:
 
 1. **Gateway URL** (shown in the dashboard):
    ```
@@ -69,7 +70,7 @@ Buckets are private by default. Objects in a bucket you make **public** are serv
    <dashboard-host>/api/s3/<addonId>/public/<bucket>/<key>
    ```
 
-Once you make the `default` bucket public, its objects are served at:
+Once you make the `default` bucket public, anyone can read its objects at:
 
 ```
 <dashboard-host>/api/s3/<addonId>/public/default/<key>
@@ -77,9 +78,9 @@ Once you make the `default` bucket public, its objects are served at:
 
 ## Browse objects
 
-Open the **S3 browser** in the dashboard (`lizard open`) to upload and delete objects, create folders, and make buckets public or private. From the CLI, `lizard s3 upload <file>` uploads a file and `lizard s3 list` lists objects.
+Open the **S3 browser** in the dashboard (`lizard open`) to upload and delete objects, create folders, and make buckets public or private. From the CLI, `lizard s3 upload <file>` uploads a file and `lizard s3 list` lists objects; see [`lizard s3`](/cli/s3).
 
-> **Bucket ACL changes** (making a bucket public/private) aren't on the CLI yet — manage them from the dashboard.
+> **Bucket ACL changes** (making a bucket public/private) require the dashboard; the CLI does not support them yet.
 
 ## Storage limit
 
@@ -87,5 +88,5 @@ Each account can store up to 16 GiB of objects across its Managed Object Storage
 
 ## See also
 
-- [Managed Addons](/addons) — naming, references, and the dashboard browsers.
-- [Cross-Service References](/variables/references) — reference syntax and resolution.
+- [Managed Addons](/addons): naming, references, and the dashboard browsers.
+- [Cross-Service References](/variables/references): reference syntax and resolution.

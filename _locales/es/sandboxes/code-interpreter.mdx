@@ -1,8 +1,11 @@
 ---
-description: "Ejecuta comandos Python con Lizard SDK y la plantilla interpreter."
+title: "API de intérprete de código para código generado por LLM"
+description: "Ejecuta en un sandbox el código que escribió un LLM con Lizard SDK: un kernel de Python con estado, gráficos como PNG, errores con traceback, tiempos de espera y un ejemplo de herramienta para LLM."
 ---
 
-# Ejecutar Python
+<span id="code-interpreter-api-for-llm-generated-code" />
+
+# API de intérprete de código para código generado por LLM
 
 <span id="intérprete-de-código" />
 <span id="ejecutar-código" />
@@ -19,16 +22,22 @@ description: "Ejecuta comandos Python con Lizard SDK y la plantilla interpreter.
 <span id="checkpointing-a-session" />
 <span id="see-also" />
 
-Ejecuta Python con la plantilla `interpreter`. `CodeSandbox` conserva el estado entre llamadas: Python se ejecuta en un kernel de Jupyter persistente por contexto, y los resultados pueden incluir el valor de la última expresión y gráficos como `image/png`.
+Un intérprete de código ejecuta el código que escribe un modelo de lenguaje y le devuelve la salida al modelo. En Lizard (lizard.build), `CodeSandbox` de Lizard SDK lo hace dentro de un sandbox, una microVM de Firecracker, así que el código se ejecuta aparte de tu app y de tu máquina. Arranca la plantilla `interpreter`, que incluye Python y bibliotecas de datos habituales. Python se ejecuta en un kernel de Jupyter que conserva las variables entre llamadas, y cada resultado incluye la salida impresa, el valor de la última expresión, los gráficos como `image/png` y cualquier error con su traceback.
+
+<span id="run-code-with-state" />
+
+## Ejecutar código con estado
 
 ```ts
 import { CodeSandbox } from '@lizard-build/sdk';
 
 const sandbox = await CodeSandbox.create({ projectId: 'proj_123', timeoutMs: 300_000 });
 try {
-  await sandbox.runCode('x = 21');
-  const run = await sandbox.runCode('x * 2');
-  console.log(run.results[0]?.data, run.stdout, run.error);
+  await sandbox.runCode('import pandas as pd\ndf = pd.DataFrame({"x": [1, 2, 3]})');
+  const run = await sandbox.runCode('df.x.sum()');
+  console.log(run.results[0]?.data); // "6"
+  const bad = await sandbox.runCode('1/0');
+  console.log(bad.error?.name); // "ZeroDivisionError"
 } finally {
   await sandbox.kill();
 }
@@ -37,48 +46,114 @@ try {
 ```python
 from lizard import CodeSandbox
 
-sandbox = CodeSandbox.create(project_id="proj_123", timeout_ms=300_000)
-try:
-    sandbox.run_code("x = 21")
-    run = sandbox.run_code("x * 2")
-    print(run.results[0].data, run.stdout, run.error)
-finally:
-    sandbox.kill()
+with CodeSandbox.create(project_id="proj_123", timeout_ms=300_000) as sandbox:
+    sandbox.run_code('import pandas as pd\ndf = pd.DataFrame({"x": [1, 2, 3]})')
+    run = sandbox.run_code("df.x.sum()")
+    print(run.results[0].data)  # "6"
+    print(sandbox.run_code("1/0").error.name)  # "ZeroDivisionError"
 ```
 
-`createContext()` (Python: `create_context()`) inicia un kernel aparte con sus propias variables. JavaScript y bash se ejecutan como un proceso nuevo en cada llamada.
+Un error del código forma parte del resultado, no es una excepción. Los fallos de la solicitud, como una clave de API incorrecta, sí lanzan una excepción.
 
-## Ejecutar comandos
+<span id="what-does-runcode-return" />
 
-`process.exec` inicia un proceso distinto para cada comando, por lo que las variables de Python no persisten entre llamadas. Guarda los resultados intermedios en archivos. Devuelve stdout, stderr y un código de salida.
+## ¿Qué devuelve runCode?
+
+`runCode` (Python: `run_code`) devuelve un `Execution`:
+
+| Campo | Contenido |
+|---|---|
+| `stdout`, `stderr` | Todo lo que imprimió el código |
+| `results` | Salida enriquecida: el valor de la última expresión como `text/plain`, gráficos de matplotlib e imágenes como `image/png` en base64, HTML y otros tipos, cada uno con `mime` y `data` |
+| `error` | `name`, `message` y `traceback` cuando el código lanzó una excepción |
+| `executionCount` | El contador de celdas del kernel (Python: `execution_count`) |
+
+Pasa `onStdout`, `onStderr`, `onResult` u `onError` (Python: `on_stdout`, etc.) para recibir la salida mientras se ejecuta el código.
+
+<span id="use-it-as-an-llm-tool" />
+
+## Úsalo como herramienta de un LLM
+
+Dale al modelo una herramienta, por ejemplo `run_python` con un único argumento de texto `code`. Cuando el modelo la llame, ejecuta el código en el sandbox y devuelve el texto como resultado de la herramienta. Usa un mismo sandbox durante toda la conversación para que las variables del modelo se conserven entre llamadas.
 
 ```ts
-import { Sandbox } from '@lizard-build/sdk';
+import { CodeSandbox } from '@lizard-build/sdk';
 
-const sandbox = await Sandbox.create('interpreter', {
-  projectId: 'proj_123', timeoutMs: 300_000,
-});
-try {
-  const result = await sandbox.process.exec("python -c 'print(2 ** 10)'");
-  console.log(result.stdout, result.stderr, result.exitCode);
-} finally {
-  await sandbox.kill();
+const sandbox = await CodeSandbox.create({ projectId: 'proj_123', timeoutMs: 600_000 });
+
+// Call this when the model asks to run Python. Return the text to send back to it.
+async function runPython(code: string): Promise<string> {
+  const run = await sandbox.runCode(code, { timeoutMs: 30_000 });
+  if (run.error) return `${run.error.name}: ${run.error.message}\n${run.error.traceback}`;
+  const values = run.results.flatMap((r) =>
+    r.type === 'result' && r.mime === 'text/plain' ? [r.data] : [],
+  );
+  return [run.stdout, ...values].filter(Boolean).join('\n');
 }
+
+// When the conversation ends:
+await sandbox.kill();
 ```
 
 ```python
-from lizard import Sandbox
+from lizard import CodeSandbox
 
-sandbox = Sandbox.create("interpreter", project_id="proj_123", timeout_ms=300_000)
-try:
-    result = sandbox.process.exec_("python -c 'print(2 ** 10)'")
-    print(result.stdout, result.stderr, result.exit_code)
-finally:
-    sandbox.kill()
+sandbox = CodeSandbox.create(project_id="proj_123", timeout_ms=600_000)
+
+def run_python(code: str) -> str:
+    """Call this when the model asks to run Python. Return the text to send back to it."""
+    run = sandbox.run_code(code, timeout_ms=30_000)
+    if run.error:
+        return f"{run.error.name}: {run.error.message}\n{run.error.traceback}"
+    values = [r.data for r in run.results if r.mime == "text/plain"]
+    return "\n".join(filter(None, [run.stdout, *values]))
+
+# When the conversation ends:
+sandbox.kill()
 ```
+
+Aquí la duración del sandbox es de diez minutos. Auméntala para conversaciones más largas con `setTimeout` (Python: `set_timeout`), o establece `timeoutMs: 0` y detén el sandbox tú mismo.
+
+<span id="charts" />
+
+## Gráficos
+
+Cuando el código dibuja un gráfico de matplotlib, `results` contiene un elemento con `mime` igual a `image/png` y la imagen en base64 en `data`:
+
+```python
+import base64
+from pathlib import Path
+
+run = sandbox.run_code("import matplotlib.pyplot as plt\nplt.plot([1, 4, 9])\nplt.show()")
+png = next(r.data for r in run.results if r.mime == "image/png")
+Path("chart.png").write_bytes(base64.b64decode(png))
+```
+
+<span id="contexts-timeouts-and-languages" />
+
+## Contextos, tiempos de espera y lenguajes
+
+- **Contextos.** `createContext()` (Python: `create_context()`) inicia un kernel aparte con sus propias variables y su propio directorio de trabajo; pásalo como `context` a `runCode`. `listContexts()`, `restartContext(ctx)` y `deleteContext(ctx)` los gestionan. Sin un contexto, cada lenguaje usa su propio contexto predeterminado.
+- **Tiempos de espera.** `timeoutMs` (Python: `timeout_ms`) limita una llamada y por defecto es de 60 segundos. Un kernel de Python que lo supera se interrumpe y conserva su estado; el `error.name` del resultado es `TimeoutError`.
+- **Otros lenguajes.** JavaScript y bash se ejecutan como un proceso nuevo en cada llamada, así que no se conserva el estado y `results` queda vacío. JavaScript necesita `node`, que la plantilla `interpreter` no incluye.
+- **Pausa y snapshots.** Los kernels se ejecutan dentro del sandbox, así que `pause()` y `resume()` conservan sus variables, y `snapshot()` y `fork()` las copian.
+
+<span id="run-commands" />
+
+## Ejecutar comandos
+
+`process.exec` inicia un proceso distinto para cada comando, por lo que las variables de Python no persisten entre llamadas. Úsalo para pasos de shell como `pip install`, y guarda en archivos los resultados que necesites después. Consulta [ejecutar un comando](/sandboxes/quickstart#run-a-command) y la [referencia del SDK](/sandboxes/sdk-reference#run-commands).
+
+<span id="untrusted-code" />
+
+## Código no confiable
+
+Trata todo lo que escribe el modelo como no confiable. No pases `lizardToken` a menos que el código necesite Lizard CLI; cualquier proceso del sandbox puede leerlo, así que, si lo pasas, usa una clave limitada al workspace. Mantén otros secretos fuera de `envs`. Un sandbox que usa un volumen basado en pods comparte el kernel del host; consulta [runtime y plantillas](/sandboxes#runtime-and-templates).
+
+<span id="storage-and-billing" />
 
 ## Almacenamiento y facturación
 
-Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un Persistent Volume adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
+Las variables y los archivos duran solo lo que dura el sandbox. Las reglas de facturación y almacenamiento están en [almacenamiento y facturación](/sandboxes#storage-and-billing); los tamaños y precios, en [límites](/platform/limits#sandbox-sizes).
 
-[Inicio rápido](/sandboxes/quickstart) · [Referencia del SDK](/sandboxes/sdk-reference) · [Ejecutar Python](/sandboxes/code-interpreter) · [Panel](/sandboxes/dashboard) · [Persistent Volumes](/sandboxes/volumes)
+[Descripción general de Sandboxes](/sandboxes) · [Inicio rápido](/sandboxes/quickstart) · [Referencia del SDK](/sandboxes/sdk-reference) · [Persistent Volumes](/sandboxes/volumes) · [Página de Sandboxes](https://lizard.build/sandboxes)

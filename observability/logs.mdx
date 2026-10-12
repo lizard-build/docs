@@ -1,4 +1,5 @@
 ---
+title: "Logs: runtime, build and crash logs"
 description: "Stream runtime logs, read build logs after a failed deploy, and pull the log tail around a restart, from the CLI or the dashboard."
 ---
 
@@ -6,7 +7,7 @@ description: "Stream runtime logs, read build logs after a failed deploy, and pu
 
 Lizard captures **runtime** logs, **build** logs, and the log tail around **restarts**. Stream them live in your terminal or browse them in the dashboard.
 
-Runtime logs are collected while a log stream is open (`lizard logs` or the dashboard Logs page, plus 60 seconds after it closes), around deploys and restarts, and while a service is crash-looping. Opening a stream fills in the last 500 lines per replica.
+Lizard collects runtime logs while a log stream is open (`lizard logs` or the dashboard Logs page, plus 60 seconds after it closes), around deploys and restarts, and while a service is crash-looping. Opening a stream fills in the last 500 lines per replica.
 
 ## Runtime logs
 
@@ -19,7 +20,7 @@ lizard logs --level error         # filter by level
 
 ### Behavior with `--json`
 
-`lizard logs --json` is **not** a stream — it returns the last 200 lines (override with `--tail N`, max 1000) and exits. Use it for snapshots and scripting. A snapshot taken while nobody was streaming can miss recent lines; open a stream first if you need them. Stream live only without `--json` when you want an interactive tail.
+`lizard logs --json` returns the last 200 lines (override with `--tail N`, max 1000) and exits. Use it for snapshots and scripting. A snapshot taken while nobody was streaming can miss recent lines; open a stream first if you need them. Stream live only without `--json` when you want an interactive tail.
 
 ## Build logs
 
@@ -27,7 +28,7 @@ lizard logs --level error         # filter by level
 lizard logs --build               # the most recent build's logs
 ```
 
-This is the first thing to check when a deploy fails — read it, fix the cause, then `lizard redeploy`. See [Build Pipeline](/concepts/build-pipeline).
+This is the first thing to check when a deploy fails: read it, fix the cause, then `lizard redeploy`. See [Build Pipeline](/concepts/build-pipeline).
 
 ## Restart / crash logs
 
@@ -54,6 +55,6 @@ The dashboard (`lizard open`) streams runtime and build logs with search and lev
 
 ## See also
 
-- [`lizard logs`](/cli/logs) — the full command reference.
-- [Events & History](/observability/events) — deploy history and replica status.
-- [Deploy from Claude Code](https://lizard.build/blog/deploy-from-claude-code) — logs written to be read by an agent, not just by you.
+- [`lizard logs`](/cli/logs): the full command reference.
+- [Events & History](/observability/events): deploy history and replica status.
+- [Deploy from Claude Code](https://lizard.build/blog/deploy-from-claude-code): using logs to diagnose a deploy with an agent.

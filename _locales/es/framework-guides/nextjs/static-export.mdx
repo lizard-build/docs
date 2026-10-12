@@ -1,5 +1,5 @@
 ---
-description: "Implementa una exportación estática de Next.js en Lizard con output export, un Dockerfile de nginx, puerto 80 y respuestas 404 reales. Descubre qué funciones todavía necesitan un servidor Node.js."
+description: "Despliega una exportación estática de Next.js en Lizard con output export, un Dockerfile de nginx, puerto 80 y 404 reales. Descubre qué funciones todavía necesitan un servidor Node.js."
 ---
 
 <span id="deploy-a-nextjs-static-export" />
@@ -93,7 +93,7 @@ lizard logs --build --service web --json
 lizard ps --json
 ```
 
-El Dockerfile completo incluye un paso de compilación con npm que lizardpack puede reconocer. En un servicio existente, inspecciona y borra las anulaciones de compilación/inicio en conflicto antes de seleccionar un Dockerfile; consulta el [orden de decisión de compilación](/concepts/build-pipeline#build-decision-order).
+El Dockerfile completo incluye un paso de compilación con npm que lizardpack puede reconocer. En un servicio existente, inspecciona y borra los comandos de compilación personalizados/inicio en conflicto antes de seleccionar un Dockerfile; consulta el [orden de decisión de compilación](/concepts/build-pipeline#build-decision-order).
 
 <span id="verify-routes-and-updates" />
 

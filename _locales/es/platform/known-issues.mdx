@@ -1,24 +1,24 @@
 ---
-description: "Limitaciones actuales del ciclo de vida de Sandboxes, límites de recuperación de despliegues y precedencia de la configuración de compilación que debes revisar antes de depender de un flujo de trabajo."
+description: "Limitaciones actuales del ciclo de vida de Sandboxes, límites de recuperación de despliegues y precedencia de la configuración de compilación que debes revisar antes de usar estas funciones."
 ---
 
 <span id="known-issues" />
 
 # Problemas conocidos
 
-<span id="redeploy-is-not-rollback" />
-
-Esta página registra comportamientos que requieren precaución o una versión verificada. Una corrección de código en revisión no es una garantía sobre un servicio en ejecución.
+Esta página enumera comportamientos de Lizard que debes revisar antes de usar estas funciones: la pausa y el vencimiento de los sandboxes, los redeploys que no son rollbacks, la precedencia de Dockerfile y los problemas corregidos con la fecha en que se verificaron. Una corrección de código en revisión no es una garantía sobre un servicio en ejecución.
 
 <span id="sandbox-pause-and-expiration" />
 
 ## Pausa y vencimiento del sandbox
 
-Crea un sandbox, ejecuta comandos y llama a `kill`. `connect` se conecta a un sandbox existente sin cambiar su estado, así que no reanuda uno pausado ni uno detenido. Pausar, reanudar, snapshot y restore están disponibles; consulta [Pausa, reanudación y snapshots](/sandboxes/quickstart#pause-and-resume). Fork (`sandbox.fork({ count })`) funciona en sandboxes Firecracker; devuelve HTTP 409 cuando hay un volumen adjunto y HTTP 501 en un sandbox de pod. `lizard sandbox ssh` abre una shell interactiva con tus credenciales de la CLI. No hay acceso por el protocolo SSH, así que los clientes SSH, `scp` y el reenvío de puertos no funcionan.
+`connect` no reanuda un sandbox pausado ni uno detenido, y fork devuelve HTTP 409 cuando hay un volumen adjunto y HTTP 501 en un sandbox de pod; consulta el [ciclo de vida](/sandboxes#lifecycle) del sandbox.
 
 La pausa cierra las conexiones de red abiertas. Si no se pueden guardar los procesos, el sandbox sigue en marcha e indica el motivo en `pauseError`. Un sandbox pausado solo se reanuda en su propio nodo; si ese nodo falla, se pierde el estado pausado.
 
-Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un volumen persistente adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
+Tras detenerse un sandbox, solo se conservan los archivos de un volumen de Persistent Volumes adjunto en `/workspace`, y los volúmenes usan almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo. Consulta [almacenamiento y facturación](/sandboxes#storage-and-billing).
+
+<span id="redeploy-is-not-rollback" />
 
 ## Redeploy no es rollback
 
@@ -34,7 +34,7 @@ Los comandos explícitos de compilación o inicio tienen prioridad sobre un Dock
 
 ## Plantillas y MCP
 
-Elige una plantilla del catálogo actual. Las plantillas habilitadas son `base`, `interpreter`, `codex`, `desktop`, `opencode`, `pi`, `prime` y `claude`; su disponibilidad depende de la región y de la capacidad del pool. `interpreter` incluye Python y bibliotecas de datos habituales. Comprueba las versiones dentro del sandbox. La CLI pública no permite subir plantillas propias.
+La disponibilidad de las plantillas depende de la región y de la capacidad del pool, y la CLI pública no permite subir plantillas propias. Comprueba las versiones dentro del sandbox. El catálogo está en [runtime y plantillas](/sandboxes#runtime-and-templates).
 
 Lizard Skill usa Lizard CLI y no expone un transporte MCP. Para clientes MCP, usa el servidor alojado de Lizard MCP; consulta [Lizard MCP](/agents#lizard-mcp). Alojar tu propio servidor MCP remoto es un despliegue de aplicación independiente; consulta la [guía](/guides/deploy-mcp-server).
 

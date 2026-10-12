@@ -1,10 +1,11 @@
 ---
-description: "Создайте базу данных Managed Postgres на Lizard, подключите её к сервису по ссылке, запускайте миграции при развёртывании и увеличивайте объём её хранилища."
+title: "Managed Postgres: строка подключения и настройка"
+description: "Добавьте базу PostgreSQL 18 на Lizard, найдите её строку подключения и переменные PG, подключите сервисы по ссылке, запускайте миграции и увеличивайте хранилище."
 ---
 
 # Managed Postgres
 
-Управляемая база данных PostgreSQL, которую можно создать одной командой и подключить к сервисам по ссылке.
+Команда `lizard add postgres` добавляет в проект Lizard (lizard.build) базу PostgreSQL под управлением Managed Postgres. Новые базы по умолчанию работают на PostgreSQL 18. Lizard сохраняет строку подключения в `DATABASE_URL`, а её части записывает в `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD` и `PGDATABASE`; ваши сервисы читают их через ссылку вида `${{postgres.DATABASE_PRIVATE_URL}}`. Вы платите за CPU, память и хранилище базы по тем же [тарифам](/platform/billing#resource-rates), что и для приложений, а в панели управления для неё есть SQL-редактор. Обзор и цены смотрите на [странице Managed Postgres](https://lizard.build/postgres).
 
 <span id="provision" />
 
@@ -35,24 +36,64 @@ lizard add postgres
 | `POSTGRES_DB` | Алиас базы данных |
 | `POSTGRES_PASSWORD` | Алиас пароля |
 
+<span id="postgres-connection-string" />
+
+## Строка подключения к Postgres
+
+У каждой базы две строки подключения. Обе используют пользователя `postgres` и базу `postgres`:
+
+| Переменная | Откуда подключаться | Формат |
+|---|---|---|
+| `DATABASE_PRIVATE_URL` | Сервисы в том же проекте | `postgresql://postgres:<password>@<name>.lizard.internal:5432/postgres` |
+| `DATABASE_URL` | Ваша машина, CI или сервис в другом проекте | `postgresql://postgres:<password>@<host>:<port>/postgres` |
+
+Вместо `<name>` подставьте имя базы в проекте; у первой базы это `postgres`. Публичные хост и порт Lizard назначает при создании базы, поэтому берите их из `DATABASE_URL`, `PGHOST` и `PGPORT`, а не вводите вручную. Приватный адрес работает только внутри проекта; см. [приватную сеть](/networking#private-networking).
+
+Большинство драйверов принимают строку как есть:
+
+```js
+// Node.js with pg
+import pg from 'pg';
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+```
+
+```python
+# Python with psycopg
+import os, psycopg
+conn = psycopg.connect(os.environ["DATABASE_URL"])
+```
+
+`psql` и другие инструменты libpq читают переменные `PG*`, поэтому подключаются без аргументов.
+
+<span id="how-do-i-see-the-connection-string" />
+
+### Как посмотреть строку подключения?
+
+- **Панель управления:** откройте базу в проекте. На вкладке **Overview** показаны `DATABASE_URL` и приватный URL с кнопками копирования. На вкладке **Secrets** перечислены все переменные подключения и ссылка `${{…}}`, которую можно вставить в сервис.
+- **CLI:** `lizard run --service postgres -- printenv DATABASE_URL` выводит публичную строку. В ней есть пароль, поэтому не вставляйте её в логи и чаты.
+
+Строка подключения содержит учётные данные. Подключайте к ней сервисы через ссылку, а не копируйте её в секрет: так сервисы получат актуальное значение при каждом развёртывании.
+
 <span id="connect-a-service" />
 
 ## Подключение сервиса
 
-Укажите ссылку на приватную строку подключения в сервисе-потребителе и выполните повторное развёртывание:
+Укажите ссылку на приватную строку подключения в сервисе, которому нужна база, и выполните повторное развёртывание:
 
 ```bash
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-Ссылка вычисляется при развёртывании, поэтому каждый сервис-потребитель получает актуальные значения дополнения при следующем развёртывании. Для клиентов за пределами проекта используйте `DATABASE_URL`. Кроме того, каждый сервис в проекте получает публичный `DATABASE_URL` дополнения с самым низким приоритетом; явная ссылка переопределяет его.
+Ссылка вычисляется при развёртывании, поэтому каждый сервис получает актуальные значения дополнения при следующем развёртывании. Для клиентов за пределами проекта используйте `DATABASE_URL`. Кроме того, каждый сервис в проекте получает публичный `DATABASE_URL` дополнения с самым низким приоритетом; явная ссылка переопределяет его.
 
-Проверьте подключение со своей машины, не выводя строку подключения:
+Проверьте подключение со своего компьютера, не выводя строку подключения:
 
 ```bash
 lizard run --service postgres -- sh -c 'psql "$DATABASE_URL" -c "SELECT 1"'
 ```
+
+`lizard run --service postgres` выполняет команду на вашем компьютере с публичными значениями подключения базы, поэтому локально должен быть установлен `psql`. `lizard run --service api` передаст ссылки `${{…}}` как буквальный текст; см. [`lizard run`](/cli/run).
 
 <span id="run-migrations-on-deploy" />
 
@@ -65,7 +106,7 @@ lizard service set api --set preDeployCommand="npm run migrate" --set startComma
 lizard redeploy --service api
 ```
 
-Для приложения Django используется команда `python manage.py migrate`; см. [Хостинг Python-приложений](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks).
+Для приложения Django используется команда `python manage.py migrate`; см. [руководство по Django](/framework-guides/django) и [Хостинг Python-приложений](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks). Руководства по [Umami](/guides/umami) и [Flowise](/guides/flowise) показывают готовые приложения на Managed Postgres.
 
 <span id="browse-and-query-data" />
 
@@ -98,11 +139,21 @@ lizard add postgres
 lizard secrets set ANALYTICS_URL='${{postgres-autumn-bear.DATABASE_PRIVATE_URL}}' --service api
 ```
 
+<span id="backups-and-restore" />
+
+## Резервные копии и восстановление
+
+Не рассчитывайте на резервное копирование по расписанию или восстановление на момент времени. Перед рискованной миграцией сами выгрузите базу и проверьте восстановление в отдельной базе. Например, если локально установлен `pg_dump` 18 или новее:
+
+```bash
+lizard run --service postgres -- sh -c 'pg_dump "$DATABASE_URL" > backup.sql'
+```
+
+План восстановления см. в разделе [хранилище и восстановление](/platform/storage-and-recovery).
+
 <span id="see-also" />
 
 ## См. также
 
 - [Управляемые дополнения](/addons) — имена, ссылки и инструменты просмотра в панели управления.
 - [Межсервисные ссылки](/variables/references) — синтаксис ссылок и порядок их вычисления.
-
-Сведения о планировании резервного копирования и восстановления см. в разделе [хранилище и восстановление](/platform/storage-and-recovery). `lizard run --service postgres` выполняет команду на вашей машине с публичными значениями подключения дополнения; для этого локально должен быть установлен `psql`. `lizard run --service api` передаст ссылки `${{…}}` как буквальный текст.
