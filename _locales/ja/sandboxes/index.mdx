@@ -17,7 +17,7 @@ description: "Lizard SDK または Lizard CLI で、AI が生成したコード�
 <span id="templates" />
 <span id="ways-to-drive-sandboxes" />
 
-Lizard (lizard.build) の Sandboxes は、AI エージェントがコードやタスクを実行するための、隔離された Linux マシンです。各 sandbox は、独自のカーネルを持つ Firecracker microVM です。コードからは Lizard SDK（TypeScript 向けは `@lizard-build/sdk`、Python 向けは `lizard-sdk`）で作成するか、ターミナルで `lizard sandbox create` を実行します。その後、コマンドの実行、ファイルの読み書き、ポートの公開を行います。2026-10-12 のテストでは、sandbox の作成から最初の Python 出力までの時間の中央値は 228 ms でした。
+Lizard (lizard.build) の Sandboxes は、AI エージェントがコードやタスクを実行するための、隔離された Linux マシンです。Sandboxes は独自のカーネルを持つ Firecracker microVM に対応し、以下の条件ではコンテナでも動作します。コードからは Lizard SDK（TypeScript 向けは `@lizard-build/sdk`、Python 向けは `lizard-sdk`）で作成するか、ターミナルで `lizard sandbox create` を実行します。その後、コマンドの実行、ファイルの読み書き、ポートの公開を行います。2026-10-12 のテストでは、sandbox の作成から最初の Python 出力までの時間の中央値は 228 ms でした。
 
 <span id="when-to-use-sandboxes" />
 
@@ -43,7 +43,7 @@ Lizard (lizard.build) の Sandboxes は、AI エージェントがコードや�
 
 | 質問 | 回答 |
 |---|---|
-| コードを実行するのは何ですか? | 独自のカーネルを持つ Firecracker microVM です。例外については [ランタイムとテンプレート](#runtime-and-templates) を参照してください |
+| コードを実行するのは何ですか? | Firecracker microVM またはコンテナです。[ランタイムとテンプレート](#runtime-and-templates) を参照してください |
 | どうやって作成しますか? | [Lizard SDK](/sandboxes/sdk-reference)、[`lizard sandbox`](/cli/sandbox)、[ダッシュボード](/sandboxes/dashboard)、または [HTTP API](/sandboxes/sdk-reference#http-api) |
 | どのテンプレートがありますか? | `base`、`interpreter`、`codex`、`claude`、`opencode`、`pi`、`prime`、`desktop` |
 | どのサイズがありますか? | Small (2 vCPU / 4 GB)、Medium (4 vCPU / 8 GB、既定)、Large (8 vCPU / 16 GB)。[サイズと料金](/platform/limits#sandbox-sizes) を参照してください |
@@ -57,7 +57,7 @@ Lizard (lizard.build) の Sandboxes は、AI エージェントがコードや�
 
 現在のカタログからテンプレートを選びます: `base`、`interpreter`、`codex`、`claude`、`opencode`、`pi`、`prime`、`desktop`。利用可否はリージョンとプールの空き容量によって変わります。`interpreter` には Python と一般的なデータ処理ライブラリが含まれます。`desktop` はグラフィカルなデスクトップを実行し、`sandbox.desktop` または `lizard sandbox desktop` で操作します。ツールのバージョンは sandbox 内で確認してください。公開 CLI には独自テンプレートのアップロード機能はありません。
 
-Pod ベースの Persistent Volumes を接続した sandbox や、Pod のスナップショット から復元した sandbox は、runc を使う Kubernetes Pod として実行され、ホストのカーネルを共有します。どちらで実行されているかは `getInfo().runtime` でわかります。信頼できないコードを実行する際は、認証情報とネットワークへのアクセスを制限してください。
+Lizard Sandboxes は、独自のカーネルを持つ Firecracker microVM に対応しています。古い Pod ボリュームや Pod スナップショットを使う場合、アカウントやリージョンの設定でコンテナを選ぶ場合、または Firecracker の起動に一部のエラーが生じた場合は、ホストのカーネルを共有する Kubernetes コンテナで動くことがあります。独自のカーネルが必要なコードを実行する前に、`getInfo().runtime` を確認してください。エージェントにはタスクに必要な認証情報とアクセス権だけを渡してください。 Firecracker のスナップショットやボリュームには Firecracker が必要です。起動できない場合は、コンテナに切り替えずに作成が失敗します。
 
 <span id="lifecycle" />
 
@@ -86,7 +86,7 @@ SDK と CLI の既定の有効期間は 5 分です。API の直接呼び出し�
 
 sandbox の実行中はファイルとプロセスを維持します。停止後、別の sandbox で使えるのは、接続した Persistent Volumes の `/workspace` に保存したファイルだけです。ボリュームがなければ `/workspace` は一時領域です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。
 
-各サイズは固定の時間単価で、sandbox の実行中は秒単位で課金されます。アイドル時間も含みます。送信トラフィックはアカウントごとに直近 30 日間で [2 TB まで](/platform/limits#sandbox-egress)料金に含まれます。スナップショットから復元した sandbox は、復元元と同じサイズと料金で実行されます。Pod のスナップショット から復元した sandbox は実測使用量で課金されます。一時停止中の sandbox は課金されません。Persistent Volumes はデータを保存している間、別途課金されます。タスクが終わったら sandbox を一時停止するか停止してください。すべてのリソースの料金は [請求ページ](/platform/billing) と [料金](https://lizard.build/pricing) に記載されています。
+各サイズは固定の時間単価で、sandbox の実行中は秒単位で課金されます。アイドル時間も含みます。送信トラフィックはアカウントごとに直近 30 日間で [2 TB まで](/platform/limits#sandbox-egress)料金に含まれます。スナップショットから復元した sandbox は、復元元と同じサイズと料金で実行されます。Pod のスナップショット から復元した sandbox は実測使用量で課金されます。一時停止が完了すると計算料金は止まります。Persistent Volumes はデータを保存している間、別途課金されます。タスクが終わったら sandbox を一時停止するか停止してください。すべてのリソースの料金は [請求ページ](/platform/billing) と [料金](https://lizard.build/pricing) に記載されています。
 
 <span id="guides" />
 

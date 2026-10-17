@@ -145,7 +145,7 @@ print(connected.get_info())
 
 ## 一時停止、再開、スナップショット
 
-`pause()` は sandbox のメモリと実行中のプロセスを保存し、`/workspace` をそのノードに残したまま課金を止めます。`resume()` は同じ ID で sandbox を復元します。どちらも処理をキューに入れてすぐに戻るため、新しい状態になるまで待ってください。
+`pause()` は sandbox のメモリと実行中のプロセスを保存し、`/workspace` をそのノードに残します。一時停止が完了すると計算料金は止まりますが、Persistent Volumes のストレージ料金は引き続き発生します。`resume()` は同じ ID で sandbox を復元し、計算料金を再開します。どちらも処理をキューに入れてすぐに戻るため、成功を確認するには `paused` または `running` を待ってください。
 
 ```ts
 await sandbox.pause();

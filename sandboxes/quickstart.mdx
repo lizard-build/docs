@@ -120,7 +120,7 @@ print(connected.get_info())
 
 ## Pause, resume, and snapshots
 
-`pause()` saves the sandbox's memory and running processes, keeps `/workspace` on its node, and stops billing. `resume()` restores the sandbox with the same ID. Both calls queue the work and return at once; wait for the new status.
+`pause()` saves the sandbox's memory and running processes and keeps `/workspace` on its node. A successful pause stops compute charges; Persistent Volumes storage continues to be billed. `resume()` restores the sandbox with the same ID and restarts compute billing. Both calls queue the work and return at once; wait for `paused` or `running` to confirm success.
 
 ```ts
 await sandbox.pause();

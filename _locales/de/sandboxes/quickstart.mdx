@@ -144,7 +144,7 @@ print(connected.get_info())
 
 ## Pause, Fortsetzen und Snapshots
 
-`pause()` speichert Arbeitsspeicher und laufende Prozesse der Sandbox, behält `/workspace` auf ihrem Node und beendet die Abrechnung. `resume()` stellt die Sandbox mit derselben ID wieder her. Beide Aufrufe reihen die Arbeit ein und kehren sofort zurück; warten Sie auf den neuen Status.
+`pause()` speichert Arbeitsspeicher und laufende Prozesse der Sandbox und behält `/workspace` auf ihrem Node. Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes wird weiter berechnet. `resume()` stellt die Sandbox mit derselben ID wieder her und startet die Berechnung der Rechenkosten erneut. Beide Aufrufe reihen die Arbeit ein und kehren sofort zurück; warten Sie auf `paused` oder `running`, um den Erfolg zu bestätigen.
 
 ```ts
 await sandbox.pause();

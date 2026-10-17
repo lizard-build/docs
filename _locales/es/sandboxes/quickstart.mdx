@@ -144,7 +144,7 @@ print(connected.get_info())
 
 ## Pausa, reanudación y snapshots
 
-`pause()` guarda la memoria y los procesos en ejecución del sandbox, mantiene `/workspace` en su nodo y detiene la facturación. `resume()` restaura el sandbox con el mismo ID. Ambas llamadas ponen el trabajo en cola y responden al instante; espera al nuevo estado.
+`pause()` guarda la memoria y los procesos en ejecución del sandbox y mantiene `/workspace` en su nodo. Una pausa completada detiene los cargos de cómputo; el almacenamiento en Persistent Volumes se sigue cobrando. `resume()` restaura el sandbox con el mismo ID y reanuda los cargos de cómputo. Ambas llamadas ponen el trabajo en cola y responden al instante; espera a `paused` o `running` para confirmar que han terminado.
 
 ```ts
 await sandbox.pause();
