@@ -39,7 +39,7 @@ Crea un sandbox y muestra su ID.
 | `--with-token [key]` | Instalar una clave de API `liz_` en el sandbox para que `lizard` funcione allí. Sin valor, reutiliza la clave `liz_` con la que ejecutas el comando; un inicio de sesión desde el navegador no tiene ninguna |
 | `-p, --project <id>` | Proyecto (por defecto, el vinculado) |
 
-Lizard factura cada tamaño por segundo con una tarifa fija. El precio incluye el disco y hasta 2 TB de tráfico saliente por cuenta en una ventana móvil de 30 días. Un sandbox en pausa no cuesta nada; un volumen conectado se cobra según la [tarifa de volúmenes](/cli/volume).
+Lizard factura cada tamaño por segundo con una tarifa fija mientras el sandbox está en marcha, incluido el tiempo inactivo. El precio incluye el disco local y [2 TB de tráfico saliente por cuenta durante los últimos 30 días](/platform/limits#sandbox-egress). Una pausa completada detiene los cargos de cómputo; el almacenamiento en Persistent Volumes mantiene la [tarifa de volúmenes](/cli/volume), tanto si el volumen está conectado como si no.
 
 | Tamaño | vCPU | Memoria | Disco | Precio |
 |------|------|--------|------|-------|
@@ -120,7 +120,7 @@ Conecta una app VNC (Compartir Pantalla de macOS, TigerVNC, RealVNC) al escritor
 
 | Comando | Qué hace |
 |---------|--------------|
-| `lizard sandbox pause <id>` | Guarda la memoria y los procesos del sandbox y luego lo detiene. Un sandbox en pausa es gratis |
+| `lizard sandbox pause <id>` | Guarda la memoria y los procesos y pausa el sandbox. Una pausa completada detiene los cargos de cómputo; el almacenamiento en Persistent Volumes se cobra aparte |
 | `lizard sandbox resume <id>` | Vuelve a iniciar un sandbox en pausa con su memoria y sus archivos guardados |
 | `lizard sandbox snapshot <id> --name <name>` | Guarda un sandbox en ejecución como snapshot privado en su proyecto y mantiene copias en caliente listas (`--warm`, de 1 a 10, por defecto 5) |
 | `lizard sandbox restore <snapshot-id>` | Inicia un sandbox nuevo desde un snapshot (`--timeout <ms>`, por defecto `300000`) |

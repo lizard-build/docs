@@ -130,7 +130,7 @@ lizard sandbox resume $SB
 lizard sandbox rm $SB
 ```
 
-Lizard no factura un sandbox pausado, y al reanudarlo conserva sus archivos y procesos. El estado de las conversaciones está en `/workspace/.lizard-agent`, dentro del sandbox. Para conservar archivos después de eliminar el sandbox, adjunta un volumen de [Persistent Volumes](/sandboxes/volumes) al crearlo con `--volume`.
+Una pausa completada detiene los cargos de cómputo; el almacenamiento en Persistent Volumes se sigue cobrando. Reanudar restaura los archivos y procesos y vuelve a iniciar los cargos de cómputo. El estado de las conversaciones está en `/workspace/.lizard-agent`, dentro del sandbox. Para conservar archivos después de eliminar el sandbox, adjunta un volumen de [Persistent Volumes](/sandboxes/volumes) al crearlo con `--volume`.
 
 <span id="common-problems" />
 

@@ -35,7 +35,7 @@ Create a sandbox and print its ID.
 | `--with-token [key]` | Install a `liz_` API key in the sandbox so `lizard` works there. Without a value it reuses the `liz_` key you run with; a browser login has none |
 | `-p, --project <id>` | Project (defaults to the linked one) |
 
-Lizard bills each size per second at a flat rate. The price includes disk and up to 2 TB of egress per account over a rolling 30 days. A paused sandbox costs nothing; an attached volume costs the [volume rate](/cli/volume).
+Lizard bills each size per second at a flat rate while it runs, including idle time. The price includes local disk and [2 TB of egress per account over a rolling 30 days](/platform/limits#sandbox-egress). A successful pause stops compute charges; storage in Persistent Volumes continues at the [volume rate](/cli/volume), whether attached or detached.
 
 | Size | vCPU | Memory | Disk | Price |
 |------|------|--------|------|-------|
@@ -114,7 +114,7 @@ Connect a VNC app (macOS Screen Sharing, TigerVNC, RealVNC) to the desktop of a 
 
 | Command | What it does |
 |---------|--------------|
-| `lizard sandbox pause <id>` | Save the sandbox's memory and processes, then stop it. A paused sandbox is free |
+| `lizard sandbox pause <id>` | Save the sandbox's memory and processes, then pause it. A successful pause stops compute charges; Persistent Volumes storage is billed separately |
 | `lizard sandbox resume <id>` | Start a paused sandbox again with its saved memory and files |
 | `lizard sandbox snapshot <id> --name <name>` | Save a running sandbox as a private snapshot in its project and keep warm copies ready (`--warm`, 1 to 10, default 5) |
 | `lizard sandbox restore <snapshot-id>` | Start a new sandbox from a snapshot (`--timeout <ms>`, default `300000`) |

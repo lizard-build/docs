@@ -130,7 +130,7 @@ lizard sandbox resume $SB
 lizard sandbox rm $SB
 ```
 
-一時停止中の sandbox は課金されず、再開するとファイルとプロセスがそのまま戻ります。会話の状態は sandbox 内の `/workspace/.lizard-agent` に保存されます。sandbox を削除した後もファイルを残すには、作成時に `--volume` で [Persistent Volumes](/sandboxes/volumes) を接続してください。
+一時停止が完了すると計算料金は止まりますが、Persistent Volumes のストレージ料金は引き続き発生します。再開するとファイルとプロセスが戻り、計算料金も再開します。会話の状態は sandbox 内の `/workspace/.lizard-agent` に保存されます。sandbox を削除した後もファイルを残すには、作成時に `--volume` で [Persistent Volumes](/sandboxes/volumes) を接続してください。
 
 <span id="common-problems" />
 

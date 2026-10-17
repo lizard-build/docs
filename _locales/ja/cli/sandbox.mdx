@@ -39,7 +39,7 @@ sandbox を作成し、その ID を表示します。
 | `--with-token [key]` | sandbox 内で `lizard` が動作するように、`liz_` API キーを sandbox にインストールします。値を省略すると、実行中の `liz_` キーを再利用します。ブラウザでログインした場合、そのキーはありません |
 | `-p, --project <id>` | プロジェクト（既定はリンク済みのプロジェクト） |
 
-Lizard は各サイズを定額で秒単位で課金します。料金には、ディスクと、直近 30 日間でアカウントあたり最大 2 TB の送信トラフィックが含まれます。一時停止中の sandbox には費用がかかりません。接続したボリュームには[ボリュームの料金](/cli/volume)がかかります。
+Lizard は sandbox の稼働中、アイドル時間も含めてサイズごとの定額で秒単位の課金をします。料金にはローカルディスクと、[アカウントごとに直近 30 日間で 2 TB までの送信トラフィック](/platform/limits#sandbox-egress)が含まれます。一時停止が完了すると計算料金は止まりますが、Persistent Volumes のストレージには、接続の有無にかかわらず[ボリューム料金](/cli/volume)が引き続きかかります。
 
 | サイズ | vCPU | メモリ | ディスク | 料金 |
 |------|------|--------|------|-------|
@@ -120,7 +120,7 @@ sandbox 内のポートに HTTPS URL を割り当てます。ポートは非公�
 
 | コマンド | 動作 |
 |---------|--------------|
-| `lizard sandbox pause <id>` | sandbox のメモリとプロセスを保存してから停止します。一時停止中の sandbox は無料です |
+| `lizard sandbox pause <id>` | メモリとプロセスを保存して sandbox を一時停止します。完了すると計算料金は止まりますが、Persistent Volumes のストレージ料金は別途かかります |
 | `lizard sandbox resume <id>` | 一時停止中の sandbox を、保存したメモリとファイルで再び起動します |
 | `lizard sandbox snapshot <id> --name <name>` | 実行中の sandbox をそのプロジェクトのプライベートなスナップショットとして保存し、待機中のコピーを用意しておきます（`--warm`、1〜10、既定値 5） |
 | `lizard sandbox restore <snapshot-id>` | スナップショットから新しい sandbox を起動します（`--timeout <ms>`、既定値 `300000`） |

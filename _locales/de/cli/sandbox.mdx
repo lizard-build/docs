@@ -39,7 +39,7 @@ Erstellt eine Sandbox und gibt ihre ID aus.
 | `--with-token [key]` | Installiert einen `liz_`-API-Key in der Sandbox, damit `lizard` dort funktioniert. Ohne Wert wird der `liz_`-Key wiederverwendet, mit dem du arbeitest; ein Browser-Login hat keinen |
 | `-p, --project <id>` | Projekt (Standard ist das verknüpfte) |
 
-Lizard rechnet jede Größe sekundengenau zu einem Pauschalpreis ab. Der Preis enthält Festplatte und bis zu 2 TB Egress pro Account innerhalb von rollierenden 30 Tagen. Eine pausierte Sandbox kostet nichts; ein angehängtes Volume kostet den [Volume-Preis](/cli/volume).
+Lizard rechnet jede Größe sekundengenau zum Festpreis ab, solange die Sandbox läuft, auch im Leerlauf. Enthalten sind lokale Festplatte und [2 TB ausgehender Traffic pro Konto über die jeweils letzten 30 Tage](/platform/limits#sandbox-egress). Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes kostet weiter den [Volume-Preis](/cli/volume), auch ohne angehängte Sandbox.
 
 | Größe | vCPU | Arbeitsspeicher | Festplatte | Preis |
 |------|------|--------|------|-------|
@@ -120,7 +120,7 @@ Verbindet eine VNC-App (macOS-Bildschirmfreigabe, TigerVNC, RealVNC) mit dem Des
 
 | Befehl | Was er macht |
 |---------|--------------|
-| `lizard sandbox pause <id>` | Speichert Arbeitsspeicher und Prozesse der Sandbox und stoppt sie dann. Eine pausierte Sandbox ist kostenlos |
+| `lizard sandbox pause <id>` | Speichert Arbeitsspeicher und Prozesse und pausiert die Sandbox. Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes wird separat berechnet |
 | `lizard sandbox resume <id>` | Startet eine pausierte Sandbox mit ihrem gespeicherten Arbeitsspeicher und ihren Dateien erneut |
 | `lizard sandbox snapshot <id> --name <name>` | Speichert eine laufende Sandbox als privaten Snapshot in ihrem Projekt und hält warme Kopien bereit (`--warm`, 1 bis 10, Standard 5) |
 | `lizard sandbox restore <snapshot-id>` | Startet eine neue Sandbox aus einem Snapshot (`--timeout <ms>`, Standard `300000`) |

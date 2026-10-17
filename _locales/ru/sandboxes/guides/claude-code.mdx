@@ -130,7 +130,7 @@ lizard sandbox resume $SB
 lizard sandbox rm $SB
 ```
 
-Lizard не берёт плату за приостановленный sandbox, а после возобновления в нём остаются файлы и процессы. Состояние бесед хранится в `/workspace/.lizard-agent` внутри sandbox. Чтобы файлы пережили удаление sandbox, подключите том [Persistent Volumes](/sandboxes/volumes) при создании через `--volume`.
+Успешная пауза останавливает оплату вычислений; хранение в Persistent Volumes оплачивается дальше. Возобновление возвращает файлы и процессы sandbox и запускает оплату вычислений. Состояние бесед хранится в `/workspace/.lizard-agent` внутри sandbox. Чтобы файлы пережили удаление sandbox, подключите том [Persistent Volumes](/sandboxes/volumes) при создании через `--volume`.
 
 <span id="common-problems" />
 

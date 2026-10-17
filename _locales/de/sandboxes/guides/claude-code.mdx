@@ -130,7 +130,7 @@ lizard sandbox resume $SB
 lizard sandbox rm $SB
 ```
 
-Lizard rechnet eine pausierte Sandbox nicht ab, und sie läuft mit ihren Dateien und Prozessen weiter, wenn Sie sie fortsetzen. Der Zustand der Konversationen liegt in `/workspace/.lizard-agent` in der Sandbox. Um Dateien nach dem Entfernen der Sandbox zu behalten, hängen Sie beim Erstellen mit `--volume` ein Volume aus [Persistent Volumes](/sandboxes/volumes) an.
+Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes wird weiter berechnet. Beim Fortsetzen kehren Dateien und Prozesse zurück und die Rechenkosten beginnen erneut. Der Zustand der Konversationen liegt in `/workspace/.lizard-agent` in der Sandbox. Um Dateien nach dem Entfernen der Sandbox zu behalten, hängen Sie beim Erstellen mit `--volume` ein Volume aus [Persistent Volumes](/sandboxes/volumes) an.
 
 <span id="common-problems" />
 

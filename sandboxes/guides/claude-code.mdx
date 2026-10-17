@@ -110,7 +110,7 @@ lizard sandbox resume $SB
 lizard sandbox rm $SB
 ```
 
-Lizard does not bill a paused sandbox, and it resumes with its files and processes. Conversation state lives in `/workspace/.lizard-agent`, inside the sandbox. To keep files after you remove the sandbox, attach a [Persistent Volume](/sandboxes/volumes) at create time with `--volume`.
+A successful pause stops compute charges; storage in Persistent Volumes continues to be billed. Resuming restores the sandbox's files and processes and restarts compute billing. Conversation state lives in `/workspace/.lizard-agent`, inside the sandbox. To keep files after you remove the sandbox, attach a [Persistent Volume](/sandboxes/volumes) at create time with `--volume`.
 
 ## Common problems
 
