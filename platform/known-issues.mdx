@@ -10,7 +10,7 @@ Check these limits before using Lizard: sandbox pause and expiration, redeploys 
 
 `connect` does not resume a paused or stopped sandbox, and fork returns HTTP 409 when a volume is attached; see the sandbox [lifecycle](/sandboxes#lifecycle).
 
-Pausing closes open network connections. If the processes cannot be saved, the sandbox keeps running and reports the reason in `pauseError`. A paused sandbox resumes only on its own node; if that node fails, the paused state is lost.
+Pausing closes open network connections. If the processes cannot be saved, the sandbox keeps running and reports the reason in `pauseError`.
 
 After a sandbox stops, only files on an attached Persistent Volume at `/workspace` remain, and volumes use node-local storage; export files that must survive node loss. See [storage and billing](/sandboxes#storage-and-billing).
 

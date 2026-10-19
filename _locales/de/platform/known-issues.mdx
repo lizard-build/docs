@@ -14,7 +14,7 @@ Diese Seite listet Verhalten von Lizard auf, das Sie prüfen sollten, bevor Sie 
 
 `connect` setzt eine pausierte oder gestoppte Sandbox nicht fort, und Fork gibt bei angehängtem Volume HTTP 409 zurück; siehe den [Lebenszyklus](/sandboxes#lifecycle) von Sandboxes.
 
-Eine Pause schließt offene Netzwerkverbindungen. Lassen sich die Prozesse nicht speichern, läuft die Sandbox weiter und meldet den Grund in `pauseError`. Eine pausierte Sandbox lässt sich nur auf ihrem eigenen Node fortsetzen; fällt dieser Node aus, geht der pausierte Zustand verloren.
+Eine Pause schließt offene Netzwerkverbindungen. Lassen sich die Prozesse nicht speichern, läuft die Sandbox weiter und meldet den Grund in `pauseError`.
 
 Nach dem Stopp einer Sandbox bleiben nur Dateien auf einem angehängten Volume aus Persistent Volumes unter `/workspace` erhalten, und Volumes liegen auf einem einzelnen Knoten. Exportieren Sie Dateien, die einen Knotenausfall überstehen müssen. Siehe [Speicher und Abrechnung](/sandboxes#storage-and-billing).
 

@@ -144,7 +144,7 @@ print(connected.get_info())
 
 ## Pause, Fortsetzen und Snapshots
 
-`pause()` speichert Arbeitsspeicher und laufende Prozesse der Sandbox und behält `/workspace` auf ihrem Node. Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes wird weiter berechnet. `resume()` stellt die Sandbox mit derselben ID wieder her und startet die Berechnung der Rechenkosten erneut. Beide Aufrufe reihen die Arbeit ein und kehren sofort zurück; warten Sie auf `paused` oder `running`, um den Erfolg zu bestätigen.
+`pause()` speichert Arbeitsspeicher und laufende Prozesse der Sandbox und behält `/workspace`. Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes wird weiter berechnet. `resume()` stellt die Sandbox mit derselben ID wieder her und startet die Berechnung der Rechenkosten erneut. Beide Aufrufe reihen die Arbeit ein und kehren sofort zurück; warten Sie auf `paused` oder `running`, um den Erfolg zu bestätigen.
 
 ```ts
 await sandbox.pause();
@@ -156,7 +156,6 @@ await sandbox.waitForStatus('running');
 - Eine Pause schließt offene Netzwerkverbindungen. Programme in der Sandbox müssen sich nach dem Fortsetzen neu verbinden.
 - Lassen sich die Prozesse nicht speichern, läuft die Sandbox weiter, und `waitForStatus` löst einen Fehler mit dem Grund aus. Schlägt das Fortsetzen fehl, bleibt die Sandbox mit ihrem Checkpoint pausiert; rufen Sie `resume()` erneut auf.
 - Während der Pause bleibt die restliche Laufzeit unverändert. Nach dem Fortsetzen zählt sie weiter herunter. Eine pausierte Sandbox zählt nicht zum Limit laufender Sandboxes.
-- Eine pausierte Sandbox wird auf demselben Node fortgesetzt. Fällt dieser Node aus, geht der pausierte Zustand verloren; exportieren Sie benötigte Dateien.
 
 Ein Snapshot speichert Arbeitsspeicher und `/workspace`-Dateien einer laufenden Sandbox als private Vorlage im Projekt. Jedes Restore startet eine neue Sandbox in der Region des Snapshots. Schließen Sie vor der Aufnahme Clients und Terminals und stoppen Sie Schreibvorgänge in `/workspace`. Angehängte Persistent Volumes werden nicht erfasst.
 

@@ -120,7 +120,7 @@ print(connected.get_info())
 
 ## Pause, resume, and snapshots
 
-`pause()` saves the sandbox's memory and running processes and keeps `/workspace` on its node. A successful pause stops compute charges; Persistent Volumes storage continues to be billed. `resume()` restores the sandbox with the same ID and restarts compute billing. Both calls queue the work and return at once; wait for `paused` or `running` to confirm success.
+`pause()` saves the sandbox's memory and running processes and keeps `/workspace`. A successful pause stops compute charges; Persistent Volumes storage continues to be billed. `resume()` restores the sandbox with the same ID and restarts compute billing. Both calls queue the work and return at once; wait for `paused` or `running` to confirm success.
 
 ```ts
 await sandbox.pause();
@@ -132,7 +132,6 @@ await sandbox.waitForStatus('running');
 - Pausing closes open network connections. Programs in the sandbox must reconnect after a resume.
 - If the processes cannot be saved, the sandbox keeps running and `waitForStatus` throws with the reason. If a resume fails, the sandbox stays paused with its checkpoint; call `resume()` again.
 - The lifetime deadline stops while the sandbox is paused and continues after the resume. A paused sandbox does not count toward the running limit.
-- A paused sandbox resumes on the same node. If that node fails, the paused state is lost; export files you need.
 
 A snapshot saves a running sandbox's memory and `/workspace` files as a private template in its project. Each restore starts a new sandbox in the snapshot's region. Close clients and terminals and stop writes to `/workspace` before you capture. Attached Persistent Volumes are not captured.
 
