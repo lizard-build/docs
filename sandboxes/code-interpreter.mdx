@@ -125,7 +125,7 @@ Path("chart.png").write_bytes(base64.b64decode(png))
 
 ## Untrusted code
 
-Treat everything the model writes as untrusted. Do not pass `lizardToken` unless the code needs Lizard CLI; anything in the sandbox can read it, so use a workspace-scoped key if you do. Keep other secrets out of `envs`. A sandbox that uses a pod-backed volume shares the host kernel; see [runtime and templates](/sandboxes#runtime-and-templates).
+Treat everything the model writes as untrusted. Do not pass `lizardToken` unless the code needs Lizard CLI; anything in the sandbox can read it, so use a workspace-scoped key if you do. Keep other secrets out of `envs`.
 
 ## Storage and billing
 

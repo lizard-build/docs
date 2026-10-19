@@ -11,7 +11,7 @@ description: "Run AI-generated code in Firecracker microVMs with Lizard SDK or L
 <span id="resources--limits" />
 <span id="ways-to-drive-sandboxes" />
 
-Sandboxes are isolated Linux machines for running code and AI agent tasks on Lizard. Sandboxes support Firecracker microVMs with their own kernel; container runtimes are also available under the conditions below. Create one with Lizard SDK (`@lizard-build/sdk` for TypeScript, `lizard-sdk` for Python) or run `lizard sandbox create` in a terminal. You can then run commands, read and write files, and open ports. In a test on 2026-10-12, the median time from creating a sandbox to its first Python output was 228 ms.
+Sandboxes are isolated Linux machines for running code and AI agent tasks on Lizard. Sandboxes run as Firecracker microVMs, each with its own kernel. Create one with Lizard SDK (`@lizard-build/sdk` for TypeScript, `lizard-sdk` for Python) or run `lizard sandbox create` in a terminal. You can then run commands, read and write files, and open ports. In a test on 2026-10-12, the median time from creating a sandbox to its first Python output was 228 ms.
 
 ## When to use Sandboxes
 
@@ -31,7 +31,7 @@ In a test on 2026-10-12, the median time from creating a sandbox to its first Py
 
 | Question | Answer |
 |---|---|
-| What runs the code? | A Firecracker microVM or a container; see [runtime and templates](#runtime-and-templates) |
+| What runs the code? | A Firecracker microVM with its own kernel; see [runtime and templates](#runtime-and-templates) |
 | How do I create one? | [Lizard SDK](/sandboxes/sdk-reference), [`lizard sandbox`](/cli/sandbox), the [dashboard](/sandboxes/dashboard), or the [HTTP API](/sandboxes/sdk-reference#http-api) |
 | Which templates exist? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` and `desktop` |
 | What sizes are there? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, the default) and Large (8 vCPU / 16 GB); see [sizes and prices](/platform/limits#sandbox-sizes) |
@@ -43,11 +43,11 @@ In a test on 2026-10-12, the median time from creating a sandbox to its first Py
 
 Choose a template from the current catalog: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, or `desktop`. Availability depends on the region and pool capacity. `interpreter` includes Python and common data libraries. `desktop` runs a graphical desktop that you drive with `sandbox.desktop` or `lizard sandbox desktop`. Check tool versions inside your sandbox. The public CLI does not provide a custom-template upload flow.
 
-Lizard Sandboxes support Firecracker microVMs with their own kernel. A sandbox can also run in a Kubernetes container that shares the host kernel: with an older pod volume or snapshot, when account or region settings select containers, or after some Firecracker startup failures. Check `getInfo().runtime` before running code that requires a separate kernel. Give the agent only the credentials and access needed for its task. A Firecracker snapshot or volume requires Firecracker; if it cannot start, creation fails rather than switching to a container.
+Lizard Sandboxes run as Firecracker microVMs, each with its own kernel. Give the agent only the credentials and access needed for its task.
 
 ## Lifecycle
 
-Create a sandbox, run commands, then call `kill`. `connect` attaches to an existing sandbox without changing its state, so it does not resume a paused or stopped sandbox. Pause, resume, snapshot, and restore are available; see [Pause, resume, and snapshots](/sandboxes/quickstart#pause-and-resume). `fork` copies a running sandbox, memory and processes included; it returns 409 when a volume is attached and 501 for a sandbox that runs as a pod. File watching is not available yet. `lizard sandbox ssh` opens an interactive shell with your CLI credentials. SSH protocol access is not available, so SSH clients, `scp`, and port forwarding do not work.
+Create a sandbox, run commands, then call `kill`. `connect` attaches to an existing sandbox without changing its state, so it does not resume a paused or stopped sandbox. Pause, resume, snapshot, and restore are available; see [Pause, resume, and snapshots](/sandboxes/quickstart#pause-and-resume). `fork` copies a running sandbox, memory and processes included; it returns 409 when a volume is attached. File watching is not available yet. `lizard sandbox ssh` opens an interactive shell with your CLI credentials. SSH protocol access is not available, so SSH clients, `scp`, and port forwarding do not work.
 
 ```text
 create -> running -> stopped (kill / expiration)
@@ -66,7 +66,7 @@ The SDK and CLI default to a five-minute lifetime. The raw API and dashboard def
 
 Files and running processes remain available while the sandbox runs. After it stops, only files written to an attached Persistent Volume at `/workspace` can be reused by a later sandbox. Without a volume, `/workspace` is temporary. Each volume attaches to one sandbox at a time and uses node-local storage; export files that must survive node loss.
 
-Each size has a flat hourly price, billed by the second while the sandbox runs, idle time included. Egress is included up to [2 TB per account](/platform/limits#sandbox-egress) over a rolling 30 days. A sandbox restored from a snapshot runs at its source's size and price; one restored from a pod snapshot is billed by measured usage. A successful pause stops compute charges; Persistent Volumes bill separately while you keep the data. Pause or kill a sandbox when the task ends. Rates for every resource are on the [billing page](/platform/billing) and [pricing](https://lizard.build/pricing).
+Each size has a flat hourly price, billed by the second while the sandbox runs, idle time included. Egress is included up to [2 TB per account](/platform/limits#sandbox-egress) over a rolling 30 days. A sandbox restored from a snapshot runs at its source's size and price. A successful pause stops compute charges; Persistent Volumes bill separately while you keep the data. Pause or kill a sandbox when the task ends. Rates for every resource are on the [billing page](/platform/billing) and [pricing](https://lizard.build/pricing).
 
 ## Guides
 

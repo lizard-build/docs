@@ -150,7 +150,7 @@ if result.exit_code != 0:
 sandbox.process.exec_(["grep", "-rn", "--", user_query, "/workspace"])
 ```
 
-コマンドの結果には stdout、stderr、終了コードが含まれます。0 以外の終了コードは自分で確認する結果であり、リクエストの失敗は例外を投げます。タイムアウトは 1～600 秒です。`process.exec` は `envs`、`workdir`、`user` を受け付けます。`user` を渡さない限り、コマンドは `root` として実行されます。作成時の `envs` は、Firecracker の sandbox ではすべてのコマンドに渡されます。pod の sandbox では無視されるため、コマンドごとに渡してください。
+コマンドの結果には stdout、stderr、終了コードが含まれます。0 以外の終了コードは自分で確認する結果であり、リクエストの失敗は例外を投げます。タイムアウトは 1～600 秒です。`process.exec` は `envs`、`workdir`、`user` を受け付けます。`user` を渡さない限り、コマンドは `root` として実行されます。作成時の `envs` はすべてのコマンドに渡されます。
 
 <span id="files" />
 
@@ -265,7 +265,7 @@ sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workd
 
 ## 未対応の API
 
-ファイル監視はまだ利用できません。`sandbox.fork()` は、ボリュームが接続されている場合は 409 を、pod として実行される sandbox では 501 を返します。`Sandbox.connect` は一時停止中や停止済みの sandbox を再開しません。一時停止中の sandbox には `resume()` を呼び出してください。SSH プロトコルでのアクセスはできません。`lizard sandbox ssh` は CLI の認証情報で対話型シェルを開きます。
+ファイル監視はまだ利用できません。`sandbox.fork()` は、ボリュームが接続されている場合は 409 を返します。`Sandbox.connect` は一時停止中や停止済みの sandbox を再開しません。一時停止中の sandbox には `resume()` を呼び出してください。SSH プロトコルでのアクセスはできません。`lizard sandbox ssh` は CLI の認証情報で対話型シェルを開きます。
 
 <span id="errors" />
 

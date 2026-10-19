@@ -8,7 +8,7 @@ Check these limits before using Lizard: sandbox pause and expiration, redeploys 
 
 ## Sandbox pause and expiration
 
-`connect` does not resume a paused or stopped sandbox, and fork returns HTTP 409 when a volume is attached and HTTP 501 for a pod sandbox; see the sandbox [lifecycle](/sandboxes#lifecycle).
+`connect` does not resume a paused or stopped sandbox, and fork returns HTTP 409 when a volume is attached; see the sandbox [lifecycle](/sandboxes#lifecycle).
 
 Pausing closes open network connections. If the processes cannot be saved, the sandbox keeps running and reports the reason in `pauseError`. A paused sandbox resumes only on its own node; if that node fails, the paused state is lost.
 

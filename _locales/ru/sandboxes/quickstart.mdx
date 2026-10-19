@@ -158,12 +158,12 @@ await sandbox.waitForStatus('running');
 Снимок (snapshot) сохраняет память и файлы `/workspace` работающего sandbox как приватный шаблон проекта. Каждый restore запускает новый sandbox в регионе снимка. Перед снимком закройте клиенты и терминалы и остановите запись в `/workspace`. Подключённые Persistent Volumes в снимок не входят.
 
 ```ts
-const saved = await sandbox.snapshot('my-app', { poolSize: 5 });
+const saved = await sandbox.snapshot('my-app');
 await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-Снимок sandbox на Firecracker готов сразу после возврата вызова и восстанавливается с диска, поэтому `poolSize` к нему не применяется. Каждый restore запускается с размером источника и оплачивается по почасовой цене этого размера. Снимок sandbox, работающего как pod, держит готовые копии, по умолчанию пять (от одной до десяти); если готовых копий нет, restore может вернуть HTTP 503, пока пул не пополнится, а восстановленный sandbox оплачивается по измеренному расходу. В обоих случаях `size` к restore не применяется. В CLI используйте `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` и `lizard sandbox restore <snapshot-id>`.
+Снимок готов сразу после возврата вызова и восстанавливается с диска, поэтому `poolSize` к нему не применяется. Каждый restore запускается с размером источника и оплачивается по почасовой цене этого размера; `size` к restore не применяется. В CLI используйте `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` и `lizard sandbox restore <snapshot-id>`.
 
 <span id="clean-up-and-next-steps" />
 

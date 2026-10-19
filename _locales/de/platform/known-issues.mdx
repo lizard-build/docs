@@ -12,7 +12,7 @@ Diese Seite listet Verhalten von Lizard auf, das Sie prüfen sollten, bevor Sie 
 
 ## Pause und Ablauf von Sandboxen
 
-`connect` setzt eine pausierte oder gestoppte Sandbox nicht fort, und Fork gibt bei angehängtem Volume HTTP 409 zurück, bei einer Pod-Sandbox HTTP 501; siehe den [Lebenszyklus](/sandboxes#lifecycle) von Sandboxes.
+`connect` setzt eine pausierte oder gestoppte Sandbox nicht fort, und Fork gibt bei angehängtem Volume HTTP 409 zurück; siehe den [Lebenszyklus](/sandboxes#lifecycle) von Sandboxes.
 
 Eine Pause schließt offene Netzwerkverbindungen. Lassen sich die Prozesse nicht speichern, läuft die Sandbox weiter und meldet den Grund in `pauseError`. Eine pausierte Sandbox lässt sich nur auf ihrem eigenen Node fortsetzen; fällt dieser Node aus, geht der pausierte Zustand verloren.
 

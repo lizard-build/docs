@@ -161,12 +161,12 @@ await sandbox.waitForStatus('running');
 Ein Snapshot speichert Arbeitsspeicher und `/workspace`-Dateien einer laufenden Sandbox als private Vorlage im Projekt. Jedes Restore startet eine neue Sandbox in der Region des Snapshots. Schließen Sie vor der Aufnahme Clients und Terminals und stoppen Sie Schreibvorgänge in `/workspace`. Angehängte Persistent Volumes werden nicht erfasst.
 
 ```ts
-const saved = await sandbox.snapshot('my-app', { poolSize: 5 });
+const saved = await sandbox.snapshot('my-app');
 await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-Ein Snapshot einer Firecracker-Sandbox ist bereit, sobald der Aufruf zurückkehrt, und wird von der Festplatte wiederhergestellt; daher gilt `poolSize` nicht. Jede Wiederherstellung startet eine Sandbox in der Größe der Quelle. Für sie gilt der Stundenpreis dieser Größe. Ein Snapshot einer Pod-Sandbox hält warme Kopien bereit, standardmäßig fünf (eine bis zehn); ist keine bereit, kann Restore HTTP 503 zurückgeben, bis der Pool nachgefüllt ist, und die wiederhergestellte Sandbox wird nach gemessener Nutzung abgerechnet. In beiden Fällen gilt `size` nicht für ein Restore. In der CLI nutzen Sie `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` und `lizard sandbox restore <snapshot-id>`.
+Ein Snapshot ist bereit, sobald der Aufruf zurückkehrt, und wird von der Festplatte wiederhergestellt; daher gilt `poolSize` nicht. Jede Wiederherstellung startet eine Sandbox in der Größe der Quelle. Für sie gilt der Stundenpreis dieser Größe; `size` gilt nicht für ein Restore. In der CLI nutzen Sie `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` und `lizard sandbox restore <snapshot-id>`.
 
 <span id="clean-up-and-next-steps" />
 

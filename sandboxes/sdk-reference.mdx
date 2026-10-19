@@ -136,7 +136,7 @@ if result.exit_code != 0:
 sandbox.process.exec_(["grep", "-rn", "--", user_query, "/workspace"])
 ```
 
-Command results contain stdout, stderr, and the exit code. A nonzero exit code is a result you check; request failures throw. Command timeouts are limited to 1 to 600 seconds. `process.exec` accepts `envs`, `workdir`, and `user`; commands run as `root` unless you pass `user`. Create-time `envs` reach every command in a Firecracker sandbox; a pod sandbox ignores them, so pass them per command there.
+Command results contain stdout, stderr, and the exit code. A nonzero exit code is a result you check; request failures throw. Command timeouts are limited to 1 to 600 seconds. `process.exec` accepts `envs`, `workdir`, and `user`; commands run as `root` unless you pass `user`. Create-time `envs` reach every command.
 
 ## Files
 
@@ -239,7 +239,7 @@ sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workd
 
 ## Unsupported APIs
 
-File watching is not available yet. `sandbox.fork()` returns 409 when a volume is attached and 501 for a sandbox that runs as a pod. `Sandbox.connect` does not resume a paused or stopped sandbox; call `resume()` on a paused one. SSH protocol access is not available; `lizard sandbox ssh` opens an interactive shell with your CLI credentials.
+File watching is not available yet. `sandbox.fork()` returns 409 when a volume is attached. `Sandbox.connect` does not resume a paused or stopped sandbox; call `resume()` on a paused one. SSH protocol access is not available; `lizard sandbox ssh` opens an interactive shell with your CLI credentials.
 
 ## Errors
 

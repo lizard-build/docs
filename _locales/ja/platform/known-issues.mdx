@@ -12,7 +12,7 @@ description: "運用前に確認すべき、現在の Sandboxes のライフサ�
 
 ## サンドボックス の一時停止と有効期限
 
-`connect` は一時停止中や停止済みの sandbox を再開しません。また fork は、ボリュームが接続されている場合は HTTP 409 を返し、pod の sandbox では HTTP 501 を返します。sandbox の [ライフサイクル](/sandboxes#lifecycle) を参照してください。
+`connect` は一時停止中や停止済みの sandbox を再開しません。また fork は、ボリュームが接続されている場合は HTTP 409 を返します。sandbox の [ライフサイクル](/sandboxes#lifecycle) を参照してください。
 
 一時停止すると、開いているネットワーク接続は閉じられます。プロセスを保存できない場合、sandbox は実行を続け、理由を `pauseError` に記録します。一時停止中の sandbox は元のノードでしか再開できず、そのノードが故障すると一時停止した状態は失われます。
 

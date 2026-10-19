@@ -12,7 +12,7 @@ Esta página enumera comportamientos de Lizard que debes revisar antes de usar e
 
 ## Pausa y vencimiento del sandbox
 
-`connect` no reanuda un sandbox pausado ni uno detenido, y fork devuelve HTTP 409 cuando hay un volumen adjunto y HTTP 501 en un sandbox de pod; consulta el [ciclo de vida](/sandboxes#lifecycle) del sandbox.
+`connect` no reanuda un sandbox pausado ni uno detenido, y fork devuelve HTTP 409 cuando hay un volumen adjunto; consulta el [ciclo de vida](/sandboxes#lifecycle) del sandbox.
 
 La pausa cierra las conexiones de red abiertas. Si no se pueden guardar los procesos, el sandbox sigue en marcha e indica el motivo en `pauseError`. Un sandbox pausado solo se reanuda en su propio nodo; si ese nodo falla, se pierde el estado pausado.
 

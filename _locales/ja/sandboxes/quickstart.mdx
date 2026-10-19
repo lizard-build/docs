@@ -162,12 +162,12 @@ await sandbox.waitForStatus('running');
 スナップショットは、実行中の sandbox のメモリと `/workspace` のファイルを、プロジェクト専用のテンプレートとして保存します。restore するたびに、スナップショットと同じリージョンで新しい sandbox が起動します。取得前にクライアントとターミナルを閉じ、`/workspace` への書き込みを止めてください。接続中の Persistent Volumes は保存されません。
 
 ```ts
-const saved = await sandbox.snapshot('my-app', { poolSize: 5 });
+const saved = await sandbox.snapshot('my-app');
 await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-Firecracker の sandbox のスナップショットは、呼び出しが戻った時点で準備が完了し、ディスクから restore されるため、`poolSize` は適用されません。restore のたびに元の sandbox と同じサイズで実行され、そのサイズの時間単価で課金されます。pod の sandbox のスナップショットは待機中のコピーを保持します (既定で 5 つ、1〜10 で変更可能)。待機中のコピーがないときは、プールが補充されるまで restore が HTTP 503 を返すことがあり、復元した sandbox は実測使用量で課金されます。どちらの場合も、restore には `size` は適用されません。CLI では `lizard sandbox pause <id>`、`lizard sandbox resume <id>`、`lizard sandbox snapshot <id> --name my-app`、`lizard sandbox restore <snapshot-id>` を使います。
+スナップショットは、呼び出しが戻った時点で準備が完了し、ディスクから restore されるため、`poolSize` は適用されません。restore のたびに元の sandbox と同じサイズで実行され、そのサイズの時間単価で課金されます。restore には `size` は適用されません。CLI では `lizard sandbox pause <id>`、`lizard sandbox resume <id>`、`lizard sandbox snapshot <id> --name my-app`、`lizard sandbox restore <snapshot-id>` を使います。
 
 <span id="clean-up-and-next-steps" />
 

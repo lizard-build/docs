@@ -18,7 +18,7 @@ description: "Führen Sie KI-generierten Code in Firecracker-MicroVMs mit Lizard
 <span id="resources--limits" />
 <span id="ways-to-drive-sandboxes" />
 
-Sandboxes auf Lizard (lizard.build) sind isolierte Linux-Maschinen, in denen ein KI-Agent Code und Aufgaben ausführt. Sandboxes unterstützen Firecracker microVMs mit eigenem Kernel; unter den unten beschriebenen Bedingungen laufen sie in Containern. Ihr Code erstellt eine mit Lizard SDK (`@lizard-build/sdk` für TypeScript, `lizard-sdk` für Python), oder Sie führen `lizard sandbox create` in einem Terminal aus; danach führen Sie Befehle aus, lesen und schreiben Dateien und öffnen Ports. In einem Test am 2026-10-12 dauerte es vom Erstellen einer Sandbox bis zur ersten Python-Ausgabe im Median 228 ms.
+Sandboxes auf Lizard (lizard.build) sind isolierte Linux-Maschinen, in denen ein KI-Agent Code und Aufgaben ausführt. Sandboxes laufen als Firecracker microVMs, jede mit eigenem Kernel. Ihr Code erstellt eine mit Lizard SDK (`@lizard-build/sdk` für TypeScript, `lizard-sdk` für Python), oder Sie führen `lizard sandbox create` in einem Terminal aus; danach führen Sie Befehle aus, lesen und schreiben Dateien und öffnen Ports. In einem Test am 2026-10-12 dauerte es vom Erstellen einer Sandbox bis zur ersten Python-Ausgabe im Median 228 ms.
 
 <span id="when-to-use-sandboxes" />
 
@@ -44,7 +44,7 @@ In einem Test am 2026-10-12 dauerte es vom Erstellen einer Sandbox bis zur erste
 
 | Frage | Antwort |
 |---|---|
-| Was führt den Code aus? | Eine Firecracker microVM oder ein Container; siehe [Laufzeit und Vorlagen](#runtime-and-templates) |
+| Was führt den Code aus? | Eine Firecracker microVM mit eigenem Kernel; siehe [Laufzeit und Vorlagen](#runtime-and-templates) |
 | Wie erstelle ich eine? | [Lizard SDK](/sandboxes/sdk-reference), [`lizard sandbox`](/cli/sandbox), das [Dashboard](/sandboxes/dashboard) oder die [HTTP-API](/sandboxes/sdk-reference#http-api) |
 | Welche Vorlagen gibt es? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` und `desktop` |
 | Welche Größen gibt es? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, Standard) und Large (8 vCPU / 16 GB); siehe [Größen und Preise](/platform/limits#sandbox-sizes) |
@@ -58,13 +58,13 @@ In einem Test am 2026-10-12 dauerte es vom Erstellen einer Sandbox bis zur erste
 
 Wählen Sie eine Vorlage aus dem aktuellen Katalog: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` oder `desktop`. Die Verfügbarkeit hängt von Region und Pool-Kapazität ab. `interpreter` enthält Python und gängige Datenbibliotheken. `desktop` führt einen grafischen Desktop aus, den Sie mit `sandbox.desktop` oder `lizard sandbox desktop` steuern. Prüfen Sie die Werkzeugversionen in der Sandbox. Die öffentliche CLI bietet keinen Upload eigener Vorlagen.
 
-Lizard Sandboxes unterstützen Firecracker microVMs mit eigenem Kernel. Eine Sandbox kann auch in einem Kubernetes-Container laufen, der den Kernel des Hosts teilt: mit einem älteren Pod-Volume oder Pod-Snapshot, wenn Konto- oder Regionseinstellungen Container wählen oder nach bestimmten Fehlern beim Firecracker-Start. Prüfen Sie `getInfo().runtime`, bevor Sie Code ausführen, der einen eigenen Kernel braucht. Geben Sie dem Agenten nur die Zugangsdaten und Rechte, die er für seine Aufgabe braucht. Ein Firecracker-Snapshot oder Firecracker-Volume benötigt Firecracker. Schlägt der Start fehl, endet die Erstellung mit einem Fehler, ohne auf einen Container zu wechseln.
+Lizard Sandboxes laufen als Firecracker microVMs, jede mit eigenem Kernel. Geben Sie dem Agenten nur die Zugangsdaten und Rechte, die er für seine Aufgabe braucht.
 
 <span id="lifecycle" />
 
 ## Lebenszyklus
 
-Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, ohne ihren Zustand zu ändern; eine pausierte oder gestoppte Sandbox wird dadurch nicht fortgesetzt. Pause, Fortsetzen, Snapshot und Restore sind verfügbar; siehe [Pause, Fortsetzen und Snapshots](/sandboxes/quickstart#pause-and-resume). `fork` kopiert eine laufende Sandbox einschließlich Arbeitsspeicher und Prozessen; bei angehängtem Volume gibt es 409 zurück, bei einer Sandbox, die als Pod läuft, 501. Dateiüberwachung ist noch nicht verfügbar. `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten. Zugriff über das SSH-Protokoll gibt es nicht, daher funktionieren SSH-Clients, `scp` und Portweiterleitung nicht.
+Erstellen Sie eine Sandbox, führen Sie Befehle aus und rufen Sie danach `kill` auf. `connect` verbindet mit einer bestehenden Sandbox, ohne ihren Zustand zu ändern; eine pausierte oder gestoppte Sandbox wird dadurch nicht fortgesetzt. Pause, Fortsetzen, Snapshot und Restore sind verfügbar; siehe [Pause, Fortsetzen und Snapshots](/sandboxes/quickstart#pause-and-resume). `fork` kopiert eine laufende Sandbox einschließlich Arbeitsspeicher und Prozessen; bei angehängtem Volume gibt es 409 zurück. Dateiüberwachung ist noch nicht verfügbar. `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten. Zugriff über das SSH-Protokoll gibt es nicht, daher funktionieren SSH-Clients, `scp` und Portweiterleitung nicht.
 
 ```text
 create -> running -> stopped (kill / expiration)
@@ -87,7 +87,7 @@ SDK und CLI setzen standardmäßig eine Laufzeit von fünf Minuten. Die direkte 
 
 Dateien und laufende Prozesse bleiben verfügbar, solange die Sandbox läuft. Nach dem Stopp kann eine spätere Sandbox nur Dateien auf einem angehängten Volume aus Persistent Volumes unter `/workspace` wiederverwenden. Ohne Volume ist `/workspace` temporär. Ein Volume hängt jeweils an einer Sandbox und liegt auf einem einzelnen Knoten. Exportieren Sie Dateien, die einen Knotenausfall überstehen müssen.
 
-Jede Größe hat einen festen Stundenpreis, sekundengenau abgerechnet, solange die Sandbox läuft, Leerlauf eingeschlossen. Ausgehender Traffic ist bis [2 TB pro Konto](/platform/limits#sandbox-egress) in rollierenden 30 Tagen enthalten. Eine aus einem Snapshot wiederhergestellte Sandbox läuft mit Größe und Preis ihrer Quelle; eine aus einem Pod-Snapshot wiederhergestellte wird nach gemessener Nutzung abgerechnet. Eine erfolgreiche Pause stoppt die Rechenkosten; Persistent Volumes werden getrennt abgerechnet, solange Sie die Daten behalten. Pausieren oder beenden Sie eine Sandbox, wenn die Aufgabe erledigt ist. Die Tarife für jede Ressource stehen auf der [Abrechnungsseite](/platform/billing) und unter [Preise](https://lizard.build/pricing).
+Jede Größe hat einen festen Stundenpreis, sekundengenau abgerechnet, solange die Sandbox läuft, Leerlauf eingeschlossen. Ausgehender Traffic ist bis [2 TB pro Konto](/platform/limits#sandbox-egress) in rollierenden 30 Tagen enthalten. Eine aus einem Snapshot wiederhergestellte Sandbox läuft mit Größe und Preis ihrer Quelle. Eine erfolgreiche Pause stoppt die Rechenkosten; Persistent Volumes werden getrennt abgerechnet, solange Sie die Daten behalten. Pausieren oder beenden Sie eine Sandbox, wenn die Aufgabe erledigt ist. Die Tarife für jede Ressource stehen auf der [Abrechnungsseite](/platform/billing) und unter [Preise](https://lizard.build/pricing).
 
 <span id="guides" />
 

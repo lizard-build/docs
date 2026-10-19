@@ -150,7 +150,7 @@ if result.exit_code != 0:
 sandbox.process.exec_(["grep", "-rn", "--", user_query, "/workspace"])
 ```
 
-Los resultados incluyen stdout, stderr y el código de salida. Un código de salida distinto de cero es un resultado que debes comprobar; los fallos de la solicitud lanzan una excepción. El tiempo máximo de un comando está entre 1 y 600 segundos. `process.exec` acepta `envs`, `workdir` y `user`; los comandos se ejecutan como `root` salvo que pases `user`. Las `envs` de creación llegan a todos los comandos en un sandbox Firecracker; un sandbox de pod las ignora, así que allí pásalas en cada comando.
+Los resultados incluyen stdout, stderr y el código de salida. Un código de salida distinto de cero es un resultado que debes comprobar; los fallos de la solicitud lanzan una excepción. El tiempo máximo de un comando está entre 1 y 600 segundos. `process.exec` acepta `envs`, `workdir` y `user`; los comandos se ejecutan como `root` salvo que pases `user`. Las `envs` de creación llegan a todos los comandos.
 
 <span id="files" />
 
@@ -265,7 +265,7 @@ sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workd
 
 ## API no compatibles
 
-La vigilancia de archivos aún no está disponible. `sandbox.fork()` devuelve 409 cuando hay un volumen adjunto y 501 en un sandbox que se ejecuta como pod. `Sandbox.connect` no reanuda un sandbox pausado ni uno detenido; para uno pausado, llama a `resume()`. No hay acceso por el protocolo SSH; `lizard sandbox ssh` abre una shell interactiva con tus credenciales de la CLI.
+La vigilancia de archivos aún no está disponible. `sandbox.fork()` devuelve 409 cuando hay un volumen adjunto. `Sandbox.connect` no reanuda un sandbox pausado ni uno detenido; para uno pausado, llama a `resume()`. No hay acceso por el protocolo SSH; `lizard sandbox ssh` abre una shell interactiva con tus credenciales de la CLI.
 
 <span id="errors" />
 

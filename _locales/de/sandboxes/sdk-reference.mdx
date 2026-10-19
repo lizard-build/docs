@@ -150,7 +150,7 @@ if result.exit_code != 0:
 sandbox.process.exec_(["grep", "-rn", "--", user_query, "/workspace"])
 ```
 
-Befehlsergebnisse enthalten stdout, stderr und den Exit-Code. Ein Exit-Code ungleich null ist ein Ergebnis, das Sie prüfen; fehlgeschlagene Anfragen lösen eine Exception aus. Befehls-Timeouts liegen zwischen 1 und 600 Sekunden. `process.exec` akzeptiert `envs`, `workdir` und `user`; Befehle laufen als `root`, sofern Sie kein `user` übergeben. `envs` bei der Erstellung gelten in einer Firecracker-Sandbox für jeden Befehl; eine Pod-Sandbox ignoriert sie, übergeben Sie sie dort daher pro Befehl.
+Befehlsergebnisse enthalten stdout, stderr und den Exit-Code. Ein Exit-Code ungleich null ist ein Ergebnis, das Sie prüfen; fehlgeschlagene Anfragen lösen eine Exception aus. Befehls-Timeouts liegen zwischen 1 und 600 Sekunden. `process.exec` akzeptiert `envs`, `workdir` und `user`; Befehle laufen als `root`, sofern Sie kein `user` übergeben. `envs` bei der Erstellung gelten für jeden Befehl.
 
 <span id="files" />
 
@@ -265,7 +265,7 @@ sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workd
 
 ## Nicht unterstützte APIs
 
-Dateiüberwachung ist noch nicht verfügbar. `sandbox.fork()` gibt 409 zurück, wenn ein Volume angehängt ist, und 501 für eine Sandbox, die als Pod läuft. `Sandbox.connect` setzt keine pausierte oder gestoppte Sandbox fort; rufen Sie für eine pausierte `resume()` auf. Zugriff über das SSH-Protokoll gibt es nicht; `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten.
+Dateiüberwachung ist noch nicht verfügbar. `sandbox.fork()` gibt 409 zurück, wenn ein Volume angehängt ist. `Sandbox.connect` setzt keine pausierte oder gestoppte Sandbox fort; rufen Sie für eine pausierte `resume()` auf. Zugriff über das SSH-Protokoll gibt es nicht; `lizard sandbox ssh` öffnet eine interaktive Shell mit Ihren CLI-Zugangsdaten.
 
 <span id="errors" />
 
