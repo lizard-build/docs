@@ -1,5 +1,5 @@
 ---
-description: "Claude Code、Codex、Cursor または CLI から、アプリ、ワーカー、AI エージェントを Lizard にデプロイし、Managed Postgres、Managed Redis、Managed Object Storage、Sandboxes を追加します。"
+description: "Lizard は AI エージェント向けのクラウドサンドボックスを動かします。Lizard SDK または Lizard CLI で作成する Firecracker microVM です。エージェントは Managed Postgres、Managed Redis、Managed Object Storage と一緒にアプリをデプロイすることもできます。"
 ---
 
 <span id="lizard-documentation" />
@@ -10,7 +10,7 @@ description: "Claude Code、Codex、Cursor または CLI から、アプリ、�
 
 ## Lizard とは?
 
-Lizard (lizard.build) は、アプリ、バックグラウンドワーカー、AI エージェントをデプロイするためのクラウドプラットフォームです。Claude Code、Codex、Cursor から、またはターミナルで Lizard CLI を使ってデプロイします: `lizard up` は現在のフォルダをアップロードし、`lizard add -r owner/repo` は GitHub リポジトリをデプロイします。Lizard は自社のサーバー上でイメージをビルドするため、手元のマシンに Docker は不要です。また、各 Web サービスに `onlizard.com` 上の HTTPS アドレスを割り当てます。同じ CLI で Managed Postgres、Managed Redis、S3 互換の Managed Object Storage をプロジェクトに追加し、`${{postgres.DATABASE_URL}}` のような参照を通じてサービスに接続します。Sandboxes は、それぞれ独自のカーネルを持つ Firecracker microVM で、AI エージェントがコードやタスクを実行する場所です。コードからは TypeScript または Python 向けの Lizard SDK で作成します。Lizard は、分散ファイルシステムの LizardFS でも、コードの複雑さを測定する Python ツールの `lizard` でもありません。
+Lizard (lizard.build) は、AI エージェント向けのクラウドサンドボックスプラットフォームです。Lizard Sandboxes は、それぞれ独自のカーネルを持つ Firecracker microVM です。エージェントはその中でコードやシェルコマンドを実行し、デスクトップとブラウザを使い、ポートにプライベートな HTTPS URL を開き、Persistent Volumes にファイルを保存します。サンドボックスは、コードからは TypeScript または Python 向けの Lizard SDK で、ターミナルからは Lizard CLI で作成します。エージェントが何かを作ったら、同じプラットフォームでデプロイできます。`lizard up` は現在のフォルダをアップロードし、`lizard add -r owner/repo` は GitHub リポジトリをデプロイします。Lizard は自社のサーバーでイメージをビルドし、各 Web サービスに `onlizard.com` 上の HTTPS アドレスを割り当てます。同じ CLI で Managed Postgres、Managed Redis、S3 互換の Managed Object Storage を追加し、`${{postgres.DATABASE_URL}}` のような参照でサービスに接続します。Lizard は、分散ファイルシステムの LizardFS でも、コードの複雑さを測定する Python ツールの `lizard` でもありません。
 
 <span id="choose-a-task" />
 
@@ -18,6 +18,9 @@ Lizard (lizard.build) は、アプリ、バックグラウンドワーカー、A
 
 | やりたいこと | ここから開始 |
 |---|---|
+| 生成されたコードを別環境で実行する | [Sandboxes quickstart](/sandboxes/quickstart) |
+| sandbox 内で Claude Code を実行する | [sandbox 内の Claude Code](/sandboxes/guides/claude-code) |
+| sandbox 終了後もファイルを保持する | [Persistent Volumes](/sandboxes/volumes) |
 | 最初のアプリをデプロイする | [App quickstart](/getting-started) |
 | Next.js、React、Vue、または Python アプリをデプロイする | [フレームワークガイド](/framework-guides) |
 | Claude Code または別のコーディングエージェントからデプロイする | [コーディング エージェント ガイド](/guides/deploy-from-coding-agent) |
@@ -25,10 +28,33 @@ Lizard (lizard.build) は、アプリ、バックグラウンドワーカー、A
 | リモート MCP サーバーをホストする | [Remote MCP guide](/guides/deploy-mcp-server) |
 | Telegram bot または Discord bot を動かし続ける | [Telegram ガイド](/guides/telegram-bot) または [Discord ガイド](/guides/discord-bot) |
 | データベースを接続する | [Managed Postgres](/addons/postgres) |
-| 生成されたコードを別環境で実行する | [Sandboxes quickstart](/sandboxes/quickstart) |
-| sandbox 内で Claude Code を実行する | [sandbox 内の Claude Code](/sandboxes/guides/claude-code) |
-| sandbox 終了後もファイルを保持する | [Persistent Volumes](/sandboxes/volumes) |
 | Claude Code または ChatGPT でページを視覚的に編集する | [Lizard Studio](/studio/getting-started) |
+
+<span id="run-code-in-a-sandbox" />
+
+## サンドボックスでコードを実行する
+
+ダッシュボードで API キーとプロジェクトを作成し、`LIZARD_API_KEY` を設定して Lizard SDK をインストールします。次のコードはサンドボックスを作成し、コマンドを実行して、サンドボックスを削除します:
+
+```bash
+npm install @lizard-build/sdk
+```
+
+```ts
+import { Lizard } from '@lizard-build/sdk'
+
+const lizard = new Lizard({ project: 'my-project' })
+const sandbox = await lizard.create('interpreter', { size: 'small' })
+
+try {
+  const run = await sandbox.process.exec("python -c 'print(2 ** 10)'")
+  console.log(run.stdout) // 1024
+} finally {
+  await sandbox.kill()
+}
+```
+
+Small サイズ（2 vCPU、4 GB RAM）は 1 時間 $0.0162 で、秒単位で課金されます。Python、テンプレート、有効期間については [Sandboxes クイックスタート](/sandboxes/quickstart) と [Sandboxes の概要](/sandboxes) を参照してください。
 
 <span id="deploy-an-app" />
 

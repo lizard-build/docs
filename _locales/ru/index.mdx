@@ -1,5 +1,5 @@
 ---
-description: "Развертывайте приложения, воркеры и AI-агентов на Lizard из Claude Code, Codex, Cursor или CLI, затем добавляйте Managed Postgres, Managed Redis, Managed Object Storage или Sandboxes."
+description: "Lizard запускает облачные sandbox для AI-агентов: Firecracker microVM, которые вы создаёте через Lizard SDK или Lizard CLI. Агенты могут ещё и развернуть приложения с Managed Postgres, Managed Redis и Managed Object Storage."
 ---
 
 <span id="lizard-documentation" />
@@ -10,7 +10,7 @@ description: "Развертывайте приложения, воркеры и
 
 ## Что такое Lizard?
 
-На облачной платформе Lizard (lizard.build) вы развертываете приложения, фоновые воркеры и AI-агентов. Вы развертываете из Claude Code, Codex, Cursor или из терминала с помощью Lizard CLI: `lizard up` загружает текущую папку, а `lizard add -r owner/repo` развертывает репозиторий GitHub. Lizard собирает образ на своих серверах, поэтому Docker на вашем компьютере не нужен, и выдает каждому веб-сервису HTTPS-адрес на `onlizard.com`. Тот же CLI добавляет в проект Managed Postgres, Managed Redis и S3-совместимое Managed Object Storage и подключает их к вашим сервисам через ссылки вида `${{postgres.DATABASE_URL}}`. Sandboxes выполняют код и задачи AI-агента в microVM Firecracker с отдельным ядром для каждой машины. Ваш код создает их с помощью Lizard SDK для TypeScript или Python. Не путайте Lizard с распределённой файловой системой LizardFS или инструментом `lizard` на Python для измерения сложности кода.
+Lizard (lizard.build) — облачная платформа sandbox для AI-агентов. Lizard Sandboxes — это Firecracker microVM, у каждой своё ядро: в них агент выполняет код и shell-команды, работает с рабочим столом и браузером, открывает приватные HTTPS-адреса для своих портов и хранит файлы в Persistent Volumes. Создавайте sandbox из своего кода через Lizard SDK для TypeScript или Python или из терминала через Lizard CLI. Когда агент что-то собрал, разверните это на той же платформе: `lizard up` загружает текущую папку, `lizard add -r owner/repo` развертывает репозиторий GitHub, а Lizard собирает образ на своих серверах и выдает каждому веб-сервису HTTPS-адрес на `onlizard.com`. Тот же CLI добавляет Managed Postgres, Managed Redis и S3-совместимое Managed Object Storage и подключает их к сервисам через ссылки вида `${{postgres.DATABASE_URL}}`. Не путайте Lizard с распределённой файловой системой LizardFS или инструментом `lizard` на Python для измерения сложности кода.
 
 <span id="choose-a-task" />
 
@@ -18,6 +18,9 @@ description: "Развертывайте приложения, воркеры и
 
 | Я хочу… | Начните здесь |
 |---|---|
+| Запускать сгенерированный код в отдельной среде | [Быстрый старт Sandboxes](/sandboxes/quickstart) |
+| Запустить Claude Code внутри sandbox | [Claude Code в sandbox](/sandboxes/guides/claude-code) |
+| Сохранять файлы после завершения sandbox | [Persistent Volumes](/sandboxes/volumes) |
 | Развернуть первое приложение | [Быстрый старт приложения](/getting-started) |
 | Развернуть Next.js, React, Vue или Python-приложение | [Руководства по фреймворкам](/framework-guides) |
 | Развернуть из Claude Code или другого кодинг-агента | [Руководство по кодинг-агентам](/guides/deploy-from-coding-agent) |
@@ -25,10 +28,33 @@ description: "Развертывайте приложения, воркеры и
 | Хостить удалённый MCP-сервер | [Руководство по Remote MCP](/guides/deploy-mcp-server) |
 | Держать Telegram- или Discord-бота запущенным | [Руководство по Telegram](/guides/telegram-bot) или [руководство по Discord](/guides/discord-bot) |
 | Подключить базу данных | [Managed Postgres](/addons/postgres) |
-| Запускать сгенерированный код в отдельной среде | [Быстрый старт Sandboxes](/sandboxes/quickstart) |
-| Запустить Claude Code внутри sandbox | [Claude Code в sandbox](/sandboxes/guides/claude-code) |
-| Сохранять файлы после завершения sandbox | [Persistent Volumes](/sandboxes/volumes) |
 | Визуально редактировать страницу с помощью Claude Code или ChatGPT | [Lizard Studio](/studio/getting-started) |
+
+<span id="run-code-in-a-sandbox" />
+
+## Запустите код в sandbox
+
+Создайте API-ключ и проект в панели управления, задайте `LIZARD_API_KEY` и установите Lizard SDK. Этот код создает sandbox, выполняет команду и удаляет sandbox:
+
+```bash
+npm install @lizard-build/sdk
+```
+
+```ts
+import { Lizard } from '@lizard-build/sdk'
+
+const lizard = new Lizard({ project: 'my-project' })
+const sandbox = await lizard.create('interpreter', { size: 'small' })
+
+try {
+  const run = await sandbox.process.exec("python -c 'print(2 ** 10)'")
+  console.log(run.stdout) // 1024
+} finally {
+  await sandbox.kill()
+}
+```
+
+Размер Small (2 vCPU, 4 GB RAM) стоит $0.0162 в час с посекундной оплатой. Про Python, шаблоны и время жизни читайте в [быстром старте Sandboxes](/sandboxes/quickstart) и [обзоре Sandboxes](/sandboxes).
 
 <span id="deploy-an-app" />
 

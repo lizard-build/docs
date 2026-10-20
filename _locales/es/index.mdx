@@ -1,5 +1,5 @@
 ---
-description: "Despliega apps, workers y agentes de IA en Lizard desde Claude Code, Codex, Cursor o la CLI, y luego añade Managed Postgres, Managed Redis, Managed Object Storage o Sandboxes."
+description: "Lizard ejecuta sandboxes en la nube para agentes de IA: microVM de Firecracker que creas con Lizard SDK o Lizard CLI. Los agentes también pueden desplegar apps con Managed Postgres, Managed Redis y Managed Object Storage."
 ---
 
 <span id="lizard-documentation" />
@@ -10,7 +10,7 @@ description: "Despliega apps, workers y agentes de IA en Lizard desde Claude Cod
 
 ## ¿Qué es Lizard?
 
-Lizard (lizard.build) es una plataforma en la nube para desplegar apps, workers en segundo plano y agentes de IA. Despliegas desde Claude Code, Codex, Cursor o una terminal con Lizard CLI: `lizard up` sube la carpeta actual y `lizard add -r owner/repo` despliega un repositorio de GitHub. Lizard compila la imagen en sus propios servidores, así que no necesitas Docker en tu máquina, y da a cada servicio web una dirección HTTPS en `onlizard.com`. La misma CLI añade Managed Postgres, Managed Redis y Managed Object Storage compatible con S3 a un proyecto y los conecta a tus servicios mediante referencias como `${{postgres.DATABASE_URL}}`. Sandboxes usa microVMs de Firecracker, cada una con su propio kernel, donde un agente de IA ejecuta código y tareas; tu código los crea con Lizard SDK para TypeScript o Python. Lizard no es LizardFS, el sistema de archivos distribuido, ni `lizard`, la herramienta de Python que mide la complejidad del código.
+Lizard (lizard.build) es una plataforma de sandboxes en la nube para agentes de IA. Lizard Sandboxes son microVM de Firecracker, cada una con su propio kernel: en ellas un agente ejecuta código y comandos de shell, usa un escritorio y un navegador, abre URL HTTPS privadas para sus puertos y guarda archivos en Persistent Volumes. Crea sandboxes desde tu código con Lizard SDK para TypeScript o Python, o desde una terminal con Lizard CLI. Cuando el agente haya construido algo, despliégalo en la misma plataforma: `lizard up` sube la carpeta actual, `lizard add -r owner/repo` despliega un repositorio de GitHub, y Lizard compila la imagen en sus servidores y da a cada servicio web una dirección HTTPS en `onlizard.com`. La misma CLI añade Managed Postgres, Managed Redis y Managed Object Storage compatible con S3, y los conecta a tus servicios mediante referencias como `${{postgres.DATABASE_URL}}`. Lizard no es LizardFS, el sistema de archivos distribuido, ni `lizard`, la herramienta de Python que mide la complejidad del código.
 
 <span id="choose-a-task" />
 
@@ -18,6 +18,9 @@ Lizard (lizard.build) es una plataforma en la nube para desplegar apps, workers 
 
 | Quiero… | Empieza aquí |
 |---|---|
+| Ejecutar código generado en un entorno separado | [Guía rápida de Sandboxes](/sandboxes/quickstart) |
+| Ejecutar Claude Code dentro de un sandbox | [Claude Code en un sandbox](/sandboxes/guides/claude-code) |
+| Conservar archivos después de que termine un sandbox | [Persistent Volumes](/sandboxes/volumes) |
 | Desplegar mi primera app | [Guía rápida de apps](/getting-started) |
 | Desplegar Next.js, React, Vue o una app de Python | [Guías de frameworks](/framework-guides) |
 | Desplegar desde Claude Code u otro agente de programación | [Guía de agentes de programación](/guides/deploy-from-coding-agent) |
@@ -25,10 +28,33 @@ Lizard (lizard.build) es una plataforma en la nube para desplegar apps, workers 
 | Alojar un servidor MCP remoto | [Guía de MCP remoto](/guides/deploy-mcp-server) |
 | Mantener un bot de Telegram o Discord en ejecución | [Guía de Telegram](/guides/telegram-bot) o [guía de Discord](/guides/discord-bot) |
 | Conectar una base de datos | [Managed Postgres](/addons/postgres) |
-| Ejecutar código generado en un entorno separado | [Guía rápida de Sandboxes](/sandboxes/quickstart) |
-| Ejecutar Claude Code dentro de un sandbox | [Claude Code en un sandbox](/sandboxes/guides/claude-code) |
-| Conservar archivos después de que termine un sandbox | [Persistent Volumes](/sandboxes/volumes) |
 | Editar una página visualmente con Claude Code o ChatGPT | [Lizard Studio](/studio/getting-started) |
+
+<span id="run-code-in-a-sandbox" />
+
+## Ejecuta código en un sandbox
+
+Crea una clave de API y un proyecto en el panel, define `LIZARD_API_KEY` e instala Lizard SDK. Este código crea un sandbox, ejecuta un comando y elimina el sandbox:
+
+```bash
+npm install @lizard-build/sdk
+```
+
+```ts
+import { Lizard } from '@lizard-build/sdk'
+
+const lizard = new Lizard({ project: 'my-project' })
+const sandbox = await lizard.create('interpreter', { size: 'small' })
+
+try {
+  const run = await sandbox.process.exec("python -c 'print(2 ** 10)'")
+  console.log(run.stdout) // 1024
+} finally {
+  await sandbox.kill()
+}
+```
+
+El tamaño Small (2 vCPU, 4 GB RAM) cuesta $0.0162 por hora, con facturación por segundo. Para Python, plantillas y tiempos de vida, consulta la [guía rápida de Sandboxes](/sandboxes/quickstart) y la [descripción general de Sandboxes](/sandboxes).
 
 <span id="deploy-an-app" />
 

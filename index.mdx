@@ -1,17 +1,20 @@
 ---
-description: "Deploy apps, workers and AI agents to Lizard from Claude Code, Codex, Cursor or the CLI, then add Managed Postgres, Redis, Object Storage or Sandboxes."
+description: "Lizard runs cloud sandboxes for AI agents: Firecracker microVMs you create with Lizard SDK or Lizard CLI. Agents can also deploy apps with Managed Postgres, Redis and Object Storage."
 ---
 
 # Lizard documentation
 
 ## What is Lizard?
 
-Lizard is a cloud platform for deploying apps, background workers and AI agents. You deploy from Claude Code, Codex, Cursor or a terminal with Lizard CLI: `lizard up` uploads the current folder, and `lizard add -r owner/repo` deploys a GitHub repository. Lizard builds the image on its servers and gives each web service an HTTPS address on `onlizard.com`. You do not need Docker on your machine. Add Managed Postgres, Managed Redis or S3-compatible Managed Object Storage with the same CLI. Connect them to services through references such as `${{postgres.DATABASE_URL}}`. Sandboxes let AI agents run code in Firecracker microVMs, each with its own kernel. Create them from your code with Lizard SDK for TypeScript or Python. Lizard is not LizardFS, the distributed file system, and not `lizard`, the Python tool that measures code complexity.
+Lizard is a cloud sandbox platform for AI agents. Lizard Sandboxes are Firecracker microVMs, each with its own kernel: an agent runs code and shell commands in them, uses a desktop and browser, opens private HTTPS URLs for its ports and keeps files on Persistent Volumes. Create sandboxes from your code with Lizard SDK for TypeScript or Python, or from a terminal with Lizard CLI. When the agent has built something, deploy it on the same platform: `lizard up` uploads the current folder, `lizard add -r owner/repo` deploys a GitHub repository, and Lizard builds the image on its servers and gives each web service an HTTPS address on `onlizard.com`. Add Managed Postgres, Managed Redis or S3-compatible Managed Object Storage with the same CLI and connect them to services through references such as `${{postgres.DATABASE_URL}}`. Lizard is not LizardFS, the distributed file system, and not `lizard`, the Python tool that measures code complexity.
 
 ## Choose a task
 
 | I want to… | Start here |
 |---|---|
+| Run generated code in a separate environment | [Sandboxes quickstart](/sandboxes/quickstart) |
+| Run Claude Code inside a sandbox | [Claude Code in a sandbox](/sandboxes/guides/claude-code) |
+| Keep files after a sandbox ends | [Persistent Volumes](/sandboxes/volumes) |
 | Deploy my first app | [App quickstart](/getting-started) |
 | Deploy Next.js, React, Vue, or a Python app | [Framework guides](/framework-guides) |
 | Deploy from Claude Code or another coding agent | [Coding agent guide](/guides/deploy-from-coding-agent) |
@@ -19,10 +22,31 @@ Lizard is a cloud platform for deploying apps, background workers and AI agents.
 | Host a remote MCP server | [Remote MCP guide](/guides/deploy-mcp-server) |
 | Keep a Telegram or Discord bot running | [Telegram guide](/guides/telegram-bot) or [Discord guide](/guides/discord-bot) |
 | Connect a database | [Managed Postgres](/addons/postgres) |
-| Run generated code in a separate environment | [Sandboxes quickstart](/sandboxes/quickstart) |
-| Run Claude Code inside a sandbox | [Claude Code in a sandbox](/sandboxes/guides/claude-code) |
-| Keep files after a sandbox ends | [Persistent Volumes](/sandboxes/volumes) |
 | Edit a page visually with Claude Code or ChatGPT | [Lizard Studio](/studio/getting-started) |
+
+## Run code in a sandbox
+
+Create an API key and a project in the dashboard, set `LIZARD_API_KEY`, and install Lizard SDK. This code creates a sandbox, runs a command and kills the sandbox:
+
+```bash
+npm install @lizard-build/sdk
+```
+
+```ts
+import { Lizard } from '@lizard-build/sdk'
+
+const lizard = new Lizard({ project: 'my-project' })
+const sandbox = await lizard.create('interpreter', { size: 'small' })
+
+try {
+  const run = await sandbox.process.exec("python -c 'print(2 ** 10)'")
+  console.log(run.stdout) // 1024
+} finally {
+  await sandbox.kill()
+}
+```
+
+The Small size (2 vCPU, 4 GB RAM) costs $0.0162 an hour, billed by the second. For Python, templates and lifetimes, see the [Sandboxes quickstart](/sandboxes/quickstart) and the [Sandboxes overview](/sandboxes).
 
 ## Deploy an app
 
