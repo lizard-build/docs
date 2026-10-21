@@ -21,7 +21,7 @@ API-ключи начинаются с `liz_`. Используйте ключ �
 - `LIZARD_TOKEN` или `LIZARD_API_KEY` для CLI в CI
 - `lizard login --token liz_…` на машине
 - `LIZARD_API_KEY` для [Lizard SDK](/sandboxes/sdk-reference)
-- `lizard sandbox create --with-token liz_…`, чтобы использовать `lizard` внутри sandbox
+- `lizard sandbox create --with-token liz_…`, чтобы войти в `lizard` внутри sandbox; см. [ключи в sandbox](#sign-in-lizard-inside-a-sandbox)
 
 <span id="subcommands" />
 
@@ -36,11 +36,19 @@ API-ключи начинаются с `liz_`. Используйте ключ �
 | `-p, --project <id>` | Ограничить ключ этим проектом (имя, slug или ID) |
 | `-w, --workspace <id>` | Ограничить ключ этим рабочим пространством (имя, slug или ID) |
 
-Ключ с ограниченной областью не видит платёжные данные и настройки аккаунта.
+Ключ с ограниченной областью работает только в своих проектах или рабочих пространствах. Он не может:
+
+- видеть оплату, тариф, карты и расход всего аккаунта
+- создавать, просматривать и удалять API-ключи, поэтому `lizard keys` с ним не работает
+- создавать рабочее пространство, переименовывать или удалять своё, менять лимиты рабочего пространства и цены перепродажи
+- видеть участников рабочих пространств и проектов и управлять ими
+- направлять сервис на приватный репозиторий GitHub, если из него ещё не собирается приложение в его области
+
+Если вы вошли с ключом с ограниченной областью, [`lizard whoami`](/cli/whoami) показывает области ключа, а не аккаунт, которому он принадлежит. Если владелец рабочего пространства задал [цены перепродажи](/cli/workspace#lizard-workspace-resale-pricing-name-or-id), ключ видит эти цены.
 
 ### `lizard keys list`
 
-Выводит список ваших ключей с коротким превью, областью действия, временем создания и последнего использования (псевдоним `ls`).
+Выводит список ваших ключей с коротким превью, областью действия, временем создания и последнего использования (псевдоним `ls`). Превью — это не начало ключа, поэтому сопоставляйте ключи по имени или ID.
 
 ### `lizard keys rm <name-or-id>`
 
@@ -64,14 +72,15 @@ lizard keys create github-actions --project my-project
 
 Сохраните выведенный ключ как секрет CI с именем `LIZARD_TOKEN`.
 
-<span id="create-a-key-for-a-sandbox" />
+<span id="sign-in-lizard-inside-a-sandbox" />
 
-### Создание ключа для sandbox
+### Вход в `lizard` внутри sandbox
 
 ```bash
-lizard keys create sandbox-agent --workspace my-team
 lizard sandbox create --with-token liz_xxx
 ```
+
+Sandbox получает собственный новый ключ, ограниченный проектом sandbox и удаляемый вместе с ним. В `lizard keys list` он виден как `sandbox-session:<sandbox-id>`. Переданный ключ `liz_` только подтверждает запрос и в sandbox не попадает. С `--with-token` без значения CLI берёт ключ, с которым вы вошли; это должен быть ключ `liz_`.
 
 <span id="delete-a-key" />
 
@@ -87,4 +96,4 @@ lizard keys rm github-actions --yes
 
 - [lizard login](/cli/login) — вход по ключу на машине
 - [JSON & автоматизация](/cli/json) — использование CLI из CI
-- [lizard sandbox](/cli/sandbox) — `--with-token` устанавливает ключ в sandbox
+- [lizard sandbox](/cli/sandbox) — `--with-token` выполняет вход в `lizard` внутри sandbox с собственным ключом

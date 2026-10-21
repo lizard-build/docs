@@ -4,7 +4,9 @@ description: "lizard status zeigt, mit welchem Workspace, Projekt und Service da
 
 # lizard status
 
-Zeigt den verknüpften Workspace, das Projekt und den Service für das aktuelle Verzeichnis an.
+Zeigt den verknüpften Workspace, das Projekt und den Service für das aktuelle Verzeichnis an. Eine Anmeldung ist nicht nötig.
+
+In einem nicht verknüpften Verzeichnis gibt der Befehl `Not linked` aus. Befehle dort nutzen das Standardprojekt deines Kontos, und `lizard up` verknüpft das Verzeichnis damit.
 
 <span id="usage" />
 
@@ -26,10 +28,20 @@ lizard status
 lizard status
 ```
 
+<span id="read-the-link-from-a-script" />
+
+### Verknüpfung in einem Skript auslesen
+
+```bash
+lizard status --json
+```
+
+Ein verknüpftes Verzeichnis liefert `cwd`, `linked: true`, `workspace`, `workspaceId`, `project`, `projectId`, `service` und `serviceId`. Ein nicht verknüpftes liefert `{"cwd": "…", "linked": false}`.
+
 <span id="see-also" />
 
 ## Siehe auch
 
 - [lizard init](/cli/init) — ein Projekt erstellen oder auswählen und mit dem aktuellen Verzeichnis verknüpfen
 - [lizard link](/cli/link) — das aktuelle Verzeichnis mit einem bestehenden Projekt verknüpfen
-- [lizard whoami](/cli/whoami) — den aktuellen Benutzer, den aktiven Workspace und das verknüpfte Projekt anzeigen
+- [lizard whoami](/cli/whoami) — den aktuellen Benutzer und das verknüpfte Projekt anzeigen

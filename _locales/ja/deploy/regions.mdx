@@ -32,7 +32,7 @@ lizard up --region <code>          # new services only
 
 プロジェクトにはデフォルトのリージョンがありません。`--region` を指定しない場合、`lizard add` は `us-east-1` に作成し、`lizard up` はリクエストを処理した API サーバーのリージョンに新しいサービスを作成します。リージョンを選ぶには `--region` を渡してください。
 
-> **ステートフルなリソースは同じ場所に配置してください。** サービスと、それが通信するアドオン（Managed Postgres、Managed Redis、Managed Object Storage）は、レイテンシを低く保ち、リージョン間のデータ転送料金を避けるために、**同じリージョン** に配置してください。
+> **ステートフルなリソースは同じ場所に配置してください。** サービスと、それが通信するアドオン（Managed Postgres、Managed Redis、Managed Object Storage）は、レイテンシを低く保ち、リージョン間のデータ転送料金を避けるために、**同じリージョン** に配置してください。[プライベートネットワーク](/networking#private-networking) も、1 つのリージョン内でしか使えません。
 
 <span id="generated-domains" />
 

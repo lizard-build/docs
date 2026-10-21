@@ -31,7 +31,7 @@ lizard up                          # upload cwd and deploy
 
 1. **ビルド**：プラットフォームがビルドを実行します（[ビルド Pipeline](/concepts/build-pipeline) を参照）。
 2. **Pre-deploy**：`preDeployCommand` と `startCommand` の両方が設定されている場合、コンテナは `sh -c "<pre> && exec <start>"` を実行します。プレデプロイコマンドはすべてのコンテナの起動時（各レプリカ、各再起動）に実行されるため、何度実行しても、また同時に実行しても安全なものにしてください。`startCommand` がない場合はスキップされます。
-3. **Start**：Lizard は新しい Pod を古い Pod と並べて起動します。[Workers](/deploy/workers) は先に古い Pod を停止します。
+3. **Start**：Lizard は新しい Pod を古い Pod と並べて起動します。[Workers](/deploy/workers) と[ボリューム](/cli/volume)を接続したサービスは先に古い Pod を停止するため、デプロイと再起動のたびに短時間止まります。
 4. **Health check**：TCP プローブが 2 秒ごとにアプリのポートを確認し、トラフィックは ready になった Pod にだけ移ります。Lizard は約 30 秒待機し、それまでに新しい Pod が ready にならない場合、デプロイは失敗として扱われます。Workers ではプローブはスキップされます。
 5. **Verify**：リリースのステータスを確認し、アプリケーション URL を呼び出します。ポート到達性は完全なアプリケーションヘルスチェックではありません。
 
@@ -39,14 +39,14 @@ lizard up                          # upload cwd and deploy
 
 ## ストリーミング出力
 
-非デタッチの `lizard up`（または `redeploy`）を実行すると、ビルドログがライブでストリーミングされます。`--json` を使うと、1 行ごとに 1 つの JSON イベントを受け取れます:
+非デタッチの `lizard up`（または `redeploy`）を実行すると、ビルドログがライブでストリーミングされます。`lizard up --json` を使うと、1 行ごとに 1 つの JSON イベントを受け取れます:
 
 ```json
 { "event": "log", "line": "..." }
 { "event": "deployed", "status": "...", "url": "https://..." }
 ```
 
-最後は `deployed`、`failed`、または `deploying` で終了します。`--detach` を使うと、ストリーミングせずにデプロイを開始してすぐに戻れます。
+最後は `deployed`、`failed`、または `deploying` で終了します。`lizard redeploy --json` はログ行を出力しません。すぐに 1 つのオブジェクト（`status: "deploying"`）を返し、`--wait` を付けた場合は最後に `ok` と最終的な `status` を含む 1 つのオブジェクトを返します。`--detach` を使うと、ストリーミングせずにデプロイを開始してすぐに戻れます。
 
 <span id="inspecting-history" />
 
@@ -58,7 +58,7 @@ lizard events --limit 25       # show more
 lizard ps                      # current services, status, and URLs
 ```
 
-[ダッシュボード](/dashboard) では、**デプロイメント** ビューに完全なタイムライン、デプロイごとのビルドログ、各リリースの詳細ドロワーが表示されます。
+[ダッシュボード](/dashboard) では、各サービスの **概要** タブにデプロイの一覧が表示されます。1 つを開くと、ステータス、ソース、ビルドログ、再起動を確認できます。
 
 <span id="restarts-vs-redeploys" />
 
@@ -93,4 +93,4 @@ lizard events                      # see replica status
 
 ## 失敗したリリースと復旧
 
-ビルドの失敗とアプリケーション起動の失敗は別のケースです。どちらの場合も、すでに稼働中の HTTP サービスは以前のバージョンを配信し続けます。ビルドが失敗しても何も変わらず、ready にならない新しい Pod にはトラフィックが送られません。worker では新しい Pod の起動前に古い Pod が停止するため、壊れた worker のリリースでは worker が 1 つも稼働しない状態になります。アクティブなサービス、ビルドログ、ランタイムログを確認してください。`lizard redeploy` は選択したソースを再度ビルドします。以前のビルドを復元するためのコマンドではありません。必要に応じてソースコミットを元に戻し、それをデプロイして結果を確認してください。[既知の問題](/platform/known-issues) を参照してください。
+ビルドの失敗とアプリケーション起動の失敗は別のケースです。ビルドが失敗しても何も変わらず、稼働中のバージョンがそのまま動き続けます。新しい Pod が ready にならない場合、HTTP サービスは以前のバージョンを配信し続け、新しい Pod にはトラフィックが送られません。worker とボリュームを接続したサービスは新しい Pod の起動前に古い Pod を停止するため、ready にならないリリースでは止まったままになります。アクティブなサービス、ビルドログ、ランタイムログを確認してください。`lizard redeploy` は選択したソースを再度ビルドします。以前のビルドを復元するためのコマンドではありません。必要に応じてソースコミットを元に戻し、それをデプロイして結果を確認してください。[既知の問題](/platform/known-issues) を参照してください。

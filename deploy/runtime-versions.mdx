@@ -34,7 +34,7 @@ With a GitHub service, commit the file and push instead. Rules:
 - Write a number: `24`, `v24` and `24.1.0` all select Node.js 24. Lizard skips lines that start with `#`.
 - Lizard skips `lts/*` and `node` in `.nvmrc` and moves on to the next file. It uses other aliases, such as `lts/iron`, as written, and the build fails.
 - `.nvmrc` wins over `engines.node`.
-- `engines.node` gives the lowest version in its range: `>=18` builds on Node.js 18, and `^20.11.0` on Node.js 20. A range with `||`, such as `18 || 20`, fails the build.
+- `engines.node` gives the lowest version in its range: `>=18` builds on Node.js 18, and `^20.11.0` on Node.js 20. A range with `||` fails the build when its first part has no dot, such as `18 || 20`; `^18.0.0 || ^20.0.0` builds on Node.js 18. Use `.nvmrc` to be explicit.
 
 ## Change the Python version
 
@@ -69,13 +69,13 @@ Write the bare number. `rails new` writes `ruby-3.4.1`, and Lizard does not stri
 ## When Lizard ignores version files
 
 - **Your own Dockerfile.** Its `FROM` line decides, for example `FROM node:24-slim`. See [Deploy a Docker container from a Dockerfile](/deploy/dockerfile).
-- **A build or start command on the service.** Lizard then writes a Dockerfile from the commands on a fixed image: `node:22-alpine`, `python:3.13-slim` or `golang:1.24-alpine`, chosen by the first word of the command. To return to version files, clear both:
+- **A build or start command on the service.** Lizard then writes a Dockerfile from the commands on a fixed image: `node:22-alpine`, `python:3.13-slim` or `golang:1.24-alpine`. It reads the first word of the build command, then of the start command. `go` picks Go; `python`, `python3`, `uv`, `gunicorn` or `uvicorn` pick Python. If neither command starts with one of these, for example `pip install …` with `streamlit run …`, the build uses `node:22-alpine`. To return to version files, clear both:
 
 ```bash
 lizard service set web --set buildCommand= --set startCommand=
 ```
 
-Clearing `buildCommand` on a running service starts a rebuild by itself. Check `lizard events` before you run `lizard redeploy`, so you do not queue a second build. See the [build decision order](/concepts/build-pipeline#build-decision-order).
+Clearing `buildCommand` on a running service starts a rebuild by itself. Check `lizard events` before you run `lizard redeploy`: a redeploy would cancel that build and start it again. See the [build decision order](/concepts/build-pipeline#build-decision-order).
 
 ## Check which version a build used
 

@@ -4,7 +4,9 @@ description: "lizard git подключает GitHub App, показывает �
 
 # lizard git
 
-Управление подключением GitHub для связанного проекта и его сервисов.
+Подключите аккаунт Lizard к GitHub, посмотрите, из каких репозиториев разворачиваются сервисы проекта, и переключите сервис на другую ветку. Подключение GitHub App относится к вашему аккаунту Lizard, а не к отдельному проекту.
+
+Остальные подкоманды `lizard git` относятся к Lizard Git, и эта страница их не описывает.
 
 <span id="usage" />
 
@@ -12,9 +14,11 @@ description: "lizard git подключает GitHub App, показывает �
 
 ```bash
 lizard git connect
-lizard git status
+lizard git status [flags]
 lizard git checkout <service> <branch> [flags]
 ```
+
+Без `-p` команды `status` и `checkout` используют связанный проект, а в несвязанной папке — ваш проект по умолчанию.
 
 <span id="subcommands" />
 
@@ -22,11 +26,15 @@ lizard git checkout <service> <branch> [flags]
 
 ### `lizard git connect`
 
-Подключить GitHub App для доступа к приватным репозиториям.
+Подключить GitHub App для доступа к приватным репозиториям. Команда открывает GitHub для установки приложения, ждёт, пока вы нажмёте Enter, и проверяет подключение. Если приложение уже подключено, она сообщает об этом. С `--json` или без терминала она вместо этого выводит URL установки: `{ installed: false, installUrl }`.
 
 ### `lizard git status`
 
-Показать подключение GitHub и статус репозитория.
+Показать, подключено ли GitHub App, и из какого репозитория и ветки разворачивается каждый сервис проекта.
+
+| Флаг | Описание |
+|------|-------------|
+| `-p, --project <id>` | Имя, slug или ID проекта |
 
 ### `lizard git checkout <service> <branch>`
 
@@ -35,6 +43,7 @@ lizard git checkout <service> <branch> [flags]
 | Флаг | Описание |
 |------|-------------|
 | `--detach` | Пропустить стриминг логов |
+| `-p, --project <id>` | Имя, slug или ID проекта |
 
 <span id="examples" />
 

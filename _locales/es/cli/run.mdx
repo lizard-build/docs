@@ -41,7 +41,9 @@ lizard run [flags] -- <command>
 |------|-------------|
 | `-s, --service <name>` | Servicio cuyas variables de entorno se deben cargar (por defecto, el servicio vinculado) |
 | `--no-service` | No cargar las variables de entorno del servicio, solo los secretos del proyecto |
-| `-p, --project <id>` | Proyecto (por defecto, el vinculado) |
+| `-p, --project <id>` | Nombre, slug o ID del proyecto (por defecto, el proyecto vinculado o, en una carpeta sin vincular, tu proyecto predeterminado) |
+
+En una carpeta sin vincular, `lizard run --service postgres` lee el addon `postgres` de tu proyecto predeterminado, el proyecto más antiguo de tu workspace personal. Pasa `-p` para usar la base de datos de otro proyecto.
 
 <span id="examples" />
 

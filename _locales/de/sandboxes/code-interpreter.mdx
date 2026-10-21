@@ -34,7 +34,7 @@ const sandbox = await CodeSandbox.create({ projectId: 'proj_123', timeoutMs: 300
 try {
   await sandbox.runCode('import pandas as pd\ndf = pd.DataFrame({"x": [1, 2, 3]})');
   const run = await sandbox.runCode('df.x.sum()');
-  console.log(run.results[0]?.data); // "6"
+  console.log(run.results[0]?.data); // "np.int64(6)"
   const bad = await sandbox.runCode('1/0');
   console.log(bad.error?.name); // "ZeroDivisionError"
 } finally {
@@ -48,7 +48,7 @@ from lizard import CodeSandbox
 with CodeSandbox.create(project_id="proj_123", timeout_ms=300_000) as sandbox:
     sandbox.run_code('import pandas as pd\ndf = pd.DataFrame({"x": [1, 2, 3]})')
     run = sandbox.run_code("df.x.sum()")
-    print(run.results[0].data)  # "6"
+    print(run.results[0].data)  # "np.int64(6)"
     print(sandbox.run_code("1/0").error.name)  # "ZeroDivisionError"
 ```
 
@@ -63,9 +63,11 @@ Ein Fehler im Code ist Teil des Ergebnisses, keine Exception. Fehlgeschlagene An
 | Feld | Inhalt |
 |---|---|
 | `stdout`, `stderr` | Alles, was der Code ausgegeben hat |
-| `results` | Formatierte Ausgabe: der Wert des letzten Ausdrucks als `text/plain`, matplotlib-Diagramme und Bilder als base64-`image/png`, HTML und andere Typen, jeweils mit `mime` und `data` |
+| `results` | Formatierte Ausgabe: der Wert des letzten Ausdrucks, matplotlib-Diagramme und Bilder, jeweils mit `mime` und `data` |
 | `error` | `name`, `message` und `traceback`, wenn der Code eine Exception ausgelöst hat |
 | `executionCount` | Der Zellenzähler des Kernels (Python: `execution_count`) |
+
+Jedes Ergebnis hat genau einen MIME-Typ, den reichhaltigsten, den die Ausgabe bietet, in dieser Reihenfolge: `image/png`, `image/jpeg`, `image/svg+xml`, `text/html`, `text/markdown`, `application/json`, `text/latex`, `text/plain`. Bilder kommen als base64. Eine Zahl kommt als `text/plain` zurück, ein pandas-DataFrame dagegen nur als `text/html`.
 
 Übergeben Sie `onStdout`, `onStderr`, `onResult` oder `onError` (Python: `on_stdout` usw.), um Ausgaben schon während der Ausführung zu erhalten.
 
@@ -73,7 +75,7 @@ Ein Fehler im Code ist Teil des Ergebnisses, keine Exception. Fehlgeschlagene An
 
 ## Als LLM-Tool verwenden
 
-Geben Sie dem Modell ein Tool, zum Beispiel `run_python` mit einem einzigen String-Argument `code`. Wenn das Modell es aufruft, führen Sie den Code in der Sandbox aus und senden den Text als Tool-Ergebnis zurück. Behalten Sie eine Sandbox für das gesamte Gespräch, damit die Variablen des Modells zwischen Aufrufen erhalten bleiben.
+Geben Sie dem Modell ein Tool, zum Beispiel `run_python` mit einem einzigen String-Argument `code`. Wenn das Modell es aufruft, führen Sie den Code in der Sandbox aus und senden den Text als Tool-Ergebnis zurück. Das Beispiel behält jedes Text-Ergebnis, auch HTML, damit auch ein DataFrame beim Modell ankommt. Behalten Sie eine Sandbox für das gesamte Gespräch, damit die Variablen des Modells zwischen Aufrufen erhalten bleiben.
 
 ```ts
 import { CodeSandbox } from '@lizard-build/sdk';
@@ -85,7 +87,7 @@ async function runPython(code: string): Promise<string> {
   const run = await sandbox.runCode(code, { timeoutMs: 30_000 });
   if (run.error) return `${run.error.name}: ${run.error.message}\n${run.error.traceback}`;
   const values = run.results.flatMap((r) =>
-    r.type === 'result' && r.mime === 'text/plain' ? [r.data] : [],
+    r.type === 'result' && r.mime.startsWith('text/') ? [r.data] : [],
   );
   return [run.stdout, ...values].filter(Boolean).join('\n');
 }
@@ -104,7 +106,7 @@ def run_python(code: str) -> str:
     run = sandbox.run_code(code, timeout_ms=30_000)
     if run.error:
         return f"{run.error.name}: {run.error.message}\n{run.error.traceback}"
-    values = [r.data for r in run.results if r.mime == "text/plain"]
+    values = [r.data for r in run.results if r.mime.startswith("text/")]
     return "\n".join(filter(None, [run.stdout, *values]))
 
 # When the conversation ends:
@@ -134,7 +136,7 @@ Path("chart.png").write_bytes(base64.b64decode(png))
 
 - **Kontexte.** `createContext()` (Python: `create_context()`) startet einen separaten Kernel mit eigenen Variablen und eigenem Arbeitsverzeichnis; übergeben Sie ihn als `context` an `runCode`. `listContexts()`, `restartContext(ctx)` und `deleteContext(ctx)` verwalten sie. Ohne Kontext verwendet jede Sprache ihren eigenen Standardkontext.
 - **Timeouts.** `timeoutMs` (Python: `timeout_ms`) begrenzt einen Aufruf und beträgt standardmäßig 60 Sekunden. Ein Python-Kernel, der länger läuft, wird unterbrochen und behält seinen Zustand; `error.name` im Ergebnis ist `TimeoutError`.
-- **Andere Sprachen.** JavaScript und Bash laufen bei jedem Aufruf als neuer Prozess, daher bleibt kein Zustand erhalten und `results` bleibt leer. JavaScript braucht `node`, das die Vorlage `interpreter` nicht enthält.
+- **Andere Sprachen.** JavaScript und Bash laufen bei jedem Aufruf als neuer Prozess, daher bleibt kein Zustand erhalten und `results` bleibt leer. JavaScript läuft auf Node 22 aus der Vorlage, ohne npm.
 - **Pause und Snapshots.** Kernel laufen in der Sandbox, daher behalten `pause()` und `resume()` ihre Variablen, und `snapshot()` und `fork()` kopieren sie.
 
 <span id="run-commands" />
@@ -147,7 +149,7 @@ Path("chart.png").write_bytes(base64.b64decode(png))
 
 ## Nicht vertrauenswürdiger Code
 
-Behandeln Sie alles, was das Modell schreibt, als nicht vertrauenswürdig. Übergeben Sie `lizardToken` nur, wenn der Code Lizard CLI braucht; Code in der Sandbox kann ihn lesen. Verwenden Sie in diesem Fall einen Schlüssel mit Zugriff nur auf den Workspace. Halten Sie andere Secrets aus `envs` heraus.
+Behandeln Sie alles, was das Modell schreibt, als nicht vertrauenswürdig. Übergeben Sie `lizardToken` nur, wenn der Code Lizard CLI braucht. Tun Sie es, erhält die Sandbox einen neuen Schlüssel, der auf ihr Projekt beschränkt ist und mit der Sandbox gelöscht wird; Code darin kann also dieses Projekt ändern. Halten Sie andere Secrets aus `envs` heraus.
 
 <span id="storage-and-billing" />
 

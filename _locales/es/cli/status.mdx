@@ -4,7 +4,9 @@ description: "lizard status muestra a qué espacio de trabajo, proyecto y servic
 
 # lizard status
 
-Muestra el espacio de trabajo, proyecto y servicio vinculados al directorio actual.
+Muestra el espacio de trabajo, proyecto y servicio vinculados al directorio actual. No necesita una sesión iniciada.
+
+En un directorio sin vincular imprime `Not linked`. Los comandos ahí usan el proyecto predeterminado de tu cuenta, y `lizard up` vincula el directorio a él.
 
 <span id="usage" />
 
@@ -26,10 +28,20 @@ lizard status
 lizard status
 ```
 
+<span id="read-the-link-from-a-script" />
+
+### Leer el vínculo desde un script
+
+```bash
+lizard status --json
+```
+
+Un directorio vinculado devuelve `cwd`, `linked: true`, `workspace`, `workspaceId`, `project`, `projectId`, `service` y `serviceId`. Uno sin vincular devuelve `{"cwd": "…", "linked": false}`.
+
 <span id="see-also" />
 
 ## Ver también
 
 - [lizard init](/cli/init) — crear o seleccionar un proyecto y vincularlo al directorio actual
 - [lizard link](/cli/link) — asociar el directorio actual con un proyecto existente
-- [lizard whoami](/cli/whoami) — mostrar el usuario actual, el espacio de trabajo activo y el proyecto vinculado
+- [lizard whoami](/cli/whoami) — mostrar el usuario actual y el proyecto vinculado

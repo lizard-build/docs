@@ -5,9 +5,9 @@ description: "Install and upgrade the Lizard CLI, authenticate, and look up glob
 
 # CLI Reference
 
-Lizard CLI (`lizard`) deploys and manages apps, databases and Sandboxes on Lizard from a terminal, a CI job or a coding agent. This page covers installation, global flags, exit codes, and runtime discovery. Each command has a reference page in the sidebar. See [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets), and the rest. For an overview of what the CLI does, see the [Lizard CLI page](https://lizard.build/cli).
+Lizard CLI (`lizard`) deploys and manages apps, databases and Sandboxes on Lizard from a terminal, a CI job or a coding agent. This page covers installation, global flags, exit codes, and runtime discovery. Each command has a reference page in the sidebar. See [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets), [`lizard pause` and `lizard resume`](/cli/pause), [`lizard sleep`](/cli/sleep), and the rest. For an overview of what the CLI does, see the [Lizard CLI page](https://lizard.build/cli).
 
-> Reference written for Lizard CLI **v4.0.34**. Run `lizard <cmd> --help --json` for the exact, version-matched schema of any command.
+> Reference written for Lizard CLI **v4.0.65**. Run `lizard <cmd> --help --json` for the exact, version-matched schema of any command.
 
 ## Install & upgrade
 
@@ -22,7 +22,7 @@ See [`lizard upgrade`](/cli/upgrade) for the flags.
 
 On Windows, run `irm https://lizard.build/api/cli/install.ps1 | iex` in PowerShell. With Node.js you can install from npm instead: `npm install -g @lizard-build/cli`.
 
-On macOS and Linux, the binary from the install script also updates itself in the background, at most once every 6 hours. It skips the check when `CI` or `LIZARD_NO_UPDATE=1` is set. The Windows binary does not update itself: run the installer again. An npm install updates through npm: `lizard upgrade` prints the command.
+On macOS and Linux, the binary from the install script also updates itself in the background, at most once every 6 hours, but only when it runs in an interactive terminal. It skips the check when `CI` or `LIZARD_NO_UPDATE=1` is set. Agents, scripts and CI jobs never update in the background, so run `lizard upgrade` there yourself. The Windows binary does not update itself: run the installer again. For an npm install, `lizard upgrade` runs npm for you and prints the npm command only if that fails.
 
 Use the globally installed `lizard` binary rather than `npx`. See [Quickstart](/getting-started#1-install-the-cli) for permission-error fixes.
 
@@ -55,9 +55,11 @@ Most commands also accept `-p, --project` and `-s, --service` to target a specif
 | `0` | success | continue |
 | `1` | generic error | read the message |
 | `2` | auth (401/403) | run `lizard login` |
-| `3` | not found (404) | check the name with `lizard ps` / `lizard project list` |
+| `3` | not found (404): the API has nothing with that ID | check the ID with `lizard ps` / `lizard project list` |
 | `4` | timeout (408/504) | retry |
 | `5` | cancelled by user | stop |
+
+A project or service name that matches nothing exits `1`, not `3`. `lizard run`, `lizard sandbox exec` and `lizard sandbox ssh` exit with the command's own code (`127` when `run` can't find the command), so a `2` from them may come from your command, not from auth.
 
 ## Runtime discovery
 
@@ -78,8 +80,8 @@ The output lists the arguments and flags your installed version accepts. It is a
 
 ## Configuration & state
 
-- The CLI stores auth and the current directory's project link in `~/.lizard/config.json`.
-- [`lizard status`](/cli/status) shows the cwd's workspace/project/service link (no auth required). [`lizard link`](/cli/link) sets that link, [`lizard unlink`](/cli/unlink) removes it, and [`lizard project`](/cli/project) lists, creates, and deletes projects.
+- The CLI stores auth and each folder's project link in `~/.lizard/config.json`. A link covers that exact folder, not its subfolders. In a folder with no link, project commands use your account's default project: the oldest project in your personal workspace.
+- [`lizard status`](/cli/status) shows the cwd's workspace/project/service link (no auth required). [`lizard link`](/cli/link) sets that link, [`lizard unlink`](/cli/unlink) removes it, and [`lizard project`](/cli/project) lists, creates, pauses, resumes, and deletes projects.
 - [`lizard config apply`](/cli/config) applies a `lizard-config.json` file to a project (use `--dry-run` to preview).
 - [`lizard open`](/cli/open) opens the linked project in the dashboard, and [`lizard docs`](/cli/docs) opens these docs.
 

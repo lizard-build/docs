@@ -6,7 +6,7 @@ description: "Claude Code、Codex、Cursor から Lizard にデプロイ: Lizard
 
 # コーディングエージェント
 
-Claude Code、Codex、Cursor などの AI コーディングエージェントは、Lizard CLI を通じて Lizard (lizard.build) にアプリをデプロイし、管理します。`npx skills add lizard-build/skill -g` で Lizard Skill を一度インストールすると、エージェントは `lizard skills get core --json` で CLI に組み込まれたガイドを読み込み、`--help --json` で任意のコマンドのフラグを確認します。ChatGPT や Claude など MCP で通信するクライアントは、代わりに [Lizard MCP](#lizard-mcp) を使えます。エージェントからのデプロイの全手順については、[Claude Code、Codex、Cursor からデプロイする](/guides/deploy-from-coding-agent) を参照してください。
+Claude Code、Codex、Cursor などの AI コーディングエージェントは、Lizard CLI を通じて Lizard (lizard.build) で sandbox を作成し、アプリをデプロイして管理します。`npx skills add lizard-build/skill -g` で Lizard Skill を一度インストールすると、エージェントは `lizard skills get core --json` で CLI に組み込まれたガイドを読み込み、`--help --json` で任意のコマンドのフラグを確認します。ChatGPT や Claude など MCP で通信するクライアントは、代わりに [Lizard MCP](#lizard-mcp) を使えます。エージェントからのデプロイの全手順については、[Claude Code、Codex、Cursor からデプロイする](/guides/deploy-from-coding-agent) を参照してください。
 
 <span id="the-embedded-skill" />
 
@@ -18,12 +18,14 @@ CLI には、そのバージョンに対応した利用ガイドを同梱して�
 lizard skills get core --json
 ```
 
-これにより `{ name, frontmatter, content, … }` が返されます：`content` には完全なガイド（ビルドパイプライン、env の優先順位、アドオン、検出、終了コード）が含まれます。関連するサブコマンド:
+これにより `{ name, frontmatter, content, references, … }` が返されます：`content` にはコアガイド（sandbox、デプロイ、データベース、シークレット、検出、終了コード）が含まれ、`references` にはデプロイ、sandbox、Lizard SDK の詳しいガイドが並びます。関連するサブコマンド:
 
 ```bash
-lizard skills list        # available embedded skills
-lizard skills get core    # the core guide
-lizard skills path        # where skills are stored
+lizard skills list                     # available embedded skills
+lizard skills get core                 # the core guide
+lizard skills get core --ref deploys   # one reference: deploys, sandboxes or sdk
+lizard skills get core --full          # the guide plus every reference
+lizard skills path                     # where skills are stored
 ```
 
 ガイドはバイナリに同梱されているため、`lizard upgrade` を実行するとエージェントへの指示も更新されます。
@@ -47,11 +49,11 @@ lizard <cmd> --help --json          # a specific command's schema
 
 典型的なエージェントのフロー:
 
-1. **ガイドを読み込む:** `lizard skills get core --json` → `content` を読む。
+1. **ガイドを読み込む:** `lizard skills get core --json` → `content` を読み、次にタスクに必要なリファレンス（`--ref sandboxes`、`deploys`、`sdk`）を読む。
 2. **タスクの実行時に認証を確認する:** ユーザーのタスクを実行する。終了コード `2`（`NOT_AUTHENTICATED`）の場合、エラーの `body.login` にサインイン用のリンクが含まれる。GitHub と Google のどちらでサインインするかをユーザーに尋ね、`authUrls` からそのリンクを渡し、ブラウザに「CLI authorized」と表示されたら再試行する。[`lizard login --json`](/cli/login#output-for-agents) も同じリンクを出力し、サインイン後は `account.state` でプランを報告する。
 3. **求められたらトライアルを開始する:** 新しいアカウントにはプランがないため、最初の作成は HTTP 402（`code: "PAYMENT_REQUIRED"`、終了コード `1`）で失敗する。まずユーザーに確認する。同意を得たら `lizard billing start --json` を実行し、Checkout の `url` をユーザーに渡して、カードが追加されたら再試行する。
-4. **変更前に対象を確認する:** `lizard status` (cwd リンク) と `lizard ps --json` (サービス)。
-5. **ガイドに従って実行する**：`add`、`up`、`secrets`、`domain` など。常に `--json` を付けます。
+4. **変更前に対象を確認する:** `lizard status` (cwd リンク) と `lizard ps --json` (サービス)。リンクされていないフォルダでは、`up`、`add`、`sandbox create` などのプロジェクトコマンドはアカウントのデフォルトプロジェクトを使う。
+5. **ガイドに従って実行する**：`sandbox create`、`add`、`up`、`secrets`、`domain` など。常に `--json` を付けます。
 
 `lizard` バイナリが存在しない場合は、最初にインストールしてください。macOS または Linux では、インストールスクリプトを使います:
 
@@ -101,7 +103,7 @@ Chrome で開いているページを Claude Code や ChatGPT に編集させる
 
 ## Lizard MCP
 
-Lizard MCP を使うと、ChatGPT、Claude などの MCP クライアントから Lizard プロジェクトを管理できます。サービスとアドオンの作成、再デプロイ、ログとメトリクスの確認、シークレットの設定、レプリカのスケール、ドメインの割り当てができます。これはホスト型のサーバーで、次の URL で Streamable HTTP を使って通信します:
+Lizard MCP を使うと、ChatGPT、Claude などの MCP クライアントから Lizard プロジェクトを管理できます。sandbox の作成、その中でのコマンド実行とファイルの読み書き、サービスとアドオンの作成、再デプロイ、サービス・プロジェクト・ワークスペースの[一時停止と再開](/cli/pause)、サービスの[アイドル時のスリープ](/cli/sleep)、ログとメトリクスの確認、シークレットの設定、レプリカのスケール、ドメインの割り当てができます。これはホスト型のサーバーで、次の URL で Streamable HTTP を使って通信します:
 
 ```text
 https://employ-woman-g1q2.us-east-1.onlizard.com/mcp

@@ -12,8 +12,8 @@ description: "lizard skills は、このCLIバージョンに同梱されたエ�
 
 ```bash
 lizard skills list
-lizard skills get core
-lizard skills path
+lizard skills get core [flags]
+lizard skills path [name] [flags]
 ```
 
 <span id="subcommands" />
@@ -22,15 +22,22 @@ lizard skills path
 
 ### `lizard skills list`
 
-利用可能な埋め込みスキルを一覧表示します。
+利用可能な埋め込みスキルを、説明とリファレンスとともに一覧表示します。
 
 ### `lizard skills get core`
 
-コアガイドを読み取ります。これはプラットフォームの正式な使い方ガイドで、CLIとともにバージョン管理されています。`--json` を付けると `{ name, path, frontmatter, content }` を返します。ここで、`content` は完全なガイド（ビルドパイプライン、env の優先順位、アドオン、検出、終了コード）です。
+コアガイドを読み取ります。これはエージェント向けのプラットフォーム概要で、CLIとともにバージョン管理されています。sandbox、デプロイ、データベース、シークレット、ドメイン、ログ、終了コードを扱います。詳細は `deploys`、`sandboxes`、`sdk` の 3 つのリファレンスにあります。
+
+`--json` を付けると `{ name, path, frontmatter, content, references }` を返します。`content` はコアガイドで、`references` は各リファレンスの `name`、`path`、それを表示する `command` を列挙します。
+
+| フラグ | 説明 |
+|------|-------------|
+| `--ref <name>` | 代わりにリファレンスを 1 つ表示: `deploys`、`sandboxes`、`sdk`。`--json` を付けると `{ name, ref, path, content }` を返します |
+| `--full` | コアガイドの後にすべてのリファレンスを追加 |
 
 ### `lizard skills path [name]`
 
-スキルの取得元を表示します。スキルはCLIに組み込まれているため、`LIZARD_SKILLS_DIR` でCLIにディスク上のディレクトリを指定しない限り、`embedded://skills` と表示されます。
+スキルの取得元を表示します。スキルはCLIに組み込まれているため、`LIZARD_SKILLS_DIR` でCLIにディスク上のディレクトリを指定しない限り、`lizard skills path` は `embedded://skills`、`lizard skills path core` は `embedded://skills/core/SKILL.md` と表示します。`--ref <name>` を付けると、リファレンス 1 つのパスを表示します。
 
 <span id="examples" />
 
@@ -42,6 +49,22 @@ lizard skills path
 
 ```bash
 lizard skills get core --json
+```
+
+<span id="load-one-reference" />
+
+### リファレンスを 1 つ読み込む
+
+```bash
+lizard skills get core --ref deploys --json
+```
+
+<span id="print-the-core-guide-with-every-reference" />
+
+### すべてのリファレンス付きでコアガイドを表示する
+
+```bash
+lizard skills get core --full
 ```
 
 <span id="list-available-embedded-skills" />

@@ -1,5 +1,5 @@
 ---
-description: "lizard open открывает панель управления текущего проекта в браузере, визуальную версию CLI."
+description: "lizard open открывает панель управления проекта в браузере, визуальную версию CLI, или выводит её URL с --json."
 ---
 
 # lizard open
@@ -11,8 +11,18 @@ description: "lizard open открывает панель управления �
 ## Использование
 
 ```bash
-lizard open
+lizard open [flags]
 ```
+
+<span id="flags" />
+
+## Флаги
+
+| Флаг | Описание |
+|------|-------------|
+| `-p, --project <id>` | Имя, slug или ID проекта |
+
+Без `-p` команда `open` использует связанный проект, а в несвязанной папке — ваш проект по умолчанию. С `--json` она выводит `{ url, opened: false }` и не открывает браузер.
 
 <span id="examples" />
 
@@ -24,6 +34,14 @@ lizard open
 
 ```bash
 lizard open
+```
+
+<span id="print-the-dashboard-url" />
+
+### Вывести URL панели управления
+
+```bash
+lizard open --json
 ```
 
 <span id="see-also" />

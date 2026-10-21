@@ -16,11 +16,13 @@ Si tu código no está en GitHub o quieres probar cambios rápidos, sube el dire
 lizard up
 ```
 
-- Sube el directorio actual como un tarball. Dentro de un repositorio git respeta `.gitignore` (desactívalo con `--no-gitignore`). Fuera de git omite solo una lista fija de carpetas de compilación y dependencias (`node_modules`, `.git`, `dist`, `.next`, `build`, `__pycache__`, `.venv`, `venv`, `.cache`, `coverage`, `.turbo`, `.vercel`) además de `.DS_Store`, `*.pyc`, `*.pyo` y `*.log`, por lo que los archivos `.env` se suben. Ejecuta `git init` o mueve antes los secretos a otro lugar.
+- Sube el directorio actual como un tarball. Dentro de un repositorio git respeta `.gitignore`. Fuera de git, o con `--no-gitignore`, omite solo una lista fija de carpetas de compilación y dependencias (`node_modules`, `.git`, `dist`, `.next`, `build`, `__pycache__`, `.venv`, `venv`, `.cache`, `coverage`, `.turbo`, `.vercel`) además de `.DS_Store`, `*.pyc`, `*.pyo` y `*.log`, por lo que los archivos `.env` se suben. Ejecuta `git init` o mueve antes los secretos a otro lugar.
 - Fuerza `sourceType=upload`.
 - Transmite los logs de compilación por SSE y muestra la URL en vivo al finalizar.
 
-Si el directorio todavía no está vinculado a un proyecto, `up` ejecuta primero `init`. En un TTY eso es interactivo; en un entorno no TTY (CI) **no** creará un proyecto silenciosamente: devuelve un error y te pide que ejecutes `lizard init --name <project>` (o que pases `--project <name>` a `up`). Esto evita que un error tipográfico genere un proyecto vacío.
+Si la carpeta todavía no está vinculada a un proyecto, `up` la vincula al proyecto predeterminado de tu cuenta (el proyecto más antiguo de tu workspace personal, `<username>'s Project` en las cuentas nuevas) y lo indica. No pregunta, ni en una terminal ni en CI. Para desplegar en otro proyecto, ejecuta antes `lizard init --name <project>` o pasa `--project <name>`. `lizard init --force` vuelve a vincular una carpeta.
+
+Sin `--service`, `up` despliega en el servicio vinculado a la carpeta. Si no hay ninguno vinculado, toma el nombre de `package.json` o de la carpeta (en una terminal te pide que lo confirmes). Si el proyecto ya tiene un servicio con ese nombre, `up` despliega en él, aunque sea un servicio de GitHub, al que cambia a `sourceType=upload`. También fija el puerto de ese servicio igual que en uno nuevo: `--port`, la línea `EXPOSE` local o `3000`. Si no, crea el servicio. Pasa `--service <name>` para elegir; un nombre que aún no existe crea ese servicio.
 
 <span id="common-flags" />
 
@@ -28,7 +30,8 @@ Si el directorio todavía no está vinculado a un proyecto, `up` ejecuta primero
 
 | Bandera | Propósito |
 |------|---------|
-| `-s, --service <name>` | Apuntar a un servicio existente |
+| `-s, --service <name>` | Servicio en el que desplegar; un nombre nuevo lo crea |
+| `-p, --project <name>` | Desplegar en este proyecto en lugar del vinculado o del predeterminado |
 | `--build-command <cmd>` | Anular el comando de compilación |
 | `--start-command <cmd>` | Anular el comando de arranque |
 | `--pre-deploy-command <cmd>` | Ejecutar al inicio de cada contenedor, antes del comando de arranque; requiere `--start-command` (consulta [configuración de compilación](/concepts/build-pipeline#build-configuration-reference)) |
@@ -36,7 +39,7 @@ Si el directorio todavía no está vinculado a un proyecto, `up` ejecuta primero
 | `--region <code>` | Región para un servicio nuevo (se ignora en servicios existentes) |
 | `-d, --detach` | Iniciar el despliegue y salir sin transmitir logs |
 | `-c, --ci` | Salida amigable para CI |
-| `--no-gitignore` | Subir todo, ignorando `.gitignore` |
+| `--no-gitignore` | Ignorar `.gitignore` y usar en su lugar la lista fija de exclusiones (un `dist/` o `build/` ya compilado sigue quedando fuera) |
 
 ```bash
 lizard up --service api --start-command "node server.js" --port 8080
@@ -62,7 +65,7 @@ lizard redeploy --service api
 
 ## Sin interfaz / CI
 
-Para flujos no interactivos, vincula el proyecto explícitamente antes de desplegar:
+En CI, una carpeta sin vincular también despliega en tu proyecto predeterminado. Para desplegar en un proyecto concreto, vincúlalo antes:
 
 ```bash
 export LIZARD_TOKEN=liz_xxx   # create one with: lizard keys create <name>

@@ -9,7 +9,7 @@ description: "Lizard Pro kostet $19 im Monat, mit $19 monatlichem Guthaben. So f
 
 Lizard (lizard.build) hat einen Plan zum Selbstbuchen: Pro. Er kostet $19 im Monat und enthält $19 monatliches Guthaben. Das Guthaben bezahlt die Nutzung auf der ganzen Plattform: Apps, Sandboxes, Managed Postgres, Managed Redis, Managed Object Storage, Persistent Volumes und ausgehenden Traffic. Ist das Guthaben aufgebraucht, zahlen Sie pay as you go zu den veröffentlichten Preisen.
 
-Verwalten Sie Ihren Plan auf der Seite **Abrechnung** in den Kontoeinstellungen oder mit [`lizard billing`](/cli/billing). Der Plan gehört dem Eigentümer des Workspace. Die Nutzung in allen Workspaces, die Ihnen gehören, zählt zu Ihrem Plan, und für Mitglieder fällt keine Sitzplatzgebühr an.
+Verwalten Sie Plan, Karte und Rechnungen auf der Seite **Abrechnung**: Öffnen Sie **Einstellungen** in der Seitenleiste oder im Kontomenü und dann **Abrechnung** unter **Konto**. Sie können auch [`lizard billing`](/cli/billing) verwenden. Der Plan gehört dem Eigentümer des Workspace. Die Nutzung in allen Workspaces, die Ihnen gehören, zählt zu Ihrem Plan, und für Mitglieder fällt keine Sitzplatzgebühr an.
 
 <span id="pro" />
 
@@ -61,13 +61,13 @@ Mit einem neuen Konto können Sie sich umsehen, aber um Apps, Sandboxes, Datenba
 
 Jedes Konto und jede Karte bekommt eine Testphase. Hatte das Konto schon eine, beginnt Pro sofort, und $19 werden am selben Tag belastet. Hatte die Karte schon eine, startet die Testphase nicht, und es wird nichts belastet; starten Sie Pro für $19 auf der Seite „Abrechnung“.
 
-Die Testphase enthält alle Funktionen von Pro, mit niedrigeren [Limits](#limits) bis zur ersten bezahlten Rechnung.
+Die Testphase enthält alle Funktionen von Pro, mit niedrigeren [Limits](#limits) bis zur ersten bezahlten Rechnung. Bis dahin bietet der Dialog **New Sandbox** im Dashboard nur Small-Sandboxes in US-Regionen an.
 
 <span id="when-trial-credits-run-out" />
 
 ### Wenn das Testguthaben aufgebraucht ist
 
-- Ist Ihr Testguthaben aufgebraucht, pausieren laufende Ressourcen, und Sie können keine neuen erstellen. Ihre Daten bleiben erhalten.
+- Ist Ihr Testguthaben aufgebraucht, pausieren laufende Ressourcen, und Sie können keine neuen erstellen. Ihre Daten bleiben erhalten; siehe [was eine Pause wegen der Abrechnung behält](#what-a-billing-pause-keeps).
 - Um weiterzumachen, wählen Sie **Start Pro now** auf der Seite „Abrechnung“ oder führen `lizard billing start-now` aus. Damit endet die Testphase, $19 werden belastet, und Ihr erster bezahlter Monat beginnt mit $19 Guthaben. Pausierte Apps und Datenbanken starten wieder, sobald die Zahlung durch ist.
 
 Nicht genutztes Testguthaben endet mit der Testphase. Es geht nicht in den bezahlten Monat über.
@@ -102,7 +102,7 @@ Schlägt eine Belastung fehl, ob die monatlichen $19 oder eine Belastung für Me
 
 - Ab diesem Moment können Sie keine neuen Ressourcen erstellen.
 - Laufende Ressourcen laufen noch 72 Stunden weiter und pausieren dann.
-- Pausierte Ressourcen behalten ihre Daten.
+- Pausierte Ressourcen behalten ihre Daten; siehe [was eine Pause wegen der Abrechnung behält](#what-a-billing-pause-keeps).
 
 Bezahlen Sie die offene Rechnung auf der Seite „Abrechnung“. Sobald sie bezahlt ist, hebt Lizard die Sperre auf und startet pausierte Apps und Datenbanken wieder. Pausierte Sandboxes setzen Sie selbst fort. Stripe versucht eine fehlgeschlagene Belastung erneut; schlägt auch der letzte Versuch fehl, endet Pro.
 
@@ -114,7 +114,13 @@ Sie können jederzeit kündigen: auf der Seite „Abrechnung“, im Kundenportal
 
 Bis zum Enddatum können Sie die Kündigung auf der Seite „Abrechnung“ oder mit `lizard billing resume` zurücknehmen.
 
-Endet Pro, können Sie keine Ressourcen mehr erstellen, und laufende pausieren. Ihre Daten bleiben erhalten. Um sie wieder zu nutzen, starten Sie Pro auf der Seite „Abrechnung“. Eine zweite Testphase gibt es nicht, daher beginnt Pro sofort für $19.
+Endet Pro, können Sie keine Ressourcen mehr erstellen, und laufende pausieren. Ihre Daten bleiben erhalten, wie unten beschrieben. Um sie wieder zu nutzen, starten Sie Pro auf der Seite „Abrechnung“. Eine zweite Testphase gibt es nicht, daher beginnt Pro sofort für $19.
+
+<span id="what-a-billing-pause-keeps" />
+
+## Was eine Pause wegen der Abrechnung behält
+
+Apps und Datenbanken behalten ihre Daten, solange sie pausiert sind. Eine laufende Sandbox wird mit ihren Dateien und ihrem Arbeitsspeicher pausiert. Eine Sandbox, die sich in dem Moment nicht pausieren lässt, oder eine abgestürzte Sandbox wird mit ihren Dateien gelöscht. Bewahren Sie wichtige Dateien auf einem [Persistent Volume](/sandboxes/volumes) auf.
 
 <span id="enterprise" />
 
@@ -126,6 +132,6 @@ Enterprise-Konten zahlen pay as you go und erhalten jeden Monat eine Rechnung f�
 
 ## Inaktive Apps und gespeicherte Daten
 
-Eine App kann auch ohne Anfragen Arbeitsspeicher und CPU nutzen. Stoppen Sie die App, um die Rechennutzung zu beenden. Für Persistent Volumes und Managed Object Storage zahlen Sie, solange Sie Daten darin behalten, auch wenn die App gestoppt ist.
+Eine App kann auch ohne Anfragen Arbeitsspeicher und CPU nutzen. [Pausieren](/cli/pause) Sie die App, um die Rechennutzung zu beenden, oder lassen Sie sie im Leerlauf [schlafen](/cli/sleep), damit sie bei der nächsten Anfrage aufwacht. Für Persistent Volumes und Managed Object Storage zahlen Sie, solange Sie Daten darin behalten, auch wenn die App pausiert ist.
 
 Lesen Sie [Speicher und Wiederherstellung](/platform/storage-and-recovery), bevor Sie Daten löschen. Unter [Metriken](/observability/metrics) vergleichen Sie konfigurierte Limits mit der gemessenen Nutzung.

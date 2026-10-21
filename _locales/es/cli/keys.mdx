@@ -21,7 +21,7 @@ Las claves de API empiezan por `liz_`. Usa una allí donde no puedas iniciar ses
 - `LIZARD_TOKEN` o `LIZARD_API_KEY` para la CLI en CI
 - `lizard login --token liz_…` en una máquina
 - `LIZARD_API_KEY` para [Lizard SDK](/sandboxes/sdk-reference)
-- `lizard sandbox create --with-token liz_…` para usar `lizard` dentro de un sandbox
+- `lizard sandbox create --with-token liz_…` para iniciar sesión con `lizard` dentro de un sandbox; consulta [claves en un sandbox](#sign-in-lizard-inside-a-sandbox)
 
 <span id="subcommands" />
 
@@ -36,11 +36,19 @@ Crea una clave y la muestra una sola vez. Cópiala en ese momento; Lizard no vue
 | `-p, --project <id>` | Limitar la clave a este proyecto (nombre, slug o ID) |
 | `-w, --workspace <id>` | Limitar la clave a este espacio de trabajo (nombre, slug o ID) |
 
-Una clave con ámbito no puede ver la facturación ni los ajustes de la cuenta.
+Una clave con ámbito solo funciona dentro de sus proyectos o espacios de trabajo. No puede:
+
+- ver la facturación, el plan, las tarjetas ni el uso de toda la cuenta
+- crear, listar ni eliminar claves de API, así que `lizard keys` falla con ella
+- crear un espacio de trabajo, renombrar o eliminar el suyo, ni cambiar los límites o los precios de reventa del espacio de trabajo
+- ver ni gestionar los miembros de espacios de trabajo o proyectos
+- apuntar un servicio a un repositorio privado de GitHub, salvo que una app de su ámbito ya compile desde él
+
+Con una clave con ámbito, [`lizard whoami`](/cli/whoami) muestra los ámbitos de la clave, no la cuenta que hay detrás. Si el propietario del espacio de trabajo fijó [precios de reventa](/cli/workspace#lizard-workspace-resale-pricing-name-or-id), la clave ve esos precios.
 
 ### `lizard keys list`
 
-Lista tus claves con una vista previa corta, el ámbito, la fecha de creación y el último uso (alias `ls`).
+Lista tus claves con una vista previa corta, el ámbito, la fecha de creación y el último uso (alias `ls`). La vista previa no es el inicio de la clave, así que identifica las claves por nombre o ID.
 
 ### `lizard keys rm <name-or-id>`
 
@@ -64,14 +72,15 @@ lizard keys create github-actions --project my-project
 
 Guarda la clave que se muestra como secreto de CI con el nombre `LIZARD_TOKEN`.
 
-<span id="create-a-key-for-a-sandbox" />
+<span id="sign-in-lizard-inside-a-sandbox" />
 
-### Crear una clave para un sandbox
+### Iniciar sesión con `lizard` dentro de un sandbox
 
 ```bash
-lizard keys create sandbox-agent --workspace my-team
 lizard sandbox create --with-token liz_xxx
 ```
+
+El sandbox recibe una clave nueva propia, limitada al proyecto del sandbox y que se elimina con él. Aparece en `lizard keys list` como `sandbox-session:<sandbox-id>`. La clave `liz_` que pasas solo autoriza la solicitud y nunca entra en el sandbox. Con `--with-token` sin valor, la CLI usa la clave con la que iniciaste sesión, que debe ser una clave `liz_`.
 
 <span id="delete-a-key" />
 
@@ -87,4 +96,4 @@ lizard keys rm github-actions --yes
 
 - [lizard login](/cli/login) — iniciar sesión con una clave en una máquina
 - [JSON y automatización](/cli/json) — usar la CLI desde CI
-- [lizard sandbox](/cli/sandbox) — `--with-token` instala una clave en un sandbox
+- [lizard sandbox](/cli/sandbox) — `--with-token` inicia sesión con `lizard` dentro de un sandbox con una clave propia

@@ -4,7 +4,9 @@ description: "lizard status shows which workspace, project, and service the curr
 
 # lizard status
 
-Show the linked workspace, project, and service for the current directory.
+Show the linked workspace, project, and service for the current directory. It needs no sign-in.
+
+In an unlinked folder it prints `Not linked`. Commands there use your account's default project, and `lizard up` links the folder to it.
 
 ## Usage
 
@@ -20,8 +22,16 @@ lizard status
 lizard status
 ```
 
+### Read the link from a script
+
+```bash
+lizard status --json
+```
+
+A linked folder gives `cwd`, `linked: true`, `workspace`, `workspaceId`, `project`, `projectId`, `service` and `serviceId`. An unlinked one gives `{"cwd": "…", "linked": false}`.
+
 ## See also
 
 - [lizard init](/cli/init) — create or select a project and link it to the current directory
 - [lizard link](/cli/link) — associate the current directory with an existing project
-- [lizard whoami](/cli/whoami) — show the current user, active workspace, and linked project
+- [lizard whoami](/cli/whoami) — show the current user and linked project

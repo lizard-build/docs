@@ -1,0 +1,116 @@
+---
+description: "lizard sleep (alias serverless) permite que una app, Managed Postgres o Managed Redis duerma en reposo y despierte con la siguiente solicitud en un segundo aproximadamente, con su memoria guardada."
+---
+
+# lizard sleep
+
+Permite que un servicio duerma cuando no recibe tráfico y despierte con la siguiente solicitud (alias `lizard serverless`). Duerme con su memoria guardada, así que despierta donde lo dejó, normalmente en un segundo aproximadamente.
+
+<span id="usage" />
+
+## Uso
+
+```bash
+lizard sleep [service] [flags]
+```
+
+Sin `--on` ni `--off`, `sleep` muestra el ajuste y cuántas veces ha dormido y despertado el servicio. Sin el argumento `service`, usa el servicio vinculado al directorio. En el panel, el mismo ajuste es el interruptor **Serverless** en los ajustes del servicio.
+
+<span id="flags" />
+
+## Banderas
+
+| Bandera | Descripción |
+|------|-------------|
+| `-s, --service <name>` | Nombre o ID del servicio (igual que el argumento `service`) |
+| `-p, --project <id>` | Nombre, slug o ID del proyecto |
+| `--on` | Dormir en reposo. El servicio se reinicia una vez para aplicarlo |
+| `--off` | Siempre encendido. Un servicio dormido despierta |
+| `--idle <minutes>` | Minutos sin tráfico antes de dormir, de `5` a `1440`. `--on` sin esta bandera fija `10`. Sola, cambia el tiempo de reposo de un servicio que ya duerme |
+
+<span id="how-it-works" />
+
+## Cómo funciona
+
+Tras el tiempo de reposo sin tráfico, Lizard guarda la memoria y los procesos del servicio y detiene su contenedor. La primera solicitud HTTP a una app, o la primera conexión de un cliente a una base de datos, lo despierta: Lizard restaura el estado guardado, normalmente en un segundo aproximadamente, y después pasa la solicitud. Si el estado guardado no se puede restaurar, el servicio arranca de nuevo, lo que tarda lo mismo que un arranque normal.
+
+Un servicio solo duerme cuando no hay nada conectado:
+
+- Una app duerme cuando no ha recibido solicitudes durante el tiempo de reposo y no tiene conexiones abiertas. Un WebSocket abierto la mantiene despierta.
+- Una base de datos duerme cuando ningún cliente ha estado conectado durante el tiempo de reposo. Un pool de conexiones que mantiene conexiones abiertas la mantiene despierta.
+
+Un servicio [en pausa](/cli/pause) no duerme ni despierta.
+
+<span id="which-services-can-sleep" />
+
+## Qué servicios pueden dormir
+
+- Apps con una réplica y un puerto. Los workers (puerto `0`) y las apps con más de una réplica no pueden dormir.
+- Managed Postgres 14 o posterior, y Managed Redis.
+
+Una app en un runtime antiguo necesita primero un redespliegue; el comando te avisa. Cualquier miembro del proyecto puede cambiar el ajuste.
+
+<span id="billing" />
+
+## Facturación
+
+Mientras un servicio duerme, no usa CPU y casi no usa memoria, así que sus cargos de cómputo casi se detienen hasta que despierta. Los datos que conserva pueden seguir facturándose como almacenamiento; consulta [Facturación](/platform/billing).
+
+<span id="json-output" />
+
+## Salida JSON
+
+Con `--json`, `sleep` imprime `id`, `name`, `kind` (`app` o `addon`), `enabled`, `idleMinutes`, `sleeps`, `wakes`, `lastSleptAt` y `lastWokeAt` (tiempo Unix en milisegundos, o `null`) y `lastError`. Después de `--on`, `--off` o `--idle`, `restarted` indica si el servicio se reinició para aplicar el cambio.
+
+<span id="examples" />
+
+## Ejemplos
+
+<span id="show-the-setting" />
+
+### Mostrar el ajuste
+
+```bash
+lizard sleep api
+```
+
+<span id="sleep-after-30-idle-minutes" />
+
+### Dormir tras 30 minutos de reposo
+
+```bash
+lizard sleep api --on --idle 30
+```
+
+<span id="let-a-database-sleep" />
+
+### Dejar que una base de datos duerma
+
+```bash
+lizard sleep --service my-db --on
+```
+
+<span id="change-the-idle-time" />
+
+### Cambiar el tiempo de reposo
+
+```bash
+lizard sleep api --idle 60
+```
+
+<span id="keep-a-service-always-on" />
+
+### Mantener un servicio siempre encendido
+
+```bash
+lizard sleep api --off
+```
+
+<span id="see-also" />
+
+## Véase también
+
+- [lizard pause](/cli/pause) — detener un servicio hasta que lo reanudes
+- [lizard scale](/cli/scale) — réplicas, CPU y memoria
+- [Managed Postgres](/addons/postgres) y [Managed Redis](/addons/redis)
+- [Facturación](/platform/billing) — tarifas de cómputo y almacenamiento

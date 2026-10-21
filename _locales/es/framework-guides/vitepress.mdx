@@ -68,7 +68,7 @@ Incluye la configuración de VitePress, Markdown, recursos fuente, el manifiesto
 
 ## Comprobar rutas limpias y estado HTTP
 
-Las compilaciones nuevas de VitePress resuelven las rutas sin extensión a sus archivos `.html` generados y devuelven HTTP 404 para URLs inexistentes. Mantén las anulaciones de comandos sin configurar para usar esta ruta de detección. No se necesita un Dockerfile personalizado para la salida estándar. Consulta [rutas estáticas y 404](/framework-guides/static-routing) para el enrutamiento personalizado.
+Las compilaciones nuevas de VitePress resuelven las rutas sin extensión a sus archivos `.html` generados y devuelven HTTP 404 para URLs inexistentes, con la página de error predeterminada de nginx en lugar del `404.html` generado. Mantén las anulaciones de comandos sin configurar para usar esta ruta de detección. No se necesita un Dockerfile personalizado para la salida estándar. Consulta [rutas estáticas y 404](/framework-guides/static-routing) para el enrutamiento personalizado o tu propia página 404.
 
 Comprueba directamente una URL limpia y recárgala. Solicita una ruta que no exista y confirma HTTP 404. Si una imagen anterior sirve la página de inicio para rutas inexistentes, vuelve a compilar el servicio para aplicar las reglas de enrutamiento actuales.
 

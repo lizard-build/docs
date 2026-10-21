@@ -9,7 +9,7 @@ description: "Da a un puerto de un sandbox de Lizard una URL de vista previa HTT
 
 Una URL de vista previa da una dirección HTTPS privada a un puerto dentro de un sandbox de Lizard (lizard.build). Inicia un servidor que escuche en `0.0.0.0` y luego llama a `sandbox.exposePort(3000)` (Python: `expose_port`) o ejecuta `lizard sandbox expose <id> 3000`. Obtienes `https://<sandbox-id>-3000.sandbox.<region>.onlizard.com/?lizard_token=…`; una solicitud sin el token de acceso del sandbox recibe HTTP 401.
 
-**Estado de las pruebas:** comprobamos esta página el 2026-10-12 con el código fuente de Lizard SDK, Lizard CLI 4.0.42 y el router de sandboxes. No hicimos una prueba en vivo nueva para ella.
+**Estado de las pruebas:** comprobamos esta página el 2026-10-12 con el código fuente de Lizard SDK, Lizard CLI 4.0.42 y el router de sandboxes. La respuesta 502 y la cabecera `Host` que recibe tu servidor salen de un sandbox real el 2026-10-20.
 
 <span id="from-the-cli" />
 
@@ -69,7 +69,8 @@ print(res.status_code)
 - **Tres formas de enviarlo.** El parámetro de consulta `lizard_token`, la cabecera `X-Lizard-Access-Token` o la cookie `lizard_access`.
 - **Los navegadores reciben una cookie.** Cuando un navegador abre una URL con `?lizard_token=`, Lizard fija la cookie `lizard_access` para ese hostname (HttpOnly, Secure, SameSite=None, Partitioned, 30 días) y redirige a la misma dirección sin el token. Desde ese momento, los scripts de la página, las llamadas a la API y los WebSockets llevan la cookie, y el token no queda en el historial ni en las cabeceras Referer. La cookie también funciona cuando otro sitio inserta la página en un iframe.
 - **Un hostname por puerto.** Cada puerto tiene su propio hostname y su propia cookie, así que abre una vez la URL completa de cada puerto.
-- **Tu servidor nunca ve el token.** Lizard lo quita de la consulta, la cabecera y la cookie antes de reenviar la solicitud. La solicitud conserva su cabecera `Host` original.
+- **Tu servidor nunca ve el token.** Lizard lo quita de la consulta, la cabecera y la cookie antes de reenviar la solicitud.
+- **Tu servidor ve un `Host` interno.** La solicitud reenviada lleva un nombre de host interno, no el de la URL de vista previa. Construye las URLs absolutas a partir de la URL de vista previa, no de `Host`.
 - **Los WebSockets funcionan.** Las solicitudes de upgrade pasan, así que funcionan los servidores de desarrollo con recarga en caliente y las interfaces de terminal.
 
 Trata una URL de vista previa como una contraseña: quien la tenga puede usar todos los puertos expuestos de ese sandbox.
@@ -93,7 +94,7 @@ La URL funciona mientras el sandbox está en marcha y deja de funcionar cuando s
 | 401 | `This sandbox port is private (missing or wrong access token)` | Abre la URL completa que muestra `expose` o envía `X-Lizard-Access-Token`. |
 | 403 | `Port 3000 is not published for sandbox "…". Published: …` | Ejecuta `lizard sandbox expose` o `exposePort` para ese puerto. |
 | 404 | `No running sandbox "…"` | El sandbox no está en marcha. Revisa `lizard sandbox list`. |
-| 502 | `Sandbox is not listening on port 3000` | Inicia el servidor y haz que escuche en `0.0.0.0`, no en `127.0.0.1`. |
+| 502 | JSON con `"message": "The sandbox is running but port is not open"` | Inicia el servidor y haz que escuche en `0.0.0.0`, no en `127.0.0.1`. |
 
 <span id="dev-servers" />
 
@@ -105,17 +106,17 @@ La mayoría de los servidores de desarrollo escuchan en `127.0.0.1` salvo que le
 npm run dev -- --host 0.0.0.0 --port 5173
 ```
 
-Vite además comprueba la cabecera `Host` y responde `Blocked request. This host (…) is not allowed.` a los hosts que no conoce. Permite los hostnames del sandbox en `vite.config.js`:
+Vite además comprueba la cabecera `Host` y responde `Blocked request. This host (…) is not allowed.` a los hosts que no conoce. Tu servidor recibe un nombre de host interno, así que una lista de nombres `.onlizard.com` no sirve. Permite todos los hosts en `vite.config.js`:
 
 ```js
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  server: { allowedHosts: ['.onlizard.com'] },
+  server: { allowedHosts: true },
 });
 ```
 
-Un punto al principio permite todos los subdominios. Después, expón `5173`.
+El token de acceso de la URL de vista previa sigue protegiendo el puerto. Después, expón `5173`.
 
 <span id="related" />
 

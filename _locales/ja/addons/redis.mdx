@@ -28,7 +28,7 @@ lizard add redis
 | `REDIS_URL` | パブリックエンドポイント経由の完全な接続文字列 (`redis://…`) |
 | `REDIS_PRIVATE_URL` | プロジェクトのプライベートネットワーク経由の接続文字列 (`<name>.lizard.internal:6379`) |
 
-どちらの文字列も `redis://default:<password>@<host>:<port>` という形式です。プライベートな文字列は、同じプロジェクト内のサービスからのみ使えます。[プライベートネットワーク](/networking#private-networking) を参照してください。
+どちらの文字列も `redis://default:<password>@<host>:<port>` という形式です。プライベートな文字列は、同じプロジェクトかつ同じリージョンのサービスからのみ使えます。[プライベートネットワーク](/networking#private-networking) を参照してください。別のリージョンのサービスは `REDIS_URL` を使う必要があります。プライベート URL を使わせるには、`lizard add redis --region <code>` でそのサービスのリージョンに Redis を作成します。`<name>` はアドオンがプライベートアドレスを得たときの名前 (最初のものは `redis`) で、名前を変更しても変わりません。
 
 <span id="connect-a-service" />
 
@@ -39,7 +39,7 @@ lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-参照はデプロイ時に解決されます。利用側のサービスは、次のデプロイでアドオンの現在の値を取得します。プロジェクト外のクライアントには `REDIS_URL` を使ってください。プロジェクト内のすべてのサービスには、アドオンのパブリックな `REDIS_URL` も最も低い優先度で渡されます。明示的な参照はこれを上書きします。
+参照はデプロイ時に解決されます。利用側のサービスは、次のデプロイでアドオンの現在の値を取得します。プロジェクト外や別のリージョンのクライアントには `REDIS_URL` を使ってください。プロジェクト内のすべてのサービスには、アドオンのパブリックな `REDIS_URL` も最も低い優先度で渡されます。明示的な参照はこれを上書きします。
 
 <span id="does-managed-redis-keep-data" />
 
@@ -80,6 +80,8 @@ lizard run --service redis -- sh -c 'exec redis-cli -u "$REDIS_URL"'
 ```bash
 lizard scale --service redis --storage 4096
 ```
+
+ストレージは拡張のみ可能です。指定できるサイズは 512、1024、2048、4096、8192、16384 MB です。拡張中、Lizard は Redis を停止し、データをより大きなボリュームにコピーしてから再起動します。そのため短時間のダウンタイムが発生します。一時停止中のインスタンスは、先に [`lizard resume`](/cli/pause) で再開してください。
 
 <span id="see-also" />
 

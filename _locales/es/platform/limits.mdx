@@ -7,7 +7,7 @@ description: "Límites de réplicas de apps, tamaños y precios por hora de los 
 
 # Límites
 
-En Lizard (lizard.build), una app ejecuta hasta 5 réplicas por servicio tras la primera factura pagada de Pro, y 1 durante la prueba. Pro ejecuta hasta 100 sandboxes a la vez e inicia hasta 24 por minuto; la prueba permite 5 a la vez. Los tamaños de sandbox van de Small (2 vCPU / 4 GB) a Large (8 vCPU / 16 GB), y el tráfico de salida de los sandboxes está incluido hasta 2 TB por cuenta en un periodo móvil de 30 días. Los límites dependen del recurso, el plan y la cuenta: una configuración por réplica no es el total disponible para un servicio o una cuenta. Consulta tu plan actual y el resultado de la solicitud de creación o escalado antes de dimensionar una carga de trabajo.
+En Lizard (lizard.build), una app ejecuta hasta 5 réplicas por servicio tras la primera factura pagada de Pro, y 1 durante la prueba. Pro ejecuta hasta 100 sandboxes a la vez e inicia hasta 24 por minuto; la prueba permite 5 a la vez. Los tamaños de sandbox van de Small (2 vCPU / 4 GB) a Large (8 vCPU / 16 GB), y el tráfico de salida de los sandboxes está incluido hasta 2 TB por cuenta en un periodo móvil de 30 días. El propietario de un espacio de trabajo también puede fijar [límites del espacio de trabajo](#workspace-limits) para uno solo. Los límites dependen del recurso, el plan y la cuenta: una configuración por réplica no es el total disponible para un servicio o una cuenta. Consulta tu plan actual y el resultado de la solicitud de creación o escalado antes de dimensionar una carga de trabajo.
 
 <span id="applications" />
 
@@ -47,12 +47,13 @@ Estos límites fijan cuántos sandboxes ejecuta una cuenta a la vez y con qué r
 |---|---|---|---|---|
 | Prueba de Pro | 5 | 6 | 30 | 100 |
 | Pro | 100 | 24 | 120 | 400 |
-| Enterprise | Personalizado | Personalizado | Personalizado | Personalizado |
+| Enterprise | 50 por espacio de trabajo | 120 por usuario | Sin límite | Sin límite |
 
 - Los límites se cuentan por propietario de la cuenta, en todos sus espacios de trabajo. Un segundo espacio de trabajo no añade un segundo cupo.
-- En ejecución significa ejecutándose o reanudándose. Un sandbox en pausa no cuenta; reanudarlo necesita un hueco libre.
+- En Pro y en la prueba, en ejecución significa ejecutándose o reanudándose. Un sandbox en pausa no cuenta; reanudarlo necesita un hueco libre.
 - Un inicio es un sandbox nuevo. Una reanudación no es un inicio. Una creación que falla por parte de Lizard no cuenta.
 - Al superar un límite, la creación y la reanudación devuelven HTTP 429 con `code` igual a `SANDBOX_LIMIT_REACHED` (en ejecución) o `SANDBOX_RATE_LIMITED` (inicios). Un rechazo por ritmo de inicios incluye la cabecera `Retry-After`.
+- Enterprise no tiene límite para toda la cuenta. Por defecto, cada espacio de trabajo admite hasta 50 sandboxes, y cuentan todos: en ejecución, en pausa y caídos; lo subimos por espacio de trabajo si lo pides. Por encima, la creación y fork devuelven HTTP 429 con `code` igual a `SANDBOX_LIMIT_REACHED`. Un usuario puede crear hasta 120 sandboxes por minuto en cada región.
 - El panel muestra, junto a **New Sandbox**, cuántos sandboxes se están ejecutando frente a tu límite. Para más de 100 a la vez, contáctanos sobre Enterprise.
 
 <span id="sandbox-egress" />
@@ -67,7 +68,7 @@ El tráfico saliente de los sandboxes no tiene un cargo separado por GB. Se incl
 
 | Ajuste | API de creación actual |
 |---|---|
-| Plantillas | `base`, `interpreter`, `codex`, `desktop`, `opencode`, `pi`, `prime`, `claude` |
+| Plantillas | `base`, `interpreter`, `codex`, `desktop`, `opencode`, `pi`, `prime`, `claude`; `desktop-camoufox` solo en US East |
 | Duración predeterminada de la API directa | `timeoutMs: 0`, sin vencimiento |
 | Duración predeterminada del Lizard SDK | 300000 ms, cinco minutos |
 | Rango de duración explícita | Milisegundos enteros de 0 a 2147483647 |
@@ -75,6 +76,26 @@ El tráfico saliente de los sandboxes no tiene un cargo separado por GB. Se incl
 | Conexión de un volumen persistente | Un sandbox a la vez, en el nodo del volumen |
 
 La CLI también usa por defecto cinco minutos; el panel no fija vencimiento por defecto. Los comandos no reinician el plazo. Para la pausa, los snapshots, fork y lo que conserva cada uno, consulta el [ciclo de vida](/sandboxes#lifecycle) del sandbox.
+
+<span id="workspace-limits" />
+
+## Límites del espacio de trabajo
+
+El propietario de un espacio de trabajo puede limitar uno solo, por ejemplo uno al que un cliente accede con una clave de API con ámbito. Estos límites se suman a los límites de la cuenta de arriba y se aplican a todos los que trabajan en ese espacio de trabajo.
+
+| Límite | Qué cuenta | Flag |
+|---|---|---|
+| Sandboxes | Sandboxes en ejecución o reanudándose a la vez; los que están en pausa no cuentan | `--sandboxes <n>` |
+| CPU | vCPU que usan ahora las apps y bases de datos del espacio de trabajo, según la medición | `--cpu <vcpus>` |
+| Memoria | Memoria que usan ahora las apps y bases de datos del espacio de trabajo, según la medición | `--memory <size>` |
+| Disco | Datos escritos en las bases de datos y volúmenes del espacio de trabajo | `--disk <size>` |
+
+Solo el propietario los fija, con [`lizard workspace limits`](/cli/workspace#lizard-workspace-limits-name-or-id), con sesión iniciada en el navegador o con una clave de API sin ámbito. Cualquier miembro, y cualquier clave que llegue al espacio de trabajo, puede leerlos junto con el uso actual.
+
+- Al llegar al límite de sandboxes, la creación, fork y la reanudación devuelven HTTP 429 con `code` igual a `WORKSPACE_SANDBOX_LIMIT`.
+- Mientras las apps y bases de datos usan tanta CPU o memoria como se permite, deploy, redeploy, reinicio, escalar hacia arriba, bases de datos nuevas y reanudar una app o base de datos en pausa devuelven HTTP 429 con `code` igual a `WORKSPACE_USAGE_LIMIT`. Los servicios en marcha siguen en marcha.
+- Mientras los datos llenan el límite de disco, los volúmenes nuevos, el crecimiento de volúmenes, las bases de datos nuevas y los despliegues de plantillas devuelven el mismo `WORKSPACE_USAGE_LIMIT`. Los datos ya escritos se conservan.
+- El disco `/workspace` propio de un sandbox no cuenta para el límite de disco.
 
 <span id="regions" />
 
@@ -86,4 +107,4 @@ Las regiones configuradas actualmente incluyen US East (Virginia), `us-east-1`, 
 
 ## Antes de aumentar la escala
 
-Consulta conjuntamente el plan activo, la configuración por réplica, el límite de la cuenta, el límite de conexiones de la base de datos y el crecimiento del almacenamiento. Usa [scaling](/deploy/scaling), [metrics](/observability/metrics) y [pricing](https://lizard.build/pricing) para comparar la capacidad configurada con el uso medido. Las tarifas de cada recurso están en la [página de facturación](/platform/billing#resource-rates).
+Consulta conjuntamente el plan activo, la configuración por réplica, el límite de la cuenta, los límites del espacio de trabajo, el límite de conexiones de la base de datos y el crecimiento del almacenamiento. Usa [scaling](/deploy/scaling), [metrics](/observability/metrics) y [pricing](https://lizard.build/pricing) para comparar la capacidad configurada con el uso medido. Las tarifas de cada recurso están en la [página de facturación](/platform/billing#resource-rates).

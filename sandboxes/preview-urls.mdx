@@ -7,7 +7,7 @@ description: "Give a port in a Lizard sandbox a private HTTPS preview URL with e
 
 A preview URL gives a port inside a sandbox on Lizard a private HTTPS address. Start a server that listens on `0.0.0.0`, then call `sandbox.exposePort(3000)` (Python: `expose_port`) or run `lizard sandbox expose <id> 3000`. You get `https://<sandbox-id>-3000.sandbox.<region>.onlizard.com/?lizard_token=…`; a request without the sandbox's access token gets HTTP 401.
 
-**Test status:** we checked this page against the source of Lizard SDK, Lizard CLI 4.0.42 and the sandbox router on 2026-10-12. We did not run a new live test for it.
+**Test status:** we checked this page against the source of Lizard SDK, Lizard CLI 4.0.42 and the sandbox router on 2026-10-12. The 502 answer and the `Host` header your server receives come from a live sandbox on 2026-10-20.
 
 ## From the CLI
 
@@ -61,7 +61,8 @@ print(res.status_code)
 - **Three ways to send it.** The `lizard_token` query parameter, the `X-Lizard-Access-Token` header, or the `lizard_access` cookie.
 - **Browsers get a cookie.** When a browser opens a URL with `?lizard_token=`, Lizard sets the `lizard_access` cookie for that hostname (HttpOnly, Secure, SameSite=None, Partitioned, 30 days) and redirects to the same address without the token. The page's scripts, API calls and WebSockets then carry the cookie, and the token stays out of history and Referer headers. The cookie also works when another site embeds the page in an iframe.
 - **One hostname per port.** Each port has its own hostname and its own cookie, so open each port's full URL once.
-- **Your server never sees the token.** Lizard removes it from the query, header and cookie before it forwards the request. The request keeps its original `Host` header.
+- **Your server never sees the token.** Lizard removes it from the query, header and cookie before it forwards the request.
+- **Your server sees an internal `Host`.** The forwarded request carries an internal host name, not the preview URL's host name. Build absolute URLs from the preview URL, not from `Host`.
 - **WebSockets work.** Upgrade requests pass through, so dev servers with hot reload and terminal UIs work.
 
 Treat a preview URL like a password: whoever has it can use every exposed port of that sandbox.
@@ -81,7 +82,7 @@ The URL works only while the sandbox runs. The platform reserves port `49983`; y
 | 401 | `This sandbox port is private (missing or wrong access token)` | Open the full URL from `expose`, or send `X-Lizard-Access-Token`. |
 | 403 | `Port 3000 is not published for sandbox "…". Published: …` | Run `lizard sandbox expose` or `exposePort` for that port. |
 | 404 | `No running sandbox "…"` | The sandbox is not running. Check `lizard sandbox list`. |
-| 502 | `Sandbox is not listening on port 3000` | Start the server, and bind it to `0.0.0.0`, not `127.0.0.1`. |
+| 502 | JSON with `"message": "The sandbox is running but port is not open"` | Start the server, and bind it to `0.0.0.0`, not `127.0.0.1`. |
 
 ## Dev servers
 
@@ -91,17 +92,17 @@ Most dev servers listen on `127.0.0.1` unless you tell them otherwise. Pass the 
 npm run dev -- --host 0.0.0.0 --port 5173
 ```
 
-Vite also checks the `Host` header and answers `Blocked request. This host (…) is not allowed.` for hosts it does not know. Allow the sandbox hostnames in `vite.config.js`:
+Vite also checks the `Host` header and answers `Blocked request. This host (…) is not allowed.` for hosts it does not know. Your server receives an internal host name, so a list of `.onlizard.com` names does not help. Allow every host in `vite.config.js`:
 
 ```js
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  server: { allowedHosts: ['.onlizard.com'] },
+  server: { allowedHosts: true },
 });
 ```
 
-A leading dot allows every subdomain. Then expose `5173`.
+The preview URL's access token still guards the port. Then expose `5173`.
 
 ## Related
 

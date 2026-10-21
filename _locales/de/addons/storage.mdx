@@ -7,7 +7,7 @@ description: "S3-kompatibler Objektspeicher für Uploads, Assets und Backups. Mi
 
 # Managed Object Storage
 
-Managed Object Storage auf Lizard (lizard.build) ist S3-kompatibler Speicher für Uploads, Assets und Backups. `lizard add s3` erstellt ihn mit einem **privaten Bucket namens `default`** und fünf Variablen, von `S3_ENDPOINT` bis `S3_REGION`, die jedes AWS SDK mit Path-Style-Adressierung verwenden kann. Jedes Konto kann bis zu 16 GiB speichern, und Sie zahlen für die gespeicherten Bytes. Um Dateien ohne Authentifizierung bereitzustellen, machen Sie den Bucket im S3-Browser des Dashboards öffentlich. Einen Überblick und die Preise finden Sie auf der [Seite zu Managed Object Storage](https://lizard.build/object-storage).
+Managed Object Storage auf Lizard (lizard.build) ist S3-kompatibler Speicher für Uploads, Assets und Backups. `lizard add s3` erstellt ihn mit einem **privaten Bucket namens `default`** und fünf Variablen, von `S3_ENDPOINT` bis `S3_REGION`, die jedes AWS SDK mit Path-Style-Adressierung verwenden kann. Jedes Managed Object Storage-Add-on kann bis zu 16 GiB speichern, und Sie zahlen für die gespeicherten Bytes. Um Dateien ohne Authentifizierung bereitzustellen, machen Sie den Bucket im S3-Browser des Dashboards öffentlich. Einen Überblick und die Preise finden Sie auf der [Seite zu Managed Object Storage](https://lizard.build/object-storage).
 
 <span id="provision" />
 
@@ -88,11 +88,21 @@ Sobald Sie den Bucket `default` öffentlich machen, werden seine Objekte bereitg
 <dashboard-host>/api/s3/<addonId>/public/default/<key>
 ```
 
+Der S3-Browser hat für jeden Bucket zwei Schalter. **Öffentliche Ansicht** (Public view) lässt jeden die Objekte lesen. **Öffentliches Bearbeiten** (Public edit) lässt jeden Objekte hochladen und löschen. Schalten Sie es also nur für einen Bucket ein, den jeder ändern darf.
+
+Um ein einzelnes Objekt aus einem privaten Bucket für eine Weile zu teilen, geben Sie einen temporären Link aus. Er funktioniert ohne Zugangsdaten, bis er abläuft (standardmäßig nach einer Stunde, höchstens nach 7 Tagen):
+
+```bash
+lizard s3 url report.pdf --expires 86400
+```
+
+Presigned URLs aus einem AWS SDK funktionieren ebenfalls.
+
 <span id="browse-objects" />
 
 ## Objekte durchsuchen
 
-Öffnen Sie den **S3-Browser** im Dashboard (`lizard open`), um Objekte hochzuladen und zu löschen, Ordner zu erstellen und Buckets öffentlich oder privat zu machen. In der CLI lädt `lizard s3 upload <file>` eine Datei hoch und `lizard s3 list` listet Objekte auf; siehe [`lizard s3`](/cli/s3).
+Öffnen Sie den **S3-Browser** im Dashboard (`lizard open`), um Objekte hochzuladen und zu löschen, Ordner zu erstellen und Buckets öffentlich oder privat zu machen. In der CLI lädt `lizard s3 upload <file>` eine Datei hoch, `lizard s3 list` listet Objekte auf und `lizard s3 url <key>` gibt einen temporären Link aus; siehe [`lizard s3`](/cli/s3).
 
 > **Bucket-ACL-Änderungen** (einen Bucket öffentlich/privat machen) sind in der CLI noch nicht verfügbar — verwalten Sie sie im Dashboard.
 
@@ -100,7 +110,7 @@ Sobald Sie den Bucket `default` öffentlich machen, werden seine Objekte bereitg
 
 ## Speicherlimit
 
-Jedes Konto kann über seine Managed Object Storage-Add-ons hinweg bis zu 16 GiB an Objekten speichern. Sie zahlen für gespeicherte Bytes, nicht für eine reservierte Größe; `lizard scale --storage` ändert dieses Limit nicht.
+Jedes Managed Object Storage-Add-on kann bis zu 16 GiB an Objekten speichern, zusammen für seinen Bucket `default` und alle weiteren, die Sie anlegen. Ein weiteres Add-on (`lizard add s3`) hat eigene 16 GiB. Sie zahlen für gespeicherte Bytes, nicht für eine reservierte Größe; `lizard scale --storage` ändert dieses Limit nicht.
 
 <span id="see-also" />
 

@@ -7,9 +7,9 @@ description: "Instala y actualiza Lizard CLI, autentícate y consulta las bander
 
 # Referencia de CLI
 
-Lizard CLI (`lizard`) despliega y gestiona apps, bases de datos y Sandboxes en Lizard (lizard.build) desde una terminal, un job de CI o un agente de programación. Esta página explica la instalación, las banderas globales, los códigos de salida y el descubrimiento en tiempo de ejecución. Cada comando tiene su propia página de referencia en la barra lateral: consulta [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets) y el resto. Para una visión general de lo que hace la CLI, consulta la [página de Lizard CLI](https://lizard.build/cli).
+Lizard CLI (`lizard`) despliega y gestiona apps, bases de datos y Sandboxes en Lizard (lizard.build) desde una terminal, un job de CI o un agente de programación. Esta página explica la instalación, las banderas globales, los códigos de salida y el descubrimiento en tiempo de ejecución. Cada comando tiene su propia página de referencia en la barra lateral: consulta [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets), [`lizard pause` y `lizard resume`](/cli/pause), [`lizard sleep`](/cli/sleep) y el resto. Para una visión general de lo que hace la CLI, consulta la [página de Lizard CLI](https://lizard.build/cli).
 
-> Referencia escrita para Lizard CLI **v4.0.34**. Ejecuta `lizard <cmd> --help --json` para obtener el esquema exacto de cualquier comando, correspondiente a tu versión.
+> Referencia escrita para Lizard CLI **v4.0.65**. Ejecuta `lizard <cmd> --help --json` para obtener el esquema exacto de cualquier comando, correspondiente a tu versión.
 
 <span id="install--upgrade" />
 
@@ -26,7 +26,7 @@ Consulta [`lizard upgrade`](/cli/upgrade) para ver las banderas.
 
 En Windows, ejecuta `irm https://lizard.build/api/cli/install.ps1 | iex` en PowerShell. Con Node.js puedes instalar desde npm en su lugar: `npm install -g @lizard-build/cli`.
 
-En macOS y Linux, el binario del script de instalación también se actualiza solo en segundo plano, como mucho una vez cada 6 horas. Omite la comprobación cuando `CI` o `LIZARD_NO_UPDATE=1` están definidos. El binario de Windows no se actualiza solo: vuelve a ejecutar el instalador. Una instalación de npm se actualiza a través de npm: `lizard upgrade` muestra el comando.
+En macOS y Linux, el binario del script de instalación también se actualiza solo en segundo plano, como mucho una vez cada 6 horas y solo cuando se ejecuta en una terminal interactiva. Omite la comprobación cuando `CI` o `LIZARD_NO_UPDATE=1` están definidos. Los agentes, los scripts y los jobs de CI nunca se actualizan en segundo plano, así que ejecuta `lizard upgrade` tú mismo en ellos. El binario de Windows no se actualiza solo: vuelve a ejecutar el instalador. En una instalación de npm, `lizard upgrade` ejecuta npm por ti y solo muestra el comando de npm si eso falla.
 
 Usa siempre el binario `lizard` instalado globalmente, **no** `npx`. Consulta [Quickstart](/getting-started#1-install-the-cli) para corregir errores de permisos.
 
@@ -65,9 +65,11 @@ La mayoría de los comandos también aceptan `-p, --project` y `-s, --service` p
 | `0` | éxito | continuar |
 | `1` | error genérico | lee el mensaje |
 | `2` | auth (401/403) | ejecuta `lizard login` |
-| `3` | no encontrado (404) | comprueba el nombre con `lizard ps` / `lizard project list` |
+| `3` | no encontrado (404): la API no tiene nada con ese ID | comprueba el ID con `lizard ps` / `lizard project list` |
 | `4` | tiempo de espera agotado (408/504) | reintenta |
 | `5` | cancelado por el usuario | detente |
+
+Un nombre de proyecto o servicio que no coincide con nada sale con `1`, no con `3`. `lizard run`, `lizard sandbox exec` y `lizard sandbox ssh` salen con el código del propio comando (`127` si `run` no encuentra el comando), así que un `2` de ellos puede venir de tu comando y no de la autenticación.
 
 <span id="runtime-discovery" />
 
@@ -92,8 +94,8 @@ Esto siempre refleja tu versión instalada; úsalo para consultar la sintaxis de
 
 ## Configuración y estado
 
-- La CLI almacena la autenticación y el enlace del proyecto del directorio actual en `~/.lizard/config.json`.
-- [`lizard status`](/cli/status) muestra el enlace de workspace/proyecto/servicio del cwd (no requiere autenticación). [`lizard link`](/cli/link) establece ese enlace, [`lizard unlink`](/cli/unlink) lo elimina y [`lizard project`](/cli/project) lista, crea y elimina proyectos.
+- La CLI almacena la autenticación y el enlace del proyecto de cada directorio en `~/.lizard/config.json`. Un enlace cubre ese directorio exacto, no sus subdirectorios. En un directorio sin enlace, los comandos de proyecto usan el proyecto predeterminado de tu cuenta: el proyecto más antiguo de tu workspace personal.
+- [`lizard status`](/cli/status) muestra el enlace de workspace/proyecto/servicio del cwd (no requiere autenticación). [`lizard link`](/cli/link) establece ese enlace, [`lizard unlink`](/cli/unlink) lo elimina y [`lizard project`](/cli/project) lista, crea, pausa, reanuda y elimina proyectos.
 - [`lizard config apply`](/cli/config) aplica un archivo `lizard-config.json` a un proyecto (usa `--dry-run` para previsualizar).
 - [`lizard open`](/cli/open) abre el proyecto enlazado en el panel, y [`lizard docs`](/cli/docs) abre esta documentación.
 

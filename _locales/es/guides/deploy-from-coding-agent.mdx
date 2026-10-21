@@ -58,11 +58,11 @@ Esto comprueba la sintaxis de JavaScript. Las comprobaciones de la base de datos
 lizard init --name agent-example --json
 lizard add --service api --json
 lizard add postgres --json
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api --json
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api --json
 lizard up --service api --port 3000 --json
 ```
 
-Usa el nombre real de la base de datos si no es `postgres`. Mantén la referencia entre comillas para que el shell local no la expanda. Configúrala antes del primer despliegue. Inicia sesión con `lizard login` solo si un comando indica que se requiere autenticación.
+Usa el nombre real de la base de datos si no es `postgres`. `DATABASE_PRIVATE_URL` llega a la base de datos por la red privada del proyecto y funciona desde servicios del mismo proyecto y la misma región; consulta la [cadena de conexión de Postgres](/addons/postgres#postgres-connection-string). Mantén la referencia entre comillas para que el shell local no la expanda. Configúrala antes del primer despliegue. Inicia sesión con `lizard login` solo si un comando indica que se requiere autenticación.
 
 La ruta de carga es intencional para este ejemplo copiado. Para una aplicación que ya está en GitHub, usa la siguiente sección. Una compilación fallida sale con código 1; aun así, inspecciona el evento de terminal `failed`/`deployed` y verifica la aplicación. Consulta [problemas conocidos](/platform/known-issues).
 
@@ -82,7 +82,7 @@ Usa un proyecto de prueba vinculado o crea uno con `lizard init --name YOUR_PROJ
 
 ```bash
 lizard add --repo YOUR_ORG/YOUR_REPO --name api-git --no-deploy --json
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api-git --json
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api-git --json
 ```
 
 Primero aprovisiona Managed Postgres si este proyecto no lo tiene. Esta secuencia usa el mismo ejemplo de Node.js de arriba. Para un repositorio con esa app en un subdirectorio o en otra rama, configúralo antes del despliegue:

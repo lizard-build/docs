@@ -14,14 +14,22 @@ lizard up [path] [flags]
 
 `up` packages your working tree (or `path`) as a tarball, sends it to the build nodes, and deploys it. It forces `sourceType=upload` on the target service, streams build logs over SSE, and prints the live URL when finished.
 
-If the current directory isn't linked to a project yet, `up` runs `init` first. On a TTY that's interactive; in a non-TTY (CI) environment it will **not** silently create a project — it errors and asks you to run `lizard init --name <project>` (or pass `--project <project>` to `up`), to guard against a typo spawning an empty project.
+If the folder isn't linked to a project, `up` links it to your account's default project (the oldest project in your personal workspace) and deploys there, on a TTY and in CI alike. To deploy somewhere else, run `lizard init --name <project>` first or pass `--project`.
+
+### Which service `up` deploys to
+
+1. The service you name with `--service`. If the project has no service with that name, `up` creates it.
+2. The service linked to the folder.
+3. Otherwise, a service named after the `name` in `package.json` (without the scope) or the folder. On a TTY, `up` asks for the name and offers this one.
+
+In the last case, if the project already has a service with that name, `up` deploys into it. Every `up` switches its target to upload source, so a GitHub service stops deploying on push. Pass `--service` to choose the target yourself.
 
 ## Flags
 
 | Flag | Description |
 |------|-------------|
-| `-s, --service <name>` | Target an existing service |
-| `-p, --project <id>` | Project name, slug, or ID |
+| `-s, --service <name>` | Service to deploy to (default: the linked service). If none has that name, `up` creates it |
+| `-p, --project <id>` | Project name, slug, or ID. In an unlinked folder, `up` links the folder to it and creates it if no project has that name |
 | `--build-command <cmd>` | Override the build command |
 | `--start-command <cmd>` | Override the start command |
 | `--pre-deploy-command <cmd>` | Run before the start command each time a container starts (every replica, every restart). Needs a start command; make it safe to run many times |
@@ -47,7 +55,7 @@ lizard up
 
 ### Deploy to a specific service with a custom start command and port
 
-Create the named service with `lizard add --service api` first if it does not exist.
+If `api` does not exist yet, `up` creates it.
 
 ```bash
 lizard up --service api --start-command "node server.js" --port 8080
@@ -58,11 +66,10 @@ lizard up --service api --start-command "node server.js" --port 8080
 ```bash
 export LIZARD_TOKEN=liz_xxx
 lizard init --name my-project
-lizard add --service api
-lizard up --ci --service api
+lizard up --ci --service api   # creates api on the first run
 ```
 
-Skip `lizard add` when the service already exists. A failed build or deploy exits with code `1`. With `--ci`, the exit code covers the build only, so check `lizard ps --json` before you mark the release done. `--detach` exits `0` once the upload is accepted. See [framework setup](/framework-guides#prepare-the-project).
+A failed build or deploy exits with code `1`. With `--ci`, the exit code covers the build only, so check `lizard ps --json` before you mark the release done. `--detach` exits `0` once the upload is accepted. See [framework setup](/framework-guides#prepare-the-project).
 
 ## See also
 

@@ -34,17 +34,18 @@ lizard init [flags]
 lizard init
 ```
 
+Ohne `--name` fragt `init`, welches Projekt verwendet werden soll. In einer nicht interaktiven Shell scheitert der Befehl stattdessen; übergeben Sie dort `--name`.
+
 <span id="link-explicitly-in-ci" />
 
 ### In CI explizit verknüpfen
 
-`lizard up` führt `init` für Sie in einem TTY aus, aber in einer Nicht-TTY-Umgebung (CI) gibt es einen Fehler aus, statt stillschweigend ein Projekt zu erstellen. Verknüpfen Sie es zuerst explizit:
+Ein `lizard up` in einem nicht verknüpften Verzeichnis deployt in das Standardprojekt Ihres Kontos. Um in CI in ein bestimmtes Projekt zu deployen, verknüpfen Sie es zuerst:
 
 ```bash
 export LIZARD_TOKEN=liz_xxx
 lizard init --name my-project
-lizard add --service api   # first run only; skip when the service exists
-lizard up --ci --service api
+lizard up --ci --service api   # creates api on the first run
 ```
 
 <span id="relink-a-directory-thats-already-linked" />

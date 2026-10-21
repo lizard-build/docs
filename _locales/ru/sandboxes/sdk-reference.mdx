@@ -81,8 +81,8 @@ sandbox = Sandbox.create(
 - `size` принимает `'small'`, `'medium'` или `'large'`: 2 vCPU / 4 GB, 4 vCPU / 8 GB (по умолчанию) или 8 vCPU / 16 GB; см. [размеры и цены](/platform/limits#sandbox-sizes). Для sandbox, восстановленного из снимка, `size` не действует: он работает с размером источника.
 - `timeoutMs` по умолчанию равен 300000, то есть пяти минутам. `0` отключает истечение срока. См. [ресурсы и сроки жизни](/sandboxes#resources-and-timeouts).
 - При необходимости укажите регион явно; наличие региона в каталоге не гарантирует свободные ресурсы. Не задавайте `region`, если подключаете том: sandbox запустится там, где находится том.
-- В `metadata` укажите свои метки; их возвращают `getInfo()` и `list()`.
-- `lizardToken` записывает в sandbox API-ключ `liz_`, чтобы внутри работал `lizard`. Этот ключ может прочитать всё, что работает в sandbox, поэтому передавайте ключ с доступом только к рабочему пространству.
+- В `metadata` укажите свои метки; их возвращает `getInfo()`, а `list()` — нет.
+- `lizardToken` принимает один из ваших API-ключей `liz_` и выполняет вход в `lizard` внутри sandbox. Ваш ключ только авторизует запрос: sandbox получает собственный новый ключ, который ограничен проектом sandbox и удаляется вместе с sandbox, поэтому `lizard` там может работать только с этим проектом. В шаблоне `base` нет `lizard`.
 
 <span id="methods" />
 
@@ -111,10 +111,13 @@ sandbox = Sandbox.create(
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | Задать оставшийся срок жизни, минимум 1000 мс. |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | Поставить паузу или возобновление в очередь и сразу вернуть ответ. |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | Дождаться `paused` или `running`; выбросить ошибку, если пауза не удалась. |
-| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Скопировать работающий sandbox от 1 до 10 раз вместе с памятью и процессами. |
-| `sandbox.snapshot(name, { poolSize })` | `sandbox.snapshot(name, pool_size=...)` | Сохранить память и файлы `/workspace` в приватный снимок. |
+| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Скопировать работающий sandbox от 1 до 100 раз вместе с памятью и процессами; каждая копия учитывается в лимите запущенных sandbox. |
+| `sandbox.snapshot(name, { scope })` | `sandbox.snapshot(name, scope=...)` | Сохранить память, процессы и все файлы в снимок. `scope` принимает `'workspace'` (по умолчанию), `'user'` или `'project'`. |
 | `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | Дождаться готовности снимка. |
-| `Sandbox.restore(snapshotId)` | `Sandbox.restore(snapshot_id)` | Запустить новый sandbox из снимка. |
+| `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | Запустить новый sandbox из снимка в его регионе, в любом проекте, который допускает его область. |
+| `Sandbox.snapshots(projectId)` | `Sandbox.snapshots(project_id)` | Получить список снимков, сделанных в проекте. |
+| `Sandbox.mySnapshots()` | `Sandbox.my_snapshots()` | Получить список всех снимков, которые вы сделали, во всех ваших рабочих пространствах. |
+| `Sandbox.setSnapshotScope(snapshotId, scope)` | `Sandbox.set_snapshot_scope(snapshot_id, scope)` | Изменить, где можно восстановить сделанный вами снимок. |
 | `Sandbox.deleteSnapshot(snapshotId)` | `Sandbox.delete_snapshot(snapshot_id)` | Удалить снимок; sandbox, восстановленные из него, продолжают работать. |
 | `sandbox.kill()` | `sandbox.kill()` | Остановить sandbox и отключить том. |
 
@@ -122,14 +125,14 @@ sandbox = Sandbox.create(
 
 ## Запуск команд
 
-`process.exec` (в Python: `exec_`) запускает команду и ждёт её завершения. Передайте `onStdout` или `onStderr` (в Python: `on_stdout`, `on_stderr`), чтобы получать вывод, пока команда выполняется; вызов всё равно вернёт полный результат в конце. Передайте массив argv вместо строки, чтобы обойти оболочку: так безопасно передавать недоверенный текст как аргумент.
+`process.exec` (в Python: `exec_`) запускает команду и ждёт её завершения. Передайте `onStdout` или `onStderr` (в Python: `on_stdout`, `on_stderr`), чтобы получать вывод, пока команда выполняется, по одной строке за вызов без завершающего перевода строки; вызов всё равно вернёт полный результат в конце. Передайте массив argv вместо строки, чтобы обойти оболочку: так безопасно передавать недоверенный текст как аргумент.
 
 ```ts
 const result = await sandbox.process.exec('npm test', {
   workdir: '/app',
   envs: { NODE_ENV: 'test' },
   timeoutMs: 120_000,
-  onStdout: (chunk) => process.stdout.write(chunk),
+  onStdout: (line) => console.log(line),
 });
 if (result.exitCode !== 0) throw new Error(result.stderr);
 
@@ -142,7 +145,7 @@ result = sandbox.process.exec_(
     workdir="/app",
     envs={"NODE_ENV": "test"},
     timeout_ms=120_000,
-    on_stdout=lambda chunk: print(chunk, end=""),
+    on_stdout=print,
 )
 if result.exit_code != 0:
     raise RuntimeError(result.stderr)
@@ -150,7 +153,7 @@ if result.exit_code != 0:
 sandbox.process.exec_(["grep", "-rn", "--", user_query, "/workspace"])
 ```
 
-Результат команды содержит stdout, stderr и код завершения. Ненулевой код завершения возвращается в результате; проверяйте его сами. Сбои запроса выбрасывают исключение. Таймаут команды составляет от 1 до 600 секунд. `process.exec` принимает `envs`, `workdir` и `user`; команды выполняются от `root`, если не передать `user`. Параметр `envs`, заданный при создании, доступен каждой команде.
+Результат команды содержит stdout, stderr и код завершения. Ненулевой код завершения возвращается в результате; проверяйте его сами. Сбои запроса выбрасывают исключение. `timeoutMs` (в Python: `timeout_ms`) задаёт, сколько может выполняться команда, от 1 до 600 секунд. Без него сервер останавливает команду через 150 секунд, а TypeScript SDK перестаёт ждать через 60 секунд и выбрасывает `DOMException` с именем `TimeoutError`. Передавайте `timeoutMs` для любой команды, которая может работать дольше минуты. `process.exec` принимает `envs`, `workdir` и `user`; команды выполняются от `root`, если не передать `user`. Параметр `envs`, заданный при создании, доступен каждой команде.
 
 <span id="files" />
 
@@ -200,7 +203,7 @@ sandbox.unexpose(3000)
 
 ## Пауза, снимки и fork
 
-Эти вызовы сохраняют память и запущенные процессы, а не только файлы. В [быстром старте](/sandboxes/quickstart#pause-and-resume) описано, что сохраняет каждый из них, как оплачиваются восстановленные sandbox и что может не сработать.
+Эти вызовы сохраняют память, запущенные процессы и файлы. В [быстром старте](/sandboxes/quickstart#pause-and-resume) описано, что сохраняет каждый из них, кто может восстановить снимок, как оплачиваются восстановленные sandbox и что может не сработать.
 
 ```ts
 await sandbox.pause();
@@ -279,10 +282,11 @@ sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workd
 | `AuthenticationError` | HTTP 401 или 403: неверный ключ или нет доступа. |
 | `NotFoundError` | HTTP 404: sandbox, файл или снимок не существует либо его срок истёк. |
 | `ConflictError` | HTTP 409: конфликт состояния, например fork sandbox с томом. |
-| `TimeoutError` | HTTP 408 или 504. |
+| `LimitExceededError` | HTTP 429: слишком много sandbox одновременно или слишком много запусков. `code` указывает лимит, например `SANDBOX_LIMIT_REACHED` или `SANDBOX_RATE_LIMITED`; `retryAfterS` (в Python: `retry_after_s`) указывает, когда повторить попытку. |
+| `TimeoutError` | HTTP 408 или 504. Собственное 60-секундное ожидание `process.exec` в TypeScript SDK вместо этого выбрасывает `DOMException` с именем `TimeoutError`. |
 | `LizardError` | Другие сбои API, включая неподдерживаемые операции. |
 
-Если одновременно работает слишком много sandbox или запусков слишком много, API возвращает HTTP 429; см. [лимиты аккаунта](/platform/limits#sandbox-account-limits).
+Значения лимитов, после которых API возвращает HTTP 429, см. в разделе [лимиты аккаунта](/platform/limits#sandbox-account-limits).
 
 ## HTTP API
 

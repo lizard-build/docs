@@ -1,10 +1,10 @@
 ---
-description: "lizard whoami imprime la cuenta con la que has iniciado sesión, tu espacio de trabajo activo y el proyecto vinculado a este directorio."
+description: "lizard whoami imprime la cuenta con la que has iniciado sesión y el proyecto vinculado a este directorio, o los proyectos y espacios de trabajo de una clave de API con ámbito."
 ---
 
 # lizard whoami
 
-Muestra el usuario actual, el espacio de trabajo activo y el proyecto vinculado.
+Muestra la cuenta con la que has iniciado sesión y, en una carpeta vinculada, el proyecto vinculado y su espacio de trabajo.
 
 <span id="usage" />
 
@@ -13,6 +13,17 @@ Muestra el usuario actual, el espacio de trabajo activo y el proyecto vinculado.
 ```bash
 lizard whoami
 ```
+
+<span id="what-it-shows" />
+
+## Qué muestra
+
+- Con sesión iniciada en una cuenta: tu nombre de usuario, si la GitHub App está conectada y el proyecto vinculado con su espacio de trabajo entre paréntesis. En una carpeta sin vincular muestra `Project: none`; los comandos que ejecutes ahí usan el proyecto predeterminado de tu cuenta.
+- Con una clave de API con ámbito: `Scoped API key (account details are not visible)` y después cada proyecto o espacio de trabajo al que llega la clave. Nunca muestra la cuenta que hay detrás de la clave.
+
+`whoami` no muestra un espacio de trabajo activo. Para listar tus espacios de trabajo, ejecuta [`lizard workspace list`](/cli/workspace).
+
+Con `--json`, o cuando la salida no es una terminal, imprime los campos de tu cuenta más `project`. Para una clave con ámbito imprime `{ "scoped": true, "scopes": [...], "project": ... }`.
 
 <span id="examples" />
 
@@ -33,3 +44,4 @@ lizard whoami
 - [lizard login](/cli/login) — autentícate antes de comprobar tu identidad
 - [lizard status](/cli/status) — muestra el espacio de trabajo, proyecto y servicio vinculados para el directorio actual
 - [lizard workspace](/cli/workspace) — enumera los espacios de trabajo a los que puedes acceder
+- [lizard keys](/cli/keys) — qué puede hacer una clave de API con ámbito

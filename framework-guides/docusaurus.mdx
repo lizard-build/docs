@@ -68,7 +68,7 @@ Commit source, plugins, configuration, and the lockfile. Exclude `node_modules/`
 
 ## Serve inner routes and missing pages
 
-New Docusaurus builds serve generated route files and return HTTP 404 for unknown paths. A custom Dockerfile is not needed for this routing policy. If your service still uses an image built before the September 2026 routing fix, rebuild it. Use [static routes and 404s](/framework-guides/static-routing) only when you need custom nginx behavior.
+New Docusaurus builds serve generated route files and return HTTP 404 for unknown paths, with nginx's default error page rather than the site's `404.html`. A custom Dockerfile is not needed for this routing policy. If your service still uses an image built before the September 2026 routing fix, rebuild it. Use [static routes and 404s](/framework-guides/static-routing) only when you need custom nginx behavior, such as serving your own 404 page.
 
 After deployment, request a nested docs URL directly, refresh it, and check a made-up URL's status. Also inspect the canonical URL and sitemap on the final hostname. A visible error page with HTTP 200 is still a soft 404.
 

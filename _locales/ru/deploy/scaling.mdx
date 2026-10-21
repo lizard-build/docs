@@ -1,13 +1,13 @@
 ---
 title: "Масштабирование сервиса: реплики, CPU и память"
-description: "Добавьте реплики или увеличьте CPU и память для сервиса, а также увеличьте хранилище аддона. Допустимые диапазоны, поведение при развертывании и как проверить изменение."
+description: "Добавьте реплики или увеличьте CPU и память для сервиса, увеличьте хранилище аддона, включите сон при простое или поставьте сервис на паузу. Допустимые диапазоны и как проверить изменение."
 ---
 
 <span id="scaling" />
 
 # Масштабирование
 
-Масштабируйте сервис горизонтально (больше реплик) или вертикально (больше CPU/памяти) с помощью `lizard scale`. Хранилище аддонов увеличивается тем же способом.
+Командой `lizard scale` можно добавить реплики сервиса, увеличить CPU или память и расширить хранилище аддона. Чтобы сократить сервис до нуля реплик, включите [сон при простое](#sleep-when-idle) или [поставьте его на паузу](#pause-a-service).
 
 <span id="scale-a-service" />
 
@@ -59,16 +59,44 @@ lizard scale --service api --cpu 4 --memory 8192
 lizard scale --service postgres --storage 8192
 ```
 
+<span id="sleep-when-idle" />
+
+## Сон при простое
+
+`lizard sleep --on` позволяет веб-сервису засыпать, когда к нему нет трафика, и просыпаться примерно за секунду при следующем запросе. По умолчанию сервис засыпает после 10 минут без трафика; через `--idle` можно задать от 5 до 1440 минут. При включении сервис один раз перезапускается. Сон работает только для сервиса с портом и одной репликой, поэтому воркерам он недоступен. Managed Postgres и Managed Redis тоже умеют засыпать.
+
+```bash
+lizard sleep --on --idle 30 --service api
+lizard sleep --off --service api    # always on
+```
+
+См. [`lizard sleep`](/cli/sleep).
+
+<span id="pause-a-service" />
+
+## Пауза сервиса
+
+`lizard pause` останавливает сервис или базу данных, не удаляя их: число реплик падает до нуля, а URL, пароль, настройки и данные сохраняются. `lizard resume` снова запускает их. GitHub-сервис на паузе игнорирует пуши, пока вы его не возобновите.
+
+```bash
+lizard pause api
+lizard resume api
+```
+
+Чтобы поставить на паузу все сервисы проекта или рабочего пространства, используйте `lizard project pause` или `lizard workspace pause`. См. [`lizard pause`](/cli/pause).
+
 <span id="verifying" />
 
 ## Проверка
 
 ```bash
 lizard ps                 # replica status + URL
-lizard events             # per-replica deploy/scale history
+lizard events             # deploy history + current replicas
 lizard metrics            # live CPU / memory / network / disk
-lizard metrics --cost     # include cost
+lizard metrics --cost     # cost instead of metrics
 ```
+
+Изменение числа реплик не создаёт развёртывание, поэтому `lizard events` его не показывает; смотрите таблицу Replicas.
 
 <span id="see-also" />
 

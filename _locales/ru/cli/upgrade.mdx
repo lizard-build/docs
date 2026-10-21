@@ -1,5 +1,5 @@
 ---
-description: "lizard upgrade заменяет бинарный файл CLI последним релизом на macOS и Linux или проверяет наличие новой версии с флагом --check."
+description: "lizard upgrade ставит последний релиз CLI через npm или заменой бинарного файла либо проверяет наличие новой версии с флагом --check."
 ---
 
 # lizard upgrade
@@ -17,8 +17,10 @@ lizard upgrade [flags]
 Способ обновления зависит от того, как вы установили CLI:
 
 - **Установочный скрипт на macOS или Linux:** загружает последний релиз и заменяет бинарный файл.
-- **npm:** выводит команду, которую нужно выполнить, `npm install -g @lizard-build/cli@latest`.
+- **npm:** сам запускает `npm install -g @lizard-build/cli@<version>`. Если npm не справится, например из-за нехватки прав на запись в глобальную папку, CLI выведет `npm install -g @lizard-build/cli@latest`, чтобы вы выполнили команду сами с нужными правами.
 - **Windows:** бинарный файл не может заменить сам себя. Запустите установщик ещё раз: `irm https://lizard.build/api/cli/install.ps1 | iex`.
+
+Бинарный файл из установочного скрипта на macOS и Linux также обновляется сам в фоне: только в интерактивном терминале, не чаще раза в 6 часов и никогда, если задана `CI` или `LIZARD_NO_UPDATE`. Следующая команда после этого выводит `lizard auto-updated: v<old> → v<new>`. Установки через npm и бинарный файл для Windows в фоне не обновляются.
 
 <span id="flags" />
 
@@ -27,6 +29,8 @@ lizard upgrade [flags]
 | Флаг | Описание |
 |------|-------------|
 | `--check` | Проверить наличие новой версии без установки |
+
+С `--json` команда `lizard upgrade --check` возвращает `{ currentVersion, latestVersion, updateAvailable }`.
 
 <span id="examples" />
 

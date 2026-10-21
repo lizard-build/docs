@@ -69,9 +69,9 @@ Exclude local generated output and secrets. Include the theme's source files in 
 
 ## Verify the deployed site
 
-Open the live home page, an inner article, and an image. Check the generated canonical URLs and `sitemap.xml`. Test a made-up path's HTTP status. New Hugo builds serve the generated HTML and return HTTP 404 for missing pages. No custom Dockerfile is needed for the simple source layout in this guide. Rebuild older images to pick up the current routing rules.
+Open the live home page, an inner article, and an image. Check the generated canonical URLs and `sitemap.xml`. Test a made-up path's HTTP status. New Hugo builds serve the generated HTML and return HTTP 404 for missing pages, with nginx's default error page rather than your `404.html` layout. No custom Dockerfile is needed for the simple source layout in this guide. Rebuild older images to pick up the current routing rules.
 
-Use [static routes and 404s](/framework-guides/static-routing) if you need a custom nginx policy. A custom Hugo build stage must include the theme's required Hugo version and tools, run `hugo --minify`, and copy `public/` into the serving image.
+Use [static routes and 404s](/framework-guides/static-routing) if you need a custom nginx policy or your own 404 page. A custom Hugo build stage must include the theme's required Hugo version and tools, run `hugo --minify`, and copy `public/` into the serving image.
 
 If theme assets are missing, inspect the build logs, theme source, and `baseURL`. If the wrong builder starts, check that the Hugo config and `content/` are in the upload root and inspect existing service overrides. Hugo produces static files, so content changes need a new build.
 

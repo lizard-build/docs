@@ -7,7 +7,7 @@ description: "Lizard Pro costs $19 a month with $19 in monthly credits. How the 
 
 Lizard has one self-serve plan, Pro. It costs $19 a month and comes with $19 in monthly credits. The credits cover apps, Sandboxes, Managed Postgres, Managed Redis, Managed Object Storage, Persistent Volumes and outgoing traffic. Once you use your credits, you pay as you go at the published rates.
 
-Manage your plan on the **Billing** page in account settings or with [`lizard billing`](/cli/billing). The plan belongs to the workspace owner. Usage in every workspace you own counts toward your plan, and members add no seat fee.
+Manage your plan, card and invoices on the **Billing** page: open **Settings** from the sidebar or the account menu, then **Billing** under **Account**. You can also use [`lizard billing`](/cli/billing). The plan belongs to the workspace owner. Usage in every workspace you own counts toward your plan, and members add no seat fee.
 
 ## Pro
 
@@ -51,11 +51,11 @@ You can browse with a new account, but you need Pro to create apps, Sandboxes, d
 
 Each account and each card gets one trial. If the account had one before, Pro starts at once and charges $19 that day. If the card had one, the trial does not start and nothing is charged; start Pro at $19 on the Billing page.
 
-The trial includes every Pro feature, with lower [limits](#limits) until your first paid invoice.
+The trial includes every Pro feature, with lower [limits](#limits) until your first paid invoice. Until then, the **New Sandbox** dialog in the dashboard offers only Small sandboxes in US regions.
 
 ### When trial credits run out
 
-- When you use all your trial credits, Lizard pauses running resources and blocks new ones. It keeps their data.
+- When you use all your trial credits, Lizard pauses running resources and blocks new ones. It keeps their data; see [what a billing pause keeps](#what-a-billing-pause-keeps).
 - To go on, choose **Start Pro now** on the Billing page or run `lizard billing start-now`. This ends the trial, charges $19 and starts your first paid month with $19 in credits. Paused apps and databases start again once the payment goes through.
 
 Unused trial credits end with the trial. They do not move to the paid month.
@@ -84,7 +84,7 @@ If a charge fails, whether the monthly $19 or an overage charge:
 
 - You cannot create new resources from the moment the charge fails.
 - Running resources keep running for 72 hours, then pause.
-- Paused resources keep their data.
+- Paused resources keep their data; see [what a billing pause keeps](#what-a-billing-pause-keeps).
 
 Pay the open invoice on the Billing page. Once it is paid, Lizard lifts the block and starts paused apps and databases again. Resume paused Sandboxes yourself. Stripe retries a failed charge; if the last retry fails, Pro ends.
 
@@ -94,7 +94,11 @@ Cancel at any time on the Billing page, in the Stripe customer portal, or with `
 
 Until the end date, you can undo the cancel on the Billing page or with `lizard billing resume`.
 
-When Pro ends, Lizard blocks new resources and pauses running ones. It keeps their data. To use them again, start Pro on the Billing page. A second trial is not available, so Pro starts at once at $19.
+When Pro ends, Lizard blocks new resources and pauses running ones. It keeps their data, as described below. To use them again, start Pro on the Billing page. A second trial is not available, so Pro starts at once at $19.
+
+## What a billing pause keeps
+
+Apps and databases keep their data while paused. A running sandbox is paused with its files and memory. A sandbox that can't be paused at that moment, or one that has crashed, is deleted with its files. Keep files you need on a [Persistent Volume](/sandboxes/volumes).
 
 ## Enterprise
 
@@ -102,6 +106,6 @@ Enterprise accounts pay as you go and get an invoice each month for the month be
 
 ## Idle apps and stored data
 
-An app can use memory and CPU even when it has no requests. Stop the app to stop compute usage. You pay for Persistent Volumes and Managed Object Storage while you keep data in them, even when the app is stopped.
+An app can use memory and CPU even when it has no requests. [Pause](/cli/pause) the app to stop compute usage, or let it [sleep](/cli/sleep) when idle and wake on the next request. You pay for Persistent Volumes and Managed Object Storage while you keep data in them, even when the app is paused.
 
 See [storage and recovery](/platform/storage-and-recovery) before removing data. Read [metrics](/observability/metrics) to compare configured limits with measured use.

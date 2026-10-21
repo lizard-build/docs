@@ -49,7 +49,7 @@ Ist nur ein OpenRouter-Schlüssel verbunden und kein Modell gewählt, verwendet 
 lizard sandbox create -t opencode --timeout 3600000
 ```
 
-Speichern Sie die ausgegebene ID in einer Variablen: `SB=sb_abc123`. Der Standard der CLI sind fünf Minuten Laufzeit; danach löscht Lizard die Sandbox samt Dateien. `--timeout 3600000` gibt ihr eine Stunde. Die Vorlage `opencode` enthält Node.js 22, eine festgelegte Version von OpenCode, git, Python 3, ripgrep, curl, jq, unzip und Lizard CLI.
+Speichern Sie die ausgegebene ID in einer Variablen: `SB=genuine-toddler-jasj`. Der Standard der CLI sind fünf Minuten Laufzeit; danach löscht Lizard die Sandbox samt Dateien. `--timeout 3600000` gibt ihr eine Stunde. Die Vorlage `opencode` enthält Node.js 22, eine festgelegte Version von OpenCode, git, Python 3, ripgrep, curl, jq, unzip und Lizard CLI.
 
 Kopieren Sie Ihren Code so hinein wie bei Claude Code:
 
@@ -94,7 +94,7 @@ lizard sandbox expose $SB 4096
 
 Öffnen Sie die URL, die `expose` ausgibt. Sie enthält `?lizard_token=`; Lizard legt das Token in einem Cookie für diesen Host ab und leitet ohne Token auf dieselbe Seite weiter. So kommen die eigenen Anfragen der UI, ihr Event-Stream und die Terminal-WebSockets durch.
 
-- `--hostname 0.0.0.0` ist nötig. OpenCode lauscht standardmäßig auf `127.0.0.1`, und die Vorschau-URL antwortet dann mit `Sandbox is not listening on port 4096`.
+- `--hostname 0.0.0.0` ist nötig. OpenCode lauscht standardmäßig auf `127.0.0.1`, und die Vorschau-URL antwortet dann mit 502 und `The sandbox is running but port is not open`.
 - Geben Sie einen festen `--port` an. Ohne ihn wählt OpenCode einen zufälligen freien Port.
 - Wer die URL hat, kann über OpenCode Befehle in der Sandbox ausführen. Halten Sie sie deshalb geheim. Um zusätzlich ein Passwort zu verlangen, fügen Sie `export OPENCODE_SERVER_PASSWORD=…` in `opencode.env` ein; der Benutzername ist `opencode`.
 - Das Log des Servers lesen Sie mit `lizard sandbox exec $SB -- tail -n 50 /tmp/opencode.log`. Den Server stoppen Sie mit `lizard sandbox exec $SB -- sh -c 'kill $(cat /tmp/opencode.pid)'`.

@@ -1,10 +1,10 @@
 ---
-description: "lizard s3 загружает локальный файл в бакет Managed Object Storage и выводит список объектов в бакете без AWS SDK."
+description: "lizard s3 загружает локальный файл в бакет Managed Object Storage, выводит список объектов и временные ссылки для скачивания без AWS SDK."
 ---
 
 # lizard s3
 
-Загружайте объекты в бакет [Managed Object Storage](/addons/storage) и выводите их список.
+Загружайте объекты в бакет [Managed Object Storage](/addons/storage), выводите их список и получайте временные ссылки для скачивания.
 
 <span id="usage" />
 
@@ -13,9 +13,10 @@ description: "lizard s3 загружает локальный файл в бак
 ```bash
 lizard s3 upload <file> [flags]
 lizard s3 list [flags]
+lizard s3 url <key> [flags]
 ```
 
-Обе команды работают с единственным S3-аддоном проекта и его бакетом `default`, если не указать `--addon` и `--bucket`. Сначала добавьте аддон командой `lizard add s3`.
+Все три команды работают с единственным S3-аддоном проекта и его бакетом `default`, если не указать `--addon` и `--bucket`. Сначала добавьте аддон командой `lizard add s3`.
 
 <span id="subcommands" />
 
@@ -25,12 +26,25 @@ lizard s3 list [flags]
 
 Загружает локальный файл. Выводит ключ, ETag, размер и URL, если бакет публичный. Бакет `default` приватный; сделать бакет публичным можно в S3-браузере на дашборде.
 
+`upload` отправляет весь файл через API Lizard одним запросом, до 150 MB. Для файлов больше используйте S3-клиент с учётными данными аддона; см. [Managed Object Storage](/addons/storage).
+
 | Флаг | Описание |
 |------|-------------|
 | `--addon <name>` | Имя или ID S3-аддона (по умолчанию — единственный S3-аддон проекта) |
 | `--bucket <name>` | Целевой бакет (по умолчанию `default`) |
 | `--key <key>` | Ключ объекта (по умолчанию — имя файла) |
 | `--content-type <type>` | Заголовок Content-Type (по умолчанию определяется по расширению файла) |
+| `-p, --project <id>` | Имя, slug или ID проекта |
+
+### `lizard s3 url <key>`
+
+Выводит временную ссылку для скачивания объекта. Любой, у кого есть ссылка, может скачать объект до истечения её срока, даже из приватного бакета и без учётных данных. С `--json` выводит `url`, `key`, `bucket`, `expiresIn` и `expiresAt`.
+
+| Флаг | Описание |
+|------|-------------|
+| `--addon <name>` | Имя или ID S3-аддона (по умолчанию — единственный S3-аддон проекта) |
+| `--bucket <name>` | Бакет (по умолчанию `default`) |
+| `--expires <seconds>` | Сколько секунд работает ссылка (по умолчанию `3600`, максимум `604800` = 7 дней) |
 | `-p, --project <id>` | Имя, slug или ID проекта |
 
 ### `lizard s3 list`
@@ -56,6 +70,14 @@ lizard s3 list [flags]
 
 ```bash
 lizard s3 upload ./logo.png --key assets/logo.png
+```
+
+<span id="share-a-private-file-for-a-day" />
+
+### Поделиться приватным файлом на сутки
+
+```bash
+lizard s3 url assets/logo.png --expires 86400
 ```
 
 <span id="list-objects-under-a-prefix" />

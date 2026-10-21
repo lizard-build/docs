@@ -8,11 +8,12 @@ The build succeeds and a new pod starts, but the deploy is marked failed or the 
 
 ## What this means
 
-The platform's health check — a TCP probe on your app's port — never passes, so traffic never shifts to the new pod. Lizard waits about 30 seconds, then marks the deploy failed. A service that already ran keeps serving its previous version; a first deploy shows as crashed.
+The platform's health check — a TCP probe on your app's port — never passes, so traffic never shifts to the new pod. Lizard waits about 30 seconds, then marks the deploy failed. A service that already ran keeps serving its previous version, unless it has an attached volume: then its old pod stops first, and the service is down until a deploy passes. A first deploy shows as crashed.
 
 ## Why this can happen
 
 - **Your app isn't listening on the expected port.** Lizard injects a `PORT` environment variable (default container port `3000`) and checks that your app is reachable there. If your app is hardcoded to a different port, or never binds one, the health check never passes. A Python app is the usual case: `gunicorn` and `uvicorn` bind `127.0.0.1` unless you tell them otherwise, and the probe comes from outside the process. [Python app hosting](https://lizard.build/blog/python-app-hosting#build-and-start-commands) has the `--bind 0.0.0.0:$PORT` line each framework needs.
+- **The service port doesn't match the image.** When `lizard up` creates a service from a Dockerfile with no `EXPOSE` line, it sets port `3000`, even if the base image listens elsewhere, such as `nginx` on 80. A `PORT` variable does not change that port. Run `lizard port <n>` and redeploy, or add an `EXPOSE` line. See [which port Lizard routes to](/deploy/dockerfile#which-port-lizard-routes-to).
 - **The service is accidentally in worker mode.** Setting `containerPort=0` puts a service into [worker mode](/deploy/workers), which **skips the health check and load-balancer registration entirely**. A service that's supposed to serve HTTP but got flipped to `containerPort=0` will deploy "successfully" and just never serve anything — worker mode hides the underlying startup problem instead of surfacing it.
 
 ## Possible solutions

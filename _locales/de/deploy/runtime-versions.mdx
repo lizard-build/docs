@@ -40,7 +40,7 @@ Bei einem GitHub-Service committest und pushst du die Datei stattdessen. Regeln:
 - Schreib eine Zahl: `24`, `v24` und `24.1.0` wählen alle Node.js 24. Zeilen, die mit `#` beginnen, überspringt Lizard.
 - `lts/*` und `node` in `.nvmrc` überspringt Lizard und geht zur nächsten Datei weiter. Andere Aliase wie `lts/iron` übernimmt es unverändert, und der Build schlägt fehl.
 - `.nvmrc` hat Vorrang vor `engines.node`.
-- `engines.node` liefert die niedrigste Version seines Bereichs: `>=18` baut auf Node.js 18 und `^20.11.0` auf Node.js 20. Ein Bereich mit `||`, etwa `18 || 20`, lässt den Build fehlschlagen.
+- `engines.node` liefert die niedrigste Version seines Bereichs: `>=18` baut auf Node.js 18 und `^20.11.0` auf Node.js 20. Ein Bereich mit `||` lässt den Build fehlschlagen, wenn sein erster Teil keinen Punkt hat, etwa `18 || 20`; `^18.0.0 || ^20.0.0` baut auf Node.js 18. Nutze `.nvmrc`, um die Version eindeutig festzulegen.
 
 <span id="change-the-python-version" />
 
@@ -83,13 +83,13 @@ Schreib nur die Zahl. `rails new` schreibt `ruby-3.4.1`, und Lizard entfernt das
 ## Wann Lizard Versionsdateien ignoriert
 
 - **Dein eigenes Dockerfile.** Dann entscheidet seine `FROM`-Zeile, zum Beispiel `FROM node:24-slim`. Siehe [Einen Docker-Container aus einem Dockerfile deployen](/deploy/dockerfile).
-- **Ein Build- oder Startbefehl im Service.** Lizard schreibt dann aus den Befehlen ein Dockerfile auf einem festen Image: `node:22-alpine`, `python:3.13-slim` oder `golang:1.24-alpine`, je nach erstem Wort des Befehls. Um wieder die Versionsdateien zu nutzen, leere beide:
+- **Ein Build- oder Startbefehl im Service.** Lizard schreibt dann aus den Befehlen ein Dockerfile auf einem festen Image: `node:22-alpine`, `python:3.13-slim` oder `golang:1.24-alpine`. Es liest das erste Wort des Build-Befehls, danach das des Startbefehls. `go` wählt Go; `python`, `python3`, `uv`, `gunicorn` oder `uvicorn` wählen Python. Beginnt keiner der beiden Befehle mit einem dieser Wörter, zum Beispiel `pip install …` mit `streamlit run …`, nutzt der Build `node:22-alpine`. Um wieder die Versionsdateien zu nutzen, leere beide:
 
 ```bash
 lizard service set web --set buildCommand= --set startCommand=
 ```
 
-Wenn du `buildCommand` bei einem laufenden Service leerst, startet von selbst ein neuer Build. Prüfe `lizard events`, bevor du `lizard redeploy` ausführst, damit du keinen zweiten Build einreihst. Siehe die [Entscheidungsreihenfolge beim Build](/concepts/build-pipeline#build-decision-order).
+Wenn du `buildCommand` bei einem laufenden Service leerst, startet von selbst ein neuer Build. Prüfe `lizard events`, bevor du `lizard redeploy` ausführst: Ein Redeploy würde diesen Build abbrechen und neu starten. Siehe die [Entscheidungsreihenfolge beim Build](/concepts/build-pipeline#build-decision-order).
 
 <span id="check-which-version-a-build-used" />
 

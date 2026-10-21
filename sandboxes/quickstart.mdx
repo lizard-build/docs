@@ -120,7 +120,7 @@ print(connected.get_info())
 
 ## Pause, resume, and snapshots
 
-`pause()` saves the sandbox's memory and running processes and keeps `/workspace`. A successful pause stops compute charges; Persistent Volumes storage continues to be billed. `resume()` restores the sandbox with the same ID and restarts compute billing. Both calls queue the work and return at once; wait for `paused` or `running` to confirm success.
+`pause()` saves the sandbox's memory, running processes and every file on its disk. A successful pause stops compute charges; Persistent Volumes storage continues to be billed. `resume()` restores the sandbox with the same ID and restarts compute billing. Both calls queue the work and return at once; wait for `paused` or `running` to confirm success.
 
 ```ts
 await sandbox.pause();
@@ -133,7 +133,15 @@ await sandbox.waitForStatus('running');
 - If the processes cannot be saved, the sandbox keeps running and `waitForStatus` throws with the reason. If a resume fails, the sandbox stays paused with its checkpoint; call `resume()` again.
 - The lifetime deadline stops while the sandbox is paused and continues after the resume. A paused sandbox does not count toward the running limit.
 
-A snapshot saves a running sandbox's memory and `/workspace` files as a private template in its project. Each restore starts a new sandbox in the snapshot's region. Close clients and terminals and stop writes to `/workspace` before you capture. Attached Persistent Volumes are not captured.
+A snapshot saves a running sandbox's memory, running processes and every file on its disk. It belongs to the user who took it. Each restore starts a new sandbox in the snapshot's region, in any project the snapshot's scope allows:
+
+- `workspace` (the default): any project in the source sandbox's workspace.
+- `user`: any project in any of your workspaces.
+- `project`: only the source sandbox's project.
+
+Set the scope with `snapshot(name, { scope })` (Python: `scope=`) and pick the project with `Sandbox.restore(id, { projectId })` (Python: `project_id=`). Close clients and terminals and stop writes to `/workspace` before you capture.
+
+If the sandbox has a Persistent Volume attached, the snapshot includes a copy of the volume's files as they were at capture. Every restore gets that copy, not the live volume, and cannot attach another volume. Anyone who can restore the snapshot can read those files, so sharing such a snapshot shares the volume's data. A snapshot of a sandbox without a volume can mount one at restore with `volumeId` (Python: `volume_id`) from the same region.
 
 ```ts
 const saved = await sandbox.snapshot('my-app');
@@ -141,7 +149,7 @@ await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-A snapshot is ready when the call returns and restores from disk, so `poolSize` does not apply. Each restore runs at the source's size and bills at that size's hourly price; `size` does not apply to a restore. In the CLI, use `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app`, and `lizard sandbox restore <snapshot-id>`.
+A snapshot is ready when the call returns and restores from disk, so `poolSize` does not apply. Each restore runs at the source's size and bills at that size's hourly price; `size` does not apply to a restore. In the CLI, use `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app`, and `lizard sandbox restore <snapshot-id>`; see [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots) for scopes and `--volume`.
 
 ## Clean up and next steps
 

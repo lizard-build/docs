@@ -1,5 +1,5 @@
 ---
-description: "lizard upgrade ersetzt das CLI-Binary auf macOS und Linux durch das neueste Release, oder prüft mit --check, ob eine neuere Version verfügbar ist."
+description: "lizard upgrade installiert das neueste CLI-Release über npm oder durch Ersetzen des Binarys, oder prüft mit --check, ob eine neuere Version verfügbar ist."
 ---
 
 # lizard upgrade
@@ -17,14 +17,18 @@ lizard upgrade [flags]
 Wie die Aktualisierung abläuft, hängt davon ab, wie du die CLI installiert hast:
 
 - **Installationsskript auf macOS oder Linux:** lädt das neueste Release herunter und ersetzt das Binary.
-- **npm:** gibt den Befehl aus, den du ausführen musst, `npm install -g @lizard-build/cli@latest`.
+- **npm:** führt `npm install -g @lizard-build/cli@<version>` für dich aus. Scheitert npm, etwa weil ihm Schreibrechte für den globalen Ordner fehlen, gibt die CLI `npm install -g @lizard-build/cli@latest` aus, damit du den Befehl mit den nötigen Rechten selbst ausführst.
 - **Windows:** Das Binary kann sich nicht selbst ersetzen. Führe den Installer erneut aus: `irm https://lizard.build/api/cli/install.ps1 | iex`.
+
+Das Binary aus dem Installationsskript auf macOS und Linux aktualisiert sich außerdem im Hintergrund: nur in einem interaktiven Terminal, höchstens alle 6 Stunden und nie, wenn `CI` oder `LIZARD_NO_UPDATE` gesetzt ist. Der nächste Befehl gibt dann `lizard auto-updated: v<old> → v<new>` aus. npm-Installationen und das Windows-Binary aktualisieren sich nicht im Hintergrund.
 
 ## Flags
 
 | Flag | Beschreibung |
 |------|-------------|
 | `--check` | Auf eine neuere Version prüfen, ohne sie zu installieren |
+
+Mit `--json` gibt `lizard upgrade --check` `{ currentVersion, latestVersion, updateAvailable }` zurück.
 
 <span id="examples" />
 

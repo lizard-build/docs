@@ -8,6 +8,8 @@ description: "Ergebnisse des Framework-Leitfadens aus 16 echten Lizard CLI-Berei
 
 Am 9. September 2026 haben alle 16 Rezepte in 11 Frameworks einen lokalen Build und eine neue Cloud-Bereitstellung mit Lizard CLI 0.3.95 bestanden. Wir haben die veröffentlichte Einrichtung befolgt, für jedes Rezept ein neues Projekt und einen neuen Service erstellt und den Quellcode mit `lizard up` hochgeladen. Diese Ergebnisse decken die unten aufgeführten Versionen und kleinen Test-Apps ab.
 
+Diese Ergebnisse stammen aus der Zeit vor Lizard CLI 4 (17. September 2026) und vor dem Umzug der Builds auf den aktuellen Builder Ende September 2026. Seitdem haben wir sie nicht wiederholt. Für die meisten Frameworks unten gibt es neuere Versionen, und SvelteKit 3 ist am 1. Oktober 2026 erschienen; die Adapter-Schritte dafür stehen in der [SvelteKit-Anleitung](/framework-guides/sveltekit#configure-the-adapter).
+
 Der Cloud-Durchlauf bestand 100 Prüfungen von Routen, APIs und Formularen sowie 45 Prüfungen verknüpfter JavaScript- und CSS-Dateien. Django-Migrationen, ein Datenbankschreib- und -lesevorgang sowie die finalen Website-URLs von Docusaurus und Hugo wurden ebenfalls bestanden.
 
 <span id="tested-recipes" />
@@ -69,4 +71,4 @@ Lizard CLI 0.3.95 enthält die Korrekturen für Archive und Exit-Codes bei fehlg
 
 ## Grenzen dieser Ergebnisse
 
-Diese Prüfungen decken Quellcode-Uploads und die dokumentierten Modi ab. Sie belegen keine Unterstützung für jedes Plugin, jeden Adapter, jedes Theme, jede Framework-Version, jeden GitHub-Bereitstellungspfad, jedes Datenbank-Recovery-Verfahren oder Workloads mit mehreren Replikaten. Djangos kleine Test-App meldet weiterhin Sicherheitswarnungen von `check --deploy`; sie ist keine vollständige Sicherheitskonfiguration für die Produktion. Diese Tests messen weder Suchrankings noch AI-Zitationen. Prüfen Sie vor dem Release die Routen und Datenoperationen Ihrer eigenen App.
+Diese Prüfungen decken Quellcode-Uploads und die dokumentierten Modi ab. Seit dem Durchlauf verbindet sich die Django-Anleitung über `DATABASE_PRIVATE_URL` statt über die öffentliche `DATABASE_URL`; für diese Änderung gibt es noch keinen Cloud-Durchlauf. Die Prüfungen belegen keine Unterstützung für jedes Plugin, jeden Adapter, jedes Theme, jede Framework-Version, jeden GitHub-Bereitstellungspfad, jedes Datenbank-Recovery-Verfahren oder Workloads mit mehreren Replikaten. Djangos kleine Test-App meldet weiterhin Sicherheitswarnungen von `check --deploy`; sie ist keine vollständige Sicherheitskonfiguration für die Produktion. Diese Tests messen weder Suchrankings noch AI-Zitationen. Prüfen Sie vor dem Release die Routen und Datenoperationen Ihrer eigenen App.

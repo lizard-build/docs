@@ -8,6 +8,8 @@ description: "Resultados de la guía de frameworks de 16 despliegues reales con 
 
 El 9 de septiembre de 2026, las 16 recetas de 11 frameworks superaron una compilación local y un nuevo despliegue en la nube con Lizard CLI 0.3.95. Seguimos la configuración publicada, creamos un proyecto y un servicio nuevos para cada receta y subimos el código fuente con `lizard up`. Estos resultados cubren las versiones y las pequeñas apps de prueba indicadas abajo.
 
+Estos resultados son anteriores a Lizard CLI 4 (17 de septiembre de 2026) y al paso de las compilaciones al compilador actual a finales de septiembre de 2026. No los hemos repetido desde entonces. La mayoría de los frameworks de abajo tienen versiones más nuevas, y SvelteKit 3 salió el 1 de octubre de 2026; sus pasos de adaptador están en la [guía de SvelteKit](/framework-guides/sveltekit#configure-the-adapter).
+
 La ejecución en la nube superó 100 comprobaciones de rutas, API y formularios, además de 45 comprobaciones de archivos JavaScript y CSS enlazados. También superaron las migraciones de Django, una escritura y lectura en la base de datos, y las URL finales de los sitios de Docusaurus y Hugo.
 
 <span id="tested-recipes" />
@@ -69,4 +71,4 @@ Lizard CLI 0.3.95 incluye las correcciones del archivo y de los códigos de sali
 
 ## Límites de estos resultados
 
-Estas comprobaciones cubren las subidas de código fuente y los modos documentados. No establecen compatibilidad con cada plugin, adapter, tema, versión de framework, ruta de despliegue de GitHub, procedimiento de recuperación de base de datos o carga de trabajo con múltiples réplicas. La pequeña app de prueba de Django sigue mostrando advertencias de seguridad de `check --deploy`; no es una configuración de seguridad de producción completa. Estas pruebas no miden rankings de búsqueda ni citas de IA. Comprueba las rutas y operaciones de datos de tu propia app antes del lanzamiento.
+Estas comprobaciones cubren las subidas de código fuente y los modos documentados. Desde la ejecución, la guía de Django se conecta mediante `DATABASE_PRIVATE_URL` en lugar de la `DATABASE_URL` pública; ese cambio aún no tiene una ejecución en la nube. Las comprobaciones no establecen compatibilidad con cada plugin, adapter, tema, versión de framework, ruta de despliegue de GitHub, procedimiento de recuperación de base de datos o carga de trabajo con múltiples réplicas. La pequeña app de prueba de Django sigue mostrando advertencias de seguridad de `check --deploy`; no es una configuración de seguridad de producción completa. Estas pruebas no miden rankings de búsqueda ni citas de IA. Comprueba las rutas y operaciones de datos de tu propia app antes del lanzamiento.

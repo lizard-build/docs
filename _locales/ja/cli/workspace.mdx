@@ -1,10 +1,10 @@
 ---
-description: "lizard workspace は、ワークスペースを作成、一覧表示、削除します。ワークスペースがプロジェクトやサービスとどう関係するかも説明します。"
+description: "lizard workspace は、ワークスペースを作成、一覧表示、一時停止、削除します。ワークスペースの上限と、そのスコープ付き API キーに表示する再販価格も設定します。"
 ---
 
 # lizard workspace
 
-ワークスペースを作成、一覧表示、削除します。
+ワークスペースを作成、一覧表示、一時停止、削除し、上限と再販価格を設定します。
 
 <span id="usage" />
 
@@ -13,6 +13,10 @@ description: "lizard workspace は、ワークスペースを作成、一覧表�
 ```bash
 lizard workspace list
 lizard workspace create <name>
+lizard workspace pause <name-or-id>
+lizard workspace resume <name-or-id>
+lizard workspace limits <name-or-id> [flags]
+lizard workspace resale-pricing <name-or-id> [flags]
 lizard workspace rm <name-or-id> [flags]
 ```
 
@@ -28,9 +32,45 @@ lizard workspace rm <name-or-id> [flags]
 
 ワークスペースを作成します。`lizard project create <name> --workspace <slug>` でプロジェクトを追加します。
 
+### `lizard workspace pause <name-or-id>`
+
+ワークスペースのすべてのプロジェクトにある、すべてのアプリ、データベース、実行中のサンドボックスを一時停止します。アプリとデータベースは URL、パスワード、設定、データを保持します。Managed Object Storage のバケットは一時停止されません。ワークスペース全体を一時停止できるのはオーナーだけです。1 つのサービスやプロジェクトを一時停止するには [lizard pause](/cli/pause) を参照してください。
+
+### `lizard workspace resume <name-or-id>`
+
+ワークスペース内で手動で一時停止されたすべてのアプリとデータベース、および `lizard workspace pause` が一時停止した Sandboxes を再び起動します。Lizard が請求のために一時停止したアプリとデータベースは、請求の問題が解決するまで停止したままです。実行できるのはオーナーだけで、ワークスペースが[上限](/platform/limits#workspace-limits)内に収まっている必要があります。
+
+### `lizard workspace limits <name-or-id>`
+
+ワークスペースが使える量と、現在の利用量を表示します。フラグを付けると上限を設定します。設定できるのはオーナーだけで、ブラウザでサインインした状態か、スコープのない API キーを使います。メンバーなら誰でも読めます。各フラグに `none` を渡すと、その上限を外せます。
+
+| フラグ | 説明 |
+|------|-------------|
+| `--sandboxes <n>` | 同時に実行できるサンドボックス数 |
+| `--cpu <vcpus>` | ワークスペースのアプリとデータベースが使える vCPU |
+| `--memory <size>` | ワークスペースのアプリとデータベースが使えるメモリ（例: `4GB`、`512MB`） |
+| `--disk <size>` | データベースとボリュームが使えるディスク（例: `20GB`、`1TB`） |
+
+CPU とメモリは、設定値ではなく、アプリとデータベースが現在使っている量で数えます。上限に達すると、ワークスペースで新しいものは起動しません。実行中のサービスは動き続けます。ディスクの上限に達すると、新しいボリューム、新しいデータベース、ボリュームの拡張はできません。書き込み済みのデータは残ります。エラーについては[ワークスペースの上限](/platform/limits#workspace-limits)を参照してください。
+
+### `lizard workspace resale-pricing <name-or-id>`
+
+このワークスペース、またはそのプロジェクトに限定された API キーに表示する価格を表示または設定します (別名 `resale`)。各価格は Lizard の価格の倍率で、1 から 100 までです。あなた自身の請求、ダッシュボード、スコープのないキーには Lizard の価格が表示されたままです。表示や設定ができるのはオーナーだけで、ブラウザでサインインした状態か、スコープのない API キーを使います。
+
+| フラグ | 説明 |
+|------|-------------|
+| `--all <x>` | すべてのリソースをこの倍率にする |
+| `--cpu <x>` | CPU |
+| `--memory <x>` | メモリ |
+| `--storage <x>` | ボリューム |
+| `--egress <x>` | 送信トラフィック |
+| `--object-storage <x>` | Managed Object Storage |
+| `--sandbox <x>` | サンドボックスの時間料金 |
+| `--off` | 再販価格をオフにする。スコープ付きキーには再び Lizard の価格が表示されます |
+
 ### `lizard workspace rm <name-or-id>`
 
-ワークスペースを削除します (別名 `delete`)。削除できるのはオーナーだけで、プロジェクトもサンドボックスも残っていない場合に限ります。個人用ワークスペースは削除できません。
+ワークスペースを削除します (別名 `delete`)。削除できるのはオーナーだけで、プロジェクト、サンドボックス、ボリュームが残っていない場合に限ります。ゴミ箱にあるプロジェクトは数に入らず、ワークスペースと一緒に削除されます。ワークスペース自体にはゴミ箱がありません。スコープ付き API キーではワークスペースを削除できません。個人用ワークスペースは削除できません。
 
 | フラグ | 説明 |
 |------|-------------|
@@ -56,6 +96,25 @@ lizard workspace list
 lizard workspace create my-team
 ```
 
+<span id="cap-a-workspace" />
+
+### ワークスペースに上限を設定する
+
+```bash
+lizard workspace limits my-team                                   # show limits and current use
+lizard workspace limits my-team --sandboxes 5 --cpu 2 --memory 4GB --disk 20GB
+lizard workspace limits my-team --cpu none                        # remove one limit
+```
+
+<span id="set-resale-prices" />
+
+### 再販価格を設定する
+
+```bash
+lizard workspace resale-pricing my-team --all 3                   # every price x3
+lizard workspace resale-pricing my-team --off
+```
+
 <span id="delete-an-empty-workspace" />
 
 ### 空のワークスペースを削除する
@@ -68,6 +127,9 @@ lizard workspace rm my-team --yes
 
 ## 関連項目
 
-- [lizard whoami](/cli/whoami) — アクティブなワークスペースを表示します
+- [lizard whoami](/cli/whoami) — サインイン中のアカウントを表示します
 - [lizard project](/cli/project) — ワークスペース内のプロジェクトを一覧表示または作成します
+- [lizard pause](/cli/pause) — サービスやプロジェクトを一時停止・再開します
+- [lizard keys](/cli/keys) — ワークスペースに限定した API キーを作成します
+- [制限](/platform/limits#workspace-limits) — ワークスペースの上限とそのエラー
 - [Architecture: ワークスペース](/concepts/architecture) — ワークスペースがプロジェクトやサービスとどう関係するか

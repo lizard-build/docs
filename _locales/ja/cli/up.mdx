@@ -16,7 +16,17 @@ lizard up [path] [flags]
 
 `up` は作業ツリー（または `path`）を tarball としてパッケージ化し、ビルドノードに送信してデプロイします。対象サービスで `sourceType=upload` を強制し、SSE 経由でビルドログをストリーミングし、完了時に稼働中の URL を表示します。
 
-現在のディレクトリがまだプロジェクトにリンクされていない場合、`up` は最初に `init` を実行します。TTY では対話的に動作します。非 TTY（CI）環境では、無言でプロジェクトを作成することは**ありません**。代わりにエラーになり、`lizard init --name <project>` を実行するよう求めます（または `up` に `--project <project>` を渡します）。これは、タイプミスによって空のプロジェクトが作成されるのを防ぐためです。
+ディレクトリがプロジェクトにリンクされていない場合、`up` はディレクトリをアカウントのデフォルトプロジェクト（個人ワークスペースで最も古いプロジェクト）にリンクし、そこへデプロイします。TTY でも CI でも同じです。別の場所にデプロイするには、先に `lizard init --name <project>` を実行するか、`--project` を渡してください。
+
+<span id="which-service-up-deploys-to" />
+
+### `up` のデプロイ先サービス
+
+1. `--service` で指定したサービス。その名前のサービスがプロジェクトにない場合、`up` が作成します。
+2. ディレクトリにリンクされたサービス。
+3. それ以外の場合、`package.json` の `name`（スコープを除く）またはディレクトリ名を名前にしたサービス。TTY では `up` が名前を尋ね、この名前を候補として示します。
+
+最後のケースで、その名前のサービスがプロジェクトにすでにある場合、`up` はそこへデプロイします。`up` は毎回デプロイ先をアップロードソースに切り替えるため、GitHub のサービスは push でデプロイされなくなります。デプロイ先を自分で選ぶには `--service` を渡してください。
 
 <span id="flags" />
 
@@ -24,8 +34,8 @@ lizard up [path] [flags]
 
 | フラグ | 説明 |
 |------|-------------|
-| `-s, --service <name>` | 既存のサービスを対象にします |
-| `-p, --project <id>` | プロジェクトの名前、スラッグ、または ID |
+| `-s, --service <name>` | デプロイ先のサービス（既定値はリンク済みのサービス）。その名前のサービスがなければ `up` が作成します |
+| `-p, --project <id>` | プロジェクトの名前、スラッグ、または ID。リンクされていないディレクトリでは、`up` はディレクトリをこのプロジェクトにリンクし、その名前のプロジェクトがなければ作成します |
 | `--build-command <cmd>` | ビルドコマンドを上書きします |
 | `--start-command <cmd>` | 起動コマンドを上書きします |
 | `--pre-deploy-command <cmd>` | コンテナが起動するたびに（すべてのレプリカ、すべての再起動で）起動コマンドの前に実行します。起動コマンドが必要です。何度実行しても問題ないようにしてください |
@@ -59,7 +69,7 @@ lizard up
 
 ### カスタム起動コマンドとポートを指定して特定のサービスにデプロイする
 
-指定した名前のサービスが存在しない場合は、先に `lizard add --service api` で作成してください。
+`api` がまだ存在しない場合、`up` が作成します。
 
 ```bash
 lizard up --service api --start-command "node server.js" --port 8080
@@ -72,11 +82,10 @@ lizard up --service api --start-command "node server.js" --port 8080
 ```bash
 export LIZARD_TOKEN=liz_xxx
 lizard init --name my-project
-lizard add --service api
-lizard up --ci --service api
+lizard up --ci --service api   # creates api on the first run
 ```
 
-サービスがすでに存在する場合は `lizard add` を省略してください。ビルドまたはデプロイが失敗すると、終了コード `1` で終了します。`--ci` では終了コードはビルドだけを対象にするため、リリースを完了とする前に `lizard ps --json` を確認してください。`--detach` はアップロードが受け付けられた時点で `0` で終了します。[framework setup](/framework-guides#prepare-the-project) を参照してください。
+ビルドまたはデプロイが失敗すると、終了コード `1` で終了します。`--ci` では終了コードはビルドだけを対象にするため、リリースを完了とする前に `lizard ps --json` を確認してください。`--detach` はアップロードが受け付けられた時点で `0` で終了します。[framework setup](/framework-guides#prepare-the-project) を参照してください。
 
 <span id="see-also" />
 

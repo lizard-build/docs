@@ -51,7 +51,7 @@ cat .env | lizard secrets import          # KEY=value lines from stdin
 
 **По умолчанию — уровень сервиса.** Скомпрометированный сервис может прочитать своё окружение — более широкая область видимости означает больше учётных данных без нужды. Используйте `--global` только для несекретных, заведомо публичных значений вроде `LOG_LEVEL`, `NODE_ENV`, флагов функций или публичного URL фронтенда `SENTRY_DSN`. Если не уверены, является ли значение секретом — считайте его секретом и ограничьте сервисом.
 
-`DATABASE_URL` и `REDIS_URL` каждого запущенного аддона Postgres и Redis уже попадают во все сервисы проекта с самым низким приоритетом. Чтобы выбрать конкретный аддон или использовать его приватный URL, привяжите его к каждому потребителю через [ссылку](/variables/references), а не через `--global`:
+Каждый сервис уже получает один `DATABASE_URL` и один `REDIS_URL` от аддонов Postgres и Redis проекта (запущенных или на паузе) с самым низким приоритетом. Если аддонов одного типа несколько, какой из них попадёт в сервис, не определено. Чтобы выбрать конкретный аддон или использовать его приватный URL, привяжите его к каждому потребителю через [ссылку](/variables/references), а не через `--global`:
 
 ```bash
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
@@ -70,7 +70,7 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service w
 addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets  <  platform vars
 ```
 
-Поэтому **секреты приложения перекрывают секреты проекта**, а **платформенные переменные** (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`, `LIZARD_PRIVATE_DOMAIN`) применяются в самом конце и их нельзя переопределить. `PORT` задаётся только тогда, когда у сервиса есть HTTP-порт. Если задать `PORT` самостоятельно, порт, на который Lizard направляет трафик, изменится при следующем деплое, если только порт не был задан через `lizard port`.
+Поэтому **секреты приложения перекрывают секреты проекта**, а **платформенные переменные** (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`, `LIZARD_PRIVATE_DOMAIN`) применяются в самом конце и их нельзя переопределить. `PORT` задаётся только тогда, когда у сервиса есть HTTP-порт. Переменная `PORT`, которую вы задали, меняет маршрутизацию только у сервиса, которому порт ни разу не задавали. Сервис, созданный через `lizard up` или получивший порт через `--port`, `lizard port`, `containerPort` или дашборд, сохраняет этот порт, и Lizard перезаписывает им ваш `PORT`. Чтобы сменить порт, выполните `lizard port <n>` и переразверните сервис. См. [на какой порт Lizard направляет трафик](/deploy/dockerfile#which-port-lizard-routes-to).
 
 <span id="build-time-vs-runtime" />
 
@@ -78,8 +78,8 @@ addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets
 
 Большинство изменений переменных вступают в силу **без пересборки** — сервис перезапускается и подхватывает их за несколько секунд. Исключения — значения времени сборки, зашиваемые в образ:
 
-- Изменение значения `VITE_*` или `NEXT_PUBLIC_*` сразу запускает пересборку затронутых запущенных сервисов (для `--global` — всех запущенных сервисов).
-- Lizard зашивает эти значения в виде строк `ENV` для сервисов из GitHub (Dockerfile, который генерирует lizardpack, или Dockerfile в корне репозитория) и для Node-сервисов, собираемых через `buildCommand` / `startCommand`. Сервис с собственным `dockerfilePath` или загруженный через `lizard up` без этих команд не получает переменные Lizard во время сборки; build args не получает ни один сервис, кроме `COMMIT_SHA`. Для публичных значений в таких случаях закоммитьте их в `.env.production`, задайте команду сборки или впишите их в свой Dockerfile.
+- Изменение значения `VITE_*` или `NEXT_PUBLIC_*` через `lizard secrets set` или в настройках сервиса сразу запускает пересборку затронутых запущенных сервисов (для `--global` — всех запущенных сервисов). Правка на странице Secrets проекта в дашборде только перезапускает их; после неё выполните `lizard redeploy`.
+- Lizard зашивает эти значения в виде строк `ENV` для сервисов из GitHub (Dockerfile, который генерирует lizardpack, или Dockerfile в корне репозитория) и для Node-сервисов, собираемых через `buildCommand` / `startCommand`. Сервис с собственным `dockerfilePath` или загруженный через `lizard up` без этих команд не получает переменные Lizard во время сборки; build args не получает ни один сервис, кроме `COMMIT_SHA`. Для публичных значений в таких случаях закоммитьте их в `.env.production` или впишите их строками `ENV` в свой Dockerfile. Для Node-приложения, загруженного без своего Dockerfile, подойдёт и команда сборки.
 
 См. [Пайплайн сборки → триггеры пересборки](/concepts/build-pipeline#what-triggers-a-rebuild).
 
@@ -92,8 +92,10 @@ addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets
 ```bash
 lizard logs --build --service api          # warns about every empty ${{…}} reference
 lizard secrets list --service api --show   # stored values
-lizard secrets list --service api --ref    # reference templates you can use
+lizard secrets list --service api --ref    # addon keys and each service's LIZARD_* / PORT keys
 ```
+
+`--ref` не показывает собственные переменные и секреты других сервисов. Ссылки на них работают; ключи проверьте командой `lizard secrets list --service <target>`.
 
 Если ожидаемого значения нет, см. [Устранение неполадок → секрет или ссылка не отображается](/variables/troubleshooting/reference-not-applied).
 

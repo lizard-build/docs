@@ -51,7 +51,7 @@ finally:
 
 New volumes allow **1 to 50 GB**, in whole GB, with **5 GB** as the default. The server can override the maximum through `VOLUME_MAX_SIZE_GB`; the dashboard and CLI read the current limits and storage price from `GET /api/projects/:projectId/volume-limits`.
 
-You pay for **used space**, not the full allocation. Existing volumes larger than the new maximum keep their size and remain accessible. Creating a new volume requires enough unreserved disk space on a healthy worker in the chosen region. If none has room, the API returns `503` with code `volume_capacity_unavailable`.
+You pay for **used space**, not the full allocation. Existing volumes larger than the new maximum keep their size and remain accessible. The volumes of one workspace can add up to **200 GB** of allocated size; a create or resize past that returns `403` with code `volume_quota_exceeded`.
 
 ## Manage volumes
 
@@ -74,7 +74,7 @@ await Volume.delete('proj_123', 'agent-workdir'); // detach first
 
 Generated IDs and the `volumeId` / `volume_id` fields still work for existing callers. Use names in new code.
 
-You can resize a volume in place while it is attached. A Firecracker volume can only grow. A pod-backed volume can also shrink if at least 10% of the new size stays free.
+`Volume.resize` grows a volume in place. A sandbox that has the volume attached keeps running but still sees the old size; the next sandbox that attaches the volume sees the new one. A volume can only grow. Some volumes created before October 2026 can also shrink if at least 10% of the new size stays free.
 
 ## CLI
 
@@ -91,7 +91,7 @@ lizard volume rm agent-workdir --project proj_123
 
 ## Dashboard
 
-Create and attach volumes with the SDK or CLI. Once a project has a volume, **Sandboxes → Persistent Volumes** lists used and allocated space, status, and the attached sandbox. From there you can browse files, resize, or delete a volume.
+Create and attach volumes with the SDK or CLI. The **Volumes** page in the dashboard sidebar lists each volume's used and allocated space, status, and attached sandbox. From there you can browse files, resize, or delete a volume.
 
 ## Storage lifecycle
 
@@ -100,6 +100,7 @@ Create and attach volumes with the SDK or CLI. Once a project has a volume, **Sa
 - Deleting a volume removes its data. Volumes use node-local storage; export data you need after a node failure. See [storage and recovery](/platform/storage-and-recovery).
 
 - Without a volume, `/workspace` is temporary: its files are gone when the sandbox stops.
-- A sandbox with a volume attached cannot be forked (HTTP 409), and a snapshot does not capture an attached volume.
+- A sandbox with a volume attached cannot be forked (HTTP 409).
+- A snapshot of a sandbox with a volume attached includes a copy of the volume's files as they were at capture. Every restore gets that copy, not the live volume, and cannot attach another volume. Anyone who can restore the snapshot can read those files, so sharing the snapshot shares the volume's data; see [snapshots](/sandboxes/quickstart#pause-and-resume).
 
 See the [SDK reference](/sandboxes/sdk-reference) for sandbox options and [lifecycle](/sandboxes#lifecycle) for pause, snapshots and fork.

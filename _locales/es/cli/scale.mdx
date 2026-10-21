@@ -11,7 +11,7 @@ Escala un servicio (réplicas / CPU / memoria / almacenamiento).
 ## Uso
 
 ```bash
-lizard scale [flags]
+lizard scale [service] [flags]
 ```
 
 <span id="flags" />
@@ -20,6 +20,8 @@ lizard scale [flags]
 
 | Bandera | Descripción |
 |------|-------------|
+| `-s, --service <name>` | Nombre o ID del servicio (por defecto, el servicio vinculado; igual que el argumento `service`) |
+| `-p, --project <id>` | Nombre, slug o ID del proyecto |
 | `--replicas <n>` | Réplicas (apps), hasta el [límite](/platform/limits#applications) de tu plan: `1` hasta la primera factura de Pro pagada (es decir, durante la prueba), `5` después de ella y en Enterprise |
 | `--cpu <cores>` | `1`, `2`, `3` o `4` |
 | `--memory <mb>` | `128`–`8192` MB |
@@ -37,7 +39,7 @@ lizard scale [flags]
 lizard scale --service api --replicas 5
 ```
 
-Cada réplica es su propio pod detrás del balanceador de carga. Asegúrate de que tu app sea sin estado para que las réplicas sean intercambiables.
+Cada réplica es su propio pod detrás del balanceador de carga. Asegúrate de que tu app sea sin estado para que las réplicas sean intercambiables. Una app con más de una réplica no [duerme en reposo](/cli/sleep). En una app [en pausa](/cli/pause), `--replicas` guarda el número, que se aplica al reanudarla.
 
 <span id="scale-cpu-and-memory-vertically" />
 

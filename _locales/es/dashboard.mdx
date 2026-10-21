@@ -1,5 +1,5 @@
 ---
-description: "Qué añade el panel de Lizard al CLI: estado de servicios, cronología de despliegues, logs en streaming, métricas, exploradores de datos, equipo y facturación."
+description: "Qué añade el panel de Lizard al CLI: Sandboxes, estado de servicios, historial de despliegues, logs en streaming, métricas, exploradores de datos, equipo y facturación."
 ---
 
 <span id="app-dashboard" />
@@ -25,13 +25,15 @@ lizard docs          # open this documentation
 
 ### Servicios
 
-La vista principal del proyecto muestra cada servicio con su indicador de estado, dominio generado y un acceso rápido a logs, métricas, secretos y ajustes. Crea nuevos servicios (desde un repositorio de GitHub o vacío) directamente desde aquí.
+**Apps y bases de datos**, en la barra lateral, muestra cada servicio con su indicador de estado, dominio generado y un acceso rápido a logs, métricas, secretos y ajustes. Crea un servicio con **Nuevo servicio**: desde un repositorio de GitHub, desde una carpeta de tu equipo o como base de datos (Managed Postgres, Managed Redis) o Managed Object Storage.
+
+La pestaña **Configuración** de un servicio también tiene **Serverless**, que lo deja dormir cuando está inactivo ([`lizard sleep`](/cli/sleep)), y **Pausar**, que lo detiene sin borrar nada ([`lizard pause`](/cli/pause)).
 
 <span id="deployments" />
 
 ### Despliegues
 
-Una cronología de cada despliegue, con logs de compilación por despliegue y un panel de detalles (commit, estado, réplicas). Este es el equivalente visual de `lizard events` + `lizard logs --build`.
+La pestaña **Resumen** de cada servicio lista sus despliegues. Abre uno para ver su estado, desencadenante, origen, logs de compilación y reinicios. Este es el equivalente visual de `lizard events` + `lizard logs --build`.
 
 ### Logs
 
@@ -41,19 +43,19 @@ Streaming en vivo de logs de ejecución y compilación con búsqueda y filtros p
 
 ### Métricas y uso
 
-Gráficos de CPU, memoria, red y disco por servicio, además de una vista de **Uso** que desglosa el consumo y el coste en todo el proyecto. Refleja [`lizard metrics --cost`](/observability/metrics).
+Gráficos de CPU, memoria, red y disco por servicio, además de la página **Uso**, que desglosa el consumo y el coste en todo el proyecto. Refleja [`lizard metrics --cost`](/observability/metrics).
 
 <span id="variables--secrets" />
 
 ### Variables y secretos
 
-Gestiona secretos con alcance de servicio y de proyecto, con valores ocultos y compatibilidad con referencias (`${{…}}`). Consulta [Variables y secretos](/variables).
+Gestiona los secretos con alcance de servicio en la pestaña **Secrets** de cada servicio y los de proyecto en **Secretos globales**, con valores ocultos y compatibilidad con referencias (`${{…}}`). Consulta [Variables y secretos](/variables).
 
 <span id="domains" />
 
 ### Dominios
 
-Añade dominios personalizados, consulta registros DNS y sigue el estado de verificación y TLS. Consulta [Redes](/networking).
+En la pestaña **Configuración** de un servicio, añade dominios personalizados, consulta registros DNS y sigue el estado de verificación y TLS. Consulta [Redes](/networking).
 
 <span id="managed-addon-browsers" />
 
@@ -71,19 +73,19 @@ Cada addon gestionado incluye un explorador de datos:
 
 ### Sandboxes
 
-La página **Sandboxes** tiene pestañas para sandboxes, Persistent Volumes, plantillas y agentes. Crea un sandbox con **New Sandbox**; el contador junto a él muestra cuántos se están ejecutando respecto a tu límite. Consulta [Guía rápida de Sandboxes](/sandboxes/quickstart).
+La barra lateral tiene **Sandboxes**, **Volúmenes** (Persistent Volumes), **Plantillas** y **Agentes**. Crea un sandbox con **Nuevo Sandbox** en la página Sandboxes; el contador junto al botón muestra cuántos se están ejecutando respecto a tu límite. Durante la prueba, el diálogo solo ofrece el tamaño Small en regiones de US. Consulta [Guía rápida de Sandboxes](/sandboxes/quickstart).
 
 <span id="github-integration" />
 
 ### Integración con GitHub
 
-Conecta la GitHub App, elige repositorios y gestiona qué repositorios puede compilar Lizard. Consulta [Desplegar desde GitHub](/deploy/github).
+Conecta GitHub desde **Nuevo servicio → Repositorio de GitHub**. Una vez conectado, **Configurar acceso**, bajo la lista de repositorios, abre los ajustes de la GitHub App, donde eliges qué repositorios puede compilar Lizard. Un repositorio público también se despliega pegando su URL, sin conectar GitHub. Consulta [Desplegar desde GitHub](/deploy/github).
 
 <span id="settings-team--billing" />
 
 ### Ajustes, equipo y facturación
 
-Ajustes del proyecto y del workspace, invitaciones de miembros y roles, y uso de recursos. La página **Facturación** de la configuración de la cuenta muestra tu plan, la prueba, los créditos usados este mes, las facturas y la tarjeta. Consulta [Facturación](/platform/billing).
+**Configuración**, al pie de la barra lateral, reúne los ajustes del proyecto y del workspace, las invitaciones de miembros y los roles (**Equipo**), y los ajustes de tu cuenta. Abre **Facturación** desde los ajustes de la cuenta o haciendo clic en tu plan en la parte superior del panel. Muestra tu plan, la prueba, el uso del periodo actual, las facturas y la tarjeta. Consulta [Facturación](/platform/billing).
 
 <span id="cli--dashboard" />
 
@@ -91,12 +93,14 @@ Ajustes del proyecto y del workspace, invitaciones de miembros y roles, y uso de
 
 | Tarea | CLI | Vista del panel |
 |------|-----|----------------|
-| Historial de despliegues | `lizard events` | Despliegues |
+| Historial de despliegues | `lizard events` | Servicio → Resumen |
 | Streaming de logs | `lizard logs` | Logs |
 | Gráficos de recursos | `lizard metrics` | Métricas / Uso |
-| Gestionar secretos | `lizard secrets` | Variables |
-| Dominios personalizados | `lizard domain` | Dominios |
+| Gestionar secretos | `lizard secrets` | Secrets / Secretos globales |
+| Dominios personalizados | `lizard domain` | Servicio → Configuración |
+| Pausar o reanudar un servicio | `lizard pause` / `lizard resume` | Servicio → Configuración |
+| Dormir cuando está inactivo | `lizard sleep` | Servicio → Configuración → Serverless |
 | Consultar Managed Postgres, Managed Redis o Managed Object Storage | `lizard run --service <addon> -- <cmd>` | Exploradores de datos |
-| Invitar a compañeros de equipo | — | Equipo / Ajustes |
+| Invitar a compañeros de equipo | — | Configuración → Equipo |
 
 Usa lo que mejor se adapte al momento — operan sobre los mismos proyectos y servicios.

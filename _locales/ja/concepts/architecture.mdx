@@ -28,10 +28,9 @@ workspace
 
 ```bash
 lizard workspace list
-lizard whoami        # shows your active workspace
 ```
 
-複数のワークスペースに同名のプロジェクトがある場合に区別できるよう、多くのコマンドは `-w, --workspace <ws>` を受け付けます。
+複数のワークスペースに同名のプロジェクトがある場合に区別できるよう、多くのコマンドは `-w, --workspace <ws>` を受け付けます。オーナーは `lizard workspace limits` で、ワークスペースが同時に実行できる sandbox の数と、使える CPU、メモリ、ディスクの量に上限を設定できます（[`lizard workspace`](/cli/workspace) を参照）。
 
 <span id="project" />
 
@@ -46,6 +45,8 @@ lizard status                   # show the current directory's link
 lizard unlink                   # remove the link
 lizard project list             # all projects in the workspace
 ```
+
+リンクしていないフォルダでは、アカウントの **デフォルトプロジェクト** が使われます。これは個人ワークスペースで最も古いプロジェクトで、新しいアカウントでは `<username>'s Project` です。フォルダをリンクするか `--project` を渡さない限り、`lizard up`、`lizard add`、`lizard sandbox create` などのプロジェクトコマンドはこのプロジェクトを対象にします。
 
 > **ヒント:** プロジェクトにはリポジトリ名またはディレクトリ名を使い、サービスには用途がわかる名前（`api`、`worker`、`web`）を使ってください。
 
@@ -67,6 +68,8 @@ lizard service set <svc> --set <field>=<value>
 lizard service rename <new-name> --service <svc>
 lizard service delete --service <svc>
 ```
+
+サービスを削除せずに止めるには [`lizard pause`](/cli/pause) を、トラフィックがないときにスリープさせるには [`lizard sleep`](/cli/sleep) を使います。
 
 サービスの設定フィールドは **フラット** で、API のスキーマに 1:1 で対応しています（例: `repoUrl`、`branch`、`buildCommand`、`startCommand`、`containerPort`、`rootDirectory`）。`build.*` / `deploy.*` のようなネストはありません。完全な一覧は [`lizard service`](/cli/service) を参照してください。
 

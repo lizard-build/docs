@@ -7,7 +7,7 @@ description: "Almacenamiento de objetos compatible con S3 para cargas, recursos 
 
 # Managed Object Storage
 
-Managed Object Storage en Lizard (lizard.build) es almacenamiento compatible con S3 para cargas, recursos y copias de seguridad. `lizard add s3` lo crea con un **bucket privado llamado `default`** y cinco variables, de `S3_ENDPOINT` a `S3_REGION`, que cualquier AWS SDK puede usar con direccionamiento de estilo ruta (path-style). Cada cuenta puede almacenar hasta 16 GiB, y pagas por los bytes que almacenas. Para servir archivos sin autenticación, haz público el bucket desde el navegador S3 del panel. Para ver un resumen y los precios, consulta la [página de Managed Object Storage](https://lizard.build/object-storage).
+Managed Object Storage en Lizard (lizard.build) es almacenamiento compatible con S3 para cargas, recursos y copias de seguridad. `lizard add s3` lo crea con un **bucket privado llamado `default`** y cinco variables, de `S3_ENDPOINT` a `S3_REGION`, que cualquier AWS SDK puede usar con direccionamiento de estilo ruta (path-style). Cada addon de Managed Object Storage puede almacenar hasta 16 GiB, y pagas por los bytes que almacenas. Para servir archivos sin autenticación, haz público el bucket desde el navegador S3 del panel. Para ver un resumen y los precios, consulta la [página de Managed Object Storage](https://lizard.build/object-storage).
 
 <span id="provision" />
 
@@ -88,11 +88,21 @@ Una vez que hagas público el bucket `default`, sus objetos se sirven en:
 <dashboard-host>/api/s3/<addonId>/public/default/<key>
 ```
 
+El navegador S3 tiene dos interruptores para cada bucket. **Vista pública** (Public view) permite que cualquiera lea sus objetos. **Edición pública** (Public edit) permite que cualquiera los suba o los borre, así que actívalo solo en un bucket que cualquiera pueda cambiar.
+
+Para compartir un objeto de un bucket privado durante un tiempo, genera un enlace temporal. Funciona sin credenciales hasta que caduca (una hora por defecto, hasta 7 días como máximo):
+
+```bash
+lizard s3 url report.pdf --expires 86400
+```
+
+Las URL prefirmadas (presigned) de un AWS SDK también funcionan.
+
 <span id="browse-objects" />
 
 ## Explorar objetos
 
-Abre el **navegador S3** en el panel (`lizard open`) para cargar y eliminar objetos, crear carpetas y hacer buckets públicos o privados. Desde la CLI, `lizard s3 upload <file>` carga un archivo y `lizard s3 list` lista los objetos; consulta [`lizard s3`](/cli/s3).
+Abre el **navegador S3** en el panel (`lizard open`) para cargar y eliminar objetos, crear carpetas y hacer buckets públicos o privados. Desde la CLI, `lizard s3 upload <file>` carga un archivo, `lizard s3 list` lista los objetos y `lizard s3 url <key>` imprime un enlace temporal; consulta [`lizard s3`](/cli/s3).
 
 > **Los cambios de ACL del bucket** (hacer un bucket público/privado) todavía no están en la CLI; gestiónalos desde el panel.
 
@@ -100,7 +110,7 @@ Abre el **navegador S3** en el panel (`lizard open`) para cargar y eliminar obje
 
 ## Límite de almacenamiento
 
-Cada cuenta puede almacenar hasta 16 GiB de objetos entre sus addons de Managed Object Storage. Pagas por los bytes almacenados, no por un tamaño reservado; `lizard scale --storage` no cambia este límite.
+Cada addon de Managed Object Storage puede almacenar hasta 16 GiB de objetos, sumando su bucket `default` y los demás que crees. Otro addon (`lizard add s3`) tiene sus propios 16 GiB. Pagas por los bytes almacenados, no por un tamaño reservado; `lizard scale --storage` no cambia este límite.
 
 <span id="see-also" />
 

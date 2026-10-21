@@ -1,10 +1,10 @@
 ---
-description: "lizard s3 は、AWS SDK を使わずに、ローカルファイルを Managed Object Storage の bucket にアップロードし、bucket 内のオブジェクトを一覧表示します。"
+description: "lizard s3 は、AWS SDK を使わずに、ローカルファイルを Managed Object Storage の bucket にアップロードし、オブジェクトを一覧表示し、期限付きのダウンロードリンクを出力します。"
 ---
 
 # lizard s3
 
-[Managed Object Storage](/addons/storage) の bucket にオブジェクトをアップロードし、一覧表示します。
+[Managed Object Storage](/addons/storage) の bucket にオブジェクトをアップロードし、一覧表示し、期限付きのダウンロードリンクを出力します。
 
 <span id="usage" />
 
@@ -13,9 +13,10 @@ description: "lizard s3 は、AWS SDK を使わずに、ローカルファイル
 ```bash
 lizard s3 upload <file> [flags]
 lizard s3 list [flags]
+lizard s3 url <key> [flags]
 ```
 
-`--addon` と `--bucket` を渡さない限り、どちらのコマンドもプロジェクト内の唯一の S3 アドオンとその `default` bucket を対象にします。先に `lizard add s3` でアドオンを追加してください。
+`--addon` と `--bucket` を渡さない限り、3 つのコマンドはどれもプロジェクト内の唯一の S3 アドオンとその `default` bucket を対象にします。先に `lizard add s3` でアドオンを追加してください。
 
 <span id="subcommands" />
 
@@ -25,12 +26,25 @@ lizard s3 list [flags]
 
 ローカルファイルをアップロードします。キー、ETag、サイズを表示し、bucket が公開されている場合は URL も表示します。`default` bucket は非公開です。bucket を公開するには、ダッシュボードの S3 ブラウザーを使ってください。
 
+`upload` はファイル全体を 1 回のリクエストで Lizard API 経由で送ります。上限は 150 MB です。それより大きいファイルには、アドオンの認証情報を使う S3 クライアントを使ってください。[Managed Object Storage](/addons/storage) を参照してください。
+
 | フラグ | 説明 |
 |------|-------------|
 | `--addon <name>` | S3 アドオンの名前または ID (デフォルト: プロジェクト内の唯一の S3 アドオン) |
 | `--bucket <name>` | アップロード先の bucket (デフォルトは `default`) |
 | `--key <key>` | オブジェクトキー (デフォルト: ファイル名) |
 | `--content-type <type>` | Content-Type ヘッダー (デフォルト: ファイルの拡張子から推測) |
+| `-p, --project <id>` | プロジェクト名、スラッグ、または ID |
+
+### `lizard s3 url <key>`
+
+オブジェクトの期限付きダウンロードリンクを出力します。リンクを持っている人は誰でも、期限が切れるまで、非公開の bucket からでも認証情報なしでオブジェクトをダウンロードできます。`--json` を付けると `url`、`key`、`bucket`、`expiresIn`、`expiresAt` を出力します。
+
+| フラグ | 説明 |
+|------|-------------|
+| `--addon <name>` | S3 アドオンの名前または ID (デフォルト: プロジェクト内の唯一の S3 アドオン) |
+| `--bucket <name>` | bucket (デフォルトは `default`) |
+| `--expires <seconds>` | リンクが有効な秒数 (デフォルトは `3600`、最大 `604800` = 7 日) |
 | `-p, --project <id>` | プロジェクト名、スラッグ、または ID |
 
 ### `lizard s3 list`
@@ -56,6 +70,14 @@ bucket 内のオブジェクトを一覧表示します (別名 `ls`)。
 
 ```bash
 lizard s3 upload ./logo.png --key assets/logo.png
+```
+
+<span id="share-a-private-file-for-a-day" />
+
+### 非公開ファイルを 1 日共有する
+
+```bash
+lizard s3 url assets/logo.png --expires 86400
 ```
 
 <span id="list-objects-under-a-prefix" />

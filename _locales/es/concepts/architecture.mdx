@@ -28,10 +28,9 @@ Un **workspace** es el nivel de cuenta u organización. Perteneces al menos a un
 
 ```bash
 lizard workspace list
-lizard whoami        # shows your active workspace
 ```
 
-Muchos comandos aceptan `-w, --workspace <ws>` para distinguir proyectos cuando el mismo nombre de proyecto existe en más de un workspace.
+Muchos comandos aceptan `-w, --workspace <ws>` para distinguir proyectos cuando el mismo nombre de proyecto existe en más de un workspace. El propietario puede limitar cuántos sandboxes ejecuta un workspace a la vez y cuánta CPU, memoria y disco usa con `lizard workspace limits` (consulta [`lizard workspace`](/cli/workspace)).
 
 <span id="project" />
 
@@ -46,6 +45,8 @@ lizard status                   # show the current directory's link
 lizard unlink                   # remove the link
 lizard project list             # all projects in the workspace
 ```
+
+Una carpeta que no has enlazado usa el **proyecto predeterminado** de tu cuenta: el proyecto más antiguo de tu workspace personal, `<username>'s Project` en una cuenta nueva. `lizard up`, `lizard add`, `lizard sandbox create` y los demás comandos de proyecto van ahí, salvo que enlaces la carpeta o pases `--project`.
 
 > **Consejo:** Usa el nombre del repositorio o del directorio para el proyecto, y nombres de tipo app (`api`, `worker`, `web`) para los servicios.
 
@@ -67,6 +68,8 @@ lizard service set <svc> --set <field>=<value>
 lizard service rename <new-name> --service <svc>
 lizard service delete --service <svc>
 ```
+
+Para detener un servicio sin borrarlo, usa [`lizard pause`](/cli/pause); para que duerma cuando no recibe tráfico, usa [`lizard sleep`](/cli/sleep).
 
 Los campos de configuración del servicio son **planos** y se asignan 1:1 al esquema de la API (p. ej. `repoUrl`, `branch`, `buildCommand`, `startCommand`, `containerPort`, `rootDirectory`). No existe anidamiento de `build.*` / `deploy.*`. Consulta [`lizard service`](/cli/service) para ver la lista completa.
 

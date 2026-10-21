@@ -18,7 +18,7 @@ lizard events --service api       # a specific service
 lizard events --limit 5           # fewer entries (default and maximum 10)
 ```
 
-Cada entrada es un despliegue: estado, desencadenante, commit y número de reinicios. La tabla Replicas de abajo muestra el estado actual de cada pod, para que puedas responder de un vistazo "qué cambió y si está saludable".
+Cada entrada es un despliegue: estado, desencadenante, commit y número de reinicios. Una tabla Replicas encima de los despliegues muestra el estado actual de cada pod; no aparece mientras el servicio no tiene pods, por ejemplo mientras está en pausa o dormido. Juntas responden a "qué cambió y si está saludable". Un cambio de réplicas con `lizard scale` no crea ningún despliegue, así que no aparece en la lista.
 
 <span id="quick-status" />
 
@@ -35,7 +35,7 @@ lizard status        # the current directory's workspace/project/service link
 
 ## Panel
 
-Abre un servicio en el dashboard (`lizard open`) para ver su historial de despliegues. Haz clic en un despliegue para ver sus logs de compilación, su commit y sus eventos de fallo. El panel del servicio muestra las réplicas en marcha y las deseadas.
+Abre un servicio en el dashboard (`lizard open`) para ver su historial de despliegues. Cada fila de despliegue muestra su rama y su mensaje de commit; haz clic en una para ver sus logs de compilación y sus reinicios. El panel del servicio muestra las réplicas en marcha y las deseadas.
 
 <span id="see-also" />
 

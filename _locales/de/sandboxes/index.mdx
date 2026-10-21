@@ -46,7 +46,7 @@ In einem Test am 2026-10-12 dauerte es vom Erstellen einer Sandbox bis zur erste
 |---|---|
 | Was führt den Code aus? | Eine Firecracker microVM mit eigenem Kernel; siehe [Laufzeit und Vorlagen](#runtime-and-templates) |
 | Wie erstelle ich eine? | [Lizard SDK](/sandboxes/sdk-reference), [`lizard sandbox`](/cli/sandbox), das [Dashboard](/sandboxes/dashboard) oder die [HTTP-API](/sandboxes/sdk-reference#http-api) |
-| Welche Vorlagen gibt es? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` und `desktop` |
+| Welche Vorlagen gibt es? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop` und `desktop-camoufox` (nur US East) |
 | Welche Größen gibt es? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, Standard) und Large (8 vCPU / 16 GB); siehe [Größen und Preise](/platform/limits#sandbox-sizes) |
 | Wie lange lebt eine? | Standardmäßig fünf Minuten über SDK und CLI; standardmäßig kein Ablauf über die direkte API und das Dashboard |
 | Was übersteht einen Stopp? | Nur Dateien auf einem unter `/workspace` eingebundenen Volume aus [Persistent Volumes](/sandboxes/volumes) |
@@ -56,7 +56,7 @@ In einem Test am 2026-10-12 dauerte es vom Erstellen einer Sandbox bis zur erste
 
 ## Laufzeit und Vorlagen
 
-Wählen Sie eine Vorlage aus dem aktuellen Katalog: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` oder `desktop`. Die Verfügbarkeit hängt von Region und Pool-Kapazität ab. `interpreter` enthält Python und gängige Datenbibliotheken. `desktop` führt einen grafischen Desktop aus, den Sie mit `sandbox.desktop` oder `lizard sandbox desktop` steuern. Prüfen Sie die Werkzeugversionen in der Sandbox. Die öffentliche CLI bietet keinen Upload eigener Vorlagen.
+Wählen Sie eine Vorlage aus dem aktuellen Katalog: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop` oder `desktop-camoufox`. Die Verfügbarkeit hängt von Region und Pool-Kapazität ab. `interpreter` enthält Python, gängige Datenbibliotheken und Node 22. `desktop` führt einen grafischen Desktop aus, den Sie mit `sandbox.desktop` oder `lizard sandbox desktop` steuern. `desktop-camoufox` ist die Vorlage `desktop` plus Camoufox, ein Firefox-Build für Scraping, den Sie mit Playwright steuern; sie läuft vorerst nur in `us-east-1`. Prüfen Sie die Werkzeugversionen in der Sandbox. Die öffentliche CLI bietet keinen Upload eigener Vorlagen.
 
 Lizard Sandboxes laufen als Firecracker microVMs, jede mit eigenem Kernel. Geben Sie dem Agenten nur die Zugangsdaten und Rechte, die er für seine Aufgabe braucht.
 

@@ -15,13 +15,15 @@ lizard metrics --range 24h        # time window: 1h (default), 6h, 24h, 7d, 14d,
 lizard metrics --watch            # live-updating view
 ```
 
+`--range` applies to one service: the linked one or `--service`. The project overview (`--all`, or a folder with no linked service) shows current values only.
+
 ## Include cost
 
 ```bash
 lizard metrics --cost
 ```
 
-This command shows cost instead of metrics: each running resource's price per hour, usage for the current billing period (egress included), and how much of Pro's included $19 you have used this month. It covers the whole project, ignores `--service` and `--range`, and only the workspace owner can see it.
+This command shows cost instead of metrics: each running resource's price per hour, usage for the current billing period (egress included), and how much of your included Pro usage you have used this period (the trial's $5 during the 7-day trial, then the $19 included each month). It covers the whole project, ignores `--service` and `--range`, and only the workspace owner can see it.
 
 ## Dashboard
 

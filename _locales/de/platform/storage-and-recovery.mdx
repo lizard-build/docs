@@ -6,8 +6,6 @@ description: "Wählen Sie Speicher für Anwendungsdaten und Sandbox-Dateien. Ver
 
 # Speicher und Wiederherstellung
 
-<span id="plan-a-database-restore" />
-
 Wählen Sie den Speicher danach aus, welche Daten einen Prozessneustart, ein neues Deployment oder einen Host-Ausfall überstehen müssen. Das sind unterschiedliche Ereignisse. Persistenter Speicher bietet für sich allein weder ein Backup noch einen Wiederherstellungspunkt oder Hochverfügbarkeit.
 
 | Daten | Wo sie gespeichert werden sollten | Grenze |
@@ -16,17 +14,27 @@ Wählen Sie den Speicher danach aus, welche Daten einen Prozessneustart, ein neu
 | Cache- und Queue-Daten | Managed Redis | Entscheiden Sie, ob die Workload ihren Zustand neu aufbauen kann oder einen eigenen Wiederherstellungsplan braucht. Managed Redis hat weder eine Eviction-Richtlinie noch ein Append-only-File: Wenn der Arbeitsspeicher ausgeht, startet es neu und neuere Schreibvorgänge können verloren gehen. Speichern Sie Daten, die Sie nicht verlieren dürfen, in Managed Postgres. |
 | Von Anwendungen gemeinsam genutzte Dateien | Managed Object Storage | Der automatisch erstellte Bucket `default` ist privat. Machen Sie einen Bucket nur dann im Bucket-Browser des Dashboards öffentlich, wenn jeder seine Dateien lesen darf. |
 
-<span id="keep-files-after-a-sandbox-ends" />
-
-Für Sandbox-Dateien gelten andere Regeln: Nur Dateien auf einem angehängten Volume aus Persistent Volumes unter `/workspace` überdauern eine Sandbox. Siehe [Speicher und Abrechnung](/sandboxes#storage-and-billing).
+Für Sandbox-Dateien gelten andere Regeln: Nur Dateien auf einem angehängten Volume aus Persistent Volumes unter `/workspace` oder in einem selbst erstellten Snapshot überdauern eine Sandbox. Siehe [Speicher und Abrechnung](/sandboxes#storage-and-billing).
 
 <span id="keep-files-after-a-sandbox-ends" />
 
 ## Dateien nach dem Ende einer Sandbox behalten
 
-Der Reiter Persistent Volumes verwaltet benannte Volumes und ihre Verbindungen. Hängen Sie ein Volume bei der Erstellung an und schreiben Sie nach `/workspace`. Stoppen Sie die aktuelle Sandbox, bevor Sie das Volume an eine andere hängen.
+Die Seite **Volumes** im Dashboard verwaltet benannte Volumes und ihre Verbindungen. Hängen Sie ein Volume bei der Erstellung an und schreiben Sie nach `/workspace`. Stoppen Sie die aktuelle Sandbox, bevor Sie das Volume an eine andere hängen.
 
 [Persistent Volumes](/sandboxes/volumes)
+
+Um eine ganze Sandbox samt Arbeitsspeicher zu behalten, speichern Sie sie mit `lizard sandbox snapshot <id>` und starten Sie später eine Kopie mit `lizard sandbox restore <snapshot-id>`; siehe [Snapshots](/sandboxes/quickstart#pause-and-resume).
+
+<span id="restore-a-deleted-resource" />
+
+## Gelöschte Ressourcen wiederherstellen
+
+Ein gelöschtes Projekt bleibt mit seinen Apps und Datenbanken 3 Tage im Papierkorb, ebenso eine gelöschte Datenbank. Stellen Sie sie in dieser Zeit unter **Gefahrenbereich** in den Workspace- oder Projekteinstellungen wieder her; danach löscht Lizard sie endgültig.
+
+- Eine einzeln gelöschte App kommt nur dann in den Papierkorb, wenn Sie sie mit `lizard up` aus Dateien bereitgestellt haben; beim Wiederherstellen wird sie aus diesem Upload neu gebaut. Eine aus GitHub bereitgestellte App wird sofort gelöscht.
+- Sandboxes, ihre Volumes und Snapshots haben keinen Papierkorb. Wenn Sie sie oder ihr Projekt löschen, sind sie sofort weg.
+- Auch für gelöschte Workspaces gibt es keinen Papierkorb.
 
 <span id="plan-a-database-restore" />
 

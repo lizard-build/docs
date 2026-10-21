@@ -9,7 +9,7 @@ description: "Ejecuta Claude Code en un sandbox de Lizard: conecta una suscripci
 
 Para ejecutar Claude Code en un sandbox de Lizard (lizard.build), conecta una credencial una sola vez con `lizard agents add claude` (un token de `claude setup-token`) o `lizard agents add anthropic` (una clave de API). Después crea un sandbox desde la plantilla `claude` y envíale trabajo con `lizard sandbox prompt <id> --agent claude "…"`. Claude Code se ejecuta en su propia máquina Linux con `--dangerously-skip-permissions`: edita archivos y ejecuta comandos sin preguntar, y no tiene acceso a tu equipo.
 
-**Estado de las pruebas:** los comandos y el comportamiento de esta página se basan en Lizard CLI 4.0.42 y del ejecutor de agentes de la plataforma a fecha de 2026-10-12. No hemos probado todos estos pasos de principio a fin en un sandbox real para esta página. Comprobamos en local los pasos de `git bundle` y del parche.
+**Estado de las pruebas:** los comandos y el comportamiento de esta página se basan en Lizard CLI 4.0.42 y en el ejecutor de agentes de la plataforma a fecha de 2026-10-12; la nota sobre `--with-token` se basa en Lizard CLI 4.0.65. No hemos probado todos estos pasos de principio a fin en un sandbox real para esta página. Comprobamos en local los pasos de `git bundle` y del parche.
 
 <span id="before-you-start" />
 
@@ -47,7 +47,7 @@ Consulta [`lizard agents`](/cli/agents) para ver todas las opciones.
 lizard sandbox create -t claude --timeout 3600000
 ```
 
-El comando muestra el ID del sandbox, por ejemplo `sb_abc123`. Guárdalo en una variable para los pasos siguientes: `SB=sb_abc123`.
+El comando muestra el ID del sandbox, por ejemplo `genuine-toddler-jasj`. Guárdalo en una variable para los pasos siguientes: `SB=genuine-toddler-jasj`.
 
 - `--timeout 3600000` le da al sandbox una hora. El valor predeterminado de la CLI es de cinco minutos; pasado ese tiempo, Lizard elimina el sandbox y sus archivos, aunque esté a mitad de una tarea. Amplía la duración de uno en marcha con `lizard sandbox timeout $SB 3600000`.
 - La plantilla `claude` incluye Node.js 22, una versión fijada de Claude Code, git, Python 3, ripgrep, curl, jq, unzip y Lizard CLI. Comprueba la versión de Claude Code con `lizard sandbox exec $SB -- claude --version`.
@@ -100,7 +100,7 @@ Pasa `--agent claude` y `--cwd` en cada prompt, también en los siguientes. Sin 
 - **Archivos.** Todo lo que hay en el sandbox y nada de tu equipo.
 - **Red.** Acceso a internet de salida, para descargar paquetes y llamar a APIs. El precio del sandbox incluye el tráfico de salida hasta [2 TB por cuenta](/platform/limits#sandbox-egress) en una ventana móvil de 30 días.
 - **Tu credencial.** Durante una ejecución, el token está en el entorno de Claude Code como `CLAUDE_CODE_OAUTH_TOKEN` o `ANTHROPIC_API_KEY`, y los comandos que ejecuta lo heredan. Con una suscripción, es el token de larga duración de `claude setup-token`; solo los inicios de sesión de ChatGPT reciben una copia de corta duración en cada ejecución. Da por hecho que el código que se ejecuta en el sandbox puede leerlo, y elimínalo con `lizard agents remove claude` cuando ya no lo necesites.
-- **Tu cuenta de Lizard.** Sin acceso por defecto. Crea el sandbox con `--with-token <key>` para instalar una clave `liz_` y que `lizard` funcione dentro, por ejemplo para desplegar lo que construyó Claude. Cualquier proceso del sandbox puede leer esa clave, así que usa una limitada a un solo workspace o proyecto; consulta [`lizard keys`](/cli/keys).
+- **Tu cuenta de Lizard.** Sin acceso por defecto. Crea el sandbox con `--with-token` para iniciar sesión en `lizard` dentro de él, por ejemplo para desplegar lo que construyó Claude. Tu propia clave solo autoriza la petición: el sandbox recibe una clave nueva, limitada al proyecto del sandbox y que se elimina con el sandbox. Así Claude puede cambiar ese proyecto y nada más de tu cuenta; consulta [`lizard keys`](/cli/keys).
 
 <span id="get-the-changes-back" />
 

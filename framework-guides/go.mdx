@@ -7,7 +7,7 @@ description: "Host a Go app on Lizard: lizardpack finds go.mod, builds a static 
 
 To deploy a Go app on Lizard, upload or push a module with a `go.mod` file. lizardpack builds it with the Go version from the `go` line, compiles a static binary (`CGO_ENABLED=0`) and runs it on Alpine Linux. The service port is `8080`, and Lizard passes it to your process in `PORT`, so read `PORT` in your app and listen on all interfaces.
 
-**Test status:** the sample app below builds and runs locally with Go 1.24, and we checked its build plan with lizardpack, the build planner Lizard runs. We have not yet deployed it end to end with this guide.
+**Test status:** the sample app below builds and runs locally with Go 1.27, and we checked its build plan with lizardpack, the build planner Lizard runs. We have not yet deployed it end to end with this guide.
 
 ## Before you start
 
@@ -21,7 +21,7 @@ To deploy a Go app on Lizard, upload or push a module with a `go.mod` file. liza
 ```text
 module example.com/hello
 
-go 1.24
+go 1.27
 ```
 
 `main.go`:
@@ -68,16 +68,16 @@ curl http://localhost:8080/healthz
 | Step | What happens |
 |---|---|
 | Detection | `go.mod`, `go.work` or any `.go` file. lizardpack checks Go before Node.js and Python. |
-| Go version | The `go` line in `go.mod`, major and minor only: `go 1.24.3` builds on `golang:1.24-alpine`. Without `go.mod`, Go 1.24. |
+| Go version | The `go` line in `go.mod`, major and minor only: `go 1.27.3` builds on `golang:1.27-alpine`. Without `go.mod`, Go 1.24, which no longer gets security fixes. |
 | Build | `go mod download`, then `CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w' -o /app/server <package>` |
-| Main package | The root directory; `./cmd` if `cmd/main.go` exists; else the first `cmd/<name>/main.go` in alphabetical order |
+| Main package | `./cmd` if `cmd/main.go` exists; else the first `cmd/<name>/main.go` in alphabetical order; else the root directory. A `main.go` in `cmd/` or `cmd/<name>/` wins over a root `main.go`. |
 | Runtime | `alpine:3.19` with `ca-certificates` and `tzdata`. lizardpack copies the whole source directory to `/app` next to the binary, so relative paths such as `templates/` and `static/` still work. |
 | Start and port | `/app/server` on port `8080` |
 
 The generated Dockerfile:
 
 ```dockerfile
-FROM golang:1.24-alpine AS build
+FROM golang:1.27-alpine AS build
 WORKDIR /app
 COPY go.mod go.sum* ./
 RUN go mod download
@@ -92,7 +92,7 @@ EXPOSE 8080
 CMD ["/app/server"]
 ```
 
-Leave the service's build and start commands empty to get this image. With either one set, Lizard writes a different Dockerfile from those commands and ignores the `go` line: a `go build …` command builds on Go 1.24. For other build steps, commit your own `Dockerfile`; see [Deploy a Docker container from a Dockerfile](/deploy/dockerfile).
+Leave the service's build and start commands empty to get this image. With either one set, Lizard writes a different Dockerfile from those commands and ignores the `go` line: a `go build …` command builds on Go 1.24, which no longer gets security fixes. For other build steps, commit your own `Dockerfile`; see [Deploy a Docker container from a Dockerfile](/deploy/dockerfile).
 
 ## Deploy
 
@@ -144,10 +144,10 @@ Request `/healthz` on the URL that `lizard up` printed, then a route that does r
 | Symptom | Fix |
 |---|---|
 | `no Go files in /app` | The `main` package is not at the root or under `cmd/`. Move it, or add a Dockerfile. |
-| The wrong binary starts | With several `cmd/<name>/main.go`, lizardpack builds the first name in alphabetical order. Add a Dockerfile that builds the one you want. |
+| The wrong binary starts | A `main.go` in `cmd/` or `cmd/<name>/` wins over a root `main.go`, and with several `cmd/<name>/main.go`, lizardpack builds the first name in alphabetical order. Add a Dockerfile that builds the one you want. |
 | SQLite fails with `CGO_ENABLED=0` | The build turns cgo off, so `mattn/go-sqlite3` cannot work. Use a pure-Go driver, or [Managed Postgres](/addons/postgres): container files are lost on each deploy. |
 | Deploy never becomes healthy | The process must listen on `PORT` (or `8080`) on all interfaces. See [service never healthy](/deploy/troubleshooting/service-never-healthy). |
-| You need a newer Go | Change the `go` line, for example `go mod edit -go=1.25`, and deploy again. See [runtime versions](/deploy/runtime-versions). |
+| You need a newer Go | Change the `go` line, for example `go mod edit -go=1.27`, and deploy again. See [runtime versions](/deploy/runtime-versions). |
 
 A Go process that serves no HTTP, such as a queue consumer, runs as a [background worker](/deploy/workers) with `--port 0`.
 

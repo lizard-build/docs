@@ -69,15 +69,15 @@ Reference the database variables on the Flowise service:
 ```bash
 lizard secrets set \
   DATABASE_TYPE=postgres \
-  DATABASE_HOST='${{flowise-db.PGHOST}}' \
-  DATABASE_PORT='${{flowise-db.PGPORT}}' \
+  DATABASE_HOST='${{flowise-db.LIZARD_PRIVATE_DOMAIN}}' \
+  DATABASE_PORT=5432 \
   DATABASE_USER='${{flowise-db.PGUSER}}' \
   DATABASE_PASSWORD='${{flowise-db.PGPASSWORD}}' \
   DATABASE_NAME='${{flowise-db.PGDATABASE}}' \
   --service flowise
 ```
 
-Keep the single quotes so your shell does not expand the references. Lizard resolves them when the service starts.
+Keep the single quotes so your shell does not expand the references. Lizard resolves them when the service starts. `LIZARD_PRIVATE_DOMAIN` and port `5432` reach the database over the project's private network, from services in the same project and region.
 
 Generate the following secrets once during setup:
 

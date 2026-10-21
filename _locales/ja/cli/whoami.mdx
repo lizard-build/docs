@@ -1,10 +1,10 @@
 ---
-description: "lizard whoami は、ログイン中のアカウント、アクティブなワークスペース、このディレクトリにリンクされているプロジェクトを表示します。"
+description: "lizard whoami は、ログイン中のアカウントと、このディレクトリにリンクされているプロジェクトを表示します。スコープ付き API キーの場合は、そのプロジェクトとワークスペースを表示します。"
 ---
 
 # lizard whoami
 
-現在のユーザー、アクティブなワークスペース、リンクされているプロジェクトを表示します。
+ログイン中のアカウントを表示します。リンク済みのフォルダーでは、リンクされているプロジェクトとそのワークスペースも表示します。
 
 <span id="usage" />
 
@@ -13,6 +13,17 @@ description: "lizard whoami は、ログイン中のアカウント、アクテ�
 ```bash
 lizard whoami
 ```
+
+<span id="what-it-shows" />
+
+## 表示される内容
+
+- アカウントでサインインしている場合: ユーザー名、GitHub App が接続されているかどうか、リンクされているプロジェクトとその後ろの括弧内のワークスペース。リンクされていないフォルダーでは `Project: none` と表示されます。そのフォルダーでのコマンドは、アカウントのデフォルトプロジェクトを使います。
+- スコープ付き API キーでサインインしている場合: `Scoped API key (account details are not visible)` と、キーが届く各プロジェクトまたはワークスペース。キーの背後のアカウントは表示されません。
+
+`whoami` はアクティブなワークスペースを表示しません。ワークスペースを一覧表示するには [`lizard workspace list`](/cli/workspace) を実行してください。
+
+`--json` を付けた場合、または出力先がターミナルでない場合は、アカウントのフィールドと `project` を出力します。スコープ付きキーの場合は `{ "scoped": true, "scopes": [...], "project": ... }` を出力します。
 
 <span id="examples" />
 
@@ -33,3 +44,4 @@ lizard whoami
 - [lizard login](/cli/login) — 身元を確認する前に認証します
 - [lizard status](/cli/status) — 現在のディレクトリにリンクされているワークスペース、プロジェクト、サービスを表示します
 - [lizard workspace](/cli/workspace) — アクセスできるワークスペースを一覧表示します
+- [lizard keys](/cli/keys) — スコープ付き API キーでできること

@@ -21,7 +21,7 @@ description: "Lizard のダッシュボードで Sandboxes を作成、確認、
 <span id="snapshots" />
 <span id="volumes" />
 
-ダッシュボードを使うと、コードを書かずに Sandboxes を作成して管理できます。プロジェクトを開き、Sandboxes を選びます。作成時にテンプレート、リージョン、サイズ (Small、Medium (既定)、Large) を選択してください。既定のリージョンが最寄りとは限りません。**Delete after** で有効期間を選びます: 15 分、1 時間、4 時間、1 日、7 日、Never (既定)。
+ダッシュボードを使うと、コードを書かずに Sandboxes を作成して管理できます。プロジェクトを開き、サイドバーで **Sandboxes** を選びます。**New Sandbox** で sandbox を作成します: カタログのテンプレート、リージョン、サイズ (Small、Medium (既定)、Large) を選んでください。既定のリージョンが最寄りとは限りません。**Delete after** で有効期間を選びます: 15 分、1 時間、4 時間、1 日、7 日、Never (既定)。トライアル中、ダイアログで選べるのは US リージョンの Small だけです。**New Sandbox** の横の数は、実行中の sandbox の数と上限を示します。
 
 <span id="api-keys" />
 
@@ -41,8 +41,10 @@ description: "Lizard のダッシュボードで Sandboxes を作成、確認、
 
 ## テンプレートとボリューム
 
-Templates タブには、プラットフォームのテンプレートとプロジェクトの非公開スナップショットが表示され、どちらからでも新しい sandbox を起動できます。スナップショットは SDK または CLI で作成します。Kill Sandbox は sandbox を停止し、ボリュームを切り離します。
+サイドバーには **Volumes**（Persistent Volumes）、**Templates**、**Agents** もあります。**Templates** には、プラットフォームのテンプレートと現在のプロジェクトで作成したスナップショットが表示され、どちらからでも新しい sandbox を起動できます。スナップショットは SDK または CLI で作成します。Kill Sandbox は sandbox を停止し、ボリュームを切り離します。
 
-ボリュームの作成と接続は SDK または CLI で行います。作成フォームにはボリュームの項目がありません。Persistent Volumes タブは、プロジェクトにボリュームができると表示されます。各ボリュームのサイズと接続先の sandbox が表示され、ファイルの閲覧、サイズ変更、削除ができます。別の sandbox に接続する前に、現在の sandbox を停止します。
+ボリュームの作成と接続は SDK または CLI で行います。作成フォームにはボリュームの項目がありません。**Volumes** には各ボリュームのサイズと接続先の sandbox が表示され、ファイルの閲覧、サイズ変更、削除ができます。別の sandbox に接続する前に、現在の sandbox を停止します。
+
+**Agents** では、sandbox 内のコーディングエージェントが使う認証情報を接続します。[`lizard agents`](/cli/agents) と同じ働きです。
 
 [Sandboxes の概要](/sandboxes) · [クイックスタート](/sandboxes/quickstart) · [SDK リファレンス](/sandboxes/sdk-reference) · [コードインタープリター](/sandboxes/code-interpreter) · [Persistent Volumes](/sandboxes/volumes)

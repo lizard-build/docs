@@ -10,23 +10,30 @@ Read the embedded agent skills shipped with this CLI version. Alias: `lizard ski
 
 ```bash
 lizard skills list
-lizard skills get core
-lizard skills path
+lizard skills get core [flags]
+lizard skills path [name] [flags]
 ```
 
 ## Subcommands
 
 ### `lizard skills list`
 
-List the available embedded skills.
+List the available embedded skills with their descriptions and references.
 
 ### `lizard skills get core`
 
-Read the core guide — the authoritative usage guide for the platform, versioned with the CLI. With `--json` it returns `{ name, path, frontmatter, content }`, where `content` is the complete guide (build pipeline, env precedence, addons, discovery, exit codes).
+Read the core guide: the platform overview for agents, versioned with the CLI. It covers sandboxes, deploys, databases, secrets, domains, logs and exit codes. Details live in three references: `deploys`, `sandboxes` and `sdk`.
+
+With `--json` it returns `{ name, path, frontmatter, content, references }`. `content` is the core guide, and `references` lists each reference's `name`, `path` and the `command` that prints it.
+
+| Flag | Description |
+|------|-------------|
+| `--ref <name>` | Print one reference instead: `deploys`, `sandboxes` or `sdk`. With `--json` it returns `{ name, ref, path, content }` |
+| `--full` | Append every reference after the core guide |
 
 ### `lizard skills path [name]`
 
-Print where a skill comes from. Skills are built into the CLI, so this prints `embedded://skills` unless `LIZARD_SKILLS_DIR` points the CLI at a directory on disk.
+Print where a skill comes from. Skills are built into the CLI, so `lizard skills path` prints `embedded://skills` and `lizard skills path core` prints `embedded://skills/core/SKILL.md`, unless `LIZARD_SKILLS_DIR` points the CLI at a directory on disk. `--ref <name>` prints the path of one reference.
 
 ## Examples
 
@@ -34,6 +41,18 @@ Print where a skill comes from. Skills are built into the CLI, so this prints `e
 
 ```bash
 lizard skills get core --json
+```
+
+### Load one reference
+
+```bash
+lizard skills get core --ref deploys --json
+```
+
+### Print the core guide with every reference
+
+```bash
+lizard skills get core --full
 ```
 
 ### List available embedded skills

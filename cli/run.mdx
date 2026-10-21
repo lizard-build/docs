@@ -35,7 +35,9 @@ lizard run [flags] -- <command>
 |------|-------------|
 | `-s, --service <name>` | Service whose env to inject (defaults to the linked service) |
 | `--no-service` | Don't inject service env, project secrets only |
-| `-p, --project <id>` | Project (defaults to the linked one) |
+| `-p, --project <id>` | Project name, slug, or ID (defaults to the linked project, or to your default project in an unlinked folder) |
+
+In an unlinked folder, `lizard run --service postgres` reads the `postgres` addon of your default project, the oldest project in your personal workspace. Pass `-p` to use another project's database.
 
 ## Examples
 

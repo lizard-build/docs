@@ -16,11 +16,13 @@ description: "Git は不要で、lizard up を使って現在のディレクト�
 lizard up
 ```
 
-- 現在のディレクトリを tarball としてアップロードします。git リポジトリ内では `.gitignore` を尊重します（`--no-gitignore` で無効化）。git の外では、決まったビルド用・依存関係用フォルダー（`node_modules`、`.git`、`dist`、`.next`、`build`、`__pycache__`、`.venv`、`venv`、`.cache`、`coverage`、`.turbo`、`.vercel`）と、`.DS_Store`、`*.pyc`、`*.pyo`、`*.log` だけをスキップするため、`.env` ファイルはアップロードされます。先に `git init` を実行するか、シークレットを移動してください。
+- 現在のディレクトリを tarball としてアップロードします。git リポジトリ内では `.gitignore` を尊重します。git の外、または `--no-gitignore` を付けた場合は、決まったビルド用・依存関係用フォルダー（`node_modules`、`.git`、`dist`、`.next`、`build`、`__pycache__`、`.venv`、`venv`、`.cache`、`coverage`、`.turbo`、`.vercel`）と、`.DS_Store`、`*.pyc`、`*.pyo`、`*.log` だけをスキップするため、`.env` ファイルはアップロードされます。先に `git init` を実行するか、シークレットを移動してください。
 - `sourceType=upload` を強制します。
 - SSE 経由でビルドログをストリーミングし、完了時にライブ URL を表示します。
 
-ディレクトリがまだプロジェクトにリンクされていない場合、`up` は最初に `init` を実行します。TTY では対話的に動作しますが、非 TTY（CI）では空のプロジェクトを暗黙的に作成することは**ありません**。代わりにエラーになり、`lizard init --name <project>` を実行するよう求めます（または `up` に `--project <name>` を渡します）。これは、タイプミスによって空のプロジェクトが作成されるのを防ぐためです。
+フォルダーがまだプロジェクトにリンクされていない場合、`up` はそのフォルダーをアカウントのデフォルトプロジェクト（個人ワークスペースで最も古いプロジェクト。新しいアカウントでは `<username>'s Project`）にリンクし、そのことを表示します。ターミナルでも CI でも確認は求めません。別のプロジェクトにデプロイするには、先に `lizard init --name <project>` を実行するか、`--project <name>` を渡してください。`lizard init --force` でフォルダーをリンクし直せます。
+
+`--service` を指定しない場合、`up` はフォルダーにリンクされたサービスにデプロイします。リンクされたサービスがなければ、`package.json` またはフォルダーから名前を取ります（ターミナルでは確認を求めます）。その名前のサービスがプロジェクトにすでにあれば、`up` はそのサービスにデプロイします。GitHub サービスであってもデプロイし、`sourceType=upload` に切り替えます。また、そのサービスのポートを新しいサービスと同じ方法で設定します: `--port`、ローカルの `EXPOSE` 行、または `3000` です。該当するサービスがなければ作成します。デプロイ先を選ぶには `--service <name>` を渡します。まだ存在しない名前を渡すと、そのサービスが作成されます。
 
 <span id="common-flags" />
 
@@ -28,7 +30,8 @@ lizard up
 
 | フラグ | 目的 |
 |------|---------|
-| `-s, --service <name>` | 既存のサービスを対象にする |
+| `-s, --service <name>` | デプロイ先のサービス。新しい名前ならそのサービスを作成する |
+| `-p, --project <name>` | リンク済みまたはデフォルトのプロジェクトではなく、このプロジェクトにデプロイする |
 | `--build-command <cmd>` | build コマンドを上書きする |
 | `--start-command <cmd>` | start コマンドを上書きする |
 | `--pre-deploy-command <cmd>` | すべてのコンテナの起動時に、start コマンドの前に実行する。`--start-command` が必要（[ビルド設定](/concepts/build-pipeline#build-configuration-reference) を参照） |
@@ -36,7 +39,7 @@ lizard up
 | `--region <code>` | 新しいサービスのリージョン（既存のサービスでは無視される） |
 | `-d, --detach` | デプロイを開始して、ログをストリーミングせずに終了する |
 | `-c, --ci` | CI 向けの出力 |
-| `--no-gitignore` | `.gitignore` を無視してすべてをアップロードする |
+| `--no-gitignore` | `.gitignore` を無視し、代わりに決まったスキップ一覧を使う（ビルド済みの `dist/` や `build/` は引き続き除外される） |
 
 ```bash
 lizard up --service api --start-command "node server.js" --port 8080
@@ -62,7 +65,7 @@ lizard redeploy --service api
 
 ## ヘッドレス / CI
 
-非対話フローでは、デプロイ前に明示的にプロジェクトをリンクしてください:
+CI でも、リンクされていないフォルダーはデフォルトプロジェクトにデプロイされます。選んだプロジェクトにデプロイするには、先にリンクしてください:
 
 ```bash
 export LIZARD_TOKEN=liz_xxx   # create one with: lizard keys create <name>

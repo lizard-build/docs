@@ -52,7 +52,7 @@ lizardpack はリポジトリを検査し、最適化されたマルチステー
 | ランタイム専用フィールド（`startCommand`、`preDeployCommand`、`containerPort`、`watchPatterns`）の `service set` | ❌ 適用するには `lizard redeploy` を実行 |
 | その他の環境変数 / シークレットの変更 | ❌ クイック再起動で適用（再ビルドなし） |
 
-> **二重にビルドしないでください。** 稼働中のサービスでビルドフィールドを変更する `service set` の後は、再ビルドが自動で始まります：その後に `lizard redeploy` を続けないでください。不要な 2 回目のビルドがキューに入ります ([理由](/deploy/troubleshooting/double-build))。クラッシュしたサービスや一度もデプロイされていないサービスは、自動では再ビルドされません。`lizard redeploy` を実行してください。
+> **二重にビルドしないでください。** 稼働中のサービスでビルドフィールドを変更する `service set` の後は、再ビルドが自動で始まります：その後に `lizard redeploy` を続けないでください。そのビルドがキャンセルされ、最初からやり直しになります ([理由](/deploy/troubleshooting/double-build))。クラッシュしたサービスや一度もデプロイされていないサービスは、自動では再ビルドされません。`lizard redeploy` を実行してください。
 
 <span id="build-time-variables" />
 

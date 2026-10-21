@@ -1,10 +1,10 @@
 ---
-description: "lizard domain zeigt die Domain eines Dienstes, erzeugt eine onlizard.com-Subdomain oder hängt einen benutzerdefinierten Hostnamen an und verifiziert ihn mit automatischem TLS."
+description: "lizard domain zeigt oder listet die Domains eines Dienstes, erzeugt eine onlizard.com-Subdomain oder hängt einen benutzerdefinierten Hostnamen an und verifiziert ihn mit automatischem TLS."
 ---
 
 # lizard domain
 
-Zeigt die aktuelle Domain an oder hängt eine benutzerdefinierte an.
+Zeigt oder listet die Domains eines Dienstes oder hängt eine benutzerdefinierte an.
 
 <span id="usage" />
 
@@ -22,7 +22,7 @@ Der Hostname ist ein Positionsargument — es gibt kein Subcommand `add`. Wenn d
 |------|-------------|
 | `-s, --service <name>` | Dienst |
 | `-p, --project <id>` | Projektname, Slug oder ID |
-| `--port <n>` | Freizugebender Port |
+| `--port <n>` | Wird ignoriert: Eine Domain führt immer zum Container-Port des Dienstes. Diesen Port änderst du mit [`lizard port`](/cli/port) |
 | `-f, --force` | Verschiebt die Domain hierher, falls sie an einen anderen deiner Dienste angehängt ist |
 
 Die Unterbefehle verwenden dieselben Flags `-s` und `-p`. Verifiziere und entferne eine Domain bei dem Dienst, an den du sie angehängt hast.
@@ -33,7 +33,11 @@ Die Unterbefehle verwenden dieselben Flags `-s` und `-p`. Verifiziere und entfer
 
 ### `lizard domain generate`
 
-Erzeugt eine neue `*.onlizard.com`-Subdomain.
+Gibt dem Dienst eine `*.onlizard.com`-Subdomain. Hat er schon eine, gibt `generate` diese zurück. Solange der Dienst eine benutzerdefinierte Domain nutzt, schlägt der Befehl fehl; entferne diese zuerst.
+
+### `lizard domain list`
+
+Listet die Domains des Dienstes sowie benutzerdefinierte Domains, die noch auf die DNS-Verifizierung warten, mit den anzulegenden Records (Alias `ls`).
 
 ### `lizard domain verify <hostname>`
 
@@ -81,12 +85,14 @@ Lizard gibt die zu erstellenden DNS-Records zurück: einen `CNAME` für den Host
 lizard domain verify app.example.com --service web
 ```
 
-<span id="attach-a-domain-to-a-specific-port" />
+Für eine Apex-Domain wie `example.com` erlauben die meisten DNS-Anbieter keinen `CNAME`. Lege stattdessen einen `ALIAS`- oder `ANAME`-Record mit demselben Ziel an oder nutze das CNAME-Flattening deines Anbieters.
 
-### Eine Domain an einen bestimmten Port anhängen
+<span id="list-a-services-domains" />
+
+### Die Domains eines Dienstes auflisten
 
 ```bash
-lizard domain app.example.com --service web --port 8080
+lizard domain list --service web
 ```
 
 <span id="move-a-domain-from-another-of-your-services" />

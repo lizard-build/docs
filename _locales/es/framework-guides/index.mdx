@@ -48,7 +48,7 @@ lizard login
 
 En Windows, ejecuta `irm https://lizard.build/api/cli/install.ps1 | iex` en PowerShell. Una cuenta nueva empieza sin plan: hasta que inicies la prueba de Pro de 7 días (se requiere tarjeta), `lizard add` y `lizard up` devuelven un enlace de Checkout. `lizard billing start` lo abre.
 
-Cada guía usa un proyecto nuevo y un servicio llamado `web` o `api`. Crea ese servicio con `lizard add --service web` (o `api`) antes de la primera llamada a `lizard up --service`. `up --service` selecciona un servicio existente; no crea un servicio con nombre si falta. Para un proyecto existente, comprueba `lizard status --json` y `lizard ps --json` antes de implementar. El puerto debe coincidir con el proceso dentro del contenedor, que debe escuchar en `0.0.0.0`.
+Cada guía usa un proyecto nuevo y un servicio llamado `web` o `api`. `lizard up --service web` crea `web` si todavía no existe, así que revisa el nombre: un error tipográfico crea un segundo servicio. Las guías ejecutan primero `lizard add --service web` (o `api`); ese paso solo hace falta para configurar secretos o un dominio antes del primer despliegue. Para un proyecto existente, comprueba `lizard status --json` y `lizard ps --json` antes de implementar. El puerto debe coincidir con el proceso dentro del contenedor, que debe escuchar en `0.0.0.0`.
 
 Lizard CLI 0.3.95 y posteriores excluyen los metadatos de archivo de macOS durante las cargas. No se necesita ninguna configuración `COPYFILE_DISABLE`. Actualiza las versiones anteriores de CLI antes de seguir estas guías.
 

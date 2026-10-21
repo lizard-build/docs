@@ -1,11 +1,11 @@
 ---
 title: "Scale a service: replicas, CPU and memory"
-description: "Add replicas or raise CPU and memory for a service, and grow addon storage. Allowed ranges, rollout behavior, and how to verify a change."
+description: "Add replicas or raise CPU and memory for a service, grow addon storage, or let a service sleep when idle or pause it. Allowed ranges and how to verify a change."
 ---
 
 # Scaling
 
-Use `lizard scale` to add service replicas, raise CPU or memory, or grow addon storage.
+Use `lizard scale` to add service replicas, raise CPU or memory, or grow addon storage. To scale a service to zero, let it [sleep when idle](#sleep-when-idle) or [pause it](#pause-a-service).
 
 ## Scale a service
 
@@ -49,14 +49,38 @@ You can grow addon data volumes, but you cannot shrink them:
 lizard scale --service postgres --storage 8192
 ```
 
+## Sleep when idle
+
+`lizard sleep --on` lets a web service sleep when it gets no traffic and wake on the next request in about a second. By default it sleeps after 10 minutes without traffic; set 5 to 1440 minutes with `--idle`. Turning it on restarts the service once. It works only for a service with a port and one replica, so not for workers. Managed Postgres and Managed Redis can sleep too.
+
+```bash
+lizard sleep --on --idle 30 --service api
+lizard sleep --off --service api    # always on
+```
+
+See [`lizard sleep`](/cli/sleep).
+
+## Pause a service
+
+`lizard pause` stops a service or database without deleting it: it scales to zero and keeps its URL, password, settings and data. `lizard resume` starts it again. A paused GitHub service ignores pushes until you resume it.
+
+```bash
+lizard pause api
+lizard resume api
+```
+
+To pause every service in a project or workspace, use `lizard project pause` or `lizard workspace pause`. See [`lizard pause`](/cli/pause).
+
 ## Verifying
 
 ```bash
 lizard ps                 # replica status + URL
-lizard events             # per-replica deploy/scale history
+lizard events             # deploy history + current replicas
 lizard metrics            # live CPU / memory / network / disk
-lizard metrics --cost     # include cost
+lizard metrics --cost     # cost instead of metrics
 ```
+
+A replica change creates no deploy, so `lizard events` doesn't list it; check the Replicas table instead.
 
 ## See also
 

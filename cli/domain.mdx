@@ -1,10 +1,10 @@
 ---
-description: "lizard domain shows a service's domain, generates an onlizard.com subdomain, or attaches and verifies a custom hostname with automatic TLS."
+description: "lizard domain shows or lists a service's domains, generates an onlizard.com subdomain, or attaches and verifies a custom hostname with automatic TLS."
 ---
 
 # lizard domain
 
-Show the current domain, or attach a custom one.
+Show or list a service's domains, or attach a custom one.
 
 ## Usage
 
@@ -20,7 +20,7 @@ The hostname is a positional argument — there is no `add` subcommand. Running 
 |------|-------------|
 | `-s, --service <name>` | Service |
 | `-p, --project <id>` | Project name, slug, or ID |
-| `--port <n>` | Port to expose |
+| `--port <n>` | Ignored: a domain always routes to the service's container port. Change that port with [`lizard port`](/cli/port) |
 | `-f, --force` | Move the domain here if it's attached to another of your services |
 
 The subcommands use the same `-s` and `-p` flags. Verify and delete a domain on the service you attached it to.
@@ -29,7 +29,11 @@ The subcommands use the same `-s` and `-p` flags. Verify and delete a domain on 
 
 ### `lizard domain generate`
 
-Generate a fresh `*.onlizard.com` subdomain.
+Give the service a `*.onlizard.com` subdomain. If it already has one, `generate` returns it. It fails while the service uses a custom domain; remove that first.
+
+### `lizard domain list`
+
+List the service's domains, and custom domains still waiting for DNS verification with the records to create (alias `ls`).
 
 ### `lizard domain verify <hostname>`
 
@@ -69,10 +73,12 @@ Lizard returns the DNS records to create: a `CNAME` for the hostname and, unless
 lizard domain verify app.example.com --service web
 ```
 
-### Attach a domain to a specific port
+For an apex domain such as `example.com`, most DNS providers don't allow a `CNAME`. Create an `ALIAS` or `ANAME` record with the same target instead, or use your provider's CNAME flattening.
+
+### List a service's domains
 
 ```bash
-lizard domain app.example.com --service web --port 8080
+lizard domain list --service web
 ```
 
 ### Move a domain from another of your services

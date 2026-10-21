@@ -1,10 +1,10 @@
 ---
-description: "lizard workspace erstellt, listet und löscht Workspaces und zeigt, wie Workspaces mit Projekten und Services zusammenhängen."
+description: "lizard workspace erstellt, listet, pausiert und löscht Workspaces und legt die Limits eines Workspace und die Wiederverkaufspreise fest, die seine eingeschränkten API-Schlüssel sehen."
 ---
 
 # lizard workspace
 
-Erstelle, liste und lösche Workspaces.
+Erstelle, liste, pausiere und lösche Workspaces und lege ihre Limits und Wiederverkaufspreise fest.
 
 <span id="usage" />
 
@@ -13,6 +13,10 @@ Erstelle, liste und lösche Workspaces.
 ```bash
 lizard workspace list
 lizard workspace create <name>
+lizard workspace pause <name-or-id>
+lizard workspace resume <name-or-id>
+lizard workspace limits <name-or-id> [flags]
+lizard workspace resale-pricing <name-or-id> [flags]
 lizard workspace rm <name-or-id> [flags]
 ```
 
@@ -32,11 +36,55 @@ Liste die Workspaces auf, zu denen du gehörst, mit deiner Rolle und der Anzahl 
 
 Erstelle einen Workspace. Füge ihm Projekte mit `lizard project create <name> --workspace <slug>` hinzu.
 
+<span id="lizard-workspace-pause-name-or-id" />
+
+### `lizard workspace pause <name-or-id>`
+
+Pausiert jede App, jede Datenbank und jede laufende Sandbox in allen Projekten des Workspace. Apps und Datenbanken behalten URLs, Passwörter, Einstellungen und Daten; Buckets von Managed Object Storage werden nicht pausiert. Nur der Owner kann einen ganzen Workspace pausieren. Einen einzelnen Service oder ein Projekt pausierst du mit [lizard pause](/cli/pause).
+
+<span id="lizard-workspace-resume-name-or-id" />
+
+### `lizard workspace resume <name-or-id>`
+
+Startet jede App und Datenbank im Workspace wieder, die jemand von Hand pausiert hat, und die Sandboxes, die `lizard workspace pause` pausiert hat. Apps und Datenbanken, die Lizard wegen der Abrechnung pausiert hat, bleiben pausiert, bis die Abrechnung in Ordnung ist. Das kann nur der Owner, und der Workspace braucht Platz unter seinen [Limits](/platform/limits#workspace-limits).
+
+<span id="lizard-workspace-limits-name-or-id" />
+
+### `lizard workspace limits <name-or-id>`
+
+Zeigt, was ein Workspace nutzen darf und was er gerade nutzt. Mit Flags legst du seine Limits fest. Nur der Owner legt sie fest, angemeldet über den Browser oder mit einem API-Schlüssel ohne Bereichseinschränkung; jedes Mitglied kann sie lesen. Jedes Flag nimmt `none`, um dieses Limit zu entfernen.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `--sandboxes <n>` | Gleichzeitig laufende Sandboxes |
+| `--cpu <vcpus>` | vCPU, die Apps und Datenbanken des Workspace nutzen dürfen |
+| `--memory <size>` | Arbeitsspeicher, den Apps und Datenbanken des Workspace nutzen dürfen, zum Beispiel `4GB` oder `512MB` |
+| `--disk <size>` | Speicher, den seine Datenbanken und Volumes belegen dürfen, zum Beispiel `20GB` oder `1TB` |
+
+CPU und Arbeitsspeicher zählen, was Apps und Datenbanken gerade nutzen, nicht was für sie eingestellt ist. An einem Limit startet im Workspace nichts Neues, und laufende Services laufen weiter. Am Speicherlimit sind keine neuen Volumes, keine neuen Datenbanken und kein Volume-Wachstum möglich; bereits geschriebene Daten bleiben erhalten. Die Fehler stehen unter [Workspace-Limits](/platform/limits#workspace-limits).
+
+<span id="lizard-workspace-resale-pricing-name-or-id" />
+
+### `lizard workspace resale-pricing <name-or-id>`
+
+Zeigt oder setzt die Preise, die API-Schlüssel mit Beschränkung auf diesen Workspace oder eines seiner Projekte sehen (Alias `resale`). Jeder Preis ist ein Vielfaches des Preises von Lizard, von 1 bis 100. Deine eigene Rechnung, dein Dashboard und Schlüssel ohne Bereichseinschränkung behalten die Preise von Lizard. Nur der Owner kann sie sehen oder setzen, angemeldet über den Browser oder mit einem API-Schlüssel ohne Bereichseinschränkung.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `--all <x>` | Jede Ressource auf dieses Vielfache setzen |
+| `--cpu <x>` | CPU |
+| `--memory <x>` | Arbeitsspeicher |
+| `--storage <x>` | Volumes |
+| `--egress <x>` | Ausgehender Traffic |
+| `--object-storage <x>` | Managed Object Storage |
+| `--sandbox <x>` | Stundenpreise von Sandboxes |
+| `--off` | Wiederverkaufspreise abschalten; eingeschränkte Schlüssel sehen wieder die Preise von Lizard |
+
 <span id="lizard-workspace-rm-name-or-id" />
 
 ### `lizard workspace rm <name-or-id>`
 
-Lösche einen Workspace (Alias `delete`). Nur der Owner kann ihn löschen, und nur wenn er keine Projekte oder Sandboxes mehr enthält. Du kannst deinen persönlichen Workspace nicht löschen.
+Lösche einen Workspace (Alias `delete`). Nur der Owner kann ihn löschen, und nur wenn er keine Projekte, Sandboxes oder Volumes mehr enthält. Projekte im Papierkorb zählen nicht; sie werden mit dem Workspace gelöscht, der selbst keinen Papierkorb hat. Ein eingeschränkter API-Schlüssel kann keinen Workspace löschen. Du kannst deinen persönlichen Workspace nicht löschen.
 
 | Flag | Beschreibung |
 |------|-------------|
@@ -62,6 +110,25 @@ lizard workspace list
 lizard workspace create my-team
 ```
 
+<span id="cap-a-workspace" />
+
+### Einen Workspace begrenzen
+
+```bash
+lizard workspace limits my-team                                   # show limits and current use
+lizard workspace limits my-team --sandboxes 5 --cpu 2 --memory 4GB --disk 20GB
+lizard workspace limits my-team --cpu none                        # remove one limit
+```
+
+<span id="set-resale-prices" />
+
+### Wiederverkaufspreise festlegen
+
+```bash
+lizard workspace resale-pricing my-team --all 3                   # every price x3
+lizard workspace resale-pricing my-team --off
+```
+
 <span id="delete-an-empty-workspace" />
 
 ### Einen leeren Workspace löschen
@@ -74,6 +141,9 @@ lizard workspace rm my-team --yes
 
 ## Siehe auch
 
-- [lizard whoami](/cli/whoami) — zeigt deinen aktiven Workspace an
+- [lizard whoami](/cli/whoami) — zeigt das Konto, mit dem du angemeldet bist
 - [lizard project](/cli/project) — Projekte in einem Workspace auflisten und erstellen
+- [lizard pause](/cli/pause) — einen Service oder ein Projekt pausieren und fortsetzen
+- [lizard keys](/cli/keys) — API-Schlüssel erstellen, die auf einen Workspace beschränkt sind
+- [Limits](/platform/limits#workspace-limits) — Workspace-Limits und ihre Fehler
 - [Architecture: Workspace](/concepts/architecture) — wie Workspaces mit Projekten und Services zusammenhängen

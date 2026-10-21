@@ -78,7 +78,7 @@ Confirma el código fuente, los plugins, la configuración y el lockfile. Excluy
 
 ## Servir rutas internas y páginas inexistentes
 
-Las compilaciones nuevas de Docusaurus sirven los archivos de rutas generados y devuelven HTTP 404 para rutas desconocidas. No se necesita un Dockerfile personalizado para esta política de enrutamiento. Si tu servicio todavía usa una imagen compilada antes de la corrección de enrutamiento de septiembre de 2026, recompílala. Usa [rutas estáticas y 404](/framework-guides/static-routing) solo cuando necesites un comportamiento personalizado de nginx.
+Las compilaciones nuevas de Docusaurus sirven los archivos de rutas generados y devuelven HTTP 404 para rutas desconocidas, con la página de error predeterminada de nginx en lugar del `404.html` del sitio. No se necesita un Dockerfile personalizado para esta política de enrutamiento. Si tu servicio todavía usa una imagen compilada antes de la corrección de enrutamiento de septiembre de 2026, recompílala. Usa [rutas estáticas y 404](/framework-guides/static-routing) solo cuando necesites un comportamiento personalizado de nginx, como tu propia página 404.
 
 Después del despliegue, solicita directamente una URL anidada de docs, actualízala y comprueba el estado de una URL inventada. Inspecciona también la URL canónica y el sitemap en el nombre de host final. Una página de error visible con HTTP 200 sigue siendo un soft 404.
 

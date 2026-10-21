@@ -1,18 +1,18 @@
 ---
-description: "Por qué lizard service set seguido de un redeploy pone en cola dos builds, qué campos reconstruyen por sí solos y cómo detener el redundante."
+description: "Por qué lizard service set seguido de un redeploy cancela un build y lo vuelve a empezar, qué campos reconstruyen por sí solos y cuándo hacer un redeploy."
 ---
 
-<span id="my-change-queued-two-builds-back-to-back" />
+<span id="my-redeploy-cancelled-the-build-my-change-started" />
 
-# Mi cambio puso en cola dos builds seguidos
+# Mi redeploy canceló el build que había iniciado mi cambio
 
-Ejecutaste `lizard service set` para cambiar un campo, luego `lizard redeploy`, y terminaste con dos builds en lugar de uno.
+Ejecutaste `lizard service set` para cambiar un campo y luego `lizard redeploy`. El despliegue tardó más de lo esperado, y el historial puede mostrar un build cancelado.
 
 <span id="what-this-means" />
 
 ## Qué significa esto
 
-La llamada `service set` ya activó una reconstrucción por sí sola. El `redeploy` posterior puso en cola una segunda reconstrucción redundante.
+La llamada `service set` ya inició una reconstrucción por sí sola. El `redeploy` posterior canceló ese build, cuyo log termina con `--- Build cancelled: a newer deploy was triggered ---`, y volvió a empezar el mismo build desde el principio.
 
 <span id="why-this-can-happen" />
 
@@ -30,10 +30,10 @@ Es fácil encadenar por reflejo un `redeploy` después de cada `service set`, pe
 
 ### Comprueba qué tipo de campo cambiaste
 
-Consulta la [tabla de activadores de reconstrucción](/concepts/build-pipeline#what-triggers-a-rebuild). Si es un campo de build y el servicio estaba en ejecución, la reconstrucción ya está en cola; no hagas nada más. Si el servicio había fallado o nunca se había desplegado, ejecuta `lizard redeploy` una vez.
+Consulta la [tabla de activadores de reconstrucción](/concepts/build-pipeline#what-triggers-a-rebuild). Si es un campo de build y el servicio estaba en ejecución, la reconstrucción ya empezó; no hagas nada más. Si el servicio había fallado o nunca se había desplegado, ejecuta `lizard redeploy` una vez.
 
 ```bash
-lizard events   # confirm only one build is in flight
+lizard events   # is a build already running?
 ```
 
 <span id="only-redeploy-after-runtime-only-changes" />

@@ -25,6 +25,8 @@ export default {
   service: "service",
   port: "port",
   scale: "scale",
+  pause: "pause",
+  sleep: "sleep",
   '-- secrets': { type: "separator", title: "Секреты" },
   secrets: "secrets",
   '-- domains': { type: "separator", title: "Домены" },

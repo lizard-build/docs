@@ -21,6 +21,7 @@ lizard redeploy [nameOrId] [flags]
 | Bandera | Descripción |
 |------|--------------|
 | `-s, --service <name>` | Servicio |
+| `-p, --project <id>` | Nombre, slug o ID del proyecto |
 | `--detach` | Volver después de que se acepte la compilación |
 | `--wait` | Esperar a la compilación y a que el despliegue esté listo; funciona con `--json` |
 | `--timeout <seconds>` | Tiempo de espera para la preparación después de la compilación; valor predeterminado `120` |
@@ -55,6 +56,8 @@ lizard --json redeploy --service api --wait --timeout 120
 ```
 
 Sin `--wait`, el modo JSON devuelve el resultado después de que se acepta la solicitud de compilación. Con `--wait`, el CLI sigue esa compilación y luego espera a que el despliegue esté listo. El resultado JSON incluye `buildId`, `ok` y `status`. Un fallo de compilación, una comprobación de preparación fallida o un tiempo de espera agotado devuelven un código de salida distinto de cero.
+
+Un servicio en pausa rechaza el redespliegue hasta que lo [reanudes](/cli/pause).
 
 El tiempo de espera se aplica a la preparación después de que termine la compilación; no limita la duración de la compilación ni cancela el despliegue. Los workers con `containerPort=0` usan el estado de preparación del backend sin una comprobación HTTP. Después de un comando correcto, comprueba un endpoint de la aplicación o los datos almacenados si tu flujo de trabajo necesita verificar el comportamiento de la aplicación.
 

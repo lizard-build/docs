@@ -1,18 +1,18 @@
 ---
-description: "lizard service set の後に redeploy を実行すると 2 つのビルドがキューされる理由、自動で再ビルドされるフィールド、そして冗長な 1 つを防ぐ方法。"
+description: "lizard service set の後に redeploy を実行するとビルドがキャンセルされて最初からやり直しになる理由、自動で再ビルドされるフィールド、そして redeploy すべきとき。"
 ---
 
-<span id="my-change-queued-two-builds-back-to-back" />
+<span id="my-redeploy-cancelled-the-build-my-change-started" />
 
-# 変更によって 2 つのビルドが連続でキューされました
+# 変更で始まったビルドを redeploy がキャンセルしました
 
-フィールドを変更するために `lizard service set` を実行し、その後 `lizard redeploy` を実行した結果、1 つではなく 2 つのビルドになりました。
+フィールドを変更するために `lizard service set` を実行し、その後 `lizard redeploy` を実行しました。デプロイが予想より長くかかり、履歴にはキャンセルされたビルドが表示されることがあります。
 
 <span id="what-this-means" />
 
 ## これは何を意味するのか
 
-`service set` の呼び出しは、すでにそれ自体で再ビルドをトリガーしていました。続けて実行した `redeploy` により、2 つ目の冗長なビルドがキューされました。
+`service set` の呼び出しは、すでにそれ自体で再ビルドを開始していました。続けて実行した `redeploy` はそのビルドをキャンセルし（ログの最後に `--- Build cancelled: a newer deploy was triggered ---` と表示されます）、同じビルドを最初からやり直しました。
 
 <span id="why-this-can-happen" />
 
@@ -30,10 +30,10 @@ description: "lizard service set の後に redeploy を実行すると 2 つの�
 
 ### 変更したフィールドの種類を確認する
 
-[再ビルドのトリガー一覧表](/concepts/build-pipeline#what-triggers-a-rebuild)を参照してください。ビルドフィールドで、サービスが稼働中だった場合、再ビルドはすでにキューされています。追加では何もしないでください。サービスがクラッシュしていたか、一度もデプロイされていなかった場合は、`lizard redeploy` を 1 回実行してください。
+[再ビルドのトリガー一覧表](/concepts/build-pipeline#what-triggers-a-rebuild)を参照してください。ビルドフィールドで、サービスが稼働中だった場合、再ビルドはすでに始まっています。追加では何もしないでください。サービスがクラッシュしていたか、一度もデプロイされていなかった場合は、`lizard redeploy` を 1 回実行してください。
 
 ```bash
-lizard events   # confirm only one build is in flight
+lizard events   # is a build already running?
 ```
 
 <span id="only-redeploy-after-runtime-only-changes" />

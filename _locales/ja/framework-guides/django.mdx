@@ -159,7 +159,7 @@ staticfiles/
 
 ユーザー uploads は、コンテナの静的ディレクトリではなく、[Managed Object Storage](/addons/storage) のような永続ストレージに保持してください。[ストレージとリカバリ](/platform/storage-and-recovery) を確認してください。
 
-データベースマイグレーションは別個のリリース手順として扱ってください。必要に応じてデータをバックアップし、マイグレーションは再試行しても安全になるようにし、新しい schema がリクエストで必要になる前に適用してください。pre-deploy command は、並行実行性や障害時の挙動を確認する代わりにはなりません。
+データベースマイグレーションは別個のリリース手順として扱ってください。必要に応じてデータをバックアップし、マイグレーションは再試行しても安全になるようにし、新しい schema がリクエストで必要になる前に適用してください。このガイドでは、下に示す `lizard run` で適用します。ここでは `preDeployCommand` は実行されません。Lizard は start command も設定されている場合にだけ実行し、この構成では設定していないためです。両方を設定すると、各コンテナの起動時に、すべての replica で、再起動のたびに実行されます。[デプロイ時のマイグレーション](/addons/postgres#run-migrations-on-deploy) を参照してください。
 
 <span id="deploy-and-verify" />
 
@@ -178,12 +178,12 @@ lizard add --service web
 lizard add postgres --name postgres
 ```
 
-アプリの [service secrets](/cli/secrets) を設定します。`${{postgres.DATABASE_URL}}` 内の `postgres` は、Django のデータベース alias ではなく、データベースサービス名を表します。Lizard はデプロイ時に [reference](/variables/references) を解決し、得られた URL を `web` process に注入します。単一引用符は、shell がその reference を展開しないようにするためです。上の `settings.py` ブロックが、その URL を `DATABASES["default"]` に変換します。
+アプリの [service secrets](/cli/secrets) を設定します。`${{postgres.DATABASE_PRIVATE_URL}}` 内の `postgres` は、Django のデータベース alias ではなく、データベースサービス名を表します。Lizard はデプロイ時に [reference](/variables/references) を解決し、プロジェクトのプライベートネットワーク上のデータベースのアドレスを `web` process に注入します。このアドレスは同じプロジェクトかつ同じリージョンのサービスから使えます。単一引用符は、shell がその reference を展開しないようにするためです。上の `settings.py` ブロックが、その URL を `DATABASES["default"]` に変換します。
 
 ```bash
 DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
 lizard secrets set SECRET_KEY="$DJANGO_SECRET_KEY" \
-  DATABASE_URL='${{postgres.DATABASE_URL}}' DEBUG=false \
+  DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' DEBUG=false \
   ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
   --service web
 lizard up --service web --port 8000
@@ -197,7 +197,7 @@ lizard secrets set ALLOWED_HOSTS=YOUR_PUBLIC_HOST \
   CSRF_TRUSTED_ORIGINS=https://YOUR_PUBLIC_HOST --service web
 ```
 
-reference の対象または key が見つからないと、空文字列に解決されることがあります。その場合、必須値チェックにより Django は `Set the DATABASE_URL environment variable.` で停止します。データベースサービス名と、その `DATABASE_URL` key を確認してください。`lizard logs --build --service web` は、空の値に解決されたすべての reference について警告を表示します。接続 URL を logs に出力しないでください。
+reference の対象または key が見つからないと、空文字列に解決されることがあります。その場合、必須値チェックにより Django は `Set the DATABASE_URL environment variable.` で停止します。データベースサービス名と、その `DATABASE_PRIVATE_URL` key を確認してください。`lizard logs --build --service web` は、空の値に解決されたすべての reference について警告を表示します。接続 URL を logs に出力しないでください。
 
 変数変更により process は再起動されます。ローカル virtual environments、secrets、ローカルデータベースは uploads から除外してください。
 

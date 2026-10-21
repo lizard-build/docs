@@ -50,11 +50,11 @@ This checks JavaScript syntax. The database and public HTTP checks come after de
 lizard init --name agent-example --json
 lizard add --service api --json
 lizard add postgres --json
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api --json
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api --json
 lizard up --service api --port 3000 --json
 ```
 
-Use the database's actual name if it is not `postgres`. Keep the reference quoted so the local shell does not expand it. Configure it before the first deployment. Sign in with `lizard login` only if a command reports that authentication is required.
+Use the database's actual name if it is not `postgres`. `DATABASE_PRIVATE_URL` reaches the database over the project's private network and works from services in the same project and region; see the [Postgres connection string](/addons/postgres#postgres-connection-string). Keep the reference quoted so the local shell does not expand it. Configure it before the first deployment. Sign in with `lizard login` only if a command reports that authentication is required.
 
 Use an upload for this copied example. For an application already in GitHub, use the next section instead. A failed build exits with code 1; still inspect the terminal `failed`/`deployed` event and verify the application. See [known issues](/platform/known-issues).
 
@@ -72,7 +72,7 @@ Use a linked test project or create one with `lizard init --name YOUR_PROJECT_NA
 
 ```bash
 lizard add --repo YOUR_ORG/YOUR_REPO --name api-git --no-deploy --json
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api-git --json
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api-git --json
 ```
 
 Provision Managed Postgres first if this project does not have it. This sequence uses the same Node.js example as above. For a repository with that app in a subdirectory or on another branch, configure it before deployment:

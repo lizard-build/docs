@@ -33,7 +33,7 @@ In a test on 2026-10-12, the median time from creating a sandbox to its first Py
 |---|---|
 | What runs the code? | A Firecracker microVM with its own kernel; see [runtime and templates](#runtime-and-templates) |
 | How do I create one? | [Lizard SDK](/sandboxes/sdk-reference), [`lizard sandbox`](/cli/sandbox), the [dashboard](/sandboxes/dashboard), or the [HTTP API](/sandboxes/sdk-reference#http-api) |
-| Which templates exist? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` and `desktop` |
+| Which templates exist? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop` and `desktop-camoufox` (US East only) |
 | What sizes are there? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, the default) and Large (8 vCPU / 16 GB); see [sizes and prices](/platform/limits#sandbox-sizes) |
 | How long does one live? | Five minutes by default from the SDK and CLI; no expiration by default from the raw API and dashboard |
 | What survives a stop? | Only files on a [Persistent Volume](/sandboxes/volumes) mounted at `/workspace` |
@@ -41,7 +41,7 @@ In a test on 2026-10-12, the median time from creating a sandbox to its first Py
 
 ## Runtime and templates
 
-Choose a template from the current catalog: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, or `desktop`. Availability depends on the region and pool capacity. `interpreter` includes Python and common data libraries. `desktop` runs a graphical desktop that you drive with `sandbox.desktop` or `lizard sandbox desktop`. Check tool versions inside your sandbox. The public CLI does not provide a custom-template upload flow.
+Choose a template from the current catalog: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop`, or `desktop-camoufox`. Availability depends on the region and pool capacity. `interpreter` includes Python, common data libraries and Node 22. `desktop` runs a graphical desktop that you drive with `sandbox.desktop` or `lizard sandbox desktop`. `desktop-camoufox` is the `desktop` template plus Camoufox, a Firefox build for scraping that you drive with Playwright; it runs only in `us-east-1` for now. Check tool versions inside your sandbox. The public CLI does not provide a custom-template upload flow.
 
 Lizard Sandboxes run as Firecracker microVMs, each with its own kernel. Give the agent only the credentials and access needed for its task.
 

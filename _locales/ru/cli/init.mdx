@@ -36,17 +36,18 @@ lizard init [flags]
 lizard init
 ```
 
+Без `--name` команда `init` спрашивает, какой проект использовать. В неинтерактивной оболочке она вместо этого завершается с ошибкой, поэтому передайте `--name`.
+
 <span id="link-explicitly-in-ci" />
 
 ### Явно связать в CI
 
-`lizard up` запустит `init` за вас в TTY, но в не-TTY среде (CI) выдаст ошибку вместо того, чтобы молча создать проект. Свяжите явно сначала:
+`lizard up` в несвязанной директории развёртывает код в проекте по умолчанию вашего аккаунта. Чтобы развернуть его в CI в конкретном проекте, сначала свяжите директорию:
 
 ```bash
 export LIZARD_TOKEN=liz_xxx
 lizard init --name my-project
-lizard add --service api   # first run only; skip when the service exists
-lizard up --ci --service api
+lizard up --ci --service api   # creates api on the first run
 ```
 
 <span id="relink-a-directory-thats-already-linked" />

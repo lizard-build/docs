@@ -16,7 +16,7 @@ lizard sandbox ssh <id>
 lizard sandbox rm <id> [flags]
 ```
 
-Every sandbox belongs to a project: the one linked to the current directory, or the one you pass with `-p`.
+Every sandbox belongs to a project: the one you pass with `-p`, else the one linked to the current directory, else your account's default project (the oldest project in your personal workspace).
 
 ## Subcommands
 
@@ -26,14 +26,14 @@ Create a sandbox and print its ID.
 
 | Flag | Description |
 |------|-------------|
-| `-t, --template <name>` | Template (default `base`). Enabled templates: `base`, `interpreter`, `codex`, `desktop`, `opencode`, `pi`, `prime`, `claude`. The server checks the region's list |
+| `-t, --template <name>` | Template (default `base`). Enabled templates: `base`, `interpreter`, `codex`, `desktop`, `desktop-camoufox` (US East only), `opencode`, `pi`, `prime`, `claude`. The server checks the region's list |
 | `-s, --size <size>` | `small`, `medium` (default), or `large` |
 | `--timeout <ms>` | Lifetime in milliseconds (default `300000`, five minutes); `0` disables expiration |
 | `--region <code>` | Region to create the sandbox in |
 | `--snapshot <id>` | Start from a saved snapshot; can't be combined with `--size` |
 | `--volume <name-or-id>` | Attach a [Persistent Volume](/cli/volume) |
-| `--with-token [key]` | Install a `liz_` API key in the sandbox so `lizard` works there. Without a value it reuses the `liz_` key you run with; a browser login has none |
-| `-p, --project <id>` | Project (defaults to the linked one) |
+| `--with-token [key]` | Sign in `lizard` inside the sandbox with a new key limited to the sandbox's project and deleted with the sandbox. The `liz_` key you pass, or without a value the `liz_` key you run with, only authorizes the request; a browser login has none. The `base` template has no `lizard` |
+| `-p, --project <id>` | Project (defaults to the linked one, else your default project) |
 
 Lizard bills each size per second at a flat rate while it runs, including idle time. The price includes local disk and [2 TB of egress per account over a rolling 30 days](/platform/limits#sandbox-egress). A successful pause stops compute charges; storage in Persistent Volumes continues at the [volume rate](/cli/volume), whether attached or detached.
 
@@ -43,7 +43,7 @@ Lizard bills each size per second at a flat rate while it runs, including idle t
 | `medium` | 4 | 8 GiB | 20 GB | $0.0324/h |
 | `large` | 8 | 16 GiB | 50 GB | $0.0648/h |
 
-Anything in the sandbox can read a key installed with `--with-token`. Use a key scoped to one workspace or project: `lizard keys create sandbox-key -w my-team`.
+Anything in the sandbox can read the key that `--with-token` installs and use it on the sandbox's project until the sandbox is deleted.
 
 Until your trial or Pro plan starts, `create` returns HTTP 402 with a Checkout link; run `lizard billing start`. During the trial you can run 5 sandboxes at once, and 100 after the first paid invoice. Paused sandboxes don't count. See [Limits](/platform/limits#sandbox-account-limits).
 
@@ -116,15 +116,15 @@ Connect a VNC app (macOS Screen Sharing, TigerVNC, RealVNC) to the desktop of a 
 |---------|--------------|
 | `lizard sandbox pause <id>` | Save the sandbox's memory and processes, then pause it. A successful pause stops compute charges; Persistent Volumes storage is billed separately |
 | `lizard sandbox resume <id>` | Start a paused sandbox again with its saved memory and files |
-| `lizard sandbox snapshot <id> --name <name>` | Save a running sandbox as a private snapshot in its project and keep warm copies ready (`--warm`, 1 to 10, default 5) |
-| `lizard sandbox restore <snapshot-id>` | Start a new sandbox from a snapshot (`--timeout <ms>`, default `300000`) |
-| `lizard sandbox snapshots` | List the project's snapshots (`-p` for another project) |
-| `lizard sandbox snapshot-pause <snapshot-id>` | Release a snapshot's warm copies and keep its saved state |
-| `lizard sandbox snapshot-resume <snapshot-id>` | Refill a paused snapshot's warm copies |
-| `lizard sandbox snapshot-warm <snapshot-id> <count>` | Change how many copies stay warm (1 to 10) |
+| `lizard sandbox snapshot <id> --name <name>` | Save a running sandbox, memory and files included, as a snapshot that belongs to you. `--scope` sets where it can be restored: `workspace` (the default) for any project in the sandbox's workspace, `user` for any project in any of your workspaces, `project` for its own project only |
+| `lizard sandbox restore <snapshot-id>` | Start a new sandbox from a snapshot, in the snapshot's region. `-p <project>` picks the project (default: the volume's project, else the snapshot's own), `--volume <name-or-id>` mounts a volume at `/workspace`, `--timeout <ms>` sets the lifetime (default `300000`) |
+| `lizard sandbox snapshots` | List the snapshots taken in the project (`-p` for another project, `--mine` for every snapshot you took) |
+| `lizard sandbox snapshot-scope <snapshot-id> <scope>` | Change where a snapshot you took can be restored: `user`, `workspace`, or `project` |
 | `lizard sandbox snapshot-rm <snapshot-id>` | Delete a snapshot (alias `snapshot-delete`, `-y` skips confirmation) |
 
 `pause`, `resume`, and `snapshot` wait until the work is done; pass `--no-wait` to return once it is queued. See [Pause, resume, and snapshots](/sandboxes/quickstart#pause-and-resume) for what each step keeps.
+
+A snapshot of a sandbox with a volume attached includes a copy of the volume's files as they were at capture. Every restore gets that copy and cannot take `--volume`, and anyone who can restore the snapshot can read those files. `--volume` works only with a snapshot of a sandbox that had no volume, and the volume must be in the snapshot's region.
 
 ### `lizard sandbox files`
 
@@ -161,13 +161,13 @@ Ctrl-C stops watching; the agent keeps working. `lizard sandbox interrupt <id> [
 
 ```bash
 lizard sandbox create --size small --timeout 600000
-lizard sandbox exec sb_abc123 -- python3 -c "print(1 + 1)"
+lizard sandbox exec genuine-toddler-jasj -- python3 -c "print(1 + 1)"
 ```
 
 ### Open a shell
 
 ```bash
-lizard sandbox ssh sb_abc123
+lizard sandbox ssh genuine-toddler-jasj
 ```
 
 ### Attach a Persistent Volume
@@ -180,15 +180,15 @@ lizard sandbox create --volume agent-workdir
 ### Serve a port
 
 ```bash
-lizard sandbox exec sb_abc123 -- sh -c "nohup python3 -m http.server 3000 --bind 0.0.0.0 >/tmp/http.log 2>&1 &"
-lizard sandbox expose sb_abc123 3000
+lizard sandbox exec genuine-toddler-jasj -- sh -c "nohup python3 -m http.server 3000 --bind 0.0.0.0 >/tmp/http.log 2>&1 &"
+lizard sandbox expose genuine-toddler-jasj 3000
 ```
 
 ### Use a desktop from a VNC app
 
 ```bash
 lizard sandbox create -t desktop
-lizard sandbox vnc sb_abc123 --open
+lizard sandbox vnc genuine-toddler-jasj --open
 ```
 
 ### Run Codex in a sandbox
@@ -196,14 +196,15 @@ lizard sandbox vnc sb_abc123 --open
 ```bash
 lizard agents login chatgpt
 lizard sandbox create -t codex
-lizard sandbox prompt sb_abc123 "add a health check endpoint and test it"
+lizard sandbox prompt genuine-toddler-jasj "add a health check endpoint and test it"
 ```
 
 ### Save and restore a sandbox
 
 ```bash
-lizard sandbox snapshot sb_abc123 --name my-app
-lizard sandbox restore <snapshot-id>   # ID from `lizard sandbox snapshots`
+lizard sandbox snapshot genuine-toddler-jasj --name my-app
+lizard sandbox snapshots --mine                     # find the snapshot ID
+lizard sandbox restore <snapshot-id> -p other-project
 ```
 
 ## See also

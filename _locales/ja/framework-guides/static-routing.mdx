@@ -8,6 +8,10 @@ description: "Lizard で静的サイトのルートを設定します: 生成さ
 
 生成コンテンツのサイトでは、各ルートの HTML を配信し、存在しないページには HTTP 404 を返すべきです。Astro static、Docusaurus、VitePress、Hugo、SvelteKit adapter-static 向けの新しい lizardpack ビルドでは、そのポリシーを使用します。React と Vue の SPA では、ブラウザルーターに必要な `index.html` フォールバックを維持します。
 
+これらのビルドは、存在しないページに nginx 自身の 404 ページで応答し、サイトの `404.html` は使いません。独自の 404 ページを使うには、以下の nginx 設定と Dockerfile を使ってください。
+
+末尾にスラッシュのないフォルダー URL (たとえば `guide/index.html` に対する `/guide`) は、`http://YOUR_PUBLIC_HOST/guide/` への 301 リダイレクトになり、Lizard がそれをさらに HTTPS へリダイレクトします。両方の転送を省くには末尾スラッシュ付きの形でリンクするか、リダイレクトを HTTPS のまま保つ以下の設定を使ってください。
+
 以下のカスタム設定は任意です。検出されたフレームワークで提供されないルーティングポリシーに使ってください。既存のイメージは、再ビルドするまで以前のルールを維持します。
 
 <span id="choose-the-routing-policy" />
@@ -34,6 +38,7 @@ server {
   server_name _;
   root /usr/share/nginx/html;
   index index.html;
+  absolute_redirect off;
 
   location / {
     try_files $uri $uri.html $uri/ =404;
@@ -46,7 +51,7 @@ server {
 }
 ```
 
-これは `guide.html` と `guide/index.html` の両方の出力レイアウトをサポートします。カスタムエラーページを使いたい場合は、生成された `404.html` を含めてください。それ以外の場合は、nginx のデフォルトのエラーボディを使うために `error_page` と exact-location ブロックを省略してください。サイトのリンクとサイトマップでは、正規 URL スタイルを 1 つに統一してください。このルックアップルールは正規リダイレクトを追加しません。
+これは `guide.html` と `guide/index.html` の両方の出力レイアウトをサポートします。`error_page` は、サイトで生成された `404.html` をステータス 404 で配信します。サイトに `404.html` がない場合は、nginx のデフォルトのエラーボディを使うために `error_page` と exact-location ブロックを省略してください。`absolute_redirect off` はフォルダーのリダイレクトを相対的な `Location: /guide/` として送るため、ブラウザは HTTPS のままになります。サイトのリンクとサイトマップでは、正規 URL スタイルを 1 つに統一してください。このルックアップルールは正規リダイレクトを追加しません。
 
 <span id="build-the-site-with-the-config" />
 

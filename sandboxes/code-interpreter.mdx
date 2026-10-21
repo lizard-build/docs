@@ -24,7 +24,7 @@ const sandbox = await CodeSandbox.create({ projectId: 'proj_123', timeoutMs: 300
 try {
   await sandbox.runCode('import pandas as pd\ndf = pd.DataFrame({"x": [1, 2, 3]})');
   const run = await sandbox.runCode('df.x.sum()');
-  console.log(run.results[0]?.data); // "6"
+  console.log(run.results[0]?.data); // "np.int64(6)"
   const bad = await sandbox.runCode('1/0');
   console.log(bad.error?.name); // "ZeroDivisionError"
 } finally {
@@ -38,7 +38,7 @@ from lizard import CodeSandbox
 with CodeSandbox.create(project_id="proj_123", timeout_ms=300_000) as sandbox:
     sandbox.run_code('import pandas as pd\ndf = pd.DataFrame({"x": [1, 2, 3]})')
     run = sandbox.run_code("df.x.sum()")
-    print(run.results[0].data)  # "6"
+    print(run.results[0].data)  # "np.int64(6)"
     print(sandbox.run_code("1/0").error.name)  # "ZeroDivisionError"
 ```
 
@@ -51,15 +51,17 @@ A code error is part of the result, not an exception. Request failures, such as 
 | Field | Contents |
 |---|---|
 | `stdout`, `stderr` | Everything the code printed |
-| `results` | Rich output: the last expression's value as `text/plain`, matplotlib charts and images as base64 `image/png`, HTML, and other types, each with `mime` and `data` |
+| `results` | Rich output: the last expression's value, matplotlib charts and images, each with `mime` and `data` |
 | `error` | `name`, `message`, and `traceback` when the code raised an exception |
 | `executionCount` | The kernel's cell counter (Python: `execution_count`) |
+
+Each result carries one MIME type, the richest one the output has, in this order: `image/png`, `image/jpeg`, `image/svg+xml`, `text/html`, `text/markdown`, `application/json`, `text/latex`, `text/plain`. Images come as base64. A number comes back as `text/plain`, but a pandas DataFrame comes back as `text/html` only.
 
 Pass `onStdout`, `onStderr`, `onResult` or `onError` (Python: `on_stdout` and so on) to receive output while the code runs.
 
 ## Use it as an LLM tool
 
-Give the model one tool, for example `run_python` with a single string argument `code`. When the model calls it, run the code in the sandbox and send the text back as the tool result. Keep one sandbox for the whole conversation so the model's variables survive between calls.
+Give the model one tool, for example `run_python` with a single string argument `code`. When the model calls it, run the code in the sandbox and send the text back as the tool result. The example keeps every text result, HTML included, so a DataFrame reaches the model too. Keep one sandbox for the whole conversation so the model's variables survive between calls.
 
 ```ts
 import { CodeSandbox } from '@lizard-build/sdk';
@@ -71,7 +73,7 @@ async function runPython(code: string): Promise<string> {
   const run = await sandbox.runCode(code, { timeoutMs: 30_000 });
   if (run.error) return `${run.error.name}: ${run.error.message}\n${run.error.traceback}`;
   const values = run.results.flatMap((r) =>
-    r.type === 'result' && r.mime === 'text/plain' ? [r.data] : [],
+    r.type === 'result' && r.mime.startsWith('text/') ? [r.data] : [],
   );
   return [run.stdout, ...values].filter(Boolean).join('\n');
 }
@@ -90,7 +92,7 @@ def run_python(code: str) -> str:
     run = sandbox.run_code(code, timeout_ms=30_000)
     if run.error:
         return f"{run.error.name}: {run.error.message}\n{run.error.traceback}"
-    values = [r.data for r in run.results if r.mime == "text/plain"]
+    values = [r.data for r in run.results if r.mime.startswith("text/")]
     return "\n".join(filter(None, [run.stdout, *values]))
 
 # When the conversation ends:
@@ -116,7 +118,7 @@ Path("chart.png").write_bytes(base64.b64decode(png))
 
 - **Contexts.** `createContext()` (Python: `create_context()`) starts a separate kernel with its own variables and working directory; pass it as `context` to `runCode`. `listContexts()`, `restartContext(ctx)` and `deleteContext(ctx)` manage them. Without a context, each language uses its own default one.
 - **Timeouts.** `timeoutMs` (Python: `timeout_ms`) bounds one call and defaults to 60 seconds. A Python kernel that runs past it is interrupted and keeps its state; the result's `error.name` is `TimeoutError`.
-- **Other languages.** JavaScript and bash run as a fresh process on each call, so no state carries over and `results` stays empty. JavaScript needs `node`, which the `interpreter` template does not include.
+- **Other languages.** JavaScript and bash run as a fresh process on each call, so no state carries over and `results` stays empty. JavaScript runs on the template's Node 22, which has no npm.
 - **Pause and snapshots.** Kernels live inside the sandbox, so `pause()` and `resume()` keep their variables, and `snapshot()` and `fork()` copy them.
 
 ## Run commands
@@ -125,7 +127,7 @@ Path("chart.png").write_bytes(base64.b64decode(png))
 
 ## Untrusted code
 
-Treat everything the model writes as untrusted. Do not pass `lizardToken` unless the code needs Lizard CLI; anything in the sandbox can read it, so use a workspace-scoped key if you do. Keep other secrets out of `envs`.
+Treat everything the model writes as untrusted. Do not pass `lizardToken` unless the code needs Lizard CLI. If you do, the sandbox gets a new key limited to its project and deleted with the sandbox, so code in it can change that project. Keep other secrets out of `envs`.
 
 ## Storage and billing
 

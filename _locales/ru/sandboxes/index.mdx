@@ -47,7 +47,7 @@ Sandboxes в Lizard (lizard.build) выполняют код и задачи AI-
 |---|---|
 | Что выполняет код? | Firecracker microVM со своим ядром; см. [runtime и шаблоны](#runtime-and-templates) |
 | Как создать sandbox? | [Lizard SDK](/sandboxes/sdk-reference), [`lizard sandbox`](/cli/sandbox), [кабинет](/sandboxes/dashboard) или [HTTP API](/sandboxes/sdk-reference#http-api) |
-| Какие есть шаблоны? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` и `desktop` |
+| Какие есть шаблоны? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop` и `desktop-camoufox` (только US East) |
 | Какие есть размеры? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, по умолчанию) и Large (8 vCPU / 16 GB); см. [размеры и цены](/platform/limits#sandbox-sizes) |
 | Сколько живёт sandbox? | По умолчанию пять минут при создании из SDK и CLI; без срока по умолчанию из прямого API и кабинета |
 | Что сохраняется после остановки? | Только файлы на томе [Persistent Volumes](/sandboxes/volumes), подключённом в `/workspace` |
@@ -57,7 +57,7 @@ Sandboxes в Lizard (lizard.build) выполняют код и задачи AI-
 
 ## Runtime и шаблоны
 
-Выбирайте шаблон из текущего каталога: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` или `desktop`. Наличие зависит от региона и свободных ресурсов пула. `interpreter` содержит Python и основные библиотеки для работы с данными. `desktop` запускает графический рабочий стол, которым вы управляете через `sandbox.desktop` или `lizard sandbox desktop`. Проверяйте версии программ внутри sandbox. Публичный CLI не поддерживает загрузку своих шаблонов.
+Выбирайте шаблон из текущего каталога: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop` или `desktop-camoufox`. Наличие зависит от региона и свободных ресурсов пула. `interpreter` содержит Python, основные библиотеки для работы с данными и Node 22. `desktop` запускает графический рабочий стол, которым вы управляете через `sandbox.desktop` или `lizard sandbox desktop`. `desktop-camoufox` — это шаблон `desktop` плюс Camoufox, сборка Firefox для сбора данных с сайтов, которой вы управляете через Playwright; пока он работает только в `us-east-1`. Проверяйте версии программ внутри sandbox. Публичный CLI не поддерживает загрузку своих шаблонов.
 
 Lizard Sandboxes работают как Firecracker microVM, каждая со своим ядром. Давайте агенту только те ключи и права доступа, которые нужны для задачи.
 

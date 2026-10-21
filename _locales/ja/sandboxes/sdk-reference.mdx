@@ -81,8 +81,8 @@ sandbox = Sandbox.create(
 - `size` は `'small'`、`'medium'`、`'large'` のいずれかで、それぞれ 2 vCPU / 4 GB、4 vCPU / 8 GB (既定)、8 vCPU / 16 GB です。[サイズと料金](/platform/limits#sandbox-sizes)を参照してください。スナップショットから復元した sandbox には `size` は適用されず、元の sandbox のサイズで動作します。
 - `timeoutMs` の既定は 300000（5 分）です。`0` は期限を無効にします。[リソースと有効期間](/sandboxes#resources-and-timeouts) を参照してください。
 - 必要に応じてリージョンを指定してください。カタログへの掲載は空き容量を保証しません。ボリュームを接続する場合は `region` を指定しないでください: sandbox はボリュームのある場所で実行されます。
-- `metadata` は独自のラベルです。`getInfo()` と `list()` がこれを返します。
-- `lizardToken` は `liz_` で始まる API キーを sandbox に書き込み、sandbox 内で `lizard` を使えるようにします。sandbox 内のどのプロセスもこのキーを読み取れるため、ワークスペース単位のキーを渡してください。
+- `metadata` は独自のラベルです。`getInfo()` はこれを返しますが、`list()` は返しません。
+- `lizardToken` は自分の `liz_` API キーを 1 つ受け取り、sandbox 内の `lizard` をサインインさせます。自分のキーはリクエストを許可するためだけに使います。sandbox には、sandbox のプロジェクトに限定され sandbox と一緒に削除される専用の新しいキーが渡されるため、そこでの `lizard` はそのプロジェクトにしか作用しません。`base` テンプレートには `lizard` がありません。
 
 <span id="methods" />
 
@@ -111,10 +111,13 @@ sandbox = Sandbox.create(
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | 残りの有効期間を設定。最小 1000 ミリ秒。 |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | 一時停止または再開をキューに入れ、すぐに戻る。 |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | `paused` または `running` を待つ。一時停止に失敗した場合はエラーを投げる。 |
-| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | 実行中の sandbox を、メモリとプロセスを含めて 1～10 個コピー。 |
-| `sandbox.snapshot(name, { poolSize })` | `sandbox.snapshot(name, pool_size=...)` | メモリと `/workspace` のファイルを非公開スナップショットとして保存。 |
+| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | 実行中の sandbox を、メモリとプロセスを含めて 1～100 個コピー。各コピーは実行中の sandbox の上限に数えられる。 |
+| `sandbox.snapshot(name, { scope })` | `sandbox.snapshot(name, scope=...)` | メモリ、プロセス、すべてのファイルをスナップショットとして保存。`scope` は `'workspace'`（既定）、`'user'`、`'project'` のいずれか。 |
 | `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | スナップショットの準備完了を待つ。 |
-| `Sandbox.restore(snapshotId)` | `Sandbox.restore(snapshot_id)` | スナップショットから新しい sandbox を起動。 |
+| `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | スナップショットのリージョンで、スコープが許す任意のプロジェクトに新しい sandbox を起動。 |
+| `Sandbox.snapshots(projectId)` | `Sandbox.snapshots(project_id)` | プロジェクトで作成したスナップショットを一覧表示。 |
+| `Sandbox.mySnapshots()` | `Sandbox.my_snapshots()` | 自分が作成したすべてのスナップショットを、すべてのワークスペースから一覧表示。 |
+| `Sandbox.setSnapshotScope(snapshotId, scope)` | `Sandbox.set_snapshot_scope(snapshot_id, scope)` | 自分が作成したスナップショットを復元できる場所を変更。 |
 | `Sandbox.deleteSnapshot(snapshotId)` | `Sandbox.delete_snapshot(snapshot_id)` | スナップショットを削除。そこから復元した sandbox は実行を続ける。 |
 | `sandbox.kill()` | `sandbox.kill()` | sandbox を停止し、ボリュームを切り離す。 |
 
@@ -122,14 +125,14 @@ sandbox = Sandbox.create(
 
 ## コマンドを実行する
 
-`process.exec`（Python では `exec_`）はコマンドを実行し、終了するまで待ちます。コマンドの実行中に出力を受け取るには、`onStdout` または `onStderr`（Python では `on_stdout`、`on_stderr`）を渡します。その場合も、呼び出しは最後に結果全体を返します。文字列の代わりに argv 配列を渡すとシェルを経由しません。信頼できないテキストを引数として渡すには、これが安全な方法です。
+`process.exec`（Python では `exec_`）はコマンドを実行し、終了するまで待ちます。コマンドの実行中に出力を受け取るには、`onStdout` または `onStderr`（Python では `on_stdout`、`on_stderr`）を渡します。1 回の呼び出しで、末尾の改行を除いた 1 行が届きます。その場合も、呼び出しは最後に結果全体を返します。文字列の代わりに argv 配列を渡すとシェルを経由しません。信頼できないテキストを引数として渡すには、これが安全な方法です。
 
 ```ts
 const result = await sandbox.process.exec('npm test', {
   workdir: '/app',
   envs: { NODE_ENV: 'test' },
   timeoutMs: 120_000,
-  onStdout: (chunk) => process.stdout.write(chunk),
+  onStdout: (line) => console.log(line),
 });
 if (result.exitCode !== 0) throw new Error(result.stderr);
 
@@ -142,7 +145,7 @@ result = sandbox.process.exec_(
     workdir="/app",
     envs={"NODE_ENV": "test"},
     timeout_ms=120_000,
-    on_stdout=lambda chunk: print(chunk, end=""),
+    on_stdout=print,
 )
 if result.exit_code != 0:
     raise RuntimeError(result.stderr)
@@ -150,7 +153,7 @@ if result.exit_code != 0:
 sandbox.process.exec_(["grep", "-rn", "--", user_query, "/workspace"])
 ```
 
-コマンドの結果には stdout、stderr、終了コードが含まれます。0 以外の終了コードは自分で確認する結果であり、リクエストの失敗は例外を投げます。タイムアウトは 1～600 秒です。`process.exec` は `envs`、`workdir`、`user` を受け付けます。`user` を渡さない限り、コマンドは `root` として実行されます。作成時の `envs` はすべてのコマンドに渡されます。
+コマンドの結果には stdout、stderr、終了コードが含まれます。0 以外の終了コードは自分で確認する結果であり、リクエストの失敗は例外を投げます。`timeoutMs`（Python では `timeout_ms`）は、コマンドを実行できる時間を 1～600 秒で設定します。指定しない場合、サーバーは 150 秒後にコマンドを止め、TypeScript SDK は 60 秒後に待つのをやめて、`TimeoutError` という名前の `DOMException` を投げます。1 分より長くかかる可能性があるコマンドには `timeoutMs` を渡してください。`process.exec` は `envs`、`workdir`、`user` を受け付けます。`user` を渡さない限り、コマンドは `root` として実行されます。作成時の `envs` はすべてのコマンドに渡されます。
 
 <span id="files" />
 
@@ -200,7 +203,7 @@ sandbox.unexpose(3000)
 
 ## 一時停止、スナップショット、fork
 
-これらの呼び出しは、ファイルだけでなくメモリと実行中のプロセスも保持します。それぞれで何が保持されるか、復元がどう課金されるか、何が失敗するかは [クイックスタート](/sandboxes/quickstart#pause-and-resume) で説明しています。
+これらの呼び出しは、メモリ、実行中のプロセス、ファイルを保持します。それぞれで何が保持されるか、誰がスナップショットを復元できるか、復元がどう課金されるか、何が失敗するかは [クイックスタート](/sandboxes/quickstart#pause-and-resume) で説明しています。
 
 ```ts
 await sandbox.pause();
@@ -279,10 +282,11 @@ API の失敗時には、以下のエラーが投げられます（Python では
 | `AuthenticationError` | HTTP 401 または 403: キーが無効か、アクセス権がありません。 |
 | `NotFoundError` | HTTP 404: sandbox、ファイル、スナップショットが存在しないか、期限切れです。 |
 | `ConflictError` | HTTP 409: ボリュームが接続された sandbox の fork など、状態の競合。 |
-| `TimeoutError` | HTTP 408 または 504。 |
+| `LimitExceededError` | HTTP 429: 同時に実行する sandbox が多すぎるか、起動が多すぎます。`code` はどの上限かを示します（`SANDBOX_LIMIT_REACHED` や `SANDBOX_RATE_LIMITED` など）。`retryAfterS`（Python では `retry_after_s`）は再試行できるまでの時間を示します。 |
+| `TimeoutError` | HTTP 408 または 504。`process.exec` に対する TypeScript SDK 自身の 60 秒の待機では、代わりに `TimeoutError` という名前の `DOMException` を投げます。 |
 | `LizardError` | 未対応の操作を含む、その他の API の失敗。 |
 
-同時に実行する sandbox が多すぎる場合や、起動が多すぎる場合は HTTP 429 が返ります。[アカウントの上限](/platform/limits#sandbox-account-limits) を参照してください。
+HTTP 429 の基準となる数値は [アカウントの上限](/platform/limits#sandbox-account-limits) にあります。
 
 <span id="http-api" />
 

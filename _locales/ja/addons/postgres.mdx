@@ -46,10 +46,12 @@ lizard add postgres
 
 | 変数 | 使用元 | 形式 |
 |---|---|---|
-| `DATABASE_PRIVATE_URL` | 同じプロジェクト内のサービス | `postgresql://postgres:<password>@<name>.lizard.internal:5432/postgres` |
-| `DATABASE_URL` | 手元のマシン、CI、または別のプロジェクトのサービス | `postgresql://postgres:<password>@<host>:<port>/postgres` |
+| `DATABASE_PRIVATE_URL` | 同じプロジェクトかつ同じリージョンのサービス | `postgresql://postgres:<password>@<name>.lizard.internal:5432/postgres` |
+| `DATABASE_URL` | 手元のマシン、CI、または別のプロジェクトや別のリージョンのサービス | `postgresql://postgres:<password>@<host>:<port>/postgres` |
 
-`<name>` はプロジェクト内でのデータベースの名前で、最初のデータベースでは `postgres` です。パブリックなホストとポートは Lizard がデータベースの作成時に割り当てるため、手入力せずに `DATABASE_URL`、`PGHOST`、`PGPORT` から読み取ってください。プライベートアドレスはプロジェクト内でのみ機能します。[プライベートネットワーク](/networking#private-networking) を参照してください。
+`<name>` はデータベースがプライベートアドレスを得たときの名前で、最初のデータベースでは `postgres` です。データベースの名前を変更しても変わりません。パブリックなホストとポートは Lizard がデータベースの作成時に割り当てます。ホストは手入力せずに `DATABASE_PRIVATE_URL`、`DATABASE_URL`、`PGHOST`、`PGPORT` から読み取ってください。
+
+プライベートアドレスは、同じプロジェクトかつ同じリージョンのサービスからのみ機能します。[プライベートネットワーク](/networking#private-networking) を参照してください。別のリージョンのサービスは `DATABASE_URL` を使う必要があります。プライベートアドレスを使わせるには、サービスと同じリージョンにデータベースを作成します: `lizard add postgres --region <code>`。
 
 ほとんどのドライバーは、この文字列をそのまま受け付けます:
 
@@ -87,7 +89,7 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service a
 lizard redeploy --service api
 ```
 
-参照はデプロイ時に解決されるため、利用側の各サービスは次回のデプロイ時にアドオンの現在の値を取得します。プロジェクト外のクライアントには、代わりに `DATABASE_URL` を使用してください。プロジェクト内のすべてのサービスには、アドオンのパブリックな `DATABASE_URL` も最も低い優先順位で渡されます。明示的な参照はこれを上書きします。
+参照はデプロイ時に解決されるため、利用側の各サービスは次回のデプロイ時にアドオンの現在の値を取得します。プロジェクト外や別のリージョンのクライアントには、代わりに `DATABASE_URL` を使用してください。プロジェクト内のすべてのサービスには、アドオンのパブリックな `DATABASE_URL` も最も低い優先順位で渡されます。明示的な参照はこれを上書きします。
 
 接続文字列を表示せずに、手元のマシンから接続を確認します:
 
@@ -129,6 +131,8 @@ lizard run --service postgres -- sh -c 'exec psql "$DATABASE_URL"'
 ```bash
 lizard scale --service postgres --storage 8192
 ```
+
+指定できるサイズは 512、1024、2048、4096、8192、16384 MB です。拡張中、Lizard はデータベースを停止し、データをより大きなボリュームにコピーしてから再起動します。そのため短時間のダウンタイムが発生します。一時停止中のデータベースは、先に [`lizard resume`](/cli/pause) で再開してください。
 
 <span id="multiple-databases" />
 

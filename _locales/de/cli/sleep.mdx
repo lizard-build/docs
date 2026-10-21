@@ -1,0 +1,114 @@
+---
+description: "lizard sleep (Alias serverless) lässt eine App, Managed Postgres oder Managed Redis im Leerlauf schlafen und beim nächsten Request in etwa einer Sekunde aufwachen, mit gespeichertem Arbeitsspeicher."
+---
+
+# lizard sleep
+
+Lass einen Service schlafen, wenn er keinen Traffic bekommt, und beim nächsten Request aufwachen (Alias `lizard serverless`). Er schläft mit gespeichertem Arbeitsspeicher und macht deshalb dort weiter, wo er aufgehört hat, meist nach etwa einer Sekunde.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard sleep [service] [flags]
+```
+
+Ohne `--on` oder `--off` zeigt `sleep` die Einstellung und wie oft der Service geschlafen hat und aufgewacht ist. Ohne Argument `service` verwendet der Befehl den mit dem Verzeichnis verknüpften Service. Im Dashboard ist dieselbe Einstellung der Schalter **Serverless** in den Einstellungen des Service.
+
+## Flags
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-s, --service <name>` | Name oder ID des Service (wie das Argument `service`) |
+| `-p, --project <id>` | Projektname, Slug oder ID |
+| `--on` | Im Leerlauf schlafen. Der Service startet dafür einmal neu |
+| `--off` | Immer an. Ein schlafender Service wacht auf |
+| `--idle <minutes>` | Minuten ohne Traffic, bevor er schläft, `5` bis `1440`. `--on` ohne diese Angabe setzt `10`. Allein ändert es die Leerlaufzeit eines Service, der bereits schläft |
+
+<span id="how-it-works" />
+
+## So funktioniert es
+
+Nach der Leerlaufzeit ohne Traffic speichert Lizard den Arbeitsspeicher und die Prozesse des Service und stoppt seinen Container. Der erste HTTP-Request an eine App oder die erste Client-Verbindung zu einer Datenbank weckt ihn: Lizard stellt den gespeicherten Zustand wieder her, meist in etwa einer Sekunde, und reicht den Request dann weiter. Lässt sich der gespeicherte Zustand nicht wiederherstellen, startet der Service stattdessen neu, was so lange dauert wie ein normaler Start.
+
+Ein Service schläft nur, wenn nichts verbunden ist:
+
+- Eine App schläft, wenn sie während der Leerlaufzeit keine Requests bekommen hat und keine Verbindung zu ihr offen ist. Ein offener WebSocket hält sie wach.
+- Eine Datenbank schläft, wenn während der Leerlaufzeit kein Client verbunden war. Ein Connection-Pool, der Verbindungen offen hält, hält sie wach.
+
+Ein [pausierter](/cli/pause) Service schläft weder ein noch wacht er auf.
+
+<span id="which-services-can-sleep" />
+
+## Welche Services schlafen können
+
+- Apps mit einer Replika und einem Port. Worker (Port `0`) und Apps mit mehr als einer Replika können nicht schlafen.
+- Managed Postgres ab Version 14 und Managed Redis.
+
+Eine App auf einer älteren Runtime braucht zuerst ein Redeploy; der Befehl sagt dir, wann. Jedes Mitglied des Projekts kann die Einstellung ändern.
+
+<span id="billing" />
+
+## Abrechnung
+
+Während ein Service schläft, nutzt er keine CPU und fast keinen Arbeitsspeicher, daher fallen bis zum nächsten Aufwachen fast keine Compute-Kosten an. Daten, die er behält, können weiterhin als Speicher abgerechnet werden; siehe [Abrechnung](/platform/billing).
+
+<span id="json-output" />
+
+## JSON-Ausgabe
+
+Mit `--json` gibt `sleep` `id`, `name`, `kind` (`app` oder `addon`), `enabled`, `idleMinutes`, `sleeps`, `wakes`, `lastSleptAt` und `lastWokeAt` (Unix-Zeit in Millisekunden oder `null`) sowie `lastError` aus. Nach `--on`, `--off` oder `--idle` zeigt `restarted`, ob der Service neu gestartet wurde, um die Änderung anzuwenden.
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="show-the-setting" />
+
+### Die Einstellung anzeigen
+
+```bash
+lizard sleep api
+```
+
+<span id="sleep-after-30-idle-minutes" />
+
+### Nach 30 Minuten Leerlauf schlafen
+
+```bash
+lizard sleep api --on --idle 30
+```
+
+<span id="let-a-database-sleep" />
+
+### Eine Datenbank schlafen lassen
+
+```bash
+lizard sleep --service my-db --on
+```
+
+<span id="change-the-idle-time" />
+
+### Die Leerlaufzeit ändern
+
+```bash
+lizard sleep api --idle 60
+```
+
+<span id="keep-a-service-always-on" />
+
+### Einen Service immer an lassen
+
+```bash
+lizard sleep api --off
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [lizard pause](/cli/pause) — einen Service anhalten, bis du ihn fortsetzt
+- [lizard scale](/cli/scale) — Replikas, CPU und Arbeitsspeicher
+- [Managed Postgres](/addons/postgres) und [Managed Redis](/addons/redis)
+- [Abrechnung](/platform/billing) — Preise für Compute und Speicher

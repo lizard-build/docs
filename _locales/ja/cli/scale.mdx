@@ -11,7 +11,7 @@ description: "lizard scale はサービスのレプリカ数、CPU、メモリ�
 ## 使い方
 
 ```bash
-lizard scale [flags]
+lizard scale [service] [flags]
 ```
 
 <span id="flags" />
@@ -20,6 +20,8 @@ lizard scale [flags]
 
 | フラグ | 説明 |
 |------|-------------|
+| `-s, --service <name>` | サービスの名前または ID（既定値はリンク済みのサービス。引数 `service` と同じ） |
+| `-p, --project <id>` | プロジェクトの名前、スラッグ、または ID |
 | `--replicas <n>` | レプリカ数（アプリ）。プランの[上限](/platform/limits#applications)まで。最初の Pro の請求書が支払われるまで（つまりトライアル中）は `1`、その後と Enterprise では `5` |
 | `--cpu <cores>` | `1`、`2`、`3`、または `4` |
 | `--memory <mb>` | `128`–`8192` MB |
@@ -37,7 +39,7 @@ lizard scale [flags]
 lizard scale --service api --replicas 5
 ```
 
-各レプリカは、ロードバランサーの背後にある独立した pod です。レプリカを相互に置き換えられるように、アプリがステートレスであることを確認してください。
+各レプリカは、ロードバランサーの背後にある独立した pod です。レプリカを相互に置き換えられるように、アプリがステートレスであることを確認してください。レプリカが 2 つ以上のアプリは[アイドル時にスリープ](/cli/sleep)しません。[一時停止中](/cli/pause)のアプリでは、`--replicas` は数を保存し、再開時に適用します。
 
 <span id="scale-cpu-and-memory-vertically" />
 

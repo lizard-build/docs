@@ -14,15 +14,27 @@ description: "アプリケーションデータと sandbox ファイルのため
 | キャッシュおよびキューデータ | Managed Redis | ワークロードが状態を再構築できるのか、独自の復旧計画が必要なのかを判断してください。Managed Redis にはエビクションポリシーも追記専用ファイル (AOF) もありません。メモリが不足すると再起動し、直近の書き込みが失われることがあります。失えないデータは Managed Postgres に保存してください。 |
 | アプリケーション間で共有されるファイル | Managed Object Storage | 自動作成される `default` bucket は非公開です。bucket を公開するのは、誰がファイルを読んでもよい場合だけにし、ダッシュボードの bucket ブラウザーから設定してください。 |
 
-sandbox のファイルには別のルールが適用されます: sandbox の終了後も残るのは、接続した Persistent Volumes の `/workspace` 上のファイルだけです。[保存と課金](/sandboxes#storage-and-billing) を参照してください。
+sandbox のファイルには別のルールが適用されます: sandbox の終了後も残るのは、接続した Persistent Volumes の `/workspace` 上のファイルと、自分で作成したスナップショットの中身だけです。[保存と課金](/sandboxes#storage-and-billing) を参照してください。
 
 <span id="keep-files-after-a-sandbox-ends" />
 
 ## sandbox の終了後もファイルを保持する
 
-Persistent Volumes タブで名前付きボリュームと接続を管理します。sandbox の作成時にボリュームを接続し、`/workspace` に書き込んでください。別の sandbox に接続する前に、現在の sandbox を停止します。
+ダッシュボードの **ボリューム** ページで名前付きボリュームと接続を管理します。sandbox の作成時にボリュームを接続し、`/workspace` に書き込んでください。別の sandbox に接続する前に、現在の sandbox を停止します。
 
 [Persistent Volumes](/sandboxes/volumes)
+
+メモリも含めて sandbox 全体を残すには、`lizard sandbox snapshot <id>` で保存し、あとで `lizard sandbox restore <snapshot-id>` でコピーを起動します。[スナップショット](/sandboxes/quickstart#pause-and-resume)を参照してください。
+
+<span id="restore-a-deleted-resource" />
+
+## 削除したリソースを復元する
+
+削除したプロジェクトは、アプリとデータベースごと 3 日間ゴミ箱に残ります。削除したデータベースも同じです。その間は、ワークスペースまたはプロジェクトの設定にある **危険ゾーン** から復元できます。期間を過ぎると、Lizard が完全に削除します。
+
+- 単独で削除したアプリがゴミ箱に入るのは、`lizard up` でファイルからデプロイした場合だけです。復元すると、そのアップロードから再ビルドされます。GitHub からデプロイしたアプリはすぐに削除されます。
+- Sandboxes、そのボリューム、スナップショットにはゴミ箱がありません。それら自体や、それらが属するプロジェクトを削除すると、すぐに消えます。
+- ワークスペースの削除にもゴミ箱はありません。
 
 <span id="plan-a-database-restore" />
 

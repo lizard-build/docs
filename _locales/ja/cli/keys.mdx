@@ -21,7 +21,7 @@ API キーは `liz_` で始まります。ブラウザでログインできな�
 - CI で CLI を使うときの `LIZARD_TOKEN` または `LIZARD_API_KEY`
 - マシン上での `lizard login --token liz_…`
 - [Lizard SDK](/sandboxes/sdk-reference) 用の `LIZARD_API_KEY`
-- sandbox 内で `lizard` を使うための `lizard sandbox create --with-token liz_…`
+- sandbox 内の `lizard` にサインインするための `lizard sandbox create --with-token liz_…`。[sandbox 内のキー](#sign-in-lizard-inside-a-sandbox)を参照
 
 <span id="subcommands" />
 
@@ -36,11 +36,19 @@ API キーは `liz_` で始まります。ブラウザでログインできな�
 | `-p, --project <id>` | キーをこのプロジェクトに限定（名前、スラッグ、または ID） |
 | `-w, --workspace <id>` | キーをこのワークスペースに限定（名前、スラッグ、または ID） |
 
-スコープを限定したキーでは、アカウントの請求情報や設定は見られません。
+スコープを限定したキーは、そのプロジェクトまたはワークスペースの中でだけ使えます。次のことはできません:
+
+- 請求、プラン、カード、アカウント全体の利用量を見る
+- API キーを作成、一覧表示、削除する。そのため、このキーでは `lizard keys` は失敗します
+- ワークスペースを作成する、自分のワークスペースの名前を変える・削除する、ワークスペースの上限や再販価格を変える
+- ワークスペースやプロジェクトのメンバーを見る・管理する
+- サービスの参照先を非公開の GitHub リポジトリにする。ただし、スコープ内のアプリがすでにそのリポジトリからビルドしている場合は除きます
+
+スコープを限定したキーでサインインしている場合、[`lizard whoami`](/cli/whoami) はキーのスコープを表示し、その背後のアカウントは表示しません。ワークスペースの所有者が[再販価格](/cli/workspace#lizard-workspace-resale-pricing-name-or-id)を設定している場合、キーにはその価格が表示されます。
 
 ### `lizard keys list`
 
-キーを、短いプレビュー、スコープ、作成日時、最終使用日時とともに一覧表示します（エイリアス `ls`）。
+キーを、短いプレビュー、スコープ、作成日時、最終使用日時とともに一覧表示します（エイリアス `ls`）。プレビューはキーの先頭部分ではないため、キーは名前か ID で見分けてください。
 
 ### `lizard keys rm <name-or-id>`
 
@@ -64,14 +72,15 @@ lizard keys create github-actions --project my-project
 
 表示されたキーを、`LIZARD_TOKEN` という名前の CI secret として保存します。
 
-<span id="create-a-key-for-a-sandbox" />
+<span id="sign-in-lizard-inside-a-sandbox" />
 
-### sandbox 用のキーを作成する
+### sandbox 内の `lizard` にサインインする
 
 ```bash
-lizard keys create sandbox-agent --workspace my-team
 lizard sandbox create --with-token liz_xxx
 ```
+
+sandbox には専用の新しいキーが発行されます。このキーは sandbox のプロジェクトに限定され、sandbox とともに削除されます。`lizard keys list` には `sandbox-session:<sandbox-id>` として表示されます。渡した `liz_` キーはリクエストの承認に使われるだけで、sandbox には入りません。値なしの `--with-token` では、CLI はサインイン中のキーを使います。これは `liz_` キーである必要があります。
 
 <span id="delete-a-key" />
 
@@ -87,4 +96,4 @@ lizard keys rm github-actions --yes
 
 - [lizard login](/cli/login) — マシン上でキーを使ってログイン
 - [JSON と自動化](/cli/json) — CI から CLI を使う
-- [lizard sandbox](/cli/sandbox) — `--with-token` で sandbox にキーをインストール
+- [lizard sandbox](/cli/sandbox) — `--with-token` で sandbox 内の `lizard` に専用のキーでサインイン

@@ -6,7 +6,7 @@ description: "Пусть Claude Code, Codex или Cursor развертываю
 
 # Агенты для кодирования
 
-Claude Code, Codex, Cursor и другие AI-агенты для разработки развертывают приложения и управляют ими в Lizard (lizard.build) через Lizard CLI. Один раз установите Lizard Skill командой `npx skills add lizard-build/skill -g`; после этого агент загружает встроенное в CLI руководство командой `lizard skills get core --json` и читает флаги любой команды через `--help --json`, чтобы узнать доступные параметры. Клиенты с поддержкой MCP, например ChatGPT и Claude, могут вместо этого использовать [Lizard MCP](#lizard-mcp). Полный пример развертывания с агентом смотрите в руководстве [Развёртывание из Claude Code, Codex или Cursor](/guides/deploy-from-coding-agent).
+Claude Code, Codex, Cursor и другие AI-агенты для разработки создают песочницы, развертывают приложения и управляют ими в Lizard (lizard.build) через Lizard CLI. Один раз установите Lizard Skill командой `npx skills add lizard-build/skill -g`; после этого агент загружает встроенное в CLI руководство командой `lizard skills get core --json` и читает флаги любой команды через `--help --json`, чтобы узнать доступные параметры. Клиенты с поддержкой MCP, например ChatGPT и Claude, могут вместо этого использовать [Lizard MCP](#lizard-mcp). Полный пример развертывания с агентом смотрите в руководстве [Развёртывание из Claude Code, Codex или Cursor](/guides/deploy-from-coding-agent).
 
 <span id="the-embedded-skill" />
 
@@ -18,12 +18,14 @@ Claude Code, Codex, Cursor и другие AI-агенты для разрабо
 lizard skills get core --json
 ```
 
-Это возвращает `{ name, frontmatter, content, … }` — `content` является полным руководством (конвейер сборки, приоритет переменных окружения, аддоны, обнаружение, коды выхода). Связанные подкоманды:
+Это возвращает `{ name, frontmatter, content, references, … }` — `content` содержит основное руководство (песочницы, деплои, базы данных, секреты, обнаружение, коды выхода), а `references` перечисляет подробные руководства по деплоям, песочницам и Lizard SDK. Связанные подкоманды:
 
 ```bash
-lizard skills list        # available embedded skills
-lizard skills get core    # the core guide
-lizard skills path        # where skills are stored
+lizard skills list                     # available embedded skills
+lizard skills get core                 # the core guide
+lizard skills get core --ref deploys   # one reference: deploys, sandboxes or sdk
+lizard skills get core --full          # the guide plus every reference
+lizard skills path                     # where skills are stored
 ```
 
 Так как руководство поставляется в составе бинарника, `lizard upgrade` обновляет и инструкции агента.
@@ -47,11 +49,11 @@ lizard <cmd> --help --json          # a specific command's schema
 
 Типичный поток работы агента:
 
-1. **Загрузите руководство:** `lizard skills get core --json` → прочитайте `content`.
+1. **Загрузите руководство:** `lizard skills get core --json` → прочитайте `content`, затем справочник, нужный для задачи (`--ref sandboxes`, `deploys` или `sdk`).
 2. **Проверьте авторизацию оптимистически:** выполните задачу пользователя. При коде выхода `2` (`NOT_AUTHENTICATED`) в поле ошибки `body.login` есть ссылки для входа: спросите пользователя, как он входит, через GitHub или Google, передайте ему эту ссылку из `authUrls` и повторите попытку, когда браузер покажет «CLI authorized». [`lizard login --json`](/cli/login#output-for-agents) выводит те же ссылки, а после входа сообщает тариф в `account.state`.
 3. **Запустите пробный период, если попросят:** у нового аккаунта нет тарифа, поэтому первое создание завершится ошибкой HTTP 402 (`code: "PAYMENT_REQUIRED"`, код выхода `1`). Сначала спросите пользователя. Если он согласен, выполните `lizard billing start --json`, передайте пользователю `url` страницы Checkout, затем повторите попытку после того, как он добавит карту.
-4. **Определите контекст перед мутацией:** `lizard status` (связка cwd) и `lizard ps --json` (сервисы).
-5. **Действуйте** с помощью руководства — `add`, `up`, `secrets`, `domain` и т.д., всегда с `--json`.
+4. **Определите контекст перед мутацией:** `lizard status` (связка cwd) и `lizard ps --json` (сервисы). В папке без связки `up`, `add`, `sandbox create` и другие команды проекта используют проект аккаунта по умолчанию.
+5. **Действуйте** с помощью руководства — `sandbox create`, `add`, `up`, `secrets`, `domain` и т.д., всегда с `--json`.
 
 Если бинарник `lizard` отсутствует, сначала установите его. На macOS или Linux используйте скрипт установки:
 
@@ -101,7 +103,7 @@ npx skills add lizard-build/skill -g
 
 ## Lizard MCP
 
-Lizard MCP позволяет ChatGPT, Claude и другим MCP-клиентам управлять вашими проектами Lizard: создавать сервисы и аддоны, выполнять повторный деплой, читать логи и метрики, задавать секреты, масштабировать реплики и подключать домены. Это размещенный сервер, который работает по Streamable HTTP по адресу:
+Lizard MCP позволяет ChatGPT, Claude и другим MCP-клиентам управлять вашими проектами Lizard: создавать песочницы, выполнять в них команды, читать и записывать файлы; создавать сервисы и аддоны, выполнять повторный деплой, [приостанавливать и возобновлять](/cli/pause) сервис, проект или рабочее пространство, [усыплять сервис без трафика](/cli/sleep), читать логи и метрики, задавать секреты, масштабировать реплики и подключать домены. Это размещенный сервер, который работает по Streamable HTTP по адресу:
 
 ```text
 https://employ-woman-g1q2.us-east-1.onlizard.com/mcp

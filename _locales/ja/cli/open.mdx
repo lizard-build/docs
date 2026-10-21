@@ -1,5 +1,5 @@
 ---
-description: "lizard open は、現在のプロジェクトのダッシュボードをブラウザで起動します。これは CLI のビジュアルコンパニオンです。"
+description: "lizard open は、プロジェクトのダッシュボードをブラウザで起動します。これは CLI のビジュアルコンパニオンです。--json を付けると URL を表示します。"
 ---
 
 # lizard open
@@ -11,8 +11,18 @@ description: "lizard open は、現在のプロジェクトのダッシュボー
 ## 使い方
 
 ```bash
-lizard open
+lizard open [flags]
 ```
+
+<span id="flags" />
+
+## フラグ
+
+| フラグ | 説明 |
+|------|-------------|
+| `-p, --project <id>` | プロジェクトの名前、slug、または ID |
+
+`-p` を指定しない場合、`open` はリンクされたプロジェクトを使い、リンクされていないフォルダーではデフォルトプロジェクトを使います。`--json` を付けると `{ url, opened: false }` を表示し、ブラウザは開きません。
 
 <span id="examples" />
 
@@ -24,6 +34,14 @@ lizard open
 
 ```bash
 lizard open
+```
+
+<span id="print-the-dashboard-url" />
+
+### ダッシュボードの URL を表示する
+
+```bash
+lizard open --json
 ```
 
 <span id="see-also" />

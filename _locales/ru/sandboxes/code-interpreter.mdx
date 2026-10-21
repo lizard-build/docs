@@ -35,7 +35,7 @@ const sandbox = await CodeSandbox.create({ projectId: 'proj_123', timeoutMs: 300
 try {
   await sandbox.runCode('import pandas as pd\ndf = pd.DataFrame({"x": [1, 2, 3]})');
   const run = await sandbox.runCode('df.x.sum()');
-  console.log(run.results[0]?.data); // "6"
+  console.log(run.results[0]?.data); // "np.int64(6)"
   const bad = await sandbox.runCode('1/0');
   console.log(bad.error?.name); // "ZeroDivisionError"
 } finally {
@@ -49,7 +49,7 @@ from lizard import CodeSandbox
 with CodeSandbox.create(project_id="proj_123", timeout_ms=300_000) as sandbox:
     sandbox.run_code('import pandas as pd\ndf = pd.DataFrame({"x": [1, 2, 3]})')
     run = sandbox.run_code("df.x.sum()")
-    print(run.results[0].data)  # "6"
+    print(run.results[0].data)  # "np.int64(6)"
     print(sandbox.run_code("1/0").error.name)  # "ZeroDivisionError"
 ```
 
@@ -64,9 +64,11 @@ with CodeSandbox.create(project_id="proj_123", timeout_ms=300_000) as sandbox:
 | Поле | Содержимое |
 |---|---|
 | `stdout`, `stderr` | Всё, что напечатал код |
-| `results` | Расширенный вывод: значение последнего выражения как `text/plain`, графики matplotlib и изображения как base64 `image/png`, HTML и другие типы, каждый с `mime` и `data` |
+| `results` | Расширенный вывод: значение последнего выражения, графики matplotlib и изображения, каждый с `mime` и `data` |
 | `error` | `name`, `message` и `traceback`, если код выбросил исключение |
 | `executionCount` | Счётчик ячеек ядра (в Python: `execution_count`) |
+
+Каждый результат содержит один тип MIME — самый полный из тех, что есть у вывода, в таком порядке: `image/png`, `image/jpeg`, `image/svg+xml`, `text/html`, `text/markdown`, `application/json`, `text/latex`, `text/plain`. Изображения приходят в base64. Число возвращается как `text/plain`, а DataFrame из pandas — только как `text/html`.
 
 Передайте `onStdout`, `onStderr`, `onResult` или `onError` (в Python: `on_stdout` и т. д.), чтобы получать вывод, пока код выполняется.
 
@@ -74,7 +76,7 @@ with CodeSandbox.create(project_id="proj_123", timeout_ms=300_000) as sandbox:
 
 ## Использование как инструмента LLM
 
-Дайте модели один инструмент, например `run_python` с единственным строковым аргументом `code`. Когда модель вызывает его, выполните код в sandbox и отправьте текст обратно как результат инструмента. Держите один sandbox на весь диалог, чтобы переменные модели сохранялись между вызовами.
+Дайте модели один инструмент, например `run_python` с единственным строковым аргументом `code`. Когда модель вызывает его, выполните код в sandbox и отправьте текст обратно как результат инструмента. Пример сохраняет каждый текстовый результат, включая HTML, поэтому модель получает и DataFrame. Держите один sandbox на весь диалог, чтобы переменные модели сохранялись между вызовами.
 
 ```ts
 import { CodeSandbox } from '@lizard-build/sdk';
@@ -86,7 +88,7 @@ async function runPython(code: string): Promise<string> {
   const run = await sandbox.runCode(code, { timeoutMs: 30_000 });
   if (run.error) return `${run.error.name}: ${run.error.message}\n${run.error.traceback}`;
   const values = run.results.flatMap((r) =>
-    r.type === 'result' && r.mime === 'text/plain' ? [r.data] : [],
+    r.type === 'result' && r.mime.startsWith('text/') ? [r.data] : [],
   );
   return [run.stdout, ...values].filter(Boolean).join('\n');
 }
@@ -105,7 +107,7 @@ def run_python(code: str) -> str:
     run = sandbox.run_code(code, timeout_ms=30_000)
     if run.error:
         return f"{run.error.name}: {run.error.message}\n{run.error.traceback}"
-    values = [r.data for r in run.results if r.mime == "text/plain"]
+    values = [r.data for r in run.results if r.mime.startswith("text/")]
     return "\n".join(filter(None, [run.stdout, *values]))
 
 # When the conversation ends:
@@ -135,7 +137,7 @@ Path("chart.png").write_bytes(base64.b64decode(png))
 
 - **Контексты.** `createContext()` (в Python: `create_context()`) запускает отдельное ядро со своими переменными и рабочей папкой; передайте его как `context` в `runCode`. `listContexts()`, `restartContext(ctx)` и `deleteContext(ctx)` управляют контекстами. Без контекста каждый язык использует свой контекст по умолчанию.
 - **Таймауты.** `timeoutMs` (в Python: `timeout_ms`) ограничивает один вызов, по умолчанию 60 секунд. Ядро Python, которое работает дольше, прерывается и сохраняет состояние; `error.name` в результате равно `TimeoutError`.
-- **Другие языки.** JavaScript и bash выполняются как новый процесс при каждом вызове, поэтому состояние не сохраняется, а `results` остаётся пустым. Для JavaScript нужен `node`, которого нет в шаблоне `interpreter`.
+- **Другие языки.** JavaScript и bash выполняются как новый процесс при каждом вызове, поэтому состояние не сохраняется, а `results` остаётся пустым. JavaScript работает на Node 22 из шаблона, в котором нет npm.
 - **Пауза и снимки.** Ядра работают внутри sandbox, поэтому `pause()` и `resume()` сохраняют их переменные, а `snapshot()` и `fork()` их копируют.
 
 <span id="run-commands" />
@@ -148,7 +150,7 @@ Path("chart.png").write_bytes(base64.b64decode(png))
 
 ## Недоверенный код
 
-Считайте недоверенным всё, что пишет модель. Не передавайте `lizardToken`, если коду не нужен Lizard CLI; этот ключ может прочитать всё, что работает в sandbox, поэтому в таком случае используйте ключ с доступом только к рабочему пространству. Не кладите другие секреты в `envs`.
+Считайте недоверенным всё, что пишет модель. Не передавайте `lizardToken`, если коду не нужен Lizard CLI. Если передадите, sandbox получит новый ключ, который ограничен его проектом и удаляется вместе с sandbox, поэтому код в нём сможет менять этот проект. Не кладите другие секреты в `envs`.
 
 <span id="storage-and-billing" />
 

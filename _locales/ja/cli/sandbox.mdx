@@ -18,7 +18,7 @@ lizard sandbox ssh <id>
 lizard sandbox rm <id> [flags]
 ```
 
-すべての sandbox はプロジェクトに属します。現在のディレクトリにリンクされたプロジェクト、または `-p` で指定したプロジェクトです。
+すべての sandbox はプロジェクトに属します。`-p` で指定したプロジェクト、指定がなければ現在のディレクトリにリンクされたプロジェクト、それもなければアカウントの既定のプロジェクト（個人ワークスペースで最も古いプロジェクト）です。
 
 <span id="subcommands" />
 
@@ -30,14 +30,14 @@ sandbox を作成し、その ID を表示します。
 
 | フラグ | 説明 |
 |------|-------------|
-| `-t, --template <name>` | テンプレート（既定値 `base`）。有効なテンプレート: `base`、`interpreter`、`codex`、`desktop`、`opencode`、`pi`、`prime`、`claude`。サーバーがリージョンの一覧と照合します |
+| `-t, --template <name>` | テンプレート（既定値 `base`）。有効なテンプレート: `base`、`interpreter`、`codex`、`desktop`、`desktop-camoufox`（US East のみ）、`opencode`、`pi`、`prime`、`claude`。サーバーがリージョンの一覧と照合します |
 | `-s, --size <size>` | `small`、`medium`（既定値）、`large` のいずれか |
 | `--timeout <ms>` | 有効期間（ミリ秒）。既定値は `300000`（5 分）で、`0` を指定すると期限がなくなります |
 | `--region <code>` | sandbox を作成するリージョン |
 | `--snapshot <id>` | 保存済みのスナップショットから起動します。`--size` とは併用できません |
 | `--volume <name-or-id>` | [Persistent Volume](/cli/volume) を接続します |
-| `--with-token [key]` | sandbox 内で `lizard` が動作するように、`liz_` API キーを sandbox にインストールします。値を省略すると、実行中の `liz_` キーを再利用します。ブラウザでログインした場合、そのキーはありません |
-| `-p, --project <id>` | プロジェクト（既定はリンク済みのプロジェクト） |
+| `--with-token [key]` | sandbox 内の `lizard` を、sandbox のプロジェクトに限定され sandbox と一緒に削除される新しいキーでサインインさせます。渡した `liz_` キー、または値を省略した場合は実行中の `liz_` キーは、このリクエストを許可するためだけに使います。ブラウザでログインした場合、そのキーはありません。`base` テンプレートには `lizard` がありません |
+| `-p, --project <id>` | プロジェクト（既定はリンク済みのプロジェクト、それもなければ既定のプロジェクト） |
 
 Lizard は sandbox の稼働中、アイドル時間も含めてサイズごとの定額で秒単位の課金をします。料金にはローカルディスクと、[アカウントごとに直近 30 日間で 2 TB までの送信トラフィック](/platform/limits#sandbox-egress)が含まれます。一時停止が完了すると計算料金は止まりますが、Persistent Volumes のストレージには、接続の有無にかかわらず[ボリューム料金](/cli/volume)が引き続きかかります。
 
@@ -47,7 +47,7 @@ Lizard は sandbox の稼働中、アイドル時間も含めてサイズごと�
 | `medium` | 4 | 8 GiB | 20 GB | $0.0324/h |
 | `large` | 8 | 16 GiB | 50 GB | $0.0648/h |
 
-`--with-token` でインストールしたキーは、sandbox 内のあらゆるものから読み取れます。1 つのワークスペースまたはプロジェクトにスコープを限定したキーを使ってください: `lizard keys create sandbox-key -w my-team`。
+`--with-token` がインストールしたキーは、sandbox 内のあらゆるものから読み取れ、sandbox が削除されるまで sandbox のプロジェクトに対して使えます。
 
 トライアルまたは Pro プランが始まるまで、`create` は Checkout へのリンク付きで HTTP 402 を返します。`lizard billing start` を実行してください。トライアル中は同時に 5 個、最初の有料の請求書の後は 100 個の sandbox を実行できます。一時停止中の sandbox は数えません。[制限](/platform/limits#sandbox-account-limits)を参照してください。
 
@@ -122,15 +122,15 @@ sandbox 内のポートに HTTPS URL を割り当てます。ポートは非公�
 |---------|--------------|
 | `lizard sandbox pause <id>` | メモリとプロセスを保存して sandbox を一時停止します。完了すると計算料金は止まりますが、Persistent Volumes のストレージ料金は別途かかります |
 | `lizard sandbox resume <id>` | 一時停止中の sandbox を、保存したメモリとファイルで再び起動します |
-| `lizard sandbox snapshot <id> --name <name>` | 実行中の sandbox をそのプロジェクトのプライベートなスナップショットとして保存し、待機中のコピーを用意しておきます（`--warm`、1〜10、既定値 5） |
-| `lizard sandbox restore <snapshot-id>` | スナップショットから新しい sandbox を起動します（`--timeout <ms>`、既定値 `300000`） |
-| `lizard sandbox snapshots` | プロジェクトのスナップショットを一覧表示します（別のプロジェクトには `-p`） |
-| `lizard sandbox snapshot-pause <snapshot-id>` | スナップショットの待機中のコピーを解放し、保存した状態は残します |
-| `lizard sandbox snapshot-resume <snapshot-id>` | 一時停止したスナップショットの待機中のコピーを補充します |
-| `lizard sandbox snapshot-warm <snapshot-id> <count>` | 待機させておくコピーの数を変更します（1〜10） |
+| `lizard sandbox snapshot <id> --name <name>` | 実行中の sandbox を、メモリとファイルを含めて、自分が所有するスナップショットとして保存します。`--scope` で復元できる場所を決めます: `workspace`（既定値）は sandbox のワークスペース内の任意のプロジェクト、`user` は自分のすべてのワークスペースの任意のプロジェクト、`project` は sandbox 自身のプロジェクトだけです |
+| `lizard sandbox restore <snapshot-id>` | スナップショットのリージョンで、スナップショットから新しい sandbox を起動します。`-p <project>` でプロジェクトを選びます（既定はボリュームのプロジェクト、なければスナップショット自身のプロジェクト）。`--volume <name-or-id>` はボリュームを `/workspace` にマウントし、`--timeout <ms>` は有効期間を設定します（既定値 `300000`） |
+| `lizard sandbox snapshots` | プロジェクトで作成したスナップショットを一覧表示します（別のプロジェクトには `-p`、自分が作成したすべてのスナップショットには `--mine`） |
+| `lizard sandbox snapshot-scope <snapshot-id> <scope>` | 自分が作成したスナップショットを復元できる場所を変更します: `user`、`workspace`、`project` のいずれか |
 | `lizard sandbox snapshot-rm <snapshot-id>` | スナップショットを削除します（エイリアス `snapshot-delete`。`-y` で確認を省略） |
 
 `pause`、`resume`、`snapshot` は処理が終わるまで待機します。キューに入った時点で戻るには `--no-wait` を渡してください。各手順で何が保持されるかは、[一時停止、再開、スナップショット](/sandboxes/quickstart#pause-and-resume)を参照してください。
+
+ボリュームを接続した sandbox のスナップショットには、作成時点のボリュームのファイルのコピーが含まれます。どの復元もそのコピーを受け取り、`--volume` は使えません。スナップショットを復元できる人は誰でもそのファイルを読めます。`--volume` はボリュームのない sandbox のスナップショットでだけ使え、ボリュームはスナップショットと同じリージョンにある必要があります。
 
 ### `lizard sandbox files`
 
@@ -173,7 +173,7 @@ Ctrl-C で表示を止めても、エージェントは作業を続けます。`
 
 ```bash
 lizard sandbox create --size small --timeout 600000
-lizard sandbox exec sb_abc123 -- python3 -c "print(1 + 1)"
+lizard sandbox exec genuine-toddler-jasj -- python3 -c "print(1 + 1)"
 ```
 
 <span id="open-a-shell" />
@@ -181,7 +181,7 @@ lizard sandbox exec sb_abc123 -- python3 -c "print(1 + 1)"
 ### シェルを開く
 
 ```bash
-lizard sandbox ssh sb_abc123
+lizard sandbox ssh genuine-toddler-jasj
 ```
 
 <span id="attach-a-persistent-volume" />
@@ -198,8 +198,8 @@ lizard sandbox create --volume agent-workdir
 ### ポートで配信する
 
 ```bash
-lizard sandbox exec sb_abc123 -- sh -c "nohup python3 -m http.server 3000 --bind 0.0.0.0 >/tmp/http.log 2>&1 &"
-lizard sandbox expose sb_abc123 3000
+lizard sandbox exec genuine-toddler-jasj -- sh -c "nohup python3 -m http.server 3000 --bind 0.0.0.0 >/tmp/http.log 2>&1 &"
+lizard sandbox expose genuine-toddler-jasj 3000
 ```
 
 <span id="use-a-desktop-from-a-vnc-app" />
@@ -208,7 +208,7 @@ lizard sandbox expose sb_abc123 3000
 
 ```bash
 lizard sandbox create -t desktop
-lizard sandbox vnc sb_abc123 --open
+lizard sandbox vnc genuine-toddler-jasj --open
 ```
 
 <span id="run-codex-in-a-sandbox" />
@@ -218,7 +218,7 @@ lizard sandbox vnc sb_abc123 --open
 ```bash
 lizard agents login chatgpt
 lizard sandbox create -t codex
-lizard sandbox prompt sb_abc123 "add a health check endpoint and test it"
+lizard sandbox prompt genuine-toddler-jasj "add a health check endpoint and test it"
 ```
 
 <span id="save-and-restore-a-sandbox" />
@@ -226,8 +226,9 @@ lizard sandbox prompt sb_abc123 "add a health check endpoint and test it"
 ### sandbox を保存して復元する
 
 ```bash
-lizard sandbox snapshot sb_abc123 --name my-app
-lizard sandbox restore <snapshot-id>   # ID from `lizard sandbox snapshots`
+lizard sandbox snapshot genuine-toddler-jasj --name my-app
+lizard sandbox snapshots --mine                     # find the snapshot ID
+lizard sandbox restore <snapshot-id> -p other-project
 ```
 
 <span id="see-also" />

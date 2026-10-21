@@ -12,13 +12,14 @@ La compilación se completa y se inicia un nuevo pod, pero el despliegue se marc
 
 ## Qué significa esto
 
-La verificación de estado de la plataforma —una sonda TCP sobre el puerto de tu app— nunca se completa correctamente, así que el tráfico nunca se redirige al nuevo pod. Lizard espera unos 30 segundos y luego marca el despliegue como fallido. Un servicio que ya estaba en ejecución sigue sirviendo su versión anterior; un primer despliegue aparece como crashed.
+La verificación de estado de la plataforma —una sonda TCP sobre el puerto de tu app— nunca se completa correctamente, así que el tráfico nunca se redirige al nuevo pod. Lizard espera unos 30 segundos y luego marca el despliegue como fallido. Un servicio que ya estaba en ejecución sigue sirviendo su versión anterior, salvo que tenga un volumen adjunto: en ese caso su pod antiguo se detiene primero, y el servicio queda caído hasta que un despliegue pase la verificación. Un primer despliegue aparece como crashed.
 
 <span id="why-this-can-happen" />
 
 ## Por qué puede pasar esto
 
 - **Tu app no está escuchando en el puerto esperado.** Lizard inyecta una variable de entorno `PORT` (puerto de contenedor predeterminado `3000`) y comprueba que se pueda acceder a tu app ahí. Si tu app tiene otro puerto fijado en el código, o nunca se enlaza a ninguno, la verificación de estado nunca se completa correctamente. Una app de Python es el caso más habitual: `gunicorn` y `uvicorn` se enlazan a `127.0.0.1` a menos que les indiques otra cosa, y la sonda viene desde fuera del proceso. [Hosting de apps Python](https://lizard.build/blog/python-app-hosting#build-and-start-commands) tiene la línea `--bind 0.0.0.0:$PORT` que necesita cada framework.
+- **El puerto del servicio no coincide con la imagen.** Cuando `lizard up` crea un servicio a partir de un Dockerfile sin línea `EXPOSE`, fija el puerto `3000`, aunque la imagen base escuche en otro, como `nginx` en el 80. Una variable `PORT` no cambia ese puerto. Ejecuta `lizard port <n>` y vuelve a desplegar, o añade una línea `EXPOSE`. Consulta [a qué puerto envía Lizard el tráfico](/deploy/dockerfile#which-port-lizard-routes-to).
 - **El servicio está accidentalmente en modo worker.** Configurar `containerPort=0` pone un servicio en [modo worker](/deploy/workers), lo que **omite por completo la verificación de estado y el registro en el balanceador de carga**. Un servicio que debería servir HTTP pero se cambió a `containerPort=0` se desplegará "correctamente" y simplemente nunca servirá nada: el modo worker oculta el problema subyacente de arranque en lugar de mostrarlo.
 
 <span id="possible-solutions" />

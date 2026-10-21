@@ -52,7 +52,7 @@ En esta ruta:
 | `service set` de campos solo de runtime (`startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns`) | ❌ ejecuta `lizard redeploy` para aplicar |
 | Cualquier otro cambio de variable de entorno / secreto | ❌ se aplica con un reinicio rápido (sin reconstrucción) |
 
-> **No compiles dos veces.** Después de un `service set` que cambia un campo de compilación en un servicio en ejecución, la reconstrucción se activa automáticamente: no encadenes un `lizard redeploy` después, o pondrás en cola una segunda compilación redundante ([por qué](/deploy/troubleshooting/double-build)). Un servicio que se ha bloqueado o que nunca se ha desplegado no se reconstruye por sí solo; ejecuta `lizard redeploy`.
+> **No compiles dos veces.** Después de un `service set` que cambia un campo de compilación en un servicio en ejecución, la reconstrucción se activa automáticamente: no encadenes un `lizard redeploy` después: cancela esa compilación y la empieza de nuevo ([por qué](/deploy/troubleshooting/double-build)). Un servicio que se ha bloqueado o que nunca se ha desplegado no se reconstruye por sí solo; ejecuta `lizard redeploy`.
 
 <span id="build-time-variables" />
 

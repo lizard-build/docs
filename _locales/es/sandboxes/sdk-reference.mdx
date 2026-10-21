@@ -81,8 +81,8 @@ sandbox = Sandbox.create(
 - `size` es `'small'`, `'medium'` o `'large'`: 2 vCPU / 4 GB, 4 vCPU / 8 GB (el predeterminado) u 8 vCPU / 16 GB; consulta [tamaños y precios](/platform/limits#sandbox-sizes). `size` no se aplica a un sandbox restaurado desde un snapshot; se ejecuta con el tamaño de su origen.
 - `timeoutMs` es 300000 por defecto, cinco minutos. `0` desactiva la caducidad. Consulta [recursos y duración](/sandboxes#resources-and-timeouts).
 - Indica la región de forma explícita si hace falta; que aparezca en el catálogo no garantiza capacidad libre. No indiques `region` cuando adjuntes un volumen: el sandbox se ejecuta donde está el volumen.
-- `metadata` son tus propias etiquetas; `getInfo()` y `list()` las devuelven.
-- `lizardToken` escribe una clave API `liz_` dentro del sandbox para que `lizard` funcione en él. Cualquier proceso del sandbox puede leer esa clave, así que pasa una limitada al workspace.
+- `metadata` son tus propias etiquetas; `getInfo()` las devuelve, `list()` no.
+- `lizardToken` toma una de tus claves API `liz_` e inicia sesión en `lizard` dentro del sandbox. Tu clave solo autoriza la solicitud: el sandbox recibe una clave nueva propia, limitada al proyecto del sandbox y que se elimina con el sandbox, así que `lizard` ahí solo puede actuar sobre ese proyecto. La plantilla `base` no incluye `lizard`.
 
 <span id="methods" />
 
@@ -111,10 +111,13 @@ sandbox = Sandbox.create(
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | Fijar la duración restante, mínimo 1000 ms. |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | Poner en cola una pausa o reanudación y responder al instante. |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | Esperar a `paused` o `running`; lanzar un error si falla la pausa. |
-| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Copiar un sandbox en marcha de 1 a 10 veces, incluidos la memoria y los procesos. |
-| `sandbox.snapshot(name, { poolSize })` | `sandbox.snapshot(name, pool_size=...)` | Guardar la memoria y los archivos de `/workspace` en un snapshot privado. |
+| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Copiar un sandbox en marcha de 1 a 100 veces, incluidos la memoria y los procesos; cada copia cuenta para tu límite de sandboxes en marcha. |
+| `sandbox.snapshot(name, { scope })` | `sandbox.snapshot(name, scope=...)` | Guardar la memoria, los procesos y todos los archivos en un snapshot. `scope` es `'workspace'` (el predeterminado), `'user'` o `'project'`. |
 | `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | Esperar a que el snapshot esté listo. |
-| `Sandbox.restore(snapshotId)` | `Sandbox.restore(snapshot_id)` | Iniciar un sandbox nuevo desde un snapshot. |
+| `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | Iniciar un sandbox nuevo desde un snapshot en su región, en cualquier proyecto que permita su ámbito. |
+| `Sandbox.snapshots(projectId)` | `Sandbox.snapshots(project_id)` | Listar los snapshots tomados en un proyecto. |
+| `Sandbox.mySnapshots()` | `Sandbox.my_snapshots()` | Listar todos los snapshots que tomaste, en todos tus workspaces. |
+| `Sandbox.setSnapshotScope(snapshotId, scope)` | `Sandbox.set_snapshot_scope(snapshot_id, scope)` | Cambiar dónde se puede restaurar un snapshot que tomaste. |
 | `Sandbox.deleteSnapshot(snapshotId)` | `Sandbox.delete_snapshot(snapshot_id)` | Eliminar un snapshot; los sandboxes restaurados desde él siguen en marcha. |
 | `sandbox.kill()` | `sandbox.kill()` | Detener el sandbox y separar su volumen. |
 
@@ -122,14 +125,14 @@ sandbox = Sandbox.create(
 
 ## Ejecutar comandos
 
-`process.exec` (Python: `exec_`) ejecuta un comando y espera a que termine. Pasa `onStdout` u `onStderr` (Python: `on_stdout`, `on_stderr`) para recibir la salida mientras se ejecuta el comando; la llamada igualmente devuelve el resultado completo al final. Pasa un array argv en lugar de una cadena para evitar la shell, que es la forma segura de pasar texto no confiable como argumento.
+`process.exec` (Python: `exec_`) ejecuta un comando y espera a que termine. Pasa `onStdout` u `onStderr` (Python: `on_stdout`, `on_stderr`) para recibir la salida mientras se ejecuta el comando, una línea por llamada sin el salto de línea final; la llamada igualmente devuelve el resultado completo al final. Pasa un array argv en lugar de una cadena para evitar la shell, que es la forma segura de pasar texto no confiable como argumento.
 
 ```ts
 const result = await sandbox.process.exec('npm test', {
   workdir: '/app',
   envs: { NODE_ENV: 'test' },
   timeoutMs: 120_000,
-  onStdout: (chunk) => process.stdout.write(chunk),
+  onStdout: (line) => console.log(line),
 });
 if (result.exitCode !== 0) throw new Error(result.stderr);
 
@@ -142,7 +145,7 @@ result = sandbox.process.exec_(
     workdir="/app",
     envs={"NODE_ENV": "test"},
     timeout_ms=120_000,
-    on_stdout=lambda chunk: print(chunk, end=""),
+    on_stdout=print,
 )
 if result.exit_code != 0:
     raise RuntimeError(result.stderr)
@@ -150,7 +153,7 @@ if result.exit_code != 0:
 sandbox.process.exec_(["grep", "-rn", "--", user_query, "/workspace"])
 ```
 
-Los resultados incluyen stdout, stderr y el código de salida. Un código de salida distinto de cero es un resultado que debes comprobar; los fallos de la solicitud lanzan una excepción. El tiempo máximo de un comando está entre 1 y 600 segundos. `process.exec` acepta `envs`, `workdir` y `user`; los comandos se ejecutan como `root` salvo que pases `user`. Las `envs` de creación llegan a todos los comandos.
+Los resultados incluyen stdout, stderr y el código de salida. Un código de salida distinto de cero es un resultado que debes comprobar; los fallos de la solicitud lanzan una excepción. `timeoutMs` (Python: `timeout_ms`) fija cuánto tiempo puede ejecutarse un comando, de 1 a 600 segundos. Sin él, el servidor detiene el comando a los 150 segundos, y el SDK de TypeScript deja de esperar a los 60 segundos y lanza una `DOMException` llamada `TimeoutError`. Pasa `timeoutMs` para cualquier comando que pueda tardar más de un minuto. `process.exec` acepta `envs`, `workdir` y `user`; los comandos se ejecutan como `root` salvo que pases `user`. Las `envs` de creación llegan a todos los comandos.
 
 <span id="files" />
 
@@ -200,7 +203,7 @@ sandbox.unexpose(3000)
 
 ## Pausa, snapshot y fork
 
-Estas llamadas conservan la memoria y los procesos en ejecución, no solo los archivos. El [inicio rápido](/sandboxes/quickstart#pause-and-resume) explica qué conserva cada una, cómo se facturan los restores y qué puede fallar.
+Estas llamadas conservan la memoria, los procesos en ejecución y los archivos. El [inicio rápido](/sandboxes/quickstart#pause-and-resume) explica qué conserva cada una, quién puede restaurar un snapshot, cómo se facturan los restores y qué puede fallar.
 
 ```ts
 await sandbox.pause();
@@ -279,10 +282,11 @@ Los fallos de la API lanzan (Python: raise) estos errores. Cada uno incluye el e
 | `AuthenticationError` | HTTP 401 o 403: clave no válida o sin acceso. |
 | `NotFoundError` | HTTP 404: el sandbox, el archivo o el snapshot no existe o ha vencido. |
 | `ConflictError` | HTTP 409: estado en conflicto, como hacer fork de un sandbox con volumen. |
-| `TimeoutError` | HTTP 408 o 504. |
+| `LimitExceededError` | HTTP 429: demasiados sandboxes a la vez o demasiados inicios. `code` indica qué límite, como `SANDBOX_LIMIT_REACHED` o `SANDBOX_RATE_LIMITED`; `retryAfterS` (Python: `retry_after_s`) indica cuándo volver a intentarlo. |
+| `TimeoutError` | HTTP 408 o 504. La espera propia de 60 segundos del SDK de TypeScript para `process.exec` lanza en su lugar una `DOMException` llamada `TimeoutError`. |
 | `LizardError` | Otros fallos de la API, incluidas las operaciones no compatibles. |
 
-Demasiados sandboxes a la vez, o demasiados inicios, devuelven HTTP 429; consulta [límites de la cuenta](/platform/limits#sandbox-account-limits).
+Los valores que llevan a HTTP 429 están en [límites de la cuenta](/platform/limits#sandbox-account-limits).
 
 <span id="http-api" />
 

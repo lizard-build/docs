@@ -14,7 +14,7 @@ lizard events --service api       # a specific service
 lizard events --limit 5           # fewer entries (default and maximum 10)
 ```
 
-Each entry is a deploy: status, trigger, commit, and restart count. The Replicas table below shows the current state of each pod, so you can answer "what changed, and is it healthy?" at a glance.
+Each entry is a deploy: status, trigger, commit, and restart count. A Replicas table above the deploys shows each pod's current state; it is missing while the service has no pods, for example while it is paused or asleep. Together they answer "what changed, and is it healthy?" A replica change from `lizard scale` creates no deploy, so it is not listed.
 
 ## Quick status
 
@@ -27,7 +27,7 @@ lizard status        # the current directory's workspace/project/service link
 
 ## Dashboard
 
-Open a service in the dashboard (`lizard open`) to see its deploy history. Click a deploy for its build logs, commit, and crash events. The service panel shows running and desired replicas.
+Open a service in the dashboard (`lizard open`) to see its deploy history. Each deploy row shows its branch and commit message; click one for its build logs and restarts. The service panel shows running and desired replicas.
 
 ## See also
 

@@ -1,0 +1,131 @@
+---
+description: "lizard pause はアプリやデータベースを削除せずに停止し、URL、パスワード、データを保持します。lizard resume で再び起動します。プロジェクトとワークスペースの形式ではすべてを一度に一時停止します。"
+---
+
+# lizard pause
+
+サービス（アプリまたはデータベース）を削除せずに一時停止し、後で再開します。`lizard project pause` と `lizard workspace pause` は、プロジェクトまたはワークスペース内のすべてを一度に一時停止します。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard pause [service] [flags]
+lizard resume [service] [flags]
+lizard project pause [project]
+lizard project resume [project]
+lizard workspace pause <name-or-id>
+lizard workspace resume <name-or-id>
+```
+
+引数 `service` を省略すると、`pause` と `resume` はディレクトリにリンクされたサービスを使います。
+
+<span id="flags" />
+
+## フラグ
+
+`lizard pause` と `lizard resume` は次のフラグを受け付けます。
+
+| フラグ | 説明 |
+|------|-------------|
+| `-s, --service <name>` | サービスの名前または ID（引数 `service` と同じ） |
+| `-p, --project <id>` | プロジェクトの名前、スラッグ、または ID |
+
+`project pause` と `project resume` はプロジェクトの名前、スラッグ、または ID を受け取ります。省略すると、ディレクトリにリンクされたプロジェクトを使い、リンクされていないディレクトリではアカウントのデフォルトプロジェクトを使います。`workspace pause` と `workspace resume` はワークスペースの名前、スラッグ、または ID を受け取ります。
+
+<span id="what-pausing-keeps" />
+
+## 一時停止で保持されるもの
+
+一時停止中のサービスはコンテナを実行しません。URL、ホスト、ポート、パスワード、変数、設定、ボリュームは保持されます。一時停止中は次のようになります。
+
+- URL は `503` を返し、データベースは接続を拒否します。
+- デプロイと再起動は拒否されます。
+- [`lizard scale`](/cli/scale) で指定した新しいレプリカ数と新しい [secrets](/cli/secrets) は保存され、再開時に適用されます。
+
+`resume` は、最後に実行していたイメージから、現在の変数とデータでサービスを再び起動します。メモリは保持されないため、アプリは最初から起動します。メモリを保持して次のリクエストで起きるようにするには、[`lizard sleep`](/cli/sleep) を使ってください。
+
+一時停止できるのは、実行中またはクラッシュしたアプリと、実行中の Managed Postgres または Managed Redis のデータベースです。デプロイなどの操作が終わるまで待ってください。Managed Object Storage は一時停止できません。
+
+<span id="billing" />
+
+## 料金
+
+一時停止中のサービスは CPU もメモリも使わないため、コンピュートの料金は止まります。保持しているデータは、引き続きストレージとして課金される場合があります。[請求](/platform/billing) を参照してください。
+
+トライアルの利用分を使い切ったときや支払いが失敗したときも、Lizard はアプリとデータベースを自動で一時停止します。請求の問題が解決すると再び起動します。`resume` でそれより早く起動することはできません。
+
+<span id="pause-a-whole-project" />
+
+## プロジェクト全体を一時停止する
+
+`lizard project pause` は、プロジェクト内のすべてのアプリとデータベースを一時停止します。また、プロジェクトの実行中の sandbox も、[`lizard sandbox pause`](/cli/sandbox) と同じようにメモリとファイルを保存して一時停止します。一時停止できなかったサービスは理由とともに表示されます。
+
+`lizard project resume` は、プロジェクト内で誰かが手動で一時停止したすべてのアプリとデータベースと、`project pause` が一時停止した sandbox を再開します。自分で一時停止した sandbox は一時停止したままです。sandbox が再開されるのは、[sandbox の上限](/platform/limits#sandbox-account-limits) に余裕がある場合だけです。
+
+`lizard workspace pause` と `lizard workspace resume` は、ワークスペース内のすべてのプロジェクトに対して同じことを行います。プロジェクトに属していない sandbox はスキップされます。
+
+<span id="who-can-pause" />
+
+## 一時停止できるユーザー
+
+- プロジェクトのメンバーなら誰でも、そのサービスやプロジェクト全体を一時停止・再開できます。
+- ワークスペース全体を一時停止・再開できるのは、ワークスペースのオーナーだけです。
+- 再開するとコンピュートが再び動くため、有効なプランと、ワークスペースの上限内の余裕が必要です（[`lizard workspace limits`](/cli/workspace)）。
+
+<span id="json-output" />
+
+## JSON 出力
+
+`--json` を付けると、`pause` と `resume` は `id`、`name`、`kind`（`app` または `addon`）、`status`（`paused` または `running`）を出力します。
+
+プロジェクトとワークスペースの形式は `id`、`done`、`skipped` を出力します。各エントリには `kind`（`app`、`database`、`sandbox`）、`id`、`name` があり、スキップされたエントリには `reason` が加わります。
+
+<span id="examples" />
+
+## 例
+
+<span id="pause-and-resume-an-app" />
+
+### アプリを一時停止して再開する
+
+```bash
+lizard pause api
+lizard resume api
+```
+
+<span id="pause-a-database-in-another-project" />
+
+### 別のプロジェクトのデータベースを一時停止する
+
+```bash
+lizard pause --service my-db --project my-project
+```
+
+<span id="pause-everything-in-a-project" />
+
+### プロジェクト内のすべてを一時停止する
+
+```bash
+lizard project pause my-project --json
+lizard project resume my-project
+```
+
+<span id="pause-a-workspace" />
+
+### ワークスペースを一時停止する
+
+```bash
+lizard workspace pause my-team
+lizard workspace resume my-team
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [lizard sleep](/cli/sleep) — アイドル時にスリープし、次のリクエストで起きる
+- [lizard project](/cli/project) — プロジェクトの一覧表示、作成、削除
+- [lizard workspace](/cli/workspace) — ワークスペースの上限とその他のコマンド
+- [請求](/platform/billing) — コンピュートとストレージの料金

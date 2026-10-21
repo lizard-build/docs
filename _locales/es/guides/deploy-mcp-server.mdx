@@ -103,7 +103,7 @@ Un proceso en buen estado por sí solo no demuestra que el handshake de MCP o la
 
 Este ejemplo no mantiene sesiones de usuario ni archivos persistentes en la memoria del servidor. Añade una base de datos para el estado persistente de la aplicación y comprueba el acceso por usuario antes de exponer herramientas privadas. Para clientes que requieran descubrimiento OAuth o inicio de sesión interactivo, añade un proveedor de OAuth compatible en lugar de distribuir este token de prueba.
 
-Un proceso HTTP puede permanecer activo entre llamadas. Consulta [pricing](https://lizard.build/pricing), [limits](/platform/limits) y el uso medido de CPU/memoria; una cola de solicitudes vacía no implica que no haya cargos.
+El servidor sigue en marcha entre llamadas, y Lizard factura la CPU y la memoria medidas mientras se ejecuta. Para reducir el costo en reposo, activa [dormir en reposo](/cli/sleep): `lizard sleep --on --service mcp`. Al activarlo, el servicio se reinicia una vez. Tras un tiempo fijado sin solicitudes (10 minutos por defecto), el servicio se duerme; la siguiente solicitud lo despierta, así que esa primera llamada tarda más. Consulta [pricing](https://lizard.build/pricing) y [limits](/platform/limits).
 
 <span id="next-steps" />
 

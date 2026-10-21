@@ -15,7 +15,7 @@ ${{<name>.<KEY>}}
 ```
 
 - `<name>` — der Name des Zieldienstes oder Add-ons (der im Dashboard angezeigt und in `lizard add -n` verwendet wird).
-- `<KEY>` — ein Schlüssel in der zusammengeführten Umgebung des Ziels.
+- `<KEY>` — ein Schlüssel, den das Ziel bereitstellt. Ein Add-on stellt seine Verbindungswerte bereit. Ein Dienst stellt seine Projekt- und Dienstvariablen und Secrets bereit, dazu seine `LIZARD_*`- und `PORT`-Werte. Die `DATABASE_URL` oder `REDIS_URL`, die Lizard aus Add-ons einfügt, stellt er nicht bereit; referenziere dafür das Add-on.
 
 Verwende sie überall dort, wo ein Wert akzeptiert wird — am häufigsten in einem Secret:
 
@@ -27,8 +27,8 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 
 ## Wie sie aufgelöst werden
 
-- Referenzen werden zur **Deploy-Zeit** anhand der zusammengeführten Umgebung des Ziels aufgelöst.
-- Sie beziehen sich auf den **aktuellen Namen** des Ziels. Ein Umbenennen des Ziels macht sie kaputt; aktualisiere nach einer Umbenennung jedes `${{oldname.KEY}}`.
+- Referenzen werden zur **Deploy-Zeit** anhand der Werte aufgelöst, die das Ziel bereitstellt.
+- Referenzen, die du in einem Secret setzt (`lizard secrets set` oder das Dashboard), beziehen sich auf den **aktuellen Namen** des Ziels. Ein Umbenennen des Ziels macht sie kaputt; aktualisiere nach einer Umbenennung jedes `${{oldname.KEY}}`. Referenzen, die mit `lizard add -v` angelegt wurden, folgen dem Ziel bei einer Umbenennung.
 - Eine Referenz auf ein **fehlendes** Ziel oder einen fehlenden Schlüssel wird zu einem **leeren String** aufgelöst — das Bereitstellen schlägt dadurch *nicht* fehl. Das Build-Log gibt für jede leere Referenz eine Warnung mit der Ursache aus.
 - Nur **zirkuläre** Referenzen werfen einen Fehler.
 
@@ -67,7 +67,7 @@ lizard secrets set CACHE_URL='${{redis-winter-otter.REDIS_URL}}' --service api
 
 ## Warum nicht einfach `--global` verwenden?
 
-Wenn du einen gemeinsamen Wert im Projektbereich (`--global`) ablegst, ist er für *jeden* Dienst sichtbar, auch für solche, die ihn nicht benötigen. Eine Referenz hält den Wert an einer Stelle und bindet ihn nur dort, wo du sie setzt. Beachte, dass `DATABASE_URL` und `REDIS_URL` jedes laufenden Postgres- und Redis-Add-ons ohnehin jeden Dienst erreichen, und zwar mit der niedrigsten Priorität; eine Referenz überschreibt sie. Siehe [Secret-Scopes](/variables#scoping).
+Wenn du einen gemeinsamen Wert im Projektbereich (`--global`) ablegst, ist er für *jeden* Dienst sichtbar, auch für solche, die ihn nicht benötigen. Eine Referenz hält den Wert an einer Stelle und bindet ihn nur dort, wo du sie setzt. Beachte, dass jeder Dienst ohnehin eine `DATABASE_URL` und eine `REDIS_URL` aus den Postgres- und Redis-Add-ons des Projekts erhält, mit der niedrigsten Priorität; gibt es mehrere Add-ons desselben Typs, ist nicht festgelegt, welches. Eine Referenz überschreibt sie. Siehe [Secret-Scopes](/variables#scoping).
 
 <span id="see-also" />
 

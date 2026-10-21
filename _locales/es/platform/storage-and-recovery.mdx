@@ -14,15 +14,27 @@ Elige el almacenamiento según los datos que deben sobrevivir a un reinicio del 
 | Datos de caché y cola | Managed Redis | Decide si la carga de trabajo puede reconstruir su estado o necesita su propio plan de recuperación. Managed Redis no tiene política de expulsión ni archivo append-only: si se queda sin memoria, se reinicia y pueden perderse las escrituras recientes. Guarda en Managed Postgres los datos que no puedas perder. |
 | Archivos compartidos por aplicaciones | Managed Object Storage | El bucket `default` creado automáticamente es privado. Haz público un bucket desde el navegador de buckets del dashboard solo si cualquiera puede leer sus archivos. |
 
-Los archivos de un sandbox siguen otras reglas: solo los archivos de un volumen de Persistent Volumes adjunto en `/workspace` sobreviven a un sandbox. Consulta [almacenamiento y facturación](/sandboxes#storage-and-billing).
+Los archivos de un sandbox siguen otras reglas: solo los archivos de un volumen de Persistent Volumes adjunto en `/workspace`, o de un snapshot que hayas tomado, sobreviven a un sandbox. Consulta [almacenamiento y facturación](/sandboxes#storage-and-billing).
 
 <span id="keep-files-after-a-sandbox-ends" />
 
 ## Conservar archivos después de que termine un sandbox
 
-La pestaña Persistent Volumes permite gestionar volúmenes con nombre y sus conexiones. Adjunta un volumen al crear el sandbox y escribe en `/workspace`. Detén el sandbox actual antes de adjuntar el volumen a otro.
+La página **Volúmenes** del panel permite gestionar volúmenes con nombre y sus conexiones. Adjunta un volumen al crear el sandbox y escribe en `/workspace`. Detén el sandbox actual antes de adjuntar el volumen a otro.
 
 [Persistent Volumes](/sandboxes/volumes)
+
+Para conservar un sandbox entero, memoria incluida, guárdalo con `lizard sandbox snapshot <id>` y arranca después una copia con `lizard sandbox restore <snapshot-id>`; consulta [snapshots](/sandboxes/quickstart#pause-and-resume).
+
+<span id="restore-a-deleted-resource" />
+
+## Restaurar un recurso eliminado
+
+Un proyecto eliminado queda 3 días en la papelera con sus apps y bases de datos, y lo mismo pasa con una base de datos eliminada. Restáuralos en ese plazo desde **Zona de peligro** en la configuración del workspace o del proyecto; después, Lizard los elimina para siempre.
+
+- Una app que eliminas por separado solo va a la papelera si la desplegaste desde archivos con `lizard up`; al restaurarla, se vuelve a compilar desde esa subida. Una app desplegada desde GitHub se elimina al instante.
+- Los sandboxes, sus volúmenes y sus snapshots no tienen papelera. Si los eliminas a ellos o al proyecto al que pertenecen, desaparecen al instante.
+- Eliminar un workspace tampoco tiene papelera.
 
 <span id="plan-a-database-restore" />
 

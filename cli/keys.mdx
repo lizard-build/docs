@@ -19,7 +19,7 @@ API keys start with `liz_`. Use one wherever you can't log in through a browser:
 - `LIZARD_TOKEN` or `LIZARD_API_KEY` for the CLI in CI
 - `lizard login --token liz_…` on a machine
 - `LIZARD_API_KEY` for the [Lizard SDK](/sandboxes/sdk-reference)
-- `lizard sandbox create --with-token liz_…` to use `lizard` inside a sandbox
+- `lizard sandbox create --with-token liz_…` to sign in `lizard` inside a sandbox; see [keys in a sandbox](#sign-in-lizard-inside-a-sandbox)
 
 ## Subcommands
 
@@ -32,11 +32,19 @@ Create a key and print it once. Copy it then; Lizard does not show it again. A k
 | `-p, --project <id>` | Limit the key to this project (name, slug, or ID) |
 | `-w, --workspace <id>` | Limit the key to this workspace (name, slug, or ID) |
 
-A scoped key can't see account billing or settings.
+A scoped key works only inside its projects or workspaces. It can't:
+
+- see billing, the plan, cards or account-wide usage
+- create, list or delete API keys, so `lizard keys` fails with it
+- create a workspace, rename or delete its workspace, or change workspace limits or resale prices
+- see or manage workspace or project members
+- point a service at a private GitHub repository, unless an app in its scope already builds from it
+
+Signed in with a scoped key, [`lizard whoami`](/cli/whoami) shows the key's scopes, not the account behind it. If the workspace owner set [resale prices](/cli/workspace#lizard-workspace-resale-pricing-name-or-id), the key sees those prices.
 
 ### `lizard keys list`
 
-List your keys with a short preview, scope, creation time, and last use (alias `ls`).
+List your keys with a short preview, scope, creation time, and last use (alias `ls`). The preview is not the start of the key, so match keys by name or ID.
 
 ### `lizard keys rm <name-or-id>`
 
@@ -56,12 +64,13 @@ lizard keys create github-actions --project my-project
 
 Store the printed key as a CI secret named `LIZARD_TOKEN`.
 
-### Create a key for a sandbox
+### Sign in `lizard` inside a sandbox
 
 ```bash
-lizard keys create sandbox-agent --workspace my-team
 lizard sandbox create --with-token liz_xxx
 ```
+
+The sandbox gets a new key of its own, limited to the sandbox's project and deleted with the sandbox. It shows in `lizard keys list` as `sandbox-session:<sandbox-id>`. The `liz_` key you pass only authorizes the request and never enters the sandbox. With a bare `--with-token`, the CLI uses the key you are signed in with, which must be a `liz_` key.
 
 ### Delete a key
 
@@ -73,4 +82,4 @@ lizard keys rm github-actions --yes
 
 - [lizard login](/cli/login) — log in with a key on a machine
 - [JSON & Automation](/cli/json) — using the CLI from CI
-- [lizard sandbox](/cli/sandbox) — `--with-token` installs a key in a sandbox
+- [lizard sandbox](/cli/sandbox) — `--with-token` signs in `lizard` inside a sandbox with a key of its own

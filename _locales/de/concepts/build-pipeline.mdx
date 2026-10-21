@@ -52,7 +52,7 @@ Auf diesem Pfad gilt:
 | `service set` von reinen Laufzeitfeldern (`startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns`) | ❌ führe `lizard redeploy` aus, damit es angewendet wird |
 | Jede andere Änderung an Umgebungsvariablen / Secrets | ❌ wird bei einem schnellen Neustart angewendet (kein Neuaufbau) |
 
-> **Nicht doppelt bauen.** Nach einem `service set`, das bei einem laufenden Service ein Build-Feld ändert, startet der Neuaufbau automatisch. Hänge nicht noch ein `lizard redeploy` direkt danach an, sonst stellst du einen zweiten, überflüssigen Build in die Warteschlange ([warum](/deploy/troubleshooting/double-build)). Ein abgestürzter oder noch nie bereitgestellter Service wird nicht von selbst neu gebaut; führe `lizard redeploy` aus.
+> **Nicht doppelt bauen.** Nach einem `service set`, das bei einem laufenden Service ein Build-Feld ändert, startet der Neuaufbau automatisch. Hänge nicht noch ein `lizard redeploy` direkt danach an: Es bricht diesen Build ab und startet ihn von vorn ([warum](/deploy/troubleshooting/double-build)). Ein abgestürzter oder noch nie bereitgestellter Service wird nicht von selbst neu gebaut; führe `lizard redeploy` aus.
 
 <span id="build-time-variables" />
 

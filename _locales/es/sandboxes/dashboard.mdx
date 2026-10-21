@@ -21,7 +21,7 @@ description: "Crea, inspecciona, pausa y detén Sandboxes en el panel de Lizard:
 <span id="snapshots" />
 <span id="volumes" />
 
-El panel te permite crear y gestionar Sandboxes sin código. Abre un proyecto y selecciona Sandboxes. Al crear, elige una plantilla, una región y un tamaño: Small, Medium (el predeterminado) o Large. La región por defecto no tiene por qué ser la más cercana. Elige una duración en **Delete after**: 15 minutos, 1 hora, 4 horas, 1 día, 7 días o Never (el predeterminado).
+El panel te permite crear y gestionar Sandboxes sin código. Abre un proyecto y selecciona **Sandboxes** en la barra lateral. Crea un sandbox con **New Sandbox**: elige una plantilla del catálogo, una región y un tamaño: Small, Medium (el predeterminado) o Large. Elige la región que necesites; la región por defecto no tiene por qué ser la más cercana. Elige una duración en **Delete after**: 15 minutos, 1 hora, 4 horas, 1 día, 7 días o Never (el predeterminado). Durante la prueba, el diálogo solo ofrece Small en regiones de EE. UU. El contador junto a **New Sandbox** muestra cuántos sandboxes están en marcha respecto a tu límite.
 
 <span id="api-keys" />
 
@@ -41,8 +41,10 @@ Un sandbox en marcha se factura por segundo al precio por hora de su tamaño, in
 
 ## Plantillas y volúmenes
 
-La pestaña Templates muestra las plantillas de la plataforma y los snapshots privados de tu proyecto; puedes iniciar un sandbox nuevo desde cualquiera. Crea snapshots con el SDK o la CLI. Kill Sandbox detiene el sandbox y separa su volumen.
+La barra lateral también tiene **Volumes** (Persistent Volumes), **Templates** y **Agents**. **Templates** muestra las plantillas de la plataforma y los snapshots tomados en el proyecto actual; puedes iniciar un sandbox nuevo desde cualquiera. Crea snapshots con el SDK o la CLI. Kill Sandbox detiene el sandbox y separa su volumen.
 
-Crea y adjunta volúmenes con el SDK o la CLI; el formulario de creación no tiene opción de volumen. La pestaña Persistent Volumes aparece cuando un proyecto tiene un volumen. Muestra el tamaño de cada volumen y el sandbox adjunto, y te permite explorar sus archivos, cambiar su tamaño o eliminarlo. Detén el sandbox actual antes de adjuntar el volumen a otro.
+Crea y adjunta volúmenes con el SDK o la CLI; el formulario de creación no tiene opción de volumen. **Volumes** muestra el tamaño de cada volumen y el sandbox adjunto, y te permite explorar sus archivos, cambiar su tamaño o eliminarlo. Detén el sandbox actual antes de adjuntar el volumen a otro.
+
+**Agents** conecta las credenciales que usan los agentes de programación en los sandboxes, igual que [`lizard agents`](/cli/agents).
 
 [Descripción general de Sandboxes](/sandboxes) · [Inicio rápido](/sandboxes/quickstart) · [Referencia del SDK](/sandboxes/sdk-reference) · [Intérprete de código](/sandboxes/code-interpreter) · [Persistent Volumes](/sandboxes/volumes)

@@ -41,7 +41,7 @@ With only an OpenRouter key connected and no model chosen, Lizard runs `openrout
 lizard sandbox create -t opencode --timeout 3600000
 ```
 
-Keep the printed ID in a variable: `SB=sb_abc123`. The CLI default lifetime is five minutes, after which Lizard deletes the sandbox and its files; `--timeout 3600000` gives it one hour. The `opencode` template has Node.js 22, a pinned OpenCode release, git, Python 3, ripgrep, curl, jq, unzip and Lizard CLI.
+Keep the printed ID in a variable: `SB=genuine-toddler-jasj`. The CLI default lifetime is five minutes, after which Lizard deletes the sandbox and its files; `--timeout 3600000` gives it one hour. The `opencode` template has Node.js 22, a pinned OpenCode release, git, Python 3, ripgrep, curl, jq, unzip and Lizard CLI.
 
 Copy your code in the same way as for Claude Code:
 
@@ -82,7 +82,7 @@ lizard sandbox expose $SB 4096
 
 Open the URL that `expose` prints. It carries `?lizard_token=`; Lizard moves the token into a cookie for that host and redirects to the same page without it. The cookie authenticates the UI's requests, event stream and terminal WebSockets.
 
-- You need `--hostname 0.0.0.0`. OpenCode listens on `127.0.0.1` by default, and the preview URL then answers `Sandbox is not listening on port 4096`.
+- You need `--hostname 0.0.0.0`. OpenCode listens on `127.0.0.1` by default, and the preview URL then answers 502 with `The sandbox is running but port is not open`.
 - Give a fixed `--port`. Without one, OpenCode picks a random unused port.
 - The URL works like a password: whoever has it can run commands in the sandbox through OpenCode. To require a password as well, add `export OPENCODE_SERVER_PASSWORD=…` to `opencode.env`; the user name is `opencode`.
 - Read the server's log with `lizard sandbox exec $SB -- tail -n 50 /tmp/opencode.log`. Stop the server with `lizard sandbox exec $SB -- sh -c 'kill $(cat /tmp/opencode.pid)'`.

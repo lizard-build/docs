@@ -28,10 +28,9 @@ Ein **Workspace** ist die Konto- oder Organisationsebene. Sie gehören mindesten
 
 ```bash
 lizard workspace list
-lizard whoami        # shows your active workspace
 ```
 
-Viele Befehle akzeptieren `-w, --workspace <ws>`, um Mehrdeutigkeiten aufzulösen, wenn derselbe Projektname in mehr als einem Workspace existiert.
+Viele Befehle akzeptieren `-w, --workspace <ws>`, um Mehrdeutigkeiten aufzulösen, wenn derselbe Projektname in mehr als einem Workspace existiert. Der Inhaber kann mit `lizard workspace limits` begrenzen, wie viele Sandboxes ein Workspace gleichzeitig ausführt und wie viel CPU, Arbeitsspeicher und Speicherplatz er nutzt (siehe [`lizard workspace`](/cli/workspace)).
 
 <span id="project" />
 
@@ -46,6 +45,8 @@ lizard status                   # show the current directory's link
 lizard unlink                   # remove the link
 lizard project list             # all projects in the workspace
 ```
+
+Ein Ordner, den Sie nicht verknüpft haben, verwendet das **Standardprojekt** Ihres Kontos: das älteste Projekt in Ihrem persönlichen Workspace, bei einem neuen Konto `<username>'s Project`. `lizard up`, `lizard add`, `lizard sandbox create` und andere Projektbefehle landen dort, sofern Sie den Ordner nicht verknüpfen oder `--project` übergeben.
 
 > **Tipp:** Verwenden Sie für das Projekt den Repo- oder Verzeichnisnamen und für Services app-artige Namen (`api`, `worker`, `web`).
 
@@ -67,6 +68,8 @@ lizard service set <svc> --set <field>=<value>
 lizard service rename <new-name> --service <svc>
 lizard service delete --service <svc>
 ```
+
+Um einen Service zu stoppen, ohne ihn zu löschen, verwenden Sie [`lizard pause`](/cli/pause); damit er ohne Traffic schläft, verwenden Sie [`lizard sleep`](/cli/sleep).
 
 Felder der Service-Konfiguration sind **flach** und entsprechen 1:1 dem Wire-Schema (z. B. `repoUrl`, `branch`, `buildCommand`, `startCommand`, `containerPort`, `rootDirectory`). Es gibt keine Verschachtelung mit `build.*` / `deploy.*`. Die vollständige Liste finden Sie unter [`lizard service`](/cli/service).
 

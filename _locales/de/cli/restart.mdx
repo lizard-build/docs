@@ -19,6 +19,7 @@ lizard restart [nameOrId] [flags]
 | Flag | Beschreibung |
 |------|--------------|
 | `-s, --service <name>` | Dienst |
+| `-p, --project <id>` | Projektname, Slug oder ID |
 | `--detach` | Nach Annahme des Restarts zurückkehren, ohne dessen Status abzufragen |
 | `--wait` | Warten, bis der neue Restart-Versuch bereit ist; funktioniert mit `--json` |
 | `--timeout <seconds>` | Wartebudget für Bereitschaft mit `--wait`; Standard `120` |
@@ -55,6 +56,8 @@ lizard --json restart --service api --wait --timeout 120
 ```
 
 Ohne `--wait` gibt der JSON-Modus nach Annahme des Restarts zurück. Mit `--wait` enthält das Ergebnis `ok`, `status`, `attemptId` und `waitedMs`. Die CLI wartet auf einen neuen Restart-Versuch, daher zählt ein unveränderter Status von vor der Anfrage nicht als Erfolg. Ein fehlgeschlagenes Warten oder ein Timeout liefert einen Exit-Code ungleich null zurück.
+
+Ein pausierter Dienst lehnt einen Restart ab, bis du ihn [fortsetzt](/cli/pause).
 
 Bei HTTP-Diensten prüft die CLI zusätzlich die Dienst-Domain zweimal. Worker mit `containerPort=0` verwenden den Bereitschaftsstatus aus dem Backend und benötigen keinen HTTP-Listener, selbst wenn sie eine generierte Domain haben.
 

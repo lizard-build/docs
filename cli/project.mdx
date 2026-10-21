@@ -1,16 +1,18 @@
 ---
-description: "lizard project lists your projects, creates a new one, or deletes one, with examples for each subcommand."
+description: "lizard project lists, creates, pauses, resumes, and deletes projects, with what delete removes for good and examples for each subcommand."
 ---
 
 # lizard project
 
-List, create, or delete projects.
+List, create, pause, resume, or delete projects.
 
 ## Usage
 
 ```bash
 lizard project list [flags]
 lizard project create <name> [flags]
+lizard project pause [project]
+lizard project resume [project]
 lizard project delete [project] [flags]
 ```
 
@@ -32,9 +34,21 @@ Create a project. It does not link the current directory; use [`lizard init`](/c
 |------|-------------|
 | `-w, --workspace <ws>` | Workspace to create the project in |
 
+### `lizard project pause [project]`
+
+Pause every app and database in the project, and its running sandboxes. Services keep their URLs, passwords, settings and data. See [`lizard pause`](/cli/pause).
+
+### `lizard project resume [project]`
+
+Resume the apps and databases you paused in the project, and the sandboxes that `project pause` paused.
+
 ### `lizard project delete [project]`
 
-Move a project to trash (alias `rm`). Its services stop. You can recover it for 3 days; after that Lizard deletes it for good. Without an argument it deletes the project linked to this directory.
+Move a project to trash (alias `rm`). Only the project owner can delete it. Its services and databases stop; you can restore them from the trash in the dashboard for 3 days, after which Lizard deletes them for good.
+
+> **Warning:** Sandboxes have no trash. `project delete` deletes the project's sandboxes, their volumes and their snapshots at once, and you can't get them back.
+
+Without an argument, `pause`, `resume` and `delete` use the project linked to this folder or, in an unlinked folder, your account's default project. Name the project when you delete one, so you know which one goes.
 
 | Flag | Description |
 |------|-------------|
@@ -56,6 +70,13 @@ lizard project create my-project
 lizard project create my-project --workspace my-team
 ```
 
+### Pause and resume a project
+
+```bash
+lizard project pause my-project
+lizard project resume my-project
+```
+
 ### Delete a project
 
 ```bash
@@ -66,4 +87,5 @@ lizard project delete my-project --yes
 
 - [lizard init](/cli/init) — create or select a project and link it to the current directory
 - [lizard link](/cli/link) — associate the current directory with an existing project
+- [lizard pause](/cli/pause) — pause and resume one service, a project, or a workspace
 - [Architecture](/concepts/architecture) — how projects relate to workspaces and services

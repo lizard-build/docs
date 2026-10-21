@@ -43,7 +43,9 @@ lizard run [flags] -- <command>
 |------|-------------|
 | `-s, --service <name>` | Service, dessen env eingefügt werden soll (standardmäßig der verknüpfte Service) |
 | `--no-service` | Service-env nicht einfügen, nur Projekt-Geheimnisse |
-| `-p, --project <id>` | Projekt (standardmäßig das verknüpfte) |
+| `-p, --project <id>` | Name, Slug oder ID des Projekts (standardmäßig das verknüpfte Projekt oder in einem nicht verknüpften Ordner dein Standardprojekt) |
+
+In einem nicht verknüpften Ordner liest `lizard run --service postgres` das Add-on `postgres` deines Standardprojekts, also des ältesten Projekts in deinem persönlichen Workspace. Gib `-p` an, um die Datenbank eines anderen Projekts zu verwenden.
 
 <span id="examples" />
 

@@ -1,0 +1,105 @@
+---
+description: "lizard pause stops an app or database without deleting it, keeping its URL, password and data, and lizard resume starts it again. Project and workspace forms pause everything at once."
+---
+
+# lizard pause
+
+Pause a service (an app or a database) without deleting it, and resume it later. `lizard project pause` and `lizard workspace pause` pause everything in a project or workspace at once.
+
+## Usage
+
+```bash
+lizard pause [service] [flags]
+lizard resume [service] [flags]
+lizard project pause [project]
+lizard project resume [project]
+lizard workspace pause <name-or-id>
+lizard workspace resume <name-or-id>
+```
+
+Without a `service` argument, `pause` and `resume` use the service linked to the folder.
+
+## Flags
+
+`lizard pause` and `lizard resume` take:
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | Service name or ID (same as the `service` argument) |
+| `-p, --project <id>` | Project name, slug, or ID |
+
+`project pause` and `project resume` take a project name, slug, or ID. Without one, they use the project linked to the folder or, in an unlinked folder, your account's default project. `workspace pause` and `workspace resume` take a workspace name, slug, or ID.
+
+## What pausing keeps
+
+A paused service runs no containers. It keeps its URL, host, port, password, variables, settings and volumes. While it is paused:
+
+- its URL answers `503`, and a database refuses connections;
+- Lizard refuses deploys and restarts;
+- Lizard saves a new replica count from [`lizard scale`](/cli/scale) and new [secrets](/cli/secrets), and applies them when it resumes.
+
+`resume` starts it again from the image it last ran, with its current variables and its data. Memory is not kept: the app starts fresh. To keep memory and wake on the next request instead, use [`lizard sleep`](/cli/sleep).
+
+You can pause an app that is running or crashed, and a Managed Postgres or Managed Redis database that is running. Wait until a deploy or other operation on the service finishes. You can't pause Managed Object Storage.
+
+## Billing
+
+A paused service uses no CPU or memory, so its compute charges stop. Lizard can still bill the data it keeps as storage; see [Billing](/platform/billing).
+
+Lizard also pauses apps and databases itself when trial usage runs out or a payment fails. They start again once billing is in order; `resume` does not start them sooner.
+
+## Pause a whole project
+
+`lizard project pause` pauses every app and database in the project. It also pauses the project's running sandboxes, saving their memory and files as [`lizard sandbox pause`](/cli/sandbox) does. It lists the services it can't pause, with the reason.
+
+`lizard project resume` resumes every app and database in the project that someone paused by hand, and the sandboxes that `project pause` paused. Sandboxes you paused yourself stay paused. A sandbox resumes only while your [sandbox limits](/platform/limits#sandbox-account-limits) leave room.
+
+`lizard workspace pause` and `lizard workspace resume` do the same for every project in a workspace. They skip sandboxes outside a project.
+
+## Who can pause
+
+- Any member of a project can pause and resume its services, or the whole project.
+- Only the workspace owner can pause or resume a whole workspace.
+- Resume starts compute again, so it needs an active plan and room under the workspace's limits ([`lizard workspace limits`](/cli/workspace)).
+
+## JSON output
+
+With `--json`, `pause` and `resume` print `id`, `name`, `kind` (`app` or `addon`) and `status` (`paused` or `running`).
+
+The project and workspace forms print `id`, `done` and `skipped`. Each entry has `kind` (`app`, `database` or `sandbox`), `id` and `name`; skipped entries add a `reason`.
+
+## Examples
+
+### Pause and resume an app
+
+```bash
+lizard pause api
+lizard resume api
+```
+
+### Pause a database in another project
+
+```bash
+lizard pause --service my-db --project my-project
+```
+
+### Pause everything in a project
+
+```bash
+lizard project pause my-project --json
+lizard project resume my-project
+```
+
+### Pause a workspace
+
+```bash
+lizard workspace pause my-team
+lizard workspace resume my-team
+```
+
+## See also
+
+- [lizard sleep](/cli/sleep) — sleep when idle and wake on the next request
+- [lizard project](/cli/project) — list, create, and delete projects
+- [lizard workspace](/cli/workspace) — workspace limits and other workspace commands
+- [Billing](/platform/billing) — rates for compute and storage

@@ -17,7 +17,7 @@ GitHub リポジトリを接続すると、Lizard (lizard.build) は追跡対象
 lizard add -r your-org/your-app
 ```
 
-これにより `github`-source サービスが作成され、リポジトリがクローンされ、スタックが自動検出され（[lizardpack](/concepts/build-pipeline)）、ビルドされ、稼働中の URL が返されます。便利なフラグ:
+これにより `github`-source サービスが作成され、最初のビルドがバックグラウンドで始まります。Lizard はリポジトリをクローンし、スタックを検出します（[lizardpack](/concepts/build-pipeline)）。このコマンドは URL を表示しません。ビルドは `lizard logs --build --service <name>` で追えます。稼働が始まると、`lizard ps` に URL が表示されます。便利なフラグ:
 
 | フラグ | 目的 |
 |------|---------|
@@ -53,9 +53,9 @@ lizard service set api \
   --set branch=main
 ```
 
-稼働中のサービスでビルド項目を変更すると自動的に再ビルドされます。**その後に** `redeploy` **をつなげないでください**。つなげると [ビルドが 2 回キューに入ります](/deploy/troubleshooting/double-build)。クラッシュしたサービスや一度もデプロイされていないサービスには `lizard redeploy` が必要です。
+稼働中のサービスでビルド項目を変更すると、再ビルドが行われます。その後に `redeploy` を実行すると、[そのビルドがキャンセルされ、別のビルドが始まります](/deploy/troubleshooting/double-build)。クラッシュしたサービスや一度もデプロイされていないサービスには `lizard redeploy` が必要です。
 
-> **Note:** `lizard up` は常に `sourceType=upload` を強制します。git バックエンドのサービス更新には使わないでください。リモートへ push するか、代わりに `lizard redeploy` を使用してください。
+> **Note:** `lizard up` は常に `sourceType=upload` を強制します。git バックエンドのサービス更新には使わないでください。リモートへ push するか、代わりに `lizard redeploy` を使用してください。サービスがリンクされていないフォルダーでは、`up` はフォルダー名または `package.json` の名前と同じサービスを選びます。そのため、リポジトリのクローン内で実行すると、GitHub サービスがアップロードに切り替わることがあります。
 
 <span id="auto-redeploy-on-push" />
 
@@ -69,6 +69,8 @@ lizard service set api \
 ```bash
 lizard service set api --set watchPatterns='apps/api/**,packages/**'
 ```
+
+push でデプロイしないようにするには、ダッシュボードのサービス設定で **Auto-deploy** をオフにします。[一時停止](/cli/pause) したサービスも、再開するまで push を無視します。
 
 <span id="switch-branches" />
 

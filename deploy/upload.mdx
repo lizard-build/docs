@@ -12,17 +12,20 @@ Run `lizard up` to upload and deploy the current directory, whether or not your 
 lizard up
 ```
 
-- Uploads the current directory as a tarball. Inside a git repository it respects `.gitignore` (disable with `--no-gitignore`). Outside git it skips only a fixed list of build and dependency folders (`node_modules`, `.git`, `dist`, `.next`, `build`, `__pycache__`, `.venv`, `venv`, `.cache`, `coverage`, `.turbo`, `.vercel`) plus `.DS_Store`, `*.pyc`, `*.pyo` and `*.log`, so `.env` files are uploaded. Run `git init` or move secrets out first.
+- Uploads the current directory as a tarball. Inside a git repository it respects `.gitignore`. Outside git, or with `--no-gitignore`, it skips only a fixed list of build and dependency folders (`node_modules`, `.git`, `dist`, `.next`, `build`, `__pycache__`, `.venv`, `venv`, `.cache`, `coverage`, `.turbo`, `.vercel`) plus `.DS_Store`, `*.pyc`, `*.pyo` and `*.log`, so `.env` files are uploaded. Run `git init` or move secrets out first.
 - Forces `sourceType=upload`.
 - Streams build logs over SSE and prints the live URL when finished.
 
-If the directory isn't linked to a project yet, `up` runs `init` first. On a TTY that's interactive; in a non-TTY (CI) it will **not** silently create a project: it errors and asks you to run `lizard init --name <project>` (or pass `--project <name>` to `up`). This guards against a typo spawning an empty project.
+If the folder isn't linked to a project yet, `up` links it to your account's default project (the oldest project in your personal workspace, `<username>'s Project` for new accounts) and says so. It does not ask, in a terminal or in CI. To deploy to another project, run `lizard init --name <project>` first or pass `--project <name>`. `lizard init --force` relinks a folder.
+
+Without `--service`, `up` deploys to the service linked to the folder. If none is linked, it takes the name from `package.json` or the folder (a terminal asks you to confirm it). When the project already has a service with that name, `up` deploys to it, even a GitHub service, which it switches to `sourceType=upload`. It also sets that service's port as for a new one: `--port`, the local `EXPOSE` line or `3000`. Otherwise it creates the service. Pass `--service <name>` to choose; a name that doesn't exist yet creates that service.
 
 ## Common flags
 
 | Flag | Purpose |
 |------|---------|
-| `-s, --service <name>` | Target an existing service |
+| `-s, --service <name>` | Service to deploy to; a new name creates it |
+| `-p, --project <name>` | Deploy to this project instead of the linked or default one |
 | `--build-command <cmd>` | Override the build command |
 | `--start-command <cmd>` | Override the start command |
 | `--pre-deploy-command <cmd>` | Run at the start of every container, before the start command; needs `--start-command` (see [build configuration](/concepts/build-pipeline#build-configuration-reference)) |
@@ -30,7 +33,7 @@ If the directory isn't linked to a project yet, `up` runs `init` first. On a TTY
 | `--region <code>` | Region for a new service (ignored for existing services) |
 | `-d, --detach` | Start the deploy and exit without streaming logs |
 | `-c, --ci` | CI-friendly output |
-| `--no-gitignore` | Upload everything, ignoring `.gitignore` |
+| `--no-gitignore` | Ignore `.gitignore` and use the fixed skip list instead (a built `dist/` or `build/` is still left out) |
 
 ```bash
 lizard up --service api --start-command "node server.js" --port 8080
@@ -50,7 +53,7 @@ lizard redeploy --service api
 
 ## Headless / CI
 
-For non-interactive flows, link the project explicitly before deploying:
+In CI an unlinked folder also deploys to your default project. To deploy to a chosen project, link it first:
 
 ```bash
 export LIZARD_TOKEN=liz_xxx   # create one with: lizard keys create <name>

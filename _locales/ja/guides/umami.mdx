@@ -22,7 +22,7 @@ curl -fsSL https://lizard.build/install.sh | bash
 lizard login
 ```
 
-続行する前に、ブラウザーでログインを完了してください。以下のコマンドは Lizard CLI 0.3.95 と Umami 3.3.1 でテストされています。
+続行する前に、ブラウザーでログインを完了してください。以下のコマンドは 2026年9月に、Lizard CLI 4 より前の Lizard CLI 0.3.95 と Umami 3.3.1 でテストされています。
 
 <span id="create-the-project-and-database" />
 
@@ -61,13 +61,13 @@ lizard service set umami --set dockerfilePath=Dockerfile
 
 ```bash
 lizard secrets set \
-  DATABASE_URL='${{umami-db.DATABASE_URL}}' \
+  DATABASE_URL='${{umami-db.DATABASE_PRIVATE_URL}}' \
   APP_SECRET="$(openssl rand -hex 32)" \
   TWO_FACTOR_ENCRYPTION_KEY="$(openssl rand -hex 32)" \
   --service umami
 ```
 
-データベース参照のまわりのシングルクォートはそのままにしてください: サービスの起動時に Lizard がそれを解決します。これらの値はこのサービスに属するため、プロジェクト内のほかのアプリはそれらを受け取りません。
+データベース参照のまわりのシングルクォートはそのままにしてください: サービスの起動時に Lizard がそれを、プロジェクトのプライベートネットワーク上のデータベースのアドレスに解決します。これらの値はこのサービスに属するため、プロジェクト内のほかのアプリはそれらを受け取りません。
 
 生成した両方のシークレットはパスワードマネージャーに保存してください。セットアップ時に一度だけ設定し、再起動やアップグレードの際に再生成しないでください。`TWO_FACTOR_ENCRYPTION_KEY` は二要素認証に必要です。
 
@@ -94,6 +94,8 @@ lizard logs --service umami
 ```
 
 最初の起動がタイムアウトする場合は、コンテナーの準備状況について `lizard events` を確認してください。コンテナーが起動したら、`lizard up --service umami --port 3000` でアップロードを再試行します。
+
+開く人が少ないダッシュボードなら、`lizard sleep --on --service umami` で [アイドル時のスリープ](/cli/sleep) を有効にしてください。有効にするとサービスが 1 回再起動します。記録されるページビューもリクエストとして数えられるため、アクセスの多いサイトはスリープしません。しばらくアクセスがないと、サービスが起動する間、最初のリクエストに時間がかかります。
 
 <span id="check-data-persistence" />
 

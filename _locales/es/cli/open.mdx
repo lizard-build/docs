@@ -1,5 +1,5 @@
 ---
-description: "lizard open abre el panel del proyecto actual en tu navegador, el complemento visual del CLI."
+description: "lizard open abre el panel de un proyecto en tu navegador, el complemento visual del CLI, o imprime su URL con --json."
 ---
 
 # lizard open
@@ -11,8 +11,18 @@ Abre el proyecto en el navegador.
 ## Uso
 
 ```bash
-lizard open
+lizard open [flags]
 ```
+
+<span id="flags" />
+
+## Banderas
+
+| Bandera | Descripción |
+|------|-------------|
+| `-p, --project <id>` | Nombre, slug o ID del proyecto |
+
+Sin `-p`, `open` usa el proyecto vinculado o, en una carpeta sin vincular, tu proyecto predeterminado. Con `--json` imprime `{ url, opened: false }` y no abre el navegador.
 
 <span id="examples" />
 
@@ -24,6 +34,14 @@ lizard open
 
 ```bash
 lizard open
+```
+
+<span id="print-the-dashboard-url" />
+
+### Imprimir la URL del panel
+
+```bash
+lizard open --json
 ```
 
 <span id="see-also" />

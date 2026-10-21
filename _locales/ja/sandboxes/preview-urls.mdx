@@ -9,7 +9,7 @@ description: "exposePort または lizard sandbox expose で、Lizard の sandbo
 
 プレビュー URL は、Lizard (lizard.build) の sandbox 内のポートにプライベートな HTTPS アドレスを割り当てます。`0.0.0.0` で待ち受けるサーバーを起動し、`sandbox.exposePort(3000)`（Python では `expose_port`）を呼び出すか、`lizard sandbox expose <id> 3000` を実行します。`https://<sandbox-id>-3000.sandbox.<region>.onlizard.com/?lizard_token=…` が返されます。sandbox のアクセストークンのないリクエストには HTTP 401 が返されます。
 
-**テスト状況:** 2026-10-12 に、このページを Lizard SDK、Lizard CLI 4.0.42、sandbox ルーターのソースと照らし合わせて確認しました。このページのために新たな実地テストは行っていません。
+**テスト状況:** 2026-10-12 に、このページを Lizard SDK、Lizard CLI 4.0.42、sandbox ルーターのソースと照らし合わせて確認しました。502 の応答と、サーバーが受け取る `Host` ヘッダーは、2026-10-20 に実行中の sandbox で確かめたものです。
 
 <span id="from-the-cli" />
 
@@ -69,7 +69,8 @@ print(res.status_code)
 - **送り方は 3 通り。** クエリパラメーター `lizard_token`、`X-Lizard-Access-Token` ヘッダー、`lizard_access` cookie のいずれかです。
 - **ブラウザーには cookie が渡される。** ブラウザーが `?lizard_token=` 付きの URL を開くと、Lizard はそのホスト名に `lizard_access` cookie（HttpOnly、Secure、SameSite=None、Partitioned、30 日間）を設定し、トークンを外した同じアドレスにリダイレクトします。その後はページのスクリプト、API 呼び出し、WebSocket が cookie を送るため、トークンは履歴や Referer ヘッダーに残りません。ほかのサイトがページを iframe で埋め込んだ場合も cookie は機能します。
 - **ポートごとにホスト名が 1 つ。** 各ポートには専用のホスト名と専用の cookie があるため、ポートごとに完全な URL を一度開いてください。
-- **サーバーにトークンは届かない。** Lizard はリクエストを転送する前に、クエリ、ヘッダー、cookie からトークンを取り除きます。リクエストの `Host` ヘッダーは元のまま保たれます。
+- **サーバーにトークンは届かない。** Lizard はリクエストを転送する前に、クエリ、ヘッダー、cookie からトークンを取り除きます。
+- **サーバーには内部の `Host` が届く。** 転送されたリクエストには、プレビュー URL のホスト名ではなく内部のホスト名が入ります。絶対 URL は `Host` からではなく、プレビュー URL から組み立ててください。
 - **WebSocket が使える。** アップグレードリクエストはそのまま通るため、ホットリロード付きの 開発サーバーやターミナル UI も動きます。
 
 プレビュー URL はパスワードと同じように扱ってください。URL を知っている人は誰でも、その sandbox で公開されたすべてのポートを使えます。
@@ -93,7 +94,7 @@ URL は sandbox の実行中だけ機能し、sandbox が停止すると使え�
 | 401 | `This sandbox port is private (missing or wrong access token)` | `expose` が表示した完全な URL を開くか、`X-Lizard-Access-Token` を送ります。 |
 | 403 | `Port 3000 is not published for sandbox "…". Published: …` | そのポートに対して `lizard sandbox expose` または `exposePort` を実行します。 |
 | 404 | `No running sandbox "…"` | sandbox が実行されていません。`lizard sandbox list` で確認してください。 |
-| 502 | `Sandbox is not listening on port 3000` | サーバーを起動し、`127.0.0.1` ではなく `0.0.0.0` にバインドします。 |
+| 502 | `"message": "The sandbox is running but port is not open"` を含む JSON | サーバーを起動し、`127.0.0.1` ではなく `0.0.0.0` にバインドします。 |
 
 <span id="dev-servers" />
 
@@ -105,17 +106,17 @@ URL は sandbox の実行中だけ機能し、sandbox が停止すると使え�
 npm run dev -- --host 0.0.0.0 --port 5173
 ```
 
-Vite は `Host` ヘッダーも確認し、知らないホストには `Blocked request. This host (…) is not allowed.` を返します。`vite.config.js` で sandbox のホスト名を許可してください:
+Vite は `Host` ヘッダーも確認し、知らないホストには `Blocked request. This host (…) is not allowed.` を返します。サーバーには内部のホスト名が届くため、`.onlizard.com` の名前を並べても役に立ちません。`vite.config.js` ですべてのホストを許可してください:
 
 ```js
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  server: { allowedHosts: ['.onlizard.com'] },
+  server: { allowedHosts: true },
 });
 ```
 
-先頭のドットで、すべてのサブドメインが許可されます。そのうえで `5173` を公開します。
+ポートは引き続きプレビュー URL のアクセストークンで守られます。そのうえで `5173` を公開します。
 
 <span id="related" />
 

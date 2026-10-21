@@ -81,8 +81,8 @@ sandbox = Sandbox.create(
 - `size` ist `'small'`, `'medium'` oder `'large'`: 2 vCPU / 4 GB, 4 vCPU / 8 GB (Standard) oder 8 vCPU / 16 GB; siehe [Größen und Preise](/platform/limits#sandbox-sizes). Für eine aus einem Snapshot wiederhergestellte Sandbox gilt `size` nicht; sie läuft in der Größe ihrer Quelle.
 - `timeoutMs` beträgt standardmäßig 300000, also fünf Minuten. `0` deaktiviert den Ablauf. Siehe [Ressourcen und Laufzeit](/sandboxes#resources-and-timeouts).
 - Geben Sie bei Bedarf eine Region an; ein Katalogeintrag garantiert keine freie Kapazität. Lassen Sie `region` leer, wenn Sie ein Volume anhängen: Die Sandbox läuft dort, wo das Volume liegt.
-- `metadata` sind Ihre eigenen Labels; `getInfo()` und `list()` geben sie zurück.
-- `lizardToken` schreibt einen `liz_`-API-Schlüssel in die Sandbox, damit `lizard` darin funktioniert. Code in der Sandbox kann diesen Schlüssel lesen. Übergeben Sie daher einen Schlüssel mit Zugriff nur auf den Workspace.
+- `metadata` sind Ihre eigenen Labels; `getInfo()` gibt sie zurück, `list()` nicht.
+- `lizardToken` nimmt einen Ihrer `liz_`-API-Schlüssel und meldet `lizard` in der Sandbox an. Ihr Schlüssel autorisiert nur die Anfrage: Die Sandbox erhält einen eigenen neuen Schlüssel, der auf das Projekt der Sandbox beschränkt ist und mit der Sandbox gelöscht wird. `lizard` kann dort also nur auf dieses Projekt zugreifen. Die Vorlage `base` enthält kein `lizard`.
 
 <span id="methods" />
 
@@ -111,10 +111,13 @@ sandbox = Sandbox.create(
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | Verbleibende Laufzeit setzen, mindestens 1000 ms. |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | Pause oder Fortsetzen einreihen und sofort zurückkehren. |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | Auf `paused` oder `running` warten; einen Fehler auslösen, wenn die Pause scheitert. |
-| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Eine laufende Sandbox 1- bis 10-mal kopieren, einschließlich Arbeitsspeicher und Prozessen. |
-| `sandbox.snapshot(name, { poolSize })` | `sandbox.snapshot(name, pool_size=...)` | Arbeitsspeicher und `/workspace`-Dateien als privaten Snapshot speichern. |
+| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Eine laufende Sandbox 1- bis 100-mal kopieren, einschließlich Arbeitsspeicher und Prozessen; jede Kopie zählt zu Ihrem Limit laufender Sandboxes. |
+| `sandbox.snapshot(name, { scope })` | `sandbox.snapshot(name, scope=...)` | Arbeitsspeicher, Prozesse und jede Datei als Snapshot speichern. `scope` ist `'workspace'` (Standard), `'user'` oder `'project'`. |
 | `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | Warten, bis ein Snapshot bereit ist. |
-| `Sandbox.restore(snapshotId)` | `Sandbox.restore(snapshot_id)` | Neue Sandbox aus einem Snapshot starten. |
+| `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | Neue Sandbox aus einem Snapshot in seiner Region starten, in jedem Projekt, das sein Geltungsbereich erlaubt. |
+| `Sandbox.snapshots(projectId)` | `Sandbox.snapshots(project_id)` | Die in einem Projekt erstellten Snapshots auflisten. |
+| `Sandbox.mySnapshots()` | `Sandbox.my_snapshots()` | Alle Snapshots auflisten, die Sie erstellt haben, in all Ihren Workspaces. |
+| `Sandbox.setSnapshotScope(snapshotId, scope)` | `Sandbox.set_snapshot_scope(snapshot_id, scope)` | Ändern, wo sich ein Snapshot, den Sie erstellt haben, wiederherstellen lässt. |
 | `Sandbox.deleteSnapshot(snapshotId)` | `Sandbox.delete_snapshot(snapshot_id)` | Einen Snapshot löschen; daraus wiederhergestellte Sandboxes laufen weiter. |
 | `sandbox.kill()` | `sandbox.kill()` | Sandbox stoppen und Volume trennen. |
 
@@ -122,14 +125,14 @@ sandbox = Sandbox.create(
 
 ## Befehle ausführen
 
-`process.exec` (Python: `exec_`) führt einen Befehl aus und wartet, bis er endet. Übergeben Sie `onStdout` oder `onStderr` (Python: `on_stdout`, `on_stderr`), um Ausgaben schon während der Ausführung zu erhalten; der Aufruf liefert am Ende trotzdem das vollständige Ergebnis. Übergeben Sie statt eines Strings ein argv-Array, um die Shell zu umgehen; so übergeben Sie nicht vertrauenswürdigen Text sicher als Argument.
+`process.exec` (Python: `exec_`) führt einen Befehl aus und wartet, bis er endet. Übergeben Sie `onStdout` oder `onStderr` (Python: `on_stdout`, `on_stderr`), um Ausgaben schon während der Ausführung zu erhalten, eine Zeile pro Aufruf ohne den abschließenden Zeilenumbruch; der Aufruf liefert am Ende trotzdem das vollständige Ergebnis. Übergeben Sie statt eines Strings ein argv-Array, um die Shell zu umgehen; so übergeben Sie nicht vertrauenswürdigen Text sicher als Argument.
 
 ```ts
 const result = await sandbox.process.exec('npm test', {
   workdir: '/app',
   envs: { NODE_ENV: 'test' },
   timeoutMs: 120_000,
-  onStdout: (chunk) => process.stdout.write(chunk),
+  onStdout: (line) => console.log(line),
 });
 if (result.exitCode !== 0) throw new Error(result.stderr);
 
@@ -142,7 +145,7 @@ result = sandbox.process.exec_(
     workdir="/app",
     envs={"NODE_ENV": "test"},
     timeout_ms=120_000,
-    on_stdout=lambda chunk: print(chunk, end=""),
+    on_stdout=print,
 )
 if result.exit_code != 0:
     raise RuntimeError(result.stderr)
@@ -150,7 +153,7 @@ if result.exit_code != 0:
 sandbox.process.exec_(["grep", "-rn", "--", user_query, "/workspace"])
 ```
 
-Befehlsergebnisse enthalten stdout, stderr und den Exit-Code. Ein Exit-Code ungleich null ist ein Ergebnis, das Sie prüfen; fehlgeschlagene Anfragen lösen eine Exception aus. Befehls-Timeouts liegen zwischen 1 und 600 Sekunden. `process.exec` akzeptiert `envs`, `workdir` und `user`; Befehle laufen als `root`, sofern Sie kein `user` übergeben. `envs` bei der Erstellung gelten für jeden Befehl.
+Befehlsergebnisse enthalten stdout, stderr und den Exit-Code. Ein Exit-Code ungleich null ist ein Ergebnis, das Sie prüfen; fehlgeschlagene Anfragen lösen eine Exception aus. `timeoutMs` (Python: `timeout_ms`) legt fest, wie lange ein Befehl laufen darf, von 1 bis 600 Sekunden. Ohne diese Angabe stoppt der Server den Befehl nach 150 Sekunden, und das TypeScript-SDK hört nach 60 Sekunden auf zu warten und löst eine `DOMException` mit dem Namen `TimeoutError` aus. Übergeben Sie `timeoutMs` für jeden Befehl, der länger als eine Minute laufen kann. `process.exec` akzeptiert `envs`, `workdir` und `user`; Befehle laufen als `root`, sofern Sie kein `user` übergeben. `envs` bei der Erstellung gelten für jeden Befehl.
 
 <span id="files" />
 
@@ -200,7 +203,7 @@ sandbox.unexpose(3000)
 
 ## Pause, Snapshot und Fork
 
-Diese Aufrufe behalten Arbeitsspeicher und laufende Prozesse, nicht nur Dateien. Der [Schnellstart](/sandboxes/quickstart#pause-and-resume) erklärt, was jeder Aufruf behält, wie Wiederherstellungen abgerechnet werden und was fehlschlagen kann.
+Diese Aufrufe behalten Arbeitsspeicher, laufende Prozesse und Dateien. Der [Schnellstart](/sandboxes/quickstart#pause-and-resume) erklärt, was jeder Aufruf behält, wer einen Snapshot wiederherstellen kann, wie Wiederherstellungen abgerechnet werden und was fehlschlagen kann.
 
 ```ts
 await sandbox.pause();
@@ -279,10 +282,11 @@ Fehlgeschlagene API-Aufrufe lösen diese Fehler aus (Python: raise). Jeder enth�
 | `AuthenticationError` | HTTP 401 oder 403: ungültiger Schlüssel oder kein Zugriff. |
 | `NotFoundError` | HTTP 404: Die Sandbox, Datei oder der Snapshot existiert nicht oder ist abgelaufen. |
 | `ConflictError` | HTTP 409: widersprüchlicher Zustand, etwa beim Forken einer Sandbox mit Volume. |
-| `TimeoutError` | HTTP 408 oder 504. |
+| `LimitExceededError` | HTTP 429: zu viele Sandboxes gleichzeitig oder zu viele Starts. `code` nennt das Limit, etwa `SANDBOX_LIMIT_REACHED` oder `SANDBOX_RATE_LIMITED`; `retryAfterS` (Python: `retry_after_s`) sagt, wann Sie es erneut versuchen können. |
+| `TimeoutError` | HTTP 408 oder 504. Das eigene 60-Sekunden-Warten des TypeScript-SDK bei `process.exec` löst stattdessen eine `DOMException` mit dem Namen `TimeoutError` aus. |
 | `LizardError` | Andere API-Fehler, einschließlich nicht unterstützter Operationen. |
 
-Zu viele Sandboxes gleichzeitig oder zu viele Starts ergeben HTTP 429; siehe [Kontolimits](/platform/limits#sandbox-account-limits).
+Die Zahlen hinter HTTP 429 stehen unter [Kontolimits](/platform/limits#sandbox-account-limits).
 
 <span id="http-api" />
 

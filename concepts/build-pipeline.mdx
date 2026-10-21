@@ -44,7 +44,7 @@ On this path:
 | `service set` of runtime-only fields (`startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns`) | ❌ run `lizard redeploy` to apply |
 | Any other env var / secret change | ❌ applied on a quick restart (no rebuild) |
 
-> **Don't double-build.** After a `service set` that changes a build field on a running service, Lizard starts a rebuild. Running `lizard redeploy` afterward queues a second build ([why](/deploy/troubleshooting/double-build)). A crashed or never-deployed service does not rebuild on its own; run `lizard redeploy`.
+> **Don't double-build.** After a `service set` that changes a build field on a running service, Lizard starts a rebuild. Running `lizard redeploy` afterward cancels that build and starts it again ([why](/deploy/troubleshooting/double-build)). A crashed or never-deployed service does not rebuild on its own; run `lizard redeploy`.
 
 ## Build-time variables
 

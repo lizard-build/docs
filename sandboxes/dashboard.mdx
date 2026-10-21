@@ -13,7 +13,7 @@ description: "Create, inspect, pause and stop Sandboxes in the Lizard dashboard:
 <span id="snapshots" />
 <span id="volumes" />
 
-The dashboard lets you create and manage Sandboxes without code. Open a project and select Sandboxes. Create a sandbox with a template from the catalog, a region, and a size: Small, Medium (the default), or Large. Choose the region you need; the default may not be the nearest one. Pick a lifetime under **Delete after**: 15 minutes, 1 hour, 4 hours, 1 day, 7 days, or Never (the default).
+The dashboard lets you create and manage Sandboxes without code. Open a project and select **Sandboxes** in the sidebar. Create a sandbox with **New Sandbox**: pick a template from the catalog, a region, and a size: Small, Medium (the default), or Large. Choose the region you need; the default may not be the nearest one. Pick a lifetime under **Delete after**: 15 minutes, 1 hour, 4 hours, 1 day, 7 days, or Never (the default). During the trial, the dialog offers only Small in US regions. The count next to **New Sandbox** shows how many sandboxes run against your limit.
 
 ## API keys
 
@@ -27,8 +27,10 @@ A running sandbox bills by the second at its size's hourly price, idle time incl
 
 ## Templates and volumes
 
-The Templates tab lists platform templates and your project's private snapshots; start a new sandbox from either. Create snapshots with the SDK or CLI. Kill Sandbox stops the sandbox and detaches its volume.
+The sidebar also has **Volumes** (Persistent Volumes), **Templates** and **Agents**. **Templates** lists platform templates and the snapshots taken in the current project; start a new sandbox from either. Create snapshots with the SDK or CLI. Kill Sandbox stops the sandbox and detaches its volume.
 
-Create and attach volumes with the SDK or CLI; the create form has no volume option. The Persistent Volumes tab appears once a project has a volume. It shows each volume's size and attached sandbox, and lets you browse files, resize, or delete it. Stop the current sandbox before attaching the volume to another.
+Create and attach volumes with the SDK or CLI; the create form has no volume option. **Volumes** shows each volume's size and attached sandbox, and lets you browse files, resize, or delete it. Stop the current sandbox before attaching the volume to another.
+
+**Agents** connects the credentials that coding agents use in sandboxes, as [`lizard agents`](/cli/agents) does.
 
 [Sandboxes overview](/sandboxes) · [Quickstart](/sandboxes/quickstart) · [SDK reference](/sandboxes/sdk-reference) · [Code interpreter](/sandboxes/code-interpreter) · [Persistent Volumes](/sandboxes/volumes)

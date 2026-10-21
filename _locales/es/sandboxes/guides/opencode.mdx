@@ -49,7 +49,7 @@ Si solo tienes conectada una clave de OpenRouter y no has elegido modelo, Lizard
 lizard sandbox create -t opencode --timeout 3600000
 ```
 
-Guarda el ID que muestra en una variable: `SB=sb_abc123`. La duración predeterminada de la CLI es de cinco minutos; pasado ese tiempo, Lizard elimina el sandbox y sus archivos. `--timeout 3600000` le da una hora. La plantilla `opencode` incluye Node.js 22, una versión fijada de OpenCode, git, Python 3, ripgrep, curl, jq, unzip y Lizard CLI.
+Guarda el ID que muestra en una variable: `SB=genuine-toddler-jasj`. La duración predeterminada de la CLI es de cinco minutos; pasado ese tiempo, Lizard elimina el sandbox y sus archivos. `--timeout 3600000` le da una hora. La plantilla `opencode` incluye Node.js 22, una versión fijada de OpenCode, git, Python 3, ripgrep, curl, jq, unzip y Lizard CLI.
 
 Copia tu código igual que con Claude Code:
 
@@ -94,7 +94,7 @@ lizard sandbox expose $SB 4096
 
 Abre la URL que muestra `expose`. Lleva `?lizard_token=`; Lizard pasa el token a una cookie para ese host y redirige a la misma página sin él, así que las solicitudes de la propia interfaz, su flujo de eventos y los WebSockets del terminal pueden autenticarse.
 
-- Necesitas `--hostname 0.0.0.0`. OpenCode escucha en `127.0.0.1` por defecto, y entonces la URL de vista previa responde `Sandbox is not listening on port 4096`.
+- Necesitas `--hostname 0.0.0.0`. OpenCode escucha en `127.0.0.1` por defecto, y entonces la URL de vista previa responde 502 con `The sandbox is running but port is not open`.
 - Indica un `--port` fijo. Sin él, OpenCode elige al azar un puerto libre.
 - La URL funciona como una contraseña: quien la tenga puede ejecutar comandos en el sandbox a través de OpenCode. Para pedir además una contraseña, añade `export OPENCODE_SERVER_PASSWORD=…` a `opencode.env`; el nombre de usuario es `opencode`.
 - Lee el log del servidor con `lizard sandbox exec $SB -- tail -n 50 /tmp/opencode.log`. Detén el servidor con `lizard sandbox exec $SB -- sh -c 'kill $(cat /tmp/opencode.pid)'`.

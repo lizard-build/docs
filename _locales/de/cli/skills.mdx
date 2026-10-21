@@ -12,8 +12,8 @@ Lies die eingebetteten Agenten-Skills, die mit dieser CLI-Version ausgeliefert w
 
 ```bash
 lizard skills list
-lizard skills get core
-lizard skills path
+lizard skills get core [flags]
+lizard skills path [name] [flags]
 ```
 
 <span id="subcommands" />
@@ -22,15 +22,22 @@ lizard skills path
 
 ### `lizard skills list`
 
-Liste die verfügbaren eingebetteten Skills auf.
+Liste die verfügbaren eingebetteten Skills mit ihren Beschreibungen und Referenzen auf.
 
 ### `lizard skills get core`
 
-Lies den Core-Anleitung — den maßgeblichen Nutzungsleitfaden für die Plattform, versioniert mit der CLI. Mit `--json` gibt er `{ name, path, frontmatter, content }` zurück, wobei `content` der vollständige Leitfaden ist (Build-Pipeline, env-Priorität, Add-ons, Discovery, Exit-Codes).
+Lies den Core-Leitfaden: den Plattformüberblick für Agenten, versioniert mit der CLI. Er behandelt Sandboxes, Deployments, Datenbanken, Secrets, Domains, Logs und Exit-Codes. Details stehen in drei Referenzen: `deploys`, `sandboxes` und `sdk`.
+
+Mit `--json` gibt er `{ name, path, frontmatter, content, references }` zurück. `content` ist der Core-Leitfaden, und `references` listet für jede Referenz `name`, `path` und den `command`, der sie ausgibt.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `--ref <name>` | Stattdessen eine Referenz ausgeben: `deploys`, `sandboxes` oder `sdk`. Mit `--json` gibt er `{ name, ref, path, content }` zurück |
+| `--full` | Alle Referenzen an den Core-Leitfaden anhängen |
 
 ### `lizard skills path [name]`
 
-Gib aus, woher ein Skill stammt. Skills sind in die CLI eingebaut, daher gibt dieser Befehl `embedded://skills` aus, es sei denn, `LIZARD_SKILLS_DIR` verweist die CLI auf ein Verzeichnis auf dem Datenträger.
+Gib aus, woher ein Skill stammt. Skills sind in die CLI eingebaut, daher gibt `lizard skills path` `embedded://skills` und `lizard skills path core` `embedded://skills/core/SKILL.md` aus, es sei denn, `LIZARD_SKILLS_DIR` verweist die CLI auf ein Verzeichnis auf dem Datenträger. `--ref <name>` gibt den Pfad einer Referenz aus.
 
 <span id="examples" />
 
@@ -38,10 +45,26 @@ Gib aus, woher ein Skill stammt. Skills sind in die CLI eingebaut, daher gibt di
 
 <span id="load-the-core-guide-as-an-agent" />
 
-### Den Core-Anleitung als Agent laden
+### Den Core-Leitfaden als Agent laden
 
 ```bash
 lizard skills get core --json
+```
+
+<span id="load-one-reference" />
+
+### Eine Referenz laden
+
+```bash
+lizard skills get core --ref deploys --json
+```
+
+<span id="print-the-core-guide-with-every-reference" />
+
+### Den Core-Leitfaden mit allen Referenzen ausgeben
+
+```bash
+lizard skills get core --full
 ```
 
 <span id="list-available-embedded-skills" />

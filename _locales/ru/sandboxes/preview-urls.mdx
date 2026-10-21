@@ -9,7 +9,7 @@ description: "Дайте порту в sandbox Lizard приватный HTTPS U
 
 URL предпросмотра даёт порту внутри sandbox на Lizard (lizard.build) приватный HTTPS-адрес. Запустите сервер, который слушает `0.0.0.0`, затем вызовите `sandbox.exposePort(3000)` (в Python: `expose_port`) или выполните `lizard sandbox expose <id> 3000`. Вы получите `https://<sandbox-id>-3000.sandbox.<region>.onlizard.com/?lizard_token=…`; запрос без токена доступа sandbox получает HTTP 401.
 
-**Статус тестов:** 2026-10-12 мы сверили эту страницу с исходным кодом Lizard SDK, Lizard CLI 4.0.42 и маршрутизатора sandbox. Нового теста в работающей среде для неё мы не запускали.
+**Статус тестов:** 2026-10-12 мы сверили эту страницу с исходным кодом Lizard SDK, Lizard CLI 4.0.42 и маршрутизатора sandbox. Ответ 502 и заголовок `Host`, который получает ваш сервер, мы проверили в работающем sandbox 2026-10-20.
 
 <span id="from-the-cli" />
 
@@ -69,7 +69,8 @@ print(res.status_code)
 - **Три способа передать токен.** Параметр запроса `lizard_token`, заголовок `X-Lizard-Access-Token` или cookie `lizard_access`.
 - **Браузер получает cookie.** Когда браузер открывает URL с `?lizard_token=`, Lizard ставит cookie `lizard_access` для этого имени хоста (HttpOnly, Secure, SameSite=None, Partitioned, 30 дней) и перенаправляет на тот же адрес без токена. Скрипты страницы, вызовы API и WebSocket затем передают cookie, а токен не попадает в историю и заголовки Referer. Cookie работает и тогда, когда другой сайт встраивает страницу в iframe.
 - **Своё имя хоста для каждого порта.** У каждого порта своё имя хоста и своя cookie, поэтому полный URL каждого порта нужно один раз открыть.
-- **Ваш сервер не видит токен.** Lizard убирает его из параметра запроса, заголовка и cookie, прежде чем переслать запрос. При этом исходный заголовок `Host` сохраняется.
+- **Ваш сервер не видит токен.** Lizard убирает его из параметра запроса, заголовка и cookie, прежде чем переслать запрос.
+- **Ваш сервер видит внутренний `Host`.** Пересланный запрос содержит внутреннее имя хоста, а не имя хоста URL предпросмотра. Стройте абсолютные URL из URL предпросмотра, а не из `Host`.
 - **WebSocket работает.** Запросы на upgrade проходят, поэтому dev-серверы с горячей перезагрузкой и терминальные интерфейсы работают.
 
 Храните URL предпросмотра в секрете: любой, у кого он есть, может пользоваться всеми опубликованными портами этого sandbox.
@@ -93,7 +94,7 @@ URL работает, пока sandbox запущен, и перестаёт р�
 | 401 | `This sandbox port is private (missing or wrong access token)` | Откройте полный URL из `expose` или отправьте `X-Lizard-Access-Token`. |
 | 403 | `Port 3000 is not published for sandbox "…". Published: …` | Выполните `lizard sandbox expose` или `exposePort` для этого порта. |
 | 404 | `No running sandbox "…"` | Sandbox не запущен. Проверьте `lizard sandbox list`. |
-| 502 | `Sandbox is not listening on port 3000` | Запустите сервер и привяжите его к `0.0.0.0`, а не к `127.0.0.1`. |
+| 502 | JSON с `"message": "The sandbox is running but port is not open"` | Запустите сервер и привяжите его к `0.0.0.0`, а не к `127.0.0.1`. |
 
 <span id="dev-servers" />
 
@@ -105,17 +106,17 @@ URL работает, пока sandbox запущен, и перестаёт р�
 npm run dev -- --host 0.0.0.0 --port 5173
 ```
 
-Vite также проверяет заголовок `Host` и отвечает `Blocked request. This host (…) is not allowed.` на запросы к незнакомым хостам. Разрешите имена хостов sandbox в `vite.config.js`:
+Vite также проверяет заголовок `Host` и отвечает `Blocked request. This host (…) is not allowed.` на запросы к незнакомым хостам. Ваш сервер получает внутреннее имя хоста, поэтому список имён `.onlizard.com` не поможет. Разрешите все хосты в `vite.config.js`:
 
 ```js
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  server: { allowedHosts: ['.onlizard.com'] },
+  server: { allowedHosts: true },
 });
 ```
 
-Точка в начале разрешает все поддомены. Затем опубликуйте порт `5173`.
+Порт по-прежнему защищает токен доступа из URL предпросмотра. Затем опубликуйте порт `5173`.
 
 <span id="related" />
 

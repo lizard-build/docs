@@ -1,10 +1,10 @@
 ---
-description: "lizard s3 lädt eine lokale Datei in einen Managed Object Storage Bucket hoch und listet die Objekte eines Buckets auf, ohne AWS SDK."
+description: "lizard s3 lädt eine lokale Datei in einen Managed Object Storage Bucket hoch, listet seine Objekte auf und gibt befristete Download-Links aus, ohne AWS SDK."
 ---
 
 # lizard s3
 
-Lade Objekte in einen [Managed Object Storage](/addons/storage) Bucket hoch und liste sie auf.
+Lade Objekte in einen [Managed Object Storage](/addons/storage) Bucket hoch, liste sie auf und gib befristete Download-Links aus.
 
 <span id="usage" />
 
@@ -13,9 +13,10 @@ Lade Objekte in einen [Managed Object Storage](/addons/storage) Bucket hoch und 
 ```bash
 lizard s3 upload <file> [flags]
 lizard s3 list [flags]
+lizard s3 url <key> [flags]
 ```
 
-Beide Befehle arbeiten mit dem einzigen S3-Addon des Projekts und dessen `default`-Bucket, sofern du nicht `--addon` und `--bucket` angibst. Füge das Addon zuerst mit `lizard add s3` hinzu.
+Alle drei Befehle arbeiten mit dem einzigen S3-Addon des Projekts und dessen `default`-Bucket, sofern du nicht `--addon` und `--bucket` angibst. Füge das Addon zuerst mit `lizard add s3` hinzu.
 
 <span id="subcommands" />
 
@@ -25,12 +26,25 @@ Beide Befehle arbeiten mit dem einzigen S3-Addon des Projekts und dessen `defaul
 
 Lädt eine lokale Datei hoch. Gibt den Key, den ETag, die Größe und eine URL aus, wenn der Bucket öffentlich ist. Der `default`-Bucket ist privat; mach einen Bucket über den S3-Browser im Dashboard öffentlich.
 
+`upload` sendet die ganze Datei in einer Anfrage über die Lizard API, bis zu 150 MB. Für größere Dateien nutze einen S3-Client mit den Zugangsdaten des Addons; siehe [Managed Object Storage](/addons/storage).
+
 | Flag | Beschreibung |
 |------|-------------|
 | `--addon <name>` | Name oder ID des S3-Addons (Standard: das einzige S3-Addon des Projekts) |
 | `--bucket <name>` | Ziel-Bucket (Standard `default`) |
 | `--key <key>` | Objekt-Key (Standard: der Dateiname) |
 | `--content-type <type>` | Content-Type-Header (Standard: aus der Dateiendung abgeleitet) |
+| `-p, --project <id>` | Projektname, Slug oder ID |
+
+### `lizard s3 url <key>`
+
+Gibt einen befristeten Download-Link für ein Objekt aus. Wer den Link hat, kann das Objekt bis zum Ablauf herunterladen, auch aus einem privaten Bucket und ohne Zugangsdaten. Mit `--json` gibt der Befehl `url`, `key`, `bucket`, `expiresIn` und `expiresAt` aus.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `--addon <name>` | Name oder ID des S3-Addons (Standard: das einzige S3-Addon des Projekts) |
+| `--bucket <name>` | Bucket (Standard `default`) |
+| `--expires <seconds>` | Wie lange der Link gilt, in Sekunden (Standard `3600`, höchstens `604800` = 7 Tage) |
 | `-p, --project <id>` | Projektname, Slug oder ID |
 
 ### `lizard s3 list`
@@ -56,6 +70,14 @@ Jedes Konto kann über seine Addons hinweg bis zu 16 GiB speichern. Der Speicher
 
 ```bash
 lizard s3 upload ./logo.png --key assets/logo.png
+```
+
+<span id="share-a-private-file-for-a-day" />
+
+### Eine private Datei für einen Tag teilen
+
+```bash
+lizard s3 url assets/logo.png --expires 86400
 ```
 
 <span id="list-objects-under-a-prefix" />

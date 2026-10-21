@@ -12,8 +12,8 @@ Lee las skills para agentes integradas que se incluyen con esta versión de CLI.
 
 ```bash
 lizard skills list
-lizard skills get core
-lizard skills path
+lizard skills get core [flags]
+lizard skills path [name] [flags]
 ```
 
 <span id="subcommands" />
@@ -22,15 +22,22 @@ lizard skills path
 
 ### `lizard skills list`
 
-Lista las skills integradas disponibles.
+Lista las skills integradas disponibles con sus descripciones y referencias.
 
 ### `lizard skills get core`
 
-Lee la guía principal — la guía de uso autorizada para la plataforma, versionada junto con la CLI. Con `--json` devuelve `{ name, path, frontmatter, content }`, donde `content` es la guía completa (pipeline de build, precedencia de env, addons, discovery, códigos de salida).
+Lee la guía principal: la visión general de la plataforma para agentes, versionada junto con la CLI. Cubre sandboxes, despliegues, bases de datos, secretos, dominios, logs y códigos de salida. Los detalles están en tres referencias: `deploys`, `sandboxes` y `sdk`.
+
+Con `--json` devuelve `{ name, path, frontmatter, content, references }`. `content` es la guía principal, y `references` lista para cada referencia su `name`, su `path` y el `command` que la imprime.
+
+| Bandera | Descripción |
+|------|-------------|
+| `--ref <name>` | Imprime en su lugar una referencia: `deploys`, `sandboxes` o `sdk`. Con `--json` devuelve `{ name, ref, path, content }` |
+| `--full` | Añade todas las referencias después de la guía principal |
 
 ### `lizard skills path [name]`
 
-Imprime de dónde proviene una skill. Las skills están integradas en la CLI, por lo que esto imprime `embedded://skills` a menos que `LIZARD_SKILLS_DIR` apunte la CLI a un directorio en el disco.
+Imprime de dónde proviene una skill. Las skills están integradas en la CLI, por lo que `lizard skills path` imprime `embedded://skills` y `lizard skills path core` imprime `embedded://skills/core/SKILL.md`, a menos que `LIZARD_SKILLS_DIR` apunte la CLI a un directorio en el disco. `--ref <name>` imprime la ruta de una referencia.
 
 <span id="examples" />
 
@@ -42,6 +49,22 @@ Imprime de dónde proviene una skill. Las skills están integradas en la CLI, po
 
 ```bash
 lizard skills get core --json
+```
+
+<span id="load-one-reference" />
+
+### Cargar una referencia
+
+```bash
+lizard skills get core --ref deploys --json
+```
+
+<span id="print-the-core-guide-with-every-reference" />
+
+### Imprimir la guía principal con todas las referencias
+
+```bash
+lizard skills get core --full
 ```
 
 <span id="list-available-embedded-skills" />

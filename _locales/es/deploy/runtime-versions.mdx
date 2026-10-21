@@ -40,7 +40,7 @@ Con un servicio de GitHub, haz commit del archivo y push. Reglas:
 - Escribe un número: `24`, `v24` y `24.1.0` eligen Node.js 24. Lizard salta las líneas que empiezan por `#`.
 - Lizard salta `lts/*` y `node` en `.nvmrc` y pasa al siguiente archivo. Otros alias, como `lts/iron`, los usa tal cual, y la compilación falla.
 - `.nvmrc` tiene prioridad sobre `engines.node`.
-- `engines.node` da la versión más baja de su rango: `>=18` compila sobre Node.js 18, y `^20.11.0`, sobre Node.js 20. Un rango con `||`, como `18 || 20`, hace fallar la compilación.
+- `engines.node` da la versión más baja de su rango: `>=18` compila sobre Node.js 18, y `^20.11.0`, sobre Node.js 20. Un rango con `||` hace fallar la compilación cuando su primera parte no tiene punto, como `18 || 20`; `^18.0.0 || ^20.0.0` compila sobre Node.js 18. Usa `.nvmrc` para indicar la versión exacta.
 
 <span id="change-the-python-version" />
 
@@ -83,13 +83,13 @@ Escribe solo el número. `rails new` escribe `ruby-3.4.1`, y Lizard no quita el 
 ## Cuándo ignora Lizard los archivos de versión
 
 - **Tu propio Dockerfile.** Manda su línea `FROM`, por ejemplo `FROM node:24-slim`. Consulta [Desplegar un contenedor Docker desde un Dockerfile](/deploy/dockerfile).
-- **Un comando de compilación o de inicio en el servicio.** En ese caso, Lizard escribe un Dockerfile a partir de los comandos sobre una imagen fija: `node:22-alpine`, `python:3.13-slim` o `golang:1.24-alpine`, según la primera palabra del comando. Para volver a los archivos de versión, borra los dos:
+- **Un comando de compilación o de inicio en el servicio.** En ese caso, Lizard escribe un Dockerfile a partir de los comandos sobre una imagen fija: `node:22-alpine`, `python:3.13-slim` o `golang:1.24-alpine`. Lee la primera palabra del comando de compilación y luego la del comando de inicio. `go` elige Go; `python`, `python3`, `uv`, `gunicorn` o `uvicorn` eligen Python. Si ningún comando empieza por una de ellas, por ejemplo `pip install …` con `streamlit run …`, la compilación usa `node:22-alpine`. Para volver a los archivos de versión, borra los dos:
 
 ```bash
 lizard service set web --set buildCommand= --set startCommand=
 ```
 
-Borrar `buildCommand` en un servicio en marcha lanza una recompilación por sí solo. Revisa `lizard events` antes de ejecutar `lizard redeploy`, para no poner en cola una segunda compilación. Consulta el [orden de decisión de la compilación](/concepts/build-pipeline#build-decision-order).
+Borrar `buildCommand` en un servicio en marcha lanza una recompilación por sí solo. Revisa `lizard events` antes de ejecutar `lizard redeploy`: un redeploy cancelaría esa compilación y la empezaría de nuevo. Consulta el [orden de decisión de la compilación](/concepts/build-pipeline#build-decision-order).
 
 <span id="check-which-version-a-build-used" />
 

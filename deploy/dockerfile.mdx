@@ -7,7 +7,7 @@ description: "Host a Docker container on Lizard: commit a Dockerfile, run lizard
 
 Lizard hosts Docker containers that it builds from your `Dockerfile`. Put the file at the root of your project and run `lizard up`, or connect a GitHub repository: Lizard builds the image on its own build machines, so you need no local Docker. It takes the port from `EXPOSE` or `--port`, passes it to the container in `PORT`, and serves the container over HTTPS on an `onlizard.com` domain. Lizard does not pull ready-made images from a registry; to run a public image, write a one-line Dockerfile that starts `FROM` it.
 
-**Test status:** this page describes Lizard's builder, deployer and CLI 4.0.42 as of 2026-10-12, checked against their source. We did not run a new deploy for it. The [Umami guide](/guides/umami) deploys a one-line `FROM` Dockerfile in this way and records its test.
+**Test status:** this page describes Lizard's builder, deployer and CLI 4.0.65 as of 2026-10-21, checked against their source. We did not run a new deploy for it. The [Umami guide](/guides/umami) deploys a one-line `FROM` Dockerfile in this way and records its test.
 
 ## Before you start
 
@@ -47,7 +47,7 @@ lizard add --service web
 lizard up --service web
 ```
 
-`lizard up` reads the first `EXPOSE` line of the local `Dockerfile`, prints `Detected port 3000 from Dockerfile` and sets that as the service port. Pass `--port <number>` to choose another. An upload always uses the root `Dockerfile` as written. See [deploy from local code](/deploy/upload) for what the upload includes.
+`lizard up` reads the first `EXPOSE` line of the local `Dockerfile`, prints `Detected port 3000 from Dockerfile` and sets that as the service port. Pass `--port <number>` to choose another. Without an `EXPOSE` line, a service that `lizard up` creates gets port `3000`; see [which port Lizard routes to](#which-port-lizard-routes-to). An upload always uses the root `Dockerfile` as written. See [deploy from local code](/deploy/upload) for what the upload includes.
 
 ## Deploy from GitHub
 
@@ -77,11 +77,13 @@ Leave `buildCommand` and `startCommand` empty on a Dockerfile service. Without `
 
 Lizard picks the service port in this order:
 
-1. A port you set: `lizard up --port`, `lizard port`, the dashboard, or the `EXPOSE` line that `lizard up` read.
+1. A port you set: `lizard up --port`, `lizard port`, `containerPort` in `lizard service set`, the dashboard, or the `EXPOSE` line that `lizard up` read. When `lizard up` creates a service, it always sends a port: `--port`, the local `EXPOSE` line, or `3000` when the Dockerfile has none. That counts as a port you set.
 2. `0`, which is [worker mode](/deploy/workers): no port, no route.
 3. A `PORT` variable you set on the service.
 4. The first port the built image exposes, including ports from its base image. Ports sort as text, so `3000` comes before `80`.
 5. `3000`.
+
+Steps 3 and 4 apply only to a service whose port was never set, such as one made with `lizard add --service` or from a repository whose Dockerfile has no `EXPOSE` line. If your image takes its port from its base image, for example `FROM nginx` on port 80, add an `EXPOSE` line or pass `--port`: otherwise a service that `lizard up` creates routes to `3000` and never becomes healthy. A `PORT` variable does not move a port you set; use `lizard port`.
 
 Inside the container, `PORT` holds the chosen port. Read it, or listen on the same fixed port. To change the port later, run `lizard port 8080 --service web`, then `lizard redeploy --service web`. See [networking](/networking).
 
@@ -99,7 +101,7 @@ Watch the build with `lizard logs --build --service web`.
 - **Health check:** Lizard ignores `HEALTHCHECK` and checks that the container accepts TCP connections on the service port. See [service never healthy](/deploy/troubleshooting/service-never-healthy).
 - **User:** the image's `USER` applies. A non-root user may lack permission to open a port below 1024, so prefer `8080` over `80` for such images.
 - **Variables:** the container gets your service variables, `PORT` and the `LIZARD_*` platform variables. See [variables and secrets](/variables).
-- **Files:** anything the container writes is lost on the next deploy. Use [Managed Postgres](/addons/postgres), [Managed Object Storage](/addons/storage) or another service for data; see [storage and recovery](/platform/storage-and-recovery).
+- **Files:** files written outside an attached volume are lost on the next deploy. To keep files across restarts and deploys, attach a volume, one per service (1 to 100 GB, mounted at `/data` unless you pass `--mount-path`): `lizard volume create data --service web`. A service with a volume stops its old pod before it starts the new one, so each deploy and restart has a short gap. Keep records in [Managed Postgres](/addons/postgres) or [Managed Object Storage](/addons/storage); see [`lizard volume`](/cli/volume) and [storage and recovery](/platform/storage-and-recovery).
 
 ## Run a public image
 

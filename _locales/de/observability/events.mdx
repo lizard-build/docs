@@ -18,7 +18,7 @@ lizard events --service api       # a specific service
 lizard events --limit 5           # fewer entries (default and maximum 10)
 ```
 
-Jeder Eintrag ist eine Bereitstellung: Status, Auslöser, Commit und Anzahl der Neustarts. Die Tabelle Replicas darunter zeigt den aktuellen Zustand jedes Pods, sodass du "Was hat sich geändert, und ist es gesund?" auf einen Blick beantworten kannst.
+Jeder Eintrag ist eine Bereitstellung: Status, Auslöser, Commit und Anzahl der Neustarts. Eine Tabelle Replicas über den Bereitstellungen zeigt den aktuellen Zustand jedes Pods; sie fehlt, solange der Service keine Pods hat, zum Beispiel während er pausiert ist oder schläft. Zusammen beantworten sie die Frage "Was hat sich geändert, und ist es gesund?" Eine Änderung der Replikate durch `lizard scale` erzeugt keine Bereitstellung und taucht daher nicht auf.
 
 <span id="quick-status" />
 
@@ -33,7 +33,7 @@ lizard status        # the current directory's workspace/project/service link
 
 ## Dashboard
 
-Öffne einen Service im Dashboard (`lizard open`), um seinen Bereitstellen-Verlauf zu sehen. Klicke auf eine Bereitstellung, um ihre Build-Logs, den Commit und Crash-Events zu sehen. Das Service-Panel zeigt die laufenden und gewünschten Replikate.
+Öffne einen Service im Dashboard (`lizard open`), um seinen Bereitstellen-Verlauf zu sehen. Jede Zeile einer Bereitstellung zeigt ihren Branch und ihre Commit-Nachricht; klicke auf eine, um ihre Build-Logs und Neustarts zu sehen. Das Service-Panel zeigt die laufenden und gewünschten Replikate.
 
 <span id="see-also" />
 

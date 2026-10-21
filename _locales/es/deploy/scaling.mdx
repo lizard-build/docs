@@ -1,13 +1,13 @@
 ---
 title: "Escalar un servicio: réplicas, CPU y memoria"
-description: "Añade réplicas o aumenta la CPU y la memoria de un servicio, y amplía el almacenamiento de los addons. Rangos permitidos, comportamiento del despliegue y cómo verificar un cambio."
+description: "Añade réplicas o aumenta la CPU y la memoria de un servicio, amplía el almacenamiento de los addons, o deja que un servicio duerma cuando está inactivo o ponlo en pausa. Rangos permitidos y cómo verificar un cambio."
 ---
 
 <span id="scaling" />
 
 # Escalado
 
-Escala un servicio horizontalmente (más réplicas) o verticalmente (más CPU/memoria) con `lizard scale`. El almacenamiento de addons se amplía de la misma forma.
+Usa `lizard scale` para añadir réplicas a un servicio, aumentar la CPU o la memoria, o ampliar el almacenamiento de los addons. Para escalar un servicio a cero, deja que [duerma cuando está inactivo](#sleep-when-idle) o [ponlo en pausa](#pause-a-service).
 
 <span id="scale-a-service" />
 
@@ -59,16 +59,44 @@ Los volúmenes de datos de addons **solo pueden crecer**: puedes aumentar el alm
 lizard scale --service postgres --storage 8192
 ```
 
+<span id="sleep-when-idle" />
+
+## Dormir cuando está inactivo
+
+`lizard sleep --on` hace que un servicio web duerma cuando no recibe tráfico y despierte con la siguiente solicitud en un segundo, más o menos. Por defecto duerme tras 10 minutos sin tráfico; fija de 5 a 1440 minutos con `--idle`. Activarlo reinicia el servicio una vez. Solo funciona en un servicio con puerto y una sola réplica, así que no sirve para workers. Managed Postgres y Managed Redis también pueden dormir.
+
+```bash
+lizard sleep --on --idle 30 --service api
+lizard sleep --off --service api    # always on
+```
+
+Consulta [`lizard sleep`](/cli/sleep).
+
+<span id="pause-a-service" />
+
+## Pausar un servicio
+
+`lizard pause` detiene un servicio o una base de datos sin eliminarlo: lo escala a cero y conserva su URL, su contraseña, su configuración y sus datos. `lizard resume` lo vuelve a arrancar. Un servicio de GitHub en pausa ignora los push hasta que lo reanudes.
+
+```bash
+lizard pause api
+lizard resume api
+```
+
+Para pausar todos los servicios de un proyecto o de un workspace, usa `lizard project pause` o `lizard workspace pause`. Consulta [`lizard pause`](/cli/pause).
+
 <span id="verifying" />
 
 ## Verificación
 
 ```bash
 lizard ps                 # replica status + URL
-lizard events             # per-replica deploy/scale history
+lizard events             # deploy history + current replicas
 lizard metrics            # live CPU / memory / network / disk
-lizard metrics --cost     # include cost
+lizard metrics --cost     # cost instead of metrics
 ```
+
+Un cambio de réplicas no crea ningún despliegue, así que `lizard events` no lo muestra; consulta la tabla Replicas.
 
 <span id="see-also" />
 

@@ -13,7 +13,7 @@ ${{<name>.<KEY>}}
 ```
 
 - `<name>` — the target service or addon name (the one shown in the dashboard and used in `lizard add -n`).
-- `<KEY>` — a key in the target's merged environment.
+- `<KEY>` — a key the target exposes. An addon exposes its connection values. A service exposes its project and service variables and secrets, plus its `LIZARD_*` and `PORT` values. It does not expose the `DATABASE_URL` or `REDIS_URL` that Lizard injects from addons; reference the addon for those.
 
 Use them anywhere a value is accepted — most commonly in a secret:
 
@@ -23,8 +23,8 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 
 ## How they resolve
 
-- References resolve at **deploy time** against the target's merged environment.
-- They match the target's **current name**. Renaming the target breaks them; update every `${{oldname.KEY}}` after a rename.
+- References resolve at **deploy time** against the values the target exposes.
+- References you set in a secret (`lizard secrets set` or the dashboard) match the target's **current name**. Renaming the target breaks them; update every `${{oldname.KEY}}` after a rename. References seeded with `lizard add -v` follow the target through a rename.
 - A reference to a **missing** target or key resolves to an **empty string** — it does *not* fail the deploy. The build log prints a warning for each empty reference with the reason.
 - Only **circular** references throw an error.
 
@@ -59,7 +59,7 @@ lizard secrets set CACHE_URL='${{redis-winter-otter.REDIS_URL}}' --service api
 
 ## Why not just use `--global`?
 
-Putting a shared value in project (`--global`) scope exposes it to *every* service, including ones that don't need it. A reference keeps the value in one place and binds it only where you set it. Note that every running Postgres and Redis addon's `DATABASE_URL` and `REDIS_URL` reach every service anyway, at the lowest precedence; a reference overrides them. See [Secret scoping](/variables#scoping).
+Putting a shared value in project (`--global`) scope exposes it to *every* service, including ones that don't need it. A reference keeps the value in one place and binds it only where you set it. Note that each service already gets one `DATABASE_URL` and one `REDIS_URL` from the project's Postgres and Redis addons, at the lowest precedence; with several addons of one type, which one is not defined. A reference overrides them. See [Secret scoping](/variables#scoping).
 
 ## See also
 

@@ -1,0 +1,90 @@
+---
+description: "lizard sleep (alias serverless) lets an app, Managed Postgres or Managed Redis sleep when idle and wake on the next request in about a second, with its memory saved."
+---
+
+# lizard sleep
+
+Let a service sleep when it gets no traffic and wake on the next request (alias `lizard serverless`). It sleeps with its memory saved, so it wakes where it left off, usually in about a second.
+
+## Usage
+
+```bash
+lizard sleep [service] [flags]
+```
+
+Without `--on` or `--off`, `sleep` shows the setting and how many times the service has slept and woken. Without a `service` argument, it uses the service linked to the folder. In the dashboard, the same setting is the **Serverless** switch in the service's settings.
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-s, --service <name>` | Service name or ID (same as the `service` argument) |
+| `-p, --project <id>` | Project name, slug, or ID |
+| `--on` | Sleep when idle. The service restarts once to apply this |
+| `--off` | Always on. A sleeping service wakes |
+| `--idle <minutes>` | Minutes with no traffic before it sleeps, `5` to `1440`. `--on` without it sets `10`. On its own, it changes the idle time of a service that already sleeps |
+
+## How it works
+
+After the idle time with no traffic, Lizard saves the service's memory and processes and stops its container. The first HTTP request to an app, or the first client connection to a database, wakes it: Lizard restores the saved state, usually in about a second, and then passes the request on. If Lizard can't restore the saved state, the service starts fresh instead, which takes as long as a normal start.
+
+A service only sleeps when nothing is connected:
+
+- An app sleeps when it has had no requests for the idle time and no connection to it is open. An open WebSocket keeps it awake.
+- A database sleeps when no client has been connected for the idle time. A connection pool that holds connections open keeps it awake.
+
+A [paused](/cli/pause) service neither sleeps nor wakes.
+
+## Which services can sleep
+
+- Apps with one replica and a port. Workers (port `0`) and apps scaled to more than one replica can't sleep.
+- Managed Postgres 14 or newer, and Managed Redis.
+
+An app on an older runtime needs a redeploy first; the command tells you when. Any member of the project can change the setting.
+
+## Billing
+
+While a service sleeps, it uses no CPU and almost no memory, so its compute charges nearly stop until the next wake. Lizard can still bill the data it keeps as storage; see [Billing](/platform/billing).
+
+## JSON output
+
+With `--json`, `sleep` prints `id`, `name`, `kind` (`app` or `addon`), `enabled`, `idleMinutes`, `sleeps`, `wakes`, `lastSleptAt` and `lastWokeAt` (Unix time in milliseconds, or `null`) and `lastError`. After `--on`, `--off` or `--idle`, `restarted` says whether the service restarted to apply the change.
+
+## Examples
+
+### Show the setting
+
+```bash
+lizard sleep api
+```
+
+### Sleep after 30 idle minutes
+
+```bash
+lizard sleep api --on --idle 30
+```
+
+### Let a database sleep
+
+```bash
+lizard sleep --service my-db --on
+```
+
+### Change the idle time
+
+```bash
+lizard sleep api --idle 60
+```
+
+### Keep a service always on
+
+```bash
+lizard sleep api --off
+```
+
+## See also
+
+- [lizard pause](/cli/pause) — stop a service until you resume it
+- [lizard scale](/cli/scale) — replicas, CPU and memory
+- [Managed Postgres](/addons/postgres) and [Managed Redis](/addons/redis)
+- [Billing](/platform/billing) — rates for compute and storage

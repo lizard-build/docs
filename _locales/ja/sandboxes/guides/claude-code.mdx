@@ -9,7 +9,7 @@ description: "Lizard の sandbox で Claude Code を実行: lizard agents で Cl
 
 Lizard (lizard.build) の sandbox で Claude Code を実行するには、まず認証情報を一度だけ接続します。`lizard agents add claude`（`claude setup-token` で発行したトークン）または `lizard agents add anthropic`（API キー）を使います。次に `claude` テンプレートから sandbox を作成し、`lizard sandbox prompt <id> --agent claude "…"` で作業を送ります。Claude Code は専用の Linux マシン上で `--dangerously-skip-permissions` 付きで動きます。確認を求めずにファイルを編集し、コマンドを実行しますが、お使いのコンピューターにはアクセスできません。
 
-**テスト状況:** このページのコマンドと動作は、2026-10-12 時点の Lizard CLI 4.0.42 とプラットフォームのエージェントランナーに基づいています。このページのために、実際の sandbox でこの手順を最初から最後まで実行してはいません。`git bundle` とパッチの手順はローカルで確認しました。
+**テスト状況:** このページのコマンドと動作は、2026-10-12 時点の Lizard CLI 4.0.42 とプラットフォームのエージェントランナーに基づいています。`--with-token` についての記述は Lizard CLI 4.0.65 に基づいています。このページのために、実際の sandbox でこの手順を最初から最後まで実行してはいません。`git bundle` とパッチの手順はローカルで確認しました。
 
 <span id="before-you-start" />
 
@@ -47,7 +47,7 @@ lizard agents status
 lizard sandbox create -t claude --timeout 3600000
 ```
 
-コマンドは `sb_abc123` のような sandbox ID を表示します。以降の手順のために変数に入れておきます: `SB=sb_abc123`。
+コマンドは `genuine-toddler-jasj` のような sandbox ID を表示します。以降の手順のために変数に入れておきます: `SB=genuine-toddler-jasj`。
 
 - `--timeout 3600000` で sandbox の有効期間を 1 時間にします。CLI の既定値は 5 分で、それを過ぎると Lizard は sandbox とそのファイルを、タスクの途中でも削除します。実行中の sandbox は `lizard sandbox timeout $SB 3600000` で延長できます。
 - `claude` テンプレートには Node.js 22、バージョンを固定した Claude Code、git、Python 3、ripgrep、curl、jq、unzip、Lizard CLI が入っています。Claude Code のバージョンは `lizard sandbox exec $SB -- claude --version` で確認できます。
@@ -100,7 +100,7 @@ lizard sandbox conversations $SB
 - **ファイル。** sandbox 内のすべてにアクセスでき、お使いのコンピューター上のものには一切アクセスできません。
 - **ネットワーク。** インターネットへの送信アクセスがあるため、パッケージの取得や API の呼び出しができます。sandbox の料金には、直近 30 日間で [アカウントあたり 2 TB](/platform/limits#sandbox-egress) までの送信トラフィックが含まれます。
 - **認証情報。** 実行中、トークンは Claude Code の環境に `CLAUDE_CODE_OAUTH_TOKEN` または `ANTHROPIC_API_KEY` として置かれ、Claude Code が実行するコマンドにも引き継がれます。サブスクリプションの場合、これは `claude setup-token` で発行した有効期間の長いトークンです。実行ごとに有効期間の短いコピーが渡されるのは ChatGPT のログインだけです。sandbox で動くコードはこのトークンを読めるものと考え、不要になったら `lizard agents remove claude` で削除してください。
-- **Lizard アカウント。** 既定ではアクセスできません。sandbox を `--with-token <key>` 付きで作成すると `liz_` キーがインストールされ、sandbox 内で `lizard` が使えるようになります。たとえば Claude が作ったものをデプロイする場合です。sandbox 内のどのプロセスもこのキーを読めるため、1 つのワークスペースまたはプロジェクトに範囲を絞ったキーを使ってください。[`lizard keys`](/cli/keys) を参照してください。
+- **Lizard アカウント。** 既定ではアクセスできません。sandbox を `--with-token` 付きで作成すると、sandbox 内の `lizard` がサインインします。たとえば Claude が作ったものをデプロイする場合です。自分のキーはリクエストを許可するためだけに使い、sandbox には sandbox のプロジェクトに限定され sandbox と一緒に削除される新しいキーが渡されます。そのため Claude が変更できるのはそのプロジェクトだけで、アカウントのほかの部分には触れません。[`lizard keys`](/cli/keys) を参照してください。
 
 <span id="get-the-changes-back" />
 

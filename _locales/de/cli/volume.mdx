@@ -4,7 +4,7 @@ description: "lizard volume erstellt, listet, ändert die Größe von und lösch
 
 # lizard volume
 
-Verwalte [Persistent Volumes](/sandboxes/volumes) für Sandboxes. Alias: `lizard vol`.
+Verwalte [Persistent Volumes](/sandboxes/volumes) für Sandboxes und Services. Alias: `lizard vol`.
 
 <span id="usage" />
 
@@ -17,7 +17,7 @@ lizard volume resize <volume> --size <gb> [flags]
 lizard volume rm <volume> [flags]
 ```
 
-Der Name eines Volumes ist sein Schlüssel innerhalb des Projekts. Jeder Befehl akzeptiert einen Namen oder eine ID sowie `-p, --project`, um ein anderes als das verknüpfte Projekt anzusprechen.
+Der Name eines Volumes ist sein Schlüssel innerhalb des Projekts. Jeder Befehl akzeptiert einen Namen oder eine ID sowie `-p, --project`, um ein anderes als das verknüpfte Projekt anzusprechen. In einem nicht verknüpften Ordner nutzen die Befehle das Standardprojekt deines Kontos.
 
 <span id="subcommands" />
 
@@ -25,7 +25,7 @@ Der Name eines Volumes ist sein Schlüssel innerhalb des Projekts. Jeder Befehl 
 
 ### `lizard volume list`
 
-Listet die Volumes des Projekts mit Größe, Status und der Sandbox auf, an die sie angehängt sind (Alias `ls`). `--json` enthält zusätzlich die generierten IDs.
+Listet die Volumes des Projekts mit Größe, Status und der Sandbox auf, an die sie angehängt sind (Alias `ls`). `--json` enthält zusätzlich die generierten IDs. `-s, --service <name>` zeigt stattdessen das Volume, das an diesen Service angehängt ist.
 
 ### `lizard volume create <name>`
 
@@ -33,13 +33,17 @@ Erstellt ein Volume. Namen bestehen aus Kleinbuchstaben, Ziffern und Bindestrich
 
 | Flag | Beschreibung |
 |------|-------------|
-| `--size <gb>` | Größe in ganzen GB, 1 bis 50 (Standard 5). Die CLI liest zuerst die aktuellen Limits des Servers |
+| `--size <gb>` | Größe in ganzen GB (Standard 5); ein Sandbox-Volume erlaubt 1 bis 50. Die CLI liest zuerst die aktuellen Limits des Servers |
 | `--region <code>` | Region für das Volume; sie muss zur Sandbox passen, die es einbindet |
+| `-s, --service <name>` | Erstellt das Volume und hängt es stattdessen an diesen Service an. Ein Service hat höchstens ein Volume, und dessen Dateien überstehen Neustarts und Redeploys |
+| `--mount-path <path>` | Mit `--service`: wo der Service das Volume sieht (Standard `/data`) |
 | `-p, --project <id>` | Projektname, Slug oder ID |
+
+Die Sandbox-Volumes eines Workspaces dürfen zusammen höchstens 200 GB zugewiesene Größe haben. Ein `create` oder `resize` darüber hinaus schlägt mit HTTP 403 und dem Code `volume_quota_exceeded` fehl.
 
 ### `lizard volume resize <volume> --size <gb>`
 
-Ändert die Größe eines Volumes direkt. Eine angehängte Sandbox läuft weiter und sieht die neue Größe. Ein Firecracker-Volume (der Standard) kann nur wachsen. Ein Pod-basiertes Volume kann auch verkleinert werden, wenn mindestens 10 % der neuen Größe frei bleiben.
+Vergrößert ein Volume direkt; dabei werden keine Daten kopiert. Eine Sandbox, an die das Volume angehängt ist, läuft weiter, sieht aber noch die alte Größe. Die nächste Sandbox, die das Volume anhängt, sieht die neue Größe. Um sie sofort zu nutzen, lösche die Sandbox und erstelle eine neue mit `--volume`. Ein Volume kann nur wachsen. Manche Volumes, die vor Oktober 2026 erstellt wurden, lassen sich auch verkleinern, wenn mindestens 10 % der neuen Größe frei bleiben.
 
 ### `lizard volume rm <volume>`
 
@@ -49,7 +53,7 @@ Löscht ein Volume und seine Daten (Alias `delete`). Der Befehl schlägt fehl, s
 |------|-------------|
 | `-y, --yes` | Bestätigung überspringen |
 
-Der Volume-Speicher kostet 0,14 $ pro GB und Monat für belegten Speicherplatz. Siehe [Größe und Preis](/sandboxes/volumes#size-and-price).
+Der Speicher von Sandbox-Volumes kostet 0,14 $ pro GB und Monat für belegten Speicherplatz. Siehe [Größe und Preis](/sandboxes/volumes#size-and-price).
 
 <span id="examples" />
 

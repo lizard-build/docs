@@ -9,7 +9,7 @@ description: "Hoste eine Go-App auf Lizard: lizardpack findet go.mod, baut mit d
 
 Um eine Go-App auf Lizard (lizard.build) bereitzustellen, lade ein Modul mit einer `go.mod`-Datei hoch oder pushe es. lizardpack baut es mit der Go-Version aus der `go`-Zeile, kompiliert ein statisches Binary (`CGO_ENABLED=0`) und führt es unter Alpine Linux aus. Der Service-Port ist `8080`, und Lizard übergibt ihn deinem Prozess in `PORT`. Lies also `PORT` aus und lausche auf allen Interfaces.
 
-**Teststatus:** Die Beispiel-App unten wird lokal mit Go 1.24 gebaut und läuft, und ihren Build-Plan haben wir mit lizardpack geprüft, dem Build-Planer, den Lizard ausführt. Mit dieser Anleitung haben wir sie noch nicht vollständig bereitgestellt.
+**Teststatus:** Die Beispiel-App unten wird lokal mit Go 1.27 gebaut und läuft, und ihren Build-Plan haben wir mit lizardpack geprüft, dem Build-Planer, den Lizard ausführt. Mit dieser Anleitung haben wir sie noch nicht vollständig bereitgestellt.
 
 <span id="before-you-start" />
 
@@ -27,7 +27,7 @@ Um eine Go-App auf Lizard (lizard.build) bereitzustellen, lade ein Modul mit ein
 ```text
 module example.com/hello
 
-go 1.24
+go 1.27
 ```
 
 `main.go`:
@@ -76,16 +76,16 @@ curl http://localhost:8080/healthz
 | Schritt | Was passiert |
 |---|---|
 | Erkennung | `go.mod`, `go.work` oder eine beliebige `.go`-Datei. lizardpack prüft Go vor Node.js und Python. |
-| Go-Version | Die `go`-Zeile in `go.mod`, nur Haupt- und Nebenversion: `go 1.24.3` baut auf `golang:1.24-alpine`. Ohne `go.mod` Go 1.24. |
+| Go-Version | Die `go`-Zeile in `go.mod`, nur Haupt- und Nebenversion: `go 1.27.3` baut auf `golang:1.27-alpine`. Ohne `go.mod` Go 1.24, das keine Sicherheitsupdates mehr bekommt. |
 | Build | `go mod download`, danach `CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w' -o /app/server <package>` |
-| Main-Paket | Das Stammverzeichnis; `./cmd`, wenn `cmd/main.go` existiert; sonst das alphabetisch erste `cmd/<name>/main.go` |
+| Main-Paket | `./cmd`, wenn `cmd/main.go` existiert; sonst das alphabetisch erste `cmd/<name>/main.go`; sonst das Stammverzeichnis. Eine `main.go` in `cmd/` oder `cmd/<name>/` hat Vorrang vor einer `main.go` im Stammverzeichnis. |
 | Laufzeit | `alpine:3.19` mit `ca-certificates` und `tzdata`. lizardpack kopiert das ganze Quellverzeichnis neben das Binary nach `/app`, damit relative Pfade wie `templates/` und `static/` weiter funktionieren. |
 | Start und Port | `/app/server` auf Port `8080` |
 
 Das generierte Dockerfile:
 
 ```dockerfile
-FROM golang:1.24-alpine AS build
+FROM golang:1.27-alpine AS build
 WORKDIR /app
 COPY go.mod go.sum* ./
 RUN go mod download
@@ -100,7 +100,7 @@ EXPOSE 8080
 CMD ["/app/server"]
 ```
 
-Lass Build- und Startbefehl des Service leer, um dieses Image zu bekommen. Ist einer davon gesetzt, schreibt Lizard aus diesen Befehlen ein anderes Dockerfile und ignoriert die `go`-Zeile: Ein Befehl `go build …` baut dann auf Go 1.24. Wenn du jeden Schritt selbst steuern willst, committe ein eigenes `Dockerfile`; siehe [Einen Docker-Container aus einem Dockerfile deployen](/deploy/dockerfile).
+Lass Build- und Startbefehl des Service leer, um dieses Image zu bekommen. Ist einer davon gesetzt, schreibt Lizard aus diesen Befehlen ein anderes Dockerfile und ignoriert die `go`-Zeile: Ein Befehl `go build …` baut dann auf Go 1.24, das keine Sicherheitsupdates mehr bekommt. Wenn du jeden Schritt selbst steuern willst, committe ein eigenes `Dockerfile`; siehe [Einen Docker-Container aus einem Dockerfile deployen](/deploy/dockerfile).
 
 <span id="deploy" />
 
@@ -162,10 +162,10 @@ Rufe `/healthz` unter der URL auf, die `lizard up` ausgegeben hat, und danach ei
 | Symptom | Lösung |
 |---|---|
 | `no Go files in /app` | Das Paket `main` liegt weder im Stammverzeichnis noch unter `cmd/`. Verschiebe es oder füge ein Dockerfile hinzu. |
-| Das falsche Binary startet | Bei mehreren `cmd/<name>/main.go` baut lizardpack den alphabetisch ersten Namen. Füge ein Dockerfile hinzu, das das gewünschte Binary baut. |
+| Das falsche Binary startet | Eine `main.go` in `cmd/` oder `cmd/<name>/` hat Vorrang vor einer `main.go` im Stammverzeichnis, und bei mehreren `cmd/<name>/main.go` baut lizardpack den alphabetisch ersten Namen. Füge ein Dockerfile hinzu, das das gewünschte Binary baut. |
 | SQLite schlägt mit `CGO_ENABLED=0` fehl | Der Build schaltet cgo ab, daher kann `mattn/go-sqlite3` nicht funktionieren. Nutze einen reinen Go-Treiber oder besser [Managed Postgres](/addons/postgres): Dateien im Container gehen bei jedem Deployment verloren. |
 | Das Deployment wird nie healthy | Der Prozess muss auf allen Interfaces auf `PORT` (oder `8080`) lauschen. Siehe [Service wird nie healthy](/deploy/troubleshooting/service-never-healthy). |
-| Du brauchst eine neuere Go-Version | Ändere die `go`-Zeile, zum Beispiel mit `go mod edit -go=1.25`, und stelle erneut bereit. Siehe [Laufzeitversionen](/deploy/runtime-versions). |
+| Du brauchst eine neuere Go-Version | Ändere die `go`-Zeile, zum Beispiel mit `go mod edit -go=1.27`, und stelle erneut bereit. Siehe [Laufzeitversionen](/deploy/runtime-versions). |
 
 Ein Go-Prozess, der kein HTTP ausliefert, etwa ein Queue-Consumer, läuft als [Hintergrund-Worker](/deploy/workers) mit `--port 0`.
 

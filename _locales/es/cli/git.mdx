@@ -4,7 +4,9 @@ description: "lizard git conecta la GitHub App, informa el estado del repositori
 
 # lizard git
 
-Administra la conexión de GitHub para el proyecto vinculado y sus servicios.
+Conecta tu cuenta de Lizard a GitHub, consulta desde qué repositorios se despliegan los servicios de un proyecto y cambia un servicio a otra rama. La conexión de la GitHub App pertenece a tu cuenta de Lizard, no a un proyecto concreto.
+
+Los demás subcomandos de `lizard git` pertenecen a Lizard Git, que esta página no cubre.
 
 <span id="usage" />
 
@@ -12,9 +14,11 @@ Administra la conexión de GitHub para el proyecto vinculado y sus servicios.
 
 ```bash
 lizard git connect
-lizard git status
+lizard git status [flags]
 lizard git checkout <service> <branch> [flags]
 ```
+
+Sin `-p`, `status` y `checkout` usan el proyecto vinculado o, en una carpeta sin vincular, tu proyecto predeterminado.
 
 <span id="subcommands" />
 
@@ -22,11 +26,15 @@ lizard git checkout <service> <branch> [flags]
 
 ### `lizard git connect`
 
-Conecta la GitHub App para acceder a repositorios privados.
+Conecta la GitHub App para acceder a repositorios privados. El comando abre GitHub para instalar la app, espera a que pulses Enter y luego comprueba la conexión. Si la app ya está conectada, lo indica. Con `--json` o sin terminal, imprime en su lugar la URL de instalación: `{ installed: false, installUrl }`.
 
 ### `lizard git status`
 
-Muestra la conexión de GitHub y el estado del repositorio.
+Muestra si la GitHub App está conectada y desde qué repositorio y rama se despliega cada servicio del proyecto.
+
+| Bandera | Descripción |
+|------|-------------|
+| `-p, --project <id>` | Nombre, slug o ID del proyecto |
 
 ### `lizard git checkout <service> <branch>`
 
@@ -35,6 +43,7 @@ Cambia un servicio a una rama diferente y vuelve a desplegarlo.
 | Bandera | Descripción |
 |------|-------------|
 | `--detach` | Omitir la transmisión de logs |
+| `-p, --project <id>` | Nombre, slug o ID del proyecto |
 
 <span id="examples" />
 

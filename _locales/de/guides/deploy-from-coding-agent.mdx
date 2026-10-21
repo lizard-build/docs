@@ -59,11 +59,11 @@ Damit wird die JavaScript-Syntax geprüft. Die Prüfungen für Datenbank und öf
 lizard init --name agent-example --json
 lizard add --service api --json
 lizard add postgres --json
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api --json
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api --json
 lizard up --service api --port 3000 --json
 ```
 
-Verwende den tatsächlichen Namen der Datenbank, falls er nicht `postgres` ist. Lass die Referenz in Anführungszeichen, damit die lokale Shell sie nicht expandiert. Konfiguriere sie vor der ersten Bereitstellung. Melde dich nur mit `lizard login` an, wenn ein Befehl meldet, dass eine Authentifizierung erforderlich ist.
+Verwende den tatsächlichen Namen der Datenbank, falls er nicht `postgres` ist. `DATABASE_PRIVATE_URL` erreicht die Datenbank über das private Netzwerk des Projekts und funktioniert für Services im selben Projekt und in derselben Region; siehe den [Postgres-Verbindungsstring](/addons/postgres#postgres-connection-string). Lass die Referenz in Anführungszeichen, damit die lokale Shell sie nicht expandiert. Konfiguriere sie vor der ersten Bereitstellung. Melde dich nur mit `lizard login` an, wenn ein Befehl meldet, dass eine Authentifizierung erforderlich ist.
 
 Der Upload-Pfad ist für dieses kopierte Beispiel beabsichtigt. Für eine Anwendung, die bereits in GitHub liegt, verwende stattdessen den nächsten Abschnitt. Ein fehlgeschlagener Build endet mit Code 1; prüfe trotzdem das Ereignis `failed`/`deployed` im Terminal und verifiziere die Anwendung. Siehe [bekannte Probleme](/platform/known-issues).
 
@@ -83,7 +83,7 @@ Verwende ein verknüpftes Testprojekt oder erstelle eines mit `lizard init --nam
 
 ```bash
 lizard add --repo YOUR_ORG/YOUR_REPO --name api-git --no-deploy --json
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api-git --json
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api-git --json
 ```
 
 Stelle zuerst Managed Postgres bereit, wenn dieses Projekt es noch nicht hat. Diese Abfolge verwendet dasselbe Node.js-Beispiel wie oben. Für ein Repository mit dieser App in einem Unterverzeichnis oder auf einem anderen Branch konfiguriere es vor der Bereitstellung:

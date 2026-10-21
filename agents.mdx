@@ -4,7 +4,7 @@ description: "Let Claude Code, Codex or Cursor deploy on Lizard: install Lizard 
 
 # Coding agents
 
-Claude Code, Codex, Cursor and other AI coding agents deploy and manage apps on Lizard through Lizard CLI. Install Lizard Skill once with `npx skills add lizard-build/skill -g`; the agent then loads the guide built into the CLI with `lizard skills get core --json` and reads any command's flags with `--help --json`. Clients that speak MCP, such as ChatGPT and Claude, can use [Lizard MCP](#lizard-mcp) instead. For a full deploy run from an agent, see [Deploy from Claude Code, Codex or Cursor](/guides/deploy-from-coding-agent).
+Claude Code, Codex, Cursor and other AI coding agents create sandboxes, deploy apps and manage them on Lizard through Lizard CLI. Install Lizard Skill once with `npx skills add lizard-build/skill -g`; the agent then loads the guide built into the CLI with `lizard skills get core --json` and reads any command's flags with `--help --json`. Clients that speak MCP, such as ChatGPT and Claude, can use [Lizard MCP](#lizard-mcp) instead. For a full deploy run from an agent, see [Deploy from Claude Code, Codex or Cursor](/guides/deploy-from-coding-agent).
 
 ## The embedded skill
 
@@ -14,12 +14,14 @@ The CLI includes a usage guide for the installed version. An agent reads it with
 lizard skills get core --json
 ```
 
-This returns `{ name, frontmatter, content, … }`: `content` is the complete guide (build pipeline, env precedence, addons, discovery, exit codes). Related subcommands:
+This returns `{ name, frontmatter, content, references, … }`: `content` is the core guide (sandboxes, deploys, databases, secrets, discovery, exit codes), and `references` lists the in-depth guides for deploys, sandboxes and Lizard SDK. Related subcommands:
 
 ```bash
-lizard skills list        # available embedded skills
-lizard skills get core    # the core guide
-lizard skills path        # where skills are stored
+lizard skills list                     # available embedded skills
+lizard skills get core                 # the core guide
+lizard skills get core --ref deploys   # one reference: deploys, sandboxes or sdk
+lizard skills get core --full          # the guide plus every reference
+lizard skills path                     # where skills are stored
 ```
 
 Because the guide is bundled with the binary, `lizard upgrade` updates the agent's instructions too.
@@ -39,11 +41,11 @@ See [JSON & Automation](/cli/json).
 
 A typical agent flow:
 
-1. **Load the guide:** `lizard skills get core --json` → read `content`.
+1. **Load the guide:** `lizard skills get core --json` → read `content`, then the reference the task needs (`--ref sandboxes`, `deploys` or `sdk`).
 2. **Check auth optimistically:** run the user's task. On exit code `2` (`NOT_AUTHENTICATED`), the error's `body.login` carries the sign-in links: ask the user whether they sign in with GitHub or Google, hand them that link from `authUrls`, then retry once the browser says "CLI authorized". [`lizard login --json`](/cli/login#output-for-agents) prints the same links, and after sign-in it reports the plan in `account.state`.
 3. **Start the trial if asked:** a new account has no plan, so its first create fails with HTTP 402 (`code: "PAYMENT_REQUIRED"`, exit code `1`). Ask the user first. If they agree, run `lizard billing start --json`, hand the Checkout `url` to the user, then retry once they have added a card.
-4. **Resolve context before mutating:** `lizard status` (cwd link) and `lizard ps --json` (services).
-5. **Act** using the guide: `add`, `up`, `secrets`, `domain`, etc., always with `--json`.
+4. **Resolve context before mutating:** `lizard status` (cwd link) and `lizard ps --json` (services). In a folder that isn't linked, `up`, `add`, `sandbox create` and other project commands use the account's default project.
+5. **Act** using the guide: `sandbox create`, `add`, `up`, `secrets`, `domain`, etc., always with `--json`.
 
 If the `lizard` binary isn't present, install it first. On macOS or Linux, use the install script:
 
@@ -87,7 +89,7 @@ To let Claude Code or ChatGPT edit the page you have open in Chrome, use [Lizard
 
 ## Lizard MCP
 
-Lizard MCP lets ChatGPT, Claude and other MCP clients manage your Lizard projects: create services and addons, redeploy, read logs and metrics, set secrets, scale replicas and attach domains. It is a hosted server that speaks Streamable HTTP at:
+Lizard MCP lets ChatGPT, Claude and other MCP clients manage your Lizard projects: create sandboxes, run commands and read or write files in them; create services and addons, redeploy, [pause and resume](/cli/pause) a service, project or workspace, let a service [sleep when idle](/cli/sleep), read logs and metrics, set secrets, scale replicas and attach domains. It is a hosted server that speaks Streamable HTTP at:
 
 ```text
 https://employ-woman-g1q2.us-east-1.onlizard.com/mcp

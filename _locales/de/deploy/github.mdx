@@ -17,7 +17,7 @@ Verbinde ein GitHub-Repository, und Lizard (lizard.build) baut und deployt deine
 lizard add -r your-org/your-app
 ```
 
-Dadurch wird ein `github`-source-Service erstellt, das Repo geklont, der Stack automatisch erkannt ([lizardpack](/concepts/build-pipeline)), gebaut und eine Live-URL zurückgegeben. Nützliche Flags:
+Das erstellt einen `github`-source-Service und startet den ersten Build im Hintergrund: Lizard klont das Repo und erkennt den Stack ([lizardpack](/concepts/build-pipeline)). Der Befehl gibt keine URL aus. Verfolge den Build mit `lizard logs --build --service <name>`; sobald er live ist, zeigt `lizard ps` die URL. Nützliche Flags:
 
 | Flag | Zweck |
 |------|---------|
@@ -53,9 +53,9 @@ lizard service set api \
   --set branch=main
 ```
 
-Das Ändern eines Build-Felds löst bei einem laufenden Service automatisch einen Rebuild aus. Hänge danach **kein** `redeploy` an, sonst [stellst du zwei Builds in die Warteschlange](/deploy/troubleshooting/double-build). Ein abgestürzter oder noch nie bereitgestellter Service braucht `lizard redeploy`.
+Das Ändern eines Build-Felds baut einen laufenden Service neu. Ein `redeploy` danach [bricht diesen Build ab und startet einen neuen](/deploy/troubleshooting/double-build). Ein abgestürzter oder noch nie bereitgestellter Service braucht `lizard redeploy`.
 
-> **Hinweis:** `lizard up` erzwingt immer `sourceType=upload`. Verwende es nicht, um einen Git-gestützten Service zu aktualisieren — pushe zum Remote oder verwende stattdessen `lizard redeploy`.
+> **Hinweis:** `lizard up` erzwingt immer `sourceType=upload`. Verwende es nicht, um einen Git-gestützten Service zu aktualisieren — pushe zum Remote oder verwende stattdessen `lizard redeploy`. In einem Ordner ohne verknüpften Service wählt `up` den Service, der nach dem Ordner oder der `package.json` benannt ist; in einem Klon des Repos kann es deinen GitHub-Service so auf einen Upload umstellen.
 
 <span id="auto-redeploy-on-push" />
 
@@ -69,6 +69,8 @@ Sobald `repoUrl` gesetzt ist, lösen Pushes zum passenden `branch` über den Git
 ```bash
 lizard service set api --set watchPatterns='apps/api/**,packages/**'
 ```
+
+Damit Pushes nicht mehr deployen, schalte **Auto-deploy** in den Einstellungen des Service im Dashboard aus. Ein [pausierter](/cli/pause) Service ignoriert Pushes ebenfalls, bis du ihn fortsetzt.
 
 <span id="switch-branches" />
 

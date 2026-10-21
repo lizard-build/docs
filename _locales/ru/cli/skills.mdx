@@ -12,8 +12,8 @@ description: "lizard skills считывает руководства агент
 
 ```bash
 lizard skills list
-lizard skills get core
-lizard skills path
+lizard skills get core [flags]
+lizard skills path [name] [flags]
 ```
 
 <span id="subcommands" />
@@ -22,15 +22,22 @@ lizard skills path
 
 ### `lizard skills list`
 
-Выводит список доступных встроенных навыков.
+Выводит список доступных встроенных навыков с описаниями и справочниками.
 
 ### `lizard skills get core`
 
-Читает основное руководство — авторитетное руководство по использованию платформы, версионируемое вместе с CLI. С флагом `--json` возвращает `{ name, path, frontmatter, content }`, где `content` — это полное руководство (конвейер сборки, приоритет переменных окружения, аддоны, обнаружение, коды выхода).
+Читает основное руководство: обзор платформы для агентов, версионируемый вместе с CLI. Оно охватывает sandboxes, развёртывания, базы данных, секреты, домены, логи и коды выхода. Подробности вынесены в три справочника: `deploys`, `sandboxes` и `sdk`.
+
+С флагом `--json` возвращает `{ name, path, frontmatter, content, references }`. `content` — основное руководство, а `references` перечисляет для каждого справочника `name`, `path` и `command`, которая его выводит.
+
+| Флаг | Описание |
+|------|-------------|
+| `--ref <name>` | Вывести вместо руководства один справочник: `deploys`, `sandboxes` или `sdk`. С `--json` возвращает `{ name, ref, path, content }` |
+| `--full` | Добавить все справочники после основного руководства |
 
 ### `lizard skills path [name]`
 
-Выводит, откуда берётся навык. Навыки встроены в CLI, поэтому команда выводит `embedded://skills`, если только `LIZARD_SKILLS_DIR` не указывает CLI на каталог на диске.
+Выводит, откуда берётся навык. Навыки встроены в CLI, поэтому `lizard skills path` выводит `embedded://skills`, а `lizard skills path core` — `embedded://skills/core/SKILL.md`, если только `LIZARD_SKILLS_DIR` не указывает CLI на каталог на диске. `--ref <name>` выводит путь к одному справочнику.
 
 <span id="examples" />
 
@@ -42,6 +49,22 @@ lizard skills path
 
 ```bash
 lizard skills get core --json
+```
+
+<span id="load-one-reference" />
+
+### Загрузка одного справочника
+
+```bash
+lizard skills get core --ref deploys --json
+```
+
+<span id="print-the-core-guide-with-every-reference" />
+
+### Вывод основного руководства со всеми справочниками
+
+```bash
+lizard skills get core --full
 ```
 
 <span id="list-available-embedded-skills" />

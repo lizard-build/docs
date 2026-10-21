@@ -1,10 +1,10 @@
 ---
-description: "lizard project muestra tus proyectos, crea uno nuevo o elimina uno, con ejemplos para cada subcomando."
+description: "lizard project lista, crea, pausa, reanuda y elimina proyectos, con lo que delete borra para siempre y ejemplos para cada subcomando."
 ---
 
 # lizard project
 
-Muestra, crea o elimina proyectos.
+Muestra, crea, pausa, reanuda o elimina proyectos.
 
 <span id="usage" />
 
@@ -13,6 +13,8 @@ Muestra, crea o elimina proyectos.
 ```bash
 lizard project list [flags]
 lizard project create <name> [flags]
+lizard project pause [project]
+lizard project resume [project]
 lizard project delete [project] [flags]
 ```
 
@@ -36,9 +38,21 @@ Crea un proyecto. No vincula el directorio actual; usa [`lizard init`](/cli/init
 |------|-------------|
 | `-w, --workspace <ws>` | Espacio de trabajo en el que crear el proyecto |
 
+### `lizard project pause [project]`
+
+Pausa todas las apps y bases de datos del proyecto, y sus sandboxes en ejecución. Los servicios conservan sus URL, contraseñas, ajustes y datos. Consulta [`lizard pause`](/cli/pause).
+
+### `lizard project resume [project]`
+
+Reanuda las apps y bases de datos que pausaste en el proyecto, y los sandboxes que pausó `project pause`.
+
 ### `lizard project delete [project]`
 
-Mueve un proyecto a la papelera (alias `rm`). Sus servicios se detienen. Puedes recuperarlo durante 3 días; pasado ese plazo, Lizard lo elimina definitivamente. Sin argumento, elimina el proyecto vinculado a este directorio.
+Mueve un proyecto a la papelera (alias `rm`). Solo el propietario del proyecto puede eliminarlo. Sus servicios y bases de datos se detienen; puedes restaurarlos desde la papelera en el panel durante 3 días, y pasado ese plazo Lizard los elimina definitivamente.
+
+> **Advertencia:** los sandboxes no tienen papelera. `project delete` elimina al instante los sandboxes del proyecto, sus volúmenes y sus snapshots, y no puedes recuperarlos.
+
+Sin argumento, `pause`, `resume` y `delete` usan el proyecto vinculado a este directorio o, en un directorio sin vincular, el proyecto predeterminado de tu cuenta. Indica el nombre del proyecto al eliminarlo, para saber cuál se elimina.
 
 | Flag | Descripción |
 |------|-------------|
@@ -68,6 +82,15 @@ lizard project create my-project
 lizard project create my-project --workspace my-team
 ```
 
+<span id="pause-and-resume-a-project" />
+
+### Pausar y reanudar un proyecto
+
+```bash
+lizard project pause my-project
+lizard project resume my-project
+```
+
 <span id="delete-a-project" />
 
 ### Eliminar un proyecto
@@ -82,4 +105,5 @@ lizard project delete my-project --yes
 
 - [lizard init](/cli/init) — crea o selecciona un proyecto y lo vincula al directorio actual
 - [lizard link](/cli/link) — asocia el directorio actual con un proyecto existente
+- [lizard pause](/cli/pause) — pausa y reanuda un servicio, un proyecto o un workspace
 - [Arquitectura](/concepts/architecture) — cómo se relacionan los proyectos con los espacios de trabajo y los servicios

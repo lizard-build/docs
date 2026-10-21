@@ -89,7 +89,7 @@ A healthy process alone does not prove the MCP handshake or streamed response wo
 
 This example does not keep user sessions or durable files in server memory. Add a database for lasting application state and check access per user before exposing private tools. For clients that require OAuth discovery or interactive login, add a supported OAuth provider instead of distributing this test token.
 
-An HTTP process may remain active between calls. Check [pricing](https://lizard.build/pricing), [limits](/platform/limits), and measured CPU/memory; an empty request queue does not imply no charges.
+The server keeps running between calls, and Lizard bills its measured CPU and memory while it runs. To cut idle cost, turn on [sleep when idle](/cli/sleep): `lizard sleep --on --service mcp`. Turning it on restarts the service once. After a set time without requests (10 minutes by default), the service sleeps; the next request wakes it, so that first call takes longer. Check [pricing](https://lizard.build/pricing) and [limits](/platform/limits).
 
 ## Next steps
 

@@ -46,10 +46,12 @@ Jede Datenbank hat zwei Verbindungszeichenfolgen. Beide verwenden den Benutzer `
 
 | Variable | Zugriff von | Format |
 |---|---|---|
-| `DATABASE_PRIVATE_URL` | Services im selben Projekt | `postgresql://postgres:<password>@<name>.lizard.internal:5432/postgres` |
-| `DATABASE_URL` | Ihrem Rechner, CI oder einem Service in einem anderen Projekt | `postgresql://postgres:<password>@<host>:<port>/postgres` |
+| `DATABASE_PRIVATE_URL` | Services im selben Projekt und in derselben Region | `postgresql://postgres:<password>@<name>.lizard.internal:5432/postgres` |
+| `DATABASE_URL` | Ihrem Rechner, CI oder einem Service in einem anderen Projekt oder einer anderen Region | `postgresql://postgres:<password>@<host>:<port>/postgres` |
 
-`<name>` ist der Name der Datenbank im Projekt, `postgres` für die erste. Lizard vergibt den öffentlichen Host und Port beim Erstellen der Datenbank. Lesen Sie sie daher aus `DATABASE_URL`, `PGHOST` und `PGPORT`, statt sie abzutippen. Die private Adresse funktioniert nur innerhalb des Projekts; siehe [privates Netzwerk](/networking#private-networking).
+`<name>` ist der Name, den die Datenbank beim Vergeben der privaten Adresse hatte, `postgres` für die erste; eine Umbenennung der Datenbank ändert ihn nicht. Lizard vergibt den öffentlichen Host und Port beim Erstellen der Datenbank. Lesen Sie die Hosts aus `DATABASE_PRIVATE_URL`, `DATABASE_URL`, `PGHOST` und `PGPORT`, statt sie abzutippen.
+
+Die private Adresse funktioniert nur von Services im selben Projekt und in derselben Region aus; siehe [privates Netzwerk](/networking#private-networking). Ein Service in einer anderen Region muss `DATABASE_URL` verwenden. Damit er die private Adresse nutzen kann, erstellen Sie die Datenbank in der Region des Service: `lizard add postgres --region <code>`.
 
 Die meisten Treiber übernehmen die Zeichenfolge unverändert:
 
@@ -87,7 +89,7 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service a
 lizard redeploy --service api
 ```
 
-Lizard löst die Referenz beim Deployment auf. Der Service erhält dabei die aktuellen Werte des Add-ons. Verwenden Sie stattdessen `DATABASE_URL` für Clients außerhalb des Projekts. Jeder Service im Projekt erhält außerdem die öffentliche `DATABASE_URL` des Add-ons mit der niedrigsten Priorität; eine explizite Referenz überschreibt sie.
+Lizard löst die Referenz beim Deployment auf. Der Service erhält dabei die aktuellen Werte des Add-ons. Verwenden Sie stattdessen `DATABASE_URL` für Clients außerhalb des Projekts oder in einer anderen Region. Jeder Service im Projekt erhält außerdem die öffentliche `DATABASE_URL` des Add-ons mit der niedrigsten Priorität; eine explizite Referenz überschreibt sie.
 
 Prüfen Sie die Verbindung von Ihrem Rechner aus, ohne die Verbindungszeichenfolge auszugeben:
 
@@ -129,6 +131,8 @@ Datenvolumes können nur vergrößert werden:
 ```bash
 lizard scale --service postgres --storage 8192
 ```
+
+Erlaubte Größen sind 512, 1024, 2048, 4096, 8192 oder 16384 MB. Beim Vergrößern stoppt Lizard die Datenbank, kopiert ihre Daten auf ein größeres Volume und startet sie wieder. Rechnen Sie also mit einer kurzen Ausfallzeit. Setzen Sie eine pausierte Datenbank vorher mit [`lizard resume`](/cli/pause) fort.
 
 <span id="multiple-databases" />
 

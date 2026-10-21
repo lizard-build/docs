@@ -19,6 +19,8 @@ lizard metrics --range 24h        # time window: 1h (default), 6h, 24h, 7d, 14d,
 lizard metrics --watch            # live-updating view
 ```
 
+`--range` se aplica a un solo servicio: el vinculado o el de `--service`. La vista general del proyecto (`--all`, o una carpeta sin servicio vinculado) solo muestra los valores actuales.
+
 <span id="include-cost" />
 
 ## Incluir costo
@@ -27,7 +29,7 @@ lizard metrics --watch            # live-updating view
 lizard metrics --cost
 ```
 
-Muestra una vista de costos en lugar de las métricas: el precio por hora de cada recurso en marcha, el uso del periodo de facturación actual (tráfico saliente incluido) y cuánto has usado este mes de los $19 incluidos en Pro. Cubre todo el proyecto, ignora `--service` y `--range`, y solo la ve el propietario del workspace.
+Muestra una vista de costos en lugar de las métricas: el precio por hora de cada recurso en marcha, el uso del periodo de facturación actual (tráfico saliente incluido) y cuánto has consumido este periodo del uso incluido en Pro (los $5 de la prueba durante sus 7 días y, después, los $19 incluidos cada mes). Cubre todo el proyecto, ignora `--service` y `--range`, y solo la ve el propietario del workspace.
 
 <span id="dashboard" />
 

@@ -16,11 +16,13 @@ Mit `lizard up` lädst du das aktuelle Verzeichnis direkt hoch, etwa wenn der Co
 lizard up
 ```
 
-- Lädt das aktuelle Verzeichnis als Tarball hoch. Innerhalb eines Git-Repositorys wird `.gitignore` beachtet (deaktivierbar mit `--no-gitignore`). Außerhalb von Git werden nur eine feste Liste von Build- und Abhängigkeitsordnern (`node_modules`, `.git`, `dist`, `.next`, `build`, `__pycache__`, `.venv`, `venv`, `.cache`, `coverage`, `.turbo`, `.vercel`) sowie `.DS_Store`, `*.pyc`, `*.pyo` und `*.log` übersprungen, sodass `.env`-Dateien hochgeladen werden. Führe zuvor `git init` aus oder lagere Secrets aus.
+- Lädt das aktuelle Verzeichnis als Tarball hoch. Innerhalb eines Git-Repositorys wird `.gitignore` beachtet. Außerhalb von Git oder mit `--no-gitignore` wird nur eine feste Liste von Build- und Abhängigkeitsordnern (`node_modules`, `.git`, `dist`, `.next`, `build`, `__pycache__`, `.venv`, `venv`, `.cache`, `coverage`, `.turbo`, `.vercel`) sowie `.DS_Store`, `*.pyc`, `*.pyo` und `*.log` übersprungen, sodass `.env`-Dateien hochgeladen werden. Führe zuvor `git init` aus oder lagere Secrets aus.
 - Erzwingt `sourceType=upload`.
 - Streamt Build-Logs über SSE und gibt nach Abschluss die Live-URL aus.
 
-Wenn das Verzeichnis noch nicht mit einem Projekt verknüpft ist, führt `up` zuerst `init` aus. In einem TTY ist das interaktiv; in einem non-TTY (CI) wird **nicht** stillschweigend ein Projekt erstellt — stattdessen gibt es einen Fehler und die Aufforderung, `lizard init --name <project>` auszuführen (oder `--project <name>` an `up` zu übergeben). Das schützt davor, dass ein Tippfehler ein leeres Projekt erzeugt.
+Wenn der Ordner noch nicht mit einem Projekt verknüpft ist, verknüpft `up` ihn mit dem Standardprojekt deines Kontos (dem ältesten Projekt in deinem persönlichen Workspace, bei neuen Konten `<username>'s Project`) und meldet das. Es fragt nicht nach, weder im Terminal noch in CI. Um in ein anderes Projekt zu deployen, führe zuerst `lizard init --name <project>` aus oder übergib `--project <name>`. `lizard init --force` verknüpft einen Ordner neu.
+
+Ohne `--service` deployt `up` in den Service, der mit dem Ordner verknüpft ist. Ist keiner verknüpft, nimmt es den Namen aus `package.json` oder vom Ordner (im Terminal musst du ihn bestätigen). Hat das Projekt schon einen Service mit diesem Namen, deployt `up` in diesen, auch in einen GitHub-Service, den es auf `sourceType=upload` umstellt. Außerdem setzt es den Port dieses Service wie bei einem neuen: `--port`, die lokale `EXPOSE`-Zeile oder `3000`. Sonst legt es den Service an. Mit `--service <name>` wählst du selbst; ein Name, den es noch nicht gibt, legt diesen Service an.
 
 <span id="common-flags" />
 
@@ -28,7 +30,8 @@ Wenn das Verzeichnis noch nicht mit einem Projekt verknüpft ist, führt `up` zu
 
 | Flag | Zweck |
 |------|---------|
-| `-s, --service <name>` | Einen bestehenden Service ansprechen |
+| `-s, --service <name>` | Service, in den deployt wird; ein neuer Name legt ihn an |
+| `-p, --project <name>` | In dieses Projekt deployen statt in das verknüpfte oder das Standardprojekt |
 | `--build-command <cmd>` | Den Build-Befehl überschreiben |
 | `--start-command <cmd>` | Den Start-Befehl überschreiben |
 | `--pre-deploy-command <cmd>` | Zu Beginn jedes Containers vor dem Start-Befehl ausführen; erfordert `--start-command` (siehe [Build-Konfiguration](/concepts/build-pipeline#build-configuration-reference)) |
@@ -36,7 +39,7 @@ Wenn das Verzeichnis noch nicht mit einem Projekt verknüpft ist, führt `up` zu
 | `--region <code>` | Region für einen neuen Service (wird bei bestehenden Services ignoriert) |
 | `-d, --detach` | Bereitstellung starten und beenden, ohne Logs zu streamen |
 | `-c, --ci` | CI-freundliche Ausgabe |
-| `--no-gitignore` | Alles hochladen und `.gitignore` ignorieren |
+| `--no-gitignore` | `.gitignore` ignorieren und stattdessen die feste Ausschlussliste nutzen (ein gebautes `dist/` oder `build/` bleibt trotzdem draußen) |
 
 ```bash
 lizard up --service api --start-command "node server.js" --port 8080
@@ -62,7 +65,7 @@ lizard redeploy --service api
 
 ## Headless / CI
 
-Für nicht interaktive Abläufe verknüpfe das Projekt vor der Bereitstellung ausdrücklich:
+In CI deployt ein nicht verknüpfter Ordner ebenfalls in dein Standardprojekt. Um in ein bestimmtes Projekt zu deployen, verknüpfe es zuerst:
 
 ```bash
 export LIZARD_TOKEN=liz_xxx   # create one with: lizard keys create <name>

@@ -1,11 +1,11 @@
 ---
 title: "Logs: runtime, build and crash logs"
-description: "Stream runtime logs, read build logs after a failed deploy, and pull the log tail around a restart, from the CLI or the dashboard."
+description: "Stream runtime logs, read build logs after a failed deploy, and pull the log tail around a crash, from the CLI or the dashboard."
 ---
 
 # Logs
 
-Lizard captures **runtime** logs, **build** logs, and the log tail around **restarts**. Stream them live in your terminal or browse them in the dashboard.
+Lizard captures **runtime** logs, **build** logs, and the log tail around **crashes**. Stream them live in your terminal or browse them in the dashboard.
 
 Lizard collects runtime logs while a log stream is open (`lizard logs` or the dashboard Logs page, plus 60 seconds after it closes), around deploys and restarts, and while a service is crash-looping. Opening a stream fills in the last 500 lines per replica.
 
@@ -20,7 +20,9 @@ lizard logs --level error         # filter by level
 
 ### Behavior with `--json`
 
-`lizard logs --json` returns the last 200 lines (override with `--tail N`, max 1000) and exits. Use it for snapshots and scripting. A snapshot taken while nobody was streaming can miss recent lines; open a stream first if you need them. Stream live only without `--json` when you want an interactive tail.
+`lizard logs --json` returns the last 200 lines (override with `--tail N`, max 1000) and exits. Use it for snapshots and scripting. A snapshot taken while nobody was streaming can miss recent lines; open a stream first if you need them.
+
+Without a terminal (piped output, CI, an agent), `lizard logs` acts as if you passed `--json`: it prints the last 200 lines and exits. To follow logs live, run it in a terminal without `--json`.
 
 ## Build logs
 
@@ -32,12 +34,12 @@ This is the first thing to check when a deploy fails: read it, fix the cause, th
 
 ## Restart / crash logs
 
-When a replica crashes or restarts, grab the surrounding log tail:
+When a replica crashes, Lizard saves the log tail around the crash. Manual restarts and variable changes appear in the list too, but have no tail.
 
 ```bash
-lizard logs --restart latest      # the most recent restart
-lizard logs --restart <id>        # a specific restart
-lizard logs --restarts            # list recent restarts
+lizard logs --restarts            # list recent restarts with their ids
+lizard logs --restart <id>        # the log tail of one crash
+lizard logs --restart latest      # the most recent event, which may be a manual restart
 ```
 
 ## Paging through history

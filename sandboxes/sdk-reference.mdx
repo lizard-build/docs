@@ -71,8 +71,8 @@ sandbox = Sandbox.create(
 - `size` is `'small'`, `'medium'`, or `'large'`: 2 vCPU / 4 GB, 4 vCPU / 8 GB (the default), or 8 vCPU / 16 GB; see [sizes and prices](/platform/limits#sandbox-sizes). `size` does not apply to a sandbox restored from a snapshot; it runs at its source's size.
 - `timeoutMs` defaults to 300000, five minutes. `0` disables expiration. See [resources and timeouts](/sandboxes#resources-and-timeouts).
 - Select a region explicitly when needed; a catalog entry does not guarantee free capacity. Leave `region` unset when you attach a volume: the sandbox runs where the volume is.
-- `metadata` is your own labels; `getInfo()` and `list()` return it.
-- `lizardToken` writes a `liz_` API key into the sandbox so `lizard` works inside it. Anything in the sandbox can read that key, so pass a workspace-scoped one.
+- `metadata` is your own labels; `getInfo()` returns it, `list()` does not.
+- `lizardToken` takes one of your `liz_` API keys and signs in `lizard` inside the sandbox. Your key only authorizes the request: the sandbox gets a new key of its own, limited to the sandbox's project and deleted with the sandbox, so `lizard` there can act only on that project. The `base` template has no `lizard`.
 
 ## Methods
 
@@ -99,23 +99,26 @@ sandbox = Sandbox.create(
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | Set the remaining lifetime, at least 1000 ms. |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | Queue a pause or resume and return at once. |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | Wait for `paused` or `running`; throw if the pause failed. |
-| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Copy a running sandbox 1 to 10 times, memory and processes included. |
-| `sandbox.snapshot(name, { poolSize })` | `sandbox.snapshot(name, pool_size=...)` | Save memory and `/workspace` files as a private snapshot. |
+| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Copy a running sandbox 1 to 100 times, memory and processes included; each copy counts toward your running-sandbox limit. |
+| `sandbox.snapshot(name, { scope })` | `sandbox.snapshot(name, scope=...)` | Save memory, processes and every file as a snapshot. `scope` is `'workspace'` (the default), `'user'` or `'project'`. |
 | `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | Wait until a snapshot is ready. |
-| `Sandbox.restore(snapshotId)` | `Sandbox.restore(snapshot_id)` | Start a new sandbox from a snapshot. |
+| `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | Start a new sandbox from a snapshot in its region, in any project its scope allows. |
+| `Sandbox.snapshots(projectId)` | `Sandbox.snapshots(project_id)` | List the snapshots taken in a project. |
+| `Sandbox.mySnapshots()` | `Sandbox.my_snapshots()` | List every snapshot you took, in all your workspaces. |
+| `Sandbox.setSnapshotScope(snapshotId, scope)` | `Sandbox.set_snapshot_scope(snapshot_id, scope)` | Change where a snapshot you took can be restored. |
 | `Sandbox.deleteSnapshot(snapshotId)` | `Sandbox.delete_snapshot(snapshot_id)` | Delete a snapshot; sandboxes restored from it keep running. |
 | `sandbox.kill()` | `sandbox.kill()` | Stop the sandbox and detach its volume. |
 
 ## Run commands
 
-`process.exec` (Python: `exec_`) runs a command and waits for it to finish. Pass `onStdout` or `onStderr` (Python: `on_stdout`, `on_stderr`) to receive output while the command runs; the call still returns the full result at the end. Pass an argv array instead of a string to skip the shell, which is the safe way to pass untrusted text as an argument.
+`process.exec` (Python: `exec_`) runs a command and waits for it to finish. Pass `onStdout` or `onStderr` (Python: `on_stdout`, `on_stderr`) to receive output while the command runs, one line per call without the trailing newline; the call still returns the full result at the end. Pass an argv array instead of a string to skip the shell, which is the safe way to pass untrusted text as an argument.
 
 ```ts
 const result = await sandbox.process.exec('npm test', {
   workdir: '/app',
   envs: { NODE_ENV: 'test' },
   timeoutMs: 120_000,
-  onStdout: (chunk) => process.stdout.write(chunk),
+  onStdout: (line) => console.log(line),
 });
 if (result.exitCode !== 0) throw new Error(result.stderr);
 
@@ -128,7 +131,7 @@ result = sandbox.process.exec_(
     workdir="/app",
     envs={"NODE_ENV": "test"},
     timeout_ms=120_000,
-    on_stdout=lambda chunk: print(chunk, end=""),
+    on_stdout=print,
 )
 if result.exit_code != 0:
     raise RuntimeError(result.stderr)
@@ -136,7 +139,7 @@ if result.exit_code != 0:
 sandbox.process.exec_(["grep", "-rn", "--", user_query, "/workspace"])
 ```
 
-Command results contain stdout, stderr, and the exit code. A nonzero exit code is a result you check; request failures throw. Command timeouts are limited to 1 to 600 seconds. `process.exec` accepts `envs`, `workdir`, and `user`; commands run as `root` unless you pass `user`. Create-time `envs` reach every command.
+Command results contain stdout, stderr, and the exit code. A nonzero exit code is a result you check; request failures throw. `timeoutMs` (Python: `timeout_ms`) sets how long a command may run, from 1 to 600 seconds. Without it, the server stops the command after 150 seconds, and the TypeScript SDK stops waiting after 60 seconds and throws a `DOMException` named `TimeoutError`. Pass `timeoutMs` for any command that may run longer than a minute. `process.exec` accepts `envs`, `workdir`, and `user`; commands run as `root` unless you pass `user`. Create-time `envs` reach every command.
 
 ## Files
 
@@ -180,7 +183,7 @@ sandbox.unexpose(3000)
 
 ## Pause, snapshot, and fork
 
-These calls keep memory and running processes, not just files. The [quickstart](/sandboxes/quickstart#pause-and-resume) explains what each one keeps, how restores are billed, and what fails.
+These calls keep memory, running processes and files. The [quickstart](/sandboxes/quickstart#pause-and-resume) explains what each one keeps, who can restore a snapshot, how restores are billed, and what fails.
 
 ```ts
 await sandbox.pause();
@@ -251,10 +254,11 @@ API failures throw (Python: raise) these errors. Each carries the HTTP status an
 | `AuthenticationError` | HTTP 401 or 403: invalid key or no access. |
 | `NotFoundError` | HTTP 404: the sandbox, file, or snapshot does not exist or has expired. |
 | `ConflictError` | HTTP 409: conflicting state, such as forking a sandbox with a volume. |
-| `TimeoutError` | HTTP 408 or 504. |
+| `LimitExceededError` | HTTP 429: too many sandboxes at once or too many starts. `code` says which limit, such as `SANDBOX_LIMIT_REACHED` or `SANDBOX_RATE_LIMITED`; `retryAfterS` (Python: `retry_after_s`) says when to try again. |
+| `TimeoutError` | HTTP 408 or 504. The TypeScript SDK's own 60-second wait for `process.exec` throws a `DOMException` named `TimeoutError` instead. |
 | `LizardError` | Other API failures, including unsupported operations. |
 
-Too many sandboxes at once, or too many starts, returns HTTP 429; see [account limits](/platform/limits#sandbox-account-limits).
+The numbers behind HTTP 429 are in [account limits](/platform/limits#sandbox-account-limits).
 
 ## HTTP API
 

@@ -9,7 +9,7 @@ description: "Lizard で Go アプリをホストします。lizardpack は go.m
 
 Lizard (lizard.build) に Go アプリをデプロイするには、`go.mod` ファイルを含むモジュールをアップロードするか push します。lizardpack は `go` 行の Go バージョンでビルドし、静的バイナリ（`CGO_ENABLED=0`）をコンパイルして Alpine Linux 上で実行します。サービスポートは `8080` で、Lizard はそれを `PORT` でプロセスに渡します。`PORT` を読み取り、すべてのインターフェースで待ち受けてください。
 
-**テスト状況:** 以下のサンプルアプリは Go 1.24 を使ってローカルでビルド・実行でき、ビルドプランは、Lizard が使う lizardpack で確認しました。このガイドのデプロイ手順は、まだ最初から最後まで試していません。
+**テスト状況:** 以下のサンプルアプリは Go 1.27 を使ってローカルでビルド・実行でき、ビルドプランは、Lizard が使う lizardpack で確認しました。このガイドのデプロイ手順は、まだ最初から最後まで試していません。
 
 <span id="before-you-start" />
 
@@ -27,7 +27,7 @@ Lizard (lizard.build) に Go アプリをデプロイするには、`go.mod` フ
 ```text
 module example.com/hello
 
-go 1.24
+go 1.27
 ```
 
 `main.go`:
@@ -76,16 +76,16 @@ curl http://localhost:8080/healthz
 | ステップ | 内容 |
 |---|---|
 | 検出 | `go.mod`、`go.work`、または任意の `.go` ファイル。lizardpack は Node.js や Python より先に Go を確認します。 |
-| Go のバージョン | `go.mod` の `go` 行。使われるのはメジャーとマイナーだけで、`go 1.24.3` は `golang:1.24-alpine` 上でビルドされます。`go.mod` がない場合は Go 1.24。 |
+| Go のバージョン | `go.mod` の `go` 行。使われるのはメジャーとマイナーだけで、`go 1.27.3` は `golang:1.27-alpine` 上でビルドされます。`go.mod` がない場合は Go 1.24 で、このバージョンにはもうセキュリティ修正が提供されません。 |
 | ビルド | `go mod download` の後に `CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w' -o /app/server <package>` |
-| main パッケージ | ルートディレクトリ。`cmd/main.go` がある場合は `./cmd`。それ以外は、アルファベット順で最初の `cmd/<name>/main.go` |
+| main パッケージ | `cmd/main.go` がある場合は `./cmd`。それ以外は、アルファベット順で最初の `cmd/<name>/main.go`。どちらもなければルートディレクトリ。`cmd/` または `cmd/<name>/` の `main.go` は、ルートの `main.go` より優先されます。 |
 | ランタイム | `ca-certificates` と `tzdata` を含む `alpine:3.19`。lizardpack はソースディレクトリ全体をバイナリと並べて `/app` にコピーするため、`templates/` や `static/` などの相対パスもそのまま使えます。 |
 | 起動とポート | ポート `8080` で `/app/server` |
 
 生成される Dockerfile:
 
 ```dockerfile
-FROM golang:1.24-alpine AS build
+FROM golang:1.27-alpine AS build
 WORKDIR /app
 COPY go.mod go.sum* ./
 RUN go mod download
@@ -100,7 +100,7 @@ EXPOSE 8080
 CMD ["/app/server"]
 ```
 
-このイメージを使うには、サービスのビルドコマンドと起動コマンドを空のままにしてください。どちらかが設定されていると、Lizard はそのコマンドから別の Dockerfile を生成し、`go` 行を無視します。その場合、`go build …` コマンドは Go 1.24 でビルドされます。すべてのステップを自分で制御するには、独自の `Dockerfile` をコミットしてください。[Dockerfile から Docker コンテナをデプロイする](/deploy/dockerfile)を参照してください。
+このイメージを使うには、サービスのビルドコマンドと起動コマンドを空のままにしてください。どちらかが設定されていると、Lizard はそのコマンドから別の Dockerfile を生成し、`go` 行を無視します。その場合、`go build …` コマンドは Go 1.24 でビルドされますが、このバージョンにはもうセキュリティ修正が提供されません。すべてのステップを自分で制御するには、独自の `Dockerfile` をコミットしてください。[Dockerfile から Docker コンテナをデプロイする](/deploy/dockerfile)を参照してください。
 
 <span id="deploy" />
 
@@ -162,10 +162,10 @@ lizard ps
 | 症状 | 対処 |
 |---|---|
 | `no Go files in /app` | `main` パッケージがルートにも `cmd/` の下にもありません。移動するか、Dockerfile を追加します。 |
-| 違うバイナリが起動する | `cmd/<name>/main.go` が複数ある場合、lizardpack はアルファベット順で最初の名前をビルドします。目的のバイナリをビルドする Dockerfile を追加してください。 |
+| 違うバイナリが起動する | `cmd/` または `cmd/<name>/` の `main.go` はルートの `main.go` より優先され、`cmd/<name>/main.go` が複数ある場合、lizardpack はアルファベット順で最初の名前をビルドします。目的のバイナリをビルドする Dockerfile を追加してください。 |
 | `CGO_ENABLED=0` で SQLite が失敗する | ビルドで cgo が無効になるため、`mattn/go-sqlite3` は動作しません。pure Go のドライバーを使うか、できれば [Managed Postgres](/addons/postgres) を使ってください。コンテナ内のファイルはデプロイのたびに失われます。 |
 | デプロイがいつまでも healthy にならない | プロセスは `PORT`（または `8080`）で、すべてのインターフェースに対して待ち受ける必要があります。[サービスが healthy にならない](/deploy/troubleshooting/service-never-healthy)を参照してください。 |
-| より新しい Go が必要 | `go mod edit -go=1.25` などで `go` 行を変更し、もう一度デプロイします。[ランタイムバージョン](/deploy/runtime-versions)を参照してください。 |
+| より新しい Go が必要 | `go mod edit -go=1.27` などで `go` 行を変更し、もう一度デプロイします。[ランタイムバージョン](/deploy/runtime-versions)を参照してください。 |
 
 キューコンシューマーのように HTTP を提供しない Go プロセスは、`--port 0` を付けて [バックグラウンドワーカー](/deploy/workers) として実行します。
 

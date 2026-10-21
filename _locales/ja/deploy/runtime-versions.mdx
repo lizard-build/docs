@@ -40,7 +40,7 @@ GitHub のサービスでは、代わりにファイルをコミットして pus
 - 数字で書きます: `24`、`v24`、`24.1.0` はいずれも Node.js 24 を選びます。Lizard は `#` で始まる行を読み飛ばします。
 - Lizard は `.nvmrc` の `lts/*` と `node` を読み飛ばし、次のファイルに進みます。`lts/iron` などのほかのエイリアスは書かれたとおりに使うため、ビルドが失敗します。
 - `.nvmrc` は `engines.node` より優先されます。
-- `engines.node` では範囲内で最も低いバージョンが使われます: `>=18` なら Node.js 18、`^20.11.0` なら Node.js 20 でビルドされます。`18 || 20` のように `||` を含む範囲では、ビルドが失敗します。
+- `engines.node` では範囲内で最も低いバージョンが使われます: `>=18` なら Node.js 18、`^20.11.0` なら Node.js 20 でビルドされます。`||` を含む範囲は、最初の部分にドットがない場合（`18 || 20` など）にビルドが失敗します。`^18.0.0 || ^20.0.0` なら Node.js 18 でビルドされます。はっきり指定するには `.nvmrc` を使ってください。
 
 <span id="change-the-python-version" />
 
@@ -83,13 +83,13 @@ lizard up --service web
 ## Lizard がバージョンファイルを無視する場合
 
 - **独自の Dockerfile。** その `FROM` 行で決まります。たとえば `FROM node:24-slim` です。[Dockerfile から Docker コンテナをデプロイする](/deploy/dockerfile) を参照してください。
-- **サービスのビルドコマンドまたは開始コマンド。** この場合、Lizard はコマンドから固定のイメージで Dockerfile を生成します。イメージは `node:22-alpine`、`python:3.13-slim`、`golang:1.24-alpine` のいずれかで、コマンドの最初の単語で選ばれます。バージョンファイルを使う状態に戻すには、両方をクリアします:
+- **サービスのビルドコマンドまたは開始コマンド。** この場合、Lizard はコマンドから固定のイメージで Dockerfile を生成します。イメージは `node:22-alpine`、`python:3.13-slim`、`golang:1.24-alpine` のいずれかです。Lizard はビルドコマンドの最初の単語を読み、次に開始コマンドの最初の単語を読みます。`go` なら Go、`python`、`python3`、`uv`、`gunicorn`、`uvicorn` なら Python が選ばれます。どちらのコマンドもこれらで始まらない場合（たとえば `pip install …` と `streamlit run …`）、ビルドには `node:22-alpine` が使われます。バージョンファイルを使う状態に戻すには、両方をクリアします:
 
 ```bash
 lizard service set web --set buildCommand= --set startCommand=
 ```
 
-稼働中のサービスで `buildCommand` をクリアすると、再ビルドが自動で始まります。2 回目のビルドをキューに入れないよう、`lizard redeploy` を実行する前に `lizard events` を確認してください。[ビルドの判定順序](/concepts/build-pipeline#build-decision-order) を参照してください。
+稼働中のサービスで `buildCommand` をクリアすると、再ビルドが自動で始まります。`lizard redeploy` を実行する前に `lizard events` を確認してください。redeploy すると、そのビルドがキャンセルされ、最初からやり直しになります。[ビルドの判定順序](/concepts/build-pipeline#build-decision-order) を参照してください。
 
 <span id="check-which-version-a-build-used" />
 

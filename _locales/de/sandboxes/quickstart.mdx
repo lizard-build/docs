@@ -144,7 +144,7 @@ print(connected.get_info())
 
 ## Pause, Fortsetzen und Snapshots
 
-`pause()` speichert Arbeitsspeicher und laufende Prozesse der Sandbox und behält `/workspace`. Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes wird weiter berechnet. `resume()` stellt die Sandbox mit derselben ID wieder her und startet die Berechnung der Rechenkosten erneut. Beide Aufrufe reihen die Arbeit ein und kehren sofort zurück; warten Sie auf `paused` oder `running`, um den Erfolg zu bestätigen.
+`pause()` speichert Arbeitsspeicher, laufende Prozesse und jede Datei auf der Festplatte der Sandbox. Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes wird weiter berechnet. `resume()` stellt die Sandbox mit derselben ID wieder her und startet die Berechnung der Rechenkosten erneut. Beide Aufrufe reihen die Arbeit ein und kehren sofort zurück; warten Sie auf `paused` oder `running`, um den Erfolg zu bestätigen.
 
 ```ts
 await sandbox.pause();
@@ -157,7 +157,15 @@ await sandbox.waitForStatus('running');
 - Lassen sich die Prozesse nicht speichern, läuft die Sandbox weiter, und `waitForStatus` löst einen Fehler mit dem Grund aus. Schlägt das Fortsetzen fehl, bleibt die Sandbox mit ihrem Checkpoint pausiert; rufen Sie `resume()` erneut auf.
 - Während der Pause bleibt die restliche Laufzeit unverändert. Nach dem Fortsetzen zählt sie weiter herunter. Eine pausierte Sandbox zählt nicht zum Limit laufender Sandboxes.
 
-Ein Snapshot speichert Arbeitsspeicher und `/workspace`-Dateien einer laufenden Sandbox als private Vorlage im Projekt. Jedes Restore startet eine neue Sandbox in der Region des Snapshots. Schließen Sie vor der Aufnahme Clients und Terminals und stoppen Sie Schreibvorgänge in `/workspace`. Angehängte Persistent Volumes werden nicht erfasst.
+Ein Snapshot speichert Arbeitsspeicher, laufende Prozesse und jede Datei auf der Festplatte einer laufenden Sandbox. Er gehört dem Nutzer, der ihn erstellt hat. Jede Wiederherstellung startet eine neue Sandbox in der Region des Snapshots, in jedem Projekt, das der Geltungsbereich des Snapshots erlaubt:
+
+- `workspace` (Standard): jedes Projekt im Workspace der Quell-Sandbox.
+- `user`: jedes Projekt in jedem Ihrer Workspaces.
+- `project`: nur das Projekt der Quell-Sandbox.
+
+Setzen Sie den Geltungsbereich mit `snapshot(name, { scope })` (Python: `scope=`) und wählen Sie das Projekt mit `Sandbox.restore(id, { projectId })` (Python: `project_id=`). Schließen Sie vor der Aufnahme Clients und Terminals und stoppen Sie Schreibvorgänge in `/workspace`.
+
+Ist an die Sandbox ein Persistent Volume angehängt, enthält der Snapshot eine Kopie der Dateien des Volumes zum Zeitpunkt der Aufnahme. Jede Wiederherstellung erhält diese Kopie, nicht das laufende Volume, und kann kein weiteres Volume anhängen. Wer den Snapshot wiederherstellen kann, kann diese Dateien lesen; wer einen solchen Snapshot teilt, teilt also die Daten des Volumes. Ein Snapshot einer Sandbox ohne Volume kann bei der Wiederherstellung mit `volumeId` (Python: `volume_id`) ein Volume aus derselben Region einbinden.
 
 ```ts
 const saved = await sandbox.snapshot('my-app');
@@ -165,7 +173,7 @@ await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-Ein Snapshot ist bereit, sobald der Aufruf zurückkehrt, und wird von der Festplatte wiederhergestellt; daher gilt `poolSize` nicht. Jede Wiederherstellung startet eine Sandbox in der Größe der Quelle. Für sie gilt der Stundenpreis dieser Größe; `size` gilt nicht für ein Restore. In der CLI nutzen Sie `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` und `lizard sandbox restore <snapshot-id>`.
+Ein Snapshot ist bereit, sobald der Aufruf zurückkehrt, und wird von der Festplatte wiederhergestellt; daher gilt `poolSize` nicht. Jede Wiederherstellung startet eine Sandbox in der Größe der Quelle. Für sie gilt der Stundenpreis dieser Größe; `size` gilt nicht für ein Restore. In der CLI nutzen Sie `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` und `lizard sandbox restore <snapshot-id>`; Geltungsbereiche und `--volume` erklärt [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots).
 
 <span id="clean-up-and-next-steps" />
 

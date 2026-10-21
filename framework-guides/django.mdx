@@ -151,7 +151,7 @@ staticfiles/
 
 Keep user uploads in durable storage, such as [Managed Object Storage](/addons/storage), rather than the container's static directory. Review [storage and recovery](/platform/storage-and-recovery).
 
-Treat database migrations as a separate release step. Back up data as needed, make migrations safe to retry, and apply them before requests require the new schema. A pre-deploy command is not a substitute for checking concurrency and failure behavior.
+Treat database migrations as a separate release step. Back up data as needed, make migrations safe to retry, and apply them before requests require the new schema. This guide applies them with `lizard run`, shown below. A `preDeployCommand` would not run here: Lizard runs it only when a start command is also set, and this setup sets none. With both set, it runs at the start of every container, in each replica and on each restart; see [migrations on deploy](/addons/postgres#run-migrations-on-deploy).
 
 ## Deploy and verify
 
@@ -168,12 +168,12 @@ Create [Managed Postgres](/addons/postgres) in this project. If you already have
 lizard add postgres --name postgres
 ```
 
-Set the app's [service secrets](/cli/secrets). The `postgres` in `${{postgres.DATABASE_URL}}` names the database service, not a Django database alias. Lizard resolves the [reference](/variables/references) at deploy time and injects the resulting URL into the `web` process. The single quotes keep your shell from expanding the reference. The `settings.py` block above then turns the URL into `DATABASES["default"]`.
+Set the app's [service secrets](/cli/secrets). The `postgres` in `${{postgres.DATABASE_PRIVATE_URL}}` names the database service, not a Django database alias. Lizard resolves the [reference](/variables/references) at deploy time and injects the database's address on the project's private network into the `web` process; it works from services in the same project and region. The single quotes keep your shell from expanding the reference. The `settings.py` block above then turns the URL into `DATABASES["default"]`.
 
 ```bash
 DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
 lizard secrets set SECRET_KEY="$DJANGO_SECRET_KEY" \
-  DATABASE_URL='${{postgres.DATABASE_URL}}' DEBUG=false \
+  DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' DEBUG=false \
   ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
   --service web
 lizard up --service web --port 8000
@@ -187,7 +187,7 @@ lizard secrets set ALLOWED_HOSTS=YOUR_PUBLIC_HOST \
   CSRF_TRUSTED_ORIGINS=https://YOUR_PUBLIC_HOST --service web
 ```
 
-A missing reference target or key can resolve to an empty string. The required-value check then stops Django with `Set the DATABASE_URL environment variable.` Check the database service name and its `DATABASE_URL` key; `lizard logs --build --service web` warns about every reference that resolved to an empty value. Do not print the connection URL into logs.
+A missing reference target or key can resolve to an empty string. The required-value check then stops Django with `Set the DATABASE_URL environment variable.` Check the database service name and its `DATABASE_PRIVATE_URL` key; `lizard logs --build --service web` warns about every reference that resolved to an empty value. Do not print the connection URL into logs.
 
 The variable change restarts the process. Exclude local virtual environments, secrets, and local databases from uploads.
 

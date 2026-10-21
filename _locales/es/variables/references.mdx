@@ -17,7 +17,7 @@ ${{<name>.<KEY>}}
 ```
 
 - `<name>` — el nombre del servicio o addon de destino (el que se muestra en el dashboard y se usa en `lizard add -n`).
-- `<KEY>` — una clave en el entorno combinado del destino.
+- `<KEY>` — una clave que expone el destino. Un addon expone sus valores de conexión. Un servicio expone sus variables y secretos de proyecto y de servicio, además de sus valores `LIZARD_*` y `PORT`. No expone el `DATABASE_URL` ni el `REDIS_URL` que Lizard inyecta desde los addons; para esos, haz referencia al addon.
 
 Úsalas en cualquier lugar donde se acepte un valor; lo más habitual es en un secreto:
 
@@ -29,8 +29,8 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
 
 ## Cómo se resuelven
 
-- Las referencias se resuelven en el **momento del despliegue** usando el entorno combinado del destino.
-- Coinciden con el **nombre actual** del destino. Cambiar el nombre del destino las rompe; actualiza cada `${{oldname.KEY}}` después de un cambio de nombre.
+- Las referencias se resuelven en el **momento del despliegue** usando los valores que expone el destino.
+- Las referencias que defines en un secreto (`lizard secrets set` o el dashboard) coinciden con el **nombre actual** del destino. Cambiar el nombre del destino las rompe; actualiza cada `${{oldname.KEY}}` después de un cambio de nombre. Las referencias creadas con `lizard add -v` siguen al destino tras un cambio de nombre.
 - Una referencia a un destino o clave **inexistente** se resuelve como una **cadena vacía**: *no* hace fallar el despliegue. El log de compilación muestra un aviso por cada referencia vacía, con el motivo.
 - Solo las referencias **circulares** producen un error.
 
@@ -69,7 +69,7 @@ lizard secrets set CACHE_URL='${{redis-winter-otter.REDIS_URL}}' --service api
 
 ## ¿Por qué no usar simplemente `--global`?
 
-Poner un valor compartido en el ámbito del proyecto (`--global`) lo expone a *todos* los servicios, incluidos los que no lo necesitan. Una referencia mantiene el valor en un solo lugar y lo vincula solo donde lo configuras. Ten en cuenta que los valores `DATABASE_URL` y `REDIS_URL` de cada addon de Postgres y Redis en marcha llegan a todos los servicios de todos modos, con la precedencia más baja; una referencia los sobrescribe. Consulta [Alcance de secretos](/variables#scoping).
+Poner un valor compartido en el ámbito del proyecto (`--global`) lo expone a *todos* los servicios, incluidos los que no lo necesitan. Una referencia mantiene el valor en un solo lugar y lo vincula solo donde lo configuras. Ten en cuenta que cada servicio ya recibe un `DATABASE_URL` y un `REDIS_URL` de los addons de Postgres y Redis del proyecto, con la precedencia más baja; si hay varios addons del mismo tipo, no está definido cuál. Una referencia los sobrescribe. Consulta [Alcance de secretos](/variables#scoping).
 
 <span id="see-also" />
 

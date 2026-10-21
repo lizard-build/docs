@@ -144,7 +144,7 @@ print(connected.get_info())
 
 ## Pausa, reanudación y snapshots
 
-`pause()` guarda la memoria y los procesos en ejecución del sandbox y mantiene `/workspace`. Una pausa completada detiene los cargos de cómputo; el almacenamiento en Persistent Volumes se sigue cobrando. `resume()` restaura el sandbox con el mismo ID y reanuda los cargos de cómputo. Ambas llamadas ponen el trabajo en cola y responden al instante; espera a `paused` o `running` para confirmar que han terminado.
+`pause()` guarda la memoria del sandbox, sus procesos en ejecución y todos los archivos de su disco. Una pausa completada detiene los cargos de cómputo; el almacenamiento en Persistent Volumes se sigue cobrando. `resume()` restaura el sandbox con el mismo ID y reanuda los cargos de cómputo. Ambas llamadas ponen el trabajo en cola y responden al instante; espera a `paused` o `running` para confirmar que han terminado.
 
 ```ts
 await sandbox.pause();
@@ -157,7 +157,15 @@ await sandbox.waitForStatus('running');
 - Si no se pueden guardar los procesos, el sandbox sigue en marcha y `waitForStatus` lanza un error con el motivo. Si falla la reanudación, el sandbox sigue pausado con su checkpoint; vuelve a llamar a `resume()`.
 - El plazo de vida se detiene mientras el sandbox está pausado y continúa al reanudar. Un sandbox pausado no cuenta para el límite de sandboxes en marcha.
 
-Un snapshot guarda la memoria y los archivos de `/workspace` de un sandbox en marcha como plantilla privada del proyecto. Cada restauración inicia un sandbox nuevo en la región del snapshot. Antes de capturar, cierra clientes y terminales y deja de escribir en `/workspace`. Los Persistent Volumes conectados no se capturan.
+Un snapshot guarda la memoria de un sandbox en marcha, sus procesos en ejecución y todos los archivos de su disco. Pertenece al usuario que lo tomó. Cada restauración inicia un sandbox nuevo en la región del snapshot, en cualquier proyecto que permita el ámbito del snapshot:
+
+- `workspace` (el predeterminado): cualquier proyecto del workspace del sandbox de origen.
+- `user`: cualquier proyecto de cualquiera de tus workspaces.
+- `project`: solo el proyecto del sandbox de origen.
+
+Fija el ámbito con `snapshot(name, { scope })` (Python: `scope=`) y elige el proyecto con `Sandbox.restore(id, { projectId })` (Python: `project_id=`). Antes de capturar, cierra clientes y terminales y deja de escribir en `/workspace`.
+
+Si el sandbox tiene un volumen de Persistent Volumes conectado, el snapshot incluye una copia de los archivos del volumen tal como estaban al capturar. Cada restauración recibe esa copia, no el volumen real, y no puede conectar otro volumen. Cualquiera que pueda restaurar el snapshot puede leer esos archivos, así que compartir un snapshot así comparte los datos del volumen. Un snapshot de un sandbox sin volumen puede montar uno al restaurar con `volumeId` (Python: `volume_id`), de la misma región.
 
 ```ts
 const saved = await sandbox.snapshot('my-app');
@@ -165,7 +173,7 @@ await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-Un snapshot está listo cuando la llamada termina y se restaura desde disco, así que `poolSize` no se aplica. Cada restauración se ejecuta con el tamaño del origen y se factura al precio por hora de ese tamaño; `size` no se aplica a una restauración. En la CLI, usa `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` y `lizard sandbox restore <snapshot-id>`.
+Un snapshot está listo cuando la llamada termina y se restaura desde disco, así que `poolSize` no se aplica. Cada restauración se ejecuta con el tamaño del origen y se factura al precio por hora de ese tamaño; `size` no se aplica a una restauración. En la CLI, usa `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` y `lizard sandbox restore <snapshot-id>`; consulta [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots) para los ámbitos y `--volume`.
 
 <span id="clean-up-and-next-steps" />
 

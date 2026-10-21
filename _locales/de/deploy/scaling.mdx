@@ -1,13 +1,13 @@
 ---
 title: "Einen Service skalieren: Replikate, CPU und Arbeitsspeicher"
-description: "Fügen Sie Replikate hinzu oder erhöhen Sie CPU und Arbeitsspeicher für einen Service und erweitern Sie den Add-on-Speicher. Zulässige Bereiche, Rollout-Verhalten und wie Sie eine Änderung prüfen."
+description: "Fügen Sie Replikate hinzu oder erhöhen Sie CPU und Arbeitsspeicher für einen Service, erweitern Sie den Add-on-Speicher oder lassen Sie einen Service im Leerlauf schlafen oder pausieren Sie ihn. Zulässige Bereiche und wie Sie eine Änderung prüfen."
 ---
 
 <span id="scaling" />
 
 # Skalierung
 
-Skalieren Sie einen Service horizontal (mehr Replikate) oder vertikal (mehr CPU/Arbeitsspeicher) mit `lizard scale`. Add-on-Speicher wird auf die gleiche Weise erweitert.
+Mit `lizard scale` fügen Sie einem Service Replikate hinzu, erhöhen CPU oder Arbeitsspeicher oder erweitern den Add-on-Speicher. Um einen Service auf null zu skalieren, lassen Sie ihn [im Leerlauf schlafen](#sleep-when-idle) oder [pausieren Sie ihn](#pause-a-service).
 
 <span id="scale-a-service" />
 
@@ -59,16 +59,44 @@ Add-on-Daten-Volumes können **nur vergrößert** werden — Sie können den Spe
 lizard scale --service postgres --storage 8192
 ```
 
+<span id="sleep-when-idle" />
+
+## Im Leerlauf schlafen lassen
+
+`lizard sleep --on` lässt einen Webservice schlafen, wenn er keinen Traffic bekommt, und weckt ihn bei der nächsten Anfrage in etwa einer Sekunde auf. Standardmäßig schläft er nach 10 Minuten ohne Traffic; mit `--idle` stellen Sie 5 bis 1440 Minuten ein. Das Einschalten startet den Service einmal neu. Es funktioniert nur für einen Service mit Port und einem Replikat, also nicht für Worker. Managed Postgres und Managed Redis können ebenfalls schlafen.
+
+```bash
+lizard sleep --on --idle 30 --service api
+lizard sleep --off --service api    # always on
+```
+
+Siehe [`lizard sleep`](/cli/sleep).
+
+<span id="pause-a-service" />
+
+## Einen Service pausieren
+
+`lizard pause` stoppt einen Service oder eine Datenbank, ohne etwas zu löschen: Die Ressource wird auf null skaliert und behält URL, Passwort, Einstellungen und Daten. `lizard resume` startet sie wieder. Ein pausierter GitHub-Service ignoriert Pushes, bis Sie ihn fortsetzen.
+
+```bash
+lizard pause api
+lizard resume api
+```
+
+Um jeden Service in einem Projekt oder Workspace zu pausieren, nutzen Sie `lizard project pause` oder `lizard workspace pause`. Siehe [`lizard pause`](/cli/pause).
+
 <span id="verifying" />
 
 ## Prüfung
 
 ```bash
 lizard ps                 # replica status + URL
-lizard events             # per-replica deploy/scale history
+lizard events             # deploy history + current replicas
 lizard metrics            # live CPU / memory / network / disk
-lizard metrics --cost     # include cost
+lizard metrics --cost     # cost instead of metrics
 ```
+
+Eine Änderung der Replikate erzeugt keinen Deploy, daher listet `lizard events` sie nicht auf; prüfen Sie stattdessen die Tabelle Replicas.
 
 <span id="see-also" />
 

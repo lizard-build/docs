@@ -5,7 +5,7 @@ description: "App replica limits, sandbox sizes and hourly prices, how many sand
 
 # Limits
 
-On Lizard, an app runs up to 5 replicas per service after the first paid Pro invoice, and 1 during the trial. Pro runs up to 100 sandboxes at once and starts up to 24 a minute; the trial allows 5 at once. Sandbox sizes run from Small (2 vCPU / 4 GB) to Large (8 vCPU / 16 GB), and sandbox egress is included up to 2 TB per account over a rolling 30 days. Limits depend on the resource, plan, and account: a per-replica setting is not the total available to a service or an account. Check your plan and the result of the create or scale request before choosing resources.
+On Lizard, an app runs up to 5 replicas per service after the first paid Pro invoice, and 1 during the trial. Pro runs up to 100 sandboxes at once and starts up to 24 a minute; the trial allows 5 at once. Sandbox sizes run from Small (2 vCPU / 4 GB) to Large (8 vCPU / 16 GB), and sandbox egress is included up to 2 TB per account over a rolling 30 days. A workspace owner can also set [workspace limits](#workspace-limits) for one workspace. Limits depend on the resource, plan, and account: a per-replica setting is not the total available to a service or an account. Check your plan and the result of the create or scale request before choosing resources.
 
 ## Applications
 
@@ -43,12 +43,13 @@ These limits cap how many sandboxes an account runs at once and how fast it star
 |---|---|---|---|---|
 | Pro trial | 5 | 6 | 30 | 100 |
 | Pro | 100 | 24 | 120 | 400 |
-| Enterprise | Custom | Custom | Custom | Custom |
+| Enterprise | 50 per workspace | 120 per user | No limit | No limit |
 
 - Lizard counts limits per account owner, across all of the owner's workspaces. A second workspace does not add a second allowance.
-- Running means running or resuming. A paused sandbox does not count; resuming one needs a free slot.
+- On Pro and the trial, running means running or resuming. A paused sandbox does not count; resuming one needs a free slot.
 - A start is a new sandbox. A resume is not a start. A create that fails on Lizard's side does not count.
 - Over a limit, create and resume return HTTP 429 with `code` set to `SANDBOX_LIMIT_REACHED` (running) or `SANDBOX_RATE_LIMITED` (starts). A start-rate refusal includes a `Retry-After` header.
+- Enterprise has no account-wide limit. By default each workspace holds up to 50 sandboxes, and running, paused and crashed ones all count; we raise it per workspace on request. Over it, create and fork return HTTP 429 with `code` set to `SANDBOX_LIMIT_REACHED`. One user can create up to 120 sandboxes a minute in each region.
 - The dashboard shows how many sandboxes are running against your limit next to **New Sandbox**. For more than 100 at once, contact us about Enterprise.
 
 <span id="sandbox-egress" />
@@ -63,7 +64,7 @@ Sandbox egress has no separate per-GB charge. The included allowance is 2 TB per
 
 | Setting | Current create API |
 |---|---|
-| Templates | `base`, `interpreter`, `codex`, `desktop`, `opencode`, `pi`, `prime`, `claude` |
+| Templates | `base`, `interpreter`, `codex`, `desktop`, `opencode`, `pi`, `prime`, `claude`; `desktop-camoufox` in US East only |
 | Raw API default lifetime | `timeoutMs: 0`, no expiration |
 | Lizard SDK default lifetime | 300000 ms, five minutes |
 | Explicit lifetime range | Integer milliseconds from 0 to 2147483647 |
@@ -72,10 +73,28 @@ Sandbox egress has no separate per-GB charge. The included allowance is 2 TB per
 
 The CLI also defaults to five minutes; the dashboard defaults to no expiration. Commands do not reset the deadline. For pause, snapshots, fork and what each one keeps, see the sandbox [lifecycle](/sandboxes#lifecycle).
 
+## Workspace limits
+
+A workspace owner can cap one workspace, for example one that a customer reaches with a scoped API key. These caps apply on top of the account limits above, to everyone who works in the workspace.
+
+| Limit | What counts | Flag |
+|---|---|---|
+| Sandboxes | Sandboxes running or resuming at once; paused ones don't count | `--sandboxes <n>` |
+| CPU | vCPU the workspace's apps and databases use now, as measured | `--cpu <vcpus>` |
+| Memory | Memory the workspace's apps and databases use now, as measured | `--memory <size>` |
+| Disk | Data written to the workspace's databases and volumes | `--disk <size>` |
+
+Only the owner sets them, with [`lizard workspace limits`](/cli/workspace#lizard-workspace-limits-name-or-id), signed in with the browser or an API key with no scopes. Any member, and any key that reaches the workspace, can read them with the current use.
+
+- At the sandbox cap, create, fork and resume return HTTP 429 with `code` set to `WORKSPACE_SANDBOX_LIMIT`.
+- While apps and databases use as much CPU or memory as allowed, deploy, redeploy, restart, scale up, new databases and resuming a paused app or database return HTTP 429 with `code` set to `WORKSPACE_USAGE_LIMIT`. Running services keep running.
+- While data fills the disk cap, new volumes, volume growth, new databases and template deploys return the same `WORKSPACE_USAGE_LIMIT`. Data already written stays.
+- A sandbox's own `/workspace` disk does not count toward the disk cap.
+
 ## Regions
 
 The current configured regions include US East (Virginia), `us-east-1`, and EU West (Limburg), `eu-west-lim-a`. A region in the catalog does not guarantee available capacity for every resource. Check region choices when creating the resource; a sandbox using an existing volume must run on that volume's node. [`lizard regions`](/cli/regions) lists the regions open to your account; see [regions](/deploy/regions).
 
 ## Before increasing scale
 
-Check the active plan, per-replica settings, account cap, database connection limit, and storage growth together. Use [scaling](/deploy/scaling), [metrics](/observability/metrics), and [pricing](https://lizard.build/pricing) to compare configured capacity with measured usage. Rates for every resource are on the [billing page](/platform/billing#resource-rates).
+Check the active plan, per-replica settings, account cap, workspace limits, database connection limit, and storage growth together. Use [scaling](/deploy/scaling), [metrics](/observability/metrics), and [pricing](https://lizard.build/pricing) to compare configured capacity with measured usage. Rates for every resource are on the [billing page](/platform/billing#resource-rates).

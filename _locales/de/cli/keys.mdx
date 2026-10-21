@@ -21,7 +21,7 @@ API-Schlüssel beginnen mit `liz_`. Verwende einen überall dort, wo du dich nic
 - `LIZARD_TOKEN` oder `LIZARD_API_KEY` für die CLI in CI
 - `lizard login --token liz_…` auf einem Rechner
 - `LIZARD_API_KEY` für das [Lizard SDK](/sandboxes/sdk-reference)
-- `lizard sandbox create --with-token liz_…`, um `lizard` innerhalb einer Sandbox zu verwenden
+- `lizard sandbox create --with-token liz_…`, um `lizard` innerhalb einer Sandbox anzumelden; siehe [Schlüssel in einer Sandbox](#sign-in-lizard-inside-a-sandbox)
 
 <span id="subcommands" />
 
@@ -36,11 +36,19 @@ Erstellt einen Schlüssel und gibt ihn einmalig aus. Kopiere ihn sofort; Lizard 
 | `-p, --project <id>` | Beschränkt den Schlüssel auf dieses Projekt (Name, Slug oder ID) |
 | `-w, --workspace <id>` | Beschränkt den Schlüssel auf diesen Workspace (Name, Slug oder ID) |
 
-Ein eingeschränkter Schlüssel hat keinen Zugriff auf Abrechnung und Einstellungen des Kontos.
+Ein eingeschränkter Schlüssel funktioniert nur in seinen Projekten oder Workspaces. Er kann nicht:
+
+- Abrechnung, Plan, Karten oder die Nutzung des ganzen Kontos sehen
+- API-Schlüssel erstellen, auflisten oder löschen; `lizard keys` schlägt mit ihm fehl
+- einen Workspace erstellen, seinen Workspace umbenennen oder löschen oder Workspace-Limits und Wiederverkaufspreise ändern
+- Mitglieder von Workspaces oder Projekten sehen oder verwalten
+- einen Service auf ein privates GitHub-Repository zeigen lassen, außer eine App in seinem Bereich baut bereits daraus
+
+Mit einem eingeschränkten Schlüssel angemeldet, zeigt [`lizard whoami`](/cli/whoami) die Bereiche des Schlüssels, nicht das Konto dahinter. Hat der Owner des Workspace [Wiederverkaufspreise](/cli/workspace#lizard-workspace-resale-pricing-name-or-id) festgelegt, sieht der Schlüssel diese Preise.
 
 ### `lizard keys list`
 
-Listet deine Schlüssel mit kurzer Vorschau, Bereich, Erstellungszeitpunkt und letzter Verwendung auf (Alias `ls`).
+Listet deine Schlüssel mit kurzer Vorschau, Bereich, Erstellungszeitpunkt und letzter Verwendung auf (Alias `ls`). Die Vorschau ist nicht der Anfang des Schlüssels; ordne Schlüssel daher über Name oder ID zu.
 
 ### `lizard keys rm <name-or-id>`
 
@@ -64,14 +72,15 @@ lizard keys create github-actions --project my-project
 
 Speichere den ausgegebenen Schlüssel als CI-Secret mit dem Namen `LIZARD_TOKEN`.
 
-<span id="create-a-key-for-a-sandbox" />
+<span id="sign-in-lizard-inside-a-sandbox" />
 
-### Einen Schlüssel für eine Sandbox erstellen
+### `lizard` in einer Sandbox anmelden
 
 ```bash
-lizard keys create sandbox-agent --workspace my-team
 lizard sandbox create --with-token liz_xxx
 ```
+
+Die Sandbox bekommt einen eigenen neuen Schlüssel, beschränkt auf das Projekt der Sandbox und mit ihr gelöscht. In `lizard keys list` erscheint er als `sandbox-session:<sandbox-id>`. Der `liz_`-Schlüssel, den du übergibst, autorisiert nur die Anfrage und gelangt nie in die Sandbox. Mit `--with-token` ohne Wert nimmt die CLI den Schlüssel, mit dem du angemeldet bist; das muss ein `liz_`-Schlüssel sein.
 
 <span id="delete-a-key" />
 
@@ -87,4 +96,4 @@ lizard keys rm github-actions --yes
 
 - [lizard login](/cli/login) — auf einem Rechner mit einem Schlüssel anmelden
 - [JSON & Automatisierung](/cli/json) — die CLI aus CI verwenden
-- [lizard sandbox](/cli/sandbox) — `--with-token` installiert einen Schlüssel in einer Sandbox
+- [lizard sandbox](/cli/sandbox) — `--with-token` meldet `lizard` in einer Sandbox mit einem eigenen Schlüssel an

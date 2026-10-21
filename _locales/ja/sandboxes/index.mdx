@@ -45,7 +45,7 @@ Lizard (lizard.build) の Sandboxes は、AI エージェントがコードや�
 |---|---|
 | コードを実行するのは何ですか? | 独自のカーネルを持つ Firecracker microVM です。[ランタイムとテンプレート](#runtime-and-templates) を参照してください |
 | どうやって作成しますか? | [Lizard SDK](/sandboxes/sdk-reference)、[`lizard sandbox`](/cli/sandbox)、[ダッシュボード](/sandboxes/dashboard)、または [HTTP API](/sandboxes/sdk-reference#http-api) |
-| どのテンプレートがありますか? | `base`、`interpreter`、`codex`、`claude`、`opencode`、`pi`、`prime`、`desktop` |
+| どのテンプレートがありますか? | `base`、`interpreter`、`codex`、`claude`、`opencode`、`pi`、`prime`、`desktop`、`desktop-camoufox`（US East のみ） |
 | どのサイズがありますか? | Small (2 vCPU / 4 GB)、Medium (4 vCPU / 8 GB、既定)、Large (8 vCPU / 16 GB)。[サイズと料金](/platform/limits#sandbox-sizes) を参照してください |
 | どのくらい存続しますか? | SDK と CLI からは既定で 5 分。直接の API とダッシュボードからは既定で期限なし |
 | 停止後に何が残りますか? | `/workspace` にマウントした [Persistent Volumes](/sandboxes/volumes) 上のファイルだけです |
@@ -55,7 +55,7 @@ Lizard (lizard.build) の Sandboxes は、AI エージェントがコードや�
 
 ## ランタイムとテンプレート
 
-現在のカタログからテンプレートを選びます: `base`、`interpreter`、`codex`、`claude`、`opencode`、`pi`、`prime`、`desktop`。利用可否はリージョンとプールの空き容量によって変わります。`interpreter` には Python と一般的なデータ処理ライブラリが含まれます。`desktop` はグラフィカルなデスクトップを実行し、`sandbox.desktop` または `lizard sandbox desktop` で操作します。ツールのバージョンは sandbox 内で確認してください。公開 CLI には独自テンプレートのアップロード機能はありません。
+現在のカタログからテンプレートを選びます: `base`、`interpreter`、`codex`、`claude`、`opencode`、`pi`、`prime`、`desktop`、`desktop-camoufox`。利用可否はリージョンとプールの空き容量によって変わります。`interpreter` には Python、一般的なデータ処理ライブラリ、Node 22 が含まれます。`desktop` はグラフィカルなデスクトップを実行し、`sandbox.desktop` または `lizard sandbox desktop` で操作します。`desktop-camoufox` は `desktop` テンプレートに Camoufox を加えたものです。Camoufox はスクレイピング用の Firefox ビルドで、Playwright で操作します。今のところ `us-east-1` でだけ動作します。ツールのバージョンは sandbox 内で確認してください。公開 CLI には独自テンプレートのアップロード機能はありません。
 
 Lizard Sandboxes は Firecracker microVM として動作し、それぞれが独自のカーネルを持ちます。エージェントにはタスクに必要な認証情報とアクセス権だけを渡してください。
 

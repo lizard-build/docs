@@ -1,5 +1,5 @@
 ---
-description: "lizard ps listet jeden Service im verknüpften Projekt mit seinem Status und seiner Live-URL auf, eine schnelle Übersicht darüber, was läuft."
+description: "lizard ps listet jeden Service eines Projekts mit seinem Status und seiner Live-URL auf, eine schnelle Übersicht darüber, was läuft."
 ---
 
 # lizard ps
@@ -11,8 +11,16 @@ Alle Services im Projekt mit Status und URL auflisten.
 ## Verwendung
 
 ```bash
-lizard ps
+lizard ps [flags]
 ```
+
+## Flags
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-p, --project <id>` | Name, Slug oder ID des Projekts |
+
+Ohne `-p` verwendet `ps` das verknüpfte Projekt oder in einem nicht verknüpften Ordner dein Standardprojekt.
 
 <span id="examples" />
 
@@ -24,6 +32,14 @@ lizard ps
 
 ```bash
 lizard ps
+```
+
+<span id="list-services-in-another-project" />
+
+### Services in einem anderen Projekt auflisten
+
+```bash
+lizard ps -p my-project
 ```
 
 <span id="see-also" />

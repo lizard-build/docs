@@ -21,6 +21,7 @@ lizard restart [nameOrId] [flags]
 | Bandera | Descripción |
 |------|--------------|
 | `-s, --service <name>` | Servicio |
+| `-p, --project <id>` | Nombre, slug o ID del proyecto |
 | `--detach` | Volver después de que se acepte el reinicio, sin consultar su estado |
 | `--wait` | Esperar a que el nuevo intento de reinicio esté listo; funciona con `--json` |
 | `--timeout <seconds>` | Tiempo máximo de espera de preparación con `--wait`; valor predeterminado: `120` |
@@ -57,6 +58,8 @@ lizard --json restart --service api --wait --timeout 120
 ```
 
 Sin `--wait`, el modo JSON devuelve el resultado después de que se acepte el reinicio. Con `--wait`, el resultado incluye `ok`, `status`, `attemptId` y `waitedMs`. La CLI espera un nuevo intento de reinicio, por lo que un estado sin cambios desde antes de la solicitud no cuenta como éxito. Una espera fallida o un tiempo de espera agotado devuelve un código de salida distinto de cero.
+
+Un servicio en pausa rechaza el reinicio hasta que lo [reanudes](/cli/pause).
 
 Para los servicios HTTP, la CLI también comprueba dos veces el dominio del servicio. Los workers con `containerPort=0` usan el estado de preparación del backend y no necesitan un listener HTTP, incluso cuando tienen un dominio generado.
 

@@ -8,6 +8,10 @@ description: "Configura rutas de sitios estáticos en Lizard: sirve HTML generad
 
 Un sitio de contenido generado debe servir el HTML de cada ruta y devolver HTTP 404 para una página inexistente. Las nuevas compilaciones de lizardpack para Astro static, Docusaurus, VitePress, Hugo y SvelteKit adapter-static usan esa política. Las SPA de React y Vue mantienen el fallback `index.html` necesario para los enrutadores del navegador.
 
+Esas compilaciones responden a una página inexistente con la página 404 propia de nginx, nunca con el `404.html` del sitio. Para tener tu propia página 404, usa la configuración de nginx y el Dockerfile de abajo.
+
+Una URL de carpeta sin barra final, como `/guide` para `guide/index.html`, recibe una redirección 301 a `http://YOUR_PUBLIC_HOST/guide/`, y Lizard luego la redirige a HTTPS. Enlaza la forma con barra final para evitar ambos saltos, o usa la configuración de abajo, que mantiene la redirección en HTTPS.
+
 La configuración personalizada de abajo es opcional. Úsala para una política de enrutamiento que el framework detectado no proporcione. Las imágenes existentes conservan sus reglas anteriores hasta que las vuelvas a compilar.
 
 <span id="choose-the-routing-policy" />
@@ -34,6 +38,7 @@ server {
   server_name _;
   root /usr/share/nginx/html;
   index index.html;
+  absolute_redirect off;
 
   location / {
     try_files $uri $uri.html $uri/ =404;
@@ -46,7 +51,7 @@ server {
 }
 ```
 
-Esto admite tanto los diseños de salida `guide.html` como `guide/index.html`. Incluye un `404.html` generado si quieres una página de error personalizada. De lo contrario, omite los bloques `error_page` y de ubicación exacta para usar el cuerpo de error predeterminado de nginx. Mantén un único estilo de URL canónica en los enlaces y el sitemap del sitio; esta regla de búsqueda no agrega redirecciones canónicas.
+Esto admite tanto los diseños de salida `guide.html` como `guide/index.html`. `error_page` sirve el `404.html` generado del sitio con el estado 404; si el sitio no tiene `404.html`, omite los bloques `error_page` y de ubicación exacta para usar el cuerpo de error predeterminado de nginx. `absolute_redirect off` envía la redirección de carpeta como un `Location: /guide/` relativo, así que el navegador se queda en HTTPS. Mantén un único estilo de URL canónica en los enlaces y el sitemap del sitio; esta regla de búsqueda no agrega redirecciones canónicas.
 
 <span id="build-the-site-with-the-config" />
 

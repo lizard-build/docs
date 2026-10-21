@@ -16,14 +16,24 @@ lizard up [path] [flags]
 
 `up` paketiert Ihren Arbeitsbaum (oder `path`) als Tarball, sendet ihn an die Build-Knoten und stellt ihn bereit. Es erzwingt `sourceType=upload` auf dem Zieldienst, streamt Build-Logs über SSE und gibt nach Abschluss die Live-URL aus.
 
-Wenn das aktuelle Verzeichnis noch nicht mit einem Projekt verknüpft ist, führt `up` zuerst `init` aus. In einem TTY ist das interaktiv; in einer Nicht-TTY-Umgebung (CI) wird **nicht** stillschweigend ein Projekt erstellt — stattdessen wird ein Fehler ausgegeben und Sie werden aufgefordert, `lizard init --name <project>` auszuführen (oder `--project <project>` an `up` zu übergeben), damit nicht durch einen Tippfehler ein leeres Projekt erzeugt wird.
+Ist das Verzeichnis mit keinem Projekt verknüpft, verknüpft `up` es mit dem Standardprojekt Ihres Kontos (dem ältesten Projekt in Ihrem persönlichen Workspace) und stellt dort bereit, in einem TTY wie in CI. Um woanders bereitzustellen, führen Sie zuerst `lizard init --name <project>` aus oder übergeben Sie `--project`.
+
+<span id="which-service-up-deploys-to" />
+
+### In welchen Dienst `up` bereitstellt
+
+1. In den Dienst, den Sie mit `--service` nennen. Hat das Projekt keinen Dienst mit diesem Namen, erstellt `up` ihn.
+2. In den mit dem Verzeichnis verknüpften Dienst.
+3. Sonst in einen Dienst, der nach dem `name` in `package.json` (ohne Scope) oder nach dem Verzeichnis benannt ist. In einem TTY fragt `up` nach dem Namen und schlägt diesen vor.
+
+Hat das Projekt im letzten Fall schon einen Dienst mit diesem Namen, stellt `up` in ihn bereit. Jedes `up` stellt sein Ziel auf Upload-Quelle um, sodass ein GitHub-Dienst bei Push nicht mehr bereitstellt. Übergeben Sie `--service`, um das Ziel selbst zu wählen.
 
 ## Flags
 
 | Flag | Beschreibung |
 |------|-------------|
-| `-s, --service <name>` | Einen vorhandenen Dienst als Ziel verwenden |
-| `-p, --project <id>` | Projektname, Slug oder ID |
+| `-s, --service <name>` | Dienst, in den bereitgestellt wird (Standard: der verknüpfte Dienst). Gibt es keinen mit diesem Namen, erstellt `up` ihn |
+| `-p, --project <id>` | Projektname, Slug oder ID. In einem nicht verknüpften Verzeichnis verknüpft `up` das Verzeichnis damit und erstellt das Projekt, falls keines so heißt |
 | `--build-command <cmd>` | Den Build-Befehl überschreiben |
 | `--start-command <cmd>` | Den Startbefehl überschreiben |
 | `--pre-deploy-command <cmd>` | Vor dem Startbefehl bei jedem Containerstart ausführen (jedes Replikat, jeder Neustart). Erfordert einen Startbefehl; er sollte sich gefahrlos mehrfach ausführen lassen |
@@ -57,7 +67,7 @@ lizard up
 
 ### Auf einem bestimmten Dienst mit benutzerdefiniertem Startbefehl und Port bereitstellen
 
-Erstellen Sie den benannten Dienst zuerst mit `lizard add --service api`, falls er nicht existiert.
+Gibt es `api` noch nicht, erstellt `up` den Dienst.
 
 ```bash
 lizard up --service api --start-command "node server.js" --port 8080
@@ -70,11 +80,10 @@ lizard up --service api --start-command "node server.js" --port 8080
 ```bash
 export LIZARD_TOKEN=liz_xxx
 lizard init --name my-project
-lizard add --service api
-lizard up --ci --service api
+lizard up --ci --service api   # creates api on the first run
 ```
 
-Überspringen Sie `lizard add`, wenn der Dienst bereits existiert. Ein fehlgeschlagener Build oder Deploy endet mit Exit-Code `1`. Mit `--ci` bezieht sich der Exit-Code nur auf den Build. Prüfen Sie daher `lizard ps --json`, bevor Sie das Release als abgeschlossen markieren. `--detach` endet mit `0`, sobald der Upload akzeptiert wurde. Siehe [Framework-Setup](/framework-guides#prepare-the-project).
+Ein fehlgeschlagener Build oder Deploy endet mit Exit-Code `1`. Mit `--ci` bezieht sich der Exit-Code nur auf den Build. Prüfen Sie daher `lizard ps --json`, bevor Sie das Release als abgeschlossen markieren. `--detach` endet mit `0`, sobald der Upload akzeptiert wurde. Siehe [Framework-Setup](/framework-guides#prepare-the-project).
 
 <span id="see-also" />
 

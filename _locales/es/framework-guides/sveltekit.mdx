@@ -1,5 +1,5 @@
 ---
-description: "Despliega SvelteKit en Lizard con adapter-node. Configura la compilación de producción, el puerto 3000, ORIGIN, las acciones de formularios y la ruta separada de adapter-static."
+description: "Despliega SvelteKit 2 o 3 en Lizard con adapter-node. Elige la versión del adaptador que le corresponde, compila para el puerto 3000, establece el origen público y usa la ruta de adapter-static."
 ---
 
 <span id="deploy-sveltekit-on-lizard" />
@@ -14,9 +14,13 @@ Empieza con el [ejemplo completo del código fuente](https://github.com/lizard-b
 
 ## Configurar el adaptador
 
+La versión mayor del adaptador debe coincidir con la de SvelteKit. En SvelteKit 2, que usan el ejemplo y las comprobaciones en la nube, instala adapter-node 5:
+
 ```bash
-npm install --save-dev @sveltejs/adapter-node
+npm install --save-dev @sveltejs/adapter-node@5
 ```
+
+Sin `@5`, npm elige adapter-node 6, que requiere SvelteKit 3, y se detiene con un error `ERESOLVE`.
 
 En `svelte.config.js`, mantén tu preprocess actual y los demás ajustes, pero establece `kit.adapter` en el adaptador Node:
 
@@ -27,6 +31,20 @@ export default {
   kit: { adapter: adapter() },
 };
 ```
+
+En SvelteKit 3, ejecuta `npm install --save-dev @sveltejs/adapter-node` para obtener adapter-node 6. SvelteKit 3 ya no lee `svelte.config.js`; pasa el adaptador al plugin `sveltekit()` en `vite.config.js`:
+
+```js
+import adapter from '@sveltejs/adapter-node';
+import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  plugins: [sveltekit({ adapter: adapter() })],
+});
+```
+
+SvelteKit 3 necesita Node 22.17 o posterior; la imagen de compilación predeterminada con Node 22 lo cumple. Hemos compilado los pasos de SvelteKit 3 en local, pero todavía no los hemos desplegado en Lizard.
 
 Conserva solo el adaptador de despliegue que realmente vayas a usar. En particular, una dependencia `@sveltejs/adapter-static` sin usar puede seleccionar la ruta estática en el detector actual incluso cuando tu configuración importa adapter-node.
 
@@ -50,6 +68,8 @@ HOST=0.0.0.0 PORT=3000 ORIGIN=http://localhost:3000 node build
 
 Abre una página renderizada en el servidor y envía una acción de formulario si la app tiene una. Mantén la ruta de salida predeterminada del adaptador para la detección usada en esta guía.
 
+adapter-node 6 ignora `ORIGIN`. Construye el origen con `https` y el encabezado `Host` de la solicitud, así que en SvelteKit 3 un formulario enviado desde `http://localhost:3000` recibe un 403 en esta prueba local. Comprueba los formularios en la URL HTTPS desplegada.
+
 <span id="deploy-and-set-the-public-origin" />
 
 ## Desplegar y establecer el origen público
@@ -63,7 +83,7 @@ lizard up --service web --port 3000
 lizard ps --json
 ```
 
-Establece `ORIGIN` con el origen HTTPS público exacto de la salida del despliegue, sin una ruta. Por ejemplo, reemplaza este marcador con tu URL real:
+En SvelteKit 2, establece `ORIGIN` con el origen HTTPS público exacto de la salida del despliegue, sin una ruta. Por ejemplo, reemplaza este marcador con tu URL real:
 
 ```bash
 lizard secrets set ORIGIN=https://YOUR_PUBLIC_HOST --service web
@@ -71,13 +91,15 @@ lizard secrets set ORIGIN=https://YOUR_PUBLIC_HOST --service web
 
 Usa el dominio personalizado en su lugar si ese es el origen que usarán los visitantes. Vuelve a comprobar los formularios después de cambiar la variable. Si necesitas varios orígenes permitidos o URL derivadas de proxy, lee la [guía del servidor Node de SvelteKit](https://svelte.dev/docs/kit/adapter-node) y configura deliberadamente los encabezados de proxy de confianza.
 
+En SvelteKit 3, omite `ORIGIN`: la app toma su origen del encabezado `Host`, que lleva el nombre de host público o tu dominio personalizado. Para fijar un origen, establece `paths: { origin: 'https://YOUR_PUBLIC_HOST' }` en las opciones de `sveltekit()`; SvelteKit lo lee durante la compilación.
+
 <span id="verify-and-troubleshoot" />
 
 ## Verificar y solucionar problemas
 
 Lee los logs de compilación y ejecución con `lizard logs --build --service web --json` y `lizard logs --service web --json`. Abre directamente una ruta interna, envía un formulario y solicita una ruta inexistente.
 
-Si los formularios muestran un error de envío entre sitios, revisa `ORIGIN` antes de desactivar una comprobación de seguridad. Si `node build` no puede encontrar el servidor, verifica el adaptador activo y la ruta de salida. Deja sin configurar las anulaciones del comando del servicio para usar la ruta de lizardpack.
+Si los formularios muestran un error de envío entre sitios, revisa `ORIGIN` (SvelteKit 2) o `paths.origin` (SvelteKit 3) antes de desactivar una comprobación de seguridad. Si `node build` no puede encontrar el servidor, verifica el adaptador activo y la ruta de salida. Deja sin configurar las anulaciones del comando del servicio para usar la ruta de lizardpack.
 
 <span id="static-sveltekit-sites" />
 
@@ -85,7 +107,7 @@ Si los formularios muestran un error de envío entre sitios, revisa `ORIGIN` ant
 
 Una app que pueda prerenderizar todas las páginas necesarias puede usar `@sveltejs/adapter-static`, su salida predeterminada `build/` y el puerto de servicio `80`. Esa salida no puede ejecutar acciones de servidor ni endpoints en tiempo de solicitud. Configura el prerenderizado para las rutas que necesites; instalar el paquete por sí solo no es suficiente.
 
-Instala `@sveltejs/adapter-static` y reemplaza la importación del adaptador en `svelte.config.js`:
+En SvelteKit 2, instala `@sveltejs/adapter-static@3` (la versión 4 requiere SvelteKit 3) y reemplaza la importación del adaptador en `svelte.config.js`:
 
 ```js
 import adapter from '@sveltejs/adapter-static';
@@ -94,6 +116,8 @@ export default {
   kit: { adapter: adapter() },
 };
 ```
+
+En SvelteKit 3, instala `@sveltejs/adapter-static` e impórtalo en `vite.config.js` en lugar de adapter-node.
 
 Para un sitio cuyas rutas puedan generarse por completo, añade esto a `src/routes/+layout.js`:
 

@@ -1,16 +1,20 @@
 ---
-description: "lizard workspace creates, lists, and deletes workspaces, and shows how workspaces relate to projects and services."
+description: "lizard workspace creates, lists, pauses and deletes workspaces, and sets a workspace's limits and the resale prices its scoped API keys see."
 ---
 
 # lizard workspace
 
-Create, list, and delete workspaces.
+Create, list, pause and delete workspaces, and set their limits and resale prices.
 
 ## Usage
 
 ```bash
 lizard workspace list
 lizard workspace create <name>
+lizard workspace pause <name-or-id>
+lizard workspace resume <name-or-id>
+lizard workspace limits <name-or-id> [flags]
+lizard workspace resale-pricing <name-or-id> [flags]
 lizard workspace rm <name-or-id> [flags]
 ```
 
@@ -24,9 +28,45 @@ List the workspaces you belong to, with your role and project count (alias `ls`)
 
 Create a workspace. Add projects to it with `lizard project create <name> --workspace <slug>`.
 
+### `lizard workspace pause <name-or-id>`
+
+Pause every app, database and running sandbox in every project of the workspace. Apps and databases keep their URLs, passwords, settings and data; Managed Object Storage buckets are not paused. Only the owner can pause a whole workspace. See [lizard pause](/cli/pause) to pause one service or project.
+
+### `lizard workspace resume <name-or-id>`
+
+Start again every app and database in the workspace that someone paused by hand, and the sandboxes that `lizard workspace pause` paused. Apps and databases that Lizard paused for billing stay paused until billing is in order. Only the owner can do this, and the workspace must have room under its [limits](/platform/limits#workspace-limits).
+
+### `lizard workspace limits <name-or-id>`
+
+Show what a workspace may use and what it uses now. With flags, set its limits. Only the owner sets them, signed in with the browser or an API key with no scopes; any member can read them. Each flag takes `none` to remove that limit.
+
+| Flag | Description |
+|------|-------------|
+| `--sandboxes <n>` | Sandboxes running at once |
+| `--cpu <vcpus>` | vCPU the workspace's apps and databases may be using |
+| `--memory <size>` | Memory the workspace's apps and databases may be using, for example `4GB` or `512MB` |
+| `--disk <size>` | Disk its databases and volumes may hold, for example `20GB` or `1TB` |
+
+CPU and memory count what the apps and databases use now, not what they are set to. At a limit, nothing new starts in the workspace, and running services keep going. At the disk limit, no new volume, database or volume growth is allowed, and data already written stays. See [workspace limits](/platform/limits#workspace-limits) for the errors.
+
+### `lizard workspace resale-pricing <name-or-id>`
+
+Show or set the prices that API keys scoped to this workspace, or to one of its projects, see (alias `resale`). Each price is a multiple of Lizard's, from 1 to 100. Your own bill, your dashboard and keys with no scopes keep Lizard's prices. Only the owner can see or set them, signed in with the browser or an API key with no scopes.
+
+| Flag | Description |
+|------|-------------|
+| `--all <x>` | Set every resource to this multiple |
+| `--cpu <x>` | CPU |
+| `--memory <x>` | Memory |
+| `--storage <x>` | Volumes |
+| `--egress <x>` | Outgoing traffic |
+| `--object-storage <x>` | Managed Object Storage |
+| `--sandbox <x>` | Sandbox hourly prices |
+| `--off` | Turn resale prices off; scoped keys see Lizard's prices again |
+
 ### `lizard workspace rm <name-or-id>`
 
-Delete a workspace (alias `delete`). Only the owner can delete it, and only when it has no projects or sandboxes left. You can't delete your personal workspace.
+Delete a workspace (alias `delete`). Only the owner can delete it, and only when it has no projects, sandboxes or volumes left. Projects in the trash don't count; they are deleted with the workspace, which has no trash of its own. A scoped API key can't delete a workspace. You can't delete your personal workspace.
 
 | Flag | Description |
 |------|-------------|
@@ -46,6 +86,21 @@ lizard workspace list
 lizard workspace create my-team
 ```
 
+### Cap a workspace
+
+```bash
+lizard workspace limits my-team                                   # show limits and current use
+lizard workspace limits my-team --sandboxes 5 --cpu 2 --memory 4GB --disk 20GB
+lizard workspace limits my-team --cpu none                        # remove one limit
+```
+
+### Set resale prices
+
+```bash
+lizard workspace resale-pricing my-team --all 3                   # every price x3
+lizard workspace resale-pricing my-team --off
+```
+
 ### Delete an empty workspace
 
 ```bash
@@ -54,6 +109,9 @@ lizard workspace rm my-team --yes
 
 ## See also
 
-- [lizard whoami](/cli/whoami) — shows your active workspace
+- [lizard whoami](/cli/whoami) — shows the account you are signed in with
 - [lizard project](/cli/project) — list and create projects in a workspace
+- [lizard pause](/cli/pause) — pause and resume a service or project
+- [lizard keys](/cli/keys) — create API keys scoped to a workspace
+- [Limits](/platform/limits#workspace-limits) — workspace limits and their errors
 - [Architecture: Workspace](/concepts/architecture) — how workspaces relate to projects and services

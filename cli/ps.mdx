@@ -1,5 +1,5 @@
 ---
-description: "lizard ps lists every service in the linked project with its status and live URL, a fast snapshot of what is running."
+description: "lizard ps lists every service in a project with its status and live URL, a fast snapshot of what is running."
 ---
 
 # lizard ps
@@ -9,8 +9,16 @@ List all services in the project with status and URL.
 ## Usage
 
 ```bash
-lizard ps
+lizard ps [flags]
 ```
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-p, --project <id>` | Project name, slug, or ID |
+
+Without `-p`, `ps` uses the linked project, or your default project in an unlinked folder.
 
 ## Examples
 
@@ -18,6 +26,12 @@ lizard ps
 
 ```bash
 lizard ps
+```
+
+### List services in another project
+
+```bash
+lizard ps -p my-project
 ```
 
 ## See also

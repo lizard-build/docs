@@ -103,7 +103,7 @@ Ein gesunder Prozess allein beweist nicht, dass der MCP-Handshake oder die gestr
 
 Dieses Beispiel hält weder Benutzersitzungen noch dauerhafte Dateien im Serverspeicher vor. Fügen Sie für dauerhaften Anwendungszustand eine Datenbank hinzu und prüfen Sie den Zugriff pro Benutzer, bevor Sie private Tools bereitstellen. Für Clients, die OAuth-Discovery oder interaktiven Login benötigen, fügen Sie einen unterstützten OAuth-Anbieter hinzu, statt dieses Test-Token zu verteilen.
 
-Ein HTTP-Prozess kann zwischen Aufrufen aktiv bleiben. Prüfen Sie [pricing](https://lizard.build/pricing), [limits](/platform/limits) und die gemessene CPU-/Speicherauslastung; eine leere Anfragewarteschlange bedeutet nicht, dass keine Kosten anfallen.
+Der Server läuft zwischen Aufrufen weiter, und Lizard berechnet seine gemessene CPU- und Speichernutzung, solange er läuft. Um die Kosten eines ungenutzten Servers zu senken, schalten Sie [Schlafen im Leerlauf](/cli/sleep) ein: `lizard sleep --on --service mcp`. Beim Einschalten startet der Service einmal neu. Nach einer festgelegten Zeit ohne Anfragen (standardmäßig 10 Minuten) schläft der Service; die nächste Anfrage weckt ihn, daher dauert dieser erste Aufruf länger. Prüfen Sie [pricing](https://lizard.build/pricing) und [limits](/platform/limits).
 
 <span id="next-steps" />
 

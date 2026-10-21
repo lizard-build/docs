@@ -4,25 +4,33 @@ description: "lizard git connects the GitHub App, reports repository status, and
 
 # lizard git
 
-Manage the GitHub connection for the linked project and its services.
+Connect your Lizard account to GitHub, see which repositories a project's services deploy from, and switch a service to another branch. The GitHub App connection belongs to your Lizard account, not to one project.
+
+The other `lizard git` subcommands belong to Lizard Git, which this page does not cover.
 
 ## Usage
 
 ```bash
 lizard git connect
-lizard git status
+lizard git status [flags]
 lizard git checkout <service> <branch> [flags]
 ```
+
+Without `-p`, `status` and `checkout` use the linked project, or your default project in an unlinked folder.
 
 ## Subcommands
 
 ### `lizard git connect`
 
-Connect the GitHub App to access private repositories.
+Connect the GitHub App to access private repositories. The command opens GitHub to install the app, waits for you to press Enter, then checks the connection. If the app is already connected, it says so. With `--json` or without a terminal, it prints the install URL instead: `{ installed: false, installUrl }`.
 
 ### `lizard git status`
 
-Show GitHub connection and repository status.
+Show whether the GitHub App is connected, and the repository and branch each service in the project deploys from.
+
+| Flag | Description |
+|------|-------------|
+| `-p, --project <id>` | Project name, slug, or ID |
 
 ### `lizard git checkout <service> <branch>`
 
@@ -31,6 +39,7 @@ Switch a service to a different branch and redeploy.
 | Flag | Description |
 |------|-------------|
 | `--detach` | Skip log streaming |
+| `-p, --project <id>` | Project name, slug, or ID |
 
 ## Examples
 

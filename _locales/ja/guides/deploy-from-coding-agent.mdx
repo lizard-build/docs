@@ -58,11 +58,11 @@ lizard status --json
 lizard init --name agent-example --json
 lizard add --service api --json
 lizard add postgres --json
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api --json
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api --json
 lizard up --service api --port 3000 --json
 ```
 
-データベースの実際の名前が `postgres` でない場合は、その名前を使用してください。ローカルシェルで展開されないよう、参照は引用符で囲んだままにしてください。最初のデプロイ前に設定してください。コマンドが認証必須と報告した場合にのみ、`lizard login` でサインインしてください。
+データベースの実際の名前が `postgres` でない場合は、その名前を使用してください。`DATABASE_PRIVATE_URL` はプロジェクトのプライベートネットワーク経由でデータベースに接続し、同じプロジェクトかつ同じリージョンのサービスから使えます。[Postgres 接続文字列](/addons/postgres#postgres-connection-string) を参照してください。ローカルシェルで展開されないよう、参照は引用符で囲んだままにしてください。最初のデプロイ前に設定してください。コマンドが認証必須と報告した場合にのみ、`lizard login` でサインインしてください。
 
 このコピーした例では、アップロードパスは意図的なものです。すでに GitHub にあるアプリケーションの場合は、代わりに次のセクションを使用してください。ビルドが失敗すると code 1 で終了します。それでも、ターミナルの `failed`/`deployed` event を確認し、アプリケーションを検証してください。[既知の問題](/platform/known-issues) を参照してください。
 
@@ -82,7 +82,7 @@ lizard ps --json
 
 ```bash
 lizard add --repo YOUR_ORG/YOUR_REPO --name api-git --no-deploy --json
-lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api-git --json
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api-git --json
 ```
 
 このプロジェクトに Managed Postgres がない場合は、先に用意してください。この手順では、上と同じ Node.js の例を使用します。そのアプリがサブディレクトリにあるリポジトリ、または別ブランチのリポジトリでは、デプロイ前に設定してください:

@@ -24,10 +24,9 @@ A **workspace** is the account or organization level. You belong to at least one
 
 ```bash
 lizard workspace list
-lizard whoami        # shows your active workspace
 ```
 
-Many commands accept `-w, --workspace <ws>` to disambiguate when the same project name exists in more than one workspace.
+Many commands accept `-w, --workspace <ws>` to disambiguate when the same project name exists in more than one workspace. The owner can cap how many sandboxes a workspace runs at once and how much CPU, memory and disk it uses with `lizard workspace limits` (see [`lizard workspace`](/cli/workspace)).
 
 ## Project
 
@@ -40,6 +39,8 @@ lizard status                   # show the current directory's link
 lizard unlink                   # remove the link
 lizard project list             # all projects in the workspace
 ```
+
+A folder you haven't linked uses your account's **default project**: the oldest project in your personal workspace, `<username>'s Project` for a new account. `lizard up`, `lizard add`, `lizard sandbox create` and other project commands go there unless you link the folder or pass `--project`.
 
 > **Tip:** Use the repo or directory name for the project, and app-style names (`api`, `worker`, `web`) for services.
 
@@ -59,6 +60,8 @@ lizard service set <svc> --set <field>=<value>
 lizard service rename <new-name> --service <svc>
 lizard service delete --service <svc>
 ```
+
+To stop a service without deleting it, use [`lizard pause`](/cli/pause); to let it sleep when it gets no traffic, use [`lizard sleep`](/cli/sleep).
 
 Service configuration fields are **flat** and map 1:1 to the wire schema (e.g. `repoUrl`, `branch`, `buildCommand`, `startCommand`, `containerPort`, `rootDirectory`). There is no `build.*` / `deploy.*` nesting. See [`lizard service`](/cli/service) for the full list.
 

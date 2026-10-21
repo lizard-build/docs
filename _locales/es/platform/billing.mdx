@@ -9,7 +9,7 @@ description: "Lizard Pro cuesta $19 al mes con $19 en créditos mensuales. Cómo
 
 Lizard (lizard.build) tiene un plan de alta propia: Pro. Cuesta $19 al mes y trae $19 en créditos mensuales. Los créditos pagan el uso en toda la plataforma: apps, Sandboxes, Managed Postgres, Managed Redis, Managed Object Storage, Persistent Volumes y tráfico saliente. Cuando gastas los créditos, pagas pay as you go a las tarifas publicadas.
 
-Gestiona tu plan en la página **Facturación** de la configuración de la cuenta o con [`lizard billing`](/cli/billing). El plan pertenece al propietario del workspace. El uso en todos los workspaces que te pertenecen cuenta para tu plan, y los miembros no tienen costo por usuario.
+Gestiona tu plan, tu tarjeta y tus facturas en la página **Facturación**: abre **Configuración** desde la barra lateral o el menú de la cuenta y luego **Facturación** en **Cuenta**. También puedes usar [`lizard billing`](/cli/billing). El plan pertenece al propietario del workspace. El uso en todos los workspaces que te pertenecen cuenta para tu plan, y los miembros no tienen costo por usuario.
 
 ## Pro
 
@@ -59,13 +59,13 @@ Una cuenta nueva puede explorar, pero necesita Pro para crear apps, Sandboxes, b
 
 Cada cuenta y cada tarjeta tiene una prueba. Si la cuenta ya tuvo una, Pro empieza de inmediato y cobra $19 ese mismo día. Si la tarjeta ya tuvo una, la prueba no empieza y no se cobra nada; empieza Pro a $19 en la página Facturación.
 
-La prueba incluye todas las funciones de Pro, con [límites](#limits) más bajos hasta tu primera factura pagada.
+La prueba incluye todas las funciones de Pro, con [límites](#limits) más bajos hasta tu primera factura pagada. Hasta entonces, el diálogo **New Sandbox** del panel solo ofrece sandboxes Small en regiones de EE. UU.
 
 <span id="when-trial-credits-run-out" />
 
 ### Cuando se agotan los créditos de prueba
 
-- Cuando se agotan tus créditos de prueba, los recursos en marcha se pausan y no puedes crear otros nuevos. Sus datos se conservan.
+- Cuando se agotan tus créditos de prueba, los recursos en marcha se pausan y no puedes crear otros nuevos. Sus datos se conservan; consulta [qué conserva una pausa por facturación](#what-a-billing-pause-keeps).
 - Para seguir, elige **Start Pro now** en la página Facturación o ejecuta `lizard billing start-now`. Esto termina la prueba, cobra $19 y empieza tu primer mes pagado con $19 en créditos. Las apps y bases de datos en pausa vuelven a arrancar en cuanto se completa el pago.
 
 Los créditos de prueba que no uses terminan con la prueba. No pasan al mes pagado.
@@ -100,7 +100,7 @@ Si falla un cobro, ya sean los $19 mensuales o un cobro de uso adicional:
 
 - Desde ese momento no puedes crear recursos nuevos.
 - Los recursos en marcha siguen 72 horas y luego se pausan.
-- Los recursos en pausa conservan sus datos.
+- Los recursos en pausa conservan sus datos; consulta [qué conserva una pausa por facturación](#what-a-billing-pause-keeps).
 
 Paga la factura pendiente en la página Facturación. En cuanto está pagada, Lizard quita el bloqueo y vuelve a arrancar las apps y bases de datos en pausa. Reanuda tú mismo los Sandboxes en pausa. Stripe reintenta un cobro fallido; si el último intento también falla, Pro termina.
 
@@ -112,7 +112,13 @@ Cancela cuando quieras en la página Facturación, en el portal de clientes de S
 
 Hasta la fecha de fin, puedes deshacer la cancelación en la página Facturación o con `lizard billing resume`.
 
-Cuando Pro termina, ya no puedes crear recursos, y los que están en marcha se pausan. Sus datos se conservan. Para volver a usarlos, activa Pro en la página Facturación. No hay una segunda prueba, así que Pro empieza de inmediato a $19.
+Cuando Pro termina, ya no puedes crear recursos, y los que están en marcha se pausan. Sus datos se conservan, como se explica abajo. Para volver a usarlos, activa Pro en la página Facturación. No hay una segunda prueba, así que Pro empieza de inmediato a $19.
+
+<span id="what-a-billing-pause-keeps" />
+
+## Qué conserva una pausa por facturación
+
+Las apps y bases de datos conservan sus datos mientras están en pausa. Un sandbox en marcha se pausa con sus archivos y su memoria. Un sandbox que no se puede pausar en ese momento, o uno que se ha caído, se elimina con sus archivos. Guarda los archivos que necesites en un [Persistent Volume](/sandboxes/volumes).
 
 ## Enterprise
 
@@ -122,6 +128,6 @@ Las cuentas Enterprise pagan pay as you go y reciben cada mes una factura del me
 
 ## Apps inactivas y datos almacenados
 
-Una app puede usar memoria y CPU aunque no reciba solicitudes. Detén la app para detener el uso de cómputo. Pagas por Persistent Volumes y Managed Object Storage mientras guardes datos en ellos, incluso con la app detenida.
+Una app puede usar memoria y CPU aunque no reciba solicitudes. [Pausa](/cli/pause) la app para detener el uso de cómputo, o deja que [duerma](/cli/sleep) cuando esté inactiva y despierte con la siguiente solicitud. Pagas por Persistent Volumes y Managed Object Storage mientras guardes datos en ellos, incluso con la app en pausa.
 
 Consulta [almacenamiento y recuperación](/platform/storage-and-recovery) antes de borrar datos. Lee [métricas](/observability/metrics) para comparar los límites configurados con el uso medido.

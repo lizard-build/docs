@@ -1,5 +1,5 @@
 ---
-description: "Was das Lizard-Dashboard zusätzlich zur CLI bietet: Service-Status, Bereitstellen-Zeitleiste, Live-Logs, Metriken, Datenbrowser, Team und Abrechnung."
+description: "Was das Lizard-Dashboard zusätzlich zur CLI bietet: Sandboxes, Service-Status, Deploy-Verlauf, Live-Logs, Metriken, Datenbrowser, Team und Abrechnung."
 ---
 
 # App-Dashboard
@@ -21,13 +21,15 @@ lizard docs          # open this documentation
 
 ### Services
 
-Die Startansicht des Projekts listet jeden Service mit seinem Status-Badge, der generierten Domain und einem schnellen Zugriff auf Logs, Metriken, Secrets und Einstellungen auf. Erstellen Sie neue Services (aus einem GitHub-Repository oder leer) direkt von hier aus.
+**Apps & Datenbanken** in der Seitenleiste listet jeden Service mit seinem Status-Badge, der generierten Domain und einem schnellen Zugriff auf Logs, Metriken, Secrets und Einstellungen auf. Erstellen Sie einen Service mit **Neuer Service**: aus einem GitHub-Repository, aus einem Ordner auf Ihrem Computer oder als Datenbank (Managed Postgres, Managed Redis) oder Managed Object Storage.
+
+Im Tab **Einstellungen** eines Service finden Sie außerdem **Serverless**, damit er im Leerlauf schläft ([`lizard sleep`](/cli/sleep)), und **Pausieren**, das ihn stoppt, ohne etwas zu löschen ([`lizard pause`](/cli/pause)).
 
 <span id="deployments" />
 
 ### Bereitstellungen
 
-Eine Zeitleiste aller Deploys mit Build-Logs pro Bereitstellen und einer Detailansicht (Commit, Status, Replikate). Das ist das visuelle Gegenstück zu `lizard events` + `lizard logs --build`.
+Der Tab **Übersicht** jedes Service listet seine Deploys auf. Öffnen Sie einen, um Status, Auslöser, Quelle, Build-Logs und Neustarts zu sehen. Das ist das visuelle Gegenstück zu `lizard events` + `lizard logs --build`.
 
 ### Logs
 
@@ -37,17 +39,17 @@ Live-Streaming von Laufzeit- und Build-Logs mit Such- und Level-Filtern — das 
 
 ### Metriken & Nutzung
 
-CPU-, Speicher-, Netzwerk- und Datenträgerdiagramme pro Service sowie eine **Nutzungs**-Ansicht, die Verbrauch und Kosten im gesamten Projekt aufschlüsselt. Entspricht [`lizard metrics --cost`](/observability/metrics).
+CPU-, Speicher-, Netzwerk- und Datenträgerdiagramme pro Service sowie die Seite **Nutzung**, die Verbrauch und Kosten im gesamten Projekt aufschlüsselt. Entspricht [`lizard metrics --cost`](/observability/metrics).
 
 <span id="variables--secrets" />
 
 ### Variablen & Secrets
 
-Verwalten Sie Secrets auf Service- und Projektebene mit maskierten Werten und Unterstützung für Referenzen (`${{…}}`). Siehe [Variablen & Secrets](/variables).
+Verwalten Sie Secrets auf Service-Ebene im Tab **Secrets** eines Service und Secrets auf Projektebene unter **Globale Secrets**, mit maskierten Werten und Unterstützung für Referenzen (`${{…}}`). Siehe [Variablen & Secrets](/variables).
 
 ### Domains
 
-Fügen Sie benutzerdefinierte Domains hinzu, sehen Sie DNS-Einträge ein und verfolgen Sie den Verifizierungs- und TLS-Status. Siehe [Networking](/networking).
+Fügen Sie im Tab **Einstellungen** eines Service benutzerdefinierte Domains hinzu, sehen Sie DNS-Einträge ein und verfolgen Sie den Verifizierungs- und TLS-Status. Siehe [Networking](/networking).
 
 <span id="data-browsers" />
 
@@ -61,28 +63,30 @@ Jedes Managed Addon enthält einen Datenbrowser:
 
 ### Sandboxes
 
-Die Seite **Sandboxes** enthält Tabs für Sandboxes, Persistent Volumes, Vorlagen und Agenten. Erstellen Sie eine Sandbox mit **New Sandbox**; die Zahl daneben zeigt, wie viele Sandboxes im Verhältnis zu Ihrem Limit laufen. Siehe [Sandboxes quickstart](/sandboxes/quickstart).
+Die Seitenleiste enthält **Sandboxes**, **Volumes** (Persistent Volumes), **Vorlagen** und **Agenten**. Erstellen Sie eine Sandbox mit **Neue Sandbox** auf der Seite Sandboxes; die Zahl daneben zeigt, wie viele Sandboxes im Verhältnis zu Ihrem Limit laufen. In der Testphase bietet der Dialog nur die Größe Small in US-Regionen an. Siehe [Sandboxes quickstart](/sandboxes/quickstart).
 
 ### GitHub-Integration
 
-Verbinden Sie die GitHub-App, wählen Sie Repositories aus und verwalten Sie, welche Repos Lizard bauen darf. Siehe [Von GitHub bereitstellen](/deploy/github).
+Verbinden Sie GitHub unter **Neuer Service → GitHub-Repository**. Danach öffnet **Zugriff konfigurieren** unter der Repository-Liste die Einstellungen der GitHub-App, in denen Sie wählen, welche Repos Lizard bauen darf. Ein öffentliches Repository lässt sich auch ohne Verbindung über seine eingefügte URL deployen. Siehe [Von GitHub bereitstellen](/deploy/github).
 
 <span id="settings-team--billing" />
 
 ### Einstellungen, Team & Abrechnung
 
-Projekt- und Workspace-Einstellungen, Einladungen und Rollen für Mitglieder sowie die Ressourcennutzung. Die Seite **Abrechnung** in den Kontoeinstellungen zeigt Ihren Plan, die Testphase, das in diesem Monat genutzte Guthaben, Rechnungen und Ihre Karte. Siehe [Abrechnung](/platform/billing).
+**Einstellungen** unten in der Seitenleiste enthält die Projekt- und Workspace-Einstellungen, Einladungen und Rollen für Mitglieder (**Team**) sowie Ihre Kontoeinstellungen. Öffnen Sie **Abrechnung** in den Kontoeinstellungen oder per Klick auf Ihren Plan oben im Dashboard. Die Seite zeigt Ihren Plan, die Testphase, die Nutzung im laufenden Zeitraum, Rechnungen und Ihre Karte. Siehe [Abrechnung](/platform/billing).
 
 ## CLI ↔ Dashboard
 
 | Aufgabe | CLI | Dashboard-Ansicht |
 |------|-----|----------------|
-| Bereitstellen-Verlauf | `lizard events` | Bereitstellungen |
+| Deploy-Verlauf | `lizard events` | Service → Übersicht |
 | Logs streamen | `lizard logs` | Logs |
 | Ressourcendiagramme | `lizard metrics` | Metriken / Nutzung |
-| Secrets verwalten | `lizard secrets` | Variablen |
-| Benutzerdefinierte Domains | `lizard domain` | Domains |
+| Secrets verwalten | `lizard secrets` | Secrets / Globale Secrets |
+| Benutzerdefinierte Domains | `lizard domain` | Service → Einstellungen |
+| Service pausieren oder fortsetzen | `lizard pause` / `lizard resume` | Service → Einstellungen |
+| Im Leerlauf schlafen | `lizard sleep` | Service → Einstellungen → Serverless |
 | Managed Postgres, Managed Redis oder Managed Object Storage abfragen | `lizard run --service <addon> -- <cmd>` | Datenbrowser |
-| Teammitglieder einladen | — | Team / Einstellungen |
+| Teammitglieder einladen | — | Einstellungen → Team |
 
 Verwenden Sie einfach das, was gerade am besten passt — beide arbeiten mit denselben Projekten und Services.

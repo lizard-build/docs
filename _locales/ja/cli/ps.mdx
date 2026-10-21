@@ -1,5 +1,5 @@
 ---
-description: "lizard ps は、リンクされたプロジェクト内のすべてのサービスを、そのステータスとライブ URL とともに一覧表示し、何が稼働しているかをすばやく確認できます。"
+description: "lizard ps は、プロジェクト内のすべてのサービスを、そのステータスとライブ URL とともに一覧表示し、何が稼働しているかをすばやく確認できます。"
 ---
 
 # lizard ps
@@ -11,8 +11,18 @@ description: "lizard ps は、リンクされたプロジェクト内のすべ�
 ## 使い方
 
 ```bash
-lizard ps
+lizard ps [flags]
 ```
+
+<span id="flags" />
+
+## フラグ
+
+| フラグ | 説明 |
+|------|-------------|
+| `-p, --project <id>` | プロジェクトの名前、slug、または ID |
+
+`-p` を指定しない場合、`ps` はリンクされたプロジェクトを使い、リンクされていないフォルダーではデフォルトプロジェクトを使います。
 
 <span id="examples" />
 
@@ -24,6 +34,14 @@ lizard ps
 
 ```bash
 lizard ps
+```
+
+<span id="list-services-in-another-project" />
+
+### 別のプロジェクトのサービスを一覧表示する
+
+```bash
+lizard ps -p my-project
 ```
 
 <span id="see-also" />

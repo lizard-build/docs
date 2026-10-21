@@ -34,13 +34,34 @@ lizard metrics --json
 { "event": "deployed", "status": "running", "url": "https://app.onlizard.com" }
 ```
 
-Поток сборки завершается событием `done` или `error`. Без `--ci` `lizard up` затем выдаёт финальное событие `deployed`, `failed` или `deploying` с `status`. Только `deployed` содержит `url` (который может быть `null`).
+Поток сборки завершается событием `done` или `error`. После `done` команда `lizard up` без `--ci` выдаёт финальное событие `deployed`, `failed` или `deploying` с `status`. Только `deployed` содержит `url` (который может быть `null`). После `error` финального события нет, и команда завершается с кодом `1`.
 
 <span id="logs---json-is-a-snapshot-not-a-stream" />
 
 ### `logs --json` — это снимок, а не поток
 
 `lizard logs --json` возвращает **последние 200 строк** (переопределяется через `--tail N`, максимум 1000) и завершается. Не ждите от него дополнительного вывода. Для конкретного инцидента используйте `--restart latest` или `--restart <id>`.
+
+<span id="errors" />
+
+### Ошибки
+
+В режиме JSON команда, завершившаяся ошибкой, выводит в stdout один объект ошибки и завершается с ненулевым кодом (см. таблицу в разделе «CI / работа без интерфейса»):
+
+```json
+{
+  "error": {
+    "code": "ERROR",
+    "status": null,
+    "message": "Project \"my-projet\" not found.",
+    "body": null
+  }
+}
+```
+
+`code` — код ошибки API, код CLI, например `NOT_AUTHENTICATED` или `PROJECT_DELETED`, или `ERROR` для общей ошибки; ошибки во флагах дают коды вроде `commander.unknownOption`. `status` — HTTP-статус или `null`, если CLI упал до ответа API. `body` содержит ответ API или `null`.
+
+Без входа команды завершаются с `NOT_AUTHENTICATED` и кодом `2`. Вне CI `body.login` содержит ссылки для входа (`authUrl`, `authUrls`) и `instruction`: агент может передать ссылку пользователю, а затем запустить команду снова.
 
 <span id="schema-discovery" />
 
@@ -59,13 +80,12 @@ lizard service set --help --json     # one command
 
 ## CI / работа без интерфейса
 
-Аутентифицируйтесь токеном и явно укажите проект (безголовый `up` не создаст проект автоматически):
+Аутентифицируйтесь токеном и явно укажите проект. Иначе `up` без интерфейса развернёт код в проекте по умолчанию вашего аккаунта:
 
 ```bash
 # Set LIZARD_TOKEN through your CI secret store.
 lizard init --name my-project
-lizard add --service api   # first run only; skip when the service exists
-lizard up --ci --service api --detach
+lizard up --ci --service api --detach   # creates api on the first run
 ```
 
 Проверяйте коды выхода для ветвления пайплайна:
@@ -75,9 +95,11 @@ lizard up --ci --service api --detach
 | `0` | успех |
 | `1` | общая ошибка |
 | `2` | авторизация — токен отсутствует / просрочен |
-| `3` | не найдено |
+| `3` | не найдено: в API нет ничего с таким ID |
 | `4` | таймаут |
 | `5` | отменено |
+
+Имя проекта или сервиса, которому ничего не соответствует, даёт код `1`. `lizard run`, `lizard sandbox exec` и `lizard sandbox ssh` завершаются с кодом самой команды (`127`, если `run` не находит команду).
 
 `--wait` заставляет `redeploy` дождаться завершения сборки и готовности нового деплоя. Без него в режиме JSON команда завершается с кодом `0`, как только Lizard принимает запрос на сборку.
 

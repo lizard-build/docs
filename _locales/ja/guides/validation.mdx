@@ -6,7 +6,7 @@ description: "MCP、coding-agent、Redis worker、Telegram ガイドについて
 
 # シナリオガイドのテスト結果
 
-2026-09-07 に、Lizard CLI 0.3.92 を使って、これらのガイドを別のテストプロジェクトで確認しました。アプリケーションの確認はビルドステータスとは別です。テストではガイドのコマンドを使用し、GitHub の例では別のプロジェクト名とドキュメント用テストブランチを使いました。
+2026-09-07 に、Lizard CLI 0.3.92 を使って、これらのガイドを別のテストプロジェクトで確認しました。これらの結果は、Lizard CLI 4 (2026年9月17日) と、2026年9月末に build が現在の builder へ移行する前のもので、その後は再実行していません。アプリケーションの確認はビルドステータスとは別です。テストではガイドのコマンドを使用し、GitHub の例では別のプロジェクト名とドキュメント用テストブランチを使いました。
 
 | ガイド | 結果 | チェック |
 |---|---|---|
@@ -20,7 +20,7 @@ description: "MCP、coding-agent、Redis worker、Telegram ガイドについて
 
 ## バージョン
 
-MCP コンテナは Node.js 22.23.2 と MCP TypeScript SDK 1.30.0 で動作しました。coding-agent の例では `pg` 8.16.3 を使用し、PostgreSQL 18.4 で動作する Managed Postgres に接続しました。worker コンテナは Python 3.13.15 と redis-py 6.4.0 で動作しました。依存関係の lockfile または厳密な requirements は各 example にあります。
+MCP コンテナは Node.js 22.23.2 と MCP TypeScript SDK 1.30.0 で動作しました。coding-agent の例では `pg` 8.16.3 を使用し、PostgreSQL 18.4 で動作する Managed Postgres に接続しました。worker コンテナは Python 3.13.15 と redis-py 6.4.0 で動作しました。依存関係の lockfile または厳密な requirements は各 example にあり、現在もこれらのバージョンに固定されています。MCP TypeScript SDK 1.32.1 などの新しいリリースはテストしていません。
 
 <span id="scope" />
 
@@ -28,7 +28,7 @@ MCP コンテナは Node.js 22.23.2 と MCP TypeScript SDK 1.30.0 で動作し�
 
 MCP の確認は、この example のステートレスな HTTP transport と固定 bearer token を対象にしています。OAuth 互換性、ブラウザ対応、長時間のストリーミング、負荷容量は確認していません。トークンは 1 時間後に期限切れになります。
 
-GitHub の確認では、ドキュメント用ブランチと `_examples/agent-app` ディレクトリを使用しました。明示的な redeploy はテストしましたが、すべての private-repository 権限設定や webhook event はテストしていません。
+GitHub の確認では、ドキュメント用ブランチと `_examples/agent-app` ディレクトリを使用しました。coding-agent のテストは公開用の `DATABASE_URL` で接続しましたが、ガイドは現在 `DATABASE_PRIVATE_URL` を使っており、こちらはまだクラウドで実行していません。GitHub の確認では、明示的な redeploy はテストしましたが、すべての private-repository 権限設定や webhook event はテストしていません。
 
 Redis 復旧の確認では、単一の consumer を再起動する前に、完了していない processing エントリを事前投入しました。Redis 障害、複数 worker、外部効果の exactly-once はテストしていません。データベースの確認は、アプリケーション再起動をまたいだ永続性を示すものであり、バックアップや災害復旧を示すものではありません。
 

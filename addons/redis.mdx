@@ -22,7 +22,7 @@ The first Redis addon is named `redis`, so `${{redis.REDIS_URL}}` works immediat
 | `REDIS_URL` | Full connection string over the public endpoint (`redis://…`) |
 | `REDIS_PRIVATE_URL` | Connection string over the project's private network (`<name>.lizard.internal:6379`) |
 
-Both strings use the form `redis://default:<password>@<host>:<port>`. The private one works only from services in the same project; see [private networking](/networking#private-networking).
+Both strings use the form `redis://default:<password>@<host>:<port>`. The private one works only from services in the same project and the same region; see [private networking](/networking#private-networking). A service in another region must use `REDIS_URL`; to give it the private URL, create Redis in its region with `lizard add redis --region <code>`. `<name>` is the name the addon had when it got its private address, `redis` for the first one; a rename does not change it.
 
 ## Connect a service
 
@@ -31,7 +31,7 @@ lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-The reference resolves at deploy time; consumers pick up the addon's current values on their next deploy. Use `REDIS_URL` for clients outside the project. Every service in the project also gets the addon's public `REDIS_URL` at the lowest precedence; an explicit reference overrides it.
+The reference resolves at deploy time; consumers pick up the addon's current values on their next deploy. Use `REDIS_URL` for clients outside the project or in another region. Every service in the project also gets the addon's public `REDIS_URL` at the lowest precedence; an explicit reference overrides it.
 
 ## Does Managed Redis keep data?
 
@@ -64,6 +64,8 @@ lizard run --service redis -- sh -c 'exec redis-cli -u "$REDIS_URL"'
 ```bash
 lizard scale --service redis --storage 4096
 ```
+
+Storage is grow-only. Sizes are 512, 1024, 2048, 4096, 8192 or 16384 MB. Growing the volume stops Redis while Lizard copies its data to a bigger volume, then starts it again, so expect a short outage. Resume a paused instance with [`lizard resume`](/cli/pause) before you resize it.
 
 ## See also
 

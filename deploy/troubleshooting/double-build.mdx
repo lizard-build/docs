@@ -1,14 +1,14 @@
 ---
-description: "Why lizard service set followed by redeploy queues two builds, which fields rebuild on their own, and how to stop the redundant one."
+description: "Why lizard service set followed by redeploy cancels a build and starts it again, which fields rebuild on their own, and when to redeploy."
 ---
 
-# My change queued two builds back to back
+# My redeploy cancelled the build my change started
 
-You ran `lizard service set` to change a field, then `lizard redeploy`, and ended up with two builds instead of one.
+You ran `lizard service set` to change a field, then `lizard redeploy`. The deploy took longer than expected, and the history may show a cancelled build.
 
 ## What this means
 
-The `service set` call already triggered a rebuild on its own. The follow-up `redeploy` queued a second, redundant one.
+The `service set` call already started a rebuild on its own. The follow-up `redeploy` cancelled that build, whose log ends with `--- Build cancelled: a newer deploy was triggered ---`, and started the same build again from the beginning.
 
 ## Why this can happen
 
@@ -20,10 +20,10 @@ It's easy to reflexively chain a `redeploy` after every `service set`, but that 
 
 ### Check which kind of field you changed
 
-See the [rebuild triggers table](/concepts/build-pipeline#what-triggers-a-rebuild). If it's a build field and the service was running, the rebuild is already queued — do nothing further. If the service was crashed or never deployed, run `lizard redeploy` once.
+See the [rebuild triggers table](/concepts/build-pipeline#what-triggers-a-rebuild). If it's a build field and the service was running, the rebuild has already started — do nothing further. If the service was crashed or never deployed, run `lizard redeploy` once.
 
 ```bash
-lizard events   # confirm only one build is in flight
+lizard events   # is a build already running?
 ```
 
 ### Only redeploy after runtime-only changes

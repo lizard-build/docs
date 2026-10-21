@@ -145,7 +145,7 @@ print(connected.get_info())
 
 ## 一時停止、再開、スナップショット
 
-`pause()` は sandbox のメモリと実行中のプロセスを保存し、`/workspace` を保持します。一時停止が完了すると計算料金は止まりますが、Persistent Volumes のストレージ料金は引き続き発生します。`resume()` は同じ ID で sandbox を復元し、計算料金を再開します。どちらも処理をキューに入れてすぐに戻るため、成功を確認するには `paused` または `running` を待ってください。
+`pause()` は sandbox のメモリ、実行中のプロセス、ディスク上のすべてのファイルを保存します。一時停止が完了すると計算料金は止まりますが、Persistent Volumes のストレージ料金は引き続き発生します。`resume()` は同じ ID で sandbox を復元し、計算料金を再開します。どちらも処理をキューに入れてすぐに戻るため、成功を確認するには `paused` または `running` を待ってください。
 
 ```ts
 await sandbox.pause();
@@ -158,7 +158,15 @@ await sandbox.waitForStatus('running');
 - プロセスを保存できない場合、sandbox は実行を続け、`waitForStatus` が理由付きのエラーを投げます。再開に失敗した場合、sandbox はチェックポイントを保持したまま一時停止状態に残ります。`resume()` を再度呼び出してください。
 - 一時停止中は有効期間の期限が止まり、再開後に続きから進みます。一時停止中の sandbox は実行数の上限に数えられません。
 
-スナップショットは、実行中の sandbox のメモリと `/workspace` のファイルを、プロジェクト専用のテンプレートとして保存します。restore するたびに、スナップショットと同じリージョンで新しい sandbox が起動します。取得前にクライアントとターミナルを閉じ、`/workspace` への書き込みを止めてください。接続中の Persistent Volumes は保存されません。
+スナップショットは、実行中の sandbox のメモリ、実行中のプロセス、ディスク上のすべてのファイルを保存します。スナップショットは、それを作成したユーザーのものです。restore するたびに、スナップショットと同じリージョンで新しい sandbox が起動します。起動先は、スナップショットのスコープが許す任意のプロジェクトです:
+
+- `workspace`（既定）: 元の sandbox のワークスペース内の任意のプロジェクト。
+- `user`: 自分のすべてのワークスペースの任意のプロジェクト。
+- `project`: 元の sandbox のプロジェクトだけ。
+
+スコープは `snapshot(name, { scope })`（Python では `scope=`）で設定し、プロジェクトは `Sandbox.restore(id, { projectId })`（Python では `project_id=`）で選びます。取得前にクライアントとターミナルを閉じ、`/workspace` への書き込みを止めてください。
+
+sandbox に Persistent Volume が接続されている場合、スナップショットには取得時点のボリュームのファイルのコピーが含まれます。どの restore も、現在のボリュームではなくそのコピーを受け取り、別のボリュームは接続できません。スナップショットを restore できる人は誰でもそのファイルを読めるため、このスナップショットを共有するとボリュームのデータも共有することになります。ボリュームのない sandbox のスナップショットは、restore 時に `volumeId`（Python では `volume_id`）で同じリージョンのボリュームをマウントできます。
 
 ```ts
 const saved = await sandbox.snapshot('my-app');
@@ -166,7 +174,7 @@ await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-スナップショットは、呼び出しが戻った時点で準備が完了し、ディスクから restore されるため、`poolSize` は適用されません。restore のたびに元の sandbox と同じサイズで実行され、そのサイズの時間単価で課金されます。restore には `size` は適用されません。CLI では `lizard sandbox pause <id>`、`lizard sandbox resume <id>`、`lizard sandbox snapshot <id> --name my-app`、`lizard sandbox restore <snapshot-id>` を使います。
+スナップショットは、呼び出しが戻った時点で準備が完了し、ディスクから restore されるため、`poolSize` は適用されません。restore のたびに元の sandbox と同じサイズで実行され、そのサイズの時間単価で課金されます。restore には `size` は適用されません。CLI では `lizard sandbox pause <id>`、`lizard sandbox resume <id>`、`lizard sandbox snapshot <id> --name my-app`、`lizard sandbox restore <snapshot-id>` を使います。スコープと `--volume` については [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots) を参照してください。
 
 <span id="clean-up-and-next-steps" />
 

@@ -28,15 +28,16 @@ lizard init [flags]
 lizard init
 ```
 
+Without `--name`, `init` asks which project to use. In a non-interactive shell it fails instead, so pass `--name`.
+
 ### Link explicitly in CI
 
-`lizard up` will run `init` for you on a TTY, but in a non-TTY (CI) environment it errors instead of silently creating a project. Link explicitly first:
+An unlinked `lizard up` deploys into your account's default project. To deploy into a named project in CI, link it first:
 
 ```bash
 export LIZARD_TOKEN=liz_xxx
 lizard init --name my-project
-lizard add --service api   # first run only; skip when the service exists
-lizard up --ci --service api
+lizard up --ci --service api   # creates api on the first run
 ```
 
 ### Relink a directory that's already linked

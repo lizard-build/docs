@@ -7,7 +7,7 @@ description: "Privates Netzwerk zwischen Services unter <name>.lizard.internal, 
 
 # Netzwerk
 
-Auf Lizard (lizard.build) erreichen sich Services im selben Projekt über ein privates Netzwerk unter `<service>.lizard.internal`, auf jedem Port, ohne öffentliche Domain. Jeder Webservice erhält außerdem beim Deployment sofort eine generierte `*.onlizard.com`-Domain mit automatischem TLS, und du kannst deinen eigenen Hostnamen hinzufügen, wenn du live gehen willst. Managed Postgres und Managed Redis sind im selben privaten Netzwerk. Direkt zu [privatem Netzwerk](#private-networking), [benutzerdefinierten Domains](#attach-a-custom-domain) oder [Ports](#change-the-port-your-service-listens-on).
+Auf Lizard (lizard.build) erreichen sich Services im selben Projekt und in derselben Region über ein privates Netzwerk unter `<service>.lizard.internal`, auf jedem Port, ohne öffentliche Domain. Jeder Webservice erhält außerdem beim Deployment eine generierte `*.onlizard.com`-Domain mit automatischem TLS. Du kannst auch deinen eigenen Hostnamen hinzufügen. Managed Postgres und Managed Redis sind im selben privaten Netzwerk. Direkt zu [privatem Netzwerk](#private-networking), [benutzerdefinierten Domains](#attach-a-custom-domain) oder [Ports](#change-the-port-your-service-listens-on).
 
 <span id="generated-domains" />
 
@@ -79,6 +79,8 @@ Ein [Service im Worker-Modus](/deploy/workers) (`containerPort=0`) kann weiterhi
 ## Privates Netzwerk
 
 Services im selben Projekt erreichen sich unter `<service>.lizard.internal`, auf jedem Port, auf dem der Service lauscht, ohne öffentliche Domain. Verweise auf den Hostnamen mit `${{api.LIZARD_PRIVATE_DOMAIN}}`. Managed Postgres und Managed Redis stellen im selben Netzwerk `DATABASE_PRIVATE_URL` und `REDIS_PRIVATE_URL` bereit; siehe die [Postgres-Verbindungszeichenfolge](/addons/postgres#postgres-connection-string). Diese Namen werden nur innerhalb des Projekts aufgelöst, und Services in anderen Projekten können diese Adressen nicht erreichen. Der Traffic bleibt im Netzwerk von Lizard, daher ist einfaches `http://` zwischen Services in Ordnung.
+
+Private Namen funktionieren nur zwischen Services und Datenbanken in derselben Region. Nutze zwischen Regionen die öffentliche URL. Lizard legt den Namen einmal fest: aus dem Service-Namen in Kleinbuchstaben, andere Zeichen werden zu `-`, bei einer Kollision hängt Lizard `-2`, `-3` an. Eine Umbenennung ändert ihn nicht, also verweise mit `${{api.LIZARD_PRIVATE_DOMAIN}}` darauf, statt den Namen abzutippen.
 
 ```bash
 lizard secrets set API_URL='http://${{api.LIZARD_PRIVATE_DOMAIN}}:8080' --service web

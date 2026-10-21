@@ -7,7 +7,7 @@ description: "Replikatlimits für Apps, Sandbox-Größen und Stundenpreise, wie 
 
 # Limits
 
-Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung mit bis zu 5 Replikaten pro Service, während der Testphase mit 1. Pro führt bis zu 100 Sandboxes gleichzeitig aus und startet bis zu 24 pro Minute; die Testphase erlaubt 5 gleichzeitig. Die Sandbox-Größen reichen von Small (2 vCPU / 4 GB) bis Large (8 vCPU / 16 GB), und ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum von 30 Tagen inklusive. Limits hängen von der Ressource, dem Tarif und dem Konto ab: Eine Einstellung pro Replikat entspricht nicht der insgesamt für einen Service oder ein Konto verfügbaren Kapazität. Prüfen Sie Ihren aktuellen Tarif und das Ergebnis der Erstellungs- oder Skalierungsanfrage, bevor Sie eine Workload dimensionieren.
+Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung mit bis zu 5 Replikaten pro Service, während der Testphase mit 1. Pro führt bis zu 100 Sandboxes gleichzeitig aus und startet bis zu 24 pro Minute; die Testphase erlaubt 5 gleichzeitig. Die Sandbox-Größen reichen von Small (2 vCPU / 4 GB) bis Large (8 vCPU / 16 GB), und ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum von 30 Tagen inklusive. Der Inhaber eines Workspace kann außerdem [Workspace-Limits](#workspace-limits) für einen einzelnen Workspace festlegen. Limits hängen von der Ressource, dem Tarif und dem Konto ab: Eine Einstellung pro Replikat entspricht nicht der insgesamt für einen Service oder ein Konto verfügbaren Kapazität. Prüfen Sie Ihren aktuellen Tarif und das Ergebnis der Erstellungs- oder Skalierungsanfrage, bevor Sie eine Workload dimensionieren.
 
 <span id="applications" />
 
@@ -53,12 +53,13 @@ Diese Limits begrenzen, wie viele Sandboxes ein Konto gleichzeitig ausführt und
 |---|---|---|---|---|
 | Testphase von Pro | 5 | 6 | 30 | 100 |
 | Pro | 100 | 24 | 120 | 400 |
-| Enterprise | Individuell | Individuell | Individuell | Individuell |
+| Enterprise | 50 pro Workspace | 120 pro Benutzer | Kein Limit | Kein Limit |
 
 - Die Limits gelten pro Kontoinhaber, über alle Workspaces des Inhabers hinweg. Ein zweiter Workspace bringt kein zweites Kontingent.
-- Aktiv bedeutet laufend oder fortsetzend. Eine pausierte Sandbox zählt nicht; um eine fortzusetzen, braucht es einen freien Platz.
+- Bei Pro und in der Testphase bedeutet aktiv laufend oder fortsetzend. Eine pausierte Sandbox zählt nicht; um eine fortzusetzen, braucht es einen freien Platz.
 - Ein Start ist eine neue Sandbox. Ein Fortsetzen ist kein Start. Eine Erstellung, die auf Seiten von Lizard fehlschlägt, zählt nicht.
 - Bei Überschreitung geben Create und Resume HTTP 429 zurück, mit `code` gleich `SANDBOX_LIMIT_REACHED` (aktiv) oder `SANDBOX_RATE_LIMITED` (Starts). Eine Ablehnung wegen der Startrate enthält einen `Retry-After`-Header.
+- Enterprise hat kein kontoweites Limit. Standardmäßig fasst jeder Workspace bis zu 50 Sandboxes, und laufende, pausierte und abgestürzte zählen alle mit; auf Anfrage erhöhen wir das pro Workspace. Darüber geben Create und Fork HTTP 429 mit `code` gleich `SANDBOX_LIMIT_REACHED` zurück. Ein Benutzer kann pro Region bis zu 120 Sandboxes pro Minute erstellen.
 - Das Dashboard zeigt neben **New Sandbox**, wie viele Sandboxes im Verhältnis zu Ihrem Limit laufen. Für mehr als 100 gleichzeitig sprechen Sie uns auf Enterprise an.
 
 <span id="sandbox-egress" />
@@ -77,7 +78,7 @@ Für ausgehenden Sandbox-Traffic gibt es keinen separaten Preis pro GB. Enthalte
 
 | Einstellung | Aktuelle Create-API |
 |---|---|
-| Vorlagen | `base`, `interpreter`, `codex`, `desktop`, `opencode`, `pi`, `prime`, `claude` |
+| Vorlagen | `base`, `interpreter`, `codex`, `desktop`, `opencode`, `pi`, `prime`, `claude`; `desktop-camoufox` nur in US East |
 | Standardlaufzeit der Raw API | `timeoutMs: 0`, kein Ablauf |
 | Standardlaufzeit des Lizard SDK | 300000 ms, fünf Minuten |
 | Bereich für explizite Laufzeit | Ganzzahlige Millisekunden von 0 bis 2147483647 |
@@ -85,6 +86,26 @@ Für ausgehenden Sandbox-Traffic gibt es keinen separaten Preis pro GB. Enthalte
 | Anbindung von Persistent Volumes | Jeweils nur eine Sandbox, auf dem Node des Volumes |
 
 Auch die CLI setzt standardmäßig fünf Minuten; das Dashboard setzt standardmäßig kein Ablaufdatum. Befehle verlängern die Frist nicht. Zu Pause, Snapshots, Fork und dazu, was jeweils erhalten bleibt, siehe den [Lebenszyklus](/sandboxes#lifecycle) von Sandboxes.
+
+<span id="workspace-limits" />
+
+## Workspace-Limits
+
+Der Inhaber eines Workspace kann einen einzelnen Workspace begrenzen, zum Beispiel einen, den ein Kunde mit einem eingeschränkten API-Schlüssel nutzt. Diese Grenzen gelten zusätzlich zu den Kontolimits oben, für alle, die in dem Workspace arbeiten.
+
+| Limit | Was zählt | Flag |
+|---|---|---|
+| Sandboxes | Gleichzeitig laufende oder fortsetzende Sandboxes; pausierte zählen nicht | `--sandboxes <n>` |
+| CPU | vCPU, die Apps und Datenbanken des Workspace gerade nutzen, gemessen | `--cpu <vcpus>` |
+| Arbeitsspeicher | Arbeitsspeicher, den Apps und Datenbanken des Workspace gerade nutzen, gemessen | `--memory <size>` |
+| Speicher | In Datenbanken und Volumes des Workspace geschriebene Daten | `--disk <size>` |
+
+Nur der Inhaber legt sie fest, mit [`lizard workspace limits`](/cli/workspace#lizard-workspace-limits-name-or-id), angemeldet über den Browser oder mit einem API-Schlüssel ohne Bereichseinschränkung. Jedes Mitglied und jeder Schlüssel, der den Workspace erreicht, kann sie samt aktueller Nutzung lesen.
+
+- Am Sandbox-Limit geben Create, Fork und Resume HTTP 429 mit `code` gleich `WORKSPACE_SANDBOX_LIMIT` zurück.
+- Solange Apps und Datenbanken so viel CPU oder Arbeitsspeicher nutzen wie erlaubt, geben Deploy, Redeploy, Neustart, Hochskalieren, neue Datenbanken und das Fortsetzen einer pausierten App oder Datenbank HTTP 429 mit `code` gleich `WORKSPACE_USAGE_LIMIT` zurück. Laufende Services laufen weiter.
+- Solange die Daten das Speicherlimit ausschöpfen, geben neue Volumes, Volume-Vergrößerungen, neue Datenbanken und Template-Deploys dasselbe `WORKSPACE_USAGE_LIMIT` zurück. Bereits geschriebene Daten bleiben erhalten.
+- Die eigene `/workspace`-Disk einer Sandbox zählt nicht zum Speicherlimit.
 
 <span id="regions" />
 
@@ -96,4 +117,4 @@ Die aktuell konfigurierten Regionen umfassen US East (Virginia), `us-east-1`, un
 
 ## Vor dem Erhöhen der Skalierung
 
-Prüfen Sie aktiven Tarif, Einstellungen pro Replikat, Kontolimit, Datenbank-Verbindungslimit und Speicherwachstum zusammen. Verwenden Sie [Skalierung](/deploy/scaling), [Metriken](/observability/metrics) und [Preise](https://lizard.build/pricing), um konfigurierte Kapazität mit der gemessenen Nutzung zu vergleichen. Die Tarife für jede Ressource stehen auf der [Abrechnungsseite](/platform/billing#resource-rates).
+Prüfen Sie aktiven Tarif, Einstellungen pro Replikat, Kontolimit, Workspace-Limits, Datenbank-Verbindungslimit und Speicherwachstum zusammen. Verwenden Sie [Skalierung](/deploy/scaling), [Metriken](/observability/metrics) und [Preise](https://lizard.build/pricing), um konfigurierte Kapazität mit der gemessenen Nutzung zu vergleichen. Die Tarife für jede Ressource stehen auf der [Abrechnungsseite](/platform/billing#resource-rates).

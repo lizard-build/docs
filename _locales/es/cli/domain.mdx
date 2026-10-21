@@ -1,10 +1,10 @@
 ---
-description: "lizard domain muestra el dominio de un servicio, genera un subdominio de onlizard.com, o adjunta y verifica un hostname personalizado con TLS automático."
+description: "lizard domain muestra o lista los dominios de un servicio, genera un subdominio de onlizard.com, o adjunta y verifica un hostname personalizado con TLS automático."
 ---
 
 # lizard domain
 
-Muestra el dominio actual o adjunta uno personalizado.
+Muestra o lista los dominios de un servicio, o adjunta uno personalizado.
 
 <span id="usage" />
 
@@ -24,7 +24,7 @@ El hostname es un argumento posicional: no existe el subcomando `add`. Ejecutar 
 |------|-------------|
 | `-s, --service <name>` | Servicio |
 | `-p, --project <id>` | Nombre, slug o ID del proyecto |
-| `--port <n>` | Puerto que se expondrá |
+| `--port <n>` | Se ignora: un dominio siempre lleva al puerto del contenedor del servicio. Cambia ese puerto con [`lizard port`](/cli/port) |
 | `-f, --force` | Mueve el dominio aquí si está adjunto a otro de tus servicios |
 
 Los subcomandos usan las mismas banderas `-s` y `-p`. Verifica y elimina un dominio en el servicio al que lo adjuntaste.
@@ -35,7 +35,11 @@ Los subcomandos usan las mismas banderas `-s` y `-p`. Verifica y elimina un domi
 
 ### `lizard domain generate`
 
-Genera un subdominio nuevo de `*.onlizard.com`.
+Da al servicio un subdominio de `*.onlizard.com`. Si ya tiene uno, `generate` lo devuelve. Falla mientras el servicio usa un dominio personalizado; elimínalo primero.
+
+### `lizard domain list`
+
+Lista los dominios del servicio y los dominios personalizados que aún esperan la verificación de DNS, con los registros que hay que crear (alias `ls`).
 
 ### `lizard domain verify <hostname>`
 
@@ -83,12 +87,14 @@ Lizard devuelve los registros DNS que debes crear: un registro `CNAME` para el h
 lizard domain verify app.example.com --service web
 ```
 
-<span id="attach-a-domain-to-a-specific-port" />
+Para un dominio raíz como `example.com`, la mayoría de los proveedores de DNS no permiten un `CNAME`. Crea en su lugar un registro `ALIAS` o `ANAME` con el mismo destino, o usa el CNAME flattening de tu proveedor.
 
-### Adjuntar un dominio a un puerto específico
+<span id="list-a-services-domains" />
+
+### Listar los dominios de un servicio
 
 ```bash
-lizard domain app.example.com --service web --port 8080
+lizard domain list --service web
 ```
 
 <span id="move-a-domain-from-another-of-your-services" />

@@ -26,7 +26,7 @@ El primer addon de Redis se llama `redis`, así que `${{redis.REDIS_URL}}` funci
 | `REDIS_URL` | Cadena de conexión completa a través del endpoint público (`redis://…`) |
 | `REDIS_PRIVATE_URL` | Cadena de conexión a través de la red privada del proyecto (`<name>.lizard.internal:6379`) |
 
-Ambas cadenas tienen la forma `redis://default:<password>@<host>:<port>`. La privada solo funciona desde servicios del mismo proyecto; consulta [red privada](/networking#private-networking).
+Ambas cadenas tienen la forma `redis://default:<password>@<host>:<port>`. La privada solo funciona desde servicios del mismo proyecto y la misma región; consulta [red privada](/networking#private-networking). Un servicio de otra región debe usar `REDIS_URL`; para que use la URL privada, crea Redis en su región con `lizard add redis --region <code>`. `<name>` es el nombre que tenía el addon cuando recibió su dirección privada, `redis` para el primero; renombrarlo no lo cambia.
 
 <span id="connect-a-service" />
 
@@ -37,7 +37,7 @@ lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-La referencia se resuelve en el momento del despliegue; los consumidores obtienen los valores actuales del addon en su siguiente despliegue. Usa `REDIS_URL` para clientes fuera del proyecto. Todos los servicios del proyecto también reciben el `REDIS_URL` público del addon con la prioridad más baja; una referencia explícita lo sobrescribe.
+La referencia se resuelve en el momento del despliegue; los consumidores obtienen los valores actuales del addon en su siguiente despliegue. Usa `REDIS_URL` para clientes fuera del proyecto o de otra región. Todos los servicios del proyecto también reciben el `REDIS_URL` público del addon con la prioridad más baja; una referencia explícita lo sobrescribe.
 
 <span id="does-managed-redis-keep-data" />
 
@@ -78,6 +78,8 @@ lizard run --service redis -- sh -c 'exec redis-cli -u "$REDIS_URL"'
 ```bash
 lizard scale --service redis --storage 4096
 ```
+
+El almacenamiento solo puede crecer. Los tamaños permitidos son 512, 1024, 2048, 4096, 8192 o 16384 MB. Al ampliar el volumen, Lizard detiene Redis, copia sus datos a un volumen más grande y lo vuelve a arrancar, así que cuenta con una breve interrupción. Si la instancia está en pausa, reanúdala antes con [`lizard resume`](/cli/pause).
 
 <span id="see-also" />
 

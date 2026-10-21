@@ -4,7 +4,7 @@ description: "Checks for the MCP, coding-agent, Redis worker and Telegram guides
 
 # Scenario guide test results
 
-On 2026-09-07, we checked these guides in a separate test project with Lizard CLI 0.3.92. Application checks are separate from build status. The tests used the guide commands, with a distinct project name and the documentation test branch for the GitHub example.
+On 2026-09-07, we checked these guides in a separate test project with Lizard CLI 0.3.92. These results predate Lizard CLI 4 (September 17, 2026) and the move of builds to the current builder at the end of September 2026, and we have not rerun them since. Application checks are separate from build status. The tests used the guide commands, with a distinct project name and the documentation test branch for the GitHub example.
 
 | Guide | Result | Checks |
 |---|---|---|
@@ -16,13 +16,13 @@ On 2026-09-07, we checked these guides in a separate test project with Lizard CL
 
 ## Versions
 
-The MCP container ran Node.js 22.23.2 with MCP TypeScript SDK 1.30.0. The coding-agent example uses `pg` 8.16.3 and connected to Managed Postgres running PostgreSQL 18.4. The worker container ran Python 3.13.15 with redis-py 6.4.0. Dependency lockfiles or exact requirements live with the examples.
+The MCP container ran Node.js 22.23.2 with MCP TypeScript SDK 1.30.0. The coding-agent example uses `pg` 8.16.3 and connected to Managed Postgres running PostgreSQL 18.4. The worker container ran Python 3.13.15 with redis-py 6.4.0. Dependency lockfiles or exact requirements live with the examples and still pin these versions; newer releases, such as MCP TypeScript SDK 1.32.1, have not been tested.
 
 ## Scope
 
 The MCP check covers the example's stateless HTTP transport and fixed bearer token. It does not establish OAuth compatibility, browser support, long-duration streaming or load capacity. The token expires after one hour.
 
-The GitHub check used the documentation branch and `_examples/agent-app` directory. It tested an explicit redeploy; it did not test every private-repository permission setup or webhook event.
+The GitHub check used the documentation branch and `_examples/agent-app` directory. The coding-agent test connected through the public `DATABASE_URL`; the guide now uses `DATABASE_PRIVATE_URL`, which has no cloud run yet. The GitHub check tested an explicit redeploy; it did not test every private-repository permission setup or webhook event.
 
 The Redis recovery check seeded an unfinished processing entry before restarting a single consumer. It did not test Redis failure, multiple workers or exactly-once external effects. The database check establishes persistence across an application restart, not backup or disaster recovery.
 

@@ -1,10 +1,10 @@
 ---
-description: "lizard whoami gibt das Konto aus, mit dem Sie angemeldet sind, Ihren aktiven Workspace und das mit diesem Verzeichnis verknüpfte Projekt."
+description: "lizard whoami gibt das Konto aus, mit dem Sie angemeldet sind, und das mit diesem Verzeichnis verknüpfte Projekt, bei einem eingeschränkten API-Schlüssel dessen Projekte und Workspaces."
 ---
 
 # lizard whoami
 
-Zeigt den aktuellen Benutzer, den aktiven Workspace und das verknüpfte Projekt an.
+Zeigt das Konto an, mit dem Sie angemeldet sind, und in einem verknüpften Ordner das verknüpfte Projekt samt Workspace.
 
 <span id="usage" />
 
@@ -13,6 +13,17 @@ Zeigt den aktuellen Benutzer, den aktiven Workspace und das verknüpfte Projekt 
 ```bash
 lizard whoami
 ```
+
+<span id="what-it-shows" />
+
+## Was angezeigt wird
+
+- Mit einem Konto angemeldet: Ihr Benutzername, ob die GitHub App verbunden ist, und das verknüpfte Projekt mit seinem Workspace in Klammern. In einem nicht verknüpften Ordner steht dort `Project: none`; Befehle dort verwenden das Standardprojekt Ihres Kontos.
+- Mit einem eingeschränkten API-Schlüssel angemeldet: `Scoped API key (account details are not visible)`, danach jedes Projekt und jeder Workspace, den der Schlüssel erreicht. Das Konto hinter dem Schlüssel zeigt der Befehl nie.
+
+`whoami` zeigt keinen aktiven Workspace. Ihre Workspaces listet [`lizard workspace list`](/cli/workspace) auf.
+
+Mit `--json` oder wenn die Ausgabe kein Terminal ist, gibt der Befehl die Felder Ihres Kontos und `project` aus. Für einen eingeschränkten Schlüssel gibt er `{ "scoped": true, "scopes": [...], "project": ... }` aus.
 
 <span id="examples" />
 
@@ -33,3 +44,4 @@ lizard whoami
 - [lizard login](/cli/login) — vor dem Prüfen Ihrer Identität authentifizieren
 - [lizard status](/cli/status) — den verknüpften Workspace, das Projekt und den Service für das aktuelle Verzeichnis anzeigen
 - [lizard workspace](/cli/workspace) — die Workspaces auflisten, auf die Sie Zugriff haben
+- [lizard keys](/cli/keys) — was ein eingeschränkter API-Schlüssel darf

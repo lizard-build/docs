@@ -22,7 +22,7 @@ curl -fsSL https://lizard.build/install.sh | bash
 lizard login
 ```
 
-Completa el inicio de sesión en tu navegador antes de continuar. Los comandos siguientes se probaron con Lizard CLI 0.3.95 y Umami 3.3.1.
+Completa el inicio de sesión en tu navegador antes de continuar. Los comandos siguientes se probaron en septiembre de 2026 con Lizard CLI 0.3.95, antes de Lizard CLI 4, y Umami 3.3.1.
 
 <span id="create-the-project-and-database" />
 
@@ -61,13 +61,13 @@ Conecta la base de datos y genera dos secretos independientes:
 
 ```bash
 lizard secrets set \
-  DATABASE_URL='${{umami-db.DATABASE_URL}}' \
+  DATABASE_URL='${{umami-db.DATABASE_PRIVATE_URL}}' \
   APP_SECRET="$(openssl rand -hex 32)" \
   TWO_FACTOR_ENCRYPTION_KEY="$(openssl rand -hex 32)" \
   --service umami
 ```
 
-Mantén las comillas simples alrededor de la referencia de la base de datos: Lizard la resuelve cuando se inicia el servicio. Los valores pertenecen a este servicio, por lo que otras aplicaciones del proyecto no los reciben.
+Mantén las comillas simples alrededor de la referencia de la base de datos: Lizard la resuelve cuando se inicia el servicio, con la dirección de la base de datos en la red privada del proyecto. Los valores pertenecen a este servicio, por lo que otras aplicaciones del proyecto no los reciben.
 
 Guarda ambos secretos generados en tu gestor de contraseñas. Configúralos una sola vez durante la instalación; no los regeneres al reiniciar o actualizar. `TWO_FACTOR_ENCRYPTION_KEY` es obligatorio para la autenticación de dos factores.
 
@@ -94,6 +94,8 @@ lizard logs --service umami
 ```
 
 Si el primer inicio supera el tiempo de espera, revisa `lizard events` para comprobar si el contenedor está listo. Una vez que el contenedor se haya iniciado, vuelve a intentar la carga con `lizard up --service umami --port 3000`.
+
+Para un panel que poca gente abre, activa [dormir en reposo](/cli/sleep) con `lizard sleep --on --service umami`; al activarlo, el servicio se reinicia una vez. Las páginas vistas registradas cuentan como solicitudes, así que un sitio con mucho tráfico sigue despierto. Tras un rato sin actividad, la primera solicitud tarda más mientras el servicio despierta.
 
 <span id="check-data-persistence" />
 

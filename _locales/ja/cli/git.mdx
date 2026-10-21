@@ -4,7 +4,9 @@ description: "lizard git は GitHub App を接続し、リポジトリのステ�
 
 # lizard git
 
-リンクされたプロジェクトとそのサービスの GitHub 接続を管理します。
+Lizard アカウントを GitHub に接続し、プロジェクトのサービスがどのリポジトリからデプロイされるかを確認し、サービスを別のブランチに切り替えます。GitHub App の接続は、個々のプロジェクトではなく Lizard アカウントに属します。
+
+`lizard git` のその他のサブコマンドは Lizard Git 用で、このページでは扱いません。
 
 <span id="usage" />
 
@@ -12,9 +14,11 @@ description: "lizard git は GitHub App を接続し、リポジトリのステ�
 
 ```bash
 lizard git connect
-lizard git status
+lizard git status [flags]
 lizard git checkout <service> <branch> [flags]
 ```
+
+`-p` を指定しない場合、`status` と `checkout` はリンクされたプロジェクトを使い、リンクされていないフォルダーではデフォルトプロジェクトを使います。
 
 <span id="subcommands" />
 
@@ -22,11 +26,15 @@ lizard git checkout <service> <branch> [flags]
 
 ### `lizard git connect`
 
-GitHub App を接続してプライベートリポジトリにアクセスします。
+GitHub App を接続してプライベートリポジトリにアクセスします。このコマンドは GitHub を開いてアプリをインストールさせ、Enter が押されるのを待ってから接続を確認します。アプリがすでに接続されている場合は、その旨を表示します。`--json` を付けた場合やターミナル外では、代わりにインストール URL を表示します: `{ installed: false, installUrl }`。
 
 ### `lizard git status`
 
-GitHub 接続とリポジトリのステータスを表示します。
+GitHub App が接続されているかどうかと、プロジェクトの各サービスがどのリポジトリとブランチからデプロイされるかを表示します。
+
+| フラグ | 説明 |
+|------|-------------|
+| `-p, --project <id>` | プロジェクトの名前、slug、または ID |
 
 ### `lizard git checkout <service> <branch>`
 
@@ -35,6 +43,7 @@ GitHub 接続とリポジトリのステータスを表示します。
 | フラグ | 説明 |
 |------|-------------|
 | `--detach` | ログのストリーミングをスキップ |
+| `-p, --project <id>` | プロジェクトの名前、slug、または ID |
 
 <span id="examples" />
 

@@ -58,7 +58,7 @@ Include the VitePress config, Markdown, source assets, package manifest, and loc
 
 ## Check clean routes and HTTP status
 
-New VitePress builds resolve extensionless routes to their generated `.html` files and return HTTP 404 for missing URLs. Keep command overrides unset to use this detection path. No custom Dockerfile is needed for the standard output. See [static routes and 404s](/framework-guides/static-routing) for custom routing.
+New VitePress builds resolve extensionless routes to their generated `.html` files and return HTTP 404 for missing URLs, with nginx's default error page rather than the generated `404.html`. Keep command overrides unset to use this detection path. No custom Dockerfile is needed for the standard output. See [static routes and 404s](/framework-guides/static-routing) for custom routing or your own 404 page.
 
 Check a clean URL directly and reload it. Request a path that does not exist and confirm HTTP 404. If an older image serves the home page for missing paths, rebuild the service to pick up the current routing rules.
 

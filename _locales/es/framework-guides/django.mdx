@@ -159,7 +159,7 @@ staticfiles/
 
 Mantén las subidas de usuarios en almacenamiento persistente, como [Managed Object Storage](/addons/storage), en lugar del directorio estático del contenedor. Revisa [almacenamiento y recuperación](/platform/storage-and-recovery).
 
-Trata las migraciones de base de datos como un paso de despliegue aparte. Haz copias de seguridad de los datos cuando sea necesario, procura que las migraciones se puedan reintentar de forma segura y aplícalas antes de que las solicitudes requieran el nuevo esquema. Un comando previo al despliegue no sustituye la comprobación del comportamiento ante concurrencia y fallos.
+Trata las migraciones de base de datos como un paso de despliegue aparte. Haz copias de seguridad de los datos cuando sea necesario, procura que las migraciones se puedan reintentar de forma segura y aplícalas antes de que las solicitudes requieran el nuevo esquema. Esta guía las aplica con `lizard run`, como se muestra abajo. Un `preDeployCommand` no se ejecutaría aquí: Lizard solo lo ejecuta cuando también hay un comando de inicio, y esta configuración no define ninguno. Con ambos definidos, se ejecuta al iniciar cada contenedor, en cada réplica y en cada reinicio; consulta [migraciones al desplegar](/addons/postgres#run-migrations-on-deploy).
 
 <span id="deploy-and-verify" />
 
@@ -178,12 +178,12 @@ Crea [Managed Postgres](/addons/postgres) en este proyecto. Si ya tienes una ins
 lizard add postgres --name postgres
 ```
 
-Establece los [secrets del servicio](/cli/secrets) de la app. El `postgres` en `${{postgres.DATABASE_URL}}` nombra el servicio de base de datos, no un alias de base de datos de Django. Lizard resuelve la [reference](/variables/references) en el momento del despliegue e inyecta la URL resultante en el proceso `web`. Las comillas simples evitan que tu shell expanda la reference. El bloque `settings.py` de arriba convierte luego la URL en `DATABASES["default"]`.
+Establece los [secrets del servicio](/cli/secrets) de la app. El `postgres` en `${{postgres.DATABASE_PRIVATE_URL}}` nombra el servicio de base de datos, no un alias de base de datos de Django. Lizard resuelve la [reference](/variables/references) en el momento del despliegue e inyecta en el proceso `web` la dirección de la base de datos en la red privada del proyecto; funciona desde servicios del mismo proyecto y la misma región. Las comillas simples evitan que tu shell expanda la reference. El bloque `settings.py` de arriba convierte luego la URL en `DATABASES["default"]`.
 
 ```bash
 DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
 lizard secrets set SECRET_KEY="$DJANGO_SECRET_KEY" \
-  DATABASE_URL='${{postgres.DATABASE_URL}}' DEBUG=false \
+  DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' DEBUG=false \
   ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
   --service web
 lizard up --service web --port 8000
@@ -197,7 +197,7 @@ lizard secrets set ALLOWED_HOSTS=YOUR_PUBLIC_HOST \
   CSRF_TRUSTED_ORIGINS=https://YOUR_PUBLIC_HOST --service web
 ```
 
-Un destino o clave de reference ausente puede resolverse como una cadena vacía. La comprobación de valor obligatorio entonces detiene Django con `Set the DATABASE_URL environment variable.`. Comprueba el nombre del servicio de base de datos y su clave `DATABASE_URL`; `lizard logs --build --service web` avisa de cada reference que se resolvió como un valor vacío. No imprimas la URL de conexión en los logs.
+Un destino o clave de reference ausente puede resolverse como una cadena vacía. La comprobación de valor obligatorio entonces detiene Django con `Set the DATABASE_URL environment variable.`. Comprueba el nombre del servicio de base de datos y su clave `DATABASE_PRIVATE_URL`; `lizard logs --build --service web` avisa de cada reference que se resolvió como un valor vacío. No imprimas la URL de conexión en los logs.
 
 El cambio de variable reinicia el proceso. Excluye los entornos virtuales locales, secrets y bases de datos locales de las subidas.
 

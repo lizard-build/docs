@@ -26,7 +26,7 @@ lizard up --region <code>          # new services only
 
 Projects have no default region. Without `--region`, `lizard add` creates resources in `us-east-1`, and `lizard up` creates a new service in the region of the API server that handles the request. Pass `--region` to choose.
 
-> **Co-locate stateful resources.** Put a service and the addons it talks to (Managed Postgres, Managed Redis, Managed Object Storage) in the **same region** to keep latency low and avoid cross-region data charges.
+> **Co-locate stateful resources.** Put a service and the addons it talks to (Managed Postgres, Managed Redis, Managed Object Storage) in the **same region** to keep latency low and avoid cross-region data charges. [Private networking](/networking#private-networking) also works only inside one region.
 
 ## Generated domains
 

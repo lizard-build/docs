@@ -31,7 +31,7 @@ lizard up                          # upload cwd and deploy
 
 1. **Build** — die Plattform führt Ihren Build aus (siehe [Build-Pipeline](/concepts/build-pipeline)).
 2. **Vor dem Bereitstellen**: Wenn sowohl `preDeployCommand` als auch `startCommand` gesetzt sind, führt der Container `sh -c "<pre> && exec <start>"` aus. Der Pre-Deploy-Befehl läuft beim Start jedes Containers (jedes Replikat, jeder Neustart). Machen Sie ihn daher so, dass er sich gefahrlos mehrfach und gleichzeitig ausführen lässt. Ohne `startCommand` wird er übersprungen.
-3. **Start** — Lizard startet den neuen Pod neben dem alten. Bei [Workers](/deploy/workers) wird zuerst der alte Pod gestoppt.
+3. **Start** — Lizard startet den neuen Pod neben dem alten. Bei [Workers](/deploy/workers) und bei Services mit angehängtem [Volume](/cli/volume) wird zuerst der alte Pod gestoppt; sie laufen daher bei jedem Deploy und Neustart kurz nicht.
 4. **Health-Checks** — eine TCP-Probe prüft alle 2 Sekunden den Port der App, und Traffic wird erst auf einen bereiten Pod umgeschaltet. Lizard wartet darauf etwa 30 Sekunden; ist der neue Pod bis dahin nicht bereit, wird das Deployment als fehlgeschlagen markiert. Workers überspringen die Probe.
 5. **Prüfen** — prüfen Sie den Release-Status und rufen Sie die Anwendungs-URL auf. Die Erreichbarkeit des Ports ist kein vollständiger Health-Checks der Anwendung.
 
@@ -39,14 +39,14 @@ lizard up                          # upload cwd and deploy
 
 ## Streaming-Ausgabe
 
-Wenn Sie ein nicht-detachtes `lizard up` (oder `redeploy`) ausführen, werden Build-Logs live gestreamt. Mit `--json` erhalten Sie ein JSON-Ereignis pro Zeile:
+Wenn Sie ein nicht-detachtes `lizard up` (oder `redeploy`) ausführen, werden Build-Logs live gestreamt. Mit `lizard up --json` erhalten Sie ein JSON-Ereignis pro Zeile:
 
 ```json
 { "event": "log", "line": "..." }
 { "event": "deployed", "status": "...", "url": "https://..." }
 ```
 
-endet mit `deployed`, `failed` oder `deploying`. Verwenden Sie `--detach`, um das Bereitstellen zu starten und sofort zurückzukehren, ohne Streaming.
+Das letzte Ereignis ist `deployed`, `failed` oder `deploying`. `lizard redeploy --json` gibt keine Log-Zeilen aus: Es liefert sofort ein Objekt (`status: "deploying"`) oder mit `--wait` am Ende ein Objekt mit `ok` und dem endgültigen `status`. Verwenden Sie `--detach`, um das Bereitstellen zu starten und sofort zurückzukehren, ohne Streaming.
 
 <span id="inspecting-history" />
 
@@ -58,7 +58,7 @@ lizard events --limit 25       # show more
 lizard ps                      # current services, status, and URLs
 ```
 
-Im [Dashboard](/dashboard) zeigt die Ansicht **Bereitstellungen** die vollständige Zeitleiste, Build-Logs pro Deployment und einen Detailbereich für jedes Release.
+Im [Dashboard](/dashboard) listet der Tab **Übersicht** jedes Service seine Deploys auf. Öffnen Sie einen, um Status, Quelle, Build-Logs und Neustarts zu sehen.
 
 <span id="restarts-vs-redeploys" />
 
@@ -93,4 +93,4 @@ Die meisten Änderungen an Umgebungsvariablen und Secrets werden ohne Neuaufbau 
 
 ## Fehlgeschlagene Releases und Wiederherstellung
 
-Ein fehlgeschlagener Build und ein fehlgeschlagener Start der Anwendung sind unterschiedliche Fälle. In beiden Fällen liefert ein HTTP-Service, der bereits läuft, weiterhin seine vorherige Version aus: Ein fehlgeschlagener Build ändert nichts, und ein neuer Pod, der nie bereit wird, erhält keinen Traffic. Der alte Pod eines Workers wird gestoppt, bevor der neue startet, daher läuft nach einem fehlerhaften Worker-Release kein Worker mehr. Prüfen Sie den aktiven Service, die Build-Logs und die Runtime-Logs. `lizard redeploy` baut die ausgewählte Quelle erneut; es ist kein Befehl zum Wiederherstellen eines vorherigen Builds. Setzen Sie bei Bedarf den Quell-Commit zurück, deployen Sie ihn und prüfen Sie das Ergebnis. Siehe [bekannte Probleme](/platform/known-issues).
+Ein fehlgeschlagener Build und ein fehlgeschlagener Start der Anwendung sind unterschiedliche Fälle. Ein fehlgeschlagener Build ändert nichts: Die laufende Version bleibt in Betrieb. Wird ein neuer Pod nie bereit, liefert ein HTTP-Service weiterhin seine vorherige Version aus, und der neue Pod erhält keinen Traffic. Workers und Services mit angehängtem Volume stoppen den alten Pod, bevor der neue startet; ein Release, das nie bereit wird, legt sie daher still. Prüfen Sie den aktiven Service, die Build-Logs und die Runtime-Logs. `lizard redeploy` baut die ausgewählte Quelle erneut; es ist kein Befehl zum Wiederherstellen eines vorherigen Builds. Setzen Sie bei Bedarf den Quell-Commit zurück, deployen Sie ihn und prüfen Sie das Ergebnis. Siehe [bekannte Probleme](/platform/known-issues).

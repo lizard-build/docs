@@ -34,13 +34,34 @@ lizard metrics --json
 { "event": "deployed", "status": "running", "url": "https://app.onlizard.com" }
 ```
 
-ビルドストリームは `done` または `error` で終了します。`--ci` を付けない場合、`lizard up` はその後、`status` を含む最終的な `deployed`、`failed`、または `deploying` イベントを出力します。`url`（`null` の場合があります）を含むのは `deployed` だけです。
+ビルドストリームは `done` または `error` で終了します。`done` の後、`--ci` を付けない `lizard up` は、`status` を含む最終的な `deployed`、`failed`、または `deploying` イベントを出力します。`url`（`null` の場合があります）を含むのは `deployed` だけです。`error` の後に最終イベントはなく、コマンドは `1` で終了します。
 
 <span id="logs---json-is-a-snapshot-not-a-stream" />
 
 ### `logs --json` はストリームではなくスナップショットです
 
 `lizard logs --json` は **直近 200 行** を返し（`--tail N` で上書き可能、最大 1000）、終了します。さらに出力があることを期待して待機しないでください。特定のインシデントについては、`--restart latest` または `--restart <id>` を使用します。
+
+<span id="errors" />
+
+### エラー
+
+JSON モードで失敗したコマンドは、stdout にエラーオブジェクトを 1 つ出力し、0 以外のコードで終了します（「CI / ヘッドレス利用」の表を参照）:
+
+```json
+{
+  "error": {
+    "code": "ERROR",
+    "status": null,
+    "message": "Project \"my-projet\" not found.",
+    "body": null
+  }
+}
+```
+
+`code` は API のエラーコード、`NOT_AUTHENTICATED` や `PROJECT_DELETED` などの CLI のコード、または一般的なエラーを表す `ERROR` です。フラグの誤りでは `commander.unknownOption` のようなコードになります。`status` は HTTP ステータスで、API が応答する前に CLI が失敗した場合は `null` です。`body` は API のレスポンスか `null` です。
+
+サインインしていない場合、コマンドは `NOT_AUTHENTICATED` で失敗し、`2` で終了します。CI 以外では、`body.login` にサインインリンク（`authUrl`、`authUrls`）と `instruction` が入ります。エージェントはリンクをユーザーに渡し、その後コマンドを再実行できます。
 
 <span id="schema-discovery" />
 
@@ -59,13 +80,12 @@ lizard service set --help --json     # one command
 
 ## CI / ヘッドレス利用
 
-トークンで認証し、プロジェクトを明示的にリンクします（ヘッドレスな `up` ではプロジェクトは自動作成されません）:
+トークンで認証し、プロジェクトを明示的にリンクします。そうしないと、ヘッドレスな `up` はアカウントのデフォルトプロジェクトにデプロイします:
 
 ```bash
 # Set LIZARD_TOKEN through your CI secret store.
 lizard init --name my-project
-lizard add --service api   # first run only; skip when the service exists
-lizard up --ci --service api --detach
+lizard up --ci --service api --detach   # creates api on the first run
 ```
 
 終了コードを確認してパイプラインを分岐してください:
@@ -75,9 +95,11 @@ lizard up --ci --service api --detach
 | `0` | 成功 |
 | `1` | 一般的なエラー |
 | `2` | 認証 — トークンがない / 期限切れ |
-| `3` | 見つからない |
+| `3` | 見つからない: その ID のものが API にない |
 | `4` | タイムアウト |
 | `5` | キャンセル済み |
+
+どれにも一致しないプロジェクト名やサービス名は `1` で終了します。`lizard run`、`lizard sandbox exec`、`lizard sandbox ssh` は、実行したコマンド自身の終了コードで終了します（`run` がコマンドを見つけられない場合は `127`）。
 
 `--wait` を付けると、`redeploy` はビルドと新しいデプロイが ready になるまで待機します。付けない場合、JSON モードは Lizard がビルドリクエストを受け付けた時点で `0` で終了します。
 

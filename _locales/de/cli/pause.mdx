@@ -1,0 +1,129 @@
+---
+description: "lizard pause hält eine App oder Datenbank an, ohne sie zu löschen, und behält URL, Passwort und Daten; lizard resume startet sie wieder. Die Formen für Projekt und Workspace pausieren alles auf einmal."
+---
+
+# lizard pause
+
+Pausiere einen Service (eine App oder eine Datenbank), ohne ihn zu löschen, und setze ihn später fort. `lizard project pause` und `lizard workspace pause` pausieren alles in einem Projekt oder Workspace auf einmal.
+
+<span id="usage" />
+
+## Verwendung
+
+```bash
+lizard pause [service] [flags]
+lizard resume [service] [flags]
+lizard project pause [project]
+lizard project resume [project]
+lizard workspace pause <name-or-id>
+lizard workspace resume <name-or-id>
+```
+
+Ohne Argument `service` verwenden `pause` und `resume` den Service, der mit dem Verzeichnis verknüpft ist.
+
+## Flags
+
+`lizard pause` und `lizard resume` akzeptieren:
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-s, --service <name>` | Name oder ID des Service (wie das Argument `service`) |
+| `-p, --project <id>` | Projektname, Slug oder ID |
+
+`project pause` und `project resume` nehmen einen Projektnamen, Slug oder eine ID. Ohne Angabe verwenden sie das mit dem Verzeichnis verknüpfte Projekt oder, in einem nicht verknüpften Verzeichnis, das Standardprojekt deines Kontos. `workspace pause` und `workspace resume` nehmen einen Workspace-Namen, Slug oder eine ID.
+
+<span id="what-pausing-keeps" />
+
+## Was beim Pausieren erhalten bleibt
+
+Ein pausierter Service betreibt keine Container. Er behält URL, Host, Port, Passwort, Variablen, Einstellungen und Volumes. Solange er pausiert ist:
+
+- antwortet seine URL mit `503`, und eine Datenbank lehnt Verbindungen ab;
+- werden Deploys und Restarts abgelehnt;
+- werden eine neue Replika-Anzahl aus [`lizard scale`](/cli/scale) und neue [Secrets](/cli/secrets) gespeichert und beim Fortsetzen angewendet.
+
+`resume` startet ihn wieder aus dem zuletzt gelaufenen Image, mit seinen aktuellen Variablen und seinen Daten. Der Arbeitsspeicher bleibt nicht erhalten: Die App startet neu. Um den Arbeitsspeicher zu behalten und beim nächsten Request aufzuwachen, nutze [`lizard sleep`](/cli/sleep).
+
+Du kannst eine App pausieren, die läuft oder abgestürzt ist, und eine laufende Managed Postgres- oder Managed Redis-Datenbank. Warte, bis ein Deploy oder eine andere Operation am Service fertig ist. Managed Object Storage lässt sich nicht pausieren.
+
+<span id="billing" />
+
+## Abrechnung
+
+Ein pausierter Service nutzt weder CPU noch Arbeitsspeicher, daher fallen keine Compute-Kosten mehr an. Daten, die er behält, können weiterhin als Speicher abgerechnet werden; siehe [Abrechnung](/platform/billing).
+
+Lizard pausiert Apps und Datenbanken auch selbst, wenn die Nutzung der Testphase aufgebraucht ist oder eine Zahlung fehlschlägt. Sie starten wieder, sobald die Abrechnung in Ordnung ist; `resume` startet sie nicht früher.
+
+<span id="pause-a-whole-project" />
+
+## Ein ganzes Projekt pausieren
+
+`lizard project pause` pausiert jede App und jede Datenbank im Projekt. Außerdem pausiert der Befehl die laufenden Sandboxes des Projekts und speichert dabei ihren Arbeitsspeicher und ihre Dateien, wie es [`lizard sandbox pause`](/cli/sandbox) tut. Services, die er nicht pausieren kann, werden mit Grund aufgelistet.
+
+`lizard project resume` setzt jede App und jede Datenbank im Projekt fort, die jemand von Hand pausiert hat, sowie die Sandboxes, die `project pause` pausiert hat. Sandboxes, die du selbst pausiert hast, bleiben pausiert. Eine Sandbox wird nur fortgesetzt, solange deine [Sandbox-Limits](/platform/limits#sandbox-account-limits) Platz lassen.
+
+`lizard workspace pause` und `lizard workspace resume` tun dasselbe für jedes Projekt eines Workspace. Sandboxes außerhalb eines Projekts werden übersprungen.
+
+<span id="who-can-pause" />
+
+## Wer pausieren darf
+
+- Jedes Mitglied eines Projekts kann dessen Services oder das ganze Projekt pausieren und fortsetzen.
+- Nur der Besitzer des Workspace kann einen ganzen Workspace pausieren oder fortsetzen.
+- Fortsetzen startet wieder Compute, daher braucht es einen aktiven Plan und Platz innerhalb der Limits des Workspace ([`lizard workspace limits`](/cli/workspace)).
+
+<span id="json-output" />
+
+## JSON-Ausgabe
+
+Mit `--json` geben `pause` und `resume` `id`, `name`, `kind` (`app` oder `addon`) und `status` (`paused` oder `running`) aus.
+
+Die Formen für Projekt und Workspace geben `id`, `done` und `skipped` aus. Jeder Eintrag hat `kind` (`app`, `database` oder `sandbox`), `id` und `name`; übersprungene Einträge haben zusätzlich `reason`.
+
+<span id="examples" />
+
+## Beispiele
+
+<span id="pause-and-resume-an-app" />
+
+### Eine App pausieren und fortsetzen
+
+```bash
+lizard pause api
+lizard resume api
+```
+
+<span id="pause-a-database-in-another-project" />
+
+### Eine Datenbank in einem anderen Projekt pausieren
+
+```bash
+lizard pause --service my-db --project my-project
+```
+
+<span id="pause-everything-in-a-project" />
+
+### Alles in einem Projekt pausieren
+
+```bash
+lizard project pause my-project --json
+lizard project resume my-project
+```
+
+<span id="pause-a-workspace" />
+
+### Einen Workspace pausieren
+
+```bash
+lizard workspace pause my-team
+lizard workspace resume my-team
+```
+
+<span id="see-also" />
+
+## Siehe auch
+
+- [lizard sleep](/cli/sleep) — im Leerlauf schlafen und beim nächsten Request aufwachen
+- [lizard project](/cli/project) — Projekte auflisten, erstellen und löschen
+- [lizard workspace](/cli/workspace) — Workspace-Limits und weitere Workspace-Befehle
+- [Abrechnung](/platform/billing) — Preise für Compute und Speicher

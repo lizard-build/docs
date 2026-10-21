@@ -42,7 +42,7 @@ lizard add postgres --region <code>
 lizard up --region <code>
 ```
 
-Without `--region`, `lizard add` uses `us-east-1` and `lizard up` uses the platform's default region. On `lizard up`, `--region` only applies when it creates a new service.
+Without `--region`, `lizard add` uses `us-east-1` and `lizard up` uses the platform's default region. On `lizard up`, `--region` only applies when it creates a new service. A database's private URL works only from services in its region, so create Postgres or Redis in the region of the services that use it.
 
 ## See also
 

@@ -1,18 +1,18 @@
 ---
-description: "Warum lizard service set, gefolgt von einem Redeploy, zwei Builds in die Warteschlange stellt, welche Felder selbstständig neu bauen und wie du den überflüssigen Build vermeidest."
+description: "Warum lizard service set, gefolgt von einem Redeploy, einen Build abbricht und neu startet, welche Felder selbstständig neu bauen und wann du neu deployen solltest."
 ---
 
-<span id="my-change-queued-two-builds-back-to-back" />
+<span id="my-redeploy-cancelled-the-build-my-change-started" />
 
-# Meine Änderung hat zwei Builds direkt hintereinander in die Warteschlange gestellt
+# Mein Redeploy hat den Build abgebrochen, den meine Änderung gestartet hat
 
-Du hast `lizard service set` ausgeführt, um ein Feld zu ändern, dann `lizard redeploy`, und am Ende wurden zwei Builds statt nur eines gestartet.
+Du hast `lizard service set` ausgeführt, um ein Feld zu ändern, dann `lizard redeploy`. Der Deploy hat länger gedauert als erwartet, und der Verlauf zeigt womöglich einen abgebrochenen Build.
 
 <span id="what-this-means" />
 
 ## Was das bedeutet
 
-Der Aufruf `service set` hat bereits selbstständig einen Rebuild ausgelöst. Das anschließende `redeploy` hat einen zweiten, überflüssigen Build in die Warteschlange gestellt.
+Der Aufruf `service set` hat bereits selbstständig einen Rebuild gestartet. Das anschließende `redeploy` hat diesen Build abgebrochen, dessen Log mit `--- Build cancelled: a newer deploy was triggered ---` endet, und denselben Build von vorn gestartet.
 
 <span id="why-this-can-happen" />
 
@@ -30,10 +30,10 @@ Es ist leicht, reflexartig nach jedem `service set` noch ein `redeploy` anzuhän
 
 ### Prüfe, welche Art von Feld du geändert hast
 
-Sieh in der [Tabelle der Rebuild-Auslöser](/concepts/build-pipeline#what-triggers-a-rebuild) nach. Wenn es ein Build-Feld ist und der Service lief, ist der Rebuild bereits in der Warteschlange — du musst nichts weiter tun. Wenn der Service abgestürzt war oder noch nie bereitgestellt wurde, führe einmal `lizard redeploy` aus.
+Sieh in der [Tabelle der Rebuild-Auslöser](/concepts/build-pipeline#what-triggers-a-rebuild) nach. Wenn es ein Build-Feld ist und der Service lief, ist der Rebuild bereits gestartet — du musst nichts weiter tun. Wenn der Service abgestürzt war oder noch nie bereitgestellt wurde, führe einmal `lizard redeploy` aus.
 
 ```bash
-lizard events   # confirm only one build is in flight
+lizard events   # is a build already running?
 ```
 
 <span id="only-redeploy-after-runtime-only-changes" />

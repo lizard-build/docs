@@ -1,10 +1,10 @@
 ---
-description: "lizard workspace crea, lista y elimina workspaces, y muestra cómo los workspaces se relacionan con los proyectos y los servicios."
+description: "lizard workspace crea, lista, pausa y elimina workspaces, y fija los límites de un workspace y los precios de reventa que ven sus claves de API con ámbito."
 ---
 
 # lizard workspace
 
-Crea, lista y elimina workspaces.
+Crea, lista, pausa y elimina workspaces, y fija sus límites y precios de reventa.
 
 <span id="usage" />
 
@@ -13,6 +13,10 @@ Crea, lista y elimina workspaces.
 ```bash
 lizard workspace list
 lizard workspace create <name>
+lizard workspace pause <name-or-id>
+lizard workspace resume <name-or-id>
+lizard workspace limits <name-or-id> [flags]
+lizard workspace resale-pricing <name-or-id> [flags]
 lizard workspace rm <name-or-id> [flags]
 ```
 
@@ -32,11 +36,55 @@ Lista los workspaces a los que perteneces, con tu rol y el número de proyectos 
 
 Crea un workspace. Añade proyectos con `lizard project create <name> --workspace <slug>`.
 
+<span id="lizard-workspace-pause-name-or-id" />
+
+### `lizard workspace pause <name-or-id>`
+
+Pausa cada app, cada base de datos y cada sandbox en ejecución de todos los proyectos del workspace. Las apps y bases de datos conservan sus URL, contraseñas, ajustes y datos; los buckets de Managed Object Storage no se pausan. Solo el propietario puede pausar un workspace entero. Para pausar un solo servicio o proyecto, consulta [lizard pause](/cli/pause).
+
+<span id="lizard-workspace-resume-name-or-id" />
+
+### `lizard workspace resume <name-or-id>`
+
+Vuelve a arrancar cada app y base de datos del workspace que alguien pausó a mano, y los sandboxes que pausó `lizard workspace pause`. Las apps y bases de datos que Lizard pausó por la facturación siguen pausadas hasta que la facturación esté en orden. Solo puede hacerlo el propietario, y el workspace necesita margen dentro de sus [límites](/platform/limits#workspace-limits).
+
+<span id="lizard-workspace-limits-name-or-id" />
+
+### `lizard workspace limits <name-or-id>`
+
+Muestra lo que un workspace puede usar y lo que usa ahora. Con flags, fija sus límites. Solo el propietario los fija, con sesión iniciada en el navegador o con una clave de API sin ámbito; cualquier miembro puede leerlos. Cada flag acepta `none` para quitar ese límite.
+
+| Flag | Descripción |
+|------|-------------|
+| `--sandboxes <n>` | Sandboxes en ejecución a la vez |
+| `--cpu <vcpus>` | vCPU que pueden usar las apps y bases de datos del workspace |
+| `--memory <size>` | Memoria que pueden usar las apps y bases de datos del workspace, por ejemplo `4GB` o `512MB` |
+| `--disk <size>` | Disco que pueden ocupar sus bases de datos y volúmenes, por ejemplo `20GB` o `1TB` |
+
+La CPU y la memoria cuentan lo que usan ahora las apps y bases de datos, no lo que tienen configurado. Al llegar a un límite, no arranca nada nuevo en el workspace y los servicios en marcha siguen. En el límite de disco no se permiten volúmenes nuevos, bases de datos nuevas ni crecimiento de volúmenes; los datos ya escritos se conservan. Los errores están en [límites del espacio de trabajo](/platform/limits#workspace-limits).
+
+<span id="lizard-workspace-resale-pricing-name-or-id" />
+
+### `lizard workspace resale-pricing <name-or-id>`
+
+Muestra o fija los precios que ven las claves de API limitadas a este workspace o a uno de sus proyectos (alias `resale`). Cada precio es un múltiplo del de Lizard, de 1 a 100. Tu propia factura, tu panel y las claves sin ámbito mantienen los precios de Lizard. Solo el propietario puede verlos o fijarlos, con sesión iniciada en el navegador o con una clave de API sin ámbito.
+
+| Flag | Descripción |
+|------|-------------|
+| `--all <x>` | Fija todos los recursos a este múltiplo |
+| `--cpu <x>` | CPU |
+| `--memory <x>` | Memoria |
+| `--storage <x>` | Volúmenes |
+| `--egress <x>` | Tráfico saliente |
+| `--object-storage <x>` | Managed Object Storage |
+| `--sandbox <x>` | Precios por hora de los sandboxes |
+| `--off` | Desactiva los precios de reventa; las claves con ámbito vuelven a ver los precios de Lizard |
+
 <span id="lizard-workspace-rm-name-or-id" />
 
 ### `lizard workspace rm <name-or-id>`
 
-Elimina un workspace (alias `delete`). Solo el propietario puede eliminarlo, y solo cuando ya no tiene proyectos ni sandboxes. No puedes eliminar tu workspace personal.
+Elimina un workspace (alias `delete`). Solo el propietario puede eliminarlo, y solo cuando ya no tiene proyectos, sandboxes ni volúmenes. Los proyectos en la papelera no cuentan; se eliminan con el workspace, que no tiene papelera propia. Una clave de API con ámbito no puede eliminar un workspace. No puedes eliminar tu workspace personal.
 
 | Flag | Descripción |
 |------|-------------|
@@ -62,6 +110,25 @@ lizard workspace list
 lizard workspace create my-team
 ```
 
+<span id="cap-a-workspace" />
+
+### Limita un workspace
+
+```bash
+lizard workspace limits my-team                                   # show limits and current use
+lizard workspace limits my-team --sandboxes 5 --cpu 2 --memory 4GB --disk 20GB
+lizard workspace limits my-team --cpu none                        # remove one limit
+```
+
+<span id="set-resale-prices" />
+
+### Fija precios de reventa
+
+```bash
+lizard workspace resale-pricing my-team --all 3                   # every price x3
+lizard workspace resale-pricing my-team --off
+```
+
 <span id="delete-an-empty-workspace" />
 
 ### Elimina un workspace vacío
@@ -74,6 +141,9 @@ lizard workspace rm my-team --yes
 
 ## Véase también
 
-- [lizard whoami](/cli/whoami) — muestra tu workspace activo
+- [lizard whoami](/cli/whoami) — muestra la cuenta con la que iniciaste sesión
 - [lizard project](/cli/project) — lista y crea proyectos en un workspace
+- [lizard pause](/cli/pause) — pausa y reanuda un servicio o un proyecto
+- [lizard keys](/cli/keys) — crea claves de API limitadas a un workspace
+- [Límites](/platform/limits#workspace-limits) — límites del workspace y sus errores
 - [Architecture: Espacio de trabajo](/concepts/architecture) — cómo los workspaces se relacionan con los proyectos y los servicios

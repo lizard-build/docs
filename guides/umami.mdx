@@ -18,7 +18,7 @@ curl -fsSL https://lizard.build/install.sh | bash
 lizard login
 ```
 
-Complete the login in your browser before continuing. The commands below were tested with Lizard CLI 0.3.95 and Umami 3.3.1.
+Complete the login in your browser before continuing. The commands below were tested in September 2026 with Lizard CLI 0.3.95, before Lizard CLI 4, and Umami 3.3.1.
 
 ## Create the project and database
 
@@ -53,13 +53,13 @@ Connect the database and generate two separate secrets:
 
 ```bash
 lizard secrets set \
-  DATABASE_URL='${{umami-db.DATABASE_URL}}' \
+  DATABASE_URL='${{umami-db.DATABASE_PRIVATE_URL}}' \
   APP_SECRET="$(openssl rand -hex 32)" \
   TWO_FACTOR_ENCRYPTION_KEY="$(openssl rand -hex 32)" \
   --service umami
 ```
 
-Keep the single quotes around the database reference: Lizard resolves it when the service starts. The values belong to this service, so other apps in the project do not receive them.
+Keep the single quotes around the database reference: Lizard resolves it when the service starts, to the database's address on the project's private network. The values belong to this service, so other apps in the project do not receive them.
 
 Save both generated secrets in your password manager. Set them once during setup; do not regenerate them when restarting or upgrading. `TWO_FACTOR_ENCRYPTION_KEY` is required for two-factor authentication.
 
@@ -84,6 +84,8 @@ lizard logs --service umami
 ```
 
 If the first startup times out, check `lizard events` for container readiness. Once the container has started, retry the upload with `lizard up --service umami --port 3000`.
+
+For a dashboard that few people open, turn on [sleep when idle](/cli/sleep) with `lizard sleep --on --service umami`; turning it on restarts the service once. Tracked pageviews count as requests, so a busy site stays awake. After a quiet spell, the first request takes longer while the service wakes.
 
 ## Check data persistence
 

@@ -6,6 +6,10 @@ description: "Configure static site routes on Lizard: serve generated HTML, supp
 
 A generated content site should serve each route's HTML and return HTTP 404 for a missing page. New lizardpack builds for Astro static, Docusaurus, VitePress, Hugo, and SvelteKit adapter-static use that policy. React and Vue SPAs keep the `index.html` fallback needed by browser routers.
 
+Those builds answer a missing page with nginx's own 404 page, never the site's `404.html`. For your own 404 page, use the nginx config and Dockerfile below.
+
+A folder URL without a trailing slash, such as `/guide` for `guide/index.html`, gets a 301 redirect to `http://YOUR_PUBLIC_HOST/guide/`, and Lizard then redirects that to HTTPS. Link to the trailing-slash form to skip both hops, or use the config below, which keeps the redirect on HTTPS.
+
 The custom configuration below is optional. Use it for a routing policy that the detected framework does not provide. Existing images keep their old rules until you rebuild them.
 
 ## Choose the routing policy
@@ -28,6 +32,7 @@ server {
   server_name _;
   root /usr/share/nginx/html;
   index index.html;
+  absolute_redirect off;
 
   location / {
     try_files $uri $uri.html $uri/ =404;
@@ -40,7 +45,7 @@ server {
 }
 ```
 
-This supports both `guide.html` and `guide/index.html` output layouts. Include a generated `404.html` if you want a custom error page. Otherwise omit the `error_page` and exact-location blocks to use nginx's default error body. Keep one canonical URL style in the site's links and sitemap; this lookup rule does not add canonical redirects.
+This supports both `guide.html` and `guide/index.html` output layouts. `error_page` serves the site's generated `404.html` with status 404; if the site has no `404.html`, omit the `error_page` and exact-location blocks to use nginx's default error body. `absolute_redirect off` sends the folder redirect as a relative `Location: /guide/`, so the browser stays on HTTPS. Keep one canonical URL style in the site's links and sitemap; this lookup rule does not add canonical redirects.
 
 ## Build the site with the config
 

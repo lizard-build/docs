@@ -46,7 +46,7 @@ En una prueba del 2026-10-12, la mediana del tiempo desde crear un sandbox hasta
 |---|---|
 | ¿Qué ejecuta el código? | Una microVM de Firecracker con su propio kernel; consulta [runtime y plantillas](#runtime-and-templates) |
 | ¿Cómo creo uno? | [Lizard SDK](/sandboxes/sdk-reference), [`lizard sandbox`](/cli/sandbox), el [panel](/sandboxes/dashboard) o la [API HTTP](/sandboxes/sdk-reference#http-api) |
-| ¿Qué plantillas hay? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` y `desktop` |
+| ¿Qué plantillas hay? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop` y `desktop-camoufox` (solo en US East) |
 | ¿Qué tamaños hay? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, el predeterminado) y Large (8 vCPU / 16 GB); consulta [tamaños y precios](/platform/limits#sandbox-sizes) |
 | ¿Cuánto dura uno? | Cinco minutos por defecto desde el SDK y la CLI; sin vencimiento por defecto desde la API directa y el panel |
 | ¿Qué sobrevive a una detención? | Solo los archivos de un volumen de [Persistent Volumes](/sandboxes/volumes) montado en `/workspace` |
@@ -56,7 +56,7 @@ En una prueba del 2026-10-12, la mediana del tiempo desde crear un sandbox hasta
 
 ## Runtime y plantillas
 
-Elige una plantilla del catálogo actual: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime` o `desktop`. Su disponibilidad depende de la región y de la capacidad del pool. `interpreter` incluye Python y bibliotecas de datos habituales. `desktop` ejecuta un escritorio gráfico que controlas con `sandbox.desktop` o `lizard sandbox desktop`. Comprueba las versiones dentro del sandbox. La CLI pública no permite subir plantillas propias.
+Elige una plantilla del catálogo actual: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop` o `desktop-camoufox`. Su disponibilidad depende de la región y de la capacidad del pool. `interpreter` incluye Python, bibliotecas de datos habituales y Node 22. `desktop` ejecuta un escritorio gráfico que controlas con `sandbox.desktop` o `lizard sandbox desktop`. `desktop-camoufox` es la plantilla `desktop` más Camoufox, una versión de Firefox para extraer datos de sitios web que controlas con Playwright; por ahora solo se ejecuta en `us-east-1`. Comprueba las versiones dentro del sandbox. La CLI pública no permite subir plantillas propias.
 
 Lizard Sandboxes se ejecutan como microVMs de Firecracker, cada una con su propio kernel. Da al agente solo las credenciales y los permisos que necesita para su tarea.
 

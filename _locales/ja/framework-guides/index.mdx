@@ -48,7 +48,7 @@ lizard login
 
 Windows では、PowerShell で `irm https://lizard.build/api/cli/install.ps1 | iex` を実行します。新しいアカウントはプランなしで始まります。7 日間の Pro トライアル（カードが必要）を開始するまで、`lizard add` と `lizard up` は Checkout リンクを返します。`lizard billing start` でそのリンクを開けます。
 
-各ガイドでは、新しいプロジェクトと `web` または `api` という名前のサービスを使用します。最初の `lizard up --service` 呼び出しの前に、`lizard add --service web`（または `api`）でそのサービスを作成してください。`up --service` は既存のサービスを選択します。存在しない名前付きサービスは作成しません。既存のプロジェクトでは、デプロイ前に `lizard status --json` と `lizard ps --json` を確認してください。ポートはコンテナ内のプロセスと一致している必要があり、そのプロセスは `0.0.0.0` で待ち受ける必要があります。
+各ガイドでは、新しいプロジェクトと `web` または `api` という名前のサービスを使用します。`lizard up --service web` は、`web` がまだ存在しない場合に作成します。名前を確認してください。タイプミスがあると 2 つ目のサービスが作成されます。各ガイドでは最初に `lizard add --service web`（または `api`）を実行しますが、この手順が必要なのは、最初のデプロイの前に secrets やドメインを設定する場合だけです。既存のプロジェクトでは、デプロイ前に `lizard status --json` と `lizard ps --json` を確認してください。ポートはコンテナ内のプロセスと一致している必要があり、そのプロセスは `0.0.0.0` で待ち受ける必要があります。
 
 Lizard CLI 0.3.95 以降は、アップロード時に macOS のアーカイブメタデータを除外します。`COPYFILE_DISABLE` の設定は不要です。これらのガイドに従う前に、古い CLI バージョンを更新してください。
 

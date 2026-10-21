@@ -1,13 +1,13 @@
 ---
 title: "サービスのスケール: レプリカ、CPU、メモリ"
-description: "サービスのレプリカ追加や CPU・メモリ増強、アドオンストレージの拡張を行います。許可範囲、ロールアウトの動作、変更確認方法を説明します。"
+description: "サービスのレプリカ追加や CPU・メモリ増強、アドオンストレージの拡張、アイドル時のスリープや一時停止を行います。許可範囲と変更の確認方法を説明します。"
 ---
 
 <span id="scaling" />
 
 # スケーリング
 
-`lizard scale` を使って、サービスを水平スケール（レプリカ追加）または垂直スケール（CPU/メモリ増強）できます。アドオンストレージも同じ方法で拡張します。
+`lizard scale` を使って、サービスのレプリカを追加したり、CPU やメモリを増やしたり、アドオンストレージを拡張したりできます。サービスをゼロまでスケールするには、[アイドル時にスリープ](#sleep-when-idle) させるか、[一時停止](#pause-a-service) します。
 
 <span id="scale-a-service" />
 
@@ -59,16 +59,44 @@ lizard scale --service api --cpu 4 --memory 8192
 lizard scale --service postgres --storage 8192
 ```
 
+<span id="sleep-when-idle" />
+
+## アイドル時にスリープする
+
+`lizard sleep --on` を使うと、Web サービスはトラフィックがないときにスリープし、次のリクエストで約 1 秒で起動します。デフォルトでは、トラフィックのない状態が 10 分続くとスリープします。`--idle` で 5〜1440 分に設定できます。オンにすると、サービスが 1 回再起動します。使えるのは、ポートがありレプリカが 1 つのサービスだけです。そのためワーカーには使えません。Managed Postgres と Managed Redis もスリープできます。
+
+```bash
+lizard sleep --on --idle 30 --service api
+lizard sleep --off --service api    # always on
+```
+
+[`lizard sleep`](/cli/sleep) を参照してください。
+
+<span id="pause-a-service" />
+
+## サービスを一時停止する
+
+`lizard pause` は、サービスやデータベースを削除せずに停止します。ゼロまでスケールし、URL、パスワード、設定、データは残ります。`lizard resume` で再び起動します。一時停止した GitHub サービスは、再開するまで push を無視します。
+
+```bash
+lizard pause api
+lizard resume api
+```
+
+プロジェクトやワークスペースのすべてのサービスを一時停止するには、`lizard project pause` または `lizard workspace pause` を使います。[`lizard pause`](/cli/pause) を参照してください。
+
 <span id="verifying" />
 
 ## 確認
 
 ```bash
 lizard ps                 # replica status + URL
-lizard events             # per-replica deploy/scale history
+lizard events             # deploy history + current replicas
 lizard metrics            # live CPU / memory / network / disk
-lizard metrics --cost     # include cost
+lizard metrics --cost     # cost instead of metrics
 ```
+
+レプリカの変更ではデプロイが作られないため、`lizard events` には表示されません。代わりに Replicas テーブルを確認してください。
 
 <span id="see-also" />
 

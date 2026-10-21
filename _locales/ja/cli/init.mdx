@@ -36,17 +36,18 @@ lizard init [flags]
 lizard init
 ```
 
+`--name` を付けないと、`init` は使うプロジェクトを尋ねます。非対話のシェルでは代わりにエラーになるため、`--name` を渡してください。
+
 <span id="link-explicitly-in-ci" />
 
 ### CI で明示的にリンクする
 
-`lizard up` は TTY では `init` を実行しますが、非 TTY（CI）環境では、暗黙にプロジェクトを作成せずにエラーになります。まず明示的にリンクしてください:
+リンクされていないディレクトリで `lizard up` を実行すると、アカウントのデフォルトプロジェクトにデプロイします。CI で特定のプロジェクトにデプロイするには、まずリンクしてください:
 
 ```bash
 export LIZARD_TOKEN=liz_xxx
 lizard init --name my-project
-lizard add --service api   # first run only; skip when the service exists
-lizard up --ci --service api
+lizard up --ci --service api   # creates api on the first run
 ```
 
 <span id="relink-a-directory-thats-already-linked" />

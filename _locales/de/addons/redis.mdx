@@ -28,7 +28,7 @@ Das erste Redis-Add-on heißt `redis`, daher funktioniert `${{redis.REDIS_URL}}`
 | `REDIS_URL` | Vollständige Verbindungszeichenfolge über den öffentlichen Endpunkt (`redis://…`) |
 | `REDIS_PRIVATE_URL` | Verbindungszeichenfolge über das private Netzwerk des Projekts (`<name>.lizard.internal:6379`) |
 
-Beide Zeichenfolgen haben die Form `redis://default:<password>@<host>:<port>`. Die private funktioniert nur von Services im selben Projekt aus; siehe [privates Netzwerk](/networking#private-networking).
+Beide Zeichenfolgen haben die Form `redis://default:<password>@<host>:<port>`. Die private funktioniert nur von Services im selben Projekt und in derselben Region aus; siehe [privates Netzwerk](/networking#private-networking). Ein Service in einer anderen Region muss `REDIS_URL` verwenden. Damit er die private URL nutzen kann, erstellen Sie Redis in seiner Region mit `lizard add redis --region <code>`. `<name>` ist der Name, den das Add-on beim Vergeben der privaten Adresse hatte, `redis` für das erste; eine Umbenennung ändert ihn nicht.
 
 <span id="connect-a-service" />
 
@@ -39,7 +39,7 @@ lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service api
 lizard redeploy --service api
 ```
 
-Der Verweis wird beim Bereitstellen aufgelöst; Services erhalten die aktuellen Werte des Addons beim nächsten Deploy. Verwenden Sie `REDIS_URL` für Clients außerhalb des Projekts. Jeder Service im Projekt erhält außerdem die öffentliche `REDIS_URL` des Addons mit der niedrigsten Priorität; ein expliziter Verweis überschreibt sie.
+Der Verweis wird beim Bereitstellen aufgelöst; Services erhalten die aktuellen Werte des Addons beim nächsten Deploy. Verwenden Sie `REDIS_URL` für Clients außerhalb des Projekts oder in einer anderen Region. Jeder Service im Projekt erhält außerdem die öffentliche `REDIS_URL` des Addons mit der niedrigsten Priorität; ein expliziter Verweis überschreibt sie.
 
 <span id="memory-and-durability" />
 <span id="does-managed-redis-keep-data" />
@@ -81,6 +81,8 @@ lizard run --service redis -- sh -c 'exec redis-cli -u "$REDIS_URL"'
 ```bash
 lizard scale --service redis --storage 4096
 ```
+
+Der Speicher lässt sich nur vergrößern. Erlaubte Größen sind 512, 1024, 2048, 4096, 8192 oder 16384 MB. Beim Vergrößern stoppt Lizard Redis, kopiert die Daten auf ein größeres Volume und startet Redis wieder. Rechnen Sie also mit einer kurzen Ausfallzeit. Setzen Sie eine pausierte Instanz vorher mit [`lizard resume`](/cli/pause) fort.
 
 <span id="see-also" />
 

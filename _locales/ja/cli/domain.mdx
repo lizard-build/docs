@@ -1,10 +1,10 @@
 ---
-description: "lizard domain はサービスのドメインを表示し、onlizard.com サブドメインを生成するか、自動 TLS 付きでカスタムホスト名を接続して検証します。"
+description: "lizard domain はサービスのドメインを表示・一覧表示し、onlizard.com サブドメインを生成するか、自動 TLS 付きでカスタムホスト名を接続して検証します。"
 ---
 
 # lizard domain
 
-現在のドメインを表示するか、カスタムドメインを接続します。
+サービスのドメインを表示・一覧表示するか、カスタムドメインを接続します。
 
 <span id="usage" />
 
@@ -24,7 +24,7 @@ lizard domain [hostname] [flags]
 |------|-------------|
 | `-s, --service <name>` | サービス |
 | `-p, --project <id>` | プロジェクト名、スラッグ、または ID |
-| `--port <n>` | 公開するポート |
+| `--port <n>` | 無視されます。ドメインは常にサービスのコンテナポートにつながります。このポートは [`lizard port`](/cli/port) で変更します |
 | `-f, --force` | ドメインが自分の別のサービスに接続されている場合、このサービスに移動する |
 
 サブコマンドでも同じ `-s` と `-p` フラグを使います。ドメインの検証と削除は、そのドメインを接続したサービスで行ってください。
@@ -35,7 +35,11 @@ lizard domain [hostname] [flags]
 
 ### `lizard domain generate`
 
-新しい `*.onlizard.com` サブドメインを生成します。
+サービスに `*.onlizard.com` サブドメインを割り当てます。すでにある場合、`generate` はそれを返します。サービスがカスタムドメインを使っている間は失敗するため、先にそのドメインを削除してください。
+
+### `lizard domain list`
+
+サービスのドメインと、DNS 検証を待っているカスタムドメインを、作成すべきレコードとともに一覧表示します（別名: `ls`）。
 
 ### `lizard domain verify <hostname>`
 
@@ -83,12 +87,14 @@ Lizard は作成する DNS レコードを返します。ホスト名用の `CNA
 lizard domain verify app.example.com --service web
 ```
 
-<span id="attach-a-domain-to-a-specific-port" />
+`example.com` のような apex ドメインでは、ほとんどの DNS プロバイダーが `CNAME` を許可しません。代わりに同じターゲットへの `ALIAS` または `ANAME` レコードを作成するか、プロバイダーの CNAME フラットニングを使ってください。
 
-### 特定のポートにドメインを接続する
+<span id="list-a-services-domains" />
+
+### サービスのドメインを一覧表示する
 
 ```bash
-lizard domain app.example.com --service web --port 8080
+lizard domain list --service web
 ```
 
 <span id="move-a-domain-from-another-of-your-services" />

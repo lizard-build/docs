@@ -31,7 +31,7 @@ lizard up                          # upload cwd and deploy
 
 1. **Compilación**: la plataforma ejecuta tu compilación (consulta [Proceso de compilación](/concepts/build-pipeline)).
 2. **Predeploy**: si están configurados tanto `preDeployCommand` como `startCommand`, el contenedor ejecuta `sh -c "<pre> && exec <start>"`. El comando de predeploy se ejecuta al inicio de cada contenedor (cada réplica, cada reinicio), así que hazlo seguro para ejecutarse muchas veces y al mismo tiempo. Sin `startCommand` se omite.
-3. **Inicio**: Lizard inicia el nuevo pod junto al anterior. Los [workers](/deploy/workers) detienen primero el pod anterior.
+3. **Inicio**: Lizard inicia el nuevo pod junto al anterior. Los [workers](/deploy/workers) y los servicios con un [volumen](/cli/volume) conectado detienen primero el pod anterior, así que dejan de funcionar un momento en cada despliegue y reinicio.
 4. **Comprobación de estado**: una sonda TCP comprueba el puerto de la app cada 2 segundos, y el tráfico pasa solo a un pod listo. Lizard espera unos 30 segundos; si el nuevo pod no está listo para entonces, el despliegue se marca como fallido. Los workers omiten la sonda.
 5. **Verificación**: inspecciona el estado de la publicación y llama a la URL de la aplicación. La accesibilidad del puerto no es una comprobación completa del estado de la aplicación.
 
@@ -39,14 +39,14 @@ lizard up                          # upload cwd and deploy
 
 ## Salida en streaming
 
-Cuando ejecutas un `lizard up` sin separarlo de la terminal (o `redeploy`), los registros de compilación se transmiten en vivo. Con `--json`, obtienes un evento JSON por línea:
+Cuando ejecutas un `lizard up` sin separarlo de la terminal (o `redeploy`), los registros de compilación se transmiten en vivo. Con `lizard up --json`, obtienes un evento JSON por línea:
 
 ```json
 { "event": "log", "line": "..." }
 { "event": "deployed", "status": "...", "url": "https://..." }
 ```
 
-que termina en `deployed`, `failed` o `deploying`. Usa `--detach` para iniciar el despliegue y volver inmediatamente sin transmitir la salida.
+El último evento es `deployed`, `failed` o `deploying`. `lizard redeploy --json` no imprime líneas de registro: devuelve un objeto al momento (`status: "deploying"`) o, con `--wait`, un objeto al final con `ok` y el `status` final. Usa `--detach` para iniciar el despliegue y volver inmediatamente sin transmitir la salida.
 
 <span id="inspecting-history" />
 
@@ -58,7 +58,7 @@ lizard events --limit 25       # show more
 lizard ps                      # current services, status, and URLs
 ```
 
-En el [panel](/dashboard), la vista de **Despliegues** muestra la cronología completa, los registros de compilación de cada despliegue y un panel de detalles para cada publicación.
+En el [panel](/dashboard), la pestaña **Resumen** de cada servicio lista sus despliegues. Abre uno para ver su estado, origen, registros de compilación y reinicios.
 
 <span id="restarts-vs-redeploys" />
 
@@ -93,4 +93,4 @@ La mayoría de los cambios en variables de entorno y secretos se aplican sin rec
 
 ## Publicaciones fallidas y recuperación
 
-Una compilación fallida y un inicio fallido de la aplicación son casos distintos. En ambos, un servicio HTTP que ya está en ejecución sigue atendiendo su versión anterior: una compilación fallida no cambia nada, y un pod nuevo que nunca llega a estar listo no recibe tráfico. El pod anterior de un worker se detiene antes de que arranque el nuevo, así que una publicación defectuosa de un worker no deja ningún worker en ejecución. Inspecciona el servicio activo, los registros de compilación y los registros de ejecución. `lizard redeploy` vuelve a compilar el origen seleccionado; no es un comando para restaurar una compilación anterior. Revierte el commit del código fuente cuando sea necesario, desplíegalo y comprueba el resultado. Consulta [problemas conocidos](/platform/known-issues).
+Una compilación fallida y un inicio fallido de la aplicación son casos distintos. Una compilación fallida no cambia nada: la versión en ejecución sigue funcionando. Si un pod nuevo nunca llega a estar listo, un servicio HTTP sigue atendiendo su versión anterior y el pod nuevo no recibe tráfico. Los workers y los servicios con un volumen conectado detienen el pod anterior antes de que arranque el nuevo, así que una publicación que nunca llega a estar lista los deja sin funcionar. Inspecciona el servicio activo, los registros de compilación y los registros de ejecución. `lizard redeploy` vuelve a compilar el origen seleccionado; no es un comando para restaurar una compilación anterior. Revierte el commit del código fuente cuando sea necesario, desplíegalo y comprueba el resultado. Consulta [problemas conocidos](/platform/known-issues).

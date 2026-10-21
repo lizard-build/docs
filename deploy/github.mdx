@@ -13,7 +13,7 @@ Connect a GitHub repository for git push to deploy: Lizard builds and redeploys 
 lizard add -r your-org/your-app
 ```
 
-This creates a `github`-source service, clones the repo, auto-detects the stack ([lizardpack](/concepts/build-pipeline)), builds it, and returns a live URL. Useful flags:
+This creates a `github`-source service and starts the first build in the background: Lizard clones the repo and detects the stack ([lizardpack](/concepts/build-pipeline)). The command prints no URL. Follow the build with `lizard logs --build --service <name>`; once it is live, `lizard ps` shows the URL. Useful flags:
 
 | Flag | Purpose |
 |------|---------|
@@ -45,9 +45,9 @@ lizard service set api \
   --set branch=main
 ```
 
-Changing a build field rebuilds a running service. Running `redeploy` afterward will [queue two builds](/deploy/troubleshooting/double-build). A crashed or never-deployed service needs `lizard redeploy`.
+Changing a build field rebuilds a running service. Running `redeploy` afterward [cancels that build and starts another](/deploy/troubleshooting/double-build). A crashed or never-deployed service needs `lizard redeploy`.
 
-> **Note:** `lizard up` always forces `sourceType=upload`. Don't use it to update a git-backed service: push to the remote or use `lizard redeploy` instead.
+> **Note:** `lizard up` always forces `sourceType=upload`. Don't use it to update a git-backed service: push to the remote or use `lizard redeploy` instead. In a folder with no linked service, `up` picks the service named after the folder or `package.json`, so in a clone of the repo it can switch your GitHub service to an upload.
 
 ## Auto-redeploy on push
 
@@ -59,6 +59,8 @@ Once `repoUrl` is set, pushes to the matching `branch` redeploy automatically vi
 ```bash
 lizard service set api --set watchPatterns='apps/api/**,packages/**'
 ```
+
+To stop pushes from deploying, turn off **Auto-deploy** in the service's settings in the dashboard. A [paused](/cli/pause) service also ignores pushes until you resume it.
 
 ## Switch branches
 

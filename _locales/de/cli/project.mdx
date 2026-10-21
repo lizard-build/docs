@@ -1,10 +1,10 @@
 ---
-description: "lizard project listet Ihre Projekte auf, erstellt ein neues oder löscht eines, mit Beispielen für jeden Unterbefehl."
+description: "lizard project listet, erstellt, pausiert, setzt fort und löscht Projekte, mit dem, was delete endgültig entfernt, und Beispielen für jeden Unterbefehl."
 ---
 
 # lizard project
 
-Projekte auflisten, erstellen oder löschen.
+Projekte auflisten, erstellen, pausieren, fortsetzen oder löschen.
 
 <span id="usage" />
 
@@ -13,6 +13,8 @@ Projekte auflisten, erstellen oder löschen.
 ```bash
 lizard project list [flags]
 lizard project create <name> [flags]
+lizard project pause [project]
+lizard project resume [project]
 lizard project delete [project] [flags]
 ```
 
@@ -36,9 +38,21 @@ Ein Projekt erstellen. Es verknüpft nicht das aktuelle Verzeichnis; verwenden S
 |------|-------------|
 | `-w, --workspace <ws>` | Workspace, in dem das Projekt erstellt wird |
 
+### `lizard project pause [project]`
+
+Pausiert jede App und jede Datenbank im Projekt sowie seine laufenden Sandboxes. Services behalten ihre URLs, Passwörter, Einstellungen und Daten. Siehe [`lizard pause`](/cli/pause).
+
+### `lizard project resume [project]`
+
+Setzt die Apps und Datenbanken fort, die Sie im Projekt pausiert haben, sowie die Sandboxes, die `project pause` pausiert hat.
+
 ### `lizard project delete [project]`
 
-Ein Projekt in den Papierkorb verschieben (Alias `rm`). Seine Services werden gestoppt. Sie können es 3 Tage lang wiederherstellen; danach löscht Lizard es endgültig. Ohne Argument wird das mit diesem Verzeichnis verknüpfte Projekt gelöscht.
+Ein Projekt in den Papierkorb verschieben (Alias `rm`). Nur der Besitzer des Projekts kann es löschen. Seine Services und Datenbanken werden gestoppt; Sie können sie 3 Tage lang im Dashboard aus dem Papierkorb wiederherstellen, danach löscht Lizard sie endgültig.
+
+> **Achtung:** Sandboxes haben keinen Papierkorb. `project delete` löscht die Sandboxes des Projekts, ihre Volumes und ihre Snapshots sofort, und Sie können sie nicht zurückholen.
+
+Ohne Argument verwenden `pause`, `resume` und `delete` das mit diesem Verzeichnis verknüpfte Projekt oder, in einem nicht verknüpften Verzeichnis, das Standardprojekt Ihres Kontos. Nennen Sie beim Löschen den Projektnamen, damit Sie wissen, welches Projekt gelöscht wird.
 
 | Flag | Beschreibung |
 |------|-------------|
@@ -68,6 +82,15 @@ lizard project create my-project
 lizard project create my-project --workspace my-team
 ```
 
+<span id="pause-and-resume-a-project" />
+
+### Ein Projekt pausieren und fortsetzen
+
+```bash
+lizard project pause my-project
+lizard project resume my-project
+```
+
 <span id="delete-a-project" />
 
 ### Ein Projekt löschen
@@ -82,4 +105,5 @@ lizard project delete my-project --yes
 
 - [lizard init](/cli/init) — ein Projekt erstellen oder auswählen und mit dem aktuellen Verzeichnis verknüpfen
 - [lizard link](/cli/link) — das aktuelle Verzeichnis einem vorhandenen Projekt zuordnen
+- [lizard pause](/cli/pause) — einen Service, ein Projekt oder einen Workspace pausieren und fortsetzen
 - [Architecture](/concepts/architecture) — wie Projekte mit Workspaces und Services zusammenhängen

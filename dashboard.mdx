@@ -1,5 +1,5 @@
 ---
-description: "What the Lizard dashboard adds to the CLI: service status, deploy timeline, streaming logs, metrics, data browsers, team, and billing."
+description: "What the Lizard dashboard adds to the CLI: Sandboxes, service status, deploy history, streaming logs, metrics, data browsers, team, and billing."
 ---
 
 # App dashboard
@@ -19,11 +19,13 @@ lizard docs          # open this documentation
 
 ### Services
 
-The project's home view lists every service with its status badge, generated domain, and a quick path to logs, metrics, secrets, and settings. Create new services (from a GitHub repo or empty) right from here.
+**Apps & databases** in the sidebar lists every service with its status badge, generated domain, and a quick path to logs, metrics, secrets, and settings. Create a service with **New Service**: from a GitHub repository, from a folder on your computer, or as a database (Managed Postgres, Managed Redis) or Managed Object Storage.
+
+A service's **Settings** tab also has **Serverless**, which lets it sleep when idle ([`lizard sleep`](/cli/sleep)), and **Pause**, which stops it without deleting anything ([`lizard pause`](/cli/pause)).
 
 ### Deployments
 
-A timeline of every deploy, with per-deploy build logs and a detail drawer (commit, status, replicas). This is the visual equivalent of `lizard events` + `lizard logs --build`.
+Each service's **Overview** tab lists its deploys. Open one to see its status, trigger, source, build logs and restarts. This is the visual equivalent of `lizard events` + `lizard logs --build`.
 
 ### Logs
 
@@ -31,15 +33,15 @@ Live runtime and build log streaming with search and level filters — the UI co
 
 ### Metrics & Usage
 
-CPU, memory, network, and disk charts per service, plus a **Usage** view that breaks down consumption and cost across the project. Mirrors [`lizard metrics --cost`](/observability/metrics).
+CPU, memory, network, and disk charts per service, plus the **Usage** page, which breaks down consumption and cost across the project. Mirrors [`lizard metrics --cost`](/observability/metrics).
 
 ### Variables & Secrets
 
-Manage service- and project-scoped secrets, with masked values and reference (`${{…}}`) support. See [Variables & Secrets](/variables).
+Manage service-scoped secrets in a service's **Secrets** tab and project-scoped ones in **Global Secrets**, with masked values and reference (`${{…}}`) support. See [Variables & Secrets](/variables).
 
 ### Domains
 
-Add custom domains, view DNS records, and track verification and TLS status. See [Networking](/networking).
+In a service's **Settings** tab, add custom domains, view DNS records, and track verification and TLS status. See [Networking](/networking).
 
 ### Data browsers
 
@@ -51,26 +53,28 @@ Each managed addon ships a data browser:
 
 ### Sandboxes
 
-The **Sandboxes** page has tabs for sandboxes, Persistent Volumes, templates and agents. Create a sandbox with **New Sandbox**; the count next to it shows how many run against your limit. See [Sandboxes quickstart](/sandboxes/quickstart).
+The sidebar has **Sandboxes**, **Volumes** (Persistent Volumes), **Templates** and **Agents**. Create a sandbox with **New Sandbox** on the Sandboxes page; the count next to it shows how many run against your limit. During the trial, the dialog offers only the Small size in US regions. See [Sandboxes quickstart](/sandboxes/quickstart).
 
 ### GitHub integration
 
-Connect the GitHub App, pick repositories, and manage which repos Lizard can build. See [Deploy from GitHub](/deploy/github).
+Connect GitHub from **New Service → GitHub Repository**. Once it is connected, **Configure access** under the repository list opens the GitHub App's settings, where you choose which repositories Lizard can build. A public repository also deploys from its pasted URL, without connecting. See [Deploy from GitHub](/deploy/github).
 
 ### Settings, team & billing
 
-Project and workspace settings, member invites and roles, and resource usage. The **Billing** page in account settings shows your plan, trial, credits used this month, invoices and card. See [Billing](/platform/billing).
+**Settings**, at the bottom of the sidebar, holds project and workspace settings, member invites and roles (**Team**), and your account settings. Open **Billing** from account settings or by clicking your plan at the top of the dashboard. It shows your plan, trial, usage in the current period, invoices and card. See [Billing](/platform/billing).
 
 ## CLI ↔ Dashboard
 
 | Task | CLI | Dashboard view |
 |------|-----|----------------|
-| Deploy history | `lizard events` | Deployments |
+| Deploy history | `lizard events` | Service → Overview |
 | Stream logs | `lizard logs` | Logs |
 | Resource charts | `lizard metrics` | Metrics / Usage |
-| Manage secrets | `lizard secrets` | Variables |
-| Custom domains | `lizard domain` | Domains |
+| Manage secrets | `lizard secrets` | Secrets / Global Secrets |
+| Custom domains | `lizard domain` | Service → Settings |
+| Pause or resume a service | `lizard pause` / `lizard resume` | Service → Settings |
+| Sleep when idle | `lizard sleep` | Service → Settings → Serverless |
 | Query Managed Postgres, Managed Redis or Managed Object Storage | `lizard run --service <addon> -- <cmd>` | Data browsers |
-| Invite teammates | — | Team / Settings |
+| Invite teammates | — | Settings → Team |
 
 Use whichever fits the moment — they operate on the same projects and services.

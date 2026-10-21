@@ -4,7 +4,9 @@ description: "lizard status は、誤ったワークスペース、プロジェ�
 
 # lizard status
 
-現在のディレクトリについて、リンクされたワークスペース、プロジェクト、サービスを表示します。
+現在のディレクトリについて、リンクされたワークスペース、プロジェクト、サービスを表示します。サインインは不要です。
+
+リンクされていないディレクトリでは `Not linked` と表示します。そこでのコマンドはアカウントのデフォルトプロジェクトを使い、`lizard up` はディレクトリをそのプロジェクトにリンクします。
 
 <span id="usage" />
 
@@ -26,10 +28,20 @@ lizard status
 lizard status
 ```
 
+<span id="read-the-link-from-a-script" />
+
+### スクリプトからリンクを読み取る
+
+```bash
+lizard status --json
+```
+
+リンク済みのディレクトリでは `cwd`、`linked: true`、`workspace`、`workspaceId`、`project`、`projectId`、`service`、`serviceId` を返します。リンクされていないディレクトリでは `{"cwd": "…", "linked": false}` を返します。
+
 <span id="see-also" />
 
 ## 関連項目
 
 - [lizard init](/cli/init) — プロジェクトを作成または選択し、現在のディレクトリにリンクします
 - [lizard link](/cli/link) — 現在のディレクトリを既存のプロジェクトに関連付けます
-- [lizard whoami](/cli/whoami) — 現在のユーザー、アクティブなワークスペース、リンクされたプロジェクトを表示します
+- [lizard whoami](/cli/whoami) — 現在のユーザーとリンクされたプロジェクトを表示します

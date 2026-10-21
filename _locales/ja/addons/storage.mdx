@@ -7,7 +7,7 @@ description: "アップロード、アセット、バックアップ向けの S3
 
 # Managed Object Storage
 
-Lizard (lizard.build) の Managed Object Storage は、アップロード、アセット、バックアップ向けの S3互換ストレージです。`lizard add s3` を実行すると、**`default` という名前のプライベートバケット** と、`S3_ENDPOINT` から `S3_REGION` までの 5 つの変数が作成されます。これらの変数は、パス形式のアドレス指定を使う任意の AWS SDK で利用できます。各アカウントは最大 16 GiB まで保存でき、保存したバイト数に対して料金を支払います。認証なしでファイルを配信するには、ダッシュボードの S3 browser からバケットを公開状態にしてください。概要と料金については、[Managed Object Storage のページ](https://lizard.build/object-storage) を参照してください。
+Lizard (lizard.build) の Managed Object Storage は、アップロード、アセット、バックアップ向けの S3互換ストレージです。`lizard add s3` を実行すると、**`default` という名前のプライベートバケット** と、`S3_ENDPOINT` から `S3_REGION` までの 5 つの変数が作成されます。これらの変数は、パス形式のアドレス指定を使う任意の AWS SDK で利用できます。各 Managed Object Storage アドオンは最大 16 GiB まで保存でき、保存したバイト数に対して料金を支払います。認証なしでファイルを配信するには、ダッシュボードの S3 browser からバケットを公開状態にしてください。概要と料金については、[Managed Object Storage のページ](https://lizard.build/object-storage) を参照してください。
 
 <span id="provision" />
 
@@ -88,11 +88,21 @@ const s3 = new S3Client({
 <dashboard-host>/api/s3/<addonId>/public/default/<key>
 ```
 
+S3 browser には、バケットごとに 2 つのスイッチがあります。**公開表示** (Public view) をオンにすると、誰でもオブジェクトを読めます。**公開編集** (Public edit) をオンにすると、誰でもオブジェクトをアップロード・削除できます。誰が変更してもよいバケットだけでオンにしてください。
+
+プライベートバケットのオブジェクトを一定期間だけ共有するには、一時リンクを発行します。リンクは期限が切れるまで認証情報なしで使えます (デフォルトは 1 時間、最長 7 日):
+
+```bash
+lizard s3 url report.pdf --expires 86400
+```
+
+AWS SDK で作成した presigned URL も使えます。
+
 <span id="browse-objects" />
 
 ## オブジェクトの参照
 
-ダッシュボードで **S3 browser** (`lizard open`) を開くと、オブジェクトのアップロードと削除、フォルダーの作成、バケットの public/private の切り替えを行えます。CLI では、`lizard s3 upload <file>` でファイルをアップロードし、`lizard s3 list` でオブジェクトを一覧表示できます。[`lizard s3`](/cli/s3) を参照してください。
+ダッシュボードで **S3 browser** (`lizard open`) を開くと、オブジェクトのアップロードと削除、フォルダーの作成、バケットの public/private の切り替えを行えます。CLI では、`lizard s3 upload <file>` でファイルをアップロードし、`lizard s3 list` でオブジェクトを一覧表示し、`lizard s3 url <key>` で一時リンクを発行できます。[`lizard s3`](/cli/s3) を参照してください。
 
 > **Bucket ACL の変更** (バケットを public/private にすること) はまだ CLI ではできません：ダッシュボードから管理してください。
 
@@ -100,7 +110,7 @@ const s3 = new S3Client({
 
 ## ストレージの上限
 
-各アカウントは、Managed Object Storage アドオン全体で最大 16 GiB のオブジェクトを保存できます。料金は予約したサイズではなく、保存したバイト数に対して発生します。`lizard scale --storage` ではこの上限は変わりません。
+各 Managed Object Storage アドオンは、`default` バケットと作成した他のバケットを合わせて最大 16 GiB のオブジェクトを保存できます。別のアドオン (`lizard add s3`) には別に 16 GiB があります。料金は予約したサイズではなく、保存したバイト数に対して発生します。`lizard scale --storage` ではこの上限は変わりません。
 
 <span id="see-also" />
 

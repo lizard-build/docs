@@ -9,7 +9,7 @@ description: "Aloja un contenedor Docker en Lizard: haz commit de un Dockerfile 
 
 Lizard (lizard.build) aloja contenedores Docker que compila a partir de tu `Dockerfile`. Pon el archivo en la raíz del proyecto y ejecuta `lizard up`, o conecta un repositorio de GitHub: Lizard compila la imagen en sus propias máquinas, así que no necesitas Docker en local. Toma el puerto de `EXPOSE` o de `--port`, se lo pasa al contenedor en `PORT` y sirve el contenedor por HTTPS en un dominio `onlizard.com`. Lizard no descarga imágenes ya hechas de un registro; para ejecutar una imagen pública, escribe un Dockerfile de una línea que empiece por `FROM` con esa imagen.
 
-**Estado de las pruebas:** esta página describe el sistema de compilación y el de despliegue de Lizard y Lizard CLI 4.0.42 tal como estaban el 2026-10-12; la comprobamos con su código fuente. No hicimos un despliegue nuevo para ella. La [guía de Umami](/guides/umami) despliega de esta forma un Dockerfile de una línea con `FROM` y recoge su prueba.
+**Estado de las pruebas:** esta página describe el sistema de compilación y el de despliegue de Lizard y Lizard CLI 4.0.65 tal como estaban el 2026-10-21; la comprobamos con su código fuente. No hicimos un despliegue nuevo para ella. La [guía de Umami](/guides/umami) despliega de esta forma un Dockerfile de una línea con `FROM` y recoge su prueba.
 
 <span id="before-you-start" />
 
@@ -55,7 +55,7 @@ lizard add --service web
 lizard up --service web
 ```
 
-`lizard up` lee la primera línea `EXPOSE` del `Dockerfile` local, muestra `Detected port 3000 from Dockerfile` y fija ese puerto como puerto del servicio. Pasa `--port <number>` para elegir otro. Una subida siempre usa el `Dockerfile` de la raíz tal como está escrito. Consulta [desplegar desde código local](/deploy/upload) para saber qué incluye la subida.
+`lizard up` lee la primera línea `EXPOSE` del `Dockerfile` local, muestra `Detected port 3000 from Dockerfile` y fija ese puerto como puerto del servicio. Pasa `--port <number>` para elegir otro. Sin una línea `EXPOSE`, un servicio que crea `lizard up` recibe el puerto `3000`; consulta [a qué puerto envía Lizard el tráfico](#which-port-lizard-routes-to). Una subida siempre usa el `Dockerfile` de la raíz tal como está escrito. Consulta [desplegar desde código local](/deploy/upload) para saber qué incluye la subida.
 
 <span id="deploy-from-github" />
 
@@ -91,11 +91,13 @@ Deja vacíos `buildCommand` y `startCommand` en un servicio con Dockerfile. Sin 
 
 Lizard elige el puerto del servicio en este orden:
 
-1. Un puerto que hayas fijado: `lizard up --port`, `lizard port`, el panel o la línea `EXPOSE` que leyó `lizard up`.
+1. Un puerto que hayas fijado: `lizard up --port`, `lizard port`, `containerPort` en `lizard service set`, el panel o la línea `EXPOSE` que leyó `lizard up`. Cuando `lizard up` crea un servicio, siempre envía un puerto: `--port`, la línea `EXPOSE` local o `3000` si el Dockerfile no tiene ninguna. Eso cuenta como un puerto que has fijado.
 2. `0`, que es el [modo worker](/deploy/workers): sin puerto ni ruta.
 3. Una variable `PORT` que hayas fijado en el servicio.
 4. El primer puerto que expone la imagen compilada, incluidos los puertos de su imagen base. Los puertos se ordenan como texto, así que `3000` va antes que `80`.
 5. `3000`.
+
+Los pasos 3 y 4 solo se aplican a un servicio cuyo puerto nunca se fijó, como uno creado con `lizard add --service` o desde un repositorio cuyo Dockerfile no tiene línea `EXPOSE`. Si tu imagen toma el puerto de su imagen base, por ejemplo `FROM nginx` en el puerto 80, añade una línea `EXPOSE` o pasa `--port`: si no, un servicio que crea `lizard up` envía el tráfico al `3000` y nunca pasa a healthy. Una variable `PORT` no cambia un puerto que hayas fijado; usa `lizard port`.
 
 Dentro del contenedor, `PORT` contiene el puerto elegido. Léelo o escucha en el mismo puerto fijo. Para cambiar el puerto más adelante, ejecuta `lizard port 8080 --service web` y luego `lizard redeploy --service web`. Consulta [redes](/networking).
 
@@ -117,7 +119,7 @@ Sigue la compilación con `lizard logs --build --service web`.
 - **Comprobación de estado:** Lizard ignora `HEALTHCHECK` y comprueba que el contenedor acepte conexiones TCP en el puerto del servicio. Consulta [el servicio nunca pasa a healthy](/deploy/troubleshooting/service-never-healthy).
 - **Usuario:** se aplica el `USER` de la imagen. Un usuario que no es root puede no tener permiso para abrir un puerto por debajo de 1024, así que en esas imágenes es mejor `8080` que `80`.
 - **Variables:** el contenedor recibe las variables de tu servicio, `PORT` y las variables de plataforma `LIZARD_*`. Consulta [variables y secretos](/variables).
-- **Archivos:** todo lo que escribe el contenedor se pierde en el siguiente despliegue. Usa [Managed Postgres](/addons/postgres), [Managed Object Storage](/addons/storage) u otro servicio para los datos; consulta [almacenamiento y recuperación](/platform/storage-and-recovery).
+- **Archivos:** lo que el contenedor escribe fuera de un volumen adjunto se pierde en el siguiente despliegue. Para conservar archivos entre reinicios y despliegues, adjunta un volumen, uno por servicio (de 1 a 100 GB, montado en `/data` salvo que pases `--mount-path`): `lizard volume create data --service web`. Un servicio con volumen detiene su pod antiguo antes de arrancar el nuevo, así que cada despliegue y cada reinicio tienen una breve interrupción. Guarda los registros en [Managed Postgres](/addons/postgres) o [Managed Object Storage](/addons/storage); consulta [`lizard volume`](/cli/volume) y [almacenamiento y recuperación](/platform/storage-and-recovery).
 
 <span id="run-a-public-image" />
 

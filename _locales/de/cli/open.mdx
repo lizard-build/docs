@@ -1,5 +1,5 @@
 ---
-description: "lizard open startet das Dashboard des aktuellen Projekts in deinem Browser, den visuellen Begleiter zur CLI."
+description: "lizard open startet das Dashboard eines Projekts in deinem Browser, den visuellen Begleiter zur CLI, oder gibt mit --json seine URL aus."
 ---
 
 # lizard open
@@ -11,8 +11,16 @@ Projekt im Browser öffnen.
 ## Verwendung
 
 ```bash
-lizard open
+lizard open [flags]
 ```
+
+## Flags
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-p, --project <id>` | Name, Slug oder ID des Projekts |
+
+Ohne `-p` verwendet `open` das verknüpfte Projekt oder in einem nicht verknüpften Ordner dein Standardprojekt. Mit `--json` gibt es `{ url, opened: false }` aus und öffnet keinen Browser.
 
 <span id="examples" />
 
@@ -24,6 +32,14 @@ lizard open
 
 ```bash
 lizard open
+```
+
+<span id="print-the-dashboard-url" />
+
+### Dashboard-URL ausgeben
+
+```bash
+lizard open --json
 ```
 
 <span id="see-also" />

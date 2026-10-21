@@ -6,6 +6,8 @@ description: "Framework guide results from 16 real Lizard CLI deployments on Sep
 
 On September 9, 2026, all 16 recipes across 11 frameworks passed a local build and a new cloud deployment with Lizard CLI 0.3.95. We followed the published setup, created a fresh project and service for each recipe, and uploaded source with `lizard up`. These results cover the versions and small test apps below.
 
+These results predate Lizard CLI 4 (September 17, 2026) and the move of builds to the current builder at the end of September 2026. We have not rerun them since. Most frameworks below have newer releases, and SvelteKit 3 came out on October 1, 2026; its adapter steps are in the [SvelteKit guide](/framework-guides/sveltekit#configure-the-adapter).
+
 The cloud run passed 100 checks of routes, APIs, and forms, plus 45 checks of linked JavaScript and CSS files. Django migrations, a database write and read, and the final Docusaurus and Hugo site URLs also passed.
 
 ## Tested recipes
@@ -57,4 +59,4 @@ Lizard CLI 0.3.95 includes the archive and failed-build exit-code fixes. The Sep
 
 ## Limits of these results
 
-These checks cover source uploads and the documented modes. They do not establish support for every plugin, adapter, theme, framework version, GitHub deployment path, database recovery procedure, or multiple-replica workload. Django's small test app still reports security warnings from `check --deploy`; it is not a complete production security setup. These tests do not measure search rankings or AI citations. Check your app's own routes and data operations before release.
+These checks cover source uploads and the documented modes. Since the run, the Django guide connects through `DATABASE_PRIVATE_URL` instead of the public `DATABASE_URL`; that change has no cloud run yet. The checks do not establish support for every plugin, adapter, theme, framework version, GitHub deployment path, database recovery procedure, or multiple-replica workload. Django's small test app still reports security warnings from `check --deploy`; it is not a complete production security setup. These tests do not measure search rankings or AI citations. Check your app's own routes and data operations before release.

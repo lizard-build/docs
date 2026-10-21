@@ -1,10 +1,10 @@
 ---
-description: "lizard project は、プロジェクトを一覧表示、新規作成、または削除します。各サブコマンドの例も含まれています。"
+description: "lizard project は、プロジェクトを一覧表示、作成、一時停止、再開、削除します。delete で完全に消えるものと、各サブコマンドの例も含みます。"
 ---
 
 # lizard project
 
-プロジェクトを一覧表示、作成、または削除します。
+プロジェクトを一覧表示、作成、一時停止、再開、または削除します。
 
 <span id="usage" />
 
@@ -13,6 +13,8 @@ description: "lizard project は、プロジェクトを一覧表示、新規作
 ```bash
 lizard project list [flags]
 lizard project create <name> [flags]
+lizard project pause [project]
+lizard project resume [project]
 lizard project delete [project] [flags]
 ```
 
@@ -36,9 +38,21 @@ lizard project delete [project] [flags]
 |------|-------------|
 | `-w, --workspace <ws>` | プロジェクトを作成するワークスペース |
 
+### `lizard project pause [project]`
+
+プロジェクト内のすべてのアプリとデータベース、および実行中の sandbox を一時停止します。サービスの URL、パスワード、設定、データは保持されます。[`lizard pause`](/cli/pause) を参照してください。
+
+### `lizard project resume [project]`
+
+プロジェクト内であなたが一時停止したアプリとデータベース、および `project pause` が一時停止した sandbox を再開します。
+
 ### `lizard project delete [project]`
 
-プロジェクトをゴミ箱に移動します (別名 `rm`)。プロジェクトのサービスは停止します。3 日間は復元でき、その後 Lizard が完全に削除します。引数を省略すると、このディレクトリにリンクされたプロジェクトを削除します。
+プロジェクトをゴミ箱に移動します (別名 `rm`)。削除できるのはプロジェクトのオーナーだけです。プロジェクトのサービスとデータベースは停止し、3 日間はダッシュボードのゴミ箱から復元できます。その後 Lizard が完全に削除します。
+
+> **警告:** sandbox にはゴミ箱がありません。`project delete` はプロジェクトの sandbox、そのボリューム、スナップショットをすぐに削除し、元に戻せません。
+
+引数を省略すると、`pause`、`resume`、`delete` はこのディレクトリにリンクされたプロジェクトを使います。リンクされていないディレクトリでは、アカウントのデフォルトプロジェクトを使います。どのプロジェクトが削除されるか確実にするため、削除するときはプロジェクト名を指定してください。
 
 | フラグ | 説明 |
 |------|-------------|
@@ -66,6 +80,15 @@ lizard project create my-project
 lizard project create my-project --workspace my-team
 ```
 
+<span id="pause-and-resume-a-project" />
+
+### プロジェクトを一時停止して再開する
+
+```bash
+lizard project pause my-project
+lizard project resume my-project
+```
+
 <span id="delete-a-project" />
 
 ### プロジェクトを削除する
@@ -80,4 +103,5 @@ lizard project delete my-project --yes
 
 - [lizard init](/cli/init) — プロジェクトを作成または選択し、現在のディレクトリにリンクします
 - [lizard link](/cli/link) — 現在のディレクトリを既存のプロジェクトに関連付けます
+- [lizard pause](/cli/pause) — 1 つのサービス、プロジェクト、またはワークスペースを一時停止・再開します
 - [Architecture](/concepts/architecture) — プロジェクトがワークスペースやサービスとどのように関係するか

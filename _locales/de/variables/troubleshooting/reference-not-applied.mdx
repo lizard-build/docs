@@ -18,9 +18,9 @@ Der von dir gesetzte Wert ist nie in die zusammengeführte Umgebung des Service 
 
 ## Warum das passieren kann
 
-- **Das Verweisziel oder der Schlüssel existiert nicht.** Ein Verweis auf einen fehlenden Service-/Add-on-Namen oder auf einen Schlüssel, den dieses Add-on nicht bereitstellt, wird zu einem **leeren String** aufgelöst, statt das Deployment fehlschlagen zu lassen. Das Build-Log gibt für jeden leeren Verweis eine Warnung mit dem Grund aus; bei einer Variablenänderung, die per Neustart ohne Build übernommen wird, erscheint keine Warnung. Ein umbenanntes Ziel gilt als fehlend: Verweise beziehen sich auf den aktuellen Namen.
-- **Etwas mit höherer Priorität hat ihn überschrieben.** Werte werden in einer festen Reihenfolge zusammengeführt — `addon-issued env < project secrets < project env < app env < app secrets < platform vars` — daher kann ein projektbezogenes (`--global`) Secret stillschweigend von einem servicebezogenen Secret mit demselben Schlüssel verdeckt werden, und Plattformvariablen (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`, `LIZARD_PRIVATE_DOMAIN`) haben immer Vorrang. Wenn du `PORT` selbst setzt, ändert sich stattdessen der Port, an den Lizard weiterleitet, außer der Port wurde mit `lizard port` gesetzt.
-- **Ein Build-Zeit-Wert hat den Build nicht erreicht.** Die meisten Variablenänderungen werden ohne Rebuild übernommen — der Service startet neu, um sie zu übernehmen. `VITE_*`- und `NEXT_PUBLIC_*`-Werte werden in die gebauten Assets eingebettet, und eine Änderung startet sofort einen Rebuild laufender Services. Ein Service, der zu diesem Zeitpunkt abgestürzt oder gestoppt war, wird übersprungen, und ein Service mit eigenem `dockerfilePath` oder einer Bereitstellung per `lizard up` ohne Build-/Start-Befehle erhält diese Werte zur Build-Zeit nie.
+- **Das Verweisziel oder der Schlüssel existiert nicht.** Ein Verweis auf einen fehlenden Service-/Add-on-Namen oder auf einen Schlüssel, den dieses Add-on nicht bereitstellt, wird zu einem **leeren String** aufgelöst, statt das Deployment fehlschlagen zu lassen. Das Build-Log gibt für jeden leeren Verweis eine Warnung mit dem Grund aus; bei einer Variablenänderung, die per Neustart ohne Build übernommen wird, erscheint keine Warnung. Ein umbenanntes Ziel gilt bei Verweisen, die mit `lizard secrets set` oder im Dashboard gesetzt wurden, als fehlend: Sie beziehen sich auf den aktuellen Namen. Ein Service als Ziel stellt die `DATABASE_URL` oder `REDIS_URL`, die Lizard in ihn einfügt, nicht bereit; verweise stattdessen auf das Add-on.
+- **Etwas mit höherer Priorität hat ihn überschrieben.** Werte werden in einer festen Reihenfolge zusammengeführt — `addon-issued env < project secrets < project env < app env < app secrets < platform vars` — daher kann ein projektbezogenes (`--global`) Secret stillschweigend von einem servicebezogenen Secret mit demselben Schlüssel verdeckt werden, und Plattformvariablen (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`, `LIZARD_PRIVATE_DOMAIN`) haben immer Vorrang. Ein `PORT`, den du setzt, ändert das Routing nur bei einem Service, dessen Port nie gesetzt wurde. Bei einem Service, den `lizard up` angelegt hat oder dessen Port mit `--port`, `lizard port` oder im Dashboard gesetzt wurde, überschreibt Lizard ihn; ändere den Port mit `lizard port <n>`.
+- **Ein Build-Zeit-Wert hat den Build nicht erreicht.** Die meisten Variablenänderungen werden ohne Rebuild übernommen — der Service startet neu, um sie zu übernehmen. `VITE_*`- und `NEXT_PUBLIC_*`-Werte werden in die gebauten Assets eingebettet, und eine Änderung mit `lizard secrets set` oder in den Einstellungen eines Service startet sofort einen Rebuild laufender Services. Eine Änderung auf der Secrets-Seite des Projekts im Dashboard startet keinen Rebuild. Ein Service, der zu diesem Zeitpunkt abgestürzt oder gestoppt war, wird übersprungen, und ein Service mit eigenem `dockerfilePath` oder einer Bereitstellung per `lizard up` ohne Build-/Start-Befehle erhält diese Werte zur Build-Zeit nie.
 
 <span id="possible-solutions" />
 
@@ -38,7 +38,7 @@ Shell-Zugriff auf Services (`lizard ssh`) ist deaktiviert. Das Build-Log ist die
 lizard logs --build --service api
 ```
 
-Liste danach die Verweisvorlagen auf, die in diesem Geltungsbereich gültig sind, und vergleiche Name und Schlüssel mit deinen. Prüfe Schlüssel anhand der [dokumentierten Variablen](/addons) des Add-ons:
+Liste danach die Schlüssel der Add-ons und die `LIZARD_*`- und `PORT`-Schlüssel jedes Service auf, und vergleiche Name und Schlüssel mit deinen. Verweise auf die eigenen Variablen und Secrets eines anderen Service funktionieren, werden aber nicht aufgelistet; prüfe diese mit `lizard secrets list --service <target>`. Prüfe Schlüssel anhand der [dokumentierten Variablen](/addons) des Add-ons:
 
 ```bash
 lizard secrets list --service api --ref
@@ -61,7 +61,7 @@ Denke daran: **App-Secrets überschreiben Projekt-Secrets** — wenn ein service
 
 ### Nach einer Änderung zur Build-Zeit neu bauen
 
-Wenn der geänderte Schlüssel `VITE_*` oder `NEXT_PUBLIC_*` ist und der Service bei der Änderung abgestürzt oder gestoppt war, löse einen Rebuild aus:
+Wenn der geänderte Schlüssel `VITE_*` oder `NEXT_PUBLIC_*` ist und der Service bei der Änderung abgestürzt oder gestoppt war oder du den Schlüssel auf der Secrets-Seite des Projekts im Dashboard geändert hast, löse einen Rebuild aus:
 
 ```bash
 lizard redeploy --service api

@@ -17,7 +17,7 @@ Conecta un repositorio de GitHub y Lizard (lizard.build) compila y vuelve a desp
 lizard add -r your-org/your-app
 ```
 
-Esto crea un servicio con origen `github`, clona el repositorio, detecta automáticamente el stack ([lizardpack](/concepts/build-pipeline)), compila y devuelve una URL activa. Banderas útiles:
+Esto crea un servicio con origen `github` y empieza el primer build en segundo plano: Lizard clona el repositorio y detecta el stack ([lizardpack](/concepts/build-pipeline)). El comando no muestra ninguna URL. Sigue el build con `lizard logs --build --service <name>`; cuando el servicio esté en marcha, `lizard ps` muestra la URL. Banderas útiles:
 
 | Bandera | Propósito |
 |------|---------|
@@ -53,9 +53,9 @@ lizard service set api \
   --set branch=main
 ```
 
-Cambiar un campo de build activa automáticamente un rebuild de un servicio en ejecución: **no** encadenes un `redeploy` después, o [pondrás en cola dos builds](/deploy/troubleshooting/double-build). Un servicio que se ha caído o que nunca se ha desplegado necesita `lizard redeploy`.
+Cambiar un campo de build vuelve a compilar un servicio en ejecución. Si después ejecutas `redeploy`, [cancela ese build y empieza otro](/deploy/troubleshooting/double-build). Un servicio que se ha caído o que nunca se ha desplegado necesita `lizard redeploy`.
 
-> **Nota:** `lizard up` siempre fuerza `sourceType=upload`. No lo uses para actualizar un servicio respaldado por git: haz push al remoto o usa `lizard redeploy` en su lugar.
+> **Nota:** `lizard up` siempre fuerza `sourceType=upload`. No lo uses para actualizar un servicio respaldado por git: haz push al remoto o usa `lizard redeploy` en su lugar. En una carpeta sin servicio vinculado, `up` elige el servicio que se llama como la carpeta o como indica `package.json`, así que en un clon del repositorio puede convertir tu servicio de GitHub en uno de subida.
 
 <span id="auto-redeploy-on-push" />
 
@@ -69,6 +69,8 @@ Una vez que `repoUrl` está configurado, los push a la `branch` correspondiente 
 ```bash
 lizard service set api --set watchPatterns='apps/api/**,packages/**'
 ```
+
+Para que los push no desplieguen, desactiva **Auto-deploy** en la configuración del servicio en el panel. Un servicio [en pausa](/cli/pause) también ignora los push hasta que lo reanudes.
 
 <span id="switch-branches" />
 

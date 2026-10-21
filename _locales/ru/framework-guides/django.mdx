@@ -159,7 +159,7 @@ staticfiles/
 
 Храните загрузки пользователей в долговечном хранилище, таком как [Managed Object Storage](/addons/storage), а не в статической директории контейнера. Ознакомьтесь с [хранилищем и восстановлением](/platform/storage-and-recovery).
 
-Относитесь к миграциям базы данных как к отдельному шагу релиза. Сделайте бэкап данных при необходимости, обеспечьте безопасность повторного запуска миграций и примените их до того, как запросы потребуют новую схему. Pre-deploy-команда не заменяет проверку поведения при конкуренции и сбоях.
+Относитесь к миграциям базы данных как к отдельному шагу релиза. Сделайте бэкап данных при необходимости, обеспечьте безопасность повторного запуска миграций и примените их до того, как запросы потребуют новую схему. В этом руководстве они применяются через `lizard run`, как показано ниже. `preDeployCommand` здесь не запустится: Lizard выполняет его, только если задана и команда запуска, а в этой схеме её нет. Если заданы обе, он выполняется при старте каждого контейнера, в каждой реплике и при каждом перезапуске; см. [миграции при деплое](/addons/postgres#run-migrations-on-deploy).
 
 <span id="deploy-and-verify" />
 
@@ -178,12 +178,12 @@ lizard add --service web
 lizard add postgres --name postgres
 ```
 
-Задайте [секреты сервиса](/cli/secrets) приложения. `postgres` в `${{postgres.DATABASE_URL}}` именует сервис базы данных, не псевдоним базы Django. Lizard разрешает [ссылку](/variables/references) во время деплоя и внедряет получившийся URL в процесс `web`. Одинарные кавычки не дают оболочке раскрыть ссылку. Блок `settings.py` выше затем превращает URL в `DATABASES["default"]`.
+Задайте [секреты сервиса](/cli/secrets) приложения. `postgres` в `${{postgres.DATABASE_PRIVATE_URL}}` именует сервис базы данных, не псевдоним базы Django. Lizard разрешает [ссылку](/variables/references) во время деплоя и передаёт процессу `web` адрес базы в приватной сети проекта; он работает для сервисов в том же проекте и регионе. Одинарные кавычки не дают оболочке раскрыть ссылку. Блок `settings.py` выше затем превращает URL в `DATABASES["default"]`.
 
 ```bash
 DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
 lizard secrets set SECRET_KEY="$DJANGO_SECRET_KEY" \
-  DATABASE_URL='${{postgres.DATABASE_URL}}' DEBUG=false \
+  DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' DEBUG=false \
   ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
   --service web
 lizard up --service web --port 8000
@@ -197,7 +197,7 @@ lizard secrets set ALLOWED_HOSTS=YOUR_PUBLIC_HOST \
   CSRF_TRUSTED_ORIGINS=https://YOUR_PUBLIC_HOST --service web
 ```
 
-Отсутствующая цель ссылки или ключ могут разрешиться в пустую строку. Проверка обязательного значения тогда остановит Django с `Set the DATABASE_URL environment variable.` Проверьте имя сервиса базы данных и его ключ `DATABASE_URL`; `lizard logs --build --service web` предупреждает о каждой ссылке, разрешившейся в пустое значение. Не выводите URL подключения в логи.
+Отсутствующая цель ссылки или ключ могут разрешиться в пустую строку. Проверка обязательного значения тогда остановит Django с `Set the DATABASE_URL environment variable.` Проверьте имя сервиса базы данных и его ключ `DATABASE_PRIVATE_URL`; `lizard logs --build --service web` предупреждает о каждой ссылке, разрешившейся в пустое значение. Не выводите URL подключения в логи.
 
 Изменение переменной перезапускает процесс. Исключите локальные виртуальные окружения, секреты и локальные базы данных из загрузок.
 

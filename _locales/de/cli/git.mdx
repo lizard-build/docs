@@ -4,7 +4,9 @@ description: "lizard git verbindet die GitHub App, meldet den Repository-Status 
 
 # lizard git
 
-Verwalte die GitHub-Verbindung für das verknüpfte Projekt und seine Services.
+Verbinde dein Lizard-Konto mit GitHub, sieh nach, aus welchen Repositories die Services eines Projekts bereitgestellt werden, und wechsle einen Service auf einen anderen Branch. Die Verbindung zur GitHub App gehört zu deinem Lizard-Konto, nicht zu einem einzelnen Projekt.
+
+Die übrigen Unterbefehle von `lizard git` gehören zu Lizard Git, das diese Seite nicht behandelt.
 
 <span id="usage" />
 
@@ -12,9 +14,11 @@ Verwalte die GitHub-Verbindung für das verknüpfte Projekt und seine Services.
 
 ```bash
 lizard git connect
-lizard git status
+lizard git status [flags]
 lizard git checkout <service> <branch> [flags]
 ```
+
+Ohne `-p` verwenden `status` und `checkout` das verknüpfte Projekt oder in einem nicht verknüpften Ordner dein Standardprojekt.
 
 <span id="subcommands" />
 
@@ -22,11 +26,15 @@ lizard git checkout <service> <branch> [flags]
 
 ### `lizard git connect`
 
-Verbinde die GitHub App, um auf private Repositories zuzugreifen.
+Verbinde die GitHub App, um auf private Repositories zuzugreifen. Der Befehl öffnet GitHub, um die App zu installieren, wartet, bis du Enter drückst, und prüft dann die Verbindung. Ist die App schon verbunden, meldet er das. Mit `--json` oder ohne Terminal gibt er stattdessen die Installations-URL aus: `{ installed: false, installUrl }`.
 
 ### `lizard git status`
 
-Zeige die GitHub-Verbindung und den Repository-Status an.
+Zeige, ob die GitHub App verbunden ist und aus welchem Repository und Branch jeder Service im Projekt bereitgestellt wird.
+
+| Flag | Beschreibung |
+|------|-------------|
+| `-p, --project <id>` | Name, Slug oder ID des Projekts |
 
 ### `lizard git checkout <service> <branch>`
 
@@ -35,6 +43,7 @@ Wechsle einen Service auf einen anderen Branch und stelle ihn erneut bereit.
 | Flag | Beschreibung |
 |------|-------------|
 | `--detach` | Log-Streaming überspringen |
+| `-p, --project <id>` | Name, Slug oder ID des Projekts |
 
 <span id="examples" />
 

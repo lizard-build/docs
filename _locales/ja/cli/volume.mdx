@@ -4,7 +4,7 @@ description: "lizard volume は、Sandboxes が名前で接続する Persistent 
 
 # lizard volume
 
-Sandboxes 用の [Persistent Volumes](/sandboxes/volumes) を管理します。エイリアス: `lizard vol`。
+sandbox とサービス用の [Persistent Volumes](/sandboxes/volumes) を管理します。エイリアス: `lizard vol`。
 
 <span id="usage" />
 
@@ -17,7 +17,7 @@ lizard volume resize <volume> --size <gb> [flags]
 lizard volume rm <volume> [flags]
 ```
 
-ボリュームの名前は、プロジェクト内でのキーになります。どのコマンドも名前または ID を受け付け、リンク済みのプロジェクト以外を対象にするには `-p, --project` を使います。
+ボリュームの名前は、プロジェクト内でのキーになります。どのコマンドも名前または ID を受け付け、リンク済みのプロジェクト以外を対象にするには `-p, --project` を使います。リンクされていないフォルダーでは、コマンドはアカウントの既定のプロジェクトを使います。
 
 <span id="subcommands" />
 
@@ -25,7 +25,7 @@ lizard volume rm <volume> [flags]
 
 ### `lizard volume list`
 
-プロジェクトのボリュームを、サイズ、状態、接続先の sandbox とともに一覧表示します（エイリアス `ls`）。`--json` では生成された ID も含まれます。
+プロジェクトのボリュームを、サイズ、状態、接続先の sandbox とともに一覧表示します（エイリアス `ls`）。`--json` では生成された ID も含まれます。`-s, --service <name>` を付けると、代わりにそのサービスに接続されたボリュームを表示します。
 
 ### `lizard volume create <name>`
 
@@ -33,13 +33,17 @@ lizard volume rm <volume> [flags]
 
 | フラグ | 説明 |
 |------|-------------|
-| `--size <gb>` | サイズ（GB 単位の整数）。1～50（デフォルトは 5）。CLI は先にサーバーの現在の上限を読み取ります |
+| `--size <gb>` | サイズ（GB 単位の整数、デフォルトは 5）。sandbox のボリュームは 1～50。CLI は先にサーバーの現在の上限を読み取ります |
 | `--region <code>` | ボリュームのリージョン。接続する sandbox と一致している必要があります |
+| `-s, --service <name>` | ボリュームを作成し、代わりにこのサービスに接続します。1 つのサービスに接続できるボリュームは 1 つまでで、そのファイルは再起動と再デプロイの後も残ります |
+| `--mount-path <path>` | `--service` と併用: サービスからボリュームが見える場所（デフォルトは `/data`） |
 | `-p, --project <id>` | プロジェクト名、スラッグ、または ID |
+
+1 つのワークスペースの sandbox ボリュームは、割り当てサイズの合計で 200 GB までです。それを超える `create` や `resize` は、HTTP 403 とコード `volume_quota_exceeded` で失敗します。
 
 ### `lizard volume resize <volume> --size <gb>`
 
-ボリュームのサイズをその場で変更します。接続中の sandbox は動作を続け、新しいサイズが反映されます。Firecracker のボリューム（デフォルト）は拡張のみできます。pod ベースのボリュームは、新しいサイズの 10% 以上が空いたままであれば縮小もできます。
+ボリュームをその場で拡張します。データはコピーしません。ボリュームを接続している sandbox は動作を続けますが、古いサイズのままです。次にボリュームを接続する sandbox には新しいサイズが見えます。すぐに使うには、sandbox を削除し、`--volume` を付けて新しい sandbox を作成してください。ボリュームは拡張のみできます。2026 年 10 月より前に作成された一部のボリュームは、新しいサイズの 10% 以上が空いたままであれば縮小もできます。
 
 ### `lizard volume rm <volume>`
 
@@ -49,7 +53,7 @@ lizard volume rm <volume> [flags]
 |------|-------------|
 | `-y, --yes` | 確認をスキップ |
 
-ボリュームのストレージ料金は、使用容量 1 GB あたり月額 $0.14 です。[サイズと料金](/sandboxes/volumes#size-and-price)を参照してください。
+sandbox ボリュームのストレージ料金は、使用容量 1 GB あたり月額 $0.14 です。[サイズと料金](/sandboxes/volumes#size-and-price)を参照してください。
 
 <span id="examples" />
 

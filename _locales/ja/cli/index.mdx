@@ -7,9 +7,9 @@ description: "Lizard CLI をインストール・更新し、認証し、すべ�
 
 # CLI リファレンス
 
-Lizard CLI (`lizard`) は、ターミナル、CI ジョブ、コーディングエージェントから Lizard (lizard.build) 上のアプリ、データベース、Sandboxes をデプロイして管理します。このページでは、インストール、グローバルフラグ、終了コード、実行時検出について扱います。各コマンドのリファレンスはサイドバーから開けます。[`lizard up`](/cli/up)、[`lizard service`](/cli/service)、[`lizard secrets`](/cli/secrets) などを参照してください。CLI でできることの概要については、[Lizard CLI のページ](https://lizard.build/cli) を参照してください。
+Lizard CLI (`lizard`) は、ターミナル、CI ジョブ、コーディングエージェントから Lizard (lizard.build) 上のアプリ、データベース、Sandboxes をデプロイして管理します。このページでは、インストール、グローバルフラグ、終了コード、実行時検出について扱います。各コマンドのリファレンスはサイドバーから開けます。[`lizard up`](/cli/up)、[`lizard service`](/cli/service)、[`lizard secrets`](/cli/secrets)、[`lizard pause` と `lizard resume`](/cli/pause)、[`lizard sleep`](/cli/sleep) などを参照してください。CLI でできることの概要については、[Lizard CLI のページ](https://lizard.build/cli) を参照してください。
 
-> Lizard CLI **v4.0.34** を基準に書かれたリファレンスです。任意のコマンドのインストール済みバージョンの正確なスキーマを確認するには、`lizard <cmd> --help --json` を実行してください。
+> Lizard CLI **v4.0.65** を基準に書かれたリファレンスです。任意のコマンドのインストール済みバージョンの正確なスキーマを確認するには、`lizard <cmd> --help --json` を実行してください。
 
 <span id="install--upgrade" />
 
@@ -26,7 +26,7 @@ lizard upgrade --check    # check without installing
 
 Windows では、PowerShell で `irm https://lizard.build/api/cli/install.ps1 | iex` を実行します。Node.js があれば、代わりに `npm install -g @lizard-build/cli` で npm からインストールすることもできます。
 
-macOS と Linux では、インストールスクリプトで入れたバイナリは、バックグラウンドで自動更新もされます（最大で 6 時間に 1 回）。`CI` または `LIZARD_NO_UPDATE=1` が設定されているときは、更新の確認を行いません。Windows のバイナリは自動更新されないため、インストーラーをもう一度実行してください。npm でインストールした場合は npm で更新します。そのコマンドは `lizard upgrade` が表示します。
+macOS と Linux では、インストールスクリプトで入れたバイナリは、バックグラウンドで自動更新もされます（最大で 6 時間に 1 回、対話型ターミナルで実行したときのみ）。`CI` または `LIZARD_NO_UPDATE=1` が設定されているときは、更新の確認を行いません。エージェント、スクリプト、CI ジョブではバックグラウンド更新は行われないため、そこでは `lizard upgrade` を自分で実行してください。Windows のバイナリは自動更新されないため、インストーラーをもう一度実行してください。npm でインストールした場合、`lizard upgrade` が npm を代わりに実行し、失敗したときだけ npm のコマンドを表示します。
 
 必ずグローバルにインストールした `lizard` バイナリを使ってください。`npx` は使わないでください。権限エラーの修正については [Quickstart](/getting-started#1-install-the-cli) を参照してください。
 
@@ -65,9 +65,11 @@ API キーは `liz_` で始まります。[`lizard keys create <name>`](/cli/key
 | `0` | 成功 | 続行 |
 | `1` | 一般的なエラー | メッセージを確認 |
 | `2` | 認証 (401/403) | `lizard login` を実行 |
-| `3` | 見つからない (404) | `lizard ps` / `lizard project list` で名前を確認 |
+| `3` | 見つからない (404): その ID のものが API にない | `lizard ps` / `lizard project list` で ID を確認 |
 | `4` | タイムアウト (408/504) | 再試行 |
 | `5` | ユーザーによってキャンセル | 停止 |
+
+どれにも一致しないプロジェクト名やサービス名は、`3` ではなく `1` で終了します。`lizard run`、`lizard sandbox exec`、`lizard sandbox ssh` は、実行したコマンド自身の終了コードで終了します（`run` がコマンドを見つけられない場合は `127`）。そのため、これらの `2` は認証ではなく、あなたのコマンドから来ている場合があります。
 
 <span id="runtime-discovery" />
 
@@ -92,8 +94,8 @@ lizard <cmd> <sub> --help --json     # e.g. lizard service set --help --json
 
 ## 設定と状態
 
-- CLI は認証情報と現在のディレクトリのプロジェクトリンクを `~/.lizard/config.json` に保存します。
-- [`lizard status`](/cli/status) は cwd の workspace/project/service リンクを表示します（認証不要）。[`lizard link`](/cli/link) はこのリンクを設定し、[`lizard unlink`](/cli/unlink) は削除し、[`lizard project`](/cli/project) はプロジェクトの一覧表示、作成、削除を行います。
+- CLI は認証情報と各ディレクトリのプロジェクトリンクを `~/.lizard/config.json` に保存します。リンクはそのディレクトリだけに適用され、サブディレクトリには適用されません。リンクのないディレクトリでは、プロジェクト関連のコマンドはアカウントのデフォルトプロジェクト（個人ワークスペースで最も古いプロジェクト）を使います。
+- [`lizard status`](/cli/status) は cwd の workspace/project/service リンクを表示します（認証不要）。[`lizard link`](/cli/link) はこのリンクを設定し、[`lizard unlink`](/cli/unlink) は削除し、[`lizard project`](/cli/project) はプロジェクトの一覧表示、作成、一時停止、再開、削除を行います。
 - [`lizard config apply`](/cli/config) は `lizard-config.json` ファイルをプロジェクトに適用します（プレビューには `--dry-run` を使用）。
 - [`lizard open`](/cli/open) はリンクされたプロジェクトをダッシュボードで開き、[`lizard docs`](/cli/docs) はこのドキュメントを開きます。
 

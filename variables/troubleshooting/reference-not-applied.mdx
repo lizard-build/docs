@@ -12,9 +12,9 @@ The value you set never made it into the service's merged environment — or som
 
 ## Why this can happen
 
-- **The reference target or key doesn't exist.** A reference to a missing service/addon name, or a key that addon doesn't expose, resolves to an **empty string** instead of failing the deploy. The build log prints a warning for each empty reference with the reason; a variable change applied by restart, with no build, shows no warning. A renamed target counts as missing: references match the current name.
-- **Something with higher precedence overrode it.** Values merge in a fixed order — `addon-issued env < project secrets < project env < app env < app secrets < platform vars` — so a project-scoped (`--global`) secret can be silently shadowed by a service-scoped one with the same key, and platform variables (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`, `LIZARD_PRIVATE_DOMAIN`) always win. Setting `PORT` yourself changes the port Lizard routes to instead, unless the port was set with `lizard port`.
-- **A build-time value didn't reach the build.** Most variable changes apply with no rebuild — the service restarts to pick them up. `VITE_*` and `NEXT_PUBLIC_*` values are baked into the built assets, and changing one starts a rebuild of running services right away. A service that was crashed or stopped at the time is skipped, and a service with a custom `dockerfilePath` or uploaded with `lizard up` without build/start commands never gets these values at build time.
+- **The reference target or key doesn't exist.** A reference to a missing service/addon name, or a key that addon doesn't expose, resolves to an **empty string** instead of failing the deploy. The build log prints a warning for each empty reference with the reason; a variable change applied by restart, with no build, shows no warning. A renamed target counts as missing for references set with `lizard secrets set` or the dashboard: they match the current name. A service target does not expose the `DATABASE_URL` or `REDIS_URL` Lizard injects into it; reference the addon instead.
+- **Something with higher precedence overrode it.** Values merge in a fixed order — `addon-issued env < project secrets < project env < app env < app secrets < platform vars` — so a project-scoped (`--global`) secret can be silently shadowed by a service-scoped one with the same key, and platform variables (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`, `LIZARD_PRIVATE_DOMAIN`) always win. A `PORT` you set moves routing only on a service whose port was never set. On a service created by `lizard up`, or given a port with `--port`, `lizard port` or the dashboard, Lizard overwrites it; change the port with `lizard port <n>`.
+- **A build-time value didn't reach the build.** Most variable changes apply with no rebuild — the service restarts to pick them up. `VITE_*` and `NEXT_PUBLIC_*` values are baked into the built assets, and changing one with `lizard secrets set` or in a service's settings starts a rebuild of running services right away. An edit on the dashboard's project Secrets page starts no rebuild. A service that was crashed or stopped at the time is skipped, and a service with a custom `dockerfilePath` or uploaded with `lizard up` without build/start commands never gets these values at build time.
 
 ## Possible solutions
 
@@ -26,7 +26,7 @@ Shell access to services (`lizard ssh`) is turned off. The build log is the plac
 lizard logs --build --service api
 ```
 
-Then list the reference templates that are valid in this scope, and compare the name and key with yours. Check keys against the addon's [documented variables](/addons):
+Then list addon keys and each service's `LIZARD_*` and `PORT` keys, and compare the name and key with yours. References to another service's own variables and secrets work but are not listed; check those with `lizard secrets list --service <target>`. Check keys against the addon's [documented variables](/addons):
 
 ```bash
 lizard secrets list --service api --ref
@@ -45,7 +45,7 @@ Remember **app secrets override project secrets** — if a service-scoped value 
 
 ### Rebuild after a build-time change
 
-If the changed key is `VITE_*` or `NEXT_PUBLIC_*` and the service was crashed or stopped when you changed it, trigger a rebuild:
+If the changed key is `VITE_*` or `NEXT_PUBLIC_*`, and the service was crashed or stopped when you changed it or you changed it on the dashboard's project Secrets page, trigger a rebuild:
 
 ```bash
 lizard redeploy --service api

@@ -1,5 +1,5 @@
 ---
-description: "lizard upgrade は macOS と Linux で CLI バイナリを最新リリースに置き換えます。--check を付けると、新しいバージョンがあるか確認します。"
+description: "lizard upgrade は npm 経由またはバイナリの置き換えで CLI の最新リリースをインストールします。--check を付けると、新しいバージョンがあるか確認します。"
 ---
 
 # lizard upgrade
@@ -17,8 +17,10 @@ lizard upgrade [flags]
 更新方法は、CLI をどの方法でインストールしたかによって異なります:
 
 - **macOS または Linux のインストールスクリプト:** 最新リリースをダウンロードし、バイナリを置き換えます。
-- **npm:** 実行するコマンド `npm install -g @lizard-build/cli@latest` を表示します。
+- **npm:** `npm install -g @lizard-build/cli@<version>` を自動で実行します。グローバルフォルダーへの書き込み権限がないなどの理由で npm が失敗した場合は、`npm install -g @lizard-build/cli@latest` を表示します。npm に必要な権限で自分で実行してください。
 - **Windows:** バイナリは自分自身を置き換えられません。インストーラーを再度実行してください: `irm https://lizard.build/api/cli/install.ps1 | iex`。
+
+macOS と Linux でインストールスクリプトから入れたバイナリは、バックグラウンドでも自動更新されます。対象は対話型ターミナルのみで、頻度は最大 6 時間に 1 回です。`CI` または `LIZARD_NO_UPDATE` が設定されている場合は更新しません。更新後、次のコマンドが `lizard auto-updated: v<old> → v<new>` と表示します。npm でのインストールと Windows のバイナリは、バックグラウンドでは更新されません。
 
 <span id="flags" />
 
@@ -27,6 +29,8 @@ lizard upgrade [flags]
 | フラグ | 説明 |
 |------|-------------|
 | `--check` | インストールせずに新しいバージョンがあるか確認 |
+
+`--json` を付けると、`lizard upgrade --check` は `{ currentVersion, latestVersion, updateAvailable }` を返します。
 
 <span id="examples" />
 

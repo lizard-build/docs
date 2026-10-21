@@ -11,13 +11,15 @@ Skaliert einen Service (Replikas / CPU / Arbeitsspeicher / Speicher).
 ## Verwendung
 
 ```bash
-lizard scale [flags]
+lizard scale [service] [flags]
 ```
 
 ## Flags
 
 | Flag | Beschreibung |
 |------|-------------|
+| `-s, --service <name>` | Name oder ID des Service (Standard: der verknüpfte Service; wie das Argument `service`) |
+| `-p, --project <id>` | Projektname, Slug oder ID |
 | `--replicas <n>` | Replikas (Apps), bis zum [Limit](/platform/limits#applications) deines Plans: `1` bis zur ersten bezahlten Pro-Rechnung (also in der Testphase), `5` danach und in Enterprise |
 | `--cpu <cores>` | `1`, `2`, `3` oder `4` |
 | `--memory <mb>` | `128`–`8192` MB |
@@ -35,7 +37,7 @@ lizard scale [flags]
 lizard scale --service api --replicas 5
 ```
 
-Jede Replika ist ein eigener Pod hinter dem Load Balancer. Stelle sicher, dass deine App zustandslos ist, damit Replikas austauschbar sind.
+Jede Replika ist ein eigener Pod hinter dem Load Balancer. Stelle sicher, dass deine App zustandslos ist, damit Replikas austauschbar sind. Eine App mit mehr als einer Replika [schläft nicht im Leerlauf](/cli/sleep). Bei einer [pausierten](/cli/pause) App speichert `--replicas` die Anzahl, und sie gilt beim Fortsetzen.
 
 <span id="scale-cpu-and-memory-vertically" />
 

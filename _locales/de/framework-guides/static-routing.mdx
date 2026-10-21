@@ -8,6 +8,10 @@ description: "Konfigurieren Sie statische Website-Routen auf Lizard: Stellen Sie
 
 Eine Website mit erzeugten Inhalten sollte für jede Route deren HTML ausliefern und für eine fehlende Seite HTTP 404 zurückgeben. Neue lizardpack-Builds für Astro static, Docusaurus, VitePress, Hugo und SvelteKit adapter-static verwenden diese Richtlinie. React- und Vue-SPAs behalten den `index.html`-Fallback, den Browser-Router benötigen.
 
+Diese Builds beantworten eine fehlende Seite mit der eigenen 404-Seite von nginx, nie mit der `404.html` der Website. Für Ihre eigene 404-Seite verwenden Sie die nginx-Konfiguration und das Dockerfile unten.
+
+Eine Ordner-URL ohne abschließenden Schrägstrich, etwa `/guide` für `guide/index.html`, erhält eine 301-Weiterleitung auf `http://YOUR_PUBLIC_HOST/guide/`, und Lizard leitet diese dann auf HTTPS weiter. Verlinken Sie die Form mit Schrägstrich, um beide Sprünge zu vermeiden, oder verwenden Sie die Konfiguration unten, die die Weiterleitung auf HTTPS hält.
+
 Die benutzerdefinierte Konfiguration unten ist optional. Verwenden Sie sie für eine Routing-Richtlinie, die das erkannte Framework nicht bereitstellt. Bestehende Images behalten ihre alten Regeln, bis Sie sie neu bauen.
 
 <span id="choose-the-routing-policy" />
@@ -34,6 +38,7 @@ server {
   server_name _;
   root /usr/share/nginx/html;
   index index.html;
+  absolute_redirect off;
 
   location / {
     try_files $uri $uri.html $uri/ =404;
@@ -46,7 +51,7 @@ server {
 }
 ```
 
-Dies unterstützt sowohl `guide.html`- als auch `guide/index.html`-Ausgabelayouts. Fügen Sie ein erzeugtes `404.html` ein, wenn Sie eine benutzerdefinierte Fehlerseite möchten. Lassen Sie andernfalls die `error_page`- und Exact-Location-Blöcke weg, um den Standard-Fehlertext von nginx zu verwenden. Behalten Sie in den Links und der Sitemap der Website einen kanonischen URL-Stil bei; diese Suchregel fügt keine kanonischen Weiterleitungen hinzu.
+Dies unterstützt sowohl `guide.html`- als auch `guide/index.html`-Ausgabelayouts. `error_page` liefert die erzeugte `404.html` der Website mit Status 404 aus; hat die Website keine `404.html`, lassen Sie die `error_page`- und Exact-Location-Blöcke weg, um den Standard-Fehlertext von nginx zu verwenden. `absolute_redirect off` sendet die Ordner-Weiterleitung als relatives `Location: /guide/`, sodass der Browser bei HTTPS bleibt. Behalten Sie in den Links und der Sitemap der Website einen kanonischen URL-Stil bei; diese Suchregel fügt keine kanonischen Weiterleitungen hinzu.
 
 <span id="build-the-site-with-the-config" />
 

@@ -18,7 +18,7 @@ lizard sandbox ssh <id>
 lizard sandbox rm <id> [flags]
 ```
 
-Jede Sandbox gehört zu einem Projekt: entweder dem mit dem aktuellen Verzeichnis verknüpften oder dem, das du mit `-p` angibst.
+Jede Sandbox gehört zu einem Projekt: dem, das du mit `-p` angibst, sonst dem mit dem aktuellen Verzeichnis verknüpften, sonst dem Standardprojekt deines Kontos (dem ältesten Projekt in deinem persönlichen Workspace).
 
 <span id="subcommands" />
 
@@ -30,14 +30,14 @@ Erstellt eine Sandbox und gibt ihre ID aus.
 
 | Flag | Beschreibung |
 |------|-------------|
-| `-t, --template <name>` | Template (Standard `base`). Aktivierte Templates: `base`, `interpreter`, `codex`, `desktop`, `opencode`, `pi`, `prime`, `claude`. Der Server prüft die Liste der Region |
+| `-t, --template <name>` | Template (Standard `base`). Aktivierte Templates: `base`, `interpreter`, `codex`, `desktop`, `desktop-camoufox` (nur US East), `opencode`, `pi`, `prime`, `claude`. Der Server prüft die Liste der Region |
 | `-s, --size <size>` | `small`, `medium` (Standard) oder `large` |
 | `--timeout <ms>` | Lebensdauer in Millisekunden (Standard `300000`, fünf Minuten); `0` deaktiviert den Ablauf |
 | `--region <code>` | Region, in der die Sandbox erstellt wird |
 | `--snapshot <id>` | Aus einem gespeicherten Snapshot starten; kann nicht mit `--size` kombiniert werden |
 | `--volume <name-or-id>` | Ein [Persistent Volume](/cli/volume) anhängen |
-| `--with-token [key]` | Installiert einen `liz_`-API-Key in der Sandbox, damit `lizard` dort funktioniert. Ohne Wert wird der `liz_`-Key wiederverwendet, mit dem du arbeitest; ein Browser-Login hat keinen |
-| `-p, --project <id>` | Projekt (Standard ist das verknüpfte) |
+| `--with-token [key]` | Meldet `lizard` in der Sandbox mit einem neuen Key an, der auf das Projekt der Sandbox beschränkt ist und mit der Sandbox gelöscht wird. Der `liz_`-Key, den du angibst, oder ohne Wert der `liz_`-Key, mit dem du arbeitest, autorisiert nur die Anfrage; ein Browser-Login hat keinen. Das Template `base` enthält kein `lizard` |
+| `-p, --project <id>` | Projekt (Standard ist das verknüpfte, sonst dein Standardprojekt) |
 
 Lizard rechnet jede Größe sekundengenau zum Festpreis ab, solange die Sandbox läuft, auch im Leerlauf. Enthalten sind lokale Festplatte und [2 TB ausgehender Traffic pro Konto über die jeweils letzten 30 Tage](/platform/limits#sandbox-egress). Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes kostet weiter den [Volume-Preis](/cli/volume), auch ohne angehängte Sandbox.
 
@@ -47,7 +47,7 @@ Lizard rechnet jede Größe sekundengenau zum Festpreis ab, solange die Sandbox 
 | `medium` | 4 | 8 GiB | 20 GB | $0.0324/h |
 | `large` | 8 | 16 GiB | 50 GB | $0.0648/h |
 
-Alles in der Sandbox kann einen mit `--with-token` installierten Key lesen. Verwende einen Key, der auf einen Workspace oder ein Projekt beschränkt ist: `lizard keys create sandbox-key -w my-team`.
+Alles in der Sandbox kann den Key lesen, den `--with-token` installiert, und ihn bis zum Löschen der Sandbox für das Projekt der Sandbox nutzen.
 
 Bis deine Testphase oder dein Pro-Plan beginnt, gibt `create` HTTP 402 mit einem Checkout-Link zurück; führe `lizard billing start` aus. Während der Testphase kannst du 5 Sandboxes gleichzeitig betreiben, nach der ersten bezahlten Rechnung 100. Pausierte Sandboxes zählen nicht mit. Siehe [Limits](/platform/limits#sandbox-account-limits).
 
@@ -122,15 +122,15 @@ Verbindet eine VNC-App (macOS-Bildschirmfreigabe, TigerVNC, RealVNC) mit dem Des
 |---------|--------------|
 | `lizard sandbox pause <id>` | Speichert Arbeitsspeicher und Prozesse und pausiert die Sandbox. Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes wird separat berechnet |
 | `lizard sandbox resume <id>` | Startet eine pausierte Sandbox mit ihrem gespeicherten Arbeitsspeicher und ihren Dateien erneut |
-| `lizard sandbox snapshot <id> --name <name>` | Speichert eine laufende Sandbox als privaten Snapshot in ihrem Projekt und hält warme Kopien bereit (`--warm`, 1 bis 10, Standard 5) |
-| `lizard sandbox restore <snapshot-id>` | Startet eine neue Sandbox aus einem Snapshot (`--timeout <ms>`, Standard `300000`) |
-| `lizard sandbox snapshots` | Listet die Snapshots des Projekts auf (`-p` für ein anderes Projekt) |
-| `lizard sandbox snapshot-pause <snapshot-id>` | Gibt die warmen Kopien eines Snapshots frei und behält seinen gespeicherten Zustand |
-| `lizard sandbox snapshot-resume <snapshot-id>` | Füllt die warmen Kopien eines pausierten Snapshots wieder auf |
-| `lizard sandbox snapshot-warm <snapshot-id> <count>` | Ändert, wie viele Kopien warm bleiben (1 bis 10) |
+| `lizard sandbox snapshot <id> --name <name>` | Speichert eine laufende Sandbox samt Arbeitsspeicher und Dateien als Snapshot, der dir gehört. `--scope` legt fest, wo er sich wiederherstellen lässt: `workspace` (Standard) in jedem Projekt im Workspace der Sandbox, `user` in jedem Projekt in jedem deiner Workspaces, `project` nur im eigenen Projekt |
+| `lizard sandbox restore <snapshot-id>` | Startet eine neue Sandbox aus einem Snapshot in der Region des Snapshots. `-p <project>` wählt das Projekt (Standard: das Projekt des Volumes, sonst das des Snapshots), `--volume <name-or-id>` hängt ein Volume unter `/workspace` ein, `--timeout <ms>` setzt die Lebensdauer (Standard `300000`) |
+| `lizard sandbox snapshots` | Listet die im Projekt erstellten Snapshots auf (`-p` für ein anderes Projekt, `--mine` für alle Snapshots, die du erstellt hast) |
+| `lizard sandbox snapshot-scope <snapshot-id> <scope>` | Ändert, wo sich ein Snapshot, den du erstellt hast, wiederherstellen lässt: `user`, `workspace` oder `project` |
 | `lizard sandbox snapshot-rm <snapshot-id>` | Löscht einen Snapshot (Alias `snapshot-delete`, `-y` überspringt die Bestätigung) |
 
 `pause`, `resume` und `snapshot` warten, bis die Arbeit erledigt ist; mit `--no-wait` kehren sie zurück, sobald sie in die Warteschlange gestellt wurde. Was jeder Schritt behält, steht unter [Pausieren, Fortsetzen und Snapshots](/sandboxes/quickstart#pause-and-resume).
+
+Ein Snapshot einer Sandbox mit angehängtem Volume enthält eine Kopie der Dateien des Volumes zum Zeitpunkt der Aufnahme. Jede Wiederherstellung erhält diese Kopie und nimmt kein `--volume` an, und wer den Snapshot wiederherstellen kann, kann diese Dateien lesen. `--volume` funktioniert nur mit einem Snapshot einer Sandbox ohne Volume, und das Volume muss in der Region des Snapshots liegen.
 
 ### `lizard sandbox files`
 
@@ -171,7 +171,7 @@ Strg-C beendet das Zuschauen; der Agent arbeitet weiter. `lizard sandbox interru
 
 ```bash
 lizard sandbox create --size small --timeout 600000
-lizard sandbox exec sb_abc123 -- python3 -c "print(1 + 1)"
+lizard sandbox exec genuine-toddler-jasj -- python3 -c "print(1 + 1)"
 ```
 
 <span id="open-a-shell" />
@@ -179,7 +179,7 @@ lizard sandbox exec sb_abc123 -- python3 -c "print(1 + 1)"
 ### Eine Shell öffnen
 
 ```bash
-lizard sandbox ssh sb_abc123
+lizard sandbox ssh genuine-toddler-jasj
 ```
 
 <span id="attach-a-persistent-volume" />
@@ -196,8 +196,8 @@ lizard sandbox create --volume agent-workdir
 ### Einen Port bereitstellen
 
 ```bash
-lizard sandbox exec sb_abc123 -- sh -c "nohup python3 -m http.server 3000 --bind 0.0.0.0 >/tmp/http.log 2>&1 &"
-lizard sandbox expose sb_abc123 3000
+lizard sandbox exec genuine-toddler-jasj -- sh -c "nohup python3 -m http.server 3000 --bind 0.0.0.0 >/tmp/http.log 2>&1 &"
+lizard sandbox expose genuine-toddler-jasj 3000
 ```
 
 <span id="use-a-desktop-from-a-vnc-app" />
@@ -206,7 +206,7 @@ lizard sandbox expose sb_abc123 3000
 
 ```bash
 lizard sandbox create -t desktop
-lizard sandbox vnc sb_abc123 --open
+lizard sandbox vnc genuine-toddler-jasj --open
 ```
 
 <span id="run-codex-in-a-sandbox" />
@@ -216,7 +216,7 @@ lizard sandbox vnc sb_abc123 --open
 ```bash
 lizard agents login chatgpt
 lizard sandbox create -t codex
-lizard sandbox prompt sb_abc123 "add a health check endpoint and test it"
+lizard sandbox prompt genuine-toddler-jasj "add a health check endpoint and test it"
 ```
 
 <span id="save-and-restore-a-sandbox" />
@@ -224,8 +224,9 @@ lizard sandbox prompt sb_abc123 "add a health check endpoint and test it"
 ### Eine Sandbox speichern und wiederherstellen
 
 ```bash
-lizard sandbox snapshot sb_abc123 --name my-app
-lizard sandbox restore <snapshot-id>   # ID from `lizard sandbox snapshots`
+lizard sandbox snapshot genuine-toddler-jasj --name my-app
+lizard sandbox snapshots --mine                     # find the snapshot ID
+lizard sandbox restore <snapshot-id> -p other-project
 ```
 
 <span id="see-also" />

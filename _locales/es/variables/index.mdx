@@ -51,7 +51,7 @@ Consulta la [referencia de comandos de `lizard secrets`](/cli/secrets) para ver 
 
 **Usa por defecto el alcance de servicio.** Un servicio comprometido puede leer su propio entorno; un alcance más amplio significa más credenciales expuestas sin necesidad. Reserva `--global` para valores no secretos y demostrablemente públicos como `LOG_LEVEL`, `NODE_ENV`, feature flags o un frontend `SENTRY_DSN`. Si no estás seguro de si un valor es un secret, trátalo como tal y asígnalo al servicio.
 
-Los valores `DATABASE_URL` y `REDIS_URL` de cada addon de Postgres y Redis en marcha ya llegan a todos los servicios del proyecto, con la precedencia más baja. Para elegir un addon concreto o usar su URL privada, vincúlalo por consumidor con una [referencia](/variables/references) en lugar de `--global`:
+Cada servicio ya recibe un `DATABASE_URL` y un `REDIS_URL` de los addons de Postgres y Redis del proyecto (en marcha o en pausa), con la precedencia más baja. Si hay varios addons del mismo tipo, no está definido cuál recibes. Para elegir un addon concreto o usar su URL privada, vincúlalo por consumidor con una [referencia](/variables/references) en lugar de `--global`:
 
 ```bash
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
@@ -70,7 +70,7 @@ Cuando la misma clave se define en varios lugares, **la última escritura preval
 addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets  <  platform vars
 ```
 
-Así que **los secrets de la app anulan los secrets del proyecto**, y **las variables de la plataforma** (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`, `LIZARD_PRIVATE_DOMAIN`) se aplican al final y no se pueden sobrescribir. `PORT` solo se define cuando el servicio tiene un puerto HTTP. Si defines `PORT` tú mismo, cambias el puerto al que Lizard dirige el tráfico en el siguiente deploy, salvo que el puerto se haya fijado con `lizard port`.
+Así que **los secrets de la app anulan los secrets del proyecto**, y **las variables de la plataforma** (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`, `LIZARD_PRIVATE_DOMAIN`) se aplican al final y no se pueden sobrescribir. `PORT` solo se define cuando el servicio tiene un puerto HTTP. Una variable `PORT` que definas tú solo cambia el puerto al que Lizard dirige el tráfico en un servicio cuyo puerto nunca se fijó. Un servicio creado por `lizard up`, o con un puerto fijado mediante `--port`, `lizard port`, `containerPort` o el panel, conserva ese puerto, y Lizard sobrescribe tu `PORT` con él. Para cambiar el puerto, ejecuta `lizard port <n>` y vuelve a desplegar. Consulta [a qué puerto envía Lizard el tráfico](/deploy/dockerfile#which-port-lizard-routes-to).
 
 <span id="build-time-vs-runtime" />
 
@@ -78,8 +78,8 @@ Así que **los secrets de la app anulan los secrets del proyecto**, y **las vari
 
 La mayoría de los cambios de variables se aplican **sin recompilar**: el servicio se reinicia para recogerlos, lo que tarda unos segundos. Las excepciones son los valores de compilación integrados en la imagen:
 
-- Cambiar un valor `VITE_*` o `NEXT_PUBLIC_*` inicia al momento una recompilación de los servicios en marcha afectados (todos los servicios en marcha si es `--global`).
-- Lizard integra estos valores como líneas `ENV` en los servicios de GitHub (el Dockerfile que genera lizardpack, o el Dockerfile raíz del repositorio) y en los servicios Node compilados desde `buildCommand` / `startCommand`. Un servicio con un `dockerfilePath` personalizado, o uno subido con `lizard up` sin esos comandos, no recibe variables de Lizard en la compilación; ningún servicio recibe build args salvo `COMMIT_SHA`. Para valores públicos en esos casos, haz commit de ellos en `.env.production`, define un comando de compilación o escríbelos en tu Dockerfile.
+- Cambiar un valor `VITE_*` o `NEXT_PUBLIC_*` con `lizard secrets set` o en la configuración de un servicio inicia al momento una recompilación de los servicios en marcha afectados (todos los servicios en marcha si es `--global`). Un cambio en la página Secrets del proyecto en el panel solo los reinicia; ejecuta `lizard redeploy` después.
+- Lizard integra estos valores como líneas `ENV` en los servicios de GitHub (el Dockerfile que genera lizardpack, o el Dockerfile raíz del repositorio) y en los servicios Node compilados desde `buildCommand` / `startCommand`. Un servicio con un `dockerfilePath` personalizado, o uno subido con `lizard up` sin esos comandos, no recibe variables de Lizard en la compilación; ningún servicio recibe build args salvo `COMMIT_SHA`. Para valores públicos en esos casos, haz commit de ellos en `.env.production` o escríbelos como líneas `ENV` en tu Dockerfile. En una app Node subida sin Dockerfile propio, definir un comando de compilación también funciona.
 
 Consulta [Pipeline de compilación → desencadenantes de recompilación](/concepts/build-pipeline#what-triggers-a-rebuild).
 
@@ -92,8 +92,10 @@ El acceso por shell a los servicios (`lizard ssh`) está desactivado, así que c
 ```bash
 lizard logs --build --service api          # warns about every empty ${{…}} reference
 lizard secrets list --service api --show   # stored values
-lizard secrets list --service api --ref    # reference templates you can use
+lizard secrets list --service api --ref    # addon keys and each service's LIZARD_* / PORT keys
 ```
+
+`--ref` no muestra las variables y los secrets propios de otro servicio. Las referencias a ellos funcionan; comprueba las claves con `lizard secrets list --service <target>`.
 
 Si un valor que esperabas no está ahí, consulta [Resolución de problemas → un secret o una referencia no aparece](/variables/troubleshooting/reference-not-applied).
 

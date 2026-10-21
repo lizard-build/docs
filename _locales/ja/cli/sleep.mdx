@@ -1,0 +1,116 @@
+---
+description: "lizard sleep（別名 serverless）は、アプリ、Managed Postgres、Managed Redis をアイドル時にスリープさせ、次のリクエストで約 1 秒で起こします。メモリは保存されます。"
+---
+
+# lizard sleep
+
+トラフィックがないときにサービスをスリープさせ、次のリクエストで起こします（別名 `lizard serverless`）。メモリを保存したままスリープするため、起きたときは中断したところから続きます。通常は約 1 秒で起きます。
+
+<span id="usage" />
+
+## 使い方
+
+```bash
+lizard sleep [service] [flags]
+```
+
+`--on` も `--off` も付けない場合、`sleep` は設定と、サービスがスリープした回数・起きた回数を表示します。引数 `service` を省略すると、ディレクトリにリンクされたサービスを使います。ダッシュボードでは、サービスの設定にある **Serverless** スイッチが同じ設定です。
+
+<span id="flags" />
+
+## フラグ
+
+| フラグ | 説明 |
+|------|-------------|
+| `-s, --service <name>` | サービスの名前または ID（引数 `service` と同じ） |
+| `-p, --project <id>` | プロジェクトの名前、スラッグ、または ID |
+| `--on` | アイドル時にスリープします。適用のためにサービスが 1 回再起動します |
+| `--off` | 常に起動したままにします。スリープ中のサービスは起きます |
+| `--idle <minutes>` | スリープするまでのトラフィックのない時間（分）、`5`〜`1440`。これを付けずに `--on` を使うと `10` になります。単独で使うと、すでにスリープするサービスのアイドル時間を変更します |
+
+<span id="how-it-works" />
+
+## 仕組み
+
+トラフィックのない状態がアイドル時間続くと、Lizard はサービスのメモリとプロセスを保存し、コンテナを停止します。アプリへの最初の HTTP リクエスト、またはデータベースへの最初のクライアント接続でサービスが起きます。Lizard は保存した状態を復元し（通常は約 1 秒）、その後リクエストを渡します。保存した状態を復元できない場合、サービスは最初から起動し、通常の起動と同じ時間がかかります。
+
+サービスがスリープするのは、何も接続していないときだけです。
+
+- アプリは、アイドル時間のあいだリクエストがなく、開いている接続もない場合にスリープします。WebSocket が開いているとスリープしません。
+- データベースは、アイドル時間のあいだどのクライアントも接続していなかった場合にスリープします。接続を開いたままにする接続プールがあるとスリープしません。
+
+[一時停止中](/cli/pause)のサービスは、スリープも起動もしません。
+
+<span id="which-services-can-sleep" />
+
+## スリープできるサービス
+
+- レプリカが 1 つでポートのあるアプリ。worker（ポート `0`）とレプリカが 2 つ以上のアプリはスリープできません。
+- Managed Postgres 14 以降と Managed Redis。
+
+古いランタイムのアプリは、先に再デプロイが必要です。その場合はコマンドが知らせます。プロジェクトのメンバーなら誰でも設定を変更できます。
+
+<span id="billing" />
+
+## 料金
+
+スリープ中のサービスは CPU を使わず、メモリもほとんど使わないため、次に起きるまでコンピュートの料金はほぼ止まります。保持しているデータは、引き続きストレージとして課金される場合があります。[請求](/platform/billing) を参照してください。
+
+<span id="json-output" />
+
+## JSON 出力
+
+`--json` を付けると、`sleep` は `id`、`name`、`kind`（`app` または `addon`）、`enabled`、`idleMinutes`、`sleeps`、`wakes`、`lastSleptAt` と `lastWokeAt`（ミリ秒単位の Unix 時刻、または `null`）、`lastError` を出力します。`--on`、`--off`、`--idle` の後は、変更の適用のためにサービスが再起動したかどうかを `restarted` が示します。
+
+<span id="examples" />
+
+## 例
+
+<span id="show-the-setting" />
+
+### 設定を表示する
+
+```bash
+lizard sleep api
+```
+
+<span id="sleep-after-30-idle-minutes" />
+
+### 30 分のアイドル後にスリープする
+
+```bash
+lizard sleep api --on --idle 30
+```
+
+<span id="let-a-database-sleep" />
+
+### データベースをスリープさせる
+
+```bash
+lizard sleep --service my-db --on
+```
+
+<span id="change-the-idle-time" />
+
+### アイドル時間を変更する
+
+```bash
+lizard sleep api --idle 60
+```
+
+<span id="keep-a-service-always-on" />
+
+### サービスを常に起動したままにする
+
+```bash
+lizard sleep api --off
+```
+
+<span id="see-also" />
+
+## 関連項目
+
+- [lizard pause](/cli/pause) — 再開するまでサービスを停止する
+- [lizard scale](/cli/scale) — レプリカ、CPU、メモリ
+- [Managed Postgres](/addons/postgres) と [Managed Redis](/addons/redis)
+- [請求](/platform/billing) — コンピュートとストレージの料金

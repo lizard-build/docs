@@ -54,7 +54,7 @@ lizard add postgres --region <code>
 lizard up --region <code>
 ```
 
-`--region` を指定しない場合、`lizard add` は `us-east-1` を使い、`lizard up` はプラットフォームのデフォルトリージョンを使います。`lizard up` では、`--region` は新しいサービスを作成するときにだけ適用されます。
+`--region` を指定しない場合、`lizard add` は `us-east-1` を使い、`lizard up` はプラットフォームのデフォルトリージョンを使います。`lizard up` では、`--region` は新しいサービスを作成するときにだけ適用されます。データベースのプライベート URL は同じリージョンのサービスからしか使えないため、Postgres や Redis はそれを使うサービスと同じリージョンに作成してください。
 
 <span id="see-also" />
 

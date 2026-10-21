@@ -34,13 +34,34 @@ Bei Streaming-Befehlen (`lizard up` ohne `--detach`) gibt `--json` **pro Zeile g
 { "event": "deployed", "status": "running", "url": "https://app.onlizard.com" }
 ```
 
-Der Build-Stream endet mit `done` oder `error`. Ohne `--ci` gibt `lizard up` anschließend ein abschließendes Ereignis `deployed`, `failed` oder `deploying` mit `status` aus. Nur `deployed` enthält `url` (dies kann `null` sein).
+Der Build-Stream endet mit `done` oder `error`. Nach `done` gibt `lizard up` ohne `--ci` ein abschließendes Ereignis `deployed`, `failed` oder `deploying` mit `status` aus. Nur `deployed` enthält `url` (dies kann `null` sein). Nach `error` folgt kein abschließendes Ereignis, und der Befehl endet mit `1`.
 
 <span id="logs---json-is-a-snapshot-not-a-stream" />
 
 ### `logs --json` ist eine Momentaufnahme, kein Stream
 
 `lizard logs --json` gibt die **letzten 200 Zeilen** zurück (überschreibbar mit `--tail N`, maximal 1000) und beendet sich dann. Warte nicht darauf, wenn du weitere Ausgabe erwartest. Für einen bestimmten Vorfall verwende `--restart latest` oder `--restart <id>`.
+
+<span id="errors" />
+
+### Fehler
+
+Im JSON-Modus gibt ein fehlgeschlagener Befehl ein Fehlerobjekt auf stdout aus und endet mit einem Exit-Code ungleich null (siehe die Tabelle unter CI / Headless-Nutzung):
+
+```json
+{
+  "error": {
+    "code": "ERROR",
+    "status": null,
+    "message": "Project \"my-projet\" not found.",
+    "body": null
+  }
+}
+```
+
+`code` ist der Fehlercode der API, ein CLI-Code wie `NOT_AUTHENTICATED` oder `PROJECT_DELETED` oder `ERROR` für einen allgemeinen Fehler; falsche Flags ergeben Codes wie `commander.unknownOption`. `status` ist der HTTP-Status oder `null`, wenn die CLI scheiterte, bevor die API antwortete. `body` enthält die Antwort der API oder `null`.
+
+Ohne Anmeldung scheitern Befehle mit `NOT_AUTHENTICATED` und Exit-Code `2`. Außerhalb von CI enthält `body.login` Anmeldelinks (`authUrl`, `authUrls`) und eine `instruction`: Ein Agent kann dem Benutzer den Link geben und den Befehl danach erneut ausführen.
 
 <span id="schema-discovery" />
 
@@ -59,13 +80,12 @@ Die Form der Antwort ist `{ cli, version, agents, command: { arguments, options,
 
 ## CI / Headless-Nutzung
 
-Authentifiziere dich mit einem Token und verknüpfe das Projekt explizit (headless `up` erstellt kein Projekt automatisch):
+Authentifiziere dich mit einem Token und verknüpfe das Projekt explizit. Sonst deployt headless `up` in das Standardprojekt deines Kontos:
 
 ```bash
 # Set LIZARD_TOKEN through your CI secret store.
 lizard init --name my-project
-lizard add --service api   # first run only; skip when the service exists
-lizard up --ci --service api --detach
+lizard up --ci --service api --detach   # creates api on the first run
 ```
 
 Prüfe Exit-Codes, um deine Pipeline zu verzweigen:
@@ -75,9 +95,11 @@ Prüfe Exit-Codes, um deine Pipeline zu verzweigen:
 | `0` | erfolgreich |
 | `1` | allgemeiner Fehler |
 | `2` | Authentifizierung — Token fehlt/abgelaufen |
-| `3` | nicht gefunden |
+| `3` | nicht gefunden: Die API hat nichts mit dieser ID |
 | `4` | Zeitüberschreitung |
 | `5` | abgebrochen |
+
+Ein Projekt- oder Service-Name, zu dem nichts passt, endet mit `1`. `lizard run`, `lizard sandbox exec` und `lizard sandbox ssh` enden mit dem Exit-Code des Befehls selbst (`127`, wenn `run` den Befehl nicht findet).
 
 `--wait` sorgt dafür, dass `redeploy` auf den Build wartet und darauf, dass das neue Deployment bereit ist. Ohne diese Option beendet sich der JSON-Modus mit `0`, sobald Lizard die Build-Anfrage akzeptiert hat.
 

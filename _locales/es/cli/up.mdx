@@ -16,7 +16,17 @@ lizard up [path] [flags]
 
 `up` empaqueta tu árbol de trabajo (o `path`) como un tarball, lo envía a los nodos de compilación y lo despliega. Fuerza `sourceType=upload` en el servicio de destino, transmite los logs de compilación por SSE e imprime la URL activa al terminar.
 
-Si el directorio actual todavía no está vinculado a un proyecto, `up` ejecuta primero `init`. En un TTY eso es interactivo; en un entorno sin TTY (CI) **no** creará un proyecto silenciosamente: devolverá un error y te pedirá que ejecutes `lizard init --name <project>` (o que pases `--project <project>` a `up`), para evitar que un error tipográfico genere un proyecto vacío.
+Si el directorio no está vinculado a un proyecto, `up` lo vincula al proyecto predeterminado de tu cuenta (el proyecto más antiguo de tu workspace personal) y despliega ahí, tanto en un TTY como en CI. Para desplegar en otro sitio, ejecuta primero `lizard init --name <project>` o pasa `--project`.
+
+<span id="which-service-up-deploys-to" />
+
+### En qué servicio despliega `up`
+
+1. En el servicio que indicas con `--service`. Si el proyecto no tiene un servicio con ese nombre, `up` lo crea.
+2. En el servicio vinculado al directorio.
+3. Si no, en un servicio con el `name` de `package.json` (sin el scope) o con el nombre del directorio. En un TTY, `up` pide el nombre y ofrece este.
+
+En este último caso, si el proyecto ya tiene un servicio con ese nombre, `up` despliega en él. Cada `up` cambia su destino a origen upload, así que un servicio de GitHub deja de desplegarse con cada push. Pasa `--service` para elegir el destino tú mismo.
 
 <span id="flags" />
 
@@ -24,8 +34,8 @@ Si el directorio actual todavía no está vinculado a un proyecto, `up` ejecuta 
 
 | Bandera | Descripción |
 |------|-------------|
-| `-s, --service <name>` | Apunta a un servicio existente |
-| `-p, --project <id>` | Nombre, slug o ID del proyecto |
+| `-s, --service <name>` | Servicio en el que desplegar (por defecto, el vinculado). Si no hay ninguno con ese nombre, `up` lo crea |
+| `-p, --project <id>` | Nombre, slug o ID del proyecto. En un directorio sin vincular, `up` vincula el directorio a él y lo crea si ningún proyecto tiene ese nombre |
 | `--build-command <cmd>` | Sobrescribe el comando de compilación |
 | `--start-command <cmd>` | Sobrescribe el comando de inicio |
 | `--pre-deploy-command <cmd>` | Se ejecuta antes del comando de inicio cada vez que arranca un contenedor (cada réplica, cada reinicio). Requiere un comando de inicio; haz que sea seguro ejecutarlo muchas veces |
@@ -59,7 +69,7 @@ lizard up
 
 ### Desplegar en un servicio específico con un comando de inicio y un puerto personalizados
 
-Crea primero el servicio con nombre con `lizard add --service api` si no existe.
+Si `api` todavía no existe, `up` lo crea.
 
 ```bash
 lizard up --service api --start-command "node server.js" --port 8080
@@ -72,11 +82,10 @@ lizard up --service api --start-command "node server.js" --port 8080
 ```bash
 export LIZARD_TOKEN=liz_xxx
 lizard init --name my-project
-lizard add --service api
-lizard up --ci --service api
+lizard up --ci --service api   # creates api on the first run
 ```
 
-Omite `lizard add` cuando el servicio ya exista. Una compilación o un despliegue fallido sale con el código `1`. Con `--ci`, el código de salida solo cubre la compilación, así que revisa `lizard ps --json` antes de marcar la versión como terminada. `--detach` sale con `0` en cuanto se acepta la subida. Consulta [framework setup](/framework-guides#prepare-the-project).
+Una compilación o un despliegue fallido sale con el código `1`. Con `--ci`, el código de salida solo cubre la compilación, así que revisa `lizard ps --json` antes de marcar la versión como terminada. `--detach` sale con `0` en cuanto se acepta la subida. Consulta [framework setup](/framework-guides#prepare-the-project).
 
 <span id="see-also" />
 

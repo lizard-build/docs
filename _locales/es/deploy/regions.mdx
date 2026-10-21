@@ -32,7 +32,7 @@ lizard up --region <code>          # new services only
 
 Los proyectos no tienen una región predeterminada. Sin `--region`, `lizard add` crea en `us-east-1`, y `lizard up` crea un servicio nuevo en la región del servidor de API que gestiona la solicitud. Pasa `--region` para elegir.
 
-> **Ubica juntos los recursos con estado.** Coloca un servicio y los addons con los que se comunica (Managed Postgres, Managed Redis, Managed Object Storage) en la **misma región** para mantener baja la latencia y evitar cargos por datos entre regiones.
+> **Ubica juntos los recursos con estado.** Coloca un servicio y los addons con los que se comunica (Managed Postgres, Managed Redis, Managed Object Storage) en la **misma región** para mantener baja la latencia y evitar cargos por datos entre regiones. La [red privada](/networking#private-networking) también funciona solo dentro de una región.
 
 <span id="generated-domains" />
 

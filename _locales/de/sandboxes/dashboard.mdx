@@ -19,7 +19,7 @@ description: "Sandboxes im Lizard-Dashboard erstellen, prüfen, pausieren und st
 <span id="inspect-a-running-sandbox" />
 <span id="lifecycle" />
 
-Im Dashboard erstellen und verwalten Sie Sandboxes ohne Code. Öffnen Sie ein Projekt und wählen Sie Sandboxes. Wählen Sie beim Erstellen eine Vorlage, eine Region und eine Größe: Small, Medium (Standard) oder Large. Die Standardregion ist nicht zwingend die nächste. Wählen Sie unter **Delete after** eine Laufzeit: 15 Minuten, 1 Stunde, 4 Stunden, 1 Tag, 7 Tage oder Never (Standard).
+Im Dashboard erstellen und verwalten Sie Sandboxes ohne Code. Öffnen Sie ein Projekt und wählen Sie **Sandboxes** in der Seitenleiste. Erstellen Sie eine Sandbox mit **New Sandbox**: Wählen Sie eine Vorlage aus dem Katalog, eine Region und eine Größe: Small, Medium (Standard) oder Large. Die Standardregion ist nicht zwingend die nächste. Wählen Sie unter **Delete after** eine Laufzeit: 15 Minuten, 1 Stunde, 4 Stunden, 1 Tag, 7 Tage oder Never (Standard). In der Testphase bietet der Dialog nur Small in US-Regionen an. Die Zahl neben **New Sandbox** zeigt, wie viele Sandboxes im Verhältnis zu Ihrem Limit laufen.
 
 <span id="api-keys" />
 
@@ -39,8 +39,10 @@ Eine laufende Sandbox wird sekundengenau zum Stundenpreis ihrer Größe abgerech
 
 ## Vorlagen und Volumes
 
-Der Reiter Templates zeigt Plattformvorlagen und die privaten Snapshots Ihres Projekts; aus beiden können Sie eine neue Sandbox starten. Snapshots erstellen Sie mit dem SDK oder der CLI. Kill Sandbox stoppt die Sandbox und trennt ihr Volume.
+Die Seitenleiste enthält außerdem **Volumes** (Persistent Volumes), **Templates** und **Agents**. **Templates** zeigt Plattformvorlagen und die im aktuellen Projekt erstellten Snapshots; aus beiden können Sie eine neue Sandbox starten. Snapshots erstellen Sie mit dem SDK oder der CLI. Kill Sandbox stoppt die Sandbox und trennt ihr Volume.
 
-Volumes erstellen und hängen Sie mit dem SDK oder der CLI an; das Erstellungsformular bietet keine Volume-Option. Der Reiter Persistent Volumes erscheint, sobald ein Projekt ein Volume hat. Er zeigt Größe und angehängte Sandbox jedes Volumes und erlaubt es, Dateien zu durchsuchen, die Größe zu ändern oder das Volume zu löschen. Stoppen Sie die aktuelle Sandbox, bevor Sie das Volume an eine andere hängen.
+Volumes erstellen und hängen Sie mit dem SDK oder der CLI an; das Erstellungsformular bietet keine Volume-Option. **Volumes** zeigt Größe und angehängte Sandbox jedes Volumes und erlaubt es, Dateien zu durchsuchen, die Größe zu ändern oder das Volume zu löschen. Stoppen Sie die aktuelle Sandbox, bevor Sie das Volume an eine andere hängen.
+
+**Agents** verbindet die Zugangsdaten, die Coding-Agents in Sandboxes nutzen, wie [`lizard agents`](/cli/agents).
 
 [Sandboxes-Überblick](/sandboxes) · [Schnellstart](/sandboxes/quickstart) · [SDK-Referenz](/sandboxes/sdk-reference) · [Code Interpreter](/sandboxes/code-interpreter) · [Persistent Volumes](/sandboxes/volumes)

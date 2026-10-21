@@ -19,6 +19,7 @@ lizard redeploy [nameOrId] [flags]
 | Flag | Beschreibung |
 |------|--------------|
 | `-s, --service <name>` | Service |
+| `-p, --project <id>` | Projektname, Slug oder ID |
 | `--detach` | Gibt zurück, nachdem der Build akzeptiert wurde |
 | `--wait` | Wartet auf den Build und die Bereitstellung der Deployment-Readiness; funktioniert mit `--json` |
 | `--timeout <seconds>` | Zeitbudget für das Warten auf Readiness nach dem Build; Standard `120` |
@@ -53,6 +54,8 @@ lizard --json redeploy --service api --wait --timeout 120
 ```
 
 Ohne `--wait` gibt der JSON-Modus zurück, nachdem die Build-Anfrage akzeptiert wurde. Mit `--wait` verfolgt die CLI diesen Build und wartet dann auf die Deployment-Readiness. Das JSON-Ergebnis enthält `buildId`, `ok` und `status`. Ein fehlgeschlagener Build, eine fehlgeschlagene Readiness-Prüfung oder ein Timeout liefern einen Exit-Code ungleich null zurück.
+
+Ein pausierter Service lehnt ein Redeploy ab, bis du ihn [fortsetzt](/cli/pause).
 
 Das Timeout gilt für die Readiness, nachdem der Build abgeschlossen ist; es begrenzt nicht die Build-Dauer und bricht das Deployment nicht ab. Worker mit `containerPort=0` verwenden den Readiness-Status aus dem Backend ohne HTTP-Prüfung. Prüfe nach einem erfolgreichen Befehl einen Anwendungsendpunkt oder gespeicherte Daten, wenn dein Workflow das Anwendungsverhalten verifizieren muss.
 

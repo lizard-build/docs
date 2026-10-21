@@ -1,0 +1,131 @@
+---
+description: "lizard pause останавливает приложение или базу данных без удаления, сохраняя URL, пароль и данные, а lizard resume запускает их снова. Формы для проекта и рабочей области ставят на паузу всё сразу."
+---
+
+# lizard pause
+
+Ставит сервис (приложение или базу данных) на паузу без удаления и позже возобновляет его. `lizard project pause` и `lizard workspace pause` ставят на паузу всё в проекте или рабочей области сразу.
+
+<span id="usage" />
+
+## Использование
+
+```bash
+lizard pause [service] [flags]
+lizard resume [service] [flags]
+lizard project pause [project]
+lizard project resume [project]
+lizard workspace pause <name-or-id>
+lizard workspace resume <name-or-id>
+```
+
+Без аргумента `service` команды `pause` и `resume` используют сервис, привязанный к директории.
+
+<span id="flags" />
+
+## Флаги
+
+`lizard pause` и `lizard resume` принимают:
+
+| Флаг | Описание |
+|------|-------------|
+| `-s, --service <name>` | Имя или ID сервиса (то же, что аргумент `service`) |
+| `-p, --project <id>` | Имя, slug или ID проекта |
+
+`project pause` и `project resume` принимают имя, slug или ID проекта. Без него они используют проект, привязанный к директории, а в несвязанной директории — проект по умолчанию вашего аккаунта. `workspace pause` и `workspace resume` принимают имя, slug или ID рабочей области.
+
+<span id="what-pausing-keeps" />
+
+## Что сохраняет пауза
+
+Сервис на паузе не запускает контейнеры. Он сохраняет URL, хост, порт, пароль, переменные, настройки и тома. Пока сервис на паузе:
+
+- его URL отвечает `503`, а база данных отклоняет подключения;
+- деплои и перезапуски отклоняются;
+- новое число реплик из [`lizard scale`](/cli/scale) и новые [секреты](/cli/secrets) сохраняются и применяются при возобновлении.
+
+`resume` снова запускает сервис из образа, который работал последним, с текущими переменными и данными. Память не сохраняется: приложение стартует заново. Чтобы сохранить память и просыпаться при следующем запросе, используйте [`lizard sleep`](/cli/sleep).
+
+Поставить на паузу можно запущенное или упавшее приложение, а также запущенную базу Managed Postgres или Managed Redis. Дождитесь окончания деплоя или другой операции над сервисом. Managed Object Storage на паузу не ставится.
+
+<span id="billing" />
+
+## Оплата
+
+Сервис на паузе не использует CPU и память, поэтому плата за вычисления прекращается. Данные, которые он хранит, могут по-прежнему оплачиваться как хранилище; см. [Оплату](/platform/billing).
+
+Lizard и сам ставит приложения и базы данных на паузу, когда заканчивается пробный лимит или не проходит платёж. Они запускаются снова, когда с оплатой всё в порядке; `resume` не запустит их раньше.
+
+<span id="pause-a-whole-project" />
+
+## Пауза всего проекта
+
+`lizard project pause` ставит на паузу все приложения и базы данных проекта. Также она ставит на паузу запущенные sandbox проекта, сохраняя их память и файлы, как это делает [`lizard sandbox pause`](/cli/sandbox). Сервисы, которые поставить на паузу не удалось, выводятся с причиной.
+
+`lizard project resume` возобновляет все приложения и базы данных проекта, которые кто-то поставил на паузу вручную, и sandbox, которые поставила на паузу `project pause`. Sandbox, которые вы поставили на паузу сами, остаются на паузе. Sandbox возобновляется, только если [лимиты sandbox](/platform/limits#sandbox-account-limits) это позволяют.
+
+`lizard workspace pause` и `lizard workspace resume` делают то же для всех проектов рабочей области. Sandbox вне проекта пропускаются.
+
+<span id="who-can-pause" />
+
+## Кто может ставить на паузу
+
+- Любой участник проекта может ставить на паузу и возобновлять его сервисы или весь проект.
+- Ставить на паузу и возобновлять всю рабочую область может только её владелец.
+- Возобновление снова запускает вычисления, поэтому нужен активный тариф и запас в лимитах рабочей области ([`lizard workspace limits`](/cli/workspace)).
+
+<span id="json-output" />
+
+## Вывод JSON
+
+С `--json` команды `pause` и `resume` выводят `id`, `name`, `kind` (`app` или `addon`) и `status` (`paused` или `running`).
+
+Формы для проекта и рабочей области выводят `id`, `done` и `skipped`. В каждой записи есть `kind` (`app`, `database` или `sandbox`), `id` и `name`; в пропущенных записях добавляется `reason`.
+
+<span id="examples" />
+
+## Примеры
+
+<span id="pause-and-resume-an-app" />
+
+### Пауза и возобновление приложения
+
+```bash
+lizard pause api
+lizard resume api
+```
+
+<span id="pause-a-database-in-another-project" />
+
+### Пауза базы данных в другом проекте
+
+```bash
+lizard pause --service my-db --project my-project
+```
+
+<span id="pause-everything-in-a-project" />
+
+### Пауза всего в проекте
+
+```bash
+lizard project pause my-project --json
+lizard project resume my-project
+```
+
+<span id="pause-a-workspace" />
+
+### Пауза рабочей области
+
+```bash
+lizard workspace pause my-team
+lizard workspace resume my-team
+```
+
+<span id="see-also" />
+
+## См. также
+
+- [lizard sleep](/cli/sleep) — засыпать при простое и просыпаться при следующем запросе
+- [lizard project](/cli/project) — список, создание и удаление проектов
+- [lizard workspace](/cli/workspace) — лимиты и другие команды рабочей области
+- [Оплата](/platform/billing) — тарифы на вычисления и хранилище

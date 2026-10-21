@@ -21,6 +21,7 @@ lizard restart [nameOrId] [flags]
 | フラグ | 説明 |
 |------|--------------|
 | `-s, --service <name>` | サービス |
+| `-p, --project <id>` | プロジェクトの名前、スラッグ、または ID |
 | `--detach` | 再起動が受理されたら、ステータスをポーリングせずに戻る |
 | `--wait` | 新しい再起動試行が ready になるまで待機する。`--json` と併用可能 |
 | `--timeout <seconds>` | `--wait` 使用時の readiness 待機時間の上限。デフォルトは `120` |
@@ -55,6 +56,8 @@ lizard --json restart --service api --wait --timeout 120
 ```
 
 `--wait` がない場合、JSON モードは再起動が受理された時点で返ります。`--wait` を付けると、結果には `ok`、`status`、`attemptId`、`waitedMs` が含まれます。CLI は新しい再起動試行を待機するため、リクエスト前から変わっていないステータスは成功として扱われません。待機の失敗またはタイムアウトでは、非ゼロの終了コードが返されます。
+
+一時停止中のサービスは、[再開](/cli/pause)するまで再起動を受け付けません。
 
 HTTP サービスでは、CLI はサービスドメインも 2 回確認します。`containerPort=0` を使う worker は、バックエンドの readiness ステータスを使用するため、生成されたドメインがある場合でも HTTP リスナーは不要です。
 

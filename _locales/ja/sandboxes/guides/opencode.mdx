@@ -49,7 +49,7 @@ OpenRouter のキーだけを接続していてモデルを選んでいない場
 lizard sandbox create -t opencode --timeout 3600000
 ```
 
-表示された ID を変数に入れておきます: `SB=sb_abc123`。CLI の既定の有効期間は 5 分で、それを過ぎると Lizard は sandbox とそのファイルを削除します。`--timeout 3600000` で有効期間を 1 時間にします。`opencode` テンプレートには Node.js 22、バージョンを固定した OpenCode、git、Python 3、ripgrep、curl、jq、unzip、Lizard CLI が入っています。
+表示された ID を変数に入れておきます: `SB=genuine-toddler-jasj`。CLI の既定の有効期間は 5 分で、それを過ぎると Lizard は sandbox とそのファイルを削除します。`--timeout 3600000` で有効期間を 1 時間にします。`opencode` テンプレートには Node.js 22、バージョンを固定した OpenCode、git、Python 3、ripgrep、curl、jq、unzip、Lizard CLI が入っています。
 
 コードは Claude Code の場合と同じ方法でコピーします:
 
@@ -94,7 +94,7 @@ lizard sandbox expose $SB 4096
 
 `expose` が表示した URL を開きます。URL には `?lizard_token=` が付いています。Lizard はトークンをそのホスト用の cookie に移し、トークンを外した同じページにリダイレクトします。そのため、UI からのリクエスト、イベントストリーム、ターミナルの WebSocket も通ります。
 
-- `--hostname 0.0.0.0` が必要です。OpenCode は既定で `127.0.0.1` で待ち受けるため、その場合プレビュー URL は `Sandbox is not listening on port 4096` を返します。
+- `--hostname 0.0.0.0` が必要です。OpenCode は既定で `127.0.0.1` で待ち受けるため、その場合プレビュー URL は 502 と `The sandbox is running but port is not open` を返します。
 - `--port` は固定の値を指定してください。指定しないと、OpenCode は空いているポートをランダムに選びます。
 - URL はパスワードと同じように扱ってください。URL を知っている人は誰でも、OpenCode を通じて sandbox 内でコマンドを実行できます。パスワードも必須にするには、`opencode.env` に `export OPENCODE_SERVER_PASSWORD=…` を追加します。ユーザー名は `opencode` です。
 - サーバーのログは `lizard sandbox exec $SB -- tail -n 50 /tmp/opencode.log` で読めます。サーバーを止めるには `lizard sandbox exec $SB -- sh -c 'kill $(cat /tmp/opencode.pid)'` を実行します。
