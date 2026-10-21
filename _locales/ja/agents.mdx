@@ -48,8 +48,8 @@ lizard <cmd> --help --json          # a specific command's schema
 典型的なエージェントのフロー:
 
 1. **ガイドを読み込む:** `lizard skills get core --json` → `content` を読む。
-2. **タスクの実行時に認証を確認する:** ユーザーのタスクを実行し、終了コード `2` の場合は `lizard login` を実行し、表示された URL をユーザーに渡してから再試行する。
-3. **求められたらトライアルを開始する:** 新しいアカウントにはプランがないため、最初の作成は HTTP 402（`code: "PAYMENT_REQUIRED"`、終了コード `1`）で失敗する。`lizard billing start --json` を実行し、Checkout の `url` をユーザーに渡して、カードが追加されたら再試行する。
+2. **タスクの実行時に認証を確認する:** ユーザーのタスクを実行する。終了コード `2`（`NOT_AUTHENTICATED`）の場合、エラーの `body.login` にサインイン用のリンクが含まれる。GitHub と Google のどちらでサインインするかをユーザーに尋ね、`authUrls` からそのリンクを渡し、ブラウザに「CLI authorized」と表示されたら再試行する。[`lizard login --json`](/cli/login#output-for-agents) も同じリンクを出力し、サインイン後は `account.state` でプランを報告する。
+3. **求められたらトライアルを開始する:** 新しいアカウントにはプランがないため、最初の作成は HTTP 402（`code: "PAYMENT_REQUIRED"`、終了コード `1`）で失敗する。まずユーザーに確認する。同意を得たら `lizard billing start --json` を実行し、Checkout の `url` をユーザーに渡して、カードが追加されたら再試行する。
 4. **変更前に対象を確認する:** `lizard status` (cwd リンク) と `lizard ps --json` (サービス)。
 5. **ガイドに従って実行する**：`add`、`up`、`secrets`、`domain` など。常に `--json` を付けます。
 
@@ -59,13 +59,13 @@ lizard <cmd> --help --json          # a specific command's schema
 curl -fsSL https://lizard.build/install.sh | bash
 ```
 
-スクリプトは Node.js も `sudo` も必要とせず、すでに `PATH` に含まれているフォルダに `lizard` をリンクするので、エージェントは同じセッション内でそのまま呼び出せます。`lizard` が見つからない可能性があるとスクリプトに表示された場合は、代わりに `~/.lizard/bin/lizard` を呼び出してください。Windows では、PowerShell で次を実行します:
+スクリプトは Node.js も `sudo` も必要とせず、すでに `PATH` に含まれているフォルダに `lizard` をリンクするので、エージェントは同じセッション内でそのまま呼び出せます。`lizard` が見つからない可能性があるとスクリプトに表示された場合は、代わりに `~/.lizard/bin/lizard` を呼び出してください。ターミナルがない場合、スクリプトは最後に `lizard login --json` の出力（サインイン用のリンクと `instruction`）を表示します。リンクをユーザーに渡してください。Windows では、PowerShell で次を実行します:
 
 ```powershell
 irm https://lizard.build/api/cli/install.ps1 | iex
 ```
 
-または、どのシステムでも npm からインストールできます:
+または、どのシステムでも npm からインストールできます（Node.js 20 以降が必要です）:
 
 ```bash
 npm install -g @lizard-build/cli

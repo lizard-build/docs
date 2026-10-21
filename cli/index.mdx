@@ -29,7 +29,7 @@ Use the globally installed `lizard` binary rather than `npx`. See [Quickstart](/
 ## Authentication
 
 ```bash
-lizard login                  # browser OAuth
+lizard login                  # GitHub or Google in the browser, then the Pro trial offer
 lizard login --token liz_xxx  # API key auth
 lizard logout
 lizard whoami                 # current user, workspace, linked project
@@ -46,7 +46,7 @@ API keys start with `liz_`. Create one with [`lizard keys create <name>`](/cli/k
 | `-V, --version` | Print the CLI version |
 | `--json` | Machine-readable output. Combine with `--help` to dump a command's schema |
 
-Most commands also accept `-p, --project` and `-s, --service` to target a specific resource instead of the linked one. `init`, `link`, and `project` also take `-w, --workspace`. `lizard add` always uses the linked project.
+Most commands also accept `-p, --project` and `-s, --service` to target a specific resource instead of the linked one. In a folder that is not linked, they use your default project. `init`, `link`, and `project` also take `-w, --workspace`. `lizard add` has no `--project`: it uses the linked project or the default one.
 
 ## Exit codes
 

@@ -35,7 +35,7 @@ Verwende immer die global installierte `lizard`-Binärdatei — **nicht** `npx`.
 ## Authentifizierung
 
 ```bash
-lizard login                  # browser OAuth
+lizard login                  # GitHub or Google in the browser, then the Pro trial offer
 lizard login --token liz_xxx  # API key auth
 lizard logout
 lizard whoami                 # current user, workspace, linked project
@@ -54,7 +54,7 @@ API-Keys beginnen mit `liz_`. Erstelle einen mit [`lizard keys create <name>`](/
 | `-V, --version` | CLI-Version ausgeben |
 | `--json` | Maschinell lesbare Ausgabe. Mit `--help` kombinieren, um das Schema eines Befehls auszugeben |
 
-Die meisten Befehle akzeptieren außerdem `-p, --project` und `-s, --service`, um statt der verknüpften Ressource eine bestimmte Ressource anzusteuern. `init`, `link` und `project` akzeptieren zusätzlich `-w, --workspace`. `lizard add` verwendet immer das verknüpfte Projekt.
+Die meisten Befehle akzeptieren außerdem `-p, --project` und `-s, --service`, um statt der verknüpften Ressource eine bestimmte Ressource anzusteuern. In einem nicht verknüpften Ordner verwenden sie Ihr Standardprojekt. `init`, `link` und `project` akzeptieren zusätzlich `-w, --workspace`. `lizard add` hat kein `--project`: Es verwendet das verknüpfte Projekt oder das Standardprojekt.
 
 <span id="exit-codes" />
 

@@ -60,12 +60,10 @@ Small サイズ（2 vCPU、4 GB RAM）は 1 時間 $0.0162 で、秒単位で課
 
 ## アプリをデプロイする
 
-Lizard CLI をインストールしてサインインし、7 日間の Pro トライアルを開始してから、アクセス可能なリポジトリをデプロイします:
+Lizard CLI をインストールします。インストーラーがサインインを行い、7 日間の Pro トライアルを案内します。Stripe Checkout でカードを登録し、トライアル中は何も請求されません。その後、アクセス可能なリポジトリをデプロイします:
 
 ```bash
-curl -fsSL https://lizard.build/install.sh | bash
-lizard login
-lizard billing start   # opens Stripe Checkout; add a card, nothing is charged during the trial
+curl -fsSL https://lizard.build/install.sh | bash   # then signs you in and offers the trial
 lizard add -r your-org/your-app
 ```
 

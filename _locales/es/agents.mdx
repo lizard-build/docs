@@ -48,8 +48,8 @@ Consulta [JSON y automatización](/cli/json).
 Un flujo típico de un agente:
 
 1. **Cargar la guía:** `lizard skills get core --json` → leer `content`.
-2. **Comprobar la autenticación al ejecutar la tarea:** ejecuta la tarea del usuario; con el código de salida `2`, ejecuta `lizard login`, entrega al usuario la URL impresa y luego reintenta.
-3. **Iniciar la prueba si se solicita:** una cuenta nueva no tiene plan, así que su primera creación falla con HTTP 402 (`code: "PAYMENT_REQUIRED"`, código de salida `1`). Ejecuta `lizard billing start --json`, entrega al usuario la `url` de Checkout y reintenta cuando haya añadido una tarjeta.
+2. **Comprobar la autenticación al ejecutar la tarea:** ejecuta la tarea del usuario. Con el código de salida `2` (`NOT_AUTHENTICATED`), el campo `body.login` del error trae los enlaces de inicio de sesión: pregunta al usuario si inicia sesión con GitHub o con Google, entrégale ese enlace de `authUrls` y reintenta cuando el navegador muestre "CLI authorized". [`lizard login --json`](/cli/login#output-for-agents) imprime los mismos enlaces y, con la sesión iniciada, informa del plan en `account.state`.
+3. **Iniciar la prueba si se solicita:** una cuenta nueva no tiene plan, así que su primera creación falla con HTTP 402 (`code: "PAYMENT_REQUIRED"`, código de salida `1`). Pregunta primero al usuario. Si acepta, ejecuta `lizard billing start --json`, entrega al usuario la `url` de Checkout y reintenta cuando haya añadido una tarjeta.
 4. **Resolver el contexto antes de modificar:** `lizard status` (enlace cwd) y `lizard ps --json` (servicios).
 5. **Actuar** usando la guía: `add`, `up`, `secrets`, `domain`, etc., siempre con `--json`.
 
@@ -59,13 +59,13 @@ Si el binario `lizard` no está presente, instálalo primero. En macOS o Linux, 
 curl -fsSL https://lizard.build/install.sh | bash
 ```
 
-No necesita Node.js ni `sudo`, y enlaza `lizard` en una carpeta que ya está en el `PATH`, así que el agente puede llamarlo en la misma sesión. Si el script avisa de que quizá no se encuentre `lizard`, llama a `~/.lizard/bin/lizard`. En Windows, ejecuta esto en PowerShell:
+No necesita Node.js ni `sudo`, y enlaza `lizard` en una carpeta que ya está en el `PATH`, así que el agente puede llamarlo en la misma sesión. Si el script avisa de que quizá no se encuentre `lizard`, llama a `~/.lizard/bin/lizard`. Sin terminal, el script termina con la salida de `lizard login --json`: los enlaces de inicio de sesión y una `instruction`. Entrega el enlace al usuario. En Windows, ejecuta esto en PowerShell:
 
 ```powershell
 irm https://lizard.build/api/cli/install.ps1 | iex
 ```
 
-O instala desde npm en cualquier sistema:
+O instala desde npm en cualquier sistema (requiere Node.js 20 o posterior):
 
 ```bash
 npm install -g @lizard-build/cli

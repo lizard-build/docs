@@ -40,8 +40,8 @@ See [JSON & Automation](/cli/json).
 A typical agent flow:
 
 1. **Load the guide:** `lizard skills get core --json` → read `content`.
-2. **Check auth optimistically:** run the user's task; on exit code `2`, run `lizard login`, hand the printed URL to the user, then retry.
-3. **Start the trial if asked:** a new account has no plan, so its first create fails with HTTP 402 (`code: "PAYMENT_REQUIRED"`, exit code `1`). Run `lizard billing start --json`, hand the Checkout `url` to the user, then retry once they have added a card.
+2. **Check auth optimistically:** run the user's task. On exit code `2` (`NOT_AUTHENTICATED`), the error's `body.login` carries the sign-in links: ask the user whether they sign in with GitHub or Google, hand them that link from `authUrls`, then retry once the browser says "CLI authorized". [`lizard login --json`](/cli/login#output-for-agents) prints the same links, and after sign-in it reports the plan in `account.state`.
+3. **Start the trial if asked:** a new account has no plan, so its first create fails with HTTP 402 (`code: "PAYMENT_REQUIRED"`, exit code `1`). Ask the user first. If they agree, run `lizard billing start --json`, hand the Checkout `url` to the user, then retry once they have added a card.
 4. **Resolve context before mutating:** `lizard status` (cwd link) and `lizard ps --json` (services).
 5. **Act** using the guide: `add`, `up`, `secrets`, `domain`, etc., always with `--json`.
 
@@ -51,13 +51,13 @@ If the `lizard` binary isn't present, install it first. On macOS or Linux, use t
 curl -fsSL https://lizard.build/install.sh | bash
 ```
 
-It needs no Node.js or `sudo`, and it links `lizard` into a folder that is already on the `PATH`, so the agent can call it in the same session. If the script says `lizard` may not be found, call `~/.lizard/bin/lizard` instead. On Windows, run this in PowerShell:
+It needs no Node.js or `sudo`, and it links `lizard` into a folder that is already on the `PATH`, so the agent can call it in the same session. If the script says `lizard` may not be found, call `~/.lizard/bin/lizard` instead. Without a terminal, the script ends with the output of `lizard login --json`: the sign-in links and an `instruction`. Hand the link to the user. On Windows, run this in PowerShell:
 
 ```powershell
 irm https://lizard.build/api/cli/install.ps1 | iex
 ```
 
-Or install from npm on any system:
+Or install from npm on any system (needs Node.js 20 or later):
 
 ```bash
 npm install -g @lizard-build/cli

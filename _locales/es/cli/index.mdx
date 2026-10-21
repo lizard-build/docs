@@ -35,7 +35,7 @@ Usa siempre el binario `lizard` instalado globalmente, **no** `npx`. Consulta [Q
 ## Autenticación
 
 ```bash
-lizard login                  # browser OAuth
+lizard login                  # GitHub or Google in the browser, then the Pro trial offer
 lizard login --token liz_xxx  # API key auth
 lizard logout
 lizard whoami                 # current user, workspace, linked project
@@ -54,7 +54,7 @@ Las claves de API empiezan por `liz_`. Crea una con [`lizard keys create <name>`
 | `-V, --version` | Muestra la versión de la CLI |
 | `--json` | Salida legible por máquinas. Combínala con `--help` para volcar el esquema de un comando |
 
-La mayoría de los comandos también aceptan `-p, --project` y `-s, --service` para apuntar a un recurso específico en lugar del enlazado. `init`, `link` y `project` también aceptan `-w, --workspace`. `lizard add` siempre usa el proyecto enlazado.
+La mayoría de los comandos también aceptan `-p, --project` y `-s, --service` para apuntar a un recurso específico en lugar del enlazado. En una carpeta sin enlazar usan tu proyecto por defecto. `init`, `link` y `project` también aceptan `-w, --workspace`. `lizard add` no tiene `--project`: usa el proyecto enlazado o el proyecto por defecto.
 
 <span id="exit-codes" />
 

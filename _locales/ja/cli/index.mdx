@@ -35,7 +35,7 @@ macOS と Linux では、インストールスクリプトで入れたバイナ�
 ## 認証
 
 ```bash
-lizard login                  # browser OAuth
+lizard login                  # GitHub or Google in the browser, then the Pro trial offer
 lizard login --token liz_xxx  # API key auth
 lizard logout
 lizard whoami                 # current user, workspace, linked project
@@ -54,7 +54,7 @@ API キーは `liz_` で始まります。[`lizard keys create <name>`](/cli/key
 | `-V, --version` | CLI バージョンを表示 |
 | `--json` | 機械可読な出力。`--help` と組み合わせると、コマンドのスキーマをダンプします |
 
-ほとんどのコマンドは、リンク済みのものではなく特定のリソースを対象にするために、`-p, --project` と `-s, --service` も受け付けます。`init`、`link`、`project` は `-w, --workspace` も受け付けます。`lizard add` は常にリンク済みのプロジェクトを使います。
+ほとんどのコマンドは、リンク済みのものではなく特定のリソースを対象にするために、`-p, --project` と `-s, --service` も受け付けます。リンクされていないフォルダでは、デフォルトプロジェクトを使います。`init`、`link`、`project` は `-w, --workspace` も受け付けます。`lizard add` には `--project` がなく、リンク済みのプロジェクトかデフォルトプロジェクトを使います。
 
 <span id="exit-codes" />
 

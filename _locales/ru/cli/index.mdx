@@ -35,7 +35,7 @@ lizard upgrade --check    # check without installing
 ## Аутентификация
 
 ```bash
-lizard login                  # browser OAuth
+lizard login                  # GitHub or Google in the browser, then the Pro trial offer
 lizard login --token liz_xxx  # API key auth
 lizard logout
 lizard whoami                 # current user, workspace, linked project
@@ -54,7 +54,7 @@ API-ключи начинаются с `liz_`. Создайте ключ ком�
 | `-V, --version` | Вывести версию CLI |
 | `--json` | Машинно-читаемый вывод. Комбинируйте с `--help`, чтобы выгрузить схему команды |
 
-Большинство команд также принимают `-p, --project` и `-s, --service` для обращения к конкретному ресурсу вместо связанного. Команды `init`, `link` и `project` также принимают `-w, --workspace`. `lizard add` всегда использует связанный проект.
+Большинство команд также принимают `-p, --project` и `-s, --service` для обращения к конкретному ресурсу вместо связанного. В папке без привязки они используют ваш проект по умолчанию. Команды `init`, `link` и `project` также принимают `-w, --workspace`. У `lizard add` нет `--project`: команда использует связанный проект или проект по умолчанию.
 
 <span id="exit-codes" />
 

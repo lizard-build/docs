@@ -60,12 +60,10 @@ Die Größe Small (2 vCPU, 4 GB RAM) kostet $0.0162 pro Stunde, sekundengenau ab
 
 ## Eine App bereitstellen
 
-Installieren Sie Lizard CLI, melden Sie sich an und starten Sie die 7-tägige Pro-Testphase. Stellen Sie dann ein Repository bereit, auf das Sie zugreifen können:
+Installieren Sie Lizard CLI. Das Installationsskript meldet Sie an und bietet die 7-tägige Pro-Testphase an: Sie fügen in Stripe Checkout eine Karte hinzu, und während der Testphase wird nichts abgebucht. Stellen Sie dann ein Repository bereit, auf das Sie zugreifen können:
 
 ```bash
-curl -fsSL https://lizard.build/install.sh | bash
-lizard login
-lizard billing start   # opens Stripe Checkout; add a card, nothing is charged during the trial
+curl -fsSL https://lizard.build/install.sh | bash   # then signs you in and offers the trial
 lizard add -r your-org/your-app
 ```
 
