@@ -7,7 +7,7 @@ description: "数分で最初のアプリを Lizard にデプロイ: Lizard CLI 
 
 # アプリ クイックスタート
 
-このクイックスタートでは、数分でアプリを Lizard (lizard.build) にデプロイします。Lizard CLI をインストールしてサインインし、7 日間の Pro トライアルを開始してから、GitHub リポジトリなら `lizard add -r owner/repo`、ローカルフォルダなら `lizard up` を実行します。Lizard はローカルの Docker なしで自社のサーバー上でアプリをビルドし、`onlizard.com` 上の HTTPS URL を返します。アカウントは、最初に `lizard login` を実行したときに作成されます。
+このクイックスタートでは、数分でアプリを Lizard (lizard.build) にデプロイします。Lizard CLI をインストールすると、インストーラーがサインインを行い、7 日間の Pro トライアルを案内します。その後、GitHub リポジトリなら `lizard add -r owner/repo`、ローカルフォルダなら `lizard up` を実行します。Lizard はローカルの Docker なしで自社のサーバー上でアプリをビルドし、`onlizard.com` 上の HTTPS URL を割り当てます。アカウントは、最初にサインインしたときに作成されます。
 
 <span id="1-install-the-cli" />
 
@@ -31,7 +31,9 @@ Windows では、PowerShell で次を実行します:
 irm https://lizard.build/api/cli/install.ps1 | iex
 ```
 
-**npm からインストールすることもできます**（Node.js 18+ が必要です）:
+どちらのインストールスクリプトも最後に [`lizard login`](/cli/login) を実行し、手順 2 と 3 を代わりに行います。サインインを行い、Pro トライアルを案内します。スキップするには `LIZARD_NO_LOGIN=1` を設定してください。CI ではスクリプトが自動でスキップします。
+
+**npm からインストールすることもできます**（Node.js 20 以降が必要です）。npm でインストールした場合はサインインされないので、手順 2 に進んでください:
 
 ```bash
 npm install -g @lizard-build/cli
@@ -51,11 +53,17 @@ npm install -g @lizard-build/cli
 
 ## 2. ログインする
 
+インストールスクリプトでサインイン済みなら、この手順は飛ばしてください。そうでなければ次を実行します:
+
 ```bash
 lizard login
 ```
 
-ブラウザが開いて認証し、確認するとターミナルに戻ります。CI やその他の非対話環境では、代わりにトークンで認証します:
+GitHub と Google のどちらでサインインするかを尋ね、そのページをブラウザで開いて、承認されるまで待ちます。すでにアカウントがある場合は、登録したときと同じ方法を選んでください。別の方法を選ぶと、確認済みのメールアドレスが共通でない限り、空の 2 つ目のアカウントが作成されます。`--github` または `--google` を付けると質問を省略できます。すでにサインイン済みのマシンでは、`lizard login` はアカウントを表示するだけなので、何度実行しても問題ありません。
+
+`lizard login` を省略することもできます。ターミナルで実行したコマンドは、まず同じ方法でサインインを行ってから処理を続けます。
+
+CI やその他の非対話環境では、代わりにトークンで認証します:
 
 ```bash
 export LIZARD_TOKEN=liz_xxx
@@ -63,7 +71,7 @@ export LIZARD_TOKEN=liz_xxx
 lizard login --token liz_xxx
 ```
 
-API キーは `liz_` で始まります。`lizard keys create <name>` で作成できます。`LIZARD_TOKEN` の代わりに `LIZARD_API_KEY` も使えます。
+API キーは `liz_` で始まります。`lizard keys create <name>` で作成できます。`LIZARD_TOKEN` の代わりに `LIZARD_API_KEY` も使えます。`lizard login --token-stdin` はキーをパイプから読み取るので、シェルの履歴に残りません。
 
 現在どのアカウントであるかはいつでも確認できます:
 
@@ -75,13 +83,15 @@ lizard whoami
 
 ## 3. Pro トライアルを開始する
 
-新しいアカウントにはプランがないため、何かを作成しようとすると、Checkout へのリンク付きで HTTP 402 が返ります。先に 7 日間の Pro トライアルを開始してください:
+新しいアカウントにはプランがなく、デプロイにはプランが必要です。サインインが済むと、`lizard login` が 7 日間の Pro トライアルを案内します。承諾すると Stripe Checkout が開くので、カードを登録します。トライアルには $5 分の利用枠が含まれ、終了まで何も請求されません。すでにトライアルを利用したアカウントには、代わりに月額 $19 の Pro が案内されます。
+
+断った場合は、後から開始できます:
 
 ```bash
 lizard billing start
 ```
 
-Stripe Checkout が開くので、カードを登録します。トライアルには $5 分の利用枠が含まれ、終了まで何も請求されません。[請求](/platform/billing) と [`lizard billing`](/cli/billing) を参照してください。
+プランが始まるまでは、何かを作成しようとすると、Checkout へのリンク付きで HTTP 402 が返ります。[請求](/platform/billing) と [`lizard billing`](/cli/billing) を参照してください。
 
 <span id="4-deploy" />
 
@@ -93,13 +103,15 @@ Stripe Checkout が開くので、カードを登録します。トライアル�
 
 ### オプション A — GitHub リポジトリをデプロイする（推奨）
 
-コードが GitHub 上にある場合は、リポジトリから直接サービスを作成します。Lizard がそれをクローンし、スタックを自動検出してビルドし、公開 URL を返します:
+コードが GitHub 上にある場合は、リポジトリから直接サービスを作成します。Lizard がそれをクローンし、スタックを検出して最初のビルドを開始します:
 
 ```bash
 lizard add -r your-org/your-app
 ```
 
-以後、その追跡ブランチへの push によって自動的に再デプロイされます。プライベートリポジトリの場合は、先に [`lizard git`](/cli/git) で GitHub App を接続してください:
+コマンドはサービスが作成された時点で終了し、ビルドはそのまま続きます。ビルドの確認方法と URL の調べ方は [手順 5](#5-watch-it-build-and-run) を参照してください。
+
+プライベートリポジトリをデプロイする場合や、追跡ブランチへの push でアプリを再デプロイしたい場合は、先に [`lizard git`](/cli/git) で Lizard GitHub App を接続してください:
 
 ```bash
 lizard git connect
@@ -115,9 +127,9 @@ lizard git connect
 lizard up
 ```
 
-ディレクトリがまだプロジェクトにリンクされていない場合、`up` が対話的に作成または選択を行います。CI では、先に `lizard init --name my-project` で明示的にリンクしてください。
+初回はサービス名を尋ねます。デフォルトはフォルダ名です。その後ビルドを追跡し、アプリが稼働すると `https://your-app-x1y2z.onlizard.com` のような URL を表示します。
 
-どちらの場合でも、ビルドが完了すると `https://your-app-x1y2z.onlizard.com` のような生成済み URL が取得できます。
+フォルダがまだプロジェクトにリンクされていない場合、`lizard add` と `lizard up` はデフォルトプロジェクトを使い、そのことを表示します。デフォルトプロジェクトとは個人ワークスペースで最も古いプロジェクトで、新しいアカウントには登録時に作成されます。`lizard up` はフォルダをそのプロジェクトにリンクするので、次の `lizard up` は同じサービスを更新します。別のプロジェクトにデプロイするには、先に `lizard init --name my-project` を実行してください。デプロイ先を確実にするため、CI でも同様にしてください。
 
 Lizard はほとんどのスタックを自動で検出します。お使いのフレームワークの正確なビルドコマンド、start コマンド、ポートについては、[Next.js](/framework-guides/nextjs)、[React](/framework-guides/react)、[Vue](/framework-guides/vue)、[Astro](/framework-guides/astro)、[SvelteKit](/framework-guides/sveltekit)、[Node.js](/framework-guides/nodejs)、[Django](/framework-guides/django)、[FastAPI](/framework-guides/fastapi)、[Rails](/framework-guides/rails)、[Go](/framework-guides/go) のガイドを参照してください。独自の Dockerfile を持つアプリは [Dockerfile でデプロイする](/deploy/dockerfile) に従ってください。
 
@@ -126,10 +138,11 @@ Lizard はほとんどのスタックを自動で検出します。お使いの�
 ## 5. ビルドと実行を確認する
 
 ```bash
-lizard ps          # services in the project, with status + URL
-lizard logs        # last runtime log lines
-lizard logs --build  # the most recent build's logs
-lizard open        # open the project in the dashboard
+lizard ps               # services in the project, with status + URL
+lizard logs             # stream runtime logs (Ctrl+C to stop)
+lizard logs --tail 100  # print the last 100 lines and exit
+lizard logs --build     # the most recent build's logs
+lizard open             # open the project in the dashboard
 ```
 
 [`lizard open`](/cli/open) は同じプロジェクトを [ダッシュボード](/dashboard) で表示します。メトリクス、コスト、デプロイ履歴については [可観測性](/observability) を参照してください。
@@ -138,7 +151,7 @@ lizard open        # open the project in the dashboard
 
 ## 6. データベースを追加する（任意）
 
-Managed Postgres をプロビジョニングし、サービスから参照します:
+Managed Postgres をプロビジョニングします。プロジェクト内のすべてのサービスは、次回のデプロイ時にその公開 `DATABASE_URL` を受け取ります。プライベートネットワーク経由で接続するには、サービスから参照します:
 
 ```bash
 lizard add postgres

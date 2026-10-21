@@ -7,7 +7,7 @@ description: "Despliega tu primera app en Lizard en unos minutos: instala Lizard
 
 # Inicio rápido de apps
 
-Este inicio rápido despliega una app en Lizard (lizard.build) en unos minutos. Instala Lizard CLI, inicia sesión, empieza la prueba de Pro de 7 días y luego ejecuta `lizard add -r owner/repo` para un repositorio de GitHub o `lizard up` para una carpeta local. Lizard compila la app en sus servidores, sin Docker local, y devuelve una URL HTTPS en `onlizard.com`. Tu cuenta se crea la primera vez que ejecutas `lizard login`.
+Este inicio rápido despliega una app en Lizard (lizard.build) en unos minutos. Instala Lizard CLI: el instalador inicia tu sesión y te ofrece la prueba de Pro de 7 días. Luego ejecuta `lizard add -r owner/repo` para un repositorio de GitHub o `lizard up` para una carpeta local. Lizard compila la app en sus servidores, sin Docker local, y le da una URL HTTPS en `onlizard.com`. Tu cuenta se crea la primera vez que inicias sesión.
 
 <span id="1-install-the-cli" />
 
@@ -31,7 +31,9 @@ En Windows, ejecuta esto en PowerShell:
 irm https://lizard.build/api/cli/install.ps1 | iex
 ```
 
-**O instala desde npm** (requiere Node.js 18+):
+Los dos scripts de instalación terminan ejecutando [`lizard login`](/cli/login), que hace por ti los pasos 2 y 3: inicia tu sesión y te ofrece la prueba de Pro. Define `LIZARD_NO_LOGIN=1` para saltarlo; en CI los scripts lo saltan solos.
+
+**O instala desde npm** (requiere Node.js 20 o posterior). Una instalación con npm no inicia sesión, así que sigue con el paso 2:
 
 ```bash
 npm install -g @lizard-build/cli
@@ -51,11 +53,17 @@ npm install -g @lizard-build/cli
 
 ## 2. Inicia sesión
 
+Sáltate este paso si el script de instalación ya inició tu sesión. Si no, ejecuta:
+
 ```bash
 lizard login
 ```
 
-Esto abre tu navegador para autenticarte y luego vuelve a tu terminal una vez que confirmes. En CI u otros entornos no interactivos, autentícate con un token en su lugar:
+Te pregunta si inicias sesión con GitHub o con Google, abre esa página en tu navegador y espera a que lo apruebes. Si ya tienes cuenta, elige el método con el que te registraste: el otro abre una segunda cuenta vacía, salvo que ambos compartan un email verificado. `--github` o `--google` se salta la pregunta. En una máquina que ya tiene la sesión iniciada, `lizard login` solo muestra la cuenta, así que puedes ejecutarlo otra vez sin riesgo.
+
+También puedes saltarte `lizard login`: cualquier comando que ejecutes en una terminal inicia la sesión de la misma forma primero y luego sigue.
+
+En CI u otros entornos no interactivos, autentícate con un token en su lugar:
 
 ```bash
 export LIZARD_TOKEN=liz_xxx
@@ -63,7 +71,7 @@ export LIZARD_TOKEN=liz_xxx
 lizard login --token liz_xxx
 ```
 
-Las claves de API empiezan por `liz_`. Crea una con `lizard keys create <name>`. `LIZARD_API_KEY` funciona en lugar de `LIZARD_TOKEN`.
+Las claves de API empiezan por `liz_`. Crea una con `lizard keys create <name>`. `LIZARD_API_KEY` funciona en lugar de `LIZARD_TOKEN`. `lizard login --token-stdin` lee la clave desde una tubería (pipe), así no queda en el historial de tu shell.
 
 Comprueba quién eres en cualquier momento:
 
@@ -75,13 +83,15 @@ lizard whoami
 
 ## 3. Empieza la prueba de Pro
 
-Una cuenta nueva no tiene plan, así que crear cualquier cosa devuelve HTTP 402 con un enlace de Checkout. Empieza primero la prueba de Pro de 7 días:
+Una cuenta nueva no tiene plan, y los despliegues necesitan uno. Nada más iniciar sesión, `lizard login` te ofrece la prueba de Pro de 7 días. Si aceptas, abre Stripe Checkout, donde añades una tarjeta. La prueba incluye $5 de uso y no se cobra nada hasta que termina. A una cuenta que ya tuvo su prueba se le ofrece Pro por $19 al mes.
+
+Si dijiste que no, empiézala más tarde:
 
 ```bash
 lizard billing start
 ```
 
-Esto abre Stripe Checkout, donde añades una tarjeta. La prueba incluye $5 de uso y no se cobra nada hasta que termina. Consulta [Facturación](/platform/billing) y [`lizard billing`](/cli/billing).
+Mientras no haya un plan, crear cualquier cosa devuelve HTTP 402 con un enlace de Checkout. Consulta [Facturación](/platform/billing) y [`lizard billing`](/cli/billing).
 
 <span id="4-deploy" />
 
@@ -93,13 +103,15 @@ Elige la ruta que coincida con dónde vive tu código.
 
 ### Opción A — Desplegar un repositorio de GitHub (recomendado)
 
-Si tu código está en GitHub, crea un servicio directamente desde el repositorio. Lizard lo clona, detecta automáticamente el stack, lo compila y devuelve una URL activa:
+Si tu código está en GitHub, crea un servicio directamente desde el repositorio. Lizard lo clona, detecta el stack y empieza la primera compilación:
 
 ```bash
 lizard add -r your-org/your-app
 ```
 
-A partir de entonces, los pushes a la rama seguida volverán a desplegar automáticamente. Para repositorios privados, conecta primero la GitHub App con [`lizard git`](/cli/git):
+El comando termina en cuanto existe el servicio; la compilación sigue. El [paso 5](#5-watch-it-build-and-run) muestra cómo seguirla y encontrar la URL.
+
+Para un repositorio privado, y para que los pushes a la rama seguida vuelvan a desplegar la app, conecta primero la Lizard GitHub App con [`lizard git`](/cli/git):
 
 ```bash
 lizard git connect
@@ -115,9 +127,9 @@ Desde dentro del directorio de tu proyecto, sube y despliega la carpeta actual (
 lizard up
 ```
 
-Si el directorio aún no está vinculado a un proyecto, `up` creará o seleccionará uno de forma interactiva. En CI, vincúlalo explícitamente primero con `lizard init --name my-project`.
+La primera vez pide un nombre para el servicio; por defecto, el de la carpeta. Luego sigue la compilación e imprime la URL, como `https://your-app-x1y2z.onlizard.com`, cuando la app ya está en marcha.
 
-De cualquier forma, cuando termine la compilación obtendrás una URL generada como `https://your-app-x1y2z.onlizard.com`.
+Si la carpeta aún no está vinculada a un proyecto, `lizard add` y `lizard up` usan tu proyecto por defecto y lo indican. Es el proyecto más antiguo de tu espacio de trabajo personal; una cuenta nueva recibe uno al registrarse. `lizard up` además vincula la carpeta a él, así que el siguiente `lizard up` actualiza el mismo servicio. Para desplegar en otro proyecto, ejecuta primero `lizard init --name my-project`. Hazlo también en CI, para que el despliegue llegue adonde esperas.
 
 Lizard detecta la mayoría de los stacks por sí solo. Para el comando de compilación, el comando de inicio y el puerto exactos de tu framework, consulta la guía de [Next.js](/framework-guides/nextjs), [React](/framework-guides/react), [Vue](/framework-guides/vue), [Astro](/framework-guides/astro), [SvelteKit](/framework-guides/sveltekit), [Node.js](/framework-guides/nodejs), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails) o [Go](/framework-guides/go). Una app con su propio Dockerfile sigue [Desplegar con un Dockerfile](/deploy/dockerfile).
 
@@ -126,10 +138,11 @@ Lizard detecta la mayoría de los stacks por sí solo. Para el comando de compil
 ## 5. Observa cómo compila y se ejecuta
 
 ```bash
-lizard ps          # services in the project, with status + URL
-lizard logs        # last runtime log lines
-lizard logs --build  # the most recent build's logs
-lizard open        # open the project in the dashboard
+lizard ps               # services in the project, with status + URL
+lizard logs             # stream runtime logs (Ctrl+C to stop)
+lizard logs --tail 100  # print the last 100 lines and exit
+lizard logs --build     # the most recent build's logs
+lizard open             # open the project in the dashboard
 ```
 
 [`lizard open`](/cli/open) muestra el mismo proyecto en el [panel](/dashboard). Para métricas, costos e historial de despliegues, consulta [Observabilidad](/observability).
@@ -138,7 +151,7 @@ lizard open        # open the project in the dashboard
 
 ## 6. Añade una base de datos (opcional)
 
-Aprovisiona Managed Postgres y haz referencia a él desde tu servicio:
+Aprovisiona Managed Postgres. Cada servicio del proyecto recibe su `DATABASE_URL` pública en el siguiente despliegue; para conectarte por la red privada, haz referencia a él desde tu servicio:
 
 ```bash
 lizard add postgres

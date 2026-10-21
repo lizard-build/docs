@@ -1,10 +1,10 @@
 ---
-description: "lizard login はブラウザまたは API token を使って認証します。加えて、CI で LIZARD_TOKEN を使って非対話的に認証する方法も説明します。"
+description: "lizard login は、ブラウザで GitHub または Google を使って、あるいは API キーで Lizard にサインインし、アカウントにプランがなければ Pro トライアルを案内します。何度実行しても問題ありません。"
 ---
 
 # lizard login
 
-Lizard にログインします。
+Lizard にサインインし、アカウントにプランがなければプランを開始します。
 
 <span id="usage" />
 
@@ -14,7 +14,15 @@ Lizard にログインします。
 lizard login [flags]
 ```
 
-デフォルトでは、ブラウザでサインインページを開き、その URL を表示して終了します。サインインしたら次のコマンド（例: `lizard whoami`）を実行してください。そのコマンドがログインを完了し、認証情報を保存します。`--json` を付けると、`login` は `{ "status": "pending", "authUrl": "…" }` を出力し、ブラウザは開きません。
+ターミナルでは、`login` は GitHub と Google のどちらでサインインするかを尋ね、そのページをブラウザで開いて、承認されるまで待ちます。すでにアカウントがある場合は、登録したときと同じ方法を選んでください。別の方法を選ぶと、確認済みのメールアドレスが共通でない限り、空の 2 つ目のアカウントが作成されます。リンクの有効期間は 5 分です。
+
+サインインが済むと、`login` はプランを確認します。プランのないアカウントには 7 日間の Pro トライアルを、すでにトライアルを利用したアカウントには月額 $19 の Pro を案内します。承諾すると Stripe Checkout が開きます。最後に、次に試せるコマンドを一覧表示します。
+
+すでにサインイン済みのマシンでは、`login` はアカウントを表示してそのままプランの確認に進むので、何度実行しても問題ありません。アカウントを切り替えるには、先に [`lizard logout`](/cli/logout) を実行してください。
+
+インストールスクリプトは最後の手順として `lizard login` を実行します。スキップするには `LIZARD_NO_LOGIN=1` を設定してください。CI ではスクリプトが自動でスキップします。
+
+ほかのコマンドの前に `login` を実行する必要はほとんどありません。サインインしていないマシンのターミナルでコマンドを実行すると、まずサインインを行ってから処理を続けます。
 
 <span id="flags" />
 
@@ -22,7 +30,23 @@ lizard login [flags]
 
 | フラグ | 説明 |
 |------|-------------|
-| `--token <token>` | API キー（`liz_…`）で認証 |
+| `--github` | 質問なしで GitHub でサインイン |
+| `--google` | 質問なしで Google でサインイン |
+| `--token <token>` | API キー（`liz_…`）でサインイン |
+| `--token-stdin` | API キーを stdin から読み取り、プロセス一覧やシェルの履歴に残らないようにする |
+
+<span id="output-for-agents" />
+
+## エージェント向けの出力
+
+`--json` を付けた場合、または stdout がターミナルでない場合、`login` は JSON オブジェクトを 1 つ出力します。ブラウザは開かず、待つこともありません。
+
+- サインイン前は、`status: "pending"`、方法ごとのリンクを含む `authUrls`、`authUrl`、`expiresAt`、`instruction` を出力します。リンクをユーザーに渡し、ブラウザに「CLI authorized」と表示されたらコマンドをもう一度実行してください。
+- サインイン後は、`status: "complete"`、ユーザー名、プランについての `instruction` を含む `account.state`、`next` コマンドを出力します。
+
+プランを自動で開始することはありません。開始するには [`lizard billing start --json`](/cli/billing) を実行し、Checkout の `url` をユーザーに渡してください。
+
+ほかのコマンドも、ターミナルがない場合は同じように動作します。終了コード `2` とコード `NOT_AUTHENTICATED` で失敗し、エラー本文の `login` に同じリンクが含まれます。
 
 <span id="examples" />
 
@@ -34,6 +58,7 @@ lizard login [flags]
 
 ```bash
 lizard login
+lizard login --google   # skip the question
 ```
 
 <span id="log-in-with-an-api-key" />
@@ -44,6 +69,8 @@ lizard login
 
 ```bash
 lizard login --token liz_xxx
+# or, to keep the key out of shell history
+printf '%s' "$LIZARD_TOKEN" | lizard login --token-stdin
 ```
 
 <span id="log-in-non-interactively-in-ci" />
@@ -62,4 +89,5 @@ export LIZARD_TOKEN=liz_xxx
 
 - [lizard logout](/cli/logout) — ログアウト
 - [lizard whoami](/cli/whoami) — 現在のユーザー、アクティブなワークスペース、リンクされたプロジェクトを表示
+- [lizard billing](/cli/billing) — Pro プランの開始、確認、キャンセル
 - [CLI reference](/cli) — グローバルフラグ、終了コード、認証の概要

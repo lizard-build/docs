@@ -1,10 +1,10 @@
 ---
-description: "lizard login authentifiziert über deinen Browser oder ein API-Token sowie die nicht-interaktive Authentifizierung in CI mit LIZARD_TOKEN."
+description: "lizard login meldet dich bei Lizard mit GitHub oder Google im Browser oder mit einem API-Key an und bietet danach die Pro-Testphase an, wenn das Konto keinen Plan hat. Du kannst den Befehl gefahrlos erneut ausführen."
 ---
 
 # lizard login
 
-Bei Lizard anmelden.
+Bei Lizard anmelden und einen Plan starten, falls das Konto keinen hat.
 
 <span id="usage" />
 
@@ -14,13 +14,37 @@ Bei Lizard anmelden.
 lizard login [flags]
 ```
 
-Standardmäßig öffnet dies die Anmeldeseite in deinem Browser, gibt deren URL aus und beendet sich. Nachdem du dich angemeldet hast, führe deinen nächsten Befehl aus (zum Beispiel `lizard whoami`); er schließt die Anmeldung ab und speichert deine Zugangsdaten. Mit `--json` gibt `login` `{ "status": "pending", "authUrl": "…" }` aus und öffnet keinen Browser.
+Im Terminal fragt `login`, ob du dich mit GitHub oder Google anmeldest, öffnet diese Seite im Browser und wartet auf deine Bestätigung. Wenn du schon ein Konto hast, wähle die Methode, mit der du dich registriert hast: Die andere legt ein zweites, leeres Konto an, sofern beide keine gemeinsame bestätigte E-Mail-Adresse haben. Der Link gilt 5 Minuten.
+
+Nach der Anmeldung prüft `login` den Plan. Ein Konto ohne Plan bekommt die 7-tägige Pro-Testphase angeboten, oder Pro für $19 im Monat, wenn es seine Testphase schon hatte. Wenn du zustimmst, öffnet sich Stripe Checkout. Zum Schluss listet der Befehl auf, was du als Nächstes ausführen kannst.
+
+Auf einem Rechner, der bereits angemeldet ist, zeigt `login` das Konto an und geht direkt zum Plan über. Du kannst den Befehl also gefahrlos erneut ausführen. Um das Konto zu wechseln, führe zuerst [`lizard logout`](/cli/logout) aus.
+
+Die Installationsskripte führen `lizard login` als letzten Schritt aus. Mit `LIZARD_NO_LOGIN=1` überspringst du das; in CI überspringen die Skripte es von selbst.
+
+Vor anderen Befehlen brauchst du `login` selten: Jeder Befehl, den du im Terminal auf einem nicht angemeldeten Rechner ausführst, meldet dich zuerst an und läuft dann weiter.
 
 ## Flags
 
 | Flag | Beschreibung |
 |------|-------------|
-| `--token <token>` | Mit einem API-Key (`liz_…`) authentifizieren |
+| `--github` | Mit GitHub anmelden, ohne Rückfrage |
+| `--google` | Mit Google anmelden, ohne Rückfrage |
+| `--token <token>` | Mit einem API-Key (`liz_…`) anmelden |
+| `--token-stdin` | Den API-Key von stdin lesen, damit er nicht in der Prozessliste und im Shell-Verlauf erscheint |
+
+<span id="output-for-agents" />
+
+## Ausgabe für Agents
+
+Mit `--json`, oder wenn stdout kein Terminal ist, gibt `login` ein einziges JSON-Objekt aus. Es öffnet keinen Browser und wartet nie.
+
+- Vor der Anmeldung gibt es `status: "pending"`, `authUrls` mit einem Link pro Methode, `authUrl`, `expiresAt` und eine `instruction` aus. Gib den Link an den Nutzer weiter und führe den Befehl erneut aus, sobald der Browser „CLI authorized“ anzeigt.
+- Nach der Anmeldung gibt es `status: "complete"`, den Benutzernamen, `account.state` mit einer `instruction` zum Plan und `next`-Befehle aus.
+
+Einen Plan startet es nie selbst. Dafür führst du [`lizard billing start --json`](/cli/billing) aus und gibst dem Nutzer die Checkout-`url`.
+
+Andere Befehle verhalten sich ohne Terminal genauso: Sie enden mit Exit-Code `2` und dem Code `NOT_AUTHENTICATED`, und der Fehler-Body enthält dieselben Links unter `login`.
 
 <span id="examples" />
 
@@ -32,6 +56,7 @@ Standardmäßig öffnet dies die Anmeldeseite in deinem Browser, gibt deren URL 
 
 ```bash
 lizard login
+lizard login --google   # skip the question
 ```
 
 <span id="log-in-with-a-token" />
@@ -44,6 +69,8 @@ Erstelle einen Key mit [`lizard keys create <name>`](/cli/keys) und führe dann 
 
 ```bash
 lizard login --token liz_xxx
+# or, to keep the key out of shell history
+printf '%s' "$LIZARD_TOKEN" | lizard login --token-stdin
 ```
 
 <span id="log-in-non-interactively-in-ci" />
@@ -62,4 +89,5 @@ export LIZARD_TOKEN=liz_xxx
 
 - [lizard logout](/cli/logout) — abmelden
 - [lizard whoami](/cli/whoami) — aktuellen Benutzer, aktiven Workspace und verknüpftes Projekt anzeigen
+- [lizard billing](/cli/billing) — den Pro-Plan starten, prüfen oder kündigen
 - [CLI reference](/cli) — globale Flags, Exit-Codes und Überblick über die Authentifizierung

@@ -5,7 +5,7 @@ description: "Deploy your first app to Lizard in a few minutes: install Lizard C
 
 # App quickstart
 
-This quickstart deploys an app to Lizard in a few minutes. Install Lizard CLI, sign in, start the 7-day Pro trial, then run `lizard add -r owner/repo` for a GitHub repository or `lizard up` for a local folder. Lizard builds the app on its servers, with no local Docker, and returns an HTTPS URL on `onlizard.com`. Lizard creates your account the first time you run `lizard login`.
+This quickstart deploys an app to Lizard in a few minutes. Install Lizard CLI: the installer signs you in and offers the 7-day Pro trial. Then run `lizard add -r owner/repo` for a GitHub repository or `lizard up` for a local folder. Lizard builds the app on its servers, with no local Docker, and gives it an HTTPS URL on `onlizard.com`. Lizard creates your account the first time you sign in.
 
 ## 1. Install the CLI
 
@@ -27,7 +27,9 @@ On Windows, run this in PowerShell:
 irm https://lizard.build/api/cli/install.ps1 | iex
 ```
 
-**Or install from npm** (needs Node.js 18+):
+Both install scripts end by running [`lizard login`](/cli/login), which does steps 2 and 3 for you: it signs you in and offers the Pro trial. Set `LIZARD_NO_LOGIN=1` to skip it; in CI the scripts skip it on their own.
+
+**Or install from npm** (needs Node.js 20 or later). An npm install does not sign you in, so go on with step 2:
 
 ```bash
 npm install -g @lizard-build/cli
@@ -45,11 +47,17 @@ npm install -g @lizard-build/cli
 
 ## 2. Log in
 
+Skip this step if the install script signed you in. Otherwise run:
+
 ```bash
 lizard login
 ```
 
-This opens your browser to authenticate, then returns to your terminal after you confirm. In CI or other non-interactive environments, authenticate with a token instead:
+It asks whether you sign in with GitHub or Google, opens that page in your browser and waits until you approve. If you already have an account, pick the method you signed up with: the other one opens a second, empty account unless both share a verified email. `--github` or `--google` skips the question. On a machine that is already signed in, `lizard login` shows the account instead, so it is safe to run again.
+
+You can also skip `lizard login`: any command run at a terminal signs you in the same way first, then carries on.
+
+In CI or other non-interactive environments, authenticate with a token instead:
 
 ```bash
 export LIZARD_TOKEN=liz_xxx
@@ -57,7 +65,7 @@ export LIZARD_TOKEN=liz_xxx
 lizard login --token liz_xxx
 ```
 
-API keys start with `liz_`. Create one with `lizard keys create <name>`. `LIZARD_API_KEY` works in place of `LIZARD_TOKEN`.
+API keys start with `liz_`. Create one with `lizard keys create <name>`. `LIZARD_API_KEY` works in place of `LIZARD_TOKEN`. `lizard login --token-stdin` reads the key from a pipe, which keeps it out of your shell history.
 
 Check who you are at any time:
 
@@ -67,13 +75,15 @@ lizard whoami
 
 ## 3. Start the Pro trial
 
-A new account has no plan, so creating anything returns HTTP 402 with a Checkout link. Start the 7-day Pro trial first:
+A new account has no plan, and deploys need one. Once you are signed in, `lizard login` offers the 7-day Pro trial. Say yes, and it opens Stripe Checkout, where you add a card. The trial includes $5 of usage, and nothing is charged until it ends. An account that has had its trial is offered Pro at $19 a month instead.
+
+If you said no, start it later:
 
 ```bash
 lizard billing start
 ```
 
-This opens Stripe Checkout, where you add a card. The trial includes $5 of usage, and nothing is charged until it ends. See [Billing](/platform/billing) and [`lizard billing`](/cli/billing).
+Until a plan starts, creating anything returns HTTP 402 with a Checkout link. See [Billing](/platform/billing) and [`lizard billing`](/cli/billing).
 
 ## 4. Deploy
 
@@ -81,13 +91,15 @@ Pick the path that matches where your code lives.
 
 ### Option A — Deploy a GitHub repo (recommended)
 
-If your code is on GitHub, create a service straight from the repo. Lizard clones it, auto-detects the stack, builds it, and returns a live URL:
+If your code is on GitHub, create a service straight from the repo. Lizard clones it, detects the stack and starts the first build:
 
 ```bash
 lizard add -r your-org/your-app
 ```
 
-Pushes to the tracked branch will auto-redeploy from then on. For private repos, connect the GitHub App first with [`lizard git`](/cli/git):
+The command returns as soon as the service exists; the build carries on. [Step 5](#5-watch-it-build-and-run) shows how to follow it and find the URL.
+
+For a private repo, and for pushes to the tracked branch to redeploy the app, connect the Lizard GitHub App first with [`lizard git`](/cli/git):
 
 ```bash
 lizard git connect
@@ -101,26 +113,27 @@ From inside your project directory, upload and deploy the current folder (respec
 lizard up
 ```
 
-If the directory isn't linked to a project yet, `up` will create or select one interactively. In CI, link explicitly first with `lizard init --name my-project`.
+The first time, it asks for a service name; the folder name is the default. Then it follows the build and prints the URL, like `https://your-app-x1y2z.onlizard.com`, once the app is live.
 
-Either way, when the build finishes you'll get a generated URL like `https://your-app-x1y2z.onlizard.com`.
+If the folder isn't linked to a project yet, `lizard add` and `lizard up` use your default project and say so. That is the oldest project in your personal workspace; a new account gets one at sign-up. `lizard up` also links the folder to it, so the next `lizard up` updates the same service. To deploy into another project, run `lizard init --name my-project` first. Do that in CI as well, so the deploy lands where you expect.
 
 Lizard detects most stacks on its own. For the exact build command, start command and port of your framework, see the guide for [Next.js](/framework-guides/nextjs), [React](/framework-guides/react), [Vue](/framework-guides/vue), [Astro](/framework-guides/astro), [SvelteKit](/framework-guides/sveltekit), [Node.js](/framework-guides/nodejs), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails) or [Go](/framework-guides/go). An app with its own Dockerfile follows [Deploy with a Dockerfile](/deploy/dockerfile).
 
 ## 5. Watch it build and run
 
 ```bash
-lizard ps          # services in the project, with status + URL
-lizard logs        # last runtime log lines
-lizard logs --build  # the most recent build's logs
-lizard open        # open the project in the dashboard
+lizard ps               # services in the project, with status + URL
+lizard logs             # stream runtime logs (Ctrl+C to stop)
+lizard logs --tail 100  # print the last 100 lines and exit
+lizard logs --build     # the most recent build's logs
+lizard open             # open the project in the dashboard
 ```
 
 [`lizard open`](/cli/open) shows the same project in the [dashboard](/dashboard). For metrics, cost and deploy history, see [Observability](/observability).
 
 ## 6. Add a database (optional)
 
-Provision Managed Postgres and reference it from your service:
+Provision Managed Postgres. Every service in the project gets its public `DATABASE_URL` on the next deploy; to connect over the private network instead, reference it from your service:
 
 ```bash
 lizard add postgres

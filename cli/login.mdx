@@ -1,10 +1,10 @@
 ---
-description: "lizard login authenticates through your browser or an API token, plus how to authenticate non-interactively in CI with LIZARD_TOKEN."
+description: "lizard login signs you in to Lizard with GitHub or Google in the browser, or with an API key, then offers the Pro trial if the account has no plan. Safe to re-run."
 ---
 
 # lizard login
 
-Log in to Lizard.
+Sign in to Lizard, then start a plan if the account has none.
 
 ## Usage
 
@@ -12,13 +12,35 @@ Log in to Lizard.
 lizard login [flags]
 ```
 
-By default this opens the sign-in page in your browser, prints its URL, and exits. After you sign in, run your next command (for example `lizard whoami`); it finishes the login and saves your credentials. With `--json`, `login` prints `{ "status": "pending", "authUrl": "…" }` and does not open a browser.
+At a terminal, `login` asks whether you sign in with GitHub or Google, opens that page in your browser and waits until you approve. If you already have an account, pick the method you signed up with: the other one opens a second, empty account unless both share a verified email. The link works for 5 minutes.
+
+Once you are signed in, `login` checks the plan. An account with no plan is offered the 7-day Pro trial, or Pro at $19 a month if it has had its trial. Say yes, and it opens Stripe Checkout. Then it lists commands to try next.
+
+On a machine that is already signed in, `login` shows the account and goes straight to the plan, so it is safe to run again. To switch accounts, run [`lizard logout`](/cli/logout) first.
+
+The install scripts run `lizard login` as their last step. Set `LIZARD_NO_LOGIN=1` to skip it; in CI they skip it on their own.
+
+You rarely need `login` before other commands: any command run at a terminal on a machine that is not signed in signs you in first, then carries on.
 
 ## Flags
 
 | Flag | Description |
 |------|-------------|
-| `--token <token>` | Authenticate with an API key (`liz_…`) |
+| `--github` | Sign in with GitHub, without the question |
+| `--google` | Sign in with Google, without the question |
+| `--token <token>` | Sign in with an API key (`liz_…`) |
+| `--token-stdin` | Read the API key from stdin, which keeps it out of the process list and shell history |
+
+## Output for agents
+
+With `--json`, or when stdout is not a terminal, `login` prints one JSON object. It never opens a browser and never waits.
+
+- Before sign-in, it prints `status: "pending"`, `authUrls` with one link per method, `authUrl`, `expiresAt` and an `instruction`. Hand the link to the user, then run the command again once the browser says "CLI authorized".
+- After sign-in, it prints `status: "complete"`, the username, `account.state` with an `instruction` about the plan, and `next` commands.
+
+It never starts a plan. To start one, run [`lizard billing start --json`](/cli/billing) and hand the user the Checkout `url`.
+
+Other commands work the same way without a terminal: they fail with exit code `2` and code `NOT_AUTHENTICATED`, and the error body carries the same links under `login`.
 
 ## Examples
 
@@ -26,6 +48,7 @@ By default this opens the sign-in page in your browser, prints its URL, and exit
 
 ```bash
 lizard login
+lizard login --google   # skip the question
 ```
 
 ### Log in with an API key
@@ -34,6 +57,8 @@ Create a key with [`lizard keys create <name>`](/cli/keys), then:
 
 ```bash
 lizard login --token liz_xxx
+# or, to keep the key out of shell history
+printf '%s' "$LIZARD_TOKEN" | lizard login --token-stdin
 ```
 
 ### Log in non-interactively in CI
@@ -48,4 +73,5 @@ export LIZARD_TOKEN=liz_xxx
 
 - [lizard logout](/cli/logout) — log out
 - [lizard whoami](/cli/whoami) — show the current user, active workspace, and linked project
+- [lizard billing](/cli/billing) — start, check or cancel the Pro plan
 - [CLI reference](/cli) — global flags, exit codes, and authentication overview
