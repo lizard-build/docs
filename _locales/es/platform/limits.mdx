@@ -47,13 +47,13 @@ Estos límites fijan cuántos sandboxes ejecuta una cuenta a la vez y con qué r
 |---|---|---|---|---|
 | Prueba de Pro | 5 | 6 | 30 | 100 |
 | Pro | 100 | 24 | 120 | 400 |
-| Enterprise | 50 por espacio de trabajo | 120 por usuario | Sin límite | Sin límite |
+| Enterprise | Por espacio de trabajo, según tu contrato | 120 por usuario | Sin límite | Sin límite |
 
 - Los límites se cuentan por propietario de la cuenta, en todos sus espacios de trabajo. Un segundo espacio de trabajo no añade un segundo cupo.
 - En Pro y en la prueba, en ejecución significa ejecutándose o reanudándose. Un sandbox en pausa no cuenta; reanudarlo necesita un hueco libre.
 - Un inicio es un sandbox nuevo. Una reanudación no es un inicio. Una creación que falla por parte de Lizard no cuenta.
 - Al superar un límite, la creación y la reanudación devuelven HTTP 429 con `code` igual a `SANDBOX_LIMIT_REACHED` (en ejecución) o `SANDBOX_RATE_LIMITED` (inicios). Un rechazo por ritmo de inicios incluye la cabecera `Retry-After`.
-- Enterprise no tiene límite para toda la cuenta. Por defecto, cada espacio de trabajo admite hasta 50 sandboxes, y cuentan todos: en ejecución, en pausa y caídos; lo subimos por espacio de trabajo si lo pides. Por encima, la creación y fork devuelven HTTP 429 con `code` igual a `SANDBOX_LIMIT_REACHED`. Un usuario puede crear hasta 120 sandboxes por minuto en cada región.
+- Enterprise no tiene un límite fijo de sandboxes en ejecución a la vez. El contrato de cada cliente fija el límite por espacio de trabajo. Cuentan todos los sandboxes: en ejecución, en pausa y caídos. Por encima, la creación y fork devuelven HTTP 429 con `code` igual a `SANDBOX_LIMIT_REACHED`. Un usuario puede crear hasta 120 sandboxes por minuto en cada región.
 - El panel muestra, junto a **New Sandbox**, cuántos sandboxes se están ejecutando frente a tu límite. Para más de 100 a la vez, contáctanos sobre Enterprise.
 
 <span id="sandbox-egress" />

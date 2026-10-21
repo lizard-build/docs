@@ -43,13 +43,13 @@ These limits cap how many sandboxes an account runs at once and how fast it star
 |---|---|---|---|---|
 | Pro trial | 5 | 6 | 30 | 100 |
 | Pro | 100 | 24 | 120 | 400 |
-| Enterprise | 50 per workspace | 120 per user | No limit | No limit |
+| Enterprise | Per workspace, set by your agreement | 120 per user | No limit | No limit |
 
 - Lizard counts limits per account owner, across all of the owner's workspaces. A second workspace does not add a second allowance.
 - On Pro and the trial, running means running or resuming. A paused sandbox does not count; resuming one needs a free slot.
 - A start is a new sandbox. A resume is not a start. A create that fails on Lizard's side does not count.
 - Over a limit, create and resume return HTTP 429 with `code` set to `SANDBOX_LIMIT_REACHED` (running) or `SANDBOX_RATE_LIMITED` (starts). A start-rate refusal includes a `Retry-After` header.
-- Enterprise has no account-wide limit. By default each workspace holds up to 50 sandboxes, and running, paused and crashed ones all count; we raise it per workspace on request. Over it, create and fork return HTTP 429 with `code` set to `SANDBOX_LIMIT_REACHED`. One user can create up to 120 sandboxes a minute in each region.
+- Enterprise has no fixed limit on sandboxes running at once. Each customer's agreement sets the limit per workspace. Running, paused and crashed sandboxes all count toward it. Over it, create and fork return HTTP 429 with `code` set to `SANDBOX_LIMIT_REACHED`. One user can create up to 120 sandboxes a minute in each region.
 - The dashboard shows how many sandboxes are running against your limit next to **New Sandbox**. For more than 100 at once, contact us about Enterprise.
 
 <span id="sandbox-egress" />
