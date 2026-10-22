@@ -25,7 +25,7 @@ On Lizard, an app runs up to 5 replicas per service after the first paid Pro inv
 
 ### Sizes
 
-| Size | CPU and memory | Disk (`/workspace`) | Price while running |
+| Size | CPU and memory | Disk | Price while running |
 |---|---|---|---|
 | Small | 2 vCPU / 4 GB | 5 GB | $0.0162 per hour |
 | Medium (default) | 4 vCPU / 8 GB | 20 GB | $0.0324 per hour |
@@ -89,7 +89,7 @@ Only the owner sets them, with [`lizard workspace limits`](/cli/workspace#lizard
 - At the sandbox cap, create, fork and resume return HTTP 429 with `code` set to `WORKSPACE_SANDBOX_LIMIT`.
 - While apps and databases use as much CPU or memory as allowed, deploy, redeploy, restart, scale up, new databases and resuming a paused app or database return HTTP 429 with `code` set to `WORKSPACE_USAGE_LIMIT`. Running services keep running.
 - While data fills the disk cap, new volumes, volume growth, new databases and template deploys return the same `WORKSPACE_USAGE_LIMIT`. Data already written stays.
-- A sandbox's own `/workspace` disk does not count toward the disk cap.
+- A sandbox's own disk does not count toward the disk cap.
 
 ## Regions
 

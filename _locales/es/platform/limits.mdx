@@ -29,7 +29,7 @@ En Lizard (lizard.build), una app ejecuta hasta 5 réplicas por servicio tras la
 
 ### Tamaños
 
-| Tamaño | CPU y memoria | Disco (`/workspace`) | Precio mientras se ejecuta |
+| Tamaño | CPU y memoria | Disco | Precio mientras se ejecuta |
 |---|---|---|---|
 | Small | 2 vCPU / 4 GB | 5 GB | $0.0162 por hora |
 | Medium (predeterminado) | 4 vCPU / 8 GB | 20 GB | $0.0324 por hora |
@@ -95,7 +95,7 @@ Solo el propietario los fija, con [`lizard workspace limits`](/cli/workspace#liz
 - Al llegar al límite de sandboxes, la creación, fork y la reanudación devuelven HTTP 429 con `code` igual a `WORKSPACE_SANDBOX_LIMIT`.
 - Mientras las apps y bases de datos usan tanta CPU o memoria como se permite, deploy, redeploy, reinicio, escalar hacia arriba, bases de datos nuevas y reanudar una app o base de datos en pausa devuelven HTTP 429 con `code` igual a `WORKSPACE_USAGE_LIMIT`. Los servicios en marcha siguen en marcha.
 - Mientras los datos llenan el límite de disco, los volúmenes nuevos, el crecimiento de volúmenes, las bases de datos nuevas y los despliegues de plantillas devuelven el mismo `WORKSPACE_USAGE_LIMIT`. Los datos ya escritos se conservan.
-- El disco `/workspace` propio de un sandbox no cuenta para el límite de disco.
+- El disco propio de un sandbox no cuenta para el límite de disco.
 
 <span id="regions" />
 

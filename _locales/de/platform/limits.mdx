@@ -33,7 +33,7 @@ Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung
 
 ### Größen
 
-| Größe | CPU und Arbeitsspeicher | Speicher (`/workspace`) | Preis während der Laufzeit |
+| Größe | CPU und Arbeitsspeicher | Festplatte | Preis während der Laufzeit |
 |---|---|---|---|
 | Small | 2 vCPU / 4 GB | 5 GB | $0.0162 pro Stunde |
 | Medium (Standard) | 4 vCPU / 8 GB | 20 GB | $0.0324 pro Stunde |
@@ -105,7 +105,7 @@ Nur der Inhaber legt sie fest, mit [`lizard workspace limits`](/cli/workspace#li
 - Am Sandbox-Limit geben Create, Fork und Resume HTTP 429 mit `code` gleich `WORKSPACE_SANDBOX_LIMIT` zurück.
 - Solange Apps und Datenbanken so viel CPU oder Arbeitsspeicher nutzen wie erlaubt, geben Deploy, Redeploy, Neustart, Hochskalieren, neue Datenbanken und das Fortsetzen einer pausierten App oder Datenbank HTTP 429 mit `code` gleich `WORKSPACE_USAGE_LIMIT` zurück. Laufende Services laufen weiter.
 - Solange die Daten das Speicherlimit ausschöpfen, geben neue Volumes, Volume-Vergrößerungen, neue Datenbanken und Template-Deploys dasselbe `WORKSPACE_USAGE_LIMIT` zurück. Bereits geschriebene Daten bleiben erhalten.
-- Die eigene `/workspace`-Disk einer Sandbox zählt nicht zum Speicherlimit.
+- Die eigene Festplatte einer Sandbox zählt nicht zum Speicherlimit.
 
 <span id="regions" />
 
