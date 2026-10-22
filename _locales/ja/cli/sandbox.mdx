@@ -1,5 +1,5 @@
 ---
-description: "lizard sandbox は Sandboxes の作成、一覧表示、削除を行い、その中でコマンドやコーディングエージェントを実行し、シェルやデスクトップを開き、スナップショットとファイルを管理します。"
+description: "lizard sandbox は Sandboxes の作成、一覧表示、削除を行い、その中でコマンドやコーディングエージェントを実行し、シェルやデスクトップを開き、実行中の sandbox をフォークし、スナップショットとファイルを管理します。"
 ---
 
 # lizard sandbox
@@ -15,6 +15,7 @@ lizard sandbox create [flags]
 lizard sandbox list [flags]
 lizard sandbox exec <id> -- <command>
 lizard sandbox ssh <id>
+lizard sandbox fork <id> [flags]
 lizard sandbox rm <id> [flags]
 ```
 
@@ -62,7 +63,7 @@ Lizard は sandbox の稼働中、アイドル時間も含めてサイズごと�
 
 ### `lizard sandbox rm <id>`
 
-sandbox を削除します（エイリアス `delete`）。
+sandbox を削除します（エイリアス `delete`、`kill`）。
 
 | フラグ | 説明 |
 |------|-------------|
@@ -131,6 +132,19 @@ sandbox 内のポートに HTTPS URL を割り当てます。ポートは非公�
 `pause`、`resume`、`snapshot` は処理が終わるまで待機します。キューに入った時点で戻るには `--no-wait` を渡してください。各手順で何が保持されるかは、[一時停止、再開、スナップショット](/sandboxes/quickstart#pause-and-resume)を参照してください。
 
 ボリュームを接続した sandbox のスナップショットには、作成時点のボリュームのファイルのコピーが含まれます。どの復元もそのコピーを受け取り、`--volume` は使えません。スナップショットを復元できる人は誰でもそのファイルを読めます。`--volume` はボリュームのない sandbox のスナップショットでだけ使え、ボリュームはスナップショットと同じリージョンにある必要があります。
+
+<span id="sandbox-fork" />
+
+### `lizard sandbox fork <id>`
+
+実行中の sandbox のライブコピーを起動します。Lizard は sandbox を一瞬だけ一時停止し、メモリ、プロセス、ファイルを一度だけキャプチャして、そのキャプチャから各コピーを起動します。元の sandbox は同じ ID と有効期間のまま動き続けます。1 つの sandbox を準備（ツールをインストールし、アプリを読み込む）してからフォークすれば、セットアップを繰り返さずに作業をコピーに分配できます。
+
+| フラグ | 説明 |
+|------|-------------|
+| `-n, --count <n>` | 起動するコピーの数。1〜100（既定値 `1`） |
+| `--timeout <ms>` | 各コピーの有効期間。最小 `1000`。既定は元の sandbox の有効期間 |
+
+各コピーは sandbox の起動として扱われます。[実行中の sandbox と起動回数の制限](/platform/limits#sandbox-account-limits)に数えられ、元の sandbox と同じサイズで動き、そのサイズの料金がかかります。`--json` を付けると、コピーごとに 1 つのエントリ（`{"sandbox": {...}}` または `{"error": "..."}`）を出力します。起動できなかったコピーが 1 つでもあるとコマンドは `1` で終了し、起動したコピーは削除するまで動き続けます。一時停止中の sandbox と、ボリュームを接続した sandbox はフォークできません（HTTP 409）。
 
 ### `lizard sandbox files`
 
@@ -229,6 +243,15 @@ lizard sandbox prompt genuine-toddler-jasj "add a health check endpoint and test
 lizard sandbox snapshot genuine-toddler-jasj --name my-app
 lizard sandbox snapshots --mine                     # find the snapshot ID
 lizard sandbox restore <snapshot-id> -p other-project
+```
+
+<span id="fork-a-prepared-sandbox" />
+
+### 準備済みの sandbox をフォークする
+
+```bash
+lizard sandbox fork genuine-toddler-jasj -n 8 --json   # 8 copies with the same memory and files
+lizard sandbox rm <copy-id>                            # delete a copy when its work is done
 ```
 
 <span id="see-also" />

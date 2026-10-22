@@ -1,5 +1,5 @@
 ---
-description: "lizard sandbox crea, lista y elimina Sandboxes, ejecuta comandos y agentes de programación en ellos, abre shells y escritorios, y gestiona snapshots y archivos."
+description: "lizard sandbox crea, lista y elimina Sandboxes, ejecuta comandos y agentes de programación en ellos, abre shells y escritorios, hace fork de sandboxes en ejecución y gestiona snapshots y archivos."
 ---
 
 # lizard sandbox
@@ -15,6 +15,7 @@ lizard sandbox create [flags]
 lizard sandbox list [flags]
 lizard sandbox exec <id> -- <command>
 lizard sandbox ssh <id>
+lizard sandbox fork <id> [flags]
 lizard sandbox rm <id> [flags]
 ```
 
@@ -62,7 +63,7 @@ Lista los sandboxes del proyecto vinculado (alias `ls`).
 
 ### `lizard sandbox rm <id>`
 
-Elimina un sandbox (alias `delete`).
+Elimina un sandbox (alias `delete` y `kill`).
 
 | Bandera | Descripción |
 |------|-------------|
@@ -131,6 +132,19 @@ Conecta una app VNC (Compartir Pantalla de macOS, TigerVNC, RealVNC) al escritor
 `pause`, `resume` y `snapshot` esperan hasta que termina el trabajo; pasa `--no-wait` para volver en cuanto quede en cola. Consulta [Pausa, reanudación y snapshots](/sandboxes/quickstart#pause-and-resume) para ver qué conserva cada paso.
 
 Un snapshot de un sandbox con un volumen conectado incluye una copia de los archivos del volumen tal como estaban al capturar. Cada restauración recibe esa copia y no acepta `--volume`, y cualquiera que pueda restaurar el snapshot puede leer esos archivos. `--volume` solo funciona con un snapshot de un sandbox que no tenía volumen, y el volumen debe estar en la región del snapshot.
+
+<span id="sandbox-fork" />
+
+### `lizard sandbox fork <id>`
+
+Inicia copias en vivo de un sandbox en ejecución. Lizard pausa el sandbox un momento, captura una vez su memoria, sus procesos y sus archivos, y arranca cada copia desde esa captura. El original sigue en ejecución con el mismo ID y la misma duración. Prepara un sandbox (herramientas instaladas, app cargada) y luego haz fork para repartir el trabajo entre copias sin repetir la preparación.
+
+| Bandera | Descripción |
+|------|-------------|
+| `-n, --count <n>` | Copias que iniciar, de 1 a 100 (por defecto `1`) |
+| `--timeout <ms>` | Duración de cada copia, al menos `1000`; por defecto, la duración del original |
+
+Cada copia es un inicio de sandbox: cuenta para los [límites de sandboxes en ejecución y de inicios](/platform/limits#sandbox-account-limits), se ejecuta con el tamaño del original y se factura según ese tamaño. Con `--json`, la salida tiene una entrada por copia: `{"sandbox": {...}}` o `{"error": "..."}`. Si alguna copia no pudo iniciarse, el comando sale con `1`, y las copias que sí se iniciaron siguen en ejecución hasta que las elimines. No puedes hacer fork de un sandbox pausado ni de uno con un volumen conectado (HTTP 409).
 
 ### `lizard sandbox files`
 
@@ -229,6 +243,15 @@ lizard sandbox prompt genuine-toddler-jasj "add a health check endpoint and test
 lizard sandbox snapshot genuine-toddler-jasj --name my-app
 lizard sandbox snapshots --mine                     # find the snapshot ID
 lizard sandbox restore <snapshot-id> -p other-project
+```
+
+<span id="fork-a-prepared-sandbox" />
+
+### Hacer fork de un sandbox preparado
+
+```bash
+lizard sandbox fork genuine-toddler-jasj -n 8 --json   # 8 copies with the same memory and files
+lizard sandbox rm <copy-id>                            # delete a copy when its work is done
 ```
 
 <span id="see-also" />

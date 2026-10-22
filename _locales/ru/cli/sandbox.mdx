@@ -1,5 +1,5 @@
 ---
-description: "lizard sandbox создаёт, выводит список и удаляет Sandboxes, запускает в них команды и coding-агентов, открывает оболочки и рабочие столы, управляет снапшотами и файлами."
+description: "lizard sandbox создаёт, выводит список и удаляет Sandboxes, запускает в них команды и coding-агентов, открывает оболочки и рабочие столы, делает форки запущенных sandbox, управляет снапшотами и файлами."
 ---
 
 # lizard sandbox
@@ -15,6 +15,7 @@ lizard sandbox create [flags]
 lizard sandbox list [flags]
 lizard sandbox exec <id> -- <command>
 lizard sandbox ssh <id>
+lizard sandbox fork <id> [flags]
 lizard sandbox rm <id> [flags]
 ```
 
@@ -62,7 +63,7 @@ Lizard тарифицирует каждый размер посекундно �
 
 ### `lizard sandbox rm <id>`
 
-Удаляет sandbox (псевдоним `delete`).
+Удаляет sandbox (псевдонимы `delete` и `kill`).
 
 | Флаг | Описание |
 |------|-------------|
@@ -131,6 +132,19 @@ Lizard тарифицирует каждый размер посекундно �
 `pause`, `resume` и `snapshot` ждут завершения работы; укажите `--no-wait`, чтобы вернуться сразу после постановки в очередь. О том, что сохраняет каждый шаг, см. [Пауза, возобновление и снапшоты](/sandboxes/quickstart#pause-and-resume).
 
 Снапшот sandbox с подключённым томом содержит копию файлов тома на момент создания снапшота. Каждое восстановление получает эту копию и не принимает `--volume`, а любой, кто может восстановить снапшот, может прочитать эти файлы. `--volume` работает только со снапшотом sandbox, у которого не было тома, и том должен быть в регионе снапшота.
+
+<span id="sandbox-fork" />
+
+### `lizard sandbox fork <id>`
+
+Запускает живые копии работающего sandbox. Lizard ненадолго ставит sandbox на паузу, один раз снимает его память, процессы и файлы и запускает из этого снимка каждую копию. Исходный sandbox продолжает работать с тем же ID и временем жизни. Подготовьте один sandbox (инструменты установлены, приложение загружено), затем сделайте форк, чтобы раздать работу копиям без повторной настройки.
+
+| Флаг | Описание |
+|------|-------------|
+| `-n, --count <n>` | Сколько копий запустить, от 1 до 100 (по умолчанию `1`) |
+| `--timeout <ms>` | Время жизни каждой копии, не меньше `1000`; по умолчанию — время жизни исходного sandbox |
+
+Каждая копия — это запуск sandbox: она учитывается в [лимитах запущенных sandbox и запусков](/platform/limits#sandbox-account-limits), работает с размером исходного sandbox и оплачивается по этому размеру. С `--json` вывод содержит по одной записи на копию: `{"sandbox": {...}}` или `{"error": "..."}`. Если хотя бы одна копия не запустилась, команда завершается с кодом `1`, а запущенные копии работают, пока вы их не удалите. Нельзя сделать форк sandbox на паузе или sandbox с подключённым томом (HTTP 409).
 
 ### `lizard sandbox files`
 
@@ -229,6 +243,15 @@ lizard sandbox prompt genuine-toddler-jasj "add a health check endpoint and test
 lizard sandbox snapshot genuine-toddler-jasj --name my-app
 lizard sandbox snapshots --mine                     # find the snapshot ID
 lizard sandbox restore <snapshot-id> -p other-project
+```
+
+<span id="fork-a-prepared-sandbox" />
+
+### Форк подготовленного sandbox
+
+```bash
+lizard sandbox fork genuine-toddler-jasj -n 8 --json   # 8 copies with the same memory and files
+lizard sandbox rm <copy-id>                            # delete a copy when its work is done
 ```
 
 <span id="see-also" />
