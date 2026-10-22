@@ -81,7 +81,7 @@ Un código de salida distinto de cero es un resultado, no un error: comprueba t�
 
 ## Archivos
 
-Escribe texto o bytes con `fs.write`, lee texto con `fs.read` y lee bytes con `fs.readBytes` (Python: `read_bytes`). Los archivos duran solo lo que dura el sandbox, salvo que los escribas en un volumen de [Persistent Volumes](/sandboxes/volumes) en `/workspace`.
+Escribe texto o bytes con `fs.write`, lee texto con `fs.read` y lee bytes con `fs.readBytes` (Python: `read_bytes`). Todos los archivos del disco sobreviven a una pausa y entran en un snapshot. Un kill o la expiración borra el disco, así que guarda lo que necesites después en un volumen de [Persistent Volumes](/sandboxes/volumes) en `/workspace` o en un snapshot.
 
 ```ts
 await sandbox.fs.write("/tmp/task.py", "print(42)\n");

@@ -175,7 +175,7 @@ entries = sandbox.fs.list("/app")
 png = sandbox.fs.read_bytes("/app/chart.png")
 ```
 
-`/workspace` の [Persistent Volumes](/sandboxes/volumes) 以外にあるファイルは、sandbox の停止後に消えます。
+一時停止とスナップショットは、どこに書いたファイルでもディスク上のすべてを保持します。停止（kill または期限切れ）後は、`/workspace` の [Persistent Volumes](/sandboxes/volumes) 以外にあるファイルは消えます。事前にスナップショットを作成した場合は除きます。
 
 <span id="ports" />
 

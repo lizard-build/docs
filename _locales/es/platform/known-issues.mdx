@@ -16,7 +16,7 @@ Esta página enumera comportamientos de Lizard que debes revisar antes de usar e
 
 La pausa cierra las conexiones de red abiertas. Si no se pueden guardar los procesos, el sandbox sigue en marcha e indica el motivo en `pauseError`.
 
-Tras detenerse un sandbox, solo se conservan los archivos de un volumen de Persistent Volumes adjunto en `/workspace` o de un snapshot que hayas tomado, y los volúmenes usan almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo. Consulta [almacenamiento y facturación](/sandboxes#storage-and-billing).
+Una pausa conserva todo el disco. Tras una detención (kill o expiración), solo se conservan los archivos de un volumen de Persistent Volumes adjunto en `/workspace` o de un snapshot que hayas tomado; un snapshot guarda todo el disco. Los volúmenes usan almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo. Consulta [almacenamiento y facturación](/sandboxes#storage-and-billing).
 
 <span id="redeploy-is-not-rollback" />
 

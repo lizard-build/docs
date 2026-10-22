@@ -113,7 +113,7 @@ Erstelle und verbinde Volumes mit dem SDK oder der CLI. Die Seite **Volumes** in
 - Ein verbundenes Volume kann weder mit einer anderen Sandbox verbunden noch gelöscht werden.
 - Das Löschen eines Volumes entfernt seine Daten. Volumes nutzen lokalen Speicher des Knotens; exportiere Daten, die du nach einem Knotenausfall brauchst. Siehe [Speicherung und Wiederherstellung](/platform/storage-and-recovery).
 
-- Ohne Volume ist `/workspace` temporär: Seine Dateien sind weg, wenn die Sandbox stoppt.
+- Ohne Volume gehört `/workspace` zur Festplatte der Sandbox: Eine Pause oder ein Snapshot behält seine Dateien, ein Kill oder Ablauf löscht sie.
 - Eine Sandbox mit verbundenem Volume kann nicht geforkt werden (HTTP 409).
 - Ein Snapshot einer Sandbox mit verbundenem Volume enthält eine Kopie der Dateien des Volumes zum Zeitpunkt der Aufnahme. Jede Wiederherstellung erhält diese Kopie, nicht das laufende Volume, und kann kein weiteres Volume verbinden. Wer den Snapshot wiederherstellen kann, kann diese Dateien lesen; wer den Snapshot teilt, teilt also die Daten des Volumes; siehe [Snapshots](/sandboxes/quickstart#pause-and-resume).
 

@@ -36,7 +36,8 @@ In a test on 2026-10-12, the median time from creating a sandbox to its first Py
 | Which templates exist? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop` and `desktop-camoufox` (US East only) |
 | What sizes are there? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, the default) and Large (8 vCPU / 16 GB); see [sizes and prices](/platform/limits#sandbox-sizes) |
 | How long does one live? | Five minutes by default from the SDK and CLI; no expiration by default from the raw API and dashboard |
-| What survives a stop? | Only files on a [Persistent Volume](/sandboxes/volumes) mounted at `/workspace` |
+| What survives a pause? | The whole disk, including packages installed outside `/workspace`, plus memory and running processes |
+| What survives a stop (kill or expiration)? | Files on a [Persistent Volume](/sandboxes/volumes) at `/workspace`, and any [snapshot](/sandboxes/quickstart#pause-and-resume) you took; a snapshot holds the whole disk |
 | How many can run at once? | 100 on Pro, 5 during the trial; see [account limits](/platform/limits#sandbox-account-limits) |
 
 ## Runtime and templates
@@ -64,7 +65,7 @@ The SDK and CLI default to a five-minute lifetime. The raw API and dashboard def
 
 ## Storage and billing
 
-Files and running processes remain available while the sandbox runs. After it stops, only files written to an attached Persistent Volume at `/workspace` can be reused by a later sandbox. Without a volume, `/workspace` is temporary. Each volume attaches to one sandbox at a time and uses node-local storage; export files that must survive node loss.
+Files and running processes remain available while the sandbox runs. A pause keeps the whole disk, including packages installed outside `/workspace`, plus memory and running processes; a resume brings all of it back. A snapshot holds the same, and you can restore it after the source sandbox is gone. A stop (kill or expiration) deletes the sandbox's disk: only files on an attached Persistent Volume at `/workspace` and the snapshots you took remain. Without a volume, `/workspace` is part of that disk. Each volume attaches to one sandbox at a time and uses node-local storage; export files that must survive node loss.
 
 Each size has a flat hourly price, billed by the second while the sandbox runs, idle time included. Egress is included up to [2 TB per account](/platform/limits#sandbox-egress) over a rolling 30 days. A sandbox restored from a snapshot runs at its source's size and price. A successful pause stops compute charges; Persistent Volumes bill separately while you keep the data. Pause or kill a sandbox when the task ends. Rates for every resource are on the [billing page](/platform/billing) and [pricing](https://lizard.build/pricing).
 

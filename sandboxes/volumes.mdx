@@ -99,7 +99,7 @@ Create and attach volumes with the SDK or CLI. The **Volumes** page in the dashb
 - An attached volume cannot attach to another sandbox or be deleted.
 - Deleting a volume removes its data. Volumes use node-local storage; export data you need after a node failure. See [storage and recovery](/platform/storage-and-recovery).
 
-- Without a volume, `/workspace` is temporary: its files are gone when the sandbox stops.
+- Without a volume, `/workspace` is part of the sandbox's disk: a pause or a snapshot keeps its files, and a kill or expiration deletes them.
 - A sandbox with a volume attached cannot be forked (HTTP 409).
 - A snapshot of a sandbox with a volume attached includes a copy of the volume's files as they were at capture. Every restore gets that copy, not the live volume, and cannot attach another volume. Anyone who can restore the snapshot can read those files, so sharing the snapshot shares the volume's data; see [snapshots](/sandboxes/quickstart#pause-and-resume).
 

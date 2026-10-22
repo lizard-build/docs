@@ -112,7 +112,7 @@ Crea y conecta volúmenes con el SDK o la CLI. La página **Volumes** de la barr
 - Detener un sandbox o dejar que caduque desconecta su volumen y conserva los datos.
 - Un volumen conectado no puede conectarse a otro sandbox ni eliminarse.
 - Eliminar un volumen borra sus datos. Los volúmenes usan almacenamiento local del nodo; exporta los datos que necesites tras un fallo del nodo. Consulta [almacenamiento y recuperación](/platform/storage-and-recovery).
-- Sin volumen, `/workspace` es temporal: sus archivos desaparecen cuando el sandbox se detiene.
+- Sin volumen, `/workspace` forma parte del disco del sandbox: una pausa o un snapshot conserva sus archivos, y un kill o la expiración los borra.
 - No se puede hacer fork de un sandbox con un volumen conectado (HTTP 409).
 - Un snapshot de un sandbox con un volumen conectado incluye una copia de los archivos del volumen tal como estaban al capturar. Cada restauración recibe esa copia, no el volumen real, y no puede conectar otro volumen. Cualquiera que pueda restaurar el snapshot puede leer esos archivos, así que compartir el snapshot comparte los datos del volumen; consulta [snapshots](/sandboxes/quickstart#pause-and-resume).
 

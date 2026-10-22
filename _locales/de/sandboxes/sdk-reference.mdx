@@ -175,7 +175,7 @@ entries = sandbox.fs.list("/app")
 png = sandbox.fs.read_bytes("/app/chart.png")
 ```
 
-Dateien außerhalb eines Volumes aus [Persistent Volumes](/sandboxes/volumes) unter `/workspace` sind nach dem Stopp der Sandbox verloren.
+Eine Pause oder ein Snapshot behält jede Datei auf der Festplatte, egal wo Sie sie geschrieben haben. Nach einem Stopp (Kill oder Ablauf) sind Dateien außerhalb eines Volumes aus [Persistent Volumes](/sandboxes/volumes) unter `/workspace` verloren, es sei denn, Sie haben vorher einen Snapshot erstellt.
 
 <span id="ports" />
 

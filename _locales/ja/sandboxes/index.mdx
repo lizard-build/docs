@@ -48,7 +48,8 @@ Lizard (lizard.build) の Sandboxes は、AI エージェントがコードや�
 | どのテンプレートがありますか? | `base`、`interpreter`、`codex`、`claude`、`opencode`、`pi`、`prime`、`desktop`、`desktop-camoufox`（US East のみ） |
 | どのサイズがありますか? | Small (2 vCPU / 4 GB)、Medium (4 vCPU / 8 GB、既定)、Large (8 vCPU / 16 GB)。[サイズと料金](/platform/limits#sandbox-sizes) を参照してください |
 | どのくらい存続しますか? | SDK と CLI からは既定で 5 分。直接の API とダッシュボードからは既定で期限なし |
-| 停止後に何が残りますか? | `/workspace` にマウントした [Persistent Volumes](/sandboxes/volumes) 上のファイルだけです |
+| 一時停止後に何が残りますか? | ディスク全体（`/workspace` 以外にインストールしたパッケージも含む）と、メモリ、実行中のプロセスです |
+| 停止（kill または期限切れ）後に何が残りますか? | `/workspace` の [Persistent Volumes](/sandboxes/volumes) 上のファイルと、自分で作成した[スナップショット](/sandboxes/quickstart#pause-and-resume)です。スナップショットはディスク全体を保持します |
 | 同時にいくつ実行できますか? | Pro で 100、トライアル中は 5。[アカウントの上限](/platform/limits#sandbox-account-limits) を参照してください |
 
 <span id="runtime-and-templates" />
@@ -84,7 +85,7 @@ SDK と CLI の既定の有効期間は 5 分です。API の直接呼び出し�
 
 ## 保存と課金
 
-sandbox の実行中はファイルとプロセスを維持します。停止後、別の sandbox で使えるのは、接続した Persistent Volumes の `/workspace` に保存したファイルだけです。ボリュームがなければ `/workspace` は一時領域です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。
+sandbox の実行中はファイルとプロセスを維持します。一時停止ではディスク全体（`/workspace` 以外にインストールしたパッケージも含む）と、メモリ、実行中のプロセスが保持され、再開するとすべて戻ります。スナップショットも同じ内容を保持し、元の sandbox がなくなった後でも復元できます。停止（kill または期限切れ）すると sandbox のディスクは削除され、残るのは接続した Persistent Volumes の `/workspace` 上のファイルと、自分で作成したスナップショットだけです。ボリュームがなければ `/workspace` はそのディスクの一部です。各ボリュームは同時に 1 つの sandbox に接続し、単一ノードに保存します。ノード障害後も必要なファイルは別の場所へ書き出してください。
 
 各サイズは固定の時間単価で、sandbox の実行中は秒単位で課金されます。アイドル時間も含みます。送信トラフィックはアカウントごとに直近 30 日間で [2 TB まで](/platform/limits#sandbox-egress)料金に含まれます。スナップショットから復元した sandbox は、復元元と同じサイズと料金で実行されます。一時停止が完了すると計算料金は止まります。Persistent Volumes はデータを保存している間、別途課金されます。タスクが終わったら sandbox を一時停止するか停止してください。すべてのリソースの料金は [請求ページ](/platform/billing) と [料金](https://lizard.build/pricing) に記載されています。
 

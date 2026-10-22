@@ -80,7 +80,7 @@ finally:
 
 ## Файлы
 
-`fs.write` записывает текст или байты, `fs.read` читает текст, а `fs.readBytes` (в Python: `read_bytes`) читает байты. Файлы доступны, только пока работает sandbox, если не записать их на том [Persistent Volumes](/sandboxes/volumes) в `/workspace`.
+`fs.write` записывает текст или байты, `fs.read` читает текст, а `fs.readBytes` (в Python: `read_bytes`) читает байты. Все файлы на диске переживают паузу и попадают в снимок. Kill или истечение срока удаляет диск, поэтому храните нужные потом файлы на томе [Persistent Volumes](/sandboxes/volumes) в `/workspace` или в снимке.
 
 ```ts
 await sandbox.fs.write("/tmp/task.py", "print(42)\n");

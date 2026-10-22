@@ -175,7 +175,7 @@ entries = sandbox.fs.list("/app")
 png = sandbox.fs.read_bytes("/app/chart.png")
 ```
 
-Файлы вне тома [Persistent Volumes](/sandboxes/volumes) в `/workspace` пропадают после остановки sandbox.
+Пауза и снимок сохраняют все файлы на диске, где бы вы их ни записали. После остановки (kill или истечения срока) файлы вне тома [Persistent Volumes](/sandboxes/volumes) в `/workspace` пропадают, если вы заранее не сделали снимок.
 
 <span id="ports" />
 

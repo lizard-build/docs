@@ -81,7 +81,7 @@ Ein Exit-Code ungleich null steht im Ergebnis und löst keine Exception aus: Pr�
 
 ## Dateien
 
-Schreiben Sie Text oder Bytes mit `fs.write`, lesen Sie Text mit `fs.read` und Bytes mit `fs.readBytes` (Python: `read_bytes`). Dateien bleiben nur so lange erhalten wie die Sandbox, es sei denn, Sie schreiben sie auf ein Volume aus [Persistent Volumes](/sandboxes/volumes) unter `/workspace`.
+Schreiben Sie Text oder Bytes mit `fs.write`, lesen Sie Text mit `fs.read` und Bytes mit `fs.readBytes` (Python: `read_bytes`). Jede Datei auf der Festplatte übersteht eine Pause und landet in einem Snapshot. Ein Kill oder Ablauf löscht die Festplatte; legen Sie Dateien, die Sie später brauchen, daher auf ein Volume aus [Persistent Volumes](/sandboxes/volumes) unter `/workspace` oder in einen Snapshot.
 
 ```ts
 await sandbox.fs.write("/tmp/task.py", "print(42)\n");

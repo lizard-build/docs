@@ -159,7 +159,7 @@ entries = sandbox.fs.list("/app")
 png = sandbox.fs.read_bytes("/app/chart.png")
 ```
 
-Files outside a [Persistent Volume](/sandboxes/volumes) at `/workspace` are gone after the sandbox stops.
+A pause or a snapshot keeps every file on the disk, wherever you wrote it. After a stop (kill or expiration), files outside a [Persistent Volume](/sandboxes/volumes) at `/workspace` are gone, unless you took a snapshot first.
 
 ## Ports
 

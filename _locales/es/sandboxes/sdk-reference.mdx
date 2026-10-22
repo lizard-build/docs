@@ -175,7 +175,7 @@ entries = sandbox.fs.list("/app")
 png = sandbox.fs.read_bytes("/app/chart.png")
 ```
 
-Los archivos fuera de un volumen de [Persistent Volumes](/sandboxes/volumes) en `/workspace` desaparecen cuando el sandbox se detiene.
+Una pausa o un snapshot conserva todos los archivos del disco, estén donde estén. Tras una detención (kill o expiración), los archivos fuera de un volumen de [Persistent Volumes](/sandboxes/volumes) en `/workspace` desaparecen, salvo que antes hayas tomado un snapshot.
 
 <span id="ports" />
 

@@ -82,7 +82,7 @@ finally:
 
 ## ファイル
 
-テキストまたはバイトは `fs.write` で書き込み、テキストは `fs.read` で、バイトは `fs.readBytes`（Python では `read_bytes`）で読み取ります。ファイルは sandbox が存在する間だけ残ります。ただし、`/workspace` の [Persistent Volumes](/sandboxes/volumes) に書き込んだファイルは例外です。
+テキストまたはバイトは `fs.write` で書き込み、テキストは `fs.read` で、バイトは `fs.readBytes`（Python では `read_bytes`）で読み取ります。ディスク上のファイルはすべて一時停止後も残り、スナップショットにも含まれます。kill または期限切れでディスクは削除されるため、後で必要なファイルは `/workspace` の [Persistent Volumes](/sandboxes/volumes) かスナップショットに残してください。
 
 ```ts
 await sandbox.fs.write("/tmp/task.py", "print(42)\n");

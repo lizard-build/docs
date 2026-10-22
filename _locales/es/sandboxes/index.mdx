@@ -49,7 +49,8 @@ En una prueba del 2026-10-12, la mediana del tiempo desde crear un sandbox hasta
 | ¿Qué plantillas hay? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop` y `desktop-camoufox` (solo en US East) |
 | ¿Qué tamaños hay? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, el predeterminado) y Large (8 vCPU / 16 GB); consulta [tamaños y precios](/platform/limits#sandbox-sizes) |
 | ¿Cuánto dura uno? | Cinco minutos por defecto desde el SDK y la CLI; sin vencimiento por defecto desde la API directa y el panel |
-| ¿Qué sobrevive a una detención? | Solo los archivos de un volumen de [Persistent Volumes](/sandboxes/volumes) montado en `/workspace` |
+| ¿Qué sobrevive a una pausa? | Todo el disco, incluidos los paquetes instalados fuera de `/workspace`, además de la memoria y los procesos en ejecución |
+| ¿Qué sobrevive a una detención (kill o expiración)? | Los archivos de un volumen de [Persistent Volumes](/sandboxes/volumes) en `/workspace` y cualquier [snapshot](/sandboxes/quickstart#pause-and-resume) que hayas tomado; un snapshot guarda todo el disco |
 | ¿Cuántos pueden ejecutarse a la vez? | 100 en Pro, 5 durante la prueba; consulta [límites de la cuenta](/platform/limits#sandbox-account-limits) |
 
 <span id="runtime-and-templates" />
@@ -85,7 +86,7 @@ El SDK y la CLI fijan cinco minutos de duración por defecto. La API directa y e
 
 ## Almacenamiento y facturación
 
-Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Tras detenerlo, otro sandbox solo puede recuperar los archivos escritos en un volumen de Persistent Volumes adjunto en `/workspace`. Sin volumen, `/workspace` es temporal. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
+Los archivos y procesos siguen disponibles mientras el sandbox está en ejecución. Una pausa conserva todo el disco, incluidos los paquetes instalados fuera de `/workspace`, además de la memoria y los procesos; al reanudar vuelve todo. Un snapshot guarda lo mismo y puedes restaurarlo aunque el sandbox de origen ya no exista. Una detención (kill o expiración) borra el disco del sandbox: solo quedan los archivos de un volumen de Persistent Volumes adjunto en `/workspace` y los snapshots que hayas tomado. Sin volumen, `/workspace` forma parte de ese disco. Cada volumen se adjunta a un solo sandbox y usa almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo.
 
 Cada tamaño tiene un precio fijo por hora, facturado por segundo mientras el sandbox está en marcha, incluido el tiempo inactivo. El tráfico saliente está incluido hasta [2 TB por cuenta](/platform/limits#sandbox-egress) en una ventana móvil de 30 días. Un sandbox restaurado desde un snapshot se ejecuta con el tamaño y el precio de su origen. Una pausa completada detiene los cargos de cómputo; Persistent Volumes se facturan aparte mientras guardes los datos. Pausa o detén el sandbox cuando termine la tarea. Las tarifas de cada recurso están en la [página de facturación](/platform/billing) y en [precios](https://lizard.build/pricing).
 

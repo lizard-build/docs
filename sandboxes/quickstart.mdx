@@ -63,7 +63,7 @@ A nonzero exit code is a result, not an error: check `exitCode` (Python: `exit_c
 
 ## Files
 
-Write text or bytes with `fs.write`, read text with `fs.read`, and read bytes with `fs.readBytes` (Python: `read_bytes`). Files live only as long as the sandbox, unless you write them to a [Persistent Volume](/sandboxes/volumes) at `/workspace`.
+Write text or bytes with `fs.write`, read text with `fs.read`, and read bytes with `fs.readBytes` (Python: `read_bytes`). Every file on the disk survives a pause and goes into a snapshot. A kill or expiration deletes the disk, so keep files you need later on a [Persistent Volume](/sandboxes/volumes) at `/workspace` or in a snapshot.
 
 ```ts
 await sandbox.fs.write("/tmp/task.py", "print(42)\n");

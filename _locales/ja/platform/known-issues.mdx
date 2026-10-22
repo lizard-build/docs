@@ -16,7 +16,7 @@ description: "運用前に確認すべき、現在の Sandboxes のライフサ�
 
 一時停止すると、開いているネットワーク接続は閉じられます。プロセスを保存できない場合、sandbox は実行を続け、理由を `pauseError` に記録します。
 
-sandbox の停止後に残るのは、接続した Persistent Volumes の `/workspace` 上のファイルと、自分で作成したスナップショットの中身だけです。また、ボリュームはノードローカルのストレージを使います。ノード障害後も必要なファイルは別の場所へ書き出してください。[保存と課金](/sandboxes#storage-and-billing) を参照してください。
+一時停止ではディスク全体が残ります。停止（kill または期限切れ）後に残るのは、接続した Persistent Volumes の `/workspace` 上のファイルと、自分で作成したスナップショットの中身だけです。スナップショットはディスク全体を保持します。また、ボリュームはノードローカルのストレージを使います。ノード障害後も必要なファイルは別の場所へ書き出してください。[保存と課金](/sandboxes#storage-and-billing) を参照してください。
 
 <span id="redeploy-is-not-rollback" />
 
