@@ -32,7 +32,7 @@ sandbox を作成し、その ID を表示します。
 | フラグ | 説明 |
 |------|-------------|
 | `-t, --template <name>` | テンプレート（既定値 `base`）。有効なテンプレート: `base`、`interpreter`、`codex`、`desktop`、`desktop-camoufox`（US East のみ）、`opencode`、`pi`、`prime`、`claude`。サーバーがリージョンの一覧と照合します |
-| `-s, --size <size>` | `small`、`medium`（既定値）、`large` のいずれか |
+| `-s, --size <size>` | `small`、`medium`（既定値。トライアル中は `small`）、`large` のいずれか |
 | `--timeout <ms>` | 有効期間（ミリ秒）。既定値は `300000`（5 分）で、`0` を指定すると期限がなくなります |
 | `--region <code>` | sandbox を作成するリージョン |
 | `--snapshot <id>` | 保存済みのスナップショットから起動します。`--size` とは併用できません |
@@ -50,7 +50,7 @@ Lizard は sandbox の稼働中、アイドル時間も含めてサイズごと�
 
 `--with-token` がインストールしたキーは、sandbox 内のあらゆるものから読み取れ、sandbox が削除されるまで sandbox のプロジェクトに対して使えます。
 
-トライアルまたは Pro プランが始まるまで、`create` は Checkout へのリンク付きで HTTP 402 を返します。`lizard billing start` を実行してください。トライアル中は同時に 5 個、最初の有料の請求書の後は 100 個の sandbox を実行できます。一時停止中の sandbox は数えません。[制限](/platform/limits#sandbox-account-limits)を参照してください。
+トライアルまたは Pro プランが始まるまで、`create` は Checkout へのリンク付きで HTTP 402 を返します。`lizard billing start` を実行してください。トライアル中は同時に 5 個、最初の有料の請求書の後は 100 個の sandbox を実行できます。一時停止中の sandbox は数えません。トライアル中の sandbox は `small` で US リージョンにある必要があり、ほかのサイズやリージョンでは HTTP 403 が返ります。[制限](/platform/limits#sandbox-account-limits)を参照してください。
 
 ### `lizard sandbox list`
 

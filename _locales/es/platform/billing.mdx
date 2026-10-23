@@ -59,7 +59,7 @@ Una cuenta nueva puede explorar, pero necesita Pro para crear apps, Sandboxes, b
 
 Cada cuenta y cada tarjeta tiene una prueba. Si la cuenta ya tuvo una, Pro empieza de inmediato y cobra $19 ese mismo día. Si la tarjeta ya tuvo una, la prueba no empieza y no se cobra nada; empieza Pro a $19 en la página Facturación.
 
-La prueba incluye todas las funciones de Pro, con [límites](#limits) más bajos hasta tu primera factura pagada. Hasta entonces, el diálogo **New Sandbox** del panel solo ofrece sandboxes Small en regiones de EE. UU.
+La prueba incluye todas las funciones de Pro, con [límites](#limits) más bajos hasta tu primera factura pagada. Hasta entonces, los Sandboxes solo se ejecutan con el tamaño Small y solo en regiones de EE. UU., tanto desde el panel como con Lizard CLI, Lizard SDK o Lizard MCP. Si no indicas un tamaño, el sandbox es Small. Una solicitud de Medium o Large, ya sea por nombre o al restaurar o hacer fork de un sandbox de ese tamaño, devuelve HTTP 403 con `code` igual a `TRIAL_SANDBOX_SIZE`; una solicitud con una región fuera de EE. UU. devuelve HTTP 403 con `code` igual a `TRIAL_SANDBOX_REGION`. **Start Pro now** desbloquea los demás tamaños y regiones.
 
 <span id="when-trial-credits-run-out" />
 

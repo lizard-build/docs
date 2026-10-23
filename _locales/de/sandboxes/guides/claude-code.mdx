@@ -51,7 +51,7 @@ Der Befehl gibt die Sandbox-ID aus, etwa `genuine-toddler-jasj`. Speichern Sie s
 
 - `--timeout 3600000` gibt der Sandbox eine Stunde. Der Standard der CLI sind fünf Minuten; danach löscht Lizard die Sandbox samt Dateien, auch mitten in einer Aufgabe. Eine laufende Sandbox verlängern Sie mit `lizard sandbox timeout $SB 3600000`.
 - Die Vorlage `claude` enthält Node.js 22, eine festgelegte Version von Claude Code, git, Python 3, ripgrep, curl, jq, unzip und Lizard CLI. Die Version von Claude Code prüfen Sie mit `lizard sandbox exec $SB -- claude --version`.
-- Die Standardgröße ist Medium (4 vCPU, 8 GB). Mit `--size small` oder `--size large` ändern Sie sie.
+- Die Standardgröße ist Medium (4 vCPU, 8 GB). Mit `--size small` oder `--size large` ändern Sie sie. In der Testphase ist jede Sandbox Small und läuft in einer US-Region.
 
 <span id="put-your-code-in-the-sandbox" />
 
@@ -141,6 +141,7 @@ Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes 
 | `Claude Code has no credential. Connect one of: …` | Führen Sie `lizard agents add claude` oder `lizard agents add anthropic` aus. |
 | `Claude rejected the credential (authentication_failed)` | Das Token oder der Schlüssel ist nicht mehr gültig. Erstellen Sie neue Zugangsdaten und fügen Sie sie erneut hinzu. |
 | HTTP 402 mit einem Checkout-Link bei `create` | Starten Sie die Testphase oder Pro: `lizard billing start`. |
+| HTTP 403 mit `TRIAL_SANDBOX_SIZE` oder `TRIAL_SANDBOX_REGION` bei `create` | Die Testphase erlaubt nur Small-Sandboxes in US-Regionen. Nutzen Sie `--size small` und eine `--region` in den USA, oder starten Sie Pro sofort: `lizard billing start-now`. |
 | Die Sandbox ist mitten in einer Aufgabe verschwunden | Ihre Laufzeit ist abgelaufen. Erstellen Sie die nächste mit `--timeout` oder verlängern Sie sie mit `lizard sandbox timeout`. |
 | Die Ausgabe erwähnt Codex | Der Prompt wurde ohne `--agent claude` gesendet. |
 | Ein Schritt meldet `installing Claude Code` | Die Sandbox wurde nicht aus der Vorlage `claude` erstellt, daher installiert der Runner Claude Code zuerst mit npm. |

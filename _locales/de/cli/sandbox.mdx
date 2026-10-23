@@ -32,7 +32,7 @@ Erstellt eine Sandbox und gibt ihre ID aus.
 | Flag | Beschreibung |
 |------|-------------|
 | `-t, --template <name>` | Template (Standard `base`). Aktivierte Templates: `base`, `interpreter`, `codex`, `desktop`, `desktop-camoufox` (nur US East), `opencode`, `pi`, `prime`, `claude`. Der Server prüft die Liste der Region |
-| `-s, --size <size>` | `small`, `medium` (Standard) oder `large` |
+| `-s, --size <size>` | `small`, `medium` (Standard; in der Testphase `small`) oder `large` |
 | `--timeout <ms>` | Lebensdauer in Millisekunden (Standard `300000`, fünf Minuten); `0` deaktiviert den Ablauf |
 | `--region <code>` | Region, in der die Sandbox erstellt wird |
 | `--snapshot <id>` | Aus einem gespeicherten Snapshot starten; kann nicht mit `--size` kombiniert werden |
@@ -50,7 +50,7 @@ Lizard rechnet jede Größe sekundengenau zum Festpreis ab, solange die Sandbox 
 
 Alles in der Sandbox kann den Key lesen, den `--with-token` installiert, und ihn bis zum Löschen der Sandbox für das Projekt der Sandbox nutzen.
 
-Bis deine Testphase oder dein Pro-Plan beginnt, gibt `create` HTTP 402 mit einem Checkout-Link zurück; führe `lizard billing start` aus. Während der Testphase kannst du 5 Sandboxes gleichzeitig betreiben, nach der ersten bezahlten Rechnung 100. Pausierte Sandboxes zählen nicht mit. Siehe [Limits](/platform/limits#sandbox-account-limits).
+Bis deine Testphase oder dein Pro-Plan beginnt, gibt `create` HTTP 402 mit einem Checkout-Link zurück; führe `lizard billing start` aus. Während der Testphase kannst du 5 Sandboxes gleichzeitig betreiben, nach der ersten bezahlten Rechnung 100. Pausierte Sandboxes zählen nicht mit. In der Testphase muss eine Sandbox `small` sein und in einer US-Region laufen; eine andere Größe oder Region gibt HTTP 403 zurück. Siehe [Limits](/platform/limits#sandbox-account-limits).
 
 ### `lizard sandbox list`
 

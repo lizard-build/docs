@@ -7,7 +7,7 @@ description: "Replikatlimits für Apps, Sandbox-Größen und Stundenpreise, wie 
 
 # Limits
 
-Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung mit bis zu 5 Replikaten pro Service, während der Testphase mit 1. Pro führt bis zu 100 Sandboxes gleichzeitig aus und startet bis zu 24 pro Minute; die Testphase erlaubt 5 gleichzeitig. Die Sandbox-Größen reichen von Small (2 vCPU / 4 GB) bis Large (8 vCPU / 16 GB), und ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum von 30 Tagen inklusive. Der Inhaber eines Workspace kann außerdem [Workspace-Limits](#workspace-limits) für einen einzelnen Workspace festlegen. Limits hängen von der Ressource, dem Tarif und dem Konto ab: Eine Einstellung pro Replikat entspricht nicht der insgesamt für einen Service oder ein Konto verfügbaren Kapazität. Prüfen Sie Ihren aktuellen Tarif und das Ergebnis der Erstellungs- oder Skalierungsanfrage, bevor Sie eine Workload dimensionieren.
+Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung mit bis zu 5 Replikaten pro Service, während der Testphase mit 1. Pro führt bis zu 100 Sandboxes gleichzeitig aus und startet bis zu 24 pro Minute; die Testphase erlaubt 5 gleichzeitig, nur in der Größe Small und nur in US-Regionen. Die Sandbox-Größen reichen von Small (2 vCPU / 4 GB) bis Large (8 vCPU / 16 GB), und ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum von 30 Tagen inklusive. Der Inhaber eines Workspace kann außerdem [Workspace-Limits](#workspace-limits) für einen einzelnen Workspace festlegen. Limits hängen von der Ressource, dem Tarif und dem Konto ab: Eine Einstellung pro Replikat entspricht nicht der insgesamt für einen Service oder ein Konto verfügbaren Kapazität. Prüfen Sie Ihren aktuellen Tarif und das Ergebnis der Erstellungs- oder Skalierungsanfrage, bevor Sie eine Workload dimensionieren.
 
 <span id="applications" />
 
@@ -36,10 +36,10 @@ Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung
 | Größe | CPU und Arbeitsspeicher | Festplatte | Preis während der Laufzeit |
 |---|---|---|---|
 | Small | 2 vCPU / 4 GB | 5 GB | $0.0162 pro Stunde |
-| Medium (Standard) | 4 vCPU / 8 GB | 20 GB | $0.0324 pro Stunde |
+| Medium (Standard außerhalb der Testphase) | 4 vCPU / 8 GB | 20 GB | $0.0324 pro Stunde |
 | Large | 8 vCPU / 16 GB | 50 GB | $0.0648 pro Stunde |
 
-CPU und Arbeitsspeicher sind im Preis enthalten. Persistent Volumes werden separat abgerechnet.
+CPU und Arbeitsspeicher sind im Preis enthalten. Persistent Volumes werden separat abgerechnet. In der Testphase ist Small die Standard- und einzige Größe, und Sandboxes laufen nur in US-Regionen; siehe [Abrechnung](/platform/billing#trial).
 
 <span id="sandbox-account-limits" />
 

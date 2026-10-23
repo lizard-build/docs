@@ -78,7 +78,7 @@ sandbox = Sandbox.create(
 ```
 
 - Первым аргументом передайте шаблон из каталога в разделе [runtime и шаблоны](/sandboxes#runtime-and-templates). Без него SDK запускает `base`.
-- `size` принимает `'small'`, `'medium'` или `'large'`: 2 vCPU / 4 GB, 4 vCPU / 8 GB (по умолчанию) или 8 vCPU / 16 GB; см. [размеры и цены](/platform/limits#sandbox-sizes). Для sandbox, восстановленного из снимка, `size` не действует: он работает с размером источника.
+- `size` принимает `'small'`, `'medium'` или `'large'`: 2 vCPU / 4 GB, 4 vCPU / 8 GB (по умолчанию) или 8 vCPU / 16 GB; см. [размеры и цены](/platform/limits#sandbox-sizes). В пробном периоде `'small'` — размер по умолчанию и единственный, и работают только регионы США; другой размер или регион вызывает `AuthenticationError` с HTTP 403. Для sandbox, восстановленного из снимка, `size` не действует: он работает с размером источника.
 - `timeoutMs` по умолчанию равен 300000, то есть пяти минутам. `0` отключает истечение срока. См. [ресурсы и сроки жизни](/sandboxes#resources-and-timeouts).
 - При необходимости укажите регион явно; наличие региона в каталоге не гарантирует свободные ресурсы. Не задавайте `region`, если подключаете том: sandbox запустится там, где находится том.
 - В `metadata` укажите свои метки; их возвращает `getInfo()`, а `list()` — нет.
@@ -279,7 +279,7 @@ sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workd
 | Ошибка | Значение |
 |---|---|
 | `PaymentRequiredError` | HTTP 402: аккаунту нужно подключить Pro или оплатить счёт, прежде чем что-то создавать. В `url` указан адрес страницы, которую нужно открыть. |
-| `AuthenticationError` | HTTP 401 или 403: неверный ключ или нет доступа. |
+| `AuthenticationError` | HTTP 401 или 403: неверный ключ или нет доступа. В пробном периоде API отвечает 403 и на размер, отличный от Small, или регион за пределами США: `code` равен `TRIAL_SANDBOX_SIZE` или `TRIAL_SANDBOX_REGION`. |
 | `NotFoundError` | HTTP 404: sandbox, файл или снимок не существует либо его срок истёк. |
 | `ConflictError` | HTTP 409: конфликт состояния, например fork sandbox с томом. |
 | `LimitExceededError` | HTTP 429: слишком много sandbox одновременно или слишком много запусков. `code` указывает лимит, например `SANDBOX_LIMIT_REACHED` или `SANDBOX_RATE_LIMITED`; `retryAfterS` (в Python: `retry_after_s`) указывает, когда повторить попытку. |

@@ -32,7 +32,7 @@ Crea un sandbox y muestra su ID.
 | Bandera | Descripción |
 |------|-------------|
 | `-t, --template <name>` | Plantilla (por defecto `base`). Plantillas habilitadas: `base`, `interpreter`, `codex`, `desktop`, `desktop-camoufox` (solo en US East), `opencode`, `pi`, `prime`, `claude`. El servidor comprueba la lista de la región |
-| `-s, --size <size>` | `small`, `medium` (por defecto) o `large` |
+| `-s, --size <size>` | `small`, `medium` (por defecto; `small` durante la prueba) o `large` |
 | `--timeout <ms>` | Duración en milisegundos (por defecto `300000`, cinco minutos); `0` desactiva la caducidad |
 | `--region <code>` | Región donde crear el sandbox |
 | `--snapshot <id>` | Partir de un snapshot guardado; no se puede combinar con `--size` |
@@ -50,7 +50,7 @@ Lizard factura cada tamaño por segundo con una tarifa fija mientras el sandbox 
 
 Cualquier proceso dentro del sandbox puede leer la clave que instala `--with-token` y usarla en el proyecto del sandbox hasta que se elimine el sandbox.
 
-Hasta que empiece tu prueba o tu plan Pro, `create` devuelve HTTP 402 con un enlace de Checkout; ejecuta `lizard billing start`. Durante la prueba puedes ejecutar 5 sandboxes a la vez, y 100 después de la primera factura pagada. Los sandboxes en pausa no cuentan. Consulta [Límites](/platform/limits#sandbox-account-limits).
+Hasta que empiece tu prueba o tu plan Pro, `create` devuelve HTTP 402 con un enlace de Checkout; ejecuta `lizard billing start`. Durante la prueba puedes ejecutar 5 sandboxes a la vez, y 100 después de la primera factura pagada. Los sandboxes en pausa no cuentan. Durante la prueba, un sandbox debe ser `small` y estar en una región de EE. UU.; otro tamaño u otra región devuelve HTTP 403. Consulta [Límites](/platform/limits#sandbox-account-limits).
 
 ### `lizard sandbox list`
 

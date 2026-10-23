@@ -78,7 +78,7 @@ sandbox = Sandbox.create(
 ```
 
 - Das erste Argument ist eine Vorlage aus dem Katalog unter [Laufzeit und Vorlagen](/sandboxes#runtime-and-templates). Ohne Angabe startet das SDK `base`.
-- `size` ist `'small'`, `'medium'` oder `'large'`: 2 vCPU / 4 GB, 4 vCPU / 8 GB (Standard) oder 8 vCPU / 16 GB; siehe [Größen und Preise](/platform/limits#sandbox-sizes). Für eine aus einem Snapshot wiederhergestellte Sandbox gilt `size` nicht; sie läuft in der Größe ihrer Quelle.
+- `size` ist `'small'`, `'medium'` oder `'large'`: 2 vCPU / 4 GB, 4 vCPU / 8 GB (Standard) oder 8 vCPU / 16 GB; siehe [Größen und Preise](/platform/limits#sandbox-sizes). In der Testphase ist `'small'` die Standard- und einzige Größe, und nur US-Regionen funktionieren; eine andere Größe oder Region löst `AuthenticationError` mit HTTP 403 aus. Für eine aus einem Snapshot wiederhergestellte Sandbox gilt `size` nicht; sie läuft in der Größe ihrer Quelle.
 - `timeoutMs` beträgt standardmäßig 300000, also fünf Minuten. `0` deaktiviert den Ablauf. Siehe [Ressourcen und Laufzeit](/sandboxes#resources-and-timeouts).
 - Geben Sie bei Bedarf eine Region an; ein Katalogeintrag garantiert keine freie Kapazität. Lassen Sie `region` leer, wenn Sie ein Volume anhängen: Die Sandbox läuft dort, wo das Volume liegt.
 - `metadata` sind Ihre eigenen Labels; `getInfo()` gibt sie zurück, `list()` nicht.
@@ -279,7 +279,7 @@ Fehlgeschlagene API-Aufrufe lösen diese Fehler aus (Python: raise). Jeder enth�
 | Fehler | Bedeutung |
 |---|---|
 | `PaymentRequiredError` | HTTP 402: Das Konto muss Pro starten oder eine Rechnung bezahlen, bevor es etwas erstellen kann. `url` ist die Seite, die Sie öffnen. |
-| `AuthenticationError` | HTTP 401 oder 403: ungültiger Schlüssel oder kein Zugriff. |
+| `AuthenticationError` | HTTP 401 oder 403: ungültiger Schlüssel oder kein Zugriff. In der Testphase gibt auch eine andere Größe als Small oder eine Region außerhalb der USA 403 zurück, mit `code` gleich `TRIAL_SANDBOX_SIZE` oder `TRIAL_SANDBOX_REGION`. |
 | `NotFoundError` | HTTP 404: Die Sandbox, Datei oder der Snapshot existiert nicht oder ist abgelaufen. |
 | `ConflictError` | HTTP 409: widersprüchlicher Zustand, etwa beim Forken einer Sandbox mit Volume. |
 | `LimitExceededError` | HTTP 429: zu viele Sandboxes gleichzeitig oder zu viele Starts. `code` nennt das Limit, etwa `SANDBOX_LIMIT_REACHED` oder `SANDBOX_RATE_LIMITED`; `retryAfterS` (Python: `retry_after_s`) sagt, wann Sie es erneut versuchen können. |

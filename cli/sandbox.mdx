@@ -28,7 +28,7 @@ Create a sandbox and print its ID.
 | Flag | Description |
 |------|-------------|
 | `-t, --template <name>` | Template (default `base`). Enabled templates: `base`, `interpreter`, `codex`, `desktop`, `desktop-camoufox` (US East only), `opencode`, `pi`, `prime`, `claude`. The server checks the region's list |
-| `-s, --size <size>` | `small`, `medium` (default), or `large` |
+| `-s, --size <size>` | `small`, `medium` (default; `small` during the trial), or `large` |
 | `--timeout <ms>` | Lifetime in milliseconds (default `300000`, five minutes); `0` disables expiration |
 | `--region <code>` | Region to create the sandbox in |
 | `--snapshot <id>` | Start from a saved snapshot; can't be combined with `--size` |
@@ -46,7 +46,7 @@ Lizard bills each size per second at a flat rate while it runs, including idle t
 
 Anything in the sandbox can read the key that `--with-token` installs and use it on the sandbox's project until the sandbox is deleted.
 
-Until your trial or Pro plan starts, `create` returns HTTP 402 with a Checkout link; run `lizard billing start`. During the trial you can run 5 sandboxes at once, and 100 after the first paid invoice. Paused sandboxes don't count. See [Limits](/platform/limits#sandbox-account-limits).
+Until your trial or Pro plan starts, `create` returns HTTP 402 with a Checkout link; run `lizard billing start`. During the trial you can run 5 sandboxes at once, and 100 after the first paid invoice. Paused sandboxes don't count. During the trial, a sandbox must be `small` and in a US region; another size or region returns HTTP 403. See [Limits](/platform/limits#sandbox-account-limits).
 
 ### `lizard sandbox list`
 

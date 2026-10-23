@@ -61,7 +61,7 @@ Mit einem neuen Konto können Sie sich umsehen, aber um Apps, Sandboxes, Datenba
 
 Jedes Konto und jede Karte bekommt eine Testphase. Hatte das Konto schon eine, beginnt Pro sofort, und $19 werden am selben Tag belastet. Hatte die Karte schon eine, startet die Testphase nicht, und es wird nichts belastet; starten Sie Pro für $19 auf der Seite „Abrechnung“.
 
-Die Testphase enthält alle Funktionen von Pro, mit niedrigeren [Limits](#limits) bis zur ersten bezahlten Rechnung. Bis dahin bietet der Dialog **New Sandbox** im Dashboard nur Small-Sandboxes in US-Regionen an.
+Die Testphase enthält alle Funktionen von Pro, mit niedrigeren [Limits](#limits) bis zur ersten bezahlten Rechnung. Bis dahin laufen Sandboxes nur in der Größe Small und nur in US-Regionen, ob über das Dashboard, Lizard CLI, Lizard SDK oder Lizard MCP. Ein Create ohne Größe startet eine Small-Sandbox. Eine Anfrage mit Medium oder Large, ob direkt angegeben oder durch Wiederherstellen oder Forken einer solchen Sandbox, gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_SIZE` zurück; eine Anfrage mit einer Region außerhalb der USA gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_REGION` zurück. **Start Pro now** schaltet die anderen Größen und Regionen frei.
 
 <span id="when-trial-credits-run-out" />
 

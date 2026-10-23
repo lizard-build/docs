@@ -78,7 +78,7 @@ sandbox = Sandbox.create(
 ```
 
 - El primer argumento es una plantilla del catálogo de [runtime y plantillas](/sandboxes#runtime-and-templates). Sin él, el SDK arranca `base`.
-- `size` es `'small'`, `'medium'` o `'large'`: 2 vCPU / 4 GB, 4 vCPU / 8 GB (el predeterminado) u 8 vCPU / 16 GB; consulta [tamaños y precios](/platform/limits#sandbox-sizes). `size` no se aplica a un sandbox restaurado desde un snapshot; se ejecuta con el tamaño de su origen.
+- `size` es `'small'`, `'medium'` o `'large'`: 2 vCPU / 4 GB, 4 vCPU / 8 GB (el predeterminado) u 8 vCPU / 16 GB; consulta [tamaños y precios](/platform/limits#sandbox-sizes). Durante la prueba, `'small'` es el tamaño predeterminado y el único, y solo funcionan las regiones de EE. UU.; otro tamaño u otra región lanza `AuthenticationError` con HTTP 403. `size` no se aplica a un sandbox restaurado desde un snapshot; se ejecuta con el tamaño de su origen.
 - `timeoutMs` es 300000 por defecto, cinco minutos. `0` desactiva la caducidad. Consulta [recursos y duración](/sandboxes#resources-and-timeouts).
 - Indica la región de forma explícita si hace falta; que aparezca en el catálogo no garantiza capacidad libre. No indiques `region` cuando adjuntes un volumen: el sandbox se ejecuta donde está el volumen.
 - `metadata` son tus propias etiquetas; `getInfo()` las devuelve, `list()` no.
@@ -279,7 +279,7 @@ Los fallos de la API lanzan (Python: raise) estos errores. Cada uno incluye el e
 | Error | Significado |
 |---|---|
 | `PaymentRequiredError` | HTTP 402: la cuenta debe empezar Pro o pagar una factura antes de poder crear nada. `url` es la página que hay que abrir. |
-| `AuthenticationError` | HTTP 401 o 403: clave no válida o sin acceso. |
+| `AuthenticationError` | HTTP 401 o 403: clave no válida o sin acceso. Durante la prueba, un tamaño distinto de Small o una región fuera de EE. UU. también devuelve 403, con `code` igual a `TRIAL_SANDBOX_SIZE` o `TRIAL_SANDBOX_REGION`. |
 | `NotFoundError` | HTTP 404: el sandbox, el archivo o el snapshot no existe o ha vencido. |
 | `ConflictError` | HTTP 409: estado en conflicto, como hacer fork de un sandbox con volumen. |
 | `LimitExceededError` | HTTP 429: demasiados sandboxes a la vez o demasiados inicios. `code` indica qué límite, como `SANDBOX_LIMIT_REACHED` o `SANDBOX_RATE_LIMITED`; `retryAfterS` (Python: `retry_after_s`) indica cuándo volver a intentarlo. |

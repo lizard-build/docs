@@ -7,7 +7,7 @@ description: "Límites de réplicas de apps, tamaños y precios por hora de los 
 
 # Límites
 
-En Lizard (lizard.build), una app ejecuta hasta 5 réplicas por servicio tras la primera factura pagada de Pro, y 1 durante la prueba. Pro ejecuta hasta 100 sandboxes a la vez e inicia hasta 24 por minuto; la prueba permite 5 a la vez. Los tamaños de sandbox van de Small (2 vCPU / 4 GB) a Large (8 vCPU / 16 GB), y el tráfico de salida de los sandboxes está incluido hasta 2 TB por cuenta en un periodo móvil de 30 días. El propietario de un espacio de trabajo también puede fijar [límites del espacio de trabajo](#workspace-limits) para uno solo. Los límites dependen del recurso, el plan y la cuenta: una configuración por réplica no es el total disponible para un servicio o una cuenta. Consulta tu plan actual y el resultado de la solicitud de creación o escalado antes de dimensionar una carga de trabajo.
+En Lizard (lizard.build), una app ejecuta hasta 5 réplicas por servicio tras la primera factura pagada de Pro, y 1 durante la prueba. Pro ejecuta hasta 100 sandboxes a la vez e inicia hasta 24 por minuto; la prueba permite 5 a la vez, solo de tamaño Small y solo en regiones de EE. UU. Los tamaños de sandbox van de Small (2 vCPU / 4 GB) a Large (8 vCPU / 16 GB), y el tráfico de salida de los sandboxes está incluido hasta 2 TB por cuenta en un periodo móvil de 30 días. El propietario de un espacio de trabajo también puede fijar [límites del espacio de trabajo](#workspace-limits) para uno solo. Los límites dependen del recurso, el plan y la cuenta: una configuración por réplica no es el total disponible para un servicio o una cuenta. Consulta tu plan actual y el resultado de la solicitud de creación o escalado antes de dimensionar una carga de trabajo.
 
 <span id="applications" />
 
@@ -32,10 +32,10 @@ En Lizard (lizard.build), una app ejecuta hasta 5 réplicas por servicio tras la
 | Tamaño | CPU y memoria | Disco | Precio mientras se ejecuta |
 |---|---|---|---|
 | Small | 2 vCPU / 4 GB | 5 GB | $0.0162 por hora |
-| Medium (predeterminado) | 4 vCPU / 8 GB | 20 GB | $0.0324 por hora |
+| Medium (predeterminado fuera de la prueba) | 4 vCPU / 8 GB | 20 GB | $0.0324 por hora |
 | Large | 8 vCPU / 16 GB | 50 GB | $0.0648 por hora |
 
-La CPU y la memoria están incluidas en el precio. Los Persistent Volumes se facturan aparte.
+La CPU y la memoria están incluidas en el precio. Los Persistent Volumes se facturan aparte. Durante la prueba, Small es el tamaño predeterminado y el único, y los sandboxes solo se ejecutan en regiones de EE. UU.; consulta [Facturación](/platform/billing#trial).
 
 <span id="sandbox-account-limits" />
 

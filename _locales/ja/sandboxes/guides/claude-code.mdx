@@ -51,7 +51,7 @@ lizard sandbox create -t claude --timeout 3600000
 
 - `--timeout 3600000` で sandbox の有効期間を 1 時間にします。CLI の既定値は 5 分で、それを過ぎると Lizard は sandbox とそのファイルを、タスクの途中でも削除します。実行中の sandbox は `lizard sandbox timeout $SB 3600000` で延長できます。
 - `claude` テンプレートには Node.js 22、バージョンを固定した Claude Code、git、Python 3、ripgrep、curl、jq、unzip、Lizard CLI が入っています。Claude Code のバージョンは `lizard sandbox exec $SB -- claude --version` で確認できます。
-- 既定のサイズは Medium（4 vCPU、8 GB）です。変えるには `--size small` または `--size large` を渡します。
+- 既定のサイズは Medium（4 vCPU、8 GB）です。変えるには `--size small` または `--size large` を渡します。トライアル中の sandbox はすべて Small で、US リージョンで動きます。
 
 <span id="put-your-code-in-the-sandbox" />
 
@@ -141,6 +141,7 @@ lizard sandbox rm $SB
 | `Claude Code has no credential. Connect one of: …` | `lizard agents add claude` または `lizard agents add anthropic` を実行します。 |
 | `Claude rejected the credential (authentication_failed)` | トークンまたはキーが無効になっています。新しく作成して、もう一度追加してください。 |
 | `create` で Checkout リンク付きの HTTP 402 が返る | トライアルまたは Pro を開始します: `lizard billing start`。 |
+| `create` で `TRIAL_SANDBOX_SIZE` または `TRIAL_SANDBOX_REGION` 付きの HTTP 403 が返る | トライアルでは US リージョンの Small sandbox しか使えません。`--size small` と US の `--region` を指定するか、すぐに Pro を始めます: `lizard billing start-now`。 |
 | タスクの途中で sandbox が消えた | 有効期間が切れました。次は `--timeout` を付けて作成するか、`lizard sandbox timeout` で延長してください。 |
 | 出力に Codex が出てくる | `--agent claude` なしでプロンプトが送られました。 |
 | `installing Claude Code` というステップが表示される | sandbox が `claude` テンプレートから作成されていないため、ランナーが先に npm で Claude Code をインストールしています。 |

@@ -51,7 +51,7 @@ You can browse with a new account, but you need Pro to create apps, Sandboxes, d
 
 Each account and each card gets one trial. If the account had one before, Pro starts at once and charges $19 that day. If the card had one, the trial does not start and nothing is charged; start Pro at $19 on the Billing page.
 
-The trial includes every Pro feature, with lower [limits](#limits) until your first paid invoice. Until then, the **New Sandbox** dialog in the dashboard offers only Small sandboxes in US regions.
+The trial includes every Pro feature, with lower [limits](#limits) until your first paid invoice. Until then, Sandboxes run only at the Small size and only in US regions, from the dashboard, Lizard CLI, Lizard SDK or Lizard MCP alike. A create with no size gets Small. Asking for Medium or Large, by name or by restoring or forking such a sandbox, returns HTTP 403 with `code` set to `TRIAL_SANDBOX_SIZE`; asking for a region outside the US returns HTTP 403 with `code` set to `TRIAL_SANDBOX_REGION`. **Start Pro now** unlocks the other sizes and regions.
 
 ### When trial credits run out
 

@@ -78,7 +78,7 @@ sandbox = Sandbox.create(
 ```
 
 - 最初の引数は、[ランタイムとテンプレート](/sandboxes#runtime-and-templates) にあるカタログのテンプレートです。指定しない場合、SDK は `base` を起動します。
-- `size` は `'small'`、`'medium'`、`'large'` のいずれかで、それぞれ 2 vCPU / 4 GB、4 vCPU / 8 GB (既定)、8 vCPU / 16 GB です。[サイズと料金](/platform/limits#sandbox-sizes)を参照してください。スナップショットから復元した sandbox には `size` は適用されず、元の sandbox のサイズで動作します。
+- `size` は `'small'`、`'medium'`、`'large'` のいずれかで、それぞれ 2 vCPU / 4 GB、4 vCPU / 8 GB (既定)、8 vCPU / 16 GB です。[サイズと料金](/platform/limits#sandbox-sizes)を参照してください。トライアル中は `'small'` が既定かつ唯一のサイズで、使えるのは US リージョンだけです。ほかのサイズやリージョンでは HTTP 403 の `AuthenticationError` が投げられます。スナップショットから復元した sandbox には `size` は適用されず、元の sandbox のサイズで動作します。
 - `timeoutMs` の既定は 300000（5 分）です。`0` は期限を無効にします。[リソースと有効期間](/sandboxes#resources-and-timeouts) を参照してください。
 - 必要に応じてリージョンを指定してください。カタログへの掲載は空き容量を保証しません。ボリュームを接続する場合は `region` を指定しないでください: sandbox はボリュームのある場所で実行されます。
 - `metadata` は独自のラベルです。`getInfo()` はこれを返しますが、`list()` は返しません。
@@ -279,7 +279,7 @@ API の失敗時には、以下のエラーが投げられます（Python では
 | エラー | 意味 |
 |---|---|
 | `PaymentRequiredError` | HTTP 402: 何かを作成する前に、アカウントで Pro を開始するか請求書を支払う必要があります。`url` は開くべきページです。 |
-| `AuthenticationError` | HTTP 401 または 403: キーが無効か、アクセス権がありません。 |
+| `AuthenticationError` | HTTP 401 または 403: キーが無効か、アクセス権がありません。トライアル中に Small 以外のサイズや US 以外のリージョンを指定した場合も 403 になり、`code` は `TRIAL_SANDBOX_SIZE` または `TRIAL_SANDBOX_REGION` です。 |
 | `NotFoundError` | HTTP 404: sandbox、ファイル、スナップショットが存在しないか、期限切れです。 |
 | `ConflictError` | HTTP 409: ボリュームが接続された sandbox の fork など、状態の競合。 |
 | `LimitExceededError` | HTTP 429: 同時に実行する sandbox が多すぎるか、起動が多すぎます。`code` はどの上限かを示します（`SANDBOX_LIMIT_REACHED` や `SANDBOX_RATE_LIMITED` など）。`retryAfterS`（Python では `retry_after_s`）は再試行できるまでの時間を示します。 |

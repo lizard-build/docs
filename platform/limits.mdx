@@ -5,7 +5,7 @@ description: "App replica limits, sandbox sizes and hourly prices, how many sand
 
 # Limits
 
-On Lizard, an app runs up to 5 replicas per service after the first paid Pro invoice, and 1 during the trial. Pro runs up to 100 sandboxes at once and starts up to 24 a minute; the trial allows 5 at once. Sandbox sizes run from Small (2 vCPU / 4 GB) to Large (8 vCPU / 16 GB), and sandbox egress is included up to 2 TB per account over a rolling 30 days. A workspace owner can also set [workspace limits](#workspace-limits) for one workspace. Limits depend on the resource, plan, and account: a per-replica setting is not the total available to a service or an account. Check your plan and the result of the create or scale request before choosing resources.
+On Lizard, an app runs up to 5 replicas per service after the first paid Pro invoice, and 1 during the trial. Pro runs up to 100 sandboxes at once and starts up to 24 a minute; the trial allows 5 at once, only Small and only in US regions. Sandbox sizes run from Small (2 vCPU / 4 GB) to Large (8 vCPU / 16 GB), and sandbox egress is included up to 2 TB per account over a rolling 30 days. A workspace owner can also set [workspace limits](#workspace-limits) for one workspace. Limits depend on the resource, plan, and account: a per-replica setting is not the total available to a service or an account. Check your plan and the result of the create or scale request before choosing resources.
 
 ## Applications
 
@@ -28,10 +28,10 @@ On Lizard, an app runs up to 5 replicas per service after the first paid Pro inv
 | Size | CPU and memory | Disk | Price while running |
 |---|---|---|---|
 | Small | 2 vCPU / 4 GB | 5 GB | $0.0162 per hour |
-| Medium (default) | 4 vCPU / 8 GB | 20 GB | $0.0324 per hour |
+| Medium (default outside the trial) | 4 vCPU / 8 GB | 20 GB | $0.0324 per hour |
 | Large | 8 vCPU / 16 GB | 50 GB | $0.0648 per hour |
 
-CPU and memory are included in the price. Persistent Volumes are billed separately.
+CPU and memory are included in the price. Persistent Volumes are billed separately. During the trial, Small is the default and only size, and sandboxes run only in US regions; see [Billing](/platform/billing#trial).
 
 <span id="sandbox-account-limits" />
 

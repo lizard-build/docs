@@ -48,7 +48,7 @@ Sandboxes в Lizard (lizard.build) выполняют код и задачи AI-
 | Что выполняет код? | Firecracker microVM со своим ядром; см. [runtime и шаблоны](#runtime-and-templates) |
 | Как создать sandbox? | [Lizard SDK](/sandboxes/sdk-reference), [`lizard sandbox`](/cli/sandbox), [кабинет](/sandboxes/dashboard) или [HTTP API](/sandboxes/sdk-reference#http-api) |
 | Какие есть шаблоны? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop` и `desktop-camoufox` (только US East) |
-| Какие есть размеры? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, по умолчанию) и Large (8 vCPU / 16 GB); см. [размеры и цены](/platform/limits#sandbox-sizes) |
+| Какие есть размеры? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, по умолчанию) и Large (8 vCPU / 16 GB). В пробном периоде доступен только Small в регионах США. См. [размеры и цены](/platform/limits#sandbox-sizes) |
 | Сколько живёт sandbox? | По умолчанию пять минут при создании из SDK и CLI; без срока по умолчанию из прямого API и кабинета |
 | Что сохраняется после паузы? | Весь диск, включая пакеты, установленные вне `/workspace`, а также память и запущенные процессы |
 | Что сохраняется после остановки (kill или истечения срока)? | Файлы на томе [Persistent Volumes](/sandboxes/volumes) в `/workspace` и [снимки](/sandboxes/quickstart#pause-and-resume), которые вы сделали; снимок хранит весь диск |
@@ -79,7 +79,7 @@ snapshot -> new sandbox (restore)
 
 ## Ресурсы и сроки жизни
 
-Выберите размер при создании sandbox: Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, по умолчанию) или Large (8 vCPU / 16 GB). См. [размеры и цены](/platform/limits#sandbox-sizes). При необходимости укажите регион явно; наличие региона в каталоге не гарантирует свободные ресурсы.
+Выберите размер при создании sandbox: Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, по умолчанию) или Large (8 vCPU / 16 GB). В пробном периоде каждый sandbox имеет размер Small и работает в регионе США. См. [размеры и цены](/platform/limits#sandbox-sizes). При необходимости укажите регион явно; наличие региона в каталоге не гарантирует свободные ресурсы.
 
 SDK и CLI по умолчанию задают срок жизни пять минут. Прямой API и кабинет по умолчанию не задают срок. Укажите его явно: `timeoutMs: 0` при создании отключает истечение срока; положительное значение задаёт срок жизни. `setTimeout` принимает 1000–2147483647 мс, но не ноль. Команды не продлевают срок. Это не таймер простоя.
 

@@ -51,7 +51,7 @@ lizard sandbox create -t claude --timeout 3600000
 
 - `--timeout 3600000` даёт sandbox один час. В CLI по умолчанию это пять минут, после чего Lizard удаляет sandbox вместе с файлами, даже посреди задачи. Продлить работающий sandbox можно командой `lizard sandbox timeout $SB 3600000`.
 - В шаблоне `claude` есть Node.js 22, закреплённый релиз Claude Code, git, Python 3, ripgrep, curl, jq, unzip и Lizard CLI. Версию Claude Code покажет `lizard sandbox exec $SB -- claude --version`.
-- По умолчанию используется размер Medium (4 vCPU, 8 ГБ). Чтобы изменить его, передайте `--size small` или `--size large`.
+- По умолчанию используется размер Medium (4 vCPU, 8 ГБ). Чтобы изменить его, передайте `--size small` или `--size large`. В пробном периоде каждый sandbox имеет размер Small и работает в регионе США.
 
 <span id="put-your-code-in-the-sandbox" />
 
@@ -141,6 +141,7 @@ lizard sandbox rm $SB
 | `Claude Code has no credential. Connect one of: …` | Выполните `lizard agents add claude` или `lizard agents add anthropic`. |
 | `Claude rejected the credential (authentication_failed)` | Токен или ключ больше не действует. Создайте новый и добавьте его снова. |
 | HTTP 402 со ссылкой на Checkout при `create` | Начните пробный период или Pro: `lizard billing start`. |
+| HTTP 403 с `TRIAL_SANDBOX_SIZE` или `TRIAL_SANDBOX_REGION` при `create` | В пробном периоде работают только sandbox размера Small в регионах США. Укажите `--size small` и `--region` в США или сразу начните Pro: `lizard billing start-now`. |
 | Sandbox пропал посреди задачи | Истёк его срок жизни. Создайте следующий с `--timeout` или продлите срок командой `lizard sandbox timeout`. |
 | В выводе упоминается Codex | Промпт ушёл без `--agent claude`. |
 | На одном из шагов написано `installing Claude Code` | Sandbox создан не из шаблона `claude`, поэтому раннер сначала ставит Claude Code через npm. |
