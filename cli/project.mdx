@@ -13,7 +13,7 @@ lizard project list [flags]
 lizard project create <name> [flags]
 lizard project pause [project]
 lizard project resume [project]
-lizard project delete [project] [flags]
+lizard project delete <project> [flags]
 ```
 
 ## Subcommands
@@ -42,13 +42,13 @@ Pause every app and database in the project, and its running sandboxes. Services
 
 Resume the apps and databases you paused in the project, and the sandboxes that `project pause` paused.
 
-### `lizard project delete [project]`
+### `lizard project delete <project>`
 
 Move a project to trash (alias `rm`). Only the project owner can delete it. Its services and databases stop; you can restore them from the trash in the dashboard for 3 days, after which Lizard deletes them for good.
 
 > **Warning:** Sandboxes have no trash. `project delete` deletes the project's sandboxes, their volumes and their snapshots at once, and you can't get them back.
 
-Without an argument, `pause`, `resume` and `delete` use the project linked to this folder or, in an unlinked folder, your account's default project. Name the project when you delete one, so you know which one goes.
+`delete` needs the project named. It never falls back to the folder's linked project or your account's default project. Without an argument, `pause` and `resume` use the project linked to this folder or, in an unlinked folder, your account's default project.
 
 | Flag | Description |
 |------|-------------|

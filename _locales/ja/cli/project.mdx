@@ -15,7 +15,7 @@ lizard project list [flags]
 lizard project create <name> [flags]
 lizard project pause [project]
 lizard project resume [project]
-lizard project delete [project] [flags]
+lizard project delete <project> [flags]
 ```
 
 <span id="subcommands" />
@@ -46,13 +46,13 @@ lizard project delete [project] [flags]
 
 プロジェクト内であなたが一時停止したアプリとデータベース、および `project pause` が一時停止した sandbox を再開します。
 
-### `lizard project delete [project]`
+### `lizard project delete <project>`
 
 プロジェクトをゴミ箱に移動します (別名 `rm`)。削除できるのはプロジェクトのオーナーだけです。プロジェクトのサービスとデータベースは停止し、3 日間はダッシュボードのゴミ箱から復元できます。その後 Lizard が完全に削除します。
 
 > **警告:** sandbox にはゴミ箱がありません。`project delete` はプロジェクトの sandbox、そのボリューム、スナップショットをすぐに削除し、元に戻せません。
 
-引数を省略すると、`pause`、`resume`、`delete` はこのディレクトリにリンクされたプロジェクトを使います。リンクされていないディレクトリでは、アカウントのデフォルトプロジェクトを使います。どのプロジェクトが削除されるか確実にするため、削除するときはプロジェクト名を指定してください。
+`delete` にはプロジェクト名が必須です。ディレクトリにリンクされたプロジェクトやアカウントのデフォルトプロジェクトを代わりに使うことはありません。引数を省略すると、`pause` と `resume` はこのディレクトリにリンクされたプロジェクトを使います。リンクされていないディレクトリでは、アカウントのデフォルトプロジェクトを使います。
 
 | フラグ | 説明 |
 |------|-------------|

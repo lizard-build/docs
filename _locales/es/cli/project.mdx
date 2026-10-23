@@ -15,7 +15,7 @@ lizard project list [flags]
 lizard project create <name> [flags]
 lizard project pause [project]
 lizard project resume [project]
-lizard project delete [project] [flags]
+lizard project delete <project> [flags]
 ```
 
 <span id="subcommands" />
@@ -46,13 +46,13 @@ Pausa todas las apps y bases de datos del proyecto, y sus sandboxes en ejecució
 
 Reanuda las apps y bases de datos que pausaste en el proyecto, y los sandboxes que pausó `project pause`.
 
-### `lizard project delete [project]`
+### `lizard project delete <project>`
 
 Mueve un proyecto a la papelera (alias `rm`). Solo el propietario del proyecto puede eliminarlo. Sus servicios y bases de datos se detienen; puedes restaurarlos desde la papelera en el panel durante 3 días, y pasado ese plazo Lizard los elimina definitivamente.
 
 > **Advertencia:** los sandboxes no tienen papelera. `project delete` elimina al instante los sandboxes del proyecto, sus volúmenes y sus snapshots, y no puedes recuperarlos.
 
-Sin argumento, `pause`, `resume` y `delete` usan el proyecto vinculado a este directorio o, en un directorio sin vincular, el proyecto predeterminado de tu cuenta. Indica el nombre del proyecto al eliminarlo, para saber cuál se elimina.
+`delete` necesita el nombre del proyecto. Nunca usa el proyecto vinculado al directorio ni el proyecto predeterminado de tu cuenta. Sin argumento, `pause` y `resume` usan el proyecto vinculado a este directorio o, en un directorio sin vincular, el proyecto predeterminado de tu cuenta.
 
 | Flag | Descripción |
 |------|-------------|
