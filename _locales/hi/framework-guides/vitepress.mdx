@@ -8,7 +8,9 @@ Lizard एक VitePress documentation site बना सकता है और 
 
 The [complete source example](https://github.com/lizard-build/docs/tree/main/_examples/vitepress) में इस guide में उपयोग की गई configuration और files शामिल हैं।
 
-## Set the build script
+<span id="set-the-build-script" />
+
+## बिल्ड स्क्रिप्ट सेट करें
 
 `docs/` में Markdown files के लिए, इन scripts को `package.json` में रखें:
 
@@ -32,7 +34,9 @@ The [complete source example](https://github.com/lizard-build/docs/tree/main/_ex
 
 Detector को `vitepress build` युक्त एक script मिलती है और वह उसके root argument का उपयोग करता है। एक script का उपयोग करें जो सीधे build command को कॉल करती है। Shell wrappers, कई matching scripts, या एक custom `outDir` को explicit build configuration या Dockerfile की आवश्यकता होती है।
 
-## Check the site locally
+<span id="check-the-site-locally" />
+
+## साइट को स्थानीय रूप से जाँचें
 
 ```bash
 npm ci
@@ -58,7 +62,9 @@ lizard ps --json
 
 VitePress config, Markdown, source assets, package manifest, और lockfile शामिल करें। Local dependencies, generated output, caches, और secrets को बाहर रखें। `vitepress dev` या `vitepress preview` को service start command के रूप में सेट न करें।
 
-## Check clean routes and HTTP status
+<span id="check-clean-routes-and-http-status" />
+
+## क्लीन रूट और HTTP स्टेटस जाँचें
 
 New VitePress builds extensionless routes को उनके generated `.html` files पर resolve करते हैं और missing URLs के लिए HTTP 404 लौटाते हैं, nginx के default error page के साथ न कि generated `404.html` के। इस detection path का उपयोग करने के लिए command overrides को unset रखें। Standard output के लिए किसी custom Dockerfile की आवश्यकता नहीं है। Custom routing या अपने own 404 page के लिए [static routes and 404s](/framework-guides/static-routing) देखें।
 

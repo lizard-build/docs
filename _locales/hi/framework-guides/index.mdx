@@ -16,28 +16,30 @@ description: "Lizard पर Next.js, Express, FastAPI, Django, Streamlit, Go, Ra
 
 | Framework | Build | Runtime or output | Service port |
 |---|---|---|---|
-| [Next.js](/framework-guides/nextjs) | `npm run build` | `next start` through the start script | `3000` |
-| [Next.js static export](/framework-guides/nextjs/static-export) | `npm run build` | `out/` through a Dockerfile | `80` |
+| [Next.js](/framework-guides/nextjs) | `npm run build` | `next start` start स्क्रिप्ट के माध्यम से | `3000` |
+| [Next.js static export](/framework-guides/nextjs/static-export) | `npm run build` | `out/` Dockerfile के माध्यम से | `80` |
 | [React with Vite](/framework-guides/react) | `npm run build` | `dist/` | `80` |
 | [Vue with Vite](/framework-guides/vue) | `npm run build` | `dist/` | `80` |
-| [Astro](/framework-guides/astro) | `npm run build` | `dist/`, or the standalone Node adapter | `80` static; `3000` server |
+| [Astro](/framework-guides/astro) | `npm run build` | `dist/`, या स्टैंडअलोन Node एडाप्टर | `80` static; `3000` server |
 | [Nuxt](/framework-guides/nuxt) | `npm run build` | `node .output/server/index.mjs` | `3000` |
-| [SvelteKit](/framework-guides/sveltekit) | `npm run build` | `node build` with adapter-node | `3000` |
+| [SvelteKit](/framework-guides/sveltekit) | `npm run build` | `node build` adapter-node के साथ | `3000` |
 | [Node.js (Express)](/framework-guides/nodejs) | `build` script, if any | `start` script | `3000` |
-| [FastAPI](/framework-guides/fastapi) | Install Python dependencies | `uvicorn main:app --host 0.0.0.0 --port 8000` | `8000` |
-| [Django](/framework-guides/django) | Install Python dependencies | Gunicorn with your WSGI module | `8000` |
-| [Streamlit](/framework-guides/streamlit) | Install Python dependencies | `streamlit run app.py` from a Procfile | `8501` |
+| [FastAPI](/framework-guides/fastapi) | Python निर्भरताएँ इंस्टॉल करें | `uvicorn main:app --host 0.0.0.0 --port 8000` | `8000` |
+| [Django](/framework-guides/django) | Python निर्भरताएँ इंस्टॉल करें | अपने WSGI मॉड्यूल के साथ Gunicorn | `8000` |
+| [Streamlit](/framework-guides/streamlit) | Python निर्भरताएँ इंस्टॉल करें | Procfile से `streamlit run app.py` | `8501` |
 | [Go](/framework-guides/go) | `go build` to a static binary | `/app/server` | `8080` |
-| [Ruby on Rails](/framework-guides/rails) | The Dockerfile Rails generates | Thruster and Puma, or Puma alone | `8080` on Rails 8; `3000` on Rails 7.1 and 7.2 |
+| [Ruby on Rails](/framework-guides/rails) | Rails द्वारा जनरेट किया गया Dockerfile | Thruster और Puma, या केवल Puma | `8080` Rails 8 पर; `3000` Rails 7.1 और 7.2 पर |
 | [Docusaurus](/framework-guides/docusaurus) | `npm run build` | `build/` | `80` |
 | [VitePress](/framework-guides/vitepress) | `npm run docs:build` | `docs/.vitepress/dist/` in this guide | `80` |
 | [Hugo](/framework-guides/hugo) | `hugo --minify` | `public/` | `80` |
 
-## Prepare the project
+<span id="prepare-the-project" />
 
-Run commands from the application directory. Commit source files, configuration, and the package lockfile. Exclude `.env`, local dependencies, and local build output from uploads. Node projects can select the Node major version in `.nvmrc`; the current default is `22`. This selects a major version, not an exact patch release. [Runtime versions](/deploy/runtime-versions) lists the version files for Node.js, Python, Go and Ruby.
+## प्रोजेक्ट तैयार करें
 
-Install Lizard CLI and sign in once:
+एप्लिकेशन डायरेक्टरी से कमांड चलाएँ। स्रोत फ़ाइलें, कॉन्फ़िगरेशन, और पैकेज लॉकफ़ाइल कमिट करें। अपलोड से `.env`, स्थानीय निर्भरताएँ, और स्थानीय बिल्ड आउटपुट को बाहर रखें। Node प्रोजेक्ट `.nvmrc` में Node मेजर वर्जन चुन सकते हैं; वर्तमान डिफ़ॉल्ट `22` है। यह एक मेजर वर्जन चुनता है, सटीक पैच रिलीज़ नहीं। [रनटाइम वर्जन](/deploy/runtime-versions) Node.js, Python, Go और Ruby के लिए वर्जन फ़ाइलों की सूची देता है।
+
+Lizard CLI इंस्टॉल करें और एक बार साइन इन करें:
 
 ```bash
 curl -fsSL https://lizard.build/install.sh | bash
@@ -46,22 +48,24 @@ lizard login
 
 Windows पर PowerShell में `irm https://lizard.build/api/cli/install.ps1 | iex` चलाएँ। नए खाते में शुरू में कोई प्लान नहीं होता: जब तक आप 7-दिन का Pro ट्रायल शुरू नहीं करते (कार्ड ज़रूरी है), `lizard add` और `lizard up` Checkout लिंक देते हैं। `lizard billing start` उसे खोलता है।
 
-Each guide uses a new project and a service named `web` or `api`. `lizard up --service web` creates `web` if it does not exist yet, so check the name: a typo creates a second service. The guides run `lizard add --service web` (or `api`) first; you need that step only to set secrets or a domain before the first deploy. For an existing project, check `lizard status --json` and `lizard ps --json` before deploying. The port must match the process inside the container, which must listen on `0.0.0.0`.
+प्रत्येक गाइड एक नए प्रोजेक्ट और `web` या `api` नाम की सेवा का उपयोग करती है। `lizard up --service web` `web` बनाता है यदि यह पहले से मौजूद नहीं है, इसलिए नाम जाँचें: एक टाइपो दूसरी सेवा बना देगा। गाइड पहले `lizard add --service web` (या `api`) चलाती हैं; आपको वह चरण केवल पहली डिप्लॉय से पहले सीक्रेट या डोमेन सेट करने के लिए चाहिए। मौजूदा प्रोजेक्ट के लिए, डिप्लॉय करने से पहले `lizard status --json` और `lizard ps --json` जाँचें। पोर्ट कंटेनर के अंदर की प्रक्रिया से मेल खाना चाहिए, जिसे `0.0.0.0` पर सुनना चाहिए।
 
-Lizard CLI 0.3.95 and later exclude macOS archive metadata during uploads. No `COPYFILE_DISABLE` setting is needed. Update older CLI versions before following these guides.
+Lizard CLI 0.3.95 और बाद के वर्जन अपलोड के दौरान macOS आर्काइव मेटाडेटा को बाहर रखते हैं। किसी `COPYFILE_DISABLE` सेटिंग की आवश्यकता नहीं है। इन गाइड का पालन करने से पहले पुराने CLI वर्जन अपडेट करें।
 
 ## Choose GitHub or local source
 
-The guide commands use `lizard up` to upload the current folder. That command changes an existing service to upload source. To keep git push to deploy, [connect GitHub](/deploy/github) instead and use the guide's build settings in the repository. Configure the service port from the table: nginx for a Vite, Astro, SvelteKit, Docusaurus or VitePress build listens on the port you set, or on `3000` if you set none.
+गाइड कमांड वर्तमान फ़ोल्डर अपलोड करने के लिए `lizard up` का उपयोग करती हैं। वह कमांड किसी मौजूदा सेवा को स्रोत अपलोड करने के लिए बदल देती है। git push to deploy बनाए रखने के लिए, इसके बजाय [GitHub कनेक्ट करें](/deploy/github) और रिपॉजिटरी में गाइड की बिल्ड सेटिंग्स का उपयोग करें। तालिका से सेवा पोर्ट कॉन्फ़िगर करें: Vite, Astro, SvelteKit, Docusaurus या VitePress बिल्ड के लिए nginx आपके द्वारा सेट किए गए पोर्ट पर सुनता है, या `3000` पर यदि आपने कोई सेट नहीं किया है।
 
 ## Keep build settings consistent
 
-These guides use lizardpack detection unless they call for a Dockerfile. Existing `buildCommand` or `startCommand` overrides take precedence over detection and the repository Dockerfile; a set `dockerfilePath` takes precedence over both. Check [build decision order](/concepts/build-pipeline#build-decision-order) before switching build methods. Set scripts in `package.json` when a guide tells you to; adding a CLI override is a different build path.
+ये गाइड lizardpack डिटेक्शन का उपयोग करती हैं जब तक कि वे Dockerfile न माँगें। मौजूदा `buildCommand` या `startCommand` ओवरराइड डिटेक्शन और रिपॉजिटरी Dockerfile पर प्राथमिकता लेते हैं; एक सेट `dockerfilePath` दोनों पर प्राथमिकता लेता है। बिल्ड विधि बदलने से पहले [बिल्ड निर्णय क्रम](/concepts/build-pipeline#build-decision-order) जाँचें। जब गाइड कहे तो `package.json` में स्क्रिप्ट सेट करें; CLI ओवरराइड जोड़ना एक अलग बिल्ड पथ है।
 
-## Check a release
+<span id="check-a-release" />
 
-Read build logs, runtime logs, and the active URL. Test an inner route, a missing route, and any API or form action. A process that opens its port can still serve a broken page. For generated sites, use [static routes and 404s](/framework-guides/static-routing) to avoid returning the home page with HTTP 200 for every unknown URL.
+## रिलीज़ जाँचें
 
-Check shared caches, persistent local files and framework versions separately from runtime support. See [limits](/platform/limits), [storage and recovery](/platform/storage-and-recovery), and [known issues](/platform/known-issues) when your app relies on those features.
+बिल्ड लॉग, रनटाइम लॉग, और सक्रिय URL पढ़ें। एक आंतरिक रूट, एक गुम रूट, और कोई भी API या फॉर्म एक्शन टेस्ट करें। एक प्रक्रिया जो अपना पोर्ट खोलती है, फिर भी टूटा हुआ पेज परोस सकती है। जनरेटेड साइट्स के लिए, हर अज्ञात URL के लिए HTTP 200 के साथ होम पेज लौटाने से बचने के लिए [स्टेटिक रूट और 404](/framework-guides/static-routing) का उपयोग करें।
+
+शेयर्ड कैश, स्थायी स्थानीय फ़ाइलें, और फ्रेमवर्क वर्जन को रनटाइम सपोर्ट से अलग जाँचें। जब आपका ऐप उन सुविधाओं पर निर्भर करता हो तो [सीमाएँ](/platform/limits), [स्टोरेज और रिकवरी](/platform/storage-and-recovery), और [ज्ञात समस्याएँ](/platform/known-issues) देखें।
 
 सितंबर 9, 2026 डिप्लॉयमेंट चेक और उनकी सीमाओं के लिए [टेस्टेड वर्जन और क्लाउड रिजल्ट्स](/framework-guides/validation) देखें।
