@@ -15,6 +15,6 @@ export default {
   docusaurus: "Docusaurus",
   vitepress: "VitePress",
   hugo: "Hugo",
-  'static-routing': "Static routes & 404s",
+  'static-routing': "स्टैटिक रूट और 404 पेज",
   validation: "परीक्षण किए गए संस्करण और परिणाम",
 };

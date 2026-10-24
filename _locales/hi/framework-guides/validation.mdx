@@ -49,7 +49,9 @@ description: "Framework guide के परिणाम 16 real Lizard CLI deplo
 
 प्रत्येक recipe ने एक अलग test project का उपयोग किया, जिसमें run को अलग रखने के लिए अलग-अलग नाम थे। Workspace, region, और JSON flags ने test context को स्पष्ट बनाया। Build, start, और Dockerfile-path service overrides को unset रखा गया। केवल Next.js static export, Nuxt generate, और Django recipes ने अपने guides में documented Dockerfiles प्रदान किए। Docusaurus, VitePress, Hugo, और SvelteKit Node tests में [published source examples](https://github.com/lizard-build/docs/tree/main/_examples) शामिल थे।
 
-## Browser checks
+<span id="browser-checks" />
+
+## ब्राउज़र में जाँच
 
 September 9 run ने browser में React button click की पुष्टि की। Browser connection ने navigation और page reads के दौरान बार-बार timeouts लौटाए, इसलिए यह run सभी 16 recipes के लिए एक fresh browser pass का दावा **नहीं** करती है। HTTP route और form checks स्वतंत्र रूप से पास हुए।
 
@@ -65,6 +67,8 @@ September 8 static-routing recheck Astro static, SvelteKit static, Docusaurus, H
 
 Lizard CLI 0.3.95 में archive और failed-build exit-code fixes शामिल हैं। September 9 production checks ने service port changes और upload और rebuild के दौरान explicit port के preservation को भी सत्यापित किया। Release notes और शेष सीमाओं के लिए [known issues](/platform/known-issues) देखें।
 
-## Limits of these results
+<span id="limits-of-these-results" />
+
+## इन नतीजों की सीमाएँ
 
 ये checks source uploads और documented modes को कवर करते हैं। Run के बाद से, Django guide public `DATABASE_URL` के बजाय `DATABASE_PRIVATE_URL` के माध्यम से कनेक्ट होता है; उस परिवर्तन का अभी तक कोई cloud run नहीं है। Checks हर plugin, adapter, theme, framework version, GitHub deployment path, database recovery procedure, या multiple-replica workload के लिए support स्थापित नहीं करते हैं। Django का छोटा test app अभी भी `check --deploy` से security warnings रिपोर्ट करता है; यह एक पूर्ण production security setup नहीं है। ये tests search rankings या AI citations को मापते नहीं हैं। Release से पहले अपने app के own routes और data operations की जाँच करें।

@@ -14,23 +14,23 @@ description: "Lizard पर Next.js, Express, FastAPI, Django, Streamlit, Go, Ra
 
 ये सेटिंग्स लिंक किए गए गाइड में मानक प्रोजेक्ट लेआउट का वर्णन करती हैं। कमांड JavaScript प्रोजेक्ट के लिए npm मानते हैं। कस्टम आउटपुट पथ, एडेप्टर और बिल्ड ओवरराइड परिणाम बदल सकते हैं। इसके बजाय अपनी खुद की इमेज लाने के लिए, [Dockerfile से Docker कंटेनर परिनियोजित करें](/deploy/dockerfile) देखें।
 
-| Framework | Build | Runtime or output | Service port |
+| फ़्रेमवर्क | बिल्ड | रनटाइम या आउटपुट | सेवा का पोर्ट |
 |---|---|---|---|
 | [Next.js](/framework-guides/nextjs) | `npm run build` | `next start` start स्क्रिप्ट के माध्यम से | `3000` |
 | [Next.js static export](/framework-guides/nextjs/static-export) | `npm run build` | `out/` Dockerfile के माध्यम से | `80` |
-| [React with Vite](/framework-guides/react) | `npm run build` | `dist/` | `80` |
-| [Vue with Vite](/framework-guides/vue) | `npm run build` | `dist/` | `80` |
+| [Vite के साथ React](/framework-guides/react) | `npm run build` | `dist/` | `80` |
+| [Vite के साथ Vue](/framework-guides/vue) | `npm run build` | `dist/` | `80` |
 | [Astro](/framework-guides/astro) | `npm run build` | `dist/`, या स्टैंडअलोन Node एडाप्टर | `80` static; `3000` server |
 | [Nuxt](/framework-guides/nuxt) | `npm run build` | `node .output/server/index.mjs` | `3000` |
 | [SvelteKit](/framework-guides/sveltekit) | `npm run build` | `node build` adapter-node के साथ | `3000` |
-| [Node.js (Express)](/framework-guides/nodejs) | `build` script, if any | `start` script | `3000` |
+| [Node.js (Express)](/framework-guides/nodejs) | `build` स्क्रिप्ट, अगर हो | `start` स्क्रिप्ट | `3000` |
 | [FastAPI](/framework-guides/fastapi) | Python निर्भरताएँ इंस्टॉल करें | `uvicorn main:app --host 0.0.0.0 --port 8000` | `8000` |
 | [Django](/framework-guides/django) | Python निर्भरताएँ इंस्टॉल करें | अपने WSGI मॉड्यूल के साथ Gunicorn | `8000` |
 | [Streamlit](/framework-guides/streamlit) | Python निर्भरताएँ इंस्टॉल करें | Procfile से `streamlit run app.py` | `8501` |
-| [Go](/framework-guides/go) | `go build` to a static binary | `/app/server` | `8080` |
+| [Go](/framework-guides/go) | `go build` से स्टैटिक बाइनरी | `/app/server` | `8080` |
 | [Ruby on Rails](/framework-guides/rails) | Rails द्वारा जनरेट किया गया Dockerfile | Thruster और Puma, या केवल Puma | `8080` Rails 8 पर; `3000` Rails 7.1 और 7.2 पर |
 | [Docusaurus](/framework-guides/docusaurus) | `npm run build` | `build/` | `80` |
-| [VitePress](/framework-guides/vitepress) | `npm run docs:build` | `docs/.vitepress/dist/` in this guide | `80` |
+| [VitePress](/framework-guides/vitepress) | `npm run docs:build` | इस गाइड में `docs/.vitepress/dist/` | `80` |
 | [Hugo](/framework-guides/hugo) | `hugo --minify` | `public/` | `80` |
 
 <span id="prepare-the-project" />
@@ -52,11 +52,15 @@ Windows पर PowerShell में `irm https://lizard.build/api/cli/install.ps
 
 Lizard CLI 0.3.95 और बाद के वर्जन अपलोड के दौरान macOS आर्काइव मेटाडेटा को बाहर रखते हैं। किसी `COPYFILE_DISABLE` सेटिंग की आवश्यकता नहीं है। इन गाइड का पालन करने से पहले पुराने CLI वर्जन अपडेट करें।
 
-## Choose GitHub or local source
+<span id="choose-github-or-local-source" />
+
+## GitHub या स्थानीय सोर्स चुनें
 
 गाइड कमांड वर्तमान फ़ोल्डर अपलोड करने के लिए `lizard up` का उपयोग करती हैं। वह कमांड किसी मौजूदा सेवा को स्रोत अपलोड करने के लिए बदल देती है। git push to deploy बनाए रखने के लिए, इसके बजाय [GitHub कनेक्ट करें](/deploy/github) और रिपॉजिटरी में गाइड की बिल्ड सेटिंग्स का उपयोग करें। तालिका से सेवा पोर्ट कॉन्फ़िगर करें: Vite, Astro, SvelteKit, Docusaurus या VitePress बिल्ड के लिए nginx आपके द्वारा सेट किए गए पोर्ट पर सुनता है, या `3000` पर यदि आपने कोई सेट नहीं किया है।
 
-## Keep build settings consistent
+<span id="keep-build-settings-consistent" />
+
+## बिल्ड की सेटिंग एक जैसी रखें
 
 ये गाइड lizardpack डिटेक्शन का उपयोग करती हैं जब तक कि वे Dockerfile न माँगें। मौजूदा `buildCommand` या `startCommand` ओवरराइड डिटेक्शन और रिपॉजिटरी Dockerfile पर प्राथमिकता लेते हैं; एक सेट `dockerfilePath` दोनों पर प्राथमिकता लेता है। बिल्ड विधि बदलने से पहले [बिल्ड निर्णय क्रम](/concepts/build-pipeline#build-decision-order) जाँचें। जब गाइड कहे तो `package.json` में स्क्रिप्ट सेट करें; CLI ओवरराइड जोड़ना एक अलग बिल्ड पथ है।
 
