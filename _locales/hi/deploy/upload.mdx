@@ -1,0 +1,87 @@
+---
+description: "lizard up के साथ वर्तमान डायरेक्टरी को शिप करें, Git की आवश्यकता नहीं है। gitignore हैंडलिंग, बिल्ड और स्टार्ट ओवरराइड, और हेडलेस CI उपयोग को कवर करता है।"
+---
+
+<span id="deploy-from-local-code" />
+
+# लोकल कोड से डिप्लॉय करें
+
+वर्तमान डायरेक्टरी को अपलोड और डिप्लॉय करने के लिए `lizard up` चलाएं, चाहे आपका कोड GitHub पर हो या न हो। यह आपके वर्किंग ट्री को एक टारबॉल के रूप में पैकेज करता है, इसे बिल्ड नोड्स पर भेजता है, और डिप्लॉय करता है। प्रत्येक स्टैक के लिए आवश्यक कमांड के लिए, [React](/framework-guides/react), [Vue](/framework-guides/vue), [Astro](/framework-guides/astro), [SvelteKit](/framework-guides/sveltekit), [Hugo](/framework-guides/hugo), [Docusaurus](/framework-guides/docusaurus), [VitePress](/framework-guides/vitepress), [FastAPI](/framework-guides/fastapi) और [Streamlit](/framework-guides/streamlit) के लिए गाइड देखें।
+
+<span id="deploy-the-current-directory" />
+
+## वर्तमान डायरेक्टरी को डिप्लॉय करें
+
+```bash
+lizard up
+```
+
+- वर्तमान डायरेक्टरी को टारबॉल के रूप में अपलोड करता है। Git रिपॉजिटरी के अंदर यह `.gitignore` का सम्मान करता है। Git के बाहर, या `--no-gitignore` के साथ, यह केवल बिल्ड और निर्भरता फ़ोल्डरों (`node_modules`, `.git`, `dist`, `.next`, `build`, `__pycache__`, `.venv`, `venv`, `.cache`, `coverage`, `.turbo`, `.vercel`) की एक निश्चित सूची को छोड़ देता है, साथ ही `.DS_Store`, `*.pyc`, `*.pyo` और `*.log` को छोड़ देता है, इसलिए `.env` फ़ाइलें अपलोड की जाती हैं। `git init` चलाएं या पहले सीक्रेट्स को बाहर ले जाएं।
+- `sourceType=upload` को बाध्य करता है।
+- SSE पर बिल्ड लॉग स्ट्रीम करता है और समाप्त होने पर लाइव URL प्रिंट करता है।
+
+यदि फ़ोल्डर अभी तक किसी प्रोजेक्ट से लिंक नहीं है, तो `up` इसे आपके खाते के डिफ़ॉल्ट प्रोजेक्ट (आपके व्यक्तिगत वर्कस्पेस में सबसे पुराना प्रोजेक्ट, नए खातों के लिए `<username>'s Project`) से लिंक करता है और ऐसा कहता है। यह टर्मिनल या CI में नहीं पूछता है। किसी अन्य प्रोजेक्ट में डिप्लॉय करने के लिए, पहले `lizard init --name <project>` चलाएं या `--project <name>` पास करें। `lizard init --force` एक फ़ोल्डर को रिलिंक करता है।
+
+`--service` के बिना, `up` फ़ोल्डर से जुड़े सर्विस में डिप्लॉय होता है। यदि कोई लिंक नहीं है, तो यह `package.json` या फ़ोल्डर से नाम लेता है (एक टर्मिनल आपसे इसकी पुष्टि करने के लिए कहेगा)। जब प्रोजेक्ट में पहले से ही उस नाम की सर्विस है, तो `up` उसमें डिप्लॉय करता है, यहाँ तक कि GitHub सर्विस भी, जिसे वह `sourceType=upload` में बदल देता है। यह सर्विस के पोर्ट को भी नए की तरह सेट करता है: `--port`, लोकल `EXPOSE` लाइन या `3000`। अन्यथा यह सर्विस बनाता है। चुनने के लिए `--service <name>` पास करें; एक नाम जो अभी तक मौजूद नहीं है वह उस सर्विस को बनाता है।
+
+<span id="common-flags" />
+
+## सामान्य फ़्लैग्स
+
+| फ़्लैग | उद्देश्य |
+|------|---------|
+| `-s, --service <name>` | डिप्लॉय करने के लिए सर्विस; एक नया नाम इसे बनाता है |
+| `-p, --project <name>` | लिंक की गई या डिफ़ॉल्ट के बजाय इस प्रोजेक्ट में डिप्लॉय करें |
+| `--build-command <cmd>` | बिल्ड कमांड को ओवरराइड करें |
+| `--start-command <cmd>` | स्टार्ट कमांड को ओवरराइड करें |
+| `--pre-deploy-command <cmd>` | हर कंटेनर की शुरुआत में, स्टार्ट कमांड से पहले चलाएं; `--start-command` की आवश्यकता है (देखें [बिल्ड कॉन्फ़िगरेशन](/concepts/build-pipeline#build-configuration-reference)) |
+| `--port <number>` | कंटेनर पोर्ट (`0` = [वर्कर मोड](/deploy/workers)) |
+| `--region <code>` | नई सर्विस के लिए क्षेत्र (मौजूदा सेवाओं के लिए अनदेखा) |
+| `-d, --detach` | डिप्लॉय शुरू करें और लॉग स्ट्रीम किए बिना बाहर निकलें |
+| `-c, --ci` | CI-अनुकूल आउटपुट |
+| `--no-gitignore` | `.gitignore` को अनदेखा करें और इसके बजाय फिक्स्ड स्किप लिस्ट का उपयोग करें (एक बिल्ट `dist/` या `build/` अभी भी छोड़ दिया जाएगा) |
+
+```bash
+lizard up --service api --start-command "node server.js" --port 8080
+```
+
+<span id="setting-buildstart-commands" />
+
+## बिल्ड/स्टार्ट कमांड सेट करना
+
+`--build-command` या `--start-command` पास करने से यह सर्विस पर सेव हो जाता है और सर्विस को **सिंथेसाइज्ड डॉकरफ़ाइल** पाथ पर स्विच कर देता है, जब तक कि `dockerfilePath` सेट न हो। उस पाथ पर, `Procfile` और `package.json` `scripts.start` **नहीं** पढ़े जाते हैं: स्टार्ट कमांड को स्पष्ट रूप से सेट करें। [बिल्ड पाइपलाइन](/concepts/build-pipeline) देखें। Python ऐप्स के लिए, [Django, Flask और FastAPI](https://lizard.build/blog/python-app-hosting#build-and-start-commands) में से प्रत्येक को अपने `gunicorn` या `uvicorn` कमांड की आवश्यकता होती है।
+
+<span id="re-deploying-an-upload-service" />
+
+## अपलोड सर्विस को फिर से डिप्लॉय करना
+
+`lizard up` फिर से अपलोड और रीबिल्ड करता है। वर्तमान वेरिएबल्स के साथ **अंतिम** अपलोड को फिर से अपलोड किए बिना रीबिल्ड करने के लिए:
+
+```bash
+lizard redeploy --service api
+```
+
+<span id="headless--ci" />
+
+## हेडलेस / CI
+
+CI में एक अनलिंक्ड फ़ोल्डर आपके डिफ़ॉल्ट प्रोजेक्ट में भी डिप्लॉय होता है। एक चुने हुए प्रोजेक्ट में डिप्लॉय करने के लिए, पहले उसे लिंक करें:
+
+```bash
+export LIZARD_TOKEN=liz_xxx   # create one with: lizard keys create <name>
+lizard init --name my-project
+lizard up --ci --service api
+```
+
+<span id="when-to-prefer-github-instead" />
+
+## GitHub को कब प्राथमिकता दें
+
+बदलावों का परीक्षण करने या बिना रिमोट वाले कोड को डिप्लॉय करने के लिए अपलोड का उपयोग करें। एक ऐप के लिए जिसे आप बनाए रखने की योजना बना रहे हैं, [GitHub स्रोत](/deploy/github) का उपयोग करें ताकि पुश ऑटो-रीडिप्लॉय हो और प्रत्येक डिप्लॉय इतिहास में दिखाई दे।
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [`lizard up`](/cli/up): पूर्ण कमांड संदर्भ।
+- [बिल्ड पाइपलाइन](/concepts/build-pipeline): आपका स्टैक कैसे पता लगाया जाता है और बनाया जाता है।

@@ -1,0 +1,122 @@
+---
+description: "lizard domain किसी सेवा के डोमेन दिखाता है या सूचीबद्ध करता है, एक onlizard.com सबडोमेन उत्पन्न करता है, या स्वचालित TLS के साथ एक कस्टम होस्टनाम संलग्न और सत्यापित करता है।"
+---
+
+# lizard domain
+
+किसी सेवा के डोमेन दिखाएं या सूचीबद्ध करें, या एक कस्टम डोमेन संलग्न करें।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard domain [hostname] [flags]
+```
+
+होस्टनाम एक स्थितीय तर्क है — कोई `add` उपकमांड नहीं है। बिना किसी तर्क के `lizard domain` चलाने पर सेवा का वर्तमान डोमेन दिखाई देता है, या यदि उसका कोई डोमेन नहीं है तो एक उत्पन्न होता है। उपनाम: `lizard domains`।
+
+<span id="flags" />
+
+## फ्लैग्स
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `-s, --service <name>` | सेवा |
+| `-p, --project <id>` | प्रोजेक्ट का नाम, स्लग, या आईडी |
+| `--port <n>` | अनदेखा किया गया: एक डोमेन हमेशा सेवा के कंटेनर पोर्ट पर रूट होता है। उस पोर्ट को [`lizard port`](/cli/port) से बदलें |
+| `-f, --force` | यदि डोमेन आपकी अन्य सेवाओं से जुड़ा है तो उसे यहां ले जाएं |
+
+उपकमांड समान `-s` और `-p` फ़्लैग का उपयोग करते हैं। उस सेवा पर डोमेन सत्यापित करें और हटाएं जिसे आपने संलग्न किया है।
+
+<span id="subcommands" />
+
+## सबकमांड
+
+### `lizard domain generate`
+
+सेवा को एक `*.onlizard.com` सबडोमेन दें। यदि उसके पास पहले से ही एक है, तो `generate` उसे लौटाता है। यह तब विफल होता है जब सेवा एक कस्टम डोमेन का उपयोग कर रही हो; उसे पहले हटा दें।
+
+### `lizard domain list`
+
+सेवा के डोमेन सूचीबद्ध करें, और कस्टम डोमेन जो अभी भी DNS सत्यापन की प्रतीक्षा कर रहे हैं, उन रिकॉर्ड्स के साथ जिन्हें बनाना है (उपनाम `ls`)।
+
+### `lizard domain verify <hostname>`
+
+TXT रिकॉर्ड की जांच करें और डोमेन को सक्रिय करें। TLS स्वचालित रूप से प्रावधानित होता है।
+
+### `lizard domain delete <hostname>`
+
+एक डोमेन हटाएं (उपनाम `rm`)।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `-y, --yes` | पुष्टि छोड़ें |
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="show-the-current-domain" />
+
+### वर्तमान डोमेन दिखाएं
+
+```bash
+lizard domain
+```
+
+<span id="generate-a-subdomain" />
+
+### एक सबडोमेन उत्पन्न करें
+
+```bash
+lizard domain generate
+```
+
+<span id="attach-a-custom-domain" />
+
+### एक कस्टम डोमेन संलग्न करें
+
+```bash
+lizard domain app.example.com --service web
+```
+
+Lizard DNS रिकॉर्ड लौटाता है जिन्हें बनाने की आवश्यकता है: होस्टनाम के लिए एक `CNAME`, और, जब तक आपने डोमेन को पहले से सत्यापित नहीं किया है, `_lizard-verify.<apex domain>` पर एक `TXT` रिकॉर्ड (`app.example.com` के लिए, वह `_lizard-verify.example.com` है)। उन्हें अपने DNS प्रदाता पर जोड़ें, फिर उसी सेवा पर सत्यापित करें:
+
+```bash
+lizard domain verify app.example.com --service web
+```
+
+`example.com` जैसे एपेक्स डोमेन के लिए, अधिकांश DNS प्रदाता `CNAME` की अनुमति नहीं देते हैं। इसके बजाय समान लक्ष्य के साथ `ALIAS` या `ANAME` रिकॉर्ड बनाएं, या अपने प्रदाता के CNAME फ़्लैटनिंग का उपयोग करें।
+
+<span id="list-a-services-domains" />
+
+### किसी सेवा के डोमेन सूचीबद्ध करें
+
+```bash
+lizard domain list --service web
+```
+
+<span id="move-a-domain-from-another-of-your-services" />
+
+### किसी डोमेन को अपनी अन्य सेवाओं से ले जाएं
+
+```bash
+lizard domain app.example.com --service web --force
+```
+
+<span id="remove-a-domain" />
+
+### डोमेन हटाएं
+
+```bash
+lizard domain delete app.example.com --service web
+lizard domain rm app.example.com --service web --yes
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [नेटवर्किंग](/networking) — जेनरेट किए गए डोमेन, TLS, और वर्कर सेवाएं
+- [क्षेत्रों में डिप्लॉय करें](/deploy/regions) — सेवाओं के लिए क्षेत्र चयन

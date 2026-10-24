@@ -1,0 +1,131 @@
+---
+description: "lizard pause किसी ऐप या डेटाबेस को डिलीट किए बिना रोक देता है, उसका URL, पासवर्ड और डेटा रखता है, और lizard resume उसे फिर से शुरू करता है। प्रोजेक्ट और वर्कस्पेस फ़ॉर्म एक साथ सब कुछ रोक देते हैं।"
+---
+
+# lizard pause
+
+किसी सर्विस (ऐप या डेटाबेस) को डिलीट किए बिना रोकें, और बाद में फिर से शुरू करें। `lizard project pause` और `lizard workspace pause` एक प्रोजेक्ट या वर्कस्पेस में सब कुछ एक साथ रोक देते हैं।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard pause [service] [flags]
+lizard resume [service] [flags]
+lizard project pause [project]
+lizard project resume [project]
+lizard workspace pause <name-or-id>
+lizard workspace resume <name-or-id>
+```
+
+`service` आर्गुमेंट के बिना, `pause` और `resume` फ़ोल्डर से लिंक की गई सर्विस का उपयोग करते हैं।
+
+<span id="flags" />
+
+## फ्लैग्स
+
+`lizard pause` और `lizard resume` लेते हैं:
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `-s, --service <name>` | सर्विस का नाम या ID (`service` आर्गुमेंट के समान) |
+| `-p, --project <id>` | प्रोजेक्ट का नाम, स्लग, या आईडी |
+
+`project pause` और `project resume` एक प्रोजेक्ट का नाम, स्लग, या ID लेते हैं। इसके बिना, वे फ़ोल्डर से लिंक किए गए प्रोजेक्ट का उपयोग करते हैं या, एक अनलिंक्ड फ़ोल्डर में, आपके खाते का डिफ़ॉल्ट प्रोजेक्ट। `workspace pause` और `workspace resume` एक वर्कस्पेस का नाम, स्लग, या ID लेते हैं।
+
+<span id="what-pausing-keeps" />
+
+## रोकने पर क्या बना रहता है
+
+एक पॉज़ की गई सर्विस कोई कंटेनर नहीं चलाती है। यह अपना URL, होस्ट, पोर्ट, पासवर्ड, वैरिएबल, सेटिंग्स और वॉल्यूम रखती है। जब यह पॉज़ होती है:
+
+- इसका URL `503` का जवाब देता है, और एक डेटाबेस कनेक्शन से इनकार करता है;
+- Lizard डिप्लॉय और रीस्टार्ट से इनकार करता है;
+- Lizard [`lizard scale`](/cli/scale) से एक नया रेप्लिका काउंट और नए [secrets](/cli/secrets) को सेव करता है, और उन्हें तब लागू करता है जब वह फिर से शुरू होता है।
+
+`resume` इसे अंतिम बार चलाए गए इमेज से, अपने वर्तमान वैरिएबल और डेटा के साथ फिर से शुरू करता है। मेमोरी नहीं रखी जाती है: ऐप फ्रेश शुरू होता है। मेमोरी रखने और अगले अनुरोध पर जागने के लिए, इसके बजाय [`lizard sleep`](/cli/sleep) का उपयोग करें।
+
+आप एक चल रहे या क्रैश हुए ऐप को पॉज़ कर सकते हैं, और एक चल रहे Managed Postgres या Managed Redis डेटाबेस को। डिप्लॉय या सर्विस पर किसी अन्य ऑपरेशन के खत्म होने तक प्रतीक्षा करें। आप Managed Object Storage को पॉज़ नहीं कर सकते।
+
+<span id="billing" />
+
+## बिलिंग
+
+एक पॉज़ की गई सर्विस कोई CPU या मेमोरी का उपयोग नहीं करती है, इसलिए उसके कंप्यूट चार्ज बंद हो जाते हैं। Lizard अभी भी स्टोरेज के रूप में रखे गए डेटा का बिल ले सकता है; [Billing](/platform/billing) देखें।
+
+Lizard स्वयं ही ऐप्स और डेटाबेस को तब रोक देता है जब ट्रायल उपयोग समाप्त हो जाता है या भुगतान विफल हो जाता है। बिलिंग ठीक होने पर वे फिर से शुरू हो जाते हैं; `resume` उन्हें पहले शुरू नहीं करता है।
+
+<span id="pause-a-whole-project" />
+
+## पूरा प्रोजेक्ट रोकें
+
+`lizard project pause` प्रोजेक्ट के हर ऐप और डेटाबेस को रोकता है। यह प्रोजेक्ट के चल रहे सैंडबॉक्स को भी रोकता है, उनकी मेमोरी और फ़ाइलों को वैसे ही सहेजता है जैसे [`lizard sandbox pause`](/cli/sandbox) करता है। यह उन सेवाओं को सूचीबद्ध करता है जिन्हें वह रोक नहीं सकता, साथ ही उसका कारण भी बताता है।
+
+`lizard project resume` प्रोजेक्ट के हर ऐप और डेटाबेस को फिर से शुरू करता है जिसे किसी ने मैन्युअल रूप से रोका था, और उन सैंडबॉक्स को भी जिन्हें `project pause` ने रोका था। Sandboxes द्वारा रोके गए सैंडबॉक्स वैसे ही रुके रहते हैं। एक सैंडबॉक्स केवल तभी फिर से शुरू होता है जब आपके [सैंडबॉक्स सीमाएँ](/platform/limits#sandbox-account-limits) में जगह बचती है।
+
+`lizard workspace pause` और `lizard workspace resume` एक वर्कस्पेस में हर प्रोजेक्ट के लिए भी यही करते हैं। वे प्रोजेक्ट के बाहर के सैंडबॉक्स को छोड़ देते हैं।
+
+<span id="who-can-pause" />
+
+## कौन रोक सकता है
+
+- प्रोजेक्ट के किसी भी सदस्य द्वारा उसके सेवाओं, या पूरे प्रोजेक्ट को रोका और फिर से शुरू किया जा सकता है।
+- केवल वर्कस्पेस का मालिक ही पूरे वर्कस्पेस को रोक या फिर से शुरू कर सकता है।
+- फिर से शुरू करने से कंप्यूट फिर से चालू होता है, इसलिए इसके लिए एक सक्रिय प्लान और वर्कस्पेस की सीमाओं के तहत जगह की आवश्यकता होती है ([`lizard workspace limits`](/cli/workspace))।
+
+<span id="json-output" />
+
+## JSON आउटपुट
+
+`--json`, `pause` और `resume` के साथ `id`, `name`, `kind` (`app` या `addon`) और `status` (`paused` या `running`) प्रिंट होते हैं।
+
+प्रोजेक्ट और वर्कस्पेस फ़ॉर्म `id`, `done` और `skipped` प्रिंट करते हैं। प्रत्येक प्रविष्टि में `kind` (`app`, `database` या `sandbox`), `id` और `name` होता है; छोड़ी गई प्रविष्टियों में `reason` जोड़ा जाता है।
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="pause-and-resume-an-app" />
+
+### एक ऐप को रोकें और फिर से शुरू करें
+
+```bash
+lizard pause api
+lizard resume api
+```
+
+<span id="pause-a-database-in-another-project" />
+
+### दूसरे प्रोजेक्ट में एक डेटाबेस रोकें
+
+```bash
+lizard pause --service my-db --project my-project
+```
+
+<span id="pause-everything-in-a-project" />
+
+### एक प्रोजेक्ट में सब कुछ रोकें
+
+```bash
+lizard project pause my-project --json
+lizard project resume my-project
+```
+
+<span id="pause-a-workspace" />
+
+### एक वर्कस्पेस रोकें
+
+```bash
+lizard workspace pause my-team
+lizard workspace resume my-team
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [lizard sleep](/cli/sleep) — निष्क्रिय होने पर सोएं और अगले अनुरोध पर जागें
+- [lizard project](/cli/project) — प्रोजेक्ट्स को सूचीबद्ध करें, बनाएं और हटाएं
+- [lizard workspace](/cli/workspace) — वर्कस्पेस सीमाएं और अन्य वर्कस्पेस कमांड
+- [बिलिंग](/platform/billing) — कंप्यूट और स्टोरेज की दरें

@@ -1,0 +1,129 @@
+---
+title: "प्रीव्यू यूआरएल: सैंडबॉक्स से एक पोर्ट खोलें"
+description: "Lizard सैंडबॉक्स में एक पोर्ट को exposePort या lizard sandbox expose के साथ एक निजी HTTPS प्रीव्यू यूआरएल दें: यूआरएल फॉर्मेट, एक्सेस टोकन, कुकी, WebSockets और एरर।"
+---
+
+<span id="preview-urls-open-a-port-from-a-sandbox" />
+
+# प्रीव्यू यूआरएल: सैंडबॉक्स से एक पोर्ट खोलें
+
+एक प्रीव्यू यूआरएल Lizard पर एक सैंडबॉक्स के अंदर एक पोर्ट को एक निजी HTTPS एड्रेस पर देता है। `0.0.0.0` पर सुनने वाला सर्वर शुरू करें, फिर `sandbox.exposePort(3000)` (Python: `expose_port`) को कॉल करें या `lizard sandbox expose <id> 3000` चलाएं। आपको `https://<sandbox-id>-3000.sandbox.<region>.onlizard.com/?lizard_token=…` मिलता है; सैंडबॉक्स के एक्सेस टोकन के बिना एक रिक्वेस्ट को HTTP 401. मिलता है
+
+**टेस्ट स्टेटस:** हमने इस पेज को Lizard SDK, Lizard CLI 4.0.42 के सोर्स और 2026-10-12. पर सैंडबॉक्स राउटर के खिलाफ चेक किया है। 502 उत्तर और `Host` हेडर जो आपका सर्वर प्राप्त करता है, वह 2026-10-20. पर एक लाइव सैंडबॉक्स से आता है।
+
+<span id="from-the-cli" />
+
+## CLI से
+
+```bash
+lizard sandbox exec $SB -- sh -c "nohup python3 -m http.server 3000 --bind 0.0.0.0 >/tmp/http.log 2>&1 &"
+lizard sandbox expose $SB 3000
+```
+
+`expose` यूआरएल को टोकन के साथ प्रिंट करता है; इसे ब्राउज़र में खोलें। `hostname`, `url`, `port` और `accessToken` को एक स्क्रिप्ट के लिए प्राप्त करने के लिए `--json` जोड़ें। `lizard sandbox unexpose $SB 3000` के साथ यूआरएल हटाएं।
+
+<span id="from-lizard-sdk" />
+
+## Lizard SDK से
+
+`exposePort` ब्राउज़र `url`, बेयर `hostname` और `accessToken` लौटाता है:
+
+```ts
+import { Sandbox } from '@lizard-build/sdk';
+
+const sandbox = await Sandbox.create('base', { projectId: 'proj_123', timeoutMs: 600_000 });
+await sandbox.process.exec(
+  "nohup python3 -m http.server 3000 --bind 0.0.0.0 --directory /tmp >/tmp/http.log 2>&1 </dev/null &",
+);
+const { url, hostname, accessToken } = await sandbox.exposePort(3000);
+console.log(url); // open in a browser
+
+const res = await fetch(`https://${hostname}/`, {
+  headers: { 'X-Lizard-Access-Token': accessToken },
+});
+console.log(res.status);
+```
+
+```python
+import httpx
+from lizard import Sandbox
+
+sandbox = Sandbox.create("base", project_id="proj_123", timeout_ms=600_000)
+sandbox.process.exec_(
+    "nohup python3 -m http.server 3000 --bind 0.0.0.0 --directory /tmp >/tmp/http.log 2>&1 </dev/null &"
+)
+exposed = sandbox.expose_port(3000)
+print(exposed.url)  # open in a browser
+
+res = httpx.get(f"https://{exposed.hostname}/", headers={"X-Lizard-Access-Token": exposed.access_token})
+print(res.status_code)
+```
+
+`getHost(port)` (Python: `get_host`) भी पोर्ट पब्लिश करता है, लेकिन केवल होस्टनाम लौटाता है और टोकन को `sandbox.accessToken` (Python: `sandbox.access_token`) पर स्टोर करता है। `unexpose(port)` यूआरएल को हटाता है। ट्रैफिक भेजने से पहले सर्वर शुरू करें: जब तक यह सुनता नहीं है, यूआरएल 502. का जवाब देता है।
+
+<span id="how-access-works" />
+
+## एक्सेस कैसे काम करता है
+
+- **प्रति सैंडबॉक्स एक टोकन।** टोकन सैंडबॉक्स का है, पोर्ट का नहीं: यह उस सैंडबॉक्स पर आपके द्वारा एक्सपोज किए गए हर पोर्ट को खोलता है और सैंडबॉक्स के मौजूद रहने तक नहीं बदलता है। एक्सेस काटने के लिए, पोर्ट को अनएक्सपोज करें या सैंडबॉक्स को हटा दें।
+- **भेजने के तीन तरीके।** `lizard_token` क्वेरी पैरामीटर, `X-Lizard-Access-Token` हेडर, या `lizard_access` कुकी।
+- **ब्राउज़र को एक कुकी मिलती है।** जब कोई ब्राउज़र `?lizard_token=` के साथ एक यूआरएल खोलता है, तो Lizard उस होस्टनाम के लिए `lizard_access` कुकी सेट करता है (HttpOnly, Secure, SameSite=None, Partitioned, 30 दिन) और टोकन के बिना उसी एड्रेस पर रीडायरेक्ट करता है। पेज की स्क्रिप्ट, API कॉल और WebSockets तब कुकी ले जाते हैं, और टोकन हिस्ट्री और Referer हेडर से बाहर रहता है। कुकी तब भी काम करती है जब कोई दूसरा साइट iframe में पेज को एम्बेड करता है।
+- **प्रति पोर्ट एक होस्टनाम।** प्रत्येक पोर्ट का अपना होस्टनाम और अपनी कुकी होती है, इसलिए प्रत्येक पोर्ट के पूर्ण यूआरएल को एक बार खोलें।
+- **आपका सर्वर कभी भी टोकन नहीं देखता है।** Lizard इसे फॉरवर्ड करने से पहले क्वेरी, हेडर और कुकी से हटा देता है।
+- **आपका सर्वर एक आंतरिक `Host` देखता है।** फॉरवर्ड किया गया रिक्वेस्ट प्रीव्यू यूआरएल के होस्टनाम के बजाय एक आंतरिक होस्ट नाम ले जाता है। `Host` के बजाय प्रीव्यू यूआरएल से एब्सोल्यूट यूआरएल बनाएं।
+- **WebSockets काम करते हैं।** अपग्रेड रिक्वेस्ट पास हो जाते हैं, इसलिए हॉट रीलोड और टर्मिनल UI वाले डेव सर्वर काम करते हैं।
+
+एक प्रीव्यू यूआरएल को पासवर्ड की तरह मानें: जिसके पास यह है वह उस सैंडबॉक्स के सभी एक्सपोज्ड पोर्ट का उपयोग कर सकता है।
+
+<span id="url-format-and-lifetime" />
+
+## यूआरएल फॉर्मेट और लाइफटाइम
+
+```text
+https://<sandbox-id>-<port>.sandbox.<region>.onlizard.com
+```
+
+यूआरएल केवल तब तक काम करता है जब तक सैंडबॉक्स चल रहा हो। प्लेटफ़ॉर्म `49983` पोर्ट आरक्षित करता है; आप इसे एक्सपोज नहीं कर सकते। SDK या CLI से एक सैंडबॉक्स डिफ़ॉल्ट रूप से पांच मिनट तक रहता है; एक प्रीव्यू जिसे आप खुला रखना चाहते हैं, उसके लिए एक लंबा `timeoutMs` या `--timeout` पास करें। [लाइफटाइम सीमाएं](/platform/limits#sandbox-lifetime) देखें।
+
+<span id="errors" />
+
+## त्रुटियाँ
+
+| स्टेटस | मैसेज | फिक्स |
+|---|---|---|
+| 401 | `This sandbox port is private (missing or wrong access token)` | `expose` से पूर्ण यूआरएल खोलें, या `X-Lizard-Access-Token` भेजें। |
+| 403 | `Port 3000 is not published for sandbox "…". Published: …` | उस पोर्ट के लिए `lizard sandbox expose` या `exposePort` चलाएं। |
+| 404 | `No running sandbox "…"` | सैंडबॉक्स नहीं चल रहा है। `lizard sandbox list` जांचें। |
+| 502 | `"message": "The sandbox is running but port is not open"` के साथ JSON | सर्वर शुरू करें, और इसे `127.0.0.1` के बजाय `0.0.0.0` से बाइंड करें। |
+
+<span id="dev-servers" />
+
+## डेव सर्वर
+
+अधिकांश डेव सर्वर `127.0.0.1` पर सुनते हैं जब तक कि आप उन्हें अन्यथा न बताएं। होस्ट और एक फिक्स्ड पोर्ट पास करें:
+
+```bash
+npm run dev -- --host 0.0.0.0 --port 5173
+```
+
+Vite `Host` हेडर की भी जांच करता है और उन होस्ट के लिए `Blocked request. This host (…) is not allowed.` का जवाब देता है जिन्हें वह नहीं जानता है। आपका सर्वर एक आंतरिक होस्ट नाम प्राप्त करता है, इसलिए `.onlizard.com` नामों की सूची मदद नहीं करती है। `vite.config.js` में सभी होस्ट की अनुमति दें:
+
+```js
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  server: { allowedHosts: true },
+});
+```
+
+प्रीव्यू यूआरएल का एक्सेस टोकन अभी भी पोर्ट की सुरक्षा करता है। फिर `5173` एक्सपोज करें।
+
+<span id="related" />
+
+## संबंधित
+
+- [Claude Code को सैंडबॉक्स में चलाएं](/sandboxes/guides/claude-code)
+- [OpenCode को सैंडबॉक्स में चलाएं](/sandboxes/guides/opencode), इसके वेब UI सहित
+- [Sandboxes क्विकस्टार्ट](/sandboxes/quickstart)
+- [SDK रेफरेंस](/sandboxes/sdk-reference)
+- [`lizard sandbox`](/cli/sandbox)

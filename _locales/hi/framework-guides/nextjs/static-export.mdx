@@ -1,0 +1,106 @@
+---
+description: "Lizard पर आउटपुट एक्सपोर्ट, एक nginx Dockerfile, पोर्ट 80 और वास्तविक 404s के साथ एक Next.js स्टैटिक एक्सपोर्ट डिप्लॉय करें। जानें कि किन सुविधाओं के लिए अभी भी Node.js सर्वर की आवश्यकता है।"
+---
+
+<span id="deploy-a-nextjs-static-export" />
+
+# एक Next.js स्टैटिक एक्सपोर्ट डिप्लॉय करें
+
+एक Next.js स्टैटिक एक्सपोर्ट `out/` में HTML, JavaScript और एसेट उत्पन्न करता है। उस डायरेक्टरी को Lizard पर एक nginx Dockerfile के साथ डिप्लॉय करें। समय से पहले बनाए जा सकने वाले पेजों के लिए इस पाथ का उपयोग करें; अनुरोध-समय सर्वर सुविधाओं के लिए [Node.js सर्वर गाइड](/framework-guides/nextjs) का उपयोग करें।
+
+<span id="configure-the-export" />
+
+## एक्सपोर्ट को कॉन्फ़िगर करें
+
+इन विकल्पों को `next.config.mjs` में मर्ज करें:
+
+```js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: 'export',
+  trailingSlash: true,
+  images: { unoptimized: true },
+};
+
+export default nextConfig;
+```
+
+`package.json` में `"build": "next build"` रखें। यह उदाहरण सादे एक्सपोर्टेड इमेज का उपयोग करता है; एक बाहरी इमेज लोडर एक और विकल्प है। बिल्ड के दौरान सभी आवश्यक डायनामिक रूट पैरामीटर जेनरेट करें। अनुरोध-समय कुकीज़, सर्वर एक्शन और अन्य सुविधाएँ जिन्हें एक चालू Next.js सर्वर की आवश्यकता होती है, वे इस स्टैटिक कंटेनर में नहीं चल सकतीं। आपके ऐप द्वारा उपयोग की जाने वाली सुविधाओं के विरुद्ध [Next.js स्टैटिक एक्सपोर्ट संदर्भ](https://nextjs.org/docs/app/guides/static-exports) की जाँच करें।
+
+<span id="add-a-complete-dockerfile" />
+
+## एक पूर्ण Dockerfile जोड़ें
+
+Next.js ऑटो-डिटेक्शन पाथ एक Node सर्वर की अपेक्षा करता है। आउटपुट को `out/` पर सेट करने से बिल्ड nginx पर स्विच नहीं होता है। इस Dockerfile को ऐप रूट पर जोड़ें; यह npm और एक कमिटेड `package-lock.json` मानता है:
+
+```dockerfile
+FROM node:22-slim AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=build /app/out /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+```
+
+इसके बगल में `nginx.conf` बनाएं:
+
+```nginx
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+  location / {
+    try_files $uri $uri/ =404;
+  }
+  error_page 404 /404.html;
+  location = /404.html {
+    internal;
+  }
+}
+```
+
+ट्रेलिंग-स्लैश एक्सपोर्ट `index.html` के साथ रूट डायरेक्टरी बनाता है। nginx नियम उन डायरेक्टरी को सर्व करता है और गुम पाथ के लिए HTTP 404 लौटाता है। `.dockerignore` में `node_modules`, `.next`, `out`, `.git`, और `.env*` जोड़ें और अपलोड से स्थानीय बिल्ड फ़ाइलों को बाहर करें।
+
+<span id="build-and-deploy" />
+
+## बिल्ड और डिप्लॉय करें
+
+```bash
+npm ci
+npm run build
+```
+
+जांचें कि `out/index.html` और एक अपेक्षित आंतरिक रूट मौजूद हैं। यदि आपके पास Docker है, तो सर्वर को स्थानीय रूप से टेस्ट करें:
+
+```bash
+docker build -t nextjs-static .
+docker run --rm -p 8080:80 nextjs-static
+```
+
+[CLI सेटअप](/framework-guides#prepare-the-project) के बाद नई सेवा पर डिप्लॉय करें:
+
+```bash
+lizard init --name nextjs-static
+lizard add --service web
+lizard up --service web --port 80
+lizard logs --build --service web --json
+lizard ps --json
+```
+
+पूरा Dockerfile एक npm बिल्ड स्टेप शामिल करता है जिसे lizardpack पहचान सकता है। मौजूदा सेवा पर, डॉकरफ़ाइल चुनने से पहले कन्फ़्लिक्टिंग बिल्ड/स्टार्ट ओवरराइड्स का निरीक्षण करें और साफ़ करें; [बिल्ड निर्णय क्रम](/concepts/build-pipeline#build-decision-order) देखें।
+
+<span id="verify-routes-and-updates" />
+
+## रूट्स और अपडेट्स सत्यापित करें
+
+लाइव होम पेज, एक एक्सपोर्टेड इनर रूट, एक जावास्क्रिप्ट एसेट और एक मनगढ़ंत पाथ का अनुरोध करें। मनगढ़ंत पाथ को HTTP 404, लौटाना चाहिए, न कि होम पेज को HTTP 200. के साथ। [स्टैटिक रूट्स और 404s](/framework-guides/static-routing#verify-http-responses) में जांच का उपयोग करें।
+
+सभी एक्सपोर्टेड कंटेंट परिवर्तनों के लिए एक नए बिल्ड की आवश्यकता होती है। रनटाइम एनवायरनमेंट वेरिएबल्स `out/` में पहले से लिखे गए मानों को नहीं बदल सकते हैं। पब्लिक बिल्ड वेरिएबल्स के लिए, उन्हें `ENV` से पहले बिल्ड स्टेज में `RUN npm run build` लाइनों के रूप में लिखें। Lizard `COMMIT_SHA` को छोड़कर कोई बिल्ड आर्ग पास नहीं करता है, इसलिए एक `ARG` खाली रहता है। एक्सपोर्टेड बंडल में कभी भी प्राइवेट क्रेडेंशियल्स न रखें।
+
+सितंबर 9, 2026 डिप्लॉयमेंट चेक और उनकी सीमाओं के लिए [टेस्टेड वर्जन और क्लाउड रिजल्ट्स](/framework-guides/validation) देखें।

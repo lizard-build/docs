@@ -1,0 +1,107 @@
+---
+description: "lizard project प्रोजेक्ट्स को सूचीबद्ध करता है, बनाता है, रोकता है, फिर से शुरू करता है, और हटाता है, जिसमें यह भी बताया गया है कि डिलीट करने पर क्या हमेशा के लिए हट जाता है और प्रत्येक सबकमांड के लिए उदाहरण दिए गए हैं।"
+---
+
+# lizard project
+
+प्रोजेक्ट्स को सूचीबद्ध करें, बनाएं, रोकें, फिर से शुरू करें, या हटाएं।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard project list [flags]
+lizard project create <name> [flags]
+lizard project pause [project]
+lizard project resume [project]
+lizard project delete <project> [flags]
+```
+
+<span id="subcommands" />
+
+## सबकमांड
+
+### `lizard project list`
+
+सभी वर्कस्पेस में अपने प्रोजेक्ट्स को सूचीबद्ध करें, या `-w` के साथ एक वर्कस्पेस में।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `-w, --workspace <ws>` | केवल यह वर्कस्पेस (id, slug, या नाम) |
+
+### `lizard project create <name>`
+
+एक प्रोजेक्ट बनाएं। यह वर्तमान डायरेक्टरी को लिंक नहीं करता है; इसके लिए [`lizard init`](/cli/init) का उपयोग करें।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `-w, --workspace <ws>` | प्रोजेक्ट बनाने के लिए वर्कस्पेस |
+
+### `lizard project pause [project]`
+
+प्रोजेक्ट के हर ऐप और डेटाबेस को रोकें, और उसके चल रहे सैंडबॉक्स को। सेवाएं अपने यूआरएल, पासवर्ड, सेटिंग्स और डेटा बनाए रखती हैं। [`lizard pause`](/cli/pause) देखें।
+
+### `lizard project resume [project]`
+
+प्रोजेक्ट में आपके द्वारा रोके गए ऐप्स और डेटाबेस को फिर से शुरू करें, और उन सैंडबॉक्स को जिन्हें `project pause` ने रोका था।
+
+### `lizard project delete <project>`
+
+प्रोजेक्ट को ट्रैश में ले जाएं (उपनाम `rm`)। केवल प्रोजेक्ट का मालिक ही इसे हटा सकता है। इसकी सेवाएं और डेटाबेस बंद हो जाते हैं; आप उन्हें डैशबोर्ड से 3 दिनों के लिए ट्रैश से पुनर्स्थापित कर सकते हैं, जिसके बाद Lizard उन्हें हमेशा के लिए हटा देगा।
+
+> **चेतावनी:** Sandboxes में कोई ट्रैश नहीं है। `project delete` प्रोजेक्ट के सैंडबॉक्स, उनके वॉल्यूम और उनके स्नैपशॉट को एक साथ हटा देता है, और आप उन्हें वापस नहीं पा सकते।
+
+`delete` को प्रोजेक्ट का नाम चाहिए। यह कभी भी फ़ोल्डर के लिंक किए गए प्रोजेक्ट या आपके खाते के डिफ़ॉल्ट प्रोजेक्ट पर वापस नहीं जाता है। बिना किसी तर्क के, `pause` और `resume` इस फ़ोल्डर से लिंक किए गए प्रोजेक्ट का उपयोग करते हैं या, एक अनलिंक किए गए फ़ोल्डर में, आपके खाते के डिफ़ॉल्ट प्रोजेक्ट का।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `-y, --yes` | पुष्टि छोड़ें (TTY के बिना आवश्यक) |
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="list-projects" />
+
+### प्रोजेक्ट सूचीबद्ध करें
+
+```bash
+lizard project list
+lizard project list --workspace my-team
+```
+
+<span id="create-a-new-project" />
+
+### एक नया प्रोजेक्ट बनाएं
+
+```bash
+lizard project create my-project
+lizard project create my-project --workspace my-team
+```
+
+<span id="pause-and-resume-a-project" />
+
+### एक प्रोजेक्ट को रोकें और फिर से शुरू करें
+
+```bash
+lizard project pause my-project
+lizard project resume my-project
+```
+
+<span id="delete-a-project" />
+
+### एक प्रोजेक्ट हटाएं
+
+```bash
+lizard project delete my-project --yes
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [lizard init](/cli/init) — एक प्रोजेक्ट बनाएं या चुनें और इसे वर्तमान डायरेक्टरी से लिंक करें
+- [lizard link](/cli/link) — वर्तमान डायरेक्टरी को एक मौजूदा प्रोजेक्ट से संबद्ध करें
+- [lizard pause](/cli/pause) — एक सेवा, एक प्रोजेक्ट, या एक वर्कस्पेस को रोकें और फिर से शुरू करें
+- [Architecture](/concepts/architecture) — प्रोजेक्ट वर्कस्पेस और सेवाओं से कैसे संबंधित हैं

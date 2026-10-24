@@ -1,0 +1,60 @@
+---
+description: "lizard port किसी सेवा के कंटेनर पोर्ट को दिखाता है या बदलता है। इसे 0 पर सेट करने से सेवा वर्कर मोड में चली जाती है जिसमें कोई इनबाउंड रूटिंग नहीं होती है।"
+---
+
+# lizard port
+
+किसी सेवा के लिए कंटेनर पोर्ट दिखाएं या बदलें। कोई आर्गुमेंट वर्तमान पोर्ट प्रिंट करता है (जब यह `0` हो तो `worker mode`)। नया पोर्ट अगले डिप्लॉय पर प्रभावी होता है; इसे लागू करने के लिए [`lizard redeploy`](/cli/redeploy) चलाएं।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard port [value] [flags]
+```
+
+<span id="flags" />
+
+## फ्लैग्स
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `-s, --service <name>` | लक्षित सेवा |
+| `-p, --project <id>` | प्रोजेक्ट का नाम, स्लग, या आईडी |
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="show-the-current-port" />
+
+### वर्तमान पोर्ट दिखाएं
+
+```bash
+lizard port
+```
+
+<span id="set-the-port-for-a-specific-service" />
+
+### किसी विशिष्ट सेवा के लिए पोर्ट सेट करें
+
+```bash
+lizard port 0 -s worker
+```
+
+<span id="check-the-port-on-a-worker-service" />
+
+### वर्कर सेवा पर पोर्ट जांचें
+
+```bash
+lizard port --service worker
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [बैकग्राउंड वर्कर्स](/deploy/workers) — सेवा को इनबाउंड रूटिंग के बिना चलाने के लिए पोर्ट को `0` पर सेट करें
+- [lizard service](/cli/service) — सेवा के बाकी कॉन्फ़िगरेशन का प्रबंधन करें
+- [Python ऐप बिल्ड और स्टार्ट कमांड](https://lizard.build/blog/python-app-hosting#build-and-start-commands) — क्यों `gunicorn` या `uvicorn` प्रक्रिया को `0.0.0.0` पर `$PORT` को बाइंड करना पड़ता है

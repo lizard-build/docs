@@ -1,0 +1,41 @@
+---
+title: "क्षेत्र: सेवाएं और ऐडऑन कहां चलते हैं"
+description: "चुनें कि आपकी सेवाएं और ऐडऑन कहां चलते हैं, विलंबता कम करने के लिए स्टेटफुल संसाधनों को सह-स्थानित करें, और देखें कि सेवाओं और ऑब्जेक्ट स्टोरेज को कौन से होस्टनाम मिलते हैं।"
+---
+
+<span id="regions" />
+
+# क्षेत्र
+
+Lizard सेवाओं, ऐडऑन और Sandboxes को अमेरिका पूर्व (`us-east-1`) और यूरोपीय पश्चिम (`eu-west-lim-a`) जैसे क्षेत्रों में चलाता है। आप संसाधन बनाते समय क्षेत्र चुनते हैं; `--region` के बिना, `lizard add` इसे `us-east-1` में बनाता है। विलंबता कम रखने के लिए किसी सेवा और उसके डेटाबेस को एक ही क्षेत्र में रखें। [`lizard regions`](/cli/regions) आपके खाते के लिए खुले क्षेत्रों को सूचीबद्ध करता है।
+
+<span id="list-regions" />
+
+## क्षेत्रों की सूची बनाएं
+
+```bash
+lizard regions
+lizard regions --json
+```
+
+<span id="choose-a-region" />
+
+## एक क्षेत्र चुनें
+
+सेवा या ऐडऑन बनाते समय `--region <code>` पास करें:
+
+```bash
+lizard add -r your-org/your-app --region <code>
+lizard add postgres --region <code>
+lizard up --region <code>          # new services only
+```
+
+प्रोजेक्ट का कोई डिफ़ॉल्ट क्षेत्र नहीं होता है। `--region` के बिना, `lizard add` संसाधनों को `us-east-1` में बनाता है, और `lizard up` अनुरोध को संभालने वाले API सर्वर के क्षेत्र में एक नई सेवा बनाता है। चुनने के लिए `--region` पास करें।
+
+> **स्टेटफुल संसाधनों को सह-स्थानित करें।** विलंबता कम रखने और क्रॉस-रीजन डेटा शुल्क से बचने के लिए सेवा और उन ऐडऑन को जिन्हें वह बात करती है (Managed Postgres, Managed Redis, Managed Object Storage) **एक ही क्षेत्र** में रखें। [निजी नेटवर्किंग](/networking#private-networking) भी केवल एक क्षेत्र के भीतर काम करती है।
+
+<span id="generated-domains" />
+
+## उत्पन्न डोमेन
+
+प्रत्येक सेवा को स्वचालित TLS के साथ एक उत्पन्न डोमेन मिलता है: नई सेवाओं के लिए `<name>-<suffix>.onlizard.com`, जबकि पुरानी सेवाएं `<words>.<region>.onlizard.com` रखती हैं। [Managed Object Storage](/addons/storage) प्रति क्षेत्र एक गेटवे होस्ट का उपयोग करता है: `s3-us-east-1.onlizard.com` `us-east-1` के लिए और `s3-eu-west-1.onlizard.com` `eu-west-lim-a` के लिए। अपना स्वयं का होस्टनाम संलग्न करने के लिए, [नेटवर्किंग](/networking) देखें।

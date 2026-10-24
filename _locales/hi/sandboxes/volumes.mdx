@@ -1,0 +1,116 @@
+---
+description: "सैंडबॉक्स रन के बीच फ़ाइलों को रखने के लिए /workspace पर एक नामित वॉल्यूम माउंट करें। आकार की सीमाएँ, स्टोरेज मूल्य निर्धारण, और TypeScript, Python और CLI के लिए उदाहरण।"
+---
+
+# Persistent Volumes
+
+Persistent Volumes सैंडबॉक्स बंद होने के बाद डेटा रखता है। प्रत्येक वॉल्यूम **`/workspace`** पर माउंट होता है और **एक समय में एक सैंडबॉक्स** से जुड़ता है। सैंडबॉक्स अपने वॉल्यूम के समान नोड पर चलता है।
+
+<span id="create-and-attach-by-name" />
+
+## नाम से बनाएँ और अटैच करें
+
+नाम एक प्रोजेक्ट के भीतर अद्वितीय होते हैं। छोटे अक्षर, अंक और डैश का उपयोग करें, अक्षर या अंक से शुरू और समाप्त करें, 64 वर्णों तक।
+
+नामित वॉल्यूम का पुन: उपयोग करने के लिए `getOrCreate` का उपयोग करें। इसका आकार केवल एक नया वॉल्यूम बनाते समय लागू होता है; यह कभी भी मौजूदा वॉल्यूम का आकार नहीं बदलता है। यदि नाम लिया गया है तो `Volume.create` एक कॉन्फ्लिक्ट लौटाता है।
+
+```ts
+import { Sandbox, Volume } from '@lizard-build/sdk';
+
+await Volume.getOrCreate('proj_123', 'agent-workdir', { sizeGb: 10 });
+const sandbox = await Sandbox.create('base', {
+  projectId: 'proj_123', volumeName: 'agent-workdir',
+});
+try {
+  await sandbox.fs.write('/workspace/state.json', JSON.stringify({ step: 1 }));
+} finally {
+  await sandbox.kill();
+}
+
+// A later sandbox mounts the same data by name.
+const next = await Sandbox.create('base', {
+  projectId: 'proj_123', volumeName: 'agent-workdir',
+});
+try {
+  console.log(await next.fs.read('/workspace/state.json'));
+} finally {
+  await next.kill();
+}
+```
+
+```python
+from lizard import Sandbox, Volume
+
+Volume.get_or_create("proj_123", "agent-workdir", size_gb=10)
+sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workdir")
+try:
+    sandbox.process.exec_("echo hello > /workspace/state.txt")
+finally:
+    sandbox.kill()
+```
+
+<span id="size-and-price" />
+
+## आकार और मूल्य
+
+नए वॉल्यूम **1 से 50 GB** तक, पूरे GB में, **5 GB** डिफ़ॉल्ट के रूप में स्वीकार करते हैं। सर्वर `VOLUME_MAX_SIZE_GB` के माध्यम से अधिकतम को ओवरराइड कर सकता है; डैशबोर्ड और CLI `GET /api/projects/:projectId/volume-limits` से वर्तमान सीमाओं और स्टोरेज मूल्य को पढ़ते हैं।
+
+आप **उपयोग की गई जगह** के लिए भुगतान करते हैं, न कि पूर्ण आवंटन के लिए। नए अधिकतम से बड़े मौजूदा वॉल्यूम अपने आकार को बनाए रखते हैं और सुलभ रहते हैं। एक वर्कस्पेस के वॉल्यूम आवंटित आकार के **200 GB** तक जुड़ सकते हैं; उससे अधिक का निर्माण या आकार बदलना `403` को कोड `volume_quota_exceeded` के साथ लौटाता है।
+
+<span id="manage-volumes" />
+
+## वॉल्यूम प्रबंधित करें
+
+```ts
+await Volume.list('proj_123');
+const volume = await Volume.get('proj_123', 'agent-workdir');
+await volume.getInfo('proj_123');
+await Volume.resize('proj_123', 'agent-workdir', 20);
+await Volume.delete('proj_123', 'agent-workdir'); // detach first
+```
+
+| TypeScript | Python | उद्देश्य |
+|---|---|---|
+| `Volume.getOrCreate(projectId, name, options)` | `Volume.get_or_create(project_id, name, size_gb=5)` | वॉल्यूम का पुन: उपयोग करें या बनाएँ |
+| `Volume.create(projectId, name, options)` | `Volume.create(project_id, name, size_gb=5)` | बनाएँ; यदि नाम लिया गया है तो विफल हो जाएँ |
+| `Volume.list(projectId)` | `Volume.list(project_id)` | प्रोजेक्ट के वॉल्यूम सूचीबद्ध करें |
+| `Volume.get(projectId, nameOrId)` | `Volume.get(project_id, name_or_id)` | वॉल्यूम देखें |
+| `Volume.resize(projectId, nameOrId, sizeGb)` | `Volume.resize(project_id, name_or_id, size_gb)` | आकार बदलें |
+| `Volume.delete(projectId, nameOrId)` | `Volume.remove(project_id, name_or_id)` | डिटैच्ड वॉल्यूम हटाएँ |
+
+उत्पन्न आईडी और `volumeId` / `volume_id` फ़ील्ड मौजूदा कॉल करने वालों के लिए काम करते रहते हैं। नए कोड में नामों का उपयोग करें।
+
+`Volume.resize` एक वॉल्यूम को इन-प्लेस बढ़ाता है। वॉल्यूम अटैच करने वाला सैंडबॉक्स चलता रहता है लेकिन फिर भी पुराना आकार देखता है; वॉल्यूम अटैच करने वाला अगला सैंडबॉक्स नया देखता है। एक वॉल्यूम केवल बढ़ सकता है। अक्टूबर 2026 से पहले बनाए गए कुछ वॉल्यूम भी सिकुड़ सकते हैं यदि नए आकार का कम से कम 10% मुक्त रहता है।
+
+## CLI
+
+```bash
+lizard volume create agent-workdir --size 10 --project proj_123
+lizard volume list --project proj_123
+lizard sandbox create --volume agent-workdir --project proj_123
+lizard volume resize agent-workdir --size 20 --project proj_123
+# After stopping the sandbox:
+lizard volume rm agent-workdir --project proj_123
+```
+
+`--size` पूरे GB स्वीकार करता है और वॉल्यूम बनाने से पहले वर्तमान सर्वर सीमा की जाँच करता है। `volume list` नाम दिखाता है; जब आपको आईडी की आवश्यकता हो तो `--json` का उपयोग करें।
+
+<span id="dashboard" />
+
+## डैशबोर्ड
+
+SDK या CLI के साथ वॉल्यूम बनाएँ और अटैच करें। डैशबोर्ड साइडबार में **वॉल्यूम** पृष्ठ प्रत्येक वॉल्यूम की उपयोग की गई और आवंटित जगह, स्थिति और अटैच किए गए सैंडबॉक्स को सूचीबद्ध करता है। वहां से आप फ़ाइलों को ब्राउज़ कर सकते हैं, आकार बदल सकते हैं, या वॉल्यूम हटा सकते हैं।
+
+<span id="storage-lifecycle" />
+
+## स्टोरेज जीवनचक्र
+
+- सैंडबॉक्स को मारना या समाप्त करना उसके वॉल्यूम को डिटैच करता है और डेटा रखता है।
+- एक अटैच किया गया वॉल्यूम दूसरे सैंडबॉक्स से अटैच नहीं हो सकता या हटाया नहीं जा सकता।
+- वॉल्यूम को हटाने से उसका डेटा हट जाता है। वॉल्यूम नोड-लोकल स्टोरेज का उपयोग करते हैं; नोड विफलता के बाद आवश्यक डेटा निर्यात करें। [स्टोरेज और रिकवरी](/platform/storage-and-recovery) देखें।
+
+- वॉल्यूम के बिना, `/workspace` सैंडबॉक्स की डिस्क का हिस्सा होता है: एक पॉज़ या स्नैपशॉट अपनी फ़ाइलों को रखता है, और एक किल या एक्सपायरी उन्हें हटा देता है।
+- वॉल्यूम से जुड़ा सैंडबॉक्स फोर्क नहीं किया जा सकता (HTTP 409)।
+- वॉल्यूम से जुड़े सैंडबॉक्स का स्नैपशॉट कैप्चर के समय वॉल्यूम की फ़ाइलों की एक कॉपी शामिल करता है। हर रीस्टोर उस कॉपी को प्राप्त करता है, लाइव वॉल्यूम को नहीं, और कोई दूसरा वॉल्यूम अटैच नहीं कर सकता। जो कोई भी स्नैपशॉट को रीस्टोर कर सकता है वह उन फ़ाइलों को पढ़ सकता है, इसलिए स्नैपशॉट साझा करने से वॉल्यूम का डेटा साझा होता है; [स्नैपशॉट्स](/sandboxes/quickstart#pause-and-resume) देखें।
+
+सैंडबॉक्स विकल्पों के लिए [SDK संदर्भ](/sandboxes/sdk-reference) और पॉज़, स्नैपशॉट्स और फोर्क के लिए [लाइफसाइकिल](/sandboxes#lifecycle) देखें।

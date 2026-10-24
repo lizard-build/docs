@@ -1,0 +1,64 @@
+---
+description: "क्यों Lizard एक रिपॉजिटरी के Dockerfile को बदल देता है जिसमें कोई बिल्ड स्टेप नहीं है, अपूर्ण-Dockerfile नियम कैसे काम करता है, और आप इसे शब्दशः कैसे प्राप्त कर सकते हैं।"
+---
+
+<span id="my-dockerfile-changes-dont-seem-to-apply" />
+
+# मेरे Dockerfile परिवर्तन लागू नहीं हो रहे हैं
+
+आपके रिपॉजिटरी में एक `Dockerfile` है, आपने इसे संपादित किया है, लेकिन बिल्ड Lizard जो चलता है वह आपके द्वारा लिखे गए से मेल नहीं खाता है।
+
+<span id="what-this-means" />
+
+## इसका क्या मतलब है
+
+प्लेटफ़ॉर्म ने तय किया कि आपकी रिपॉजिटरी का Dockerfile **अपूर्ण** था और आपके बजाय [lizardpack](/concepts/build-pipeline) के साथ एक को पुनर्जीवित किया।
+
+<span id="why-this-can-happen" />
+
+## यह क्यों हो सकता है
+
+यह जाँच केवल GitHub-स्रोत सेवाओं के लिए चलती है। अपलोड (`lizard up`) हमेशा लिखे अनुसार एक रूट `Dockerfile` का उपयोग करते हैं।
+
+GitHub स्रोत पर, Lizard एक रूट Dockerfile को अपूर्ण मानता है जब दोनों सत्य होते हैं:
+
+- इसमें `COPY`, `build`, `dist`, `out`, या `.next` का `public` है जो एक ट्रेलिंग स्लैश के बिना लिखा गया है, जैसे `COPY dist /usr/share/nginx/html`;
+- इसमें कोई `RUN` लाइन नहीं है जो `npm`, `yarn`, `pnpm`, `bun`, `pip`, `pip3`, `bundle`, `cargo`, `go build`, `mvn`, या `gradle` से शुरू होती है।
+
+Lizard मानता है कि वे आर्टिफैक्ट इमेज के बाहर बनाए गए थे, और lizardpack एक प्रतिस्थापन Dockerfile उत्पन्न करता है जिसमें गुम बिल्ड स्टेप शामिल है।
+
+दो अन्य सेटिंग्स आपके रेपो के रूट Dockerfile को भी बायपास करती हैं। `dockerfilePath` सेट होने पर, Lizard उस फ़ाइल को वैसे ही उपयोग करता है जैसे वह लिखी गई है। इसके बिना, एक सेट `buildCommand` या `startCommand` Lizard को उन कमांड से एक Dockerfile संश्लेषित करने देता है।
+
+<span id="possible-solutions" />
+
+## संभावित समाधान
+
+<span id="add-a-real-build-step" />
+
+### एक वास्तविक बिल्ड स्टेप जोड़ें
+
+यदि आप चाहते हैं कि आपका Dockerfile वैसे ही उपयोग किया जाए, तो प्री-बिल्ट आउटपुट को कॉपी करने के बजाय उसे एक वास्तविक बिल्ड स्टेप दें:
+
+```dockerfile
+RUN npm ci && npm run build
+```
+
+<span id="or-force-verbatim-use" />
+
+### या वर्बेटिम उपयोग को बाध्य करें
+
+`dockerfilePath` सेट करें। यह इमेज बिल्ड के लिए बिल्ड और स्टार्ट कमांड पर प्राथमिकता लेता है, लेकिन एक सेट `startCommand` अभी भी रन टाइम पर आपके Dockerfile के `CMD` को बदल देता है, इसलिए दोनों को एक ही अपडेट में क्लियर करें। एक खाली मान एक फ़ील्ड को क्लियर करता है:
+
+```bash
+lizard service set api --set buildCommand= --set startCommand= --set dockerfilePath=Dockerfile
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [Build Pipeline](/concepts/build-pipeline) — पूर्ण बिल्ड निर्णय क्रम।
+- [Build configuration reference](/concepts/build-pipeline#build-configuration-reference)
+- [A minimal FastAPI container](https://lizard.build/blog/python-app-hosting#a-minimal-fastapi-container) — एक पूर्ण Python Dockerfile, और स्रोत बिल्ड के बजाय अपना कब लाना है।
+
+इन बिल्ड फ़ील्ड्स को बदलने से बिल्ड शुरू हो सकता है। दूसरे `redeploy` को भेजने से पहले `lizard events` की जाँच करें, ताकि दूसरे बिल्ड को शुरू करने से बचा जा सके।

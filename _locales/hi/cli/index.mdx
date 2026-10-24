@@ -1,0 +1,131 @@
+---
+title: "Lizard CLI संदर्भ: इंस्टॉल, फ़्लैग, एग्जिट कोड"
+description: "Lizard CLI को इंस्टॉल और अपग्रेड करें, प्रमाणित करें, और हर कमांड के लिए ग्लोबल फ़्लैग, एग्जिट कोड और रनटाइम स्कीमा डिस्कवरी का पता लगाएं।"
+---
+
+<span id="cli-reference" />
+
+# CLI संदर्भ
+
+Lizard CLI (`lizard`) टर्मिनल, CI जॉब या कोडिंग एजेंट से Lizard पर ऐप्स, डेटाबेस और Sandboxes को डिप्लॉय और प्रबंधित करता है। यह पृष्ठ इंस्टॉलेशन, ग्लोबल फ़्लैग, एग्जिट कोड और रनटाइम डिस्कवरी को कवर करता है। प्रत्येक कमांड का साइडबार में एक संदर्भ पृष्ठ होता है। [`lizard up`](/cli/up), [`lizard service`](/cli/service), [`lizard secrets`](/cli/secrets), [`lizard pause` और `lizard resume`](/cli/pause), [`lizard sleep`](/cli/sleep), और बाकी देखें। CLI क्या करता है इसका अवलोकन देखने के लिए, [Lizard CLI पृष्ठ](https://lizard.build/cli) देखें।
+
+> Lizard CLI **v4.0.65** के लिए लिखा गया संदर्भ। किसी भी कमांड के सटीक, संस्करण-मिलान स्कीमा के लिए `lizard <cmd> --help --json` चलाएं।
+
+<span id="install--upgrade" />
+
+## इंस्टॉल और अपग्रेड करें
+
+```bash
+curl -fsSL https://lizard.build/install.sh | bash   # macOS and Linux
+lizard --version
+lizard upgrade            # update to the latest version
+lizard upgrade --check    # check without installing
+```
+
+फ्लैग्स के लिए [`lizard upgrade`](/cli/upgrade) देखें।
+
+Windows पर PowerShell में `irm https://lizard.build/api/cli/install.ps1 | iex` चलाएँ। Node.js के साथ आप npm से भी इंस्टॉल कर सकते हैं: `npm install -g @lizard-build/cli`।
+
+macOS और Linux पर, इंस्टॉल स्क्रिप्ट का बाइनरी भी बैकग्राउंड में खुद को अपडेट करता है, हर 6 घंटे में ज़्यादा से ज़्यादा एक बार, लेकिन केवल तब जब वह इंटरैक्टिव टर्मिनल में चलता है। यह `CI` या `LIZARD_NO_UPDATE=1` सेट होने पर जांच को छोड़ देता है। एजेंट, स्क्रिप्ट और CI जॉब कभी भी बैकग्राउंड में अपडेट नहीं होते हैं, इसलिए वहां `lizard upgrade` स्वयं चलाएँ। Windows बाइनरी खुद को अपडेट नहीं करता है: इंस्टॉलर को फिर से चलाएँ। npm इंस्टॉल के लिए, `lizard upgrade` आपके लिए npm चलाता है और केवल तभी npm कमांड प्रिंट करता है जब वह विफल हो जाता है।
+
+वैश्विक रूप से इंस्टॉल किए गए `lizard` बाइनरी का उपयोग करें, न कि `npx` का। अनुमति-त्रुटि सुधारों के लिए [क्विकस्टार्ट](/getting-started#1-install-the-cli) देखें।
+
+<span id="authentication" />
+
+## प्रमाणीकरण
+
+```bash
+lizard login                  # GitHub or Google in the browser, then the Pro trial offer
+lizard login --token liz_xxx  # API key auth
+lizard logout
+lizard whoami                 # current user, workspace, linked project
+```
+
+संदर्भ पृष्ठ: वर्कस्पेस को सूचीबद्ध करने और बनाने के लिए [`lizard login`](/cli/login), [`lizard logout`](/cli/logout), [`lizard whoami`](/cli/whoami), और [`lizard workspace`](/cli/workspace)।
+
+API कुंजियाँ `liz_` से शुरू होती हैं। [`lizard keys create <name>`](/cli/keys) के साथ एक बनाएँ। CI में, `login` चलाने के बजाय पर्यावरण में `LIZARD_TOKEN` (या `LIZARD_API_KEY`) सेट करें।
+
+<span id="global-flags" />
+
+## वैश्विक फ़्लैग
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `-V, --version` | CLI संस्करण प्रिंट करें |
+| `--json` | मशीन-पठनीय आउटपुट। किसी कमांड के स्कीमा को डंप करने के लिए `--help` के साथ मिलाएं |
+
+अधिकांश कमांड एक विशिष्ट संसाधन को लिंक किए गए के बजाय लक्षित करने के लिए `-p, --project` और `-s, --service` भी स्वीकार करते हैं। लिंक न किए गए फ़ोल्डर में, वे आपके डिफ़ॉल्ट प्रोजेक्ट का उपयोग करते हैं। `init`, `link`, और `project` भी `-w, --workspace` लेते हैं। `lizard add` में कोई `--project` नहीं है: यह लिंक किए गए प्रोजेक्ट या डिफ़ॉल्ट का उपयोग करता है।
+
+<span id="exit-codes" />
+
+## निकास कोड
+
+| कोड | अर्थ | क्या करें |
+|------|---------|------------|
+| `0` | सफलता | जारी रखें |
+| `1` | सामान्य त्रुटि | संदेश पढ़ें |
+| `2` | प्रमाणीकरण (401/403) | `lizard login` चलाएँ |
+| `3` | नहीं मिला (404): API के पास उस आईडी के साथ कुछ भी नहीं है | `lizard ps` / `lizard project list` के साथ आईडी जांचें |
+| `4` | टाइमआउट (408/504) | पुनः प्रयास करें |
+| `5` | उपयोगकर्ता द्वारा रद्द किया गया | रोकें |
+
+कोई भी प्रोजेक्ट या सेवा नाम जो किसी चीज़ से मेल नहीं खाता है, `3` के बजाय `1` से बाहर निकलता है। `lizard run`, `lizard sandbox exec` और `lizard sandbox ssh` कमांड के अपने कोड (`127` जब `run` कमांड नहीं ढूंढ पाता है) से बाहर निकलते हैं, इसलिए उनसे `2` आपके कमांड से आ सकता है, प्रमाणीकरण से नहीं।
+
+<span id="runtime-discovery" />
+
+## रनटाइम डिस्कवरी
+
+CLI स्व-दस्तावेजी है। पूर्ण कमांड ट्री, वैश्विक फ़्लैग और निकास कोड देखने के लिए:
+
+```bash
+lizard --help --json
+```
+
+किसी भी कमांड या उप-कमांड के सटीक तर्कों और विकल्पों के लिए:
+
+```bash
+lizard <cmd> --help --json
+lizard <cmd> <sub> --help --json     # e.g. lizard service set --help --json
+```
+
+आउटपुट आपके इंस्टॉल किए गए संस्करण द्वारा स्वीकार किए जाने वाले तर्कों और फ़्लैग्स को सूचीबद्ध करता है। यह वह तरीका भी है जिससे एक एजेंट इसे प्रशिक्षित किए बिना CLI सीखता है: [Claude Code से डिप्लॉय करना](https://lizard.build/blog/deploy-from-claude-code) देखें।
+
+<span id="configuration--state" />
+
+## कॉन्फ़िगरेशन और स्थिति
+
+- CLI प्रमाणीकरण और प्रत्येक फ़ोल्डर के प्रोजेक्ट लिंक को `~/.lizard/config.json` में संग्रहीत करता है। एक लिंक उस सटीक फ़ोल्डर को कवर करता है, न कि उसके सबफ़ोल्डर को। लिंक न किए गए फ़ोल्डर में, प्रोजेक्ट कमांड आपके खाते के डिफ़ॉल्ट प्रोजेक्ट का उपयोग करते हैं: आपके व्यक्तिगत वर्कस्पेस में सबसे पुराना प्रोजेक्ट।
+- [`lizard status`](/cli/status) वर्तमान कार्यशील डायरेक्टरी के वर्कस्पेस/प्रोजेक्ट/सेवा लिंक को दिखाता है (कोई प्रमाणीकरण आवश्यक नहीं)। [`lizard link`](/cli/link) उस लिंक को सेट करता है, [`lizard unlink`](/cli/unlink) उसे हटाता है, और [`lizard project`](/cli/project) प्रोजेक्ट्स को सूचीबद्ध करता है, बनाता है, रोकता है, फिर से शुरू करता है, और हटाता है।
+- [`lizard config apply`](/cli/config) किसी प्रोजेक्ट पर `lizard-config.json` फ़ाइल लागू करता है (पूर्वावलोकन के लिए `--dry-run` का उपयोग करें)।
+- [`lizard open`](/cli/open) लिंक किए गए प्रोजेक्ट को डैशबोर्ड में खोलता है, और [`lizard docs`](/cli/docs) इस दस्तावेज़ को खोलता है।
+
+<span id="environment-variables" />
+
+## एनवायरनमेंट वेरिएबल्स
+
+| चर | प्रभाव |
+|----------|--------|
+| `LIZARD_TOKEN` | संग्रहीत लॉगिन के बजाय उपयोग करने के लिए API कुंजी या टोकन |
+| `LIZARD_API_KEY` | `LIZARD_TOKEN` के समान |
+| `LIZARD_API_URL` | API बेस URL (डिफ़ॉल्ट `https://lizard.build`) |
+| `LIZARD_HOME` | `~/.lizard` के बजाय `$LIZARD_HOME/.lizard` में CLI स्थिति रखें |
+| `LIZARD_NO_UPDATE` | पृष्ठभूमि स्व-अपडेट बंद करें |
+| `CI` | पृष्ठभूमि स्व-अपडेट को भी बंद कर देता है |
+| `LIZARD_SKILLS_DIR` | CLI में निर्मित के बजाय इस डायरेक्टरी से कौशल पढ़ें |
+
+<span id="sandbox-volumes" />
+
+## सैंडबॉक्स वॉल्यूम
+
+प्रोजेक्ट के भीतर [Persistent Volumes](/sandboxes/volumes) को प्रबंधित करने के लिए नामों का उपयोग करें। पूर्ण संदर्भ: [`lizard volume`](/cli/volume) और [`lizard sandbox`](/cli/sandbox)।
+
+```bash
+lizard volume create agent-workdir --size 10 --project proj_123
+lizard volume list --project proj_123
+lizard volume resize agent-workdir --size 20 --project proj_123
+lizard sandbox create --volume agent-workdir --project proj_123
+```
+
+नाम प्रति प्रोजेक्ट अद्वितीय होते हैं: छोटे अक्षर, अंक और डैश, अक्षर या अंक से शुरू और समाप्त होते हैं, 64 वर्णों तक। नए वॉल्यूम 1 से 50, तक पूरे GB की अनुमति देते हैं, डिफ़ॉल्ट 5.। CLI वॉल्यूम बनाने से पहले सर्वर की वर्तमान सीमाएँ पढ़ता है, इसलिए यह कॉन्फ़िगरेशन परिवर्तनों का पालन करता है। मौजूदा बड़े वॉल्यूम अपने आकार बनाए रखते हैं।
+
+वॉल्यूम को अलग करने के बाद, `lizard volume rm agent-workdir --project proj_123` उसे और उसके डेटा को हटा देता है। `volume list` नाम दिखाता है; `--json` में जेनरेट किए गए आईडी शामिल हैं।

@@ -1,0 +1,107 @@
+---
+title: "सेवा को स्केल करें: प्रतिकृतियां, CPU और मेमोरी"
+description: "सेवा के लिए प्रतिकृतियां जोड़ें या CPU और मेमोरी बढ़ाएं, ऐडऑन स्टोरेज बढ़ाएं, या सेवा को निष्क्रिय होने पर सोने दें या उसे रोक दें। अनुमत रेंज और परिवर्तन को सत्यापित करने का तरीका।"
+---
+
+<span id="scaling" />
+
+# स्केलिंग
+
+सेवा प्रतिकृतियां जोड़ने, CPU या मेमोरी बढ़ाने, या ऐडऑन स्टोरेज बढ़ाने के लिए `lizard scale` का उपयोग करें। किसी सेवा को शून्य तक स्केल करने के लिए, उसे [निष्क्रिय होने पर सोने दें](#sleep-when-idle) या [उसे रोक दें](#pause-a-service)।
+
+<span id="scale-a-service" />
+
+## सेवा को स्केल करें
+
+```bash
+lizard scale --service api --replicas 3
+lizard scale --service api --cpu 2 --memory 2048
+```
+
+| फ़्लैग | लागू होता है | अनुमत मान |
+|------|-----------|----------------|
+| `--replicas <n>` | ऐप्स | `1` आपके प्लान की [सीमा](/platform/limits#applications) तक: ट्रायल के दौरान `1`, Pro और Enterprise पर `5` |
+| `--cpu <cores>` | ऐप्स और ऐडऑन | पूरे कोर: `1`, `2`, `3`, `4` |
+| `--memory <mb>` | ऐप्स और ऐडऑन | `128` से `8192` MB (1 MB स्टेप्स) |
+| `--storage <mb>` | **केवल ऐडऑन**, ग्रो-ओनली | `512`, `1024`, `2048`, `4096`, `8192`, `16384` |
+
+आप एक ही कमांड में फ़्लैग को मिला सकते हैं। प्रतिकृति परिवर्तन बिना रीबिल्ड के रोल आउट होते हैं। CPU और मेमोरी परिवर्तन नई सीमाओं के साथ सेवा को पुनरारंभ करते हैं।
+
+<span id="horizontal-scaling" />
+
+## क्षैतिज स्केलिंग
+
+लोड बैलेंसर के पीछे किसी ऐप की कई प्रतिकृतियां चलाएँ:
+
+```bash
+lizard scale --service api --replicas 5
+```
+
+प्रत्येक प्रतिकृति अपने आप में एक पॉड है। सुनिश्चित करें कि आपका ऐप स्टेटलेस है (स्टेट को [Managed Postgres](/addons/postgres), [Managed Redis](/addons/redis), या [Managed Object Storage](/addons/storage) में स्टोर करें) ताकि प्रतिकृतियां विनिमेय हो सकें।
+
+<span id="vertical-scaling" />
+
+## ऊर्ध्वाधर स्केलिंग
+
+एकल प्रतिकृति को अधिक संसाधन दें:
+
+```bash
+lizard scale --service api --cpu 4 --memory 8192
+```
+
+<span id="growing-addon-storage" />
+
+## ऐडऑन स्टोरेज बढ़ाना
+
+आप ऐडऑन डेटा वॉल्यूम बढ़ा सकते हैं, लेकिन उन्हें सिकोड़ नहीं सकते:
+
+```bash
+lizard scale --service postgres --storage 8192
+```
+
+<span id="sleep-when-idle" />
+
+## निष्क्रिय होने पर सोएं
+
+`lizard sleep --on` एक वेब सेवा को तब सोने देता है जब उसे कोई ट्रैफ़िक नहीं मिलता है और लगभग एक सेकंड में अगले अनुरोध पर जाग जाता है। डिफ़ॉल्ट रूप से यह ट्रैफ़िक के बिना 10 मिनट के बाद सो जाता है; 5 को 1440 मिनट पर सेट करें `--idle` के साथ। इसे चालू करने से सेवा एक बार पुनरारंभ हो जाती है। यह केवल एक पोर्ट और एक प्रतिकृति वाली सेवा के लिए काम करता है, इसलिए वर्कर्स के लिए नहीं। Managed Postgres और Managed Redis भी सो सकते हैं।
+
+```bash
+lizard sleep --on --idle 30 --service api
+lizard sleep --off --service api    # always on
+```
+
+[`lizard sleep`](/cli/sleep) देखें।
+
+<span id="pause-a-service" />
+
+## सेवा को रोकें
+
+`lizard pause` किसी सेवा या डेटाबेस को हटाए बिना रोक देता है: यह शून्य तक स्केल करता है और उसका URL, पासवर्ड, सेटिंग्स और डेटा रखता है। `lizard resume` इसे फिर से शुरू करता है। रुकी हुई GitHub सेवा तब तक पुश को अनदेखा करती है जब तक आप इसे फिर से शुरू नहीं करते।
+
+```bash
+lizard pause api
+lizard resume api
+```
+
+किसी प्रोजेक्ट या वर्कस्पेस में हर सेवा को रोकने के लिए, `lizard project pause` या `lizard workspace pause` का उपयोग करें। [`lizard pause`](/cli/pause) देखें।
+
+<span id="verifying" />
+
+## सत्यापन
+
+```bash
+lizard ps                 # replica status + URL
+lizard events             # deploy history + current replicas
+lizard metrics            # live CPU / memory / network / disk
+lizard metrics --cost     # cost instead of metrics
+```
+
+प्रतिकृति परिवर्तन से कोई परिनियोजन नहीं होता है, इसलिए `lizard events` इसे सूचीबद्ध नहीं करता है; इसके बजाय प्रतिकृति तालिका देखें।
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [अवलोकन → मेट्रिक्स](/observability/metrics): संसाधन और लागत की निगरानी।
+- [`lizard scale`](/cli/scale): पूर्ण कमांड संदर्भ।
+- [CaaS लागत का अनुमान कैसे लगाएं](https://lizard.build/blog/container-as-a-service#how-to-estimate-caas-cost): बिल का अनुमान लगाते समय किन मीटरों की तुलना करनी है।

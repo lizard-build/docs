@@ -1,0 +1,60 @@
+---
+description: "lizard upgrade npm के माध्यम से या बाइनरी को बदलकर नवीनतम सीएलआई रिलीज़ इंस्टॉल करता है, या --check के साथ नए संस्करण की जांच करता है।"
+---
+
+# lizard upgrade
+
+सीएलआई को नवीनतम संस्करण में अपग्रेड करें।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard upgrade [flags]
+```
+
+यह कैसे अपग्रेड होता है, यह इस बात पर निर्भर करता है कि आपने सीएलआई कैसे इंस्टॉल किया है:
+
+- **macOS या Linux पर इंस्टॉल स्क्रिप्ट:** नया रिलीज़ डाउनलोड करती है और बाइनरी को बदलती है।
+- **npm:** आपके लिए `npm install -g @lizard-build/cli@<version>` चलाता है। अगर npm विफल हो, जैसे ग्लोबल फ़ोल्डर में लिखने की अनुमति न मिलने पर, तो CLI `npm install -g @lizard-build/cli@latest` दिखाता है। उसे npm के लिए ज़रूरी अनुमतियों के साथ चलाएँ।
+- **Windows:** बाइनरी खुद को बदल नहीं सकती। इंस्टॉलर फिर से चलाएँ: `irm https://lizard.build/api/cli/install.ps1 | iex`।
+
+macOS और Linux पर इंस्टॉल स्क्रिप्ट से बाइनरी पृष्ठभूमि में खुद को अपडेट भी करती है: केवल इंटरैक्टिव टर्मिनल में, हर 6 घंटे में अधिकतम एक बार, और कभी भी जब `CI` या `LIZARD_NO_UPDATE` सेट हो। अगला कमांड तब `lizard auto-updated: v<old> → v<new>` प्रिंट करता है। npm इंस्टॉल और Windows बाइनरी पृष्ठभूमि में अपडेट नहीं होते हैं।
+
+<span id="flags" />
+
+## फ्लैग्स
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `--check` | इंस्टॉल किए बिना नए संस्करण की जांच करें |
+
+`--json` के साथ, `lizard upgrade --check` `{ currentVersion, latestVersion, updateAvailable }` लौटाता है।
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="update-to-the-latest-version" />
+
+### नवीनतम संस्करण में अपडेट करें
+
+```bash
+lizard upgrade
+```
+
+<span id="check-for-updates-without-installing" />
+
+### इंस्टॉल किए बिना अपडेट की जांच करें
+
+```bash
+lizard upgrade --check
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [सीएलआई संदर्भ](/cli) — इंस्टॉल, ग्लोबल फ़्लैग, एग्जिट कोड
+- [शुरुआत करना](/getting-started) — पहली बार सीएलआई इंस्टॉल करना

@@ -1,0 +1,79 @@
+---
+description: "${{name.KEY}} से एक सेवा या addon के मान दूसरी सेवा में पढ़ें। जानें कि डिप्लॉय के समय references कैसे हल होते हैं और मान कॉपी करने से क्यों बेहतर हैं।"
+---
+
+<span id="cross-service-references" />
+
+# क्रॉस-सर्विस रेफरेंस
+
+References से सेवा बिना क्रेडेंशियल कॉपी किए दूसरी सेवा या addon के मान पढ़ सकती है। हर मान एक ही जगह रहता है; उसे इस्तेमाल करने वाली सेवाओं को बदलाव अगले डिप्लॉय पर मिलते हैं।
+
+<span id="syntax" />
+
+## सिंटैक्स
+
+```
+${{<name>.<KEY>}}
+```
+
+- `<name>` — लक्ष्य सेवा या addon का नाम (जो डैशबोर्ड में दिखता है और `lizard add -n` में इस्तेमाल होता है)।
+- `<KEY>` — लक्ष्य की उपलब्ध कुंजी। Addon अपने कनेक्शन मान देता है। सेवा अपने प्रोजेक्ट और सेवा के variables और secrets, साथ में `LIZARD_*` और `PORT` मान देती है। वह addon से Lizard के जोड़े हुए `DATABASE_URL` या `REDIS_URL` नहीं देती; इनके लिए addon का reference दें।
+
+जहाँ भी मान दे सकते हैं, वहाँ इन्हें इस्तेमाल करें — आम तौर पर किसी secret में:
+
+```bash
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_URL}}' --service api
+```
+
+<span id="how-they-resolve" />
+
+## मान कैसे मिलते हैं
+
+- **डिप्लॉय के समय** references को लक्ष्य के उपलब्ध मानों से हल करते हैं।
+- Secret में (`lizard secrets set` या डैशबोर्ड से) सेट किए गए references लक्ष्य के **मौजूदा नाम** से मेल खाते हैं। लक्ष्य का नाम बदलने पर वे टूट जाते हैं; नाम बदलने के बाद हर `${{oldname.KEY}}` अपडेट करें। `lizard add -v` से बने references नाम बदलने पर भी लक्ष्य से जुड़े रहते हैं।
+- **गायब** लक्ष्य या कुंजी का reference **खाली स्ट्रिंग** देता है — इससे डिप्लॉय विफल *नहीं* होता। बिल्ड लॉग में हर खाली reference के लिए कारण सहित चेतावनी दिखती है।
+- सिर्फ़ **चक्रीय** references त्रुटि देते हैं।
+
+> Reference जोड़ने के बाद बिल्ड लॉग में खाली references जाँचें:
+> ```bash
+> lizard logs --build --service api
+> ```
+
+अगर एक रिफ़रेंस आपकी अपेक्षा के अनुसार प्रदर्शित नहीं हो रहा है, तो देखें [समस्या निवारण → एक रहस्य या संदर्भ प्रदर्शित नहीं हो रहा](/variables/troubleshooting/reference-not-applied)।
+
+<span id="common-patterns" />
+
+## सामान्य प्रतिरूप
+
+**एक एड-ऑन को कई सेवाओं से जोड़ें** — हर उपभोगता पर बांड करें; प्रोजेक्ट के अंदर निजी URL का उपयोग करें:
+
+```bash
+lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service api
+lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service worker
+```
+
+**दूसरी सेवा के मान का रिफ़रेंस** — उदाहरण के लिए एक गणना किए गए URL या टोकन को साझा करें। `LIZARD_PUBLIC_DOMAIN` एक बेड होस्टनेम है और जब सेवा का डोमेन हो जाता है तब वह मौजूद होता है; `LIZARD_PRIVATE_DOMAIN` (`<name>.lizard.internal`) सेवा तक प्रोजेक्ट के अंदर पहुंचता है:
+
+```bash
+lizard secrets set UPSTREAM_URL='https://${{api.LIZARD_PUBLIC_DOMAIN}}' --service web
+lizard secrets set INTERNAL_API='http://${{api.LIZARD_PRIVATE_DOMAIN}}:8080' --service web
+```
+
+**समान प्रकार के दूसरे एड-ऑन का रिफ़रेंस** — उसके जनरेटेड नाम का उपयोग करें:
+
+```bash
+lizard secrets set CACHE_URL='${{redis-winter-otter.REDIS_URL}}' --service api
+```
+
+<span id="why-not-just-use---global" />
+
+## बस `--global` का उपयोग करने की क्या आवश्यकता है?
+
+प्रोजेक्ट (`--global`) स्कोप में एक साझा मान रखने से इसे *हर* सेवा के लिए खुला कर देता है, जिसमें से कुछ को आवश्यकता भी नहीं होगी। एक रिफ़रेंस मान को एक ही जगह रखता है और इसे केवल उस जगह बांड करता है जहाँ आपने इसे सेट किया है। ध्यान रखें कि हर सेवा पहले से ही प्रोजेक्ट के Postgres और Redis एड-ऑन्स से एक `DATABASE_URL` और एक `REDIS_URL` सबसे कम प्राथमिकता में प्राप्त करती है; कई एड-ऑन्स होने पर कौन सा है यह परिभाषित नहीं होता है। एक रिफ़रेंस उन्हें ओवरराइड करता है। देखें [रहस्य स्कोपिंग](/variables#scoping)।
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [चर और रहस्य](/variables) — स्कोप और प्राथमिकता।
+- [`lizard secrets`](/cli/secrets) — पूर्ण कमांड रिफ़ेरेंस।

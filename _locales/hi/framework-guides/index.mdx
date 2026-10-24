@@ -1,0 +1,67 @@
+---
+description: "Lizard पर Next.js, Express, FastAPI, Django, Streamlit, Go, Rails, Astro, Nuxt, SvelteKit और स्टेटिक साइट जनरेटर परिनियोजित करें: बिल्ड कमांड, पोर्ट और जांच।"
+---
+
+<span id="framework-guides" />
+
+# फ्रेमवर्क गाइड
+
+स्रोत से Lizard पर एक फ्रेमवर्क ऐप परिनियोजित करें। अपना फ्रेमवर्क और रेंडरिंग मोड नीचे चुनें, इसके प्रोडक्शन बिल्ड को तैयार करें, फिर Lizard CLI के साथ परिनियोजित करें या GitHub रिपॉजिटरी कनेक्ट करें। सर्वर ऐप एक प्रक्रिया चलाते हैं; स्टेटिक साइटें उत्पन्न फ़ाइलों को nginx के माध्यम से सेवा देती हैं।
+
+<span id="choose-your-framework" />
+
+## अपना फ्रेमवर्क चुनें
+
+ये सेटिंग्स लिंक किए गए गाइड में मानक प्रोजेक्ट लेआउट का वर्णन करती हैं। कमांड JavaScript प्रोजेक्ट के लिए npm मानते हैं। कस्टम आउटपुट पथ, एडेप्टर और बिल्ड ओवरराइड परिणाम बदल सकते हैं। इसके बजाय अपनी खुद की इमेज लाने के लिए, [Dockerfile से Docker कंटेनर परिनियोजित करें](/deploy/dockerfile) देखें।
+
+| Framework | Build | Runtime or output | Service port |
+|---|---|---|---|
+| [Next.js](/framework-guides/nextjs) | `npm run build` | `next start` through the start script | `3000` |
+| [Next.js static export](/framework-guides/nextjs/static-export) | `npm run build` | `out/` through a Dockerfile | `80` |
+| [React with Vite](/framework-guides/react) | `npm run build` | `dist/` | `80` |
+| [Vue with Vite](/framework-guides/vue) | `npm run build` | `dist/` | `80` |
+| [Astro](/framework-guides/astro) | `npm run build` | `dist/`, or the standalone Node adapter | `80` static; `3000` server |
+| [Nuxt](/framework-guides/nuxt) | `npm run build` | `node .output/server/index.mjs` | `3000` |
+| [SvelteKit](/framework-guides/sveltekit) | `npm run build` | `node build` with adapter-node | `3000` |
+| [Node.js (Express)](/framework-guides/nodejs) | `build` script, if any | `start` script | `3000` |
+| [FastAPI](/framework-guides/fastapi) | Install Python dependencies | `uvicorn main:app --host 0.0.0.0 --port 8000` | `8000` |
+| [Django](/framework-guides/django) | Install Python dependencies | Gunicorn with your WSGI module | `8000` |
+| [Streamlit](/framework-guides/streamlit) | Install Python dependencies | `streamlit run app.py` from a Procfile | `8501` |
+| [Go](/framework-guides/go) | `go build` to a static binary | `/app/server` | `8080` |
+| [Ruby on Rails](/framework-guides/rails) | The Dockerfile Rails generates | Thruster and Puma, or Puma alone | `8080` on Rails 8; `3000` on Rails 7.1 and 7.2 |
+| [Docusaurus](/framework-guides/docusaurus) | `npm run build` | `build/` | `80` |
+| [VitePress](/framework-guides/vitepress) | `npm run docs:build` | `docs/.vitepress/dist/` in this guide | `80` |
+| [Hugo](/framework-guides/hugo) | `hugo --minify` | `public/` | `80` |
+
+## Prepare the project
+
+Run commands from the application directory. Commit source files, configuration, and the package lockfile. Exclude `.env`, local dependencies, and local build output from uploads. Node projects can select the Node major version in `.nvmrc`; the current default is `22`. This selects a major version, not an exact patch release. [Runtime versions](/deploy/runtime-versions) lists the version files for Node.js, Python, Go and Ruby.
+
+Install Lizard CLI and sign in once:
+
+```bash
+curl -fsSL https://lizard.build/install.sh | bash
+lizard login
+```
+
+Windows पर PowerShell में `irm https://lizard.build/api/cli/install.ps1 | iex` चलाएँ। नए खाते में शुरू में कोई प्लान नहीं होता: जब तक आप 7-दिन का Pro ट्रायल शुरू नहीं करते (कार्ड ज़रूरी है), `lizard add` और `lizard up` Checkout लिंक देते हैं। `lizard billing start` उसे खोलता है।
+
+Each guide uses a new project and a service named `web` or `api`. `lizard up --service web` creates `web` if it does not exist yet, so check the name: a typo creates a second service. The guides run `lizard add --service web` (or `api`) first; you need that step only to set secrets or a domain before the first deploy. For an existing project, check `lizard status --json` and `lizard ps --json` before deploying. The port must match the process inside the container, which must listen on `0.0.0.0`.
+
+Lizard CLI 0.3.95 and later exclude macOS archive metadata during uploads. No `COPYFILE_DISABLE` setting is needed. Update older CLI versions before following these guides.
+
+## Choose GitHub or local source
+
+The guide commands use `lizard up` to upload the current folder. That command changes an existing service to upload source. To keep git push to deploy, [connect GitHub](/deploy/github) instead and use the guide's build settings in the repository. Configure the service port from the table: nginx for a Vite, Astro, SvelteKit, Docusaurus or VitePress build listens on the port you set, or on `3000` if you set none.
+
+## Keep build settings consistent
+
+These guides use lizardpack detection unless they call for a Dockerfile. Existing `buildCommand` or `startCommand` overrides take precedence over detection and the repository Dockerfile; a set `dockerfilePath` takes precedence over both. Check [build decision order](/concepts/build-pipeline#build-decision-order) before switching build methods. Set scripts in `package.json` when a guide tells you to; adding a CLI override is a different build path.
+
+## Check a release
+
+Read build logs, runtime logs, and the active URL. Test an inner route, a missing route, and any API or form action. A process that opens its port can still serve a broken page. For generated sites, use [static routes and 404s](/framework-guides/static-routing) to avoid returning the home page with HTTP 200 for every unknown URL.
+
+Check shared caches, persistent local files and framework versions separately from runtime support. See [limits](/platform/limits), [storage and recovery](/platform/storage-and-recovery), and [known issues](/platform/known-issues) when your app relies on those features.
+
+सितंबर 9, 2026 डिप्लॉयमेंट चेक और उनकी सीमाओं के लिए [टेस्टेड वर्जन और क्लाउड रिजल्ट्स](/framework-guides/validation) देखें।

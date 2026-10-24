@@ -1,0 +1,62 @@
+---
+description: "lizard link वर्तमान डायरेक्टरी को एक मौजूदा प्रोजेक्ट, और वैकल्पिक रूप से एक विशिष्ट सेवा या वर्कस्पेस से जोड़ता है।"
+---
+
+# lizard link
+
+वर्तमान डायरेक्टरी को एक मौजूदा प्रोजेक्ट (और वैकल्पिक रूप से एक सेवा) से जोड़ें। लिंक इस सटीक फ़ोल्डर को कवर करता है, न कि उसके सबफ़ोल्डर्स को। बिना लिंक वाला फ़ोल्डर आपके खाते के डिफ़ॉल्ट प्रोजेक्ट का उपयोग करता है।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard link [service] [flags]
+```
+
+<span id="flags" />
+
+## फ्लैग्स
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `-p, --project <id>` | प्रोजेक्ट का नाम, स्लग, या आईडी |
+| `-s, --service <name>` | लिंक करने के लिए सेवा |
+| `-w, --workspace <ws>` | वर्कस्पेस |
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="link-to-an-existing-project" />
+
+### एक मौजूदा प्रोजेक्ट से लिंक करें
+
+```bash
+lizard link --project my-project
+```
+
+<span id="link-to-a-project-and-a-specific-service" />
+
+### किसी प्रोजेक्ट और एक विशिष्ट सेवा का लिंक
+
+```bash
+lizard link my-service --project my-project
+```
+
+<span id="link-within-a-specific-workspace" />
+
+### किसी विशिष्ट वर्कस्पेस के भीतर लिंक
+
+```bash
+lizard link --project my-project --workspace my-workspace
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [lizard init](/cli/init) — एक प्रोजेक्ट बनाएं या चुनें और उसे एक ही चरण में लिंक करें
+- [lizard unlink](/cli/unlink) — वर्तमान डायरेक्टरी से लिंक हटाएं
+- [lizard status](/cli/status) — लिंक किया गया वर्कस्पेस, प्रोजेक्ट और सेवा दिखाएं
+- [Architecture: Project](/concepts/architecture) — डायरेक्टरी-से-प्रोजेक्ट लिंक कैसे काम करता है

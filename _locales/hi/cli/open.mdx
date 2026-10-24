@@ -1,0 +1,52 @@
+---
+description: "lizard open आपके ब्राउज़र में एक प्रोजेक्ट का डैशबोर्ड लॉन्च करता है, जो CLI का विज़ुअल साथी है, या --json के साथ उसका URL प्रिंट करता है।"
+---
+
+# lizard open
+
+प्रोजेक्ट को ब्राउज़र में खोलें।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard open [flags]
+```
+
+<span id="flags" />
+
+## फ्लैग्स
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `-p, --project <id>` | प्रोजेक्ट का नाम, स्लग, या आईडी |
+
+`-p` के बिना, `open` लिंक्ड प्रोजेक्ट का उपयोग करता है, या एक अनलिंक्ड फ़ोल्डर में आपका डिफ़ॉल्ट प्रोजेक्ट। `--json` के साथ यह `{ url, opened: false }` प्रिंट करता है और ब्राउज़र नहीं खोलता है।
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="open-the-current-projects-dashboard" />
+
+### वर्तमान प्रोजेक्ट का डैशबोर्ड खोलें
+
+```bash
+lizard open
+```
+
+<span id="print-the-dashboard-url" />
+
+### डैशबोर्ड URL प्रिंट करें
+
+```bash
+lizard open --json
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [Dashboard](/dashboard) — CLI का विज़ुअल साथी जिसे यह कमांड खोलता है
+- [Deploy an Antigravity app to production](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat) — एजेंट-रन डिप्लॉय को लैंड करते हुए देखना, बिना खुद कमांड टाइप किए

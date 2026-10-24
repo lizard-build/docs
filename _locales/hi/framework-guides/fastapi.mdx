@@ -1,0 +1,98 @@
+---
+description: "FastAPI को Lizard पर Uvicorn, requirements.txt, एक Procfile और पोर्ट 8000. के साथ डिप्लॉय करें। एक हेल्थ एंडपॉइंट सत्यापित करें और इम्पोर्ट, होस्ट और डिपेंडेंसी एरर का निदान करें।"
+---
+
+<span id="deploy-fastapi-on-lizard" />
+
+# FastAPI को Lizard पर डिप्लॉय करें
+
+Lizard पर Uvicorn का उपयोग करके FastAPI चलाएं जो `0.0.0.0:8000` पर सुन रहा है। ऐप की डिपेंडेंसी में FastAPI और Uvicorn दोनों को शामिल करें। `app = FastAPI()` घोषित करने वाली फ़ाइल को इम्पोर्ट करना अपने आप में कोई HTTP सर्वर शुरू नहीं करता है।
+
+<span id="example-project" />
+
+## उदाहरण प्रोजेक्ट
+
+[FastAPI उदाहरण](https://github.com/lizard-build/fastapi-example) में एक ऐप, एक Procfile, पिन्ड डिपेंडेंसी, एक MIT लाइसेंस और HTTP टेस्ट शामिल हैं। इसका CI लिनक्स पर प्रोडक्शन Uvicorn एंट्री पॉइंट चलाता है। हमने GitHub से कमिट `df522c1` को भी डिप्लॉय किया और पब्लिक HTTPS पर 2026-09-09. पर हेल्थ, OpenAPI, इंटरैक्टिव डॉक्स, JSON इको, अमान्य इनपुट और एक गुम रूट की जाँच की।
+
+<span id="prepare-an-app" />
+
+## एक ऐप तैयार करें
+
+यह उदाहरण `requirements.txt` और एप्लिकेशन रूट पर एक `main.py` का उपयोग करता है:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+```
+
+अपने डिपेंडेंसी वर्कफ़्लो में `fastapi` और `uvicorn` जोड़ें और हल किए गए, टेस्ट किए गए संस्करणों को `requirements.txt` में सहेजें। अपने पाइथन माइनर संस्करण को `.python-version` में चुनें, उदाहरण के लिए `3.13`, यदि आपकी डिपेंडेंसी इसका समर्थन करती हैं।
+
+एक स्पष्ट इम्पोर्ट टारगेट के साथ `Procfile` बनाएं:
+
+```text
+web: uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+`main:app` का मतलब `main.py` में `app` ऑब्जेक्ट है। `src/api.py` के लिए, उस इम्पोर्ट पाथ का उपयोग करें जो आपके ऐप रूट से काम करता है, जैसे `src.api:app`। स्पष्ट Procfile कस्टम लेआउट में सोर्स-कोड पैटर्न की पहचान पर निर्भरता से बचाता है।
+
+| सेटिंग | मान |
+|---|---|
+| इंस्टॉल करें | `pip install -r requirements.txt` |
+| प्रारंभ | Procfile `web:` कमांड |
+| सर्विस पोर्ट | `8000` |
+| बिल्ड आउटपुट | पाइथन सोर्स और इंस्टॉल की गई डिपेंडेंसी |
+
+<span id="test-locally" />
+
+## स्थानीय रूप से परीक्षण करें
+
+एक स्थानीय वर्चुअल एनवायरनमेंट का उपयोग करें:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+एक अन्य टर्मिनल में:
+
+```bash
+curl --fail http://localhost:8000/health
+```
+
+`{"status":"ok"}` के साथ एक सफल प्रतिक्रिया की अपेक्षा करें। विकास के लिए रीलोड मोड रखें। [FastAPI सर्वर गाइड](https://fastapi.tiangolo.com/deployment/manually/) ASGI सर्वर और इम्पोर्ट टारगेट की व्याख्या करता है।
+
+<span id="deploy" />
+
+## डिप्लॉय
+
+[CLI सेटअप](/framework-guides#prepare-the-project) के बाद, एप्लिकेशन रूट से अपलोड करें:
+
+```bash
+lizard init --name fastapi-app
+lizard add --service api
+lizard up --service api --port 8000
+lizard logs --build --service api --json
+lizard logs --service api --json
+lizard ps --json
+```
+
+`.venv/`, `__pycache__/`, और `.env` फ़ाइलों को बाहर रखें। सेवा बिल्ड/स्टार्ट ओवरराइड को अनसेट छोड़ दें ताकि lizardpack Procfile को पढ़ सके। यहाँ आवश्यकताओं पर आधारित पथ को अलग संकलन कमांड की आवश्यकता नहीं है।
+
+लौटाई गई HTTPS URL पर `/health` का अनुरोध करें, फिर एक वास्तविक API क्रिया का परीक्षण करें। एक TCP स्वास्थ्य प्रोब केवल यह स्थापित करता है कि प्रक्रिया अपना पोर्ट खोलती है; आपका स्वास्थ्य एंडपॉइंट उन जांचों को जोड़ सकता है जो ऐप के लिए मायने रखती हैं।
+
+<span id="data-and-common-failures" />
+
+## डेटा और सामान्य विफलताएँ
+
+[वेरिएबल्स और सीक्रेट्स](/variables) के माध्यम से क्रेडेंशियल्स सेट करें। जब ऐप को डेटाबेस की आवश्यकता हो तो [Managed Postgres](/addons/postgres) जोड़ें, और सेवा-स्कोप कनेक्शन संदर्भ का उपयोग करें। कंटेनर-स्थानीय फ़ाइलें टिकाऊ एप्लिकेशन स्टोरेज नहीं हैं; [स्टोरेज और रिकवरी](/platform/storage-and-recovery) देखें।
+
+`No module named uvicorn` के लिए, स्थापित आवश्यकताओं की जाँच करें। ASGI इम्पोर्ट त्रुटि के लिए, उसी रूट से स्थानीय रूप से सटीक Procfile कमांड चलाएँ। किसी ऐसी सेवा के लिए जो कभी स्वस्थ नहीं होती है, पोर्ट `8000` और बाइंड होस्ट की जाँच करें। यदि प्रक्रिया सर्वर लॉग के बिना बाहर निकल जाती है, तो पुष्टि करें कि यह केवल `python main.py` के बजाय Uvicorn चलाती है।
+
+सितंबर 9, 2026 डिप्लॉयमेंट चेक और उनकी सीमाओं के लिए [टेस्टेड वर्जन और क्लाउड रिजल्ट्स](/framework-guides/validation) देखें।

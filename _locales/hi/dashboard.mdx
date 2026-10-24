@@ -1,0 +1,104 @@
+---
+description: "Lizard डैशबोर्ड CLI में क्या जोड़ता है: Sandboxes, सेवा स्थिति, डिप्लॉय इतिहास, स्ट्रीमिंग लॉग, मेट्रिक्स, डेटा ब्राउज़र, टीम और बिलिंग।"
+---
+
+<span id="app-dashboard" />
+
+# ऐप डैशबोर्ड
+
+Lizard डैशबोर्ड Lizard CLI का विज़ुअल साथी है। `lizard …` के साथ आप जो कुछ भी करते हैं वह यहां दिखाई देता है, साथ ही वे चीजें भी जो UI के साथ आसान हैं — स्ट्रीमिंग लॉग, चार्ट, डेटा ब्राउज़र, Sandboxes, और टीम/बिलिंग प्रबंधन।
+
+यदि आप बिल्कुल भी टर्मिनल नहीं खोलना चाहते हैं, तो एजेंट को कमांड चलाने दें और परिणाम यहां देखें — [प्रोडक्शन में एंटीग्रेविटी ऐप डिप्लॉय करना](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat) में रूट, जहां एक प्रॉम्प्ट डिप्लॉय को संचालित करता है।
+
+इसे CLI से खोलें:
+
+```bash
+lizard open          # open the current project
+lizard docs          # open this documentation
+```
+
+<span id="whats-in-the-dashboard" />
+
+## डैशबोर्ड में क्या है
+
+<span id="services" />
+
+### सर्विसेज़
+
+साइडबार में **ऐप्स और डेटाबेस** हर सेवा को उसकी स्थिति बैज, जेनरेटेड डोमेन, और लॉग, मेट्रिक्स, सीक्रेट और सेटिंग्स के त्वरित पथ के साथ सूचीबद्ध करता है। **नई सेवा** के साथ एक सेवा बनाएं: गिटहब रिपॉजिटरी से, आपके कंप्यूटर पर एक फ़ोल्डर से, या डेटाबेस (Managed Postgres, Managed Redis) या Managed Object Storage के रूप में।
+
+सर्विस का **Settings** टैब **Serverless** भी रखता है, जो इसे निष्क्रिय होने पर स्लीप करने देता है ([`lizard sleep`](/cli/sleep)), और **Pause**, जो इसे कुछ भी डिलीट किए बिना रोकता है ([`lizard pause`](/cli/pause))।
+
+<span id="deployments" />
+
+### डिप्लॉयमेंट्स
+
+प्रत्येक सेवा का **अवलोकन** टैब उसकी डिप्लॉय सूचीबद्ध करता है। उसकी स्थिति, ट्रिगर, स्रोत, बिल्ड लॉग और रीस्टार्ट देखने के लिए एक खोलें। यह `lizard events` + `lizard logs --build` का विज़ुअल समकक्ष है।
+
+<span id="logs" />
+
+### लॉग
+
+खोज और स्तर फ़िल्टर के साथ लाइव रनटाइम और बिल्ड लॉग स्ट्रीमिंग — [`lizard logs`](/observability/logs) का UI समकक्ष।
+
+<span id="metrics--usage" />
+
+### मेट्रिक्स और उपयोग
+
+CPU, मेमोरी, नेटवर्क और डिस्क चार्ट प्रति सर्विस, साथ ही **Usage** पेज, जो प्रोजेक्ट में खपत और लागत का विवरण देता है। [`lizard metrics --cost`](/observability/metrics) को दर्शाता है।
+
+<span id="variables--secrets" />
+
+### चर और सीक्रेट
+
+सर्विस के **Secrets** टैब में सर्विस-स्कोप सीक्रेट और **Global Secrets** में प्रोजेक्ट-स्कोप सीक्रेट प्रबंधित करें, जिसमें मास्क्ड मान और संदर्भ (`${{…}}`) समर्थन हो। [Variables & Secrets](/variables) देखें।
+
+<span id="domains" />
+
+### डोमेन
+
+सर्विस के **Settings** टैब में, कस्टम डोमेन जोड़ें, DNS रिकॉर्ड देखें, और सत्यापन और TLS स्थिति ट्रैक करें। [Networking](/networking) देखें।
+
+<span id="data-browsers" />
+
+### डेटा ब्राउज़र
+
+प्रत्येक प्रबंधित एडऑन एक डेटा ब्राउज़र के साथ आता है:
+
+- Managed Postgres — डेटा को क्वेरी और संपादित करने के लिए एक SQL/टेबल संपादक।
+- Managed Redis — एक की/वैल्यू ब्राउज़र।
+- Managed Object Storage — अपलोड/डाउनलोड और बकेट एक्सेस सेटिंग्स के साथ एक बकेट और ऑब्जेक्ट ब्राउज़र।
+
+### Sandboxes
+
+साइडबार में **Sandboxes**, **Volumes** (Persistent Volumes), **Templates** और **Agents** हैं। Sandboxes पेज पर **New Sandbox** से एक सैंडबॉक्स बनाएं; इसके बगल में लगी संख्या दिखाती है कि आपकी सीमा के मुकाबले कितने चल रहे हैं। ट्रायल के दौरान, डायलॉग केवल US क्षेत्रों में Small साइज़ का विकल्प देता है। [Sandboxes क्विकस्टार्ट](/sandboxes/quickstart) देखें।
+
+<span id="github-integration" />
+
+### GitHub इंटीग्रेशन
+
+**New Service → GitHub Repository** से GitHub कनेक्ट करें। कनेक्ट होने के बाद, रिपॉजिटरी सूची के तहत **Configure access** GitHub App की सेटिंग्स खोलता है, जहाँ आप चुनते हैं कि कौन सी रिपॉजिटरी Lizard बना सकती है। एक पब्लिक रिपॉजिटरी पेस्ट किए गए URL से भी डिप्लॉय हो जाती है, बिना कनेक्ट किए। [Deploy from GitHub](/deploy/github) देखें।
+
+<span id="settings-team--billing" />
+
+### सेटिंग्स, टीम और बिलिंग
+
+साइडबार के नीचे **Settings** में प्रोजेक्ट और वर्कस्पेस सेटिंग्स, सदस्य आमंत्रण और भूमिकाएँ (**Team**), और आपकी खाता सेटिंग्स होती हैं। डैशबोर्ड के शीर्ष पर अपने प्लान पर क्लिक करके या खाता सेटिंग्स से **Billing** खोलें। यह आपका प्लान, ट्रायल, वर्तमान अवधि में उपयोग, इनवॉइस और कार्ड दिखाता है। [Billing](/platform/billing) देखें।
+
+<span id="cli--dashboard" />
+
+## CLI ↔ डैशबोर्ड
+
+| कार्य | CLI | डैशबोर्ड व्यू |
+|------|-----|----------------|
+| डिप्लॉय हिस्ट्री | `lizard events` | Service → Overview |
+| लॉग स्ट्रीम करें | `lizard logs` | Logs |
+| रिसोर्स चार्ट | `lizard metrics` | Metrics / Usage |
+| सीक्रेट मैनेज करें | `lizard secrets` | Secrets / Global Secrets |
+| कस्टम डोमेन | `lizard domain` | Service → Settings |
+| सर्विस को पॉज़ या रिज्यूम करें | `lizard pause` / `lizard resume` | Service → Settings |
+| निष्क्रिय होने पर स्लीप करें | `lizard sleep` | Service → Settings → Serverless |
+| Managed Postgres, Managed Redis या Managed Object Storage को क्वेरी करें | `lizard run --service <addon> -- <cmd>` | Data browsers |
+| टीम के सदस्यों को आमंत्रित करें | — | Settings → Team |
+
+जो भी उस समय उपयुक्त लगे उसका उपयोग करें - वे एक ही प्रोजेक्ट और सेवाओं पर काम करते हैं।

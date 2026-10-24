@@ -1,0 +1,64 @@
+---
+description: "lizard config apply एक lizard-config.json फ़ाइल को आपके प्रोजेक्ट में पुश करता है, जिसमें परिवर्तनों का पूर्वावलोकन करने के लिए --dry-run फ़्लैग होता है।"
+---
+
+# lizard config
+
+प्रोजेक्ट पर `lizard-config.json` फ़ाइल लागू करें।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard config apply [flags]
+```
+
+<span id="subcommands" />
+
+## सबकमांड
+
+### `lizard config apply`
+
+प्रोजेक्ट पर `lizard-config.json` फ़ाइल लागू करें।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `-f, --file <path>` | कॉन्फ़िगरेशन फ़ाइल (डिफ़ॉल्ट `lizard-config.json`) |
+| `-p, --project <id>` | प्रोजेक्ट का नाम, स्लग, या आईडी |
+| `--dry-run` | पार्स की गई फ़ाइल और लक्ष्य प्रोजेक्ट को लागू किए बिना प्रिंट करें। यह वर्तमान कॉन्फ़िगरेशन से तुलना नहीं करता है |
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="apply-the-default-config-file" />
+
+### डिफ़ॉल्ट कॉन्फ़िगरेशन फ़ाइल लागू करें
+
+```bash
+lizard config apply
+```
+
+<span id="apply-a-config-file-from-a-custom-path" />
+
+### कस्टम पथ से कॉन्फ़िगरेशन फ़ाइल लागू करें
+
+```bash
+lizard config apply -f ./configs/prod.json
+```
+
+<span id="preview-changes-without-applying-them" />
+
+### लागू किए बिना परिवर्तनों का पूर्वावलोकन करें
+
+```bash
+lizard config apply --dry-run
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [lizard service](/cli/service) — व्यक्तिगत सेवाओं का प्रबंधन करें
+- [आर्किटेक्चर](/concepts/architecture) — वर्कस्पेस, प्रोजेक्ट और सेवाएं कैसे संबंधित हैं

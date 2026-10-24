@@ -1,0 +1,179 @@
+---
+title: "Sandboxes क्विकस्टार्ट: Python या JavaScript से कोड चलाएं"
+description: "TypeScript या Python में Lizard SDK के साथ अपना पहला सैंडबॉक्स बनाएं: एक API कुंजी सेट करें, एक कमांड चलाएं, एक फ़ाइल लिखें, एक पोर्ट खोलें, पुनः कनेक्ट करें, रोकें और साफ़ करें।"
+---
+
+<span id="sandboxes-quickstart" />
+
+# Sandboxes क्विकस्टार्ट
+
+<span id="sandboxes-quickstart" />
+<span id="install" />
+<span id="pick-a-project" />
+<span id="your-first-sandbox" />
+<span id="working-with-files" />
+<span id="timeouts" />
+<span id="managing-sandboxes" />
+<span id="full-example" />
+<span id="next-steps" />
+
+एक सैंडबॉक्स बनाने, Python चलाने, एक फ़ाइल लिखने और एक पोर्ट खोलने के लिए Lizard SDK का उपयोग करें, फिर सैंडबॉक्स को रोकें। प्रत्येक चरण में TypeScript और Python कोड है। आपको Pro या ट्रायल पर Lizard खाता, एक API कुंजी और एक प्रोजेक्ट की आवश्यकता है। यह जानने के लिए कि Sandboxes क्या हैं, पहले [अवलोकन](/sandboxes) पढ़ें।
+
+<a id="authenticate" />
+
+
+<span id="install-and-authenticate" />
+
+## इंस्टॉल और प्रमाणित करें
+
+Lizard SDK इंस्टॉल करें और Settings → API keys में या [`lizard keys create <name>`](/cli/keys) के साथ एक API कुंजी बनाएं। इसे `LIZARD_API_KEY` में स्टोर करें। प्रत्येक सैंडबॉक्स एक प्रोजेक्ट से संबंधित है; उदाहरण इसके आईडी को `projectId` (Python: `project_id`) के रूप में पास करते हैं, और `project` एक स्लग या नाम भी स्वीकार करता है।
+
+```sh
+npm install @lizard-build/sdk
+pip install lizard-sdk
+export LIZARD_API_KEY="<your-api-key>"
+```
+
+<span id="run-a-command" />
+
+## एक कमांड चलाएं
+
+`Sandbox.create` एक टेम्प्लेट से सैंडबॉक्स को बूट करता है, यहाँ `interpreter`, जिसमें Python और सामान्य डेटा लाइब्रेरी हैं। `timeoutMs` इसका जीवनकाल निर्धारित करता है; SDK डिफ़ॉल्ट पांच मिनट है।
+
+```ts
+import { Sandbox } from '@lizard-build/sdk';
+
+const sandbox = await Sandbox.create('interpreter', {
+  projectId: 'proj_123', timeoutMs: 300_000,
+});
+try {
+  const result = await sandbox.process.exec("python -c 'print(2 ** 10)'");
+  console.log(result.stdout, result.stderr, result.exitCode);
+} finally {
+  await sandbox.kill();
+}
+```
+
+```python
+from lizard import Sandbox
+
+sandbox = Sandbox.create("interpreter", project_id="proj_123", timeout_ms=300_000)
+try:
+    result = sandbox.process.exec_("python -c 'print(2 ** 10)'")
+    print(result.stdout, result.stderr, result.exit_code)
+finally:
+    sandbox.kill()
+```
+
+एक गैर-शून्य निकास कोड एक परिणाम है, त्रुटि नहीं: स्वयं `exitCode` (Python: `exit_code`) की जाँच करें।
+
+<span id="files" />
+
+## फ़ाइलें
+
+`fs.write` के साथ टेक्स्ट या बाइट्स लिखें, `fs.read` के साथ टेक्स्ट पढ़ें, और `fs.readBytes` (Python: `read_bytes`) के साथ बाइट्स पढ़ें। डिस्क पर प्रत्येक फ़ाइल रुकने पर बनी रहती है और स्नैपशॉट में चली जाती है। किल या समाप्ति डिस्क को हटा देती है, इसलिए बाद में आवश्यक फ़ाइलों को `/workspace` पर [Persistent Volume](/sandboxes/volumes) में या स्नैपशॉट में रखें।
+
+```ts
+await sandbox.fs.write("/tmp/task.py", "print(42)\n");
+const result = await sandbox.process.exec("python /tmp/task.py");
+console.log(result.stdout);
+```
+
+```python
+sandbox.fs.write("/tmp/task.py", "print(42)\n")
+result = sandbox.process.exec_("python /tmp/task.py")
+print(result.stdout)
+```
+
+<a id="exposing-a-port" />
+
+<span id="public-ports" />
+
+## सार्वजनिक पोर्ट
+
+एक सर्वर शुरू करें जो `0.0.0.0` पर सुनता है, फिर `exposePort(port)` (Python: `expose_port`) को कॉल करें। यह `url`, `hostname`, और `accessToken` लौटाता है। पोर्ट निजी है: ब्राउज़र में `url` खोलें (यह `?lizard_token=` ले जाता है), या टोकन को `X-Lizard-Access-Token` हेडर में भेजें। टोकन के बिना अनुरोध 401. प्राप्त करते हैं। एक बंद सैंडबॉक्स अब पोर्ट की सेवा नहीं करता है। देव सर्वर के लिए [पूर्वावलोकन URL](/sandboxes/preview-urls) देखें जिसे एक एजेंट ने बनाया है।
+
+```ts
+await sandbox.process.exec(
+  "nohup python -m http.server 3000 --bind 0.0.0.0 --directory /tmp >/tmp/http.log 2>&1 </dev/null &",
+);
+const { url, hostname, accessToken } = await sandbox.exposePort(3000);
+console.log(url); // open in a browser
+const res = await fetch(`https://${hostname}/`, {
+  headers: { 'X-Lizard-Access-Token': accessToken },
+});
+```
+
+```python
+sandbox.process.exec_(
+    "nohup python -m http.server 3000 --bind 0.0.0.0 --directory /tmp >/tmp/http.log 2>&1 </dev/null &"
+)
+exposed = sandbox.expose_port(3000)
+print(exposed.url)  # open in a browser
+```
+
+<span id="reconnect-to-a-running-sandbox" />
+
+## चल रहे सैंडबॉक्स से पुनः कनेक्ट करें
+
+सैंडबॉक्स आईडी (`sandbox.sandboxId`, Python: `sandbox.sandbox_id`) रखें और उसी सैंडबॉक्स का हैंडल प्राप्त करने के लिए किसी अन्य प्रक्रिया या बाद के अनुरोध से `Sandbox.connect(id)` को कॉल करें। `connect` केवल यह जांचता है कि सैंडबॉक्स मौजूद है: यह रुके हुए सैंडबॉक्स को फिर से शुरू नहीं करता है, और सैंडबॉक्स के मारे जाने या समाप्त होने पर यह `NotFoundError` फेंकता है।
+
+```ts
+const connected = await Sandbox.connect(sandbox.sandboxId);
+console.log(await connected.getInfo());
+```
+
+```python
+connected = Sandbox.connect(sandbox.sandbox_id)
+print(connected.get_info())
+```
+
+<a id="pause-and-resume" />
+
+<span id="pause-resume-and-snapshots" />
+
+## रोकें, फिर से शुरू करें, और स्नैपशॉट
+
+`pause()` सैंडबॉक्स की मेमोरी, चल रही प्रक्रियाओं और उसकी डिस्क पर प्रत्येक फ़ाइल को सहेजता है। एक सफल पॉज़ कंप्यूट शुल्क रोकता है; Persistent Volumes स्टोरेज पर बिलिंग जारी रहती है। `resume()` उसी आईडी के साथ सैंडबॉक्स को पुनर्स्थापित करता है और कंप्यूट बिलिंग को पुनरारंभ करता है। दोनों कॉल काम को कतार में लगाते हैं और तुरंत लौटते हैं; सफलता की पुष्टि के लिए `paused` या `running` की प्रतीक्षा करें।
+
+```ts
+await sandbox.pause();
+await sandbox.waitForStatus('paused');
+await sandbox.resume();
+await sandbox.waitForStatus('running');
+```
+
+- पॉज़ करने से खुले नेटवर्क कनेक्शन बंद हो जाते हैं। सैंडबॉक्स में प्रोग्राम को फिर से शुरू करने के बाद पुनः कनेक्ट करना होगा।
+- यदि प्रक्रियाओं को सहेजा नहीं जा सकता है, तो सैंडबॉक्स चलता रहता है और `waitForStatus` कारण के साथ फेंकता है। यदि पुनः आरंभ विफल रहता है, तो सैंडबॉक्स अपने चेकपॉइंट के साथ रुका रहता है; फिर से `resume()` को कॉल करें।
+- जीवनकाल की समय सीमा तब तक रुक जाती है जब तक सैंडबॉक्स रुका रहता है और फिर से शुरू होने के बाद जारी रहता है। एक रुका हुआ सैंडबॉक्स चलने की सीमा में नहीं गिना जाता है।
+
+एक स्नैपशॉट एक चल रहे सैंडबॉक्स की मेमोरी, चल रही प्रक्रियाओं और उसकी डिस्क पर प्रत्येक फ़ाइल को सहेजता है। यह उस उपयोगकर्ता का है जिसने इसे लिया था। प्रत्येक पुनर्स्थापना स्नैपशॉट के क्षेत्र में एक नया सैंडबॉक्स शुरू करती है, किसी भी प्रोजेक्ट में जिसे स्नैपशॉट का दायरा अनुमति देता है:
+
+- `workspace` (डिफ़ॉल्ट): स्रोत सैंडबॉक्स के वर्कस्पेस में कोई भी प्रोजेक्ट।
+- `user`: आपके किसी भी वर्कस्पेस में कोई भी प्रोजेक्ट।
+- `project`: केवल स्रोत सैंडबॉक्स का प्रोजेक्ट।
+
+`snapshot(name, { scope })` (Python: `scope=`) के साथ दायरा सेट करें और `Sandbox.restore(id, { projectId })` (Python: `project_id=`) के साथ प्रोजेक्ट चुनें। कैप्चर करने से पहले क्लाइंट और टर्मिनलों को बंद करें और `/workspace` पर लिखना बंद करें।
+
+यदि सैंडबॉक्स से एक Persistent Volume जुड़ा हुआ है, तो स्नैपशॉट में कैप्चर के समय वॉल्यूम की फ़ाइलों की एक प्रति शामिल होती है। प्रत्येक पुनर्स्थापना उस प्रति को प्राप्त करती है, लाइव वॉल्यूम को नहीं, और किसी अन्य वॉल्यूम को संलग्न नहीं कर सकती है। कोई भी व्यक्ति जो स्नैपशॉट को पुनर्स्थापित कर सकता है, उन फ़ाइलों को पढ़ सकता है, इसलिए ऐसे स्नैपशॉट को साझा करने से वॉल्यूम का डेटा साझा होता है। वॉल्यूम के बिना सैंडबॉक्स का स्नैपशॉट उसी क्षेत्र से `volumeId` (Python: `volume_id`) के साथ पुनर्स्थापना पर एक माउंट कर सकता है।
+
+```ts
+const saved = await sandbox.snapshot('my-app');
+await Sandbox.waitForSnapshot(saved.id);
+const copy = await Sandbox.restore(saved.id);
+```
+
+कॉल लौटने पर एक स्नैपशॉट तैयार होता है और डिस्क से पुनर्स्थापित होता है, इसलिए `poolSize` लागू नहीं होता है। प्रत्येक पुनर्स्थापना स्रोत के आकार पर चलती है और उस आकार की प्रति घंटा कीमत पर बिल करती है; `size` पुनर्स्थापना पर लागू नहीं होता है। CLI में, `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app`, और `lizard sandbox restore <snapshot-id>` का उपयोग करें; दायरों के लिए [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots) और `--volume` देखें।
+
+<span id="clean-up-and-next-steps" />
+
+## साफ़ करें और अगले चरण
+
+कार्य समाप्त होने पर `kill()` को कॉल करें, जैसा कि `finally` में उदाहरण करते हैं। Python में, ब्लॉक से बाहर निकलने पर `with Sandbox.create(...) as sandbox:` सैंडबॉक्स को मार देता है। एक सैंडबॉक्स जिसे आप भूल जाते हैं, वह अपनी समय सीमा पर बंद हो जाता है, निर्माण के पांच मिनट बाद जब तक कि आप कोई अन्य जीवनकाल निर्धारित न करें; [संसाधन और समय-सीमा](/sandboxes#resources-and-timeouts) देखें।
+
+- प्रत्येक कॉल, विकल्प और त्रुटि: [Sandbox API और SDK संदर्भ](/sandboxes/sdk-reference)।
+- LLM से कोड जो कॉलों के बीच स्थिति बनाए रखता है: [कोड इंटरप्रेटर](/sandboxes/code-interpreter)।
+- सैंडबॉक्स से अधिक समय तक चलने वाली फ़ाइलें: [Persistent Volumes](/sandboxes/volumes)।
+- सैंडबॉक्स में एक कोडिंग एजेंट: [Claude Code](/sandboxes/guides/claude-code) या [OpenCode](/sandboxes/guides/opencode)।
+- टर्मिनल से वही चरण: [`lizard sandbox`](/cli/sandbox)। ब्राउज़र में: [Sandboxes डैशबोर्ड](/sandboxes/dashboard)।
+- आकार, कीमतें और एक साथ कितने सैंडबॉक्स चल सकते हैं: [सीमाएं](/platform/limits#sandboxes)। उत्पाद अवलोकन और तुलना: [Sandboxes](https://lizard.build/)।

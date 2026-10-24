@@ -1,0 +1,47 @@
+---
+description: "lizard status दिखाता है कि वर्तमान डायरेक्टरी किस वर्कस्पेस, प्रोजेक्ट और सेवा से जुड़ी है, इससे पहले कि आप गलत में तैनात करें।"
+---
+
+# lizard status
+
+वर्तमान डायरेक्टरी के लिए लिंक किए गए वर्कस्पेस, प्रोजेक्ट और सेवा दिखाएं। इसके लिए साइन-इन की आवश्यकता नहीं है।
+
+एक अनलिंक किए गए फ़ोल्डर में यह `Not linked` प्रिंट करता है। वहां कमांड आपके खाते के डिफ़ॉल्ट प्रोजेक्ट का उपयोग करते हैं, और `lizard up` फ़ोल्डर को उससे लिंक करता है।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard status
+```
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="check-the-current-directorys-link" />
+
+### वर्तमान डायरेक्टरी के लिंक की जाँच करें
+
+```bash
+lizard status
+```
+
+<span id="read-the-link-from-a-script" />
+
+### स्क्रिप्ट से लिंक पढ़ें
+
+```bash
+lizard status --json
+```
+
+एक लिंक किया गया फ़ोल्डर `cwd`, `linked: true`, `workspace`, `workspaceId`, `project`, `projectId`, `service` और `serviceId` देता है। एक अनलिंक किया गया फ़ोल्डर `{"cwd": "…", "linked": false}` देता है।
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [lizard init](/cli/init) — प्रोजेक्ट बनाएं या चुनें और उसे वर्तमान डायरेक्टरी से लिंक करें
+- [lizard link](/cli/link) — वर्तमान डायरेक्टरी को मौजूदा प्रोजेक्ट से संबद्ध करें
+- [lizard whoami](/cli/whoami) — वर्तमान उपयोगकर्ता और लिंक किए गए प्रोजेक्ट को दिखाएं

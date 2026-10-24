@@ -1,0 +1,64 @@
+---
+description: "lizard regions आपके खाते के लिए उपलब्ध क्षेत्रों को सूचीबद्ध करता है, और सेवा या एडऑन बनाते समय --region कैसे पास करें, यह दिखाता है।"
+---
+
+# lizard regions
+
+उपलब्ध क्षेत्र सूचीबद्ध करें।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard regions [flags]
+```
+
+<span id="flags" />
+
+## फ्लैग्स
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `--json` | JSON के रूप में आउटपुट करें |
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="list-available-regions" />
+
+### उपलब्ध क्षेत्र सूचीबद्ध करें
+
+```bash
+lizard regions
+```
+
+<span id="list-regions-as-json" />
+
+### क्षेत्रों को JSON के रूप में सूचीबद्ध करें
+
+```bash
+lizard regions --json
+```
+
+<span id="choose-a-region-when-you-create-a-resource" />
+
+### एक संसाधन बनाते समय एक क्षेत्र चुनें
+
+`lizard add`, `lizard up`, `lizard sandbox create`, या `lizard volume create` को `--region <code>` पास करें:
+
+```bash
+lizard add -r your-org/your-app --region <code>
+lizard add postgres --region <code>
+lizard up --region <code>
+```
+
+`--region` के बिना, `lizard add` `us-east-1` का उपयोग करता है और `lizard up` प्लेटफ़ॉर्म के डिफ़ॉल्ट क्षेत्र का उपयोग करता है। `lizard up` पर, `--region` केवल तब लागू होता है जब वह एक नई सेवा बनाता है। डेटाबेस का निजी URL केवल उसके क्षेत्र की सेवाओं से काम करता है, इसलिए उन सेवाओं के क्षेत्र में Postgres या Redis बनाएं जो इसका उपयोग करती हैं।
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [क्षेत्र](/deploy/regions) — क्षेत्र चयन, सह-स्थान, और उत्पन्न डोमेन
+- [`lizard add`](/cli/add) — `--region` के साथ एक सेवा, रेपो, या एडऑन जोड़ें

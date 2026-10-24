@@ -1,0 +1,99 @@
+---
+title: "नेटवर्किंग: निजी नेटवर्किंग, डोमेन और पोर्ट"
+description: "<name>.lizard.internal पर सेवाओं के बीच निजी नेटवर्किंग, TLS के साथ generated onlizard.com डोमेन, कस्टम डोमेन, DNS जांच और कंटेनर पोर्ट।"
+---
+
+<span id="networking" />
+
+# नेटवर्किंग
+
+Lizard पर, एक ही प्रोजेक्ट और क्षेत्र में सेवाएँ `<service>.lizard.internal` पर एक निजी नेटवर्क पर, किसी भी पोर्ट पर, बिना सार्वजनिक डोमेन के एक-दूसरे तक पहुँच सकती हैं। प्रत्येक वेब सेवा को डिप्लॉय होने पर स्वचालित TLS के साथ एक जेनरेटेड `*.onlizard.com` डोमेन भी मिलता है। आप अपना स्वयं का होस्टनाम भी संलग्न कर सकते हैं। Managed Postgres और Managed Redis एक ही निजी नेटवर्क से जुड़ते हैं। [निजी नेटवर्किंग](#private-networking), [कस्टम डोमेन](#attach-a-custom-domain) या [पोर्ट](#change-the-port-your-service-listens-on) पर जाएं।
+
+<span id="generated-domains" />
+
+## उत्पन्न डोमेन
+
+Lizard प्रत्येक सेवा के लिए `<name>-<suffix>.onlizard.com` के रूप में एक डिफ़ॉल्ट डोमेन बनाता है। पुरानी सेवाएँ `<words>.<region>.onlizard.com` रखती हैं। इसे दिखाएं:
+
+```bash
+lizard domain                    # show the service's current domain
+lizard domain generate           # claim a *.onlizard.com subdomain if the service has none
+```
+
+`lizard domain generate` मौजूदा जेनरेटेड डोमेन लौटाता है जब एक होता है, और विफल हो जाता है जबकि सेवा में कस्टम डोमेन होता है। [Managed Object Storage](/addons/storage) से सर्व की गई फ़ाइलें इसके बजाय एक गेटवे होस्ट का उपयोग करती हैं: `s3-eu-west-1.onlizard.com` या `s3-us-east-1.onlizard.com`।
+
+<span id="attach-a-custom-domain" />
+
+## एक कस्टम डोमेन संलग्न करें
+
+होस्टनाम को एक पोजिशनल आर्गुमेंट के रूप में पास करें। कोई `add` सबकमांड नहीं है:
+
+```bash
+lizard domain app.example.com --service web
+```
+
+Lizard DNS रिकॉर्ड्स लौटाता है जिन्हें आपको बनाना होगा (होस्टनाम के लिए एक `CNAME` और सत्यापन के लिए एक `TXT` रिकॉर्ड)। इन्हें अपने DNS प्रदाता पर जोड़ें।
+
+<span id="verify" />
+
+## सत्यापित करें
+
+DNS प्रोपेगेट हो जाने के बाद, डोमेन को सक्रिय करें:
+
+```bash
+lizard domain verify app.example.com --service web
+```
+
+Lizard `TXT` रिकॉर्ड की जाँच करता है, डोमेन को सक्रिय करता है और TLS प्रोविज़न करता है।
+
+<span id="remove-a-domain" />
+
+## डोमेन हटाएं
+
+```bash
+lizard domain delete app.example.com --service web
+lizard domain rm app.example.com --service web --yes   # alias, skip confirmation
+```
+
+<span id="change-the-port-your-service-listens-on" />
+
+## वह पोर्ट बदलें जिस पर आपकी सेवा सुनती है
+
+डोमेन सेवा के कंटेनर पोर्ट पर रूट होते हैं। यदि आपकी सेवा किसी अन्य पोर्ट पर सुनती है, तो कंटेनर पोर्ट बदलें और पुनः डिप्लॉय करें:
+
+```bash
+lizard port 8080 --service web
+lizard redeploy --service web
+```
+
+<span id="worker-services" />
+
+## वर्कर सेवाएँ
+
+एक [वर्कर-मोड सेवा](/deploy/workers) (`containerPort=0`) अभी भी एक जेनरेटेड डोमेन दिखा सकती है, लेकिन यह कुछ भी सर्व नहीं करती है: कोई लिसनर नहीं है और कोई लोड-बैलेंसर रूट नहीं है। वर्कर से कस्टम डोमेन न जोड़ें।
+
+<span id="private-networking" />
+
+## प्राइवेट नेटवर्किंग
+
+एक ही प्रोजेक्ट में सेवाएँ `<service>.lizard.internal` पर, सेवा द्वारा सुने जाने वाले किसी भी पोर्ट पर, बिना पब्लिक डोमेन के एक-दूसरे तक पहुँच सकती हैं। होस्टनाम को `${{api.LIZARD_PRIVATE_DOMAIN}}` के रूप में संदर्भित करें। Managed Postgres और Managed Redis एक ही नेटवर्क पर `DATABASE_PRIVATE_URL` और `REDIS_PRIVATE_URL` को एक्सपोज़ करते हैं; [Postgres कनेक्शन स्ट्रिंग](/addons/postgres#postgres-connection-string) देखें। ये नाम केवल प्रोजेक्ट के अंदर ही रिजॉल्व होते हैं, और अन्य प्रोजेक्ट्स की सेवाएँ इन एड्रेस तक नहीं पहुँच सकती हैं। ट्रैफ़िक Lizard के नेटवर्क के अंदर रहता है, इसलिए सेवाओं के बीच प्लेन `http://` ठीक है।
+
+प्राइवेट नाम केवल एक ही क्षेत्र में सेवाओं और डेटाबेस के बीच काम करते हैं। विभिन्न क्षेत्रों के लिए, पब्लिक URL का उपयोग करें। Lizard सेवा के नाम से लोअरकेस में अन्य वर्णों को `-` में बदलकर, टकराव होने पर `-2`, `-3` जोड़कर नाम एक बार सेट करता है। नाम बदलने से यह नहीं बदलता है, इसलिए नाम टाइप करने के बजाय `${{api.LIZARD_PRIVATE_DOMAIN}}` का संदर्भ लें।
+
+```bash
+lizard secrets set API_URL='http://${{api.LIZARD_PRIVATE_DOMAIN}}:8080' --service web
+```
+
+<span id="manage-in-the-dashboard" />
+
+## डैशबोर्ड में प्रबंधित करें
+
+डैशबोर्ड (`lizard open`) में एक सेवा खोलें और **सेटिंग्स → नेटवर्किंग** पर जाएँ। यह प्रत्येक डोमेन की सत्यापन और DNS स्थिति दिखाता है और आपको होस्टनाम जोड़ने या हटाने की सुविधा देता है।
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [`lizard domain`](/cli/domain): पूर्ण कमांड संदर्भ।
+- [क्षेत्र](/deploy/regions): लेटेंसी के लिए सेवाओं और एडऑन का सह-स्थान।
+- [प्रोटोटाइप से लेकर एक SaaS तक जिसके लिए लोग भुगतान करते हैं](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#verify-a-real-production-flow): ग्राहकों को स्वीकार करने से पहले जेनरेटेड ऐप के लिए जाँच।
