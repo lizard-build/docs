@@ -1,0 +1,189 @@
+---
+title: "Node.js ऐप (Express) डिप्लॉय करें"
+description: "Lizard पर Node.js या Express ऐप होस्ट करें: lizardpack package.json पढ़ता है, .nvmrc या engines से Node चुनता है, पोर्ट 3000 पर npm start चलाता है और PORT सेट करता है।"
+---
+
+<span id="deploy-a-nodejs-app-express" />
+
+# Node.js ऐप (Express) डिप्लॉय करें
+
+Lizard पर Node.js ऐप होस्ट करने के लिए `package.json` वाला फ़ोल्डर डिप्लॉय करें। lizardpack आपकी लॉक फ़ाइल से पैकेज मैनेजर चुनता है, डिपेंडेंसी इंस्टॉल करता है, अगर `build` स्क्रिप्ट है तो उसे चलाता है, और `start` स्क्रिप्ट से ऐप को पोर्ट `3000` पर शुरू करता है। जब तक `.nvmrc` या `engines.node` कोई दूसरा major वर्ज़न न बताए, यह Node.js 22 इस्तेमाल करता है। Lizard पोर्ट को `PORT` में देता है; अपने ऐप के लिसनर में इसे पढ़ें।
+
+**टेस्ट स्टेटस:** नीचे दिया गया Express सैंपल Express 5.3.0 के साथ लोकल रूप से चलाया गया, और डेटाबेस वाला रूट pg 8.23.1 के साथ PostgreSQL 14 पर। हमने इसका बिल्ड प्लान lizardpack से जाँचा, यानी उस बिल्ड प्लानर से जिसे Lizard चलाता है। इस गाइड से अभी तक हमने इसे शुरू से आख़िर तक डिप्लॉय नहीं किया है।
+
+<span id="before-you-start" />
+
+## शुरू करने से पहले
+
+- लॉक फ़ाइल बनाने और लोकल रूप से टेस्ट करने के लिए आपके कंप्यूटर पर Node.js और npm।
+- Lizard CLI, `lizard login` से साइन इन किया हुआ, Pro या 7-दिन के Pro ट्रायल (कार्ड ज़रूरी) पर। [प्राइसिंग](https://lizard.build/pricing) देखें।
+
+Next.js, Nuxt, Astro, SvelteKit और Vite ऐप्स की अपनी अलग गाइड हैं: [फ्रेमवर्क गाइड](/framework-guides) देखें।
+
+<span id="a-minimal-express-app" />
+
+## एक छोटा-सा Express ऐप
+
+`package.json`:
+
+```json
+{
+  "name": "express-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
+```
+
+`server.js`:
+
+```js
+import express from "express";
+
+const app = express();
+const port = Number(process.env.PORT) || 3000;
+
+app.get("/", (req, res) => {
+  res.send("Hello from Express on Lizard");
+});
+
+app.get("/healthz", (req, res) => {
+  res.json({ status: "ok" });
+});
+
+app.listen(port, "0.0.0.0", () => {
+  console.log(`listening on ${port}`);
+});
+```
+
+`package-lock.json` बनाने के लिए `npm install` चलाएँ, दोनों फ़ाइलें कमिट करें, और `node_modules` व `.env` को `.gitignore` में जोड़ें। इसे लोकल रूप से जाँचें:
+
+```bash
+npm start
+curl http://localhost:3000/healthz
+```
+
+<span id="what-lizardpack-does-with-a-nodejs-app" />
+
+## lizardpack Node.js ऐप के साथ क्या करता है
+
+| चरण | क्या होता है |
+|---|---|
+| पैकेज मैनेजर | `bun.lock` या `bun.lockb`: Bun। `pnpm-lock.yaml`: pnpm। `yarn.lock`: Yarn। `package-lock.json`: `npm ci`। लॉक फ़ाइल नहीं: `npm install`। |
+| Node.js वर्ज़न | `.nvmrc`, फिर `.node-version`, फिर `.tool-versions`, फिर `engines.node`। सिर्फ़ major वर्ज़न, `node:<major>-slim` पर। डिफ़ॉल्ट `22`। |
+| बिल्ड | `build` स्क्रिप्ट, अगर `package.json` में हो; एक अलग स्टेज में, जिसमें आपकी devDependencies मौजूद होती हैं |
+| स्टार्ट | `start` स्क्रिप्ट; नहीं तो `node <main>`; नहीं तो `server.js`, `index.js`, `app.js`, `main.js`, `dist/index.js` में से जो पहले मिले |
+| रनटाइम | `NODE_ENV=production`, पोर्ट `3000` |
+
+`build` स्क्रिप्ट न होने पर इमेज पैकेज इंस्टॉल करने से पहले `NODE_ENV=production` सेट कर देती है, इसलिए devDependencies इंस्टॉल नहीं होतीं। तब devDependencies से `nodemon`, `tsx` या `ts-node` को कॉल करने वाली स्टार्ट स्क्रिप्ट फ़ेल हो जाती है। TypeScript के लिए `build` में कंपाइल करें और कंपाइल हुआ आउटपुट स्टार्ट करें:
+
+```json
+{
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  }
+}
+```
+
+वर्ज़न फ़ाइलों और पार्सिंग के नियमों के लिए [रनटाइम वर्ज़न](/deploy/runtime-versions) देखें। सर्विस के बिल्ड और स्टार्ट कमांड खाली छोड़ें: इनमें से कोई भी सेट होने पर Lizard `node:22-alpine` पर अपना Dockerfile बनाता है और आपकी वर्ज़न फ़ाइलों को नज़रअंदाज़ कर देता है। [बिल्ड पाइपलाइन](/concepts/build-pipeline) देखें।
+
+<span id="deploy" />
+
+## डिप्लॉय
+
+ऐप के रूट से:
+
+```bash
+lizard init --name node-app
+lizard add --service web
+lizard up --service web --port 3000
+```
+
+`lizard up` फ़ोल्डर अपलोड करता है, उसे Lizard पर बिल्ड करता है और URL प्रिंट करता है। git रिपॉज़िटरी के अंदर यह वे फ़ाइलें छोड़ देता है जो `.gitignore` में हैं; git के बाहर यह `node_modules` तो छोड़ देता है, लेकिन `.env` फ़ाइलें अपलोड कर देता है। [लोकल कोड से डिप्लॉय करें](/deploy/upload) देखें।
+
+git push to deploy के लिए रिपॉज़िटरी को GitHub पर पुश करें और उसे `lizard add -r your-org/your-app -n web` से कनेक्ट करें। [GitHub से डिप्लॉय करें](/deploy/github) देखें।
+
+<span id="set-variables" />
+
+## वेरिएबल्स सेट करें
+
+```bash
+lizard secrets set SESSION_SECRET="$(openssl rand -hex 32)" --service web
+```
+
+वैल्यू `process.env.SESSION_SECRET` से पढ़ें। वेरिएबल बदलने पर सर्विस बिना रीबिल्ड के रीस्टार्ट हो जाती है। [वेरिएबल्स और सीक्रेट्स](/variables) देखें।
+
+<span id="add-managed-postgres" />
+
+## Managed Postgres जोड़ें
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service web
+npm install pg
+```
+
+सिंगल कोट्स `${{…}}` को आपके शेल से बचाकर रखते हैं; Lizard डिप्लॉय के समय [रेफ़रेंस](/variables/references) को प्रोजेक्ट के प्राइवेट नेटवर्क पर डेटाबेस के पते में resolve करता है। `server.js` में एक पूल और एक रूट जोड़ें:
+
+```js
+import pg from "pg";
+
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+
+app.get("/db", async (req, res) => {
+  const { rows } = await pool.query("SELECT now() AS now");
+  res.json(rows[0]);
+});
+```
+
+Express 5 किसी रूट से reject हुए promise को अपने एरर हैंडलर तक पहुँचा देता है, इसलिए फ़ेल हुई क्वेरी प्रोसेस को क्रैश करने के बजाय HTTP 500 लौटाती है। माइग्रेशन अपने कंप्यूटर से डेटाबेस के पब्लिक URL के साथ चलाएँ:
+
+```bash
+lizard run --service postgres -- npm run migrate
+```
+
+कैश या जॉब क्यू के लिए [Managed Redis](/addons/redis) इसी तरह जोड़ें: `lizard add redis`, फिर `REDIS_URL='${{redis.REDIS_PRIVATE_URL}}'`।
+
+<span id="check-that-it-works" />
+
+## जाँचें कि यह काम करता है
+
+```bash
+lizard logs --build --service web
+lizard logs --service web --tail 100
+lizard ps
+```
+
+रनटाइम लॉग में `listening on 3000` दिखता है। `lizard up` के प्रिंट किए URL पर `/healthz` और `/db` की रिक्वेस्ट भेजें।
+
+<span id="common-problems" />
+
+## आम समस्याएँ
+
+| लक्षण | समाधान |
+|---|---|
+| लॉक फ़ाइल सिंक में न होने से `npm ci` फ़ेल होता है | लोकल रूप से `npm install` चलाएँ और `package-lock.json` कमिट करें। |
+| `nodemon: not found` या `tsx: not found` | ये टूल devDependencies हैं और स्टार्ट के लिए इंस्टॉल नहीं होते। `build` स्टेप जोड़ें, या टूल को `dependencies` में ले जाएँ। |
+| डिप्लॉय कभी हेल्दी नहीं होता | `process.env.PORT` पर सुनें। `5000` जैसा तय पोर्ट सर्विस पोर्ट से मेल नहीं खाता। [सर्विस कभी हेल्दी नहीं होती](/deploy/troubleshooting/service-never-healthy) देखें। |
+| Node.js का गलत वर्ज़न | `.nvmrc` में major वर्ज़न डालें, जैसे `24`, और फिर से डिप्लॉय करें। |
+| `Cannot use import statement outside a module` | `package.json` में `"type": "module"` जोड़ें, या `require` इस्तेमाल करें। |
+
+जो Node.js प्रोसेस HTTP सर्व नहीं करता, जैसे क्यू कंज़्यूमर या [Discord बॉट](/guides/discord-bot), वह [बैकग्राउंड वर्कर](/deploy/workers) के रूप में चलता है।
+
+<span id="related" />
+
+## संबंधित
+
+- [फ्रेमवर्क गाइड](/framework-guides)
+- [रनटाइम वर्ज़न](/deploy/runtime-versions)
+- [Managed Postgres](/addons/postgres)
+- [लॉग्स](/observability/logs)

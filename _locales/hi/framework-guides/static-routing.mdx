@@ -1,0 +1,111 @@
+---
+description: "Lizard पर स्टैटिक साइट के रूट्स कॉन्फ़िगर करें: जेनरेट हुआ HTML सर्व करें, क्लीन URL सपोर्ट करें, न मिलने वाले पेजों के लिए HTTP 404 लौटाएँ, और तय करें कि SPA फ़ॉलबैक कब सही है।"
+---
+
+<span id="static-routes-and-404s" />
+
+# स्टैटिक रूट्स और 404
+
+जेनरेट की गई कंटेंट साइट को हर रूट का HTML सर्व करना चाहिए और न मिलने वाले पेज के लिए HTTP 404 लौटाना चाहिए। Astro स्टैटिक, Docusaurus, VitePress, Hugo और SvelteKit adapter-static के नए lizardpack बिल्ड यही नीति अपनाते हैं। React और Vue SPA वह `index.html` फ़ॉलबैक बनाए रखते हैं जिसकी ब्राउज़र राउटर को ज़रूरत होती है।
+
+ये बिल्ड न मिलने वाले पेज पर nginx का अपना 404 पेज दिखाते हैं, साइट का `404.html` कभी नहीं। अपना 404 पेज दिखाने के लिए नीचे दिया गया nginx कॉन्फ़िगरेशन और Dockerfile इस्तेमाल करें।
+
+बिना ट्रेलिंग स्लैश वाला फ़ोल्डर URL, जैसे `guide/index.html` के लिए `/guide`, `http://YOUR_PUBLIC_HOST/guide/` पर 301 रीडायरेक्ट हो जाता है, और फिर Lizard उसे HTTPS पर रीडायरेक्ट करता है। दोनों रीडायरेक्ट से बचने के लिए ट्रेलिंग-स्लैश वाले रूप से लिंक करें, या नीचे दिया गया कॉन्फ़िगरेशन इस्तेमाल करें, जो रीडायरेक्ट को HTTPS पर ही रखता है।
+
+नीचे दिया गया कस्टम कॉन्फ़िगरेशन वैकल्पिक है। इसे उस रूटिंग नीति के लिए इस्तेमाल करें जो पहचाना गया फ्रेमवर्क नहीं देता। मौजूदा इमेज रीबिल्ड होने तक अपने पुराने नियम ही रखती हैं।
+
+<span id="choose-the-routing-policy" />
+
+## रूटिंग नीति चुनें
+
+| ऐप का प्रकार | रूट का व्यवहार |
+|---|---|
+| React या Vue SPA | सही क्लाइंट रूट `index.html` लोड करता है, फिर क्लाइंट राउटर उसे रेंडर करता है। |
+| जेनरेट किया गया डॉक्यूमेंटेशन या कंटेंट | रूट अपने जेनरेट हुए HTML पर resolve होता है; अनजान पाथ HTTP 404 लौटाता है। |
+| सर्वर पर रेंडर होने वाला ऐप | एप्लिकेशन सर्वर रूट्स resolve करता है और स्टेटस लौटाता है। |
+
+SPA का catch-all व्यू "पेज नहीं मिला" जैसा मैसेज दिखा सकता है, लेकिन ब्राउज़र का कोड पहले से भेजे जा चुके HTML रिस्पॉन्स का HTTP स्टेटस नहीं बदल सकता। अगर SPA के लिए आपको रूट के हिसाब से सही HTTP स्टेटस चाहिए, तो सर्वर या प्रीरेंडर किए गए रूट्स वाला सेटअप इस्तेमाल करें, जिसे पता हो कि कौन-से पाथ मौजूद हैं।
+
+<span id="configure-nginx-for-generated-pages" />
+
+## जेनरेट किए गए पेजों के लिए nginx कॉन्फ़िगर करें
+
+एप्लिकेशन के रूट में `nginx.conf` बनाएँ:
+
+```nginx
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+  absolute_redirect off;
+
+  location / {
+    try_files $uri $uri.html $uri/ =404;
+  }
+
+  error_page 404 /404.html;
+  location = /404.html {
+    internal;
+  }
+}
+```
+
+यह `guide.html` और `guide/index.html`, दोनों तरह के आउटपुट लेआउट सपोर्ट करता है। `error_page` साइट का जेनरेट हुआ `404.html` स्टेटस 404 के साथ सर्व करता है; अगर साइट में `404.html` नहीं है, तो nginx की डिफ़ॉल्ट एरर बॉडी इस्तेमाल करने के लिए `error_page` और exact-match location वाले ब्लॉक हटा दें। `absolute_redirect off` फ़ोल्डर रीडायरेक्ट को relative `Location: /guide/` के रूप में भेजता है, इसलिए ब्राउज़र HTTPS पर ही रहता है। साइट के लिंक और sitemap में canonical URL का एक ही रूप रखें; यह lookup नियम canonical रीडायरेक्ट नहीं जोड़ता।
+
+<span id="build-the-site-with-the-config" />
+
+## इस कॉन्फ़िगरेशन के साथ साइट बिल्ड करें
+
+जिस npm प्रोजेक्ट में लॉकफ़ाइल कमिट की हुई है, उसके लिए यह पूरा Dockerfile इस्तेमाल करें। `BUILD_SCRIPT` और `OUTPUT_DIR` की डिफ़ॉल्ट वैल्यू नीचे की टेबल के हिसाब से बदलें:
+
+```dockerfile
+FROM node:22-slim AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+ARG BUILD_SCRIPT=build
+RUN npm run "$BUILD_SCRIPT"
+
+FROM nginx:alpine
+ARG OUTPUT_DIR=dist
+COPY --from=build /app/${OUTPUT_DIR}/ /usr/share/nginx/html/
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+```
+
+| साइट | `BUILD_SCRIPT` | `OUTPUT_DIR` |
+|---|---|---|
+| Astro स्टैटिक | `build` | `dist` |
+| Docusaurus | `build` | `build` |
+| `docs/` रूट वाला VitePress | `docs:build` | `docs/.vitepress/dist` |
+| प्रोजेक्ट रूट पर VitePress | `docs:build` या आपकी असली स्क्रिप्ट | `.vitepress/dist` |
+| adapter-static के साथ SvelteKit | `build` | `build` |
+| Next.js एक्सपोर्ट | `build` | `out` |
+| Nuxt generate | `nuxt generate` वाली `build` | `.output/public` |
+
+जेनरेट किए गए पेजों वाली नीति तभी इस्तेमाल करें जब ऐप में वे रूट फ़ाइलें हों। उदाहरण के लिए, SvelteKit SPA फ़ॉलबैक को अपनी अलग रूटिंग नीति चाहिए। [Next.js स्टैटिक एक्सपोर्ट](/framework-guides/nextjs/static-export) में ट्रेलिंग-स्लैश लेआउट वाली पूरी रेसिपी है।
+
+`.dockerignore` में डिपेंडेंसी, बिल्ड आउटपुट, `.git` और `.env*` जोड़कर इन्हें बाहर रखें। अगर बिल्ड को पब्लिक वेरिएबल्स चाहिए, तो उन्हें बिल्ड कमांड से पहले `ENV` लाइनों के रूप में लिखें। Lizard `COMMIT_SHA` के अलावा कोई बिल्ड आर्गुमेंट पास नहीं करता, इसलिए `ARG` खाली रहता है। प्राइवेट सीक्रेट्स को इमेज या ब्राउज़र आउटपुट में कॉपी न करें।
+
+[CLI सेटअप](/framework-guides#prepare-the-project) के बाद `lizard add --service web` से सर्विस बनाएँ, फिर इस सोर्स को `lizard up --service web --port 80` से डिप्लॉय करें। अगर सर्विस पहले से मौजूद है, तो add वाला स्टेप छोड़ दें। मौजूदा सर्विस पर [बिल्ड का निर्णय-क्रम](/concepts/build-pipeline#build-decision-order) जाँचें: कमांड ओवरराइड Dockerfile से ऊपर प्राथमिकता ले सकते हैं। सिर्फ़ कॉन्फ़िग फ़ाइल रख देने से जेनरेट होने वाला nginx कॉन्फ़िगरेशन नहीं बदलता; Dockerfile को उसे इमेज में कॉपी करना होगा।
+
+<span id="verify-http-responses" />
+
+## HTTP रिस्पॉन्स की जाँच करें
+
+`SITE_URL` को असली लोकल टेस्ट URL या डिप्लॉय किए गए ऐप के origin पर सेट करें, फिर `/guide/` की जगह कोई ऐसा पेज लिखें जो मौजूद है:
+
+```bash
+SITE_URL=https://YOUR_PUBLIC_HOST
+curl -sS -o /dev/null -w '%{http_code}\n' "$SITE_URL/"
+curl -sS -o /dev/null -w '%{http_code}\n' "$SITE_URL/guide/"
+curl -sS -o /dev/null -w '%{http_code}\n' "$SITE_URL/this-page-does-not-exist"
+```
+
+असली पेजों के लिए 200 और न मौजूद पाथ के लिए 404 आना चाहिए। अगर कोई सही रूट अपने canonical रूप पर रीडायरेक्ट करता है, तो रीडायरेक्ट देखें और फिर गंतव्य पेज जाँचें। किसी असली एसेट और किसी काल्पनिक `.js` पाथ को भी टेस्ट करें: न मौजूद स्क्रिप्ट के लिए स्टेटस 200 के साथ होम पेज का HTML नहीं लौटना चाहिए।
+
+आख़िर में अंदरूनी रूट को सीधे ब्राउज़र में खोलें और रीलोड करें। सिर्फ़ क्लाइंट-साइड नेविगेशन सही चलने से सर्वर रूटिंग की गलती छिप सकती है। इंडेक्स होने वाली साइट पब्लिश करने से पहले HTTP स्टेटस के साथ-साथ फ्रेमवर्क की canonical URL और sitemap सेटिंग्स भी जाँचें।
+
+9 सितंबर 2026 के डिप्लॉयमेंट चेक और उनकी सीमाओं के लिए [टेस्ट किए गए वर्ज़न और क्लाउड नतीजे](/framework-guides/validation) देखें।

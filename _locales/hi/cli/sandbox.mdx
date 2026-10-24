@@ -1,0 +1,265 @@
+---
+description: "lizard sandbox सैंडबॉक्स बनाता, लिस्ट करता और डिलीट करता है, उनमें कमांड और कोडिंग एजेंट चलाता है, शेल और डेस्कटॉप खोलता है, चल रहे सैंडबॉक्स को फ़ोर्क करता है, और स्नैपशॉट व फ़ाइलें मैनेज करता है।"
+---
+
+# lizard sandbox
+
+टर्मिनल से [Sandboxes](/sandboxes) बनाएँ और मैनेज करें। उपनाम: `lizard sb`।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard sandbox create [flags]
+lizard sandbox list [flags]
+lizard sandbox exec <id> -- <command>
+lizard sandbox ssh <id>
+lizard sandbox fork <id> [flags]
+lizard sandbox rm <id> [flags]
+```
+
+हर सैंडबॉक्स किसी प्रोजेक्ट का होता है: उसका जो आप `-p` से देते हैं; वह न हो तो मौजूदा डायरेक्टरी से लिंक किए गए प्रोजेक्ट का; वह भी न हो तो आपके अकाउंट के डिफ़ॉल्ट प्रोजेक्ट का (आपके पर्सनल वर्कस्पेस का सबसे पुराना प्रोजेक्ट)।
+
+<span id="subcommands" />
+
+## सबकमांड
+
+### `lizard sandbox create`
+
+सैंडबॉक्स बनाएँ और उसकी ID प्रिंट करें।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `-t, --template <name>` | टेम्प्लेट (डिफ़ॉल्ट `base`)। उपलब्ध टेम्प्लेट: `base`, `interpreter`, `codex`, `desktop`, `desktop-camoufox` (सिर्फ़ US East), `opencode`, `pi`, `prime`, `claude`। सर्वर रीजन की लिस्ट से जाँच करता है |
+| `-s, --size <size>` | `small`, `medium` (डिफ़ॉल्ट; ट्रायल के दौरान `small`) या `large` |
+| `--timeout <ms>` | लाइफटाइम मिलीसेकंड में (डिफ़ॉल्ट `300000`, यानी पाँच मिनट); `0` एक्सपायरी बंद कर देता है |
+| `--region <code>` | वह रीजन जिसमें सैंडबॉक्स बनाना है |
+| `--snapshot <id>` | सेव किए गए स्नैपशॉट से शुरू करें; `--size` के साथ नहीं दिया जा सकता |
+| `--volume <name-or-id>` | [Persistent Volume](/cli/volume) अटैच करें |
+| `--with-token [key]` | सैंडबॉक्स के अंदर `lizard` को एक नई की से साइन इन करें, जो सिर्फ़ सैंडबॉक्स के प्रोजेक्ट तक सीमित है और सैंडबॉक्स के साथ डिलीट हो जाती है। आपकी दी हुई `liz_` की, या वैल्यू न देने पर वह `liz_` की जिससे आप कमांड चला रहे हैं, सिर्फ़ इस रिक्वेस्ट को ऑथराइज़ करती है; ब्राउज़र लॉगिन में ऐसी कोई की नहीं होती। `base` टेम्प्लेट में `lizard` नहीं है |
+| `-p, --project <id>` | प्रोजेक्ट (डिफ़ॉल्ट: लिंक किया गया प्रोजेक्ट, वह न हो तो आपका डिफ़ॉल्ट प्रोजेक्ट) |
+
+Lizard हर साइज़ का बिल चलने के दौरान प्रति सेकंड एक तय दर से बनाता है, आइडल समय भी शामिल करके। कीमत में लोकल डिस्क और [हर अकाउंट के लिए रोलिंग 30 दिनों में 2 TB एग्रेस](/platform/limits#sandbox-egress) शामिल है। पॉज़ सफल होते ही कंप्यूट का चार्ज रुक जाता है; Persistent Volumes का स्टोरेज [वॉल्यूम की दर](/cli/volume) से चार्ज होता रहता है, चाहे वॉल्यूम अटैच हो या नहीं।
+
+| साइज़ | vCPU | मेमोरी | डिस्क | कीमत |
+|------|------|--------|------|-------|
+| `small` | 2 | 4 GiB | 5 GB | $0.0162/h |
+| `medium` | 4 | 8 GiB | 20 GB | $0.0324/h |
+| `large` | 8 | 16 GiB | 50 GB | $0.0648/h |
+
+सैंडबॉक्स के अंदर चलने वाली कोई भी चीज़ `--with-token` से इंस्टॉल हुई की पढ़ सकती है और सैंडबॉक्स डिलीट होने तक उसे सैंडबॉक्स के प्रोजेक्ट पर इस्तेमाल कर सकती है।
+
+जब तक आपका ट्रायल या Pro प्लान शुरू नहीं होता, `create` Checkout लिंक के साथ HTTP 402 लौटाता है; `lizard billing start` चलाएँ। ट्रायल के दौरान आप एक साथ 5 सैंडबॉक्स चला सकते हैं, और पहले पेड इनवॉइस के बाद 100। पॉज़ किए गए सैंडबॉक्स इस गिनती में नहीं आते। ट्रायल के दौरान सैंडबॉक्स `small` होना चाहिए और US रीजन में होना चाहिए; कोई दूसरा साइज़ या रीजन HTTP 403 लौटाता है। [लिमिट्स](/platform/limits#sandbox-account-limits) देखें।
+
+### `lizard sandbox list`
+
+लिंक किए गए प्रोजेक्ट के सैंडबॉक्स लिस्ट करें (उपनाम `ls`)।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `-p, --project <id>` | इसके बजाय यह प्रोजेक्ट लिस्ट करें |
+| `--all` | आपके सभी वर्कस्पेस के हर सैंडबॉक्स को लिस्ट करें |
+
+### `lizard sandbox rm <id>`
+
+सैंडबॉक्स डिलीट करें (उपनाम `delete` और `kill`)।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `-y, --yes` | पुष्टि छोड़ दें |
+
+### `lizard sandbox timeout <id> <ms>`
+
+नया लाइफटाइम मिलीसेकंड में सेट करें, जो अभी से गिना जाएगा (कम से कम `1000`)। यह आइडल टाइमर नहीं है: कमांड चलाने से यह रीसेट नहीं होता।
+
+### `lizard sandbox exec <id> -- <command>`
+
+सैंडबॉक्स के अंदर `sh -c` से एक कमांड चलाएँ, उसका आउटपुट स्ट्रीम करें, और उसी के एग्ज़िट कोड के साथ बाहर निकलें।
+
+<span id="sandbox-ssh" />
+
+### `lizard sandbox ssh <id>`
+
+चल रहे सैंडबॉक्स में इंटरैक्टिव शेल खोलें (उपनाम `shell`)। यह आपके Lizard लॉगिन का उपयोग करता है, इसलिए कोई SSH की सेट करने की ज़रूरत नहीं; स्कोप्ड API की सिर्फ़ अपने स्कोप वाले सैंडबॉक्स तक पहुँचती है। Ctrl-C, ऐरो कीज़ और टैब कंप्लीशन सैंडबॉक्स तक जाते हैं। बाहर निकलने के लिए `exit` टाइप करें या Ctrl-D दबाएँ।
+
+इसके लिए इंटरैक्टिव टर्मिनल चाहिए; स्क्रिप्ट में `lizard sandbox exec` का उपयोग करें। यह SSH प्रोटोकॉल नहीं है, इसलिए SSH क्लाइंट, `scp` और पोर्ट फ़ॉरवर्डिंग काम नहीं करते।
+
+### `lizard sandbox expose <id> <port>`
+
+सैंडबॉक्स के किसी पोर्ट को HTTPS URL दें। पोर्ट प्राइवेट रहता है: रिक्वेस्ट्स में सैंडबॉक्स का एक्सेस टोकन होना चाहिए, या तो `X-Lizard-Access-Token` हेडर में या `lizard_token` क्वेरी पैरामीटर के रूप में, जो प्रिंट किए गए URL में पहले से मौजूद है। इसके बिना रिक्वेस्ट्स को HTTP 401 मिलता है। `--json` के साथ नतीजे में `hostname` और `accessToken` भी होते हैं।
+
+`lizard sandbox unexpose <id> <port>` URL हटा देता है।
+
+### `lizard sandbox desktop <id>`
+
+`-t desktop` से बनाए गए सैंडबॉक्स का ग्राफ़िकल डेस्कटॉप शुरू करें और उसका ब्राउज़र URL और सिर्फ़ देखने वाला (view-only) URL प्रिंट करें। दोनों लिंक को पासवर्ड की तरह सुरक्षित रखें।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `--view-only` | सिर्फ़ view-only URL प्रिंट करें या खोलें |
+| `--resolution <WxH>` | स्क्रीन साइज़, 640x480 से 3840x2160 तक |
+| `--open` | डेस्कटॉप को अपने ब्राउज़र में खोलें |
+| `--status` | डेस्कटॉप को शुरू किए बिना उसकी स्थिति और URL दिखाएँ |
+| `--stop` | डेस्कटॉप बंद करें और उसका URL हटाएँ |
+
+<span id="sandbox-vnc" />
+
+### `lizard sandbox vnc <id>`
+
+`-t desktop` से बनाए गए सैंडबॉक्स के डेस्कटॉप से कोई VNC ऐप (macOS Screen Sharing, TigerVNC, RealVNC) कनेक्ट करें। डेस्कटॉप में कोई पब्लिक VNC पोर्ट नहीं है, इसलिए CLI `localhost` पर सुनता है और हर कनेक्शन को सुरक्षित WebSocket के ज़रिए सैंडबॉक्स तक पहुँचाता है। ज़रूरत हो तो यह डेस्कटॉप शुरू करता है, एड्रेस और VNC पासवर्ड प्रिंट करता है, और Ctrl-C दबाने तक चलता रहता है।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `--port <port>` | लोकल पोर्ट (डिफ़ॉल्ट `5900`; अगर वह इस्तेमाल में है, तो अगला खाली पोर्ट) |
+| `--view-only` | view-only पासवर्ड इस्तेमाल करें: सिर्फ़ देख सकते हैं, कंट्रोल नहीं कर सकते |
+| `--open` | एड्रेस को अपने VNC ऐप में खोलें (`vnc://`, macOS पर Screen Sharing) |
+
+<span id="pause-resume-and-snapshots" />
+
+### पॉज़, रिज़्यूम और स्नैपशॉट
+
+| कमांड | यह क्या करती है |
+|---------|--------------|
+| `lizard sandbox pause <id>` | सैंडबॉक्स की मेमोरी और प्रोसेस सेव करती है, फिर उसे पॉज़ करती है। पॉज़ सफल होते ही कंप्यूट का चार्ज रुक जाता है; Persistent Volumes के स्टोरेज का बिल अलग से बनता है |
+| `lizard sandbox resume <id>` | पॉज़ किए गए सैंडबॉक्स को उसकी सेव की गई मेमोरी और फ़ाइलों के साथ फिर से शुरू करती है |
+| `lizard sandbox snapshot <id> --name <name>` | चल रहे सैंडबॉक्स को, मेमोरी और फ़ाइलों समेत, ऐसे स्नैपशॉट के रूप में सेव करती है जो आपका होता है। `--scope` तय करता है कि इसे कहाँ रिस्टोर किया जा सकता है: `workspace` (डिफ़ॉल्ट) — सैंडबॉक्स के वर्कस्पेस के किसी भी प्रोजेक्ट में, `user` — आपके किसी भी वर्कस्पेस के किसी भी प्रोजेक्ट में, `project` — सिर्फ़ उसी के प्रोजेक्ट में |
+| `lizard sandbox restore <snapshot-id>` | स्नैपशॉट से, स्नैपशॉट के रीजन में, नया सैंडबॉक्स शुरू करती है। `-p <project>` प्रोजेक्ट चुनता है (डिफ़ॉल्ट: वॉल्यूम का प्रोजेक्ट, वह न हो तो स्नैपशॉट का अपना), `--volume <name-or-id>` `/workspace` पर वॉल्यूम माउंट करता है, `--timeout <ms>` लाइफटाइम सेट करता है (डिफ़ॉल्ट `300000`) |
+| `lizard sandbox snapshots` | प्रोजेक्ट में लिए गए स्नैपशॉट लिस्ट करती है (`-p` किसी दूसरे प्रोजेक्ट के लिए, `--mine` आपके लिए गए हर स्नैपशॉट के लिए) |
+| `lizard sandbox snapshot-scope <snapshot-id> <scope>` | बदलती है कि आपका लिया गया स्नैपशॉट कहाँ रिस्टोर हो सकता है: `user`, `workspace` या `project` |
+| `lizard sandbox snapshot-rm <snapshot-id>` | स्नैपशॉट डिलीट करती है (उपनाम `snapshot-delete`, `-y` पुष्टि छोड़ देता है) |
+
+`pause`, `resume` और `snapshot` काम पूरा होने तक इंतज़ार करती हैं; काम क्यू में जाते ही लौटने के लिए `--no-wait` दें। हर स्टेप में क्या बचा रहता है, यह [पॉज़, रिज़्यूम और स्नैपशॉट](/sandboxes/quickstart#pause-and-resume) में देखें।
+
+जिस सैंडबॉक्स से वॉल्यूम अटैच है, उसके स्नैपशॉट में वॉल्यूम की फ़ाइलों की वह कॉपी शामिल होती है जो कैप्चर के समय थी। हर रिस्टोर को यही कॉपी मिलती है और उसमें `--volume` नहीं दिया जा सकता; जो भी स्नैपशॉट रिस्टोर कर सकता है, वह इन फ़ाइलों को पढ़ सकता है। `--volume` सिर्फ़ उस सैंडबॉक्स के स्नैपशॉट के साथ काम करता है जिसमें कोई वॉल्यूम नहीं था, और वॉल्यूम स्नैपशॉट के रीजन में होना चाहिए।
+
+<span id="sandbox-fork" />
+
+### `lizard sandbox fork <id>`
+
+चल रहे सैंडबॉक्स की लाइव कॉपियाँ शुरू करें। Lizard सैंडबॉक्स को एक पल के लिए पॉज़ करता है, उसकी मेमोरी, प्रोसेस और फ़ाइलें एक बार कैप्चर करता है, और हर कॉपी को उसी कैप्चर से बूट करता है। ओरिजिनल सैंडबॉक्स उसी ID और लाइफटाइम के साथ चलता रहता है। एक सैंडबॉक्स तैयार करें (टूल्स इंस्टॉल, ऐप लोड), फिर उसे फ़ोर्क करके काम को कई कॉपियों में बाँटें, बिना सेटअप दोहराए।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `-n, --count <n>` | कितनी कॉपियाँ शुरू करनी हैं, 1 से 100 तक (डिफ़ॉल्ट `1`) |
+| `--timeout <ms>` | हर कॉपी का लाइफटाइम, कम से कम `1000`; डिफ़ॉल्ट: ओरिजिनल का लाइफटाइम |
+
+हर कॉपी एक नया सैंडबॉक्स स्टार्ट है: यह [रनिंग और स्टार्ट लिमिट्स](/platform/limits#sandbox-account-limits) में गिनी जाती है, ओरिजिनल के साइज़ पर चलती है और उसी साइज़ के हिसाब से बिल होती है। `--json` के साथ आउटपुट में हर कॉपी की एक एंट्री होती है, `{"sandbox": {...}}` या `{"error": "..."}`। अगर कोई भी कॉपी शुरू नहीं हो पाई, तो कमांड `1` के साथ बाहर निकलती है, और जो कॉपियाँ शुरू हो गईं वे तब तक चलती रहती हैं जब तक आप उन्हें डिलीट न करें। पॉज़ किए गए सैंडबॉक्स या वॉल्यूम अटैच वाले सैंडबॉक्स को फ़ोर्क नहीं किया जा सकता (HTTP 409)।
+
+### `lizard sandbox files`
+
+| कमांड | यह क्या करती है |
+|---------|--------------|
+| `lizard sandbox files ls <id> [path]` | डायरेक्टरी लिस्ट करती है (डिफ़ॉल्ट `/`) |
+| `lizard sandbox files cat <id> <path>` | फ़ाइल प्रिंट करती है |
+| `lizard sandbox files put <id> <local> <remote>` | लोकल फ़ाइल अपलोड करती है |
+| `lizard sandbox files get <id> <remote> <local>` | फ़ाइल डाउनलोड करती है |
+| `lizard sandbox files rm <id> <path>` | फ़ाइल या डायरेक्टरी डिलीट करती है |
+
+<span id="coding-agents" />
+
+### कोडिंग एजेंट
+
+सैंडबॉक्स के अंदर अपने क्रेडेंशियल्स से कोडिंग एजेंट चलाएँ। पहले उन्हें [`lizard agents`](/cli/agents) से कनेक्ट करें। सैंडबॉक्स किसी एजेंट टेम्प्लेट (`codex`, `claude`, `opencode`, `pi` या `prime`) से बनाएँ; `base` टेम्प्लेट में Node.js नहीं है, इसलिए उसमें एजेंट नहीं चल सकते।
+
+`lizard sandbox prompt <id> <prompt...>` प्रॉम्प्ट भेजता है और एजेंट जो कर रहा है, उसे स्ट्रीम करता है।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `--agent <name>` | `codex` (डिफ़ॉल्ट), `claude`, `pi`, `opencode` या `prime` |
+| `-c, --conversation <id>` | यही बातचीत जारी रखें |
+| `--new` | नई बातचीत शुरू करें |
+| `-m, --model <model>` | इस्तेमाल करने के लिए मॉडल |
+| `--effort <level>` | रीज़निंग effort: `minimal`, `low`, `medium`, `high` या `xhigh` |
+| `--cwd <dir>` | सैंडबॉक्स में वर्किंग डायरेक्टरी (डिफ़ॉल्ट `/workspace`) |
+| `-v, --verbose` | कमांड का आउटपुट भी प्रिंट करें |
+| `--no-wait` | प्रॉम्प्ट स्वीकार होते ही लौट आएँ |
+
+Ctrl-C सिर्फ़ देखना बंद करता है; एजेंट काम करता रहता है। `lizard sandbox interrupt <id> [-c <conversation>]` उसका चल रहा टर्न रोकता है। `lizard sandbox conversations <id>` बातचीत की लिस्ट दिखाता है, सबसे नई पहले।
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="create-a-sandbox-and-run-a-command" />
+
+### सैंडबॉक्स बनाएँ और कमांड चलाएँ
+
+```bash
+lizard sandbox create --size small --timeout 600000
+lizard sandbox exec genuine-toddler-jasj -- python3 -c "print(1 + 1)"
+```
+
+<span id="open-a-shell" />
+
+### शेल खोलें
+
+```bash
+lizard sandbox ssh genuine-toddler-jasj
+```
+
+<span id="attach-a-persistent-volume" />
+
+### Persistent Volume अटैच करें
+
+```bash
+lizard volume create agent-workdir --size 10
+lizard sandbox create --volume agent-workdir
+```
+
+<span id="serve-a-port" />
+
+### पोर्ट सर्व करें
+
+```bash
+lizard sandbox exec genuine-toddler-jasj -- sh -c "nohup python3 -m http.server 3000 --bind 0.0.0.0 >/tmp/http.log 2>&1 &"
+lizard sandbox expose genuine-toddler-jasj 3000
+```
+
+<span id="use-a-desktop-from-a-vnc-app" />
+
+### VNC ऐप से डेस्कटॉप इस्तेमाल करें
+
+```bash
+lizard sandbox create -t desktop
+lizard sandbox vnc genuine-toddler-jasj --open
+```
+
+<span id="run-codex-in-a-sandbox" />
+
+### सैंडबॉक्स में Codex चलाएँ
+
+```bash
+lizard agents login chatgpt
+lizard sandbox create -t codex
+lizard sandbox prompt genuine-toddler-jasj "add a health check endpoint and test it"
+```
+
+<span id="save-and-restore-a-sandbox" />
+
+### सैंडबॉक्स सेव और रिस्टोर करें
+
+```bash
+lizard sandbox snapshot genuine-toddler-jasj --name my-app
+lizard sandbox snapshots --mine                     # find the snapshot ID
+lizard sandbox restore <snapshot-id> -p other-project
+```
+
+<span id="fork-a-prepared-sandbox" />
+
+### तैयार सैंडबॉक्स को फ़ोर्क करें
+
+```bash
+lizard sandbox fork genuine-toddler-jasj -n 8 --json   # 8 copies with the same memory and files
+lizard sandbox rm <copy-id>                            # delete a copy when its work is done
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [Sandboxes](/sandboxes) — रनटाइम, टेम्प्लेट और लाइफसाइकिल
+- [Sandboxes क्विकस्टार्ट](/sandboxes/quickstart) — यही स्टेप्स Lizard SDK से
+- [lizard volume](/cli/volume) — `--volume` से अटैच करने के लिए Persistent Volumes
+- [lizard agents](/cli/agents) — `sandbox prompt` के लिए क्रेडेंशियल्स
+- [लिमिट्स](/platform/limits#sandbox-lifetime) — साइज़, रनिंग लिमिट्स, एग्रेस और लाइफटाइम

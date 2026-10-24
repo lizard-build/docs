@@ -1,0 +1,135 @@
+---
+description: "lizard workspace वर्कस्पेस बनाता, लिस्ट करता, पॉज़ करता और डिलीट करता है, और वर्कस्पेस की लिमिट्स और उसकी स्कोप्ड API keys को दिखने वाली रीसेल कीमतें सेट करता है।"
+---
+
+# lizard workspace
+
+वर्कस्पेस बनाएँ, लिस्ट करें, पॉज़ करें और डिलीट करें, और उनकी लिमिट्स और रीसेल कीमतें सेट करें।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard workspace list
+lizard workspace create <name>
+lizard workspace pause <name-or-id>
+lizard workspace resume <name-or-id>
+lizard workspace limits <name-or-id> [flags]
+lizard workspace resale-pricing <name-or-id> [flags]
+lizard workspace rm <name-or-id> [flags]
+```
+
+<span id="subcommands" />
+
+## सबकमांड
+
+### `lizard workspace list`
+
+वे वर्कस्पेस लिस्ट करें जिनके आप सदस्य हैं, आपकी भूमिका और प्रोजेक्ट्स की संख्या के साथ (उपनाम `ls`)।
+
+### `lizard workspace create <name>`
+
+वर्कस्पेस बनाएँ। उसमें प्रोजेक्ट `lizard project create <name> --workspace <slug>` से जोड़ें।
+
+### `lizard workspace pause <name-or-id>`
+
+वर्कस्पेस के हर प्रोजेक्ट के हर ऐप, डेटाबेस और चल रहे सैंडबॉक्स को पॉज़ करें। ऐप्स और डेटाबेस के URL, पासवर्ड, सेटिंग्स और डेटा बने रहते हैं; Managed Object Storage बकेट पॉज़ नहीं होते। पूरे वर्कस्पेस को सिर्फ़ उसका मालिक पॉज़ कर सकता है। किसी एक सर्विस या प्रोजेक्ट को पॉज़ करने के लिए [lizard pause](/cli/pause) देखें।
+
+### `lizard workspace resume <name-or-id>`
+
+वर्कस्पेस के वे सभी ऐप और डेटाबेस फिर से शुरू करें जिन्हें किसी ने मैन्युअली पॉज़ किया था, और वे सैंडबॉक्स जिन्हें `lizard workspace pause` ने पॉज़ किया था। जिन ऐप्स और डेटाबेस को Lizard ने बिलिंग की वजह से पॉज़ किया है, वे बिलिंग ठीक होने तक पॉज़ ही रहेंगे। यह सिर्फ़ मालिक कर सकता है, और वर्कस्पेस में उसकी [लिमिट्स](/platform/limits#workspace-limits) के अंदर जगह होनी चाहिए।
+
+### `lizard workspace limits <name-or-id>`
+
+दिखाएँ कि वर्कस्पेस कितना इस्तेमाल कर सकता है और अभी कितना इस्तेमाल कर रहा है। फ्लैग्स के साथ उसकी लिमिट्स सेट करें। लिमिट्स सिर्फ़ मालिक सेट करता है, ब्राउज़र से या बिना स्कोप वाली API की से साइन इन करके; कोई भी सदस्य उन्हें पढ़ सकता है। किसी लिमिट को हटाने के लिए हर फ्लैग `none` लेता है।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `--sandboxes <n>` | एक साथ चलने वाले सैंडबॉक्स की अधिकतम संख्या |
+| `--cpu <vcpus>` | वर्कस्पेस के ऐप्स और डेटाबेस कितने vCPU इस्तेमाल कर सकते हैं |
+| `--memory <size>` | वर्कस्पेस के ऐप्स और डेटाबेस कितनी मेमोरी इस्तेमाल कर सकते हैं, उदाहरण के लिए `4GB` या `512MB` |
+| `--disk <size>` | उसके डेटाबेस और वॉल्यूम कितनी डिस्क घेर सकते हैं, उदाहरण के लिए `20GB` या `1TB` |
+
+CPU और मेमोरी में वह गिना जाता है जो ऐप्स और डेटाबेस अभी इस्तेमाल कर रहे हैं, न कि जो उनके लिए सेट किया गया है। लिमिट पर पहुँचने पर वर्कस्पेस में कुछ भी नया शुरू नहीं होता, और चल रही सर्विसेज़ चलती रहती हैं। डिस्क लिमिट पर पहुँचने पर न नया वॉल्यूम बन सकता है, न नया डेटाबेस, न वॉल्यूम बढ़ाया जा सकता है; पहले से लिखा गया डेटा बना रहता है। एरर के लिए [वर्कस्पेस लिमिट्स](/platform/limits#workspace-limits) देखें।
+
+### `lizard workspace resale-pricing <name-or-id>`
+
+वे कीमतें दिखाएँ या सेट करें जो इस वर्कस्पेस या इसके किसी प्रोजेक्ट तक स्कोप की गई API keys को दिखती हैं (उपनाम `resale`)। हर कीमत Lizard की कीमत का गुणक है, 1 से 100 तक। आपके अपने बिल, आपके डैशबोर्ड और बिना स्कोप वाली keys में Lizard की कीमतें ही रहती हैं। इन्हें सिर्फ़ मालिक देख या सेट कर सकता है, ब्राउज़र से या बिना स्कोप वाली API की से साइन इन करके।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `--all <x>` | हर रिसोर्स के लिए यही गुणक सेट करें |
+| `--cpu <x>` | CPU |
+| `--memory <x>` | मेमोरी |
+| `--storage <x>` | वॉल्यूम |
+| `--egress <x>` | आउटगोइंग ट्रैफ़िक |
+| `--object-storage <x>` | Managed Object Storage |
+| `--sandbox <x>` | सैंडबॉक्स की प्रति घंटा कीमतें |
+| `--off` | रीसेल कीमतें बंद करें; स्कोप्ड keys को फिर से Lizard की कीमतें दिखेंगी |
+
+### `lizard workspace rm <name-or-id>`
+
+वर्कस्पेस डिलीट करें (उपनाम `delete`)। इसे सिर्फ़ मालिक डिलीट कर सकता है, और सिर्फ़ तब जब उसमें कोई प्रोजेक्ट, सैंडबॉक्स या वॉल्यूम न बचा हो। ट्रैश में पड़े प्रोजेक्ट्स नहीं गिने जाते; वे वर्कस्पेस के साथ डिलीट हो जाते हैं, क्योंकि वर्कस्पेस का अपना कोई ट्रैश नहीं होता। स्कोप्ड API की वर्कस्पेस डिलीट नहीं कर सकती। आप अपना पर्सनल वर्कस्पेस डिलीट नहीं कर सकते।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `-y, --yes` | पुष्टि छोड़ दें |
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="list-your-workspaces" />
+
+### अपने वर्कस्पेस लिस्ट करें
+
+```bash
+lizard workspace list
+```
+
+<span id="create-a-workspace" />
+
+### वर्कस्पेस बनाएँ
+
+```bash
+lizard workspace create my-team
+```
+
+<span id="cap-a-workspace" />
+
+### वर्कस्पेस पर लिमिट लगाएँ
+
+```bash
+lizard workspace limits my-team                                   # show limits and current use
+lizard workspace limits my-team --sandboxes 5 --cpu 2 --memory 4GB --disk 20GB
+lizard workspace limits my-team --cpu none                        # remove one limit
+```
+
+<span id="set-resale-prices" />
+
+### रीसेल कीमतें सेट करें
+
+```bash
+lizard workspace resale-pricing my-team --all 3                   # every price x3
+lizard workspace resale-pricing my-team --off
+```
+
+<span id="delete-an-empty-workspace" />
+
+### खाली वर्कस्पेस डिलीट करें
+
+```bash
+lizard workspace rm my-team --yes
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [lizard whoami](/cli/whoami) — दिखाता है कि आप किस अकाउंट से साइन इन हैं
+- [lizard project](/cli/project) — वर्कस्पेस के प्रोजेक्ट्स लिस्ट करें और नए बनाएँ
+- [lizard pause](/cli/pause) — किसी सर्विस या प्रोजेक्ट को पॉज़ और रिज़्यूम करें
+- [lizard keys](/cli/keys) — वर्कस्पेस तक स्कोप की गई API keys बनाएँ
+- [लिमिट्स](/platform/limits#workspace-limits) — वर्कस्पेस लिमिट्स और उनके एरर
+- [आर्किटेक्चर: वर्कस्पेस](/concepts/architecture) — वर्कस्पेस का प्रोजेक्ट्स और सर्विसेज़ से क्या संबंध है

@@ -1,0 +1,165 @@
+---
+description: "PostgreSQL के साथ Flowise डिप्लॉय करें, उसकी क्रेडेंशियल एन्क्रिप्शन की सुरक्षित रखें, और रीस्टार्ट और अपग्रेड के बाद सेव किए गए फ़्लो जाँचें।"
+---
+
+<span id="run-flowise-with-postgresql" />
+
+# PostgreSQL के साथ Flowise चलाएँ
+
+यह गाइड Lizard पर एक Flowise सर्विस चलाती है, जिसमें फ़्लो, अकाउंट और एन्क्रिप्टेड क्रेडेंशियल PostgreSQL में रहते हैं। यह npm का एक तय वर्ज़न बिल्ड करती है और एन्क्रिप्शन की को सर्विस सीक्रेट के रूप में सेट करती है।
+
+बेसिक सेटअप उन फ़्लो के लिए है जो API इस्तेमाल करते हैं। अपलोड की गई फ़ाइलों और लोकल वेक्टर स्टोर के लिए अलग स्थायी स्टोरेज चाहिए; इन सुविधाओं का इस्तेमाल करने से पहले [फ़ाइल स्टोरेज](#file-storage) देखें।
+
+<span id="prerequisites" />
+
+## ज़रूरी चीज़ें
+
+- Pro या 7-दिन के Pro ट्रायल (कार्ड ज़रूरी) वाला Lizard अकाउंट। ट्रायल शुरू होने तक `lizard add` और `lizard up` एक Checkout लिंक लौटाते हैं; `lizard billing start` उसे खोलता है।
+- आपके कंप्यूटर पर OpenSSL।
+- आपके Flowise वर्कलोड के लिए काफ़ी मेमोरी; टेस्ट सर्विस 4 GiB इस्तेमाल करती है।
+
+Lizard CLI इंस्टॉल करें और ब्राउज़र में लॉगिन पूरा करें:
+
+```bash
+curl -fsSL https://lizard.build/install.sh | bash
+lizard login
+```
+
+<span id="create-the-project" />
+
+## प्रोजेक्ट बनाएँ
+
+```bash
+mkdir flowise-on-lizard
+cd flowise-on-lizard
+lizard init --name flowise-on-lizard
+lizard add postgres --name flowise-db
+lizard add --service flowise
+```
+
+अगर आपको वर्कस्पेस चुनना है, तो `lizard init` के साथ `--workspace <workspace>` दें। डेटाबेस के चालू होने तक इंतज़ार करें।
+
+<span id="build-a-fixed-flowise-version" />
+
+## Flowise का तय वर्ज़न बिल्ड करें
+
+नीचे दिए गए कंटेंट के साथ `Dockerfile` बनाएँ। यह Flowise के Docker बिल्ड पर आधारित है और npm पैकेज को `3.1.4` वर्ज़न पर पिन करता है:
+
+```dockerfile
+FROM node:24-alpine AS build
+RUN apk add --no-cache git python3 py3-pip py3-setuptools make g++ build-base cairo-dev pango-dev
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+RUN npm install -g flowise@3.1.4 --legacy-peer-deps
+
+FROM node:24-alpine
+RUN apk add --no-cache chromium git python3 py3-pip py3-setuptools make g++ build-base cairo-dev pango-dev curl
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+COPY --from=build /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=build /usr/local/bin /usr/local/bin
+RUN chown -R node:node /usr/local/lib/node_modules /usr/local/bin
+USER node
+EXPOSE 3000
+ENTRYPOINT ["flowise", "start"]
+```
+
+`--legacy-peer-deps` वैकल्पिक peer इंटीग्रेशन इंस्टॉल नहीं होने देता, जिनमें एक पुरानी नेटिव SQLite डिपेंडेंसी भी है। यह रेसिपी PostgreSQL और API वाले फ़्लो के लिए है; जिन नोड्स को अतिरिक्त डिपेंडेंसी चाहिए, उनके लिए उन्हें अलग से इंस्टॉल और टेस्ट करें।
+
+Dockerfile को साफ़ तौर पर चुनें:
+
+```bash
+lizard service set flowise --set dockerfilePath=Dockerfile
+```
+
+<span id="configure-postgresql-and-encryption" />
+
+## PostgreSQL और एन्क्रिप्शन कॉन्फ़िगर करें
+
+Flowise सर्विस पर डेटाबेस के वेरिएबल्स का रेफ़रेंस दें:
+
+```bash
+lizard secrets set \
+  DATABASE_TYPE=postgres \
+  DATABASE_HOST='${{flowise-db.LIZARD_PRIVATE_DOMAIN}}' \
+  DATABASE_PORT=5432 \
+  DATABASE_USER='${{flowise-db.PGUSER}}' \
+  DATABASE_PASSWORD='${{flowise-db.PGPASSWORD}}' \
+  DATABASE_NAME='${{flowise-db.PGDATABASE}}' \
+  --service flowise
+```
+
+सिंगल कोट्स रहने दें, ताकि आपका शेल रेफ़रेंस को खुद न बदल दे। सर्विस शुरू होने पर Lizard इन्हें असली वैल्यू में बदलता है। `LIZARD_PRIVATE_DOMAIN` और पोर्ट `5432` से, एक ही प्रोजेक्ट और रीजन की सर्विसेज़ प्रोजेक्ट के प्राइवेट नेटवर्क पर डेटाबेस तक पहुँचती हैं।
+
+सेटअप के दौरान ये सीक्रेट एक बार जेनरेट करें:
+
+```bash
+lizard secrets set \
+  FLOWISE_SECRETKEY_OVERWRITE="$(openssl rand -hex 32)" \
+  JWT_AUTH_TOKEN_SECRET="$(openssl rand -hex 32)" \
+  JWT_REFRESH_TOKEN_SECRET="$(openssl rand -hex 32)" \
+  EXPRESS_SESSION_SECRET="$(openssl rand -hex 32)" \
+  TOKEN_HASH_SECRET="$(openssl rand -hex 32)" \
+  SECURE_COOKIES=true \
+  --service flowise
+```
+
+इन वैल्यू की एक सुरक्षित कॉपी रखें। खास तौर पर `FLOWISE_SECRETKEY_OVERWRITE` को संभालकर रखें: PostgreSQL में पहले से सेव क्रेडेंशियल डिक्रिप्ट करने के लिए Flowise को यही की चाहिए। रीस्टार्ट, रीडिप्लॉय या अपग्रेड करते समय सीक्रेट दोबारा जेनरेट न करें।
+
+<span id="deploy-and-create-your-account" />
+
+## डिप्लॉय करें और अपना अकाउंट बनाएँ
+
+```bash
+lizard up --service flowise --port 3000
+```
+
+पहले बिल्ड में Flowise और उसकी डिपेंडेंसी इंस्टॉल होती हैं, इसलिए इसमें कई मिनट लग सकते हैं। डिप्लॉयमेंट से मिला HTTPS URL खोलें और URL किसी से शेयर करने से पहले पहला owner अकाउंट बनाएँ। एडिटर में साइन इन करें।
+
+Flowise जो लिंक बनाता है, उनके लिए पब्लिक URL सेट करें; उदाहरण की जगह अपना असली HTTPS URL डालें:
+
+```bash
+lizard secrets set APP_URL=https://YOUR-SERVICE.onlizard.com --service flowise
+```
+
+इस बदलाव से सर्विस रीस्टार्ट होती है। अगर आपको पासवर्ड-रीसेट या इनविटेशन ईमेल चाहिए, तो SMTP अलग से कॉन्फ़िगर करें।
+
+<span id="verify-persistence" />
+
+## डेटा बना रहता है या नहीं, जाँचें
+
+एक फ़्लो बनाकर सेव करें। एक टेस्ट क्रेडेंशियल जोड़ें, फिर Flowise रीस्टार्ट करें:
+
+```bash
+lizard restart --service flowise
+```
+
+सर्विस के फिर से चलने तक इंतज़ार करें, दोबारा साइन इन करें, और जाँचें कि फ़्लो और क्रेडेंशियल बने हुए हैं। क्रेडेंशियल इस्तेमाल करने वाला फ़्लो चलाकर पुष्टि करें कि Flowise उसे अब भी डिक्रिप्ट कर पा रहा है। रीडिप्लॉय के बाद यही जाँच दोहराएँ:
+
+```bash
+lizard redeploy --service flowise
+```
+
+PostgreSQL और एन्क्रिप्शन की, दोनों का बैकअप लें। की के बिना डेटाबेस बैकअप से सेव किए गए क्रेडेंशियल वापस नहीं मिल सकते।
+
+<span id="file-storage" />
+
+## फ़ाइल स्टोरेज
+
+Flowise जो फ़ाइलें लिखता है, वे सब PostgreSQL में नहीं जातीं। यह सेटअप कोई स्थायी फ़ाइल वॉल्यूम माउंट नहीं करता, इसलिए कंटेनर बदलने पर लोकल अपलोड, लोकल वेक्टर डेटाबेस और फ़ाइल लॉग गायब हो सकते हैं।
+
+अपलोड या डॉक्यूमेंट वर्कफ़्लो इस्तेमाल करने से पहले Flowise के [स्टोरेज वेरिएबल्स](https://docs.flowiseai.com/configuration/environment-variables) से एक प्राइवेट S3 बकेट कॉन्फ़िगर करें। `STORAGE_TYPE=s3`, `S3_STORAGE_BUCKET_NAME`, `S3_STORAGE_ACCESS_KEY_ID`, `S3_STORAGE_SECRET_ACCESS_KEY` और `S3_STORAGE_REGION` सेट करें। S3-कम्पैटिबल प्रोवाइडर के लिए `S3_ENDPOINT_URL` और `S3_FORCE_PATH_STYLE=true` भी सेट करें।
+
+Lizard का Managed Object Storage एक प्राइवेट `default` बकेट बनाता है, जो Flowise के डॉक्यूमेंट्स के लिए ठीक है। इसे प्राइवेट ही रखें: डैशबोर्ड के S3 ब्राउज़र से इसे पब्लिक करने पर इसकी हर फ़ाइल सबके लिए खुल जाएगी। ऊपर वाला PostgreSQL सेटअप फ़ाइल स्टोरेज, लोकल वेक्टर स्टोर या क्यू वर्कर्स को न प्रोविज़न करता है, न टेस्ट करता है।
+
+<span id="troubleshooting-and-updates" />
+
+## समस्या निवारण और अपडेट
+
+```bash
+lizard events --service flowise
+lizard logs --build --service flowise
+lizard logs --service flowise
+```
+
+अगर इमेज अभी पुल हो रही हो और इसी दौरान पहला डिप्लॉयमेंट टाइम आउट हो जाए, तो `lizard events` देखें। कंटेनर शुरू हो जाने के बाद `lizard up --service flowise --port 3000` दोबारा चलाएँ, या आख़िरी अपलोड को फिर से बिल्ड करने के लिए `lizard redeploy --service flowise` चलाएँ — पहला बिल्ड फ़ेल होने के बाद भी।
+
+अपडेट के लिए डेटाबेस का बैकअप लें, Flowise के रिलीज़ नोट्स पढ़ें, Dockerfile में npm वर्ज़न बदलें, और `lizard up` से उसे फिर से अपलोड करें। अपडेट पर भरोसा करने से पहले नया वर्ज़न जाँचें और डेटा बने रहने वाली जाँच चलाएँ।

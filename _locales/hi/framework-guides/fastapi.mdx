@@ -1,0 +1,98 @@
+---
+description: "Uvicorn, requirements.txt, Procfile और पोर्ट 8000 के साथ Lizard पर FastAPI डिप्लॉय करें। हेल्थ एंडपॉइंट जाँचें और इम्पोर्ट, होस्ट और डिपेंडेंसी एरर का कारण पता करें।"
+---
+
+<span id="deploy-fastapi-on-lizard" />
+
+# Lizard पर FastAPI डिप्लॉय करें
+
+Lizard पर FastAPI को Uvicorn के साथ चलाएँ, जो `0.0.0.0:8000` पर सुनता हो। ऐप की डिपेंडेंसी में FastAPI और Uvicorn दोनों शामिल करें। `app = FastAPI()` वाली फ़ाइल इम्पोर्ट करने भर से कोई HTTP सर्वर शुरू नहीं होता।
+
+<span id="example-project" />
+
+## उदाहरण प्रोजेक्ट
+
+[FastAPI उदाहरण](https://github.com/lizard-build/fastapi-example) में एक ऐप, Procfile, पिन की गई डिपेंडेंसी, MIT लाइसेंस और HTTP टेस्ट शामिल हैं। इसका CI Linux पर प्रोडक्शन वाला Uvicorn एंट्री पॉइंट चलाता है। हमने 2026-09-09 को GitHub से कमिट `df522c1` डिप्लॉय भी किया और पब्लिक HTTPS पर हेल्थ, OpenAPI, इंटरैक्टिव डॉक्स, JSON echo, गलत इनपुट और एक गैर-मौजूद रूट जाँचे।
+
+<span id="prepare-an-app" />
+
+## ऐप तैयार करें
+
+यह उदाहरण `requirements.txt` और ऐप के रूट में रखी `main.py` इस्तेमाल करता है:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+```
+
+अपने डिपेंडेंसी वर्कफ़्लो में `fastapi` और `uvicorn` जोड़ें और resolve हुए, टेस्ट किए गए वर्ज़न `requirements.txt` में सेव करें। अगर आपकी डिपेंडेंसी सपोर्ट करती हैं, तो `.python-version` में Python का माइनर वर्ज़न चुनें, जैसे `3.13`।
+
+साफ़ इम्पोर्ट टारगेट के साथ `Procfile` बनाएँ:
+
+```text
+web: uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+`main:app` का मतलब है `main.py` में `app` ऑब्जेक्ट। `src/api.py` के लिए वह इम्पोर्ट पाथ इस्तेमाल करें जो ऐप के रूट से काम करता है, जैसे `src.api:app`। साफ़ लिखा Procfile होने पर कस्टम लेआउट में सोर्स कोड के पैटर्न की डिटेक्शन पर निर्भर नहीं रहना पड़ता।
+
+| सेटिंग | मान |
+|---|---|
+| इंस्टॉल | `pip install -r requirements.txt` |
+| स्टार्ट | Procfile की `web:` कमांड |
+| सर्विस पोर्ट | `8000` |
+| बिल्ड आउटपुट | Python सोर्स और इंस्टॉल की गई डिपेंडेंसी |
+
+<span id="test-locally" />
+
+## लोकल टेस्ट करें
+
+लोकल वर्चुअल एनवायरनमेंट इस्तेमाल करें:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+दूसरे टर्मिनल में:
+
+```bash
+curl --fail http://localhost:8000/health
+```
+
+सफल रिस्पॉन्स में `{"status":"ok"}` आना चाहिए। reload मोड सिर्फ़ डेवलपमेंट के लिए रखें। [FastAPI की सर्वर गाइड](https://fastapi.tiangolo.com/deployment/manually/) ASGI सर्वर और इम्पोर्ट टारगेट समझाती है।
+
+<span id="deploy" />
+
+## डिप्लॉय
+
+[CLI सेटअप](/framework-guides#prepare-the-project) के बाद ऐप के रूट से अपलोड करें:
+
+```bash
+lizard init --name fastapi-app
+lizard add --service api
+lizard up --service api --port 8000
+lizard logs --build --service api --json
+lizard logs --service api --json
+lizard ps --json
+```
+
+`.venv/`, `__pycache__/` और `.env` फ़ाइलें बाहर रखें। सर्विस के बिल्ड/स्टार्ट ओवरराइड सेट न करें, ताकि lizardpack Procfile पढ़े। यहाँ requirements.txt वाले तरीके में अलग से compile कमांड की ज़रूरत नहीं है।
+
+लौटाए गए HTTPS URL पर `/health` खोलें, फिर कोई असली API ऐक्शन टेस्ट करें। TCP हेल्थ प्रोब सिर्फ़ यह बताता है कि प्रोसेस ने अपना पोर्ट खोल लिया है; आपका हेल्थ एंडपॉइंट ऐसी जाँचें जोड़ सकता है जो ऐप के लिए मायने रखती हैं।
+
+<span id="data-and-common-failures" />
+
+## डेटा और आम एरर
+
+क्रेडेंशियल [वेरिएबल्स और सीक्रेट्स](/variables) के ज़रिए सेट करें। ऐप को डेटाबेस चाहिए, तो [Managed Postgres](/addons/postgres) जोड़ें और सर्विस-स्कोप वाला कनेक्शन रेफ़रेंस इस्तेमाल करें। कंटेनर की लोकल फ़ाइलें ऐप के लिए टिकाऊ स्टोरेज नहीं हैं; [स्टोरेज और रिकवरी](/platform/storage-and-recovery) देखें।
+
+`No module named uvicorn` आए, तो देखें कि requirements.txt के पैकेज इंस्टॉल हुए या नहीं। ASGI इम्पोर्ट एरर हो, तो वही Procfile कमांड उसी रूट से लोकल चलाकर देखें। अगर सर्विस कभी हेल्दी नहीं होती, तो पोर्ट `8000` और बाइंड होस्ट जाँचें। अगर प्रोसेस बिना किसी सर्वर लॉग के बंद हो जाता है, तो पक्का करें कि वह सिर्फ़ `python main.py` नहीं, बल्कि Uvicorn चलाता है।
+
+9 सितंबर 2026 को किए गए डिप्लॉयमेंट चेक और उनकी सीमाओं के लिए [टेस्ट किए गए वर्ज़न और क्लाउड के नतीजे](/framework-guides/validation) देखें।

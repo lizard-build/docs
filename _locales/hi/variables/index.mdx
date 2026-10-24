@@ -1,0 +1,125 @@
+---
+description: "सर्विस या प्रोजेक्ट स्कोप पर सीक्रेट सेट करें, मर्ज की प्राथमिकता समझें और देखें कि कौन-से मान बिल्ड तक पहुँचते हैं और कौन-से चल रहे कंटेनर तक।"
+---
+
+<span id="variables--secrets" />
+
+# वेरिएबल और सीक्रेट
+
+Lizard कॉन्फ़िगरेशन को **सीक्रेट्स** के रूप में स्टोर करता है। इनके दो स्कोप होते हैं — **सर्विस** (डिफ़ॉल्ट) और **प्रोजेक्ट** (`--global`) — और ये तय प्राथमिकता (precedence) क्रम में आपके ऐप के एनवायरनमेंट में मर्ज होते हैं। वर्कस्पेस-लेवल का कोई ग्लोबल स्कोप नहीं है।
+
+<span id="setting-variables" />
+
+## वेरिएबल सेट करना
+
+`lizard secrets set` वेरिएडिक है — एक बार में एक या कई वेरिएबल सेट करें। डिफ़ॉल्ट रूप से यह **लिंक की गई सर्विस** में लिखता है:
+
+```bash
+lizard secrets set DATABASE_URL=postgres://… LOG_LEVEL=info
+lizard secrets set API_KEY=sk_live_… --service api
+```
+
+**प्रोजेक्ट** स्कोप में लिखने के लिए `--global` जोड़ें (प्रोजेक्ट की हर सर्विस इसे देखती है):
+
+```bash
+lizard secrets set NODE_ENV=production --global
+```
+
+<span id="listing-deleting-importing" />
+
+## लिस्ट करना, डिलीट करना, इम्पोर्ट करना
+
+```bash
+lizard secrets list                       # current scope
+lizard secrets list --show                # reveal values
+lizard secrets delete OLD_KEY ANOTHER_KEY # variadic; add -y in scripts
+cat .env | lizard secrets import          # KEY=value lines from stdin
+```
+
+`secrets import` सादी `KEY=value` लाइनें पढ़ता है और कोट्स को वैल्यू का हिस्सा मानकर रखता है। `secrets delete` पुष्टि माँगता है; जब यह टर्मिनल के बाहर चले, तो `-y` पास करें।
+
+हर फ़्लैग के लिए [`lizard secrets` कमांड रेफरेंस](/cli/secrets) देखें।
+
+<span id="scoping" />
+
+## स्कोपिंग
+
+| स्कोप | कमांड | कहाँ स्टोर होता है | किसे दिखता है |
+|-------|---------|-----------|------------|
+| **सर्विस** (डिफ़ॉल्ट) | `lizard secrets set K=v --service <svc>` | `secrets.services[<svc>]` | सिर्फ़ उसी सर्विस को |
+| **प्रोजेक्ट** (ग्लोबल) | `lizard secrets set K=v --global` | `secrets.shared` | प्रोजेक्ट की हर सर्विस को |
+
+**डिफ़ॉल्ट रूप से सर्विस स्कोप ही इस्तेमाल करें।** कॉम्प्रोमाइज़ हुई सर्विस अपना एनवायरनमेंट पढ़ सकती है — स्कोप जितना बड़ा होगा, उतने ज़्यादा क्रेडेंशियल्स बेवजह खुले रहेंगे। `--global` सिर्फ़ ऐसे मानों के लिए रखें जो सीक्रेट नहीं हैं और जिनका पब्लिक होना तय है, जैसे `LOG_LEVEL`, `NODE_ENV`, फ़ीचर फ़्लैग या फ्रंटएंड का `SENTRY_DSN`। अगर पक्का नहीं है कि कोई मान सीक्रेट है या नहीं, तो उसे सीक्रेट मानें और सर्विस स्कोप में रखें।
+
+हर सर्विस को प्रोजेक्ट के Postgres और Redis ऐडऑन (चल रहे हों या पॉज़ हों) से पहले से ही एक `DATABASE_URL` और एक `REDIS_URL` मिलता है, सबसे कम प्राथमिकता पर। अगर एक ही टाइप के कई ऐडऑन हैं, तो कौन-सा मिलेगा यह तय नहीं है। किसी खास ऐडऑन को चुनने या उसका प्राइवेट URL इस्तेमाल करने के लिए, `--global` के बजाय हर कंज्यूमर सर्विस पर [रेफरेंस](/variables/references) से उसे बाइंड करें:
+
+```bash
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service worker
+```
+
+अगर ऐडऑन के मान बदलते हैं, तो हर कंज्यूमर सर्विस को नया मान अपने अगले डिप्लॉय या वेरिएबल बदलाव पर मिल जाता है।
+
+<span id="precedence" />
+
+## प्राथमिकता
+
+जब एक ही की कई जगहों पर तय हो, तो **जो सबसे बाद में लिखा गया, वही लागू होता है**:
+
+```
+addon-issued env  <  project secrets  <  project env  <  app env  <  app secrets  <  platform vars
+```
+
+इसलिए **ऐप सीक्रेट्स प्रोजेक्ट सीक्रेट्स को ओवरराइड करते हैं**, और **प्लेटफ़ॉर्म वेरिएबल** (`PORT`, `LIZARD_SERVICE_NAME`, `LIZARD_PROJECT_ID`, `LIZARD_PUBLIC_DOMAIN`, `LIZARD_PRIVATE_DOMAIN`) सबसे आखिर में लागू होते हैं और इन्हें ओवरराइड नहीं किया जा सकता। `PORT` सिर्फ़ तब सेट होता है जब सर्विस का कोई HTTP पोर्ट हो। आपका सेट किया हुआ `PORT` वेरिएबल रूटिंग सिर्फ़ उसी सर्विस पर बदलता है जिसका पोर्ट कभी सेट नहीं किया गया। जो सर्विस `lizard up` से बनी है, या जिसे `--port`, `lizard port`, `containerPort` या डैशबोर्ड से पोर्ट दिया गया है, वह अपना वही पोर्ट रखती है, और Lizard आपके `PORT` को उसी पोर्ट से ओवरराइट कर देता है। पोर्ट बदलने के लिए `lizard port <n>` चलाएँ और रीडिप्लॉय करें। [Lizard किस पोर्ट पर रूट करता है](/deploy/dockerfile#which-port-lizard-routes-to) देखें।
+
+<span id="build-time-vs-runtime" />
+
+## बिल्ड-टाइम बनाम रनटाइम
+
+ज़्यादातर वेरिएबल बदलाव **बिना रीबिल्ड** के लागू होते हैं — नए मान लागू करने के लिए सर्विस रीस्टार्ट होती है, जिसमें कुछ सेकंड लगते हैं। अपवाद हैं बिल्ड-टाइम मान, जो इमेज में बेक हो जाते हैं:
+
+- `lizard secrets set` से या सर्विस की सेटिंग्स में `VITE_*` या `NEXT_PUBLIC_*` मान बदलने पर प्रभावित चल रही सर्विसेज़ का रीबिल्ड तुरंत शुरू हो जाता है (`--global` के लिए हर चल रही सर्विस का)। डैशबोर्ड के प्रोजेक्ट Secrets पेज पर किया गया एडिट उन्हें सिर्फ़ रीस्टार्ट करता है; उसके बाद `lizard redeploy` चलाएँ।
+- Lizard ये मान GitHub सर्विसेज़ के लिए (lizardpack का जेनरेट किया हुआ Dockerfile या रेपो का रूट Dockerfile) और `buildCommand` / `startCommand` से बिल्ड होने वाली Node सर्विसेज़ के लिए `ENV` लाइनों के रूप में बेक करता है। कस्टम `dockerfilePath` वाली सर्विस, या इन कमांड्स के बिना `lizard up` से अपलोड की गई सर्विस को बिल्ड के समय कोई Lizard वेरिएबल नहीं मिलता; `COMMIT_SHA` के अलावा किसी भी सर्विस को बिल्ड आर्ग्स नहीं मिलते। ऐसे मामलों में पब्लिक मानों को `.env.production` में कमिट करें या अपने Dockerfile में `ENV` लाइनों के रूप में लिखें। बिना अपने Dockerfile के अपलोड किए गए Node ऐप के लिए बिल्ड कमांड सेट करना भी काम करता है।
+
+[बिल्ड पाइपलाइन → रीबिल्ड ट्रिगर](/concepts/build-pipeline#what-triggers-a-rebuild) देखें।
+
+<span id="verifying" />
+
+## जाँच करना
+
+सर्विसेज़ में शेल एक्सेस (`lizard ssh`) बंद है, इसलिए मान दूसरे तरीके से जाँचें:
+
+```bash
+lizard logs --build --service api          # warns about every empty ${{…}} reference
+lizard secrets list --service api --show   # stored values
+lizard secrets list --service api --ref    # addon keys and each service's LIZARD_* / PORT keys
+```
+
+`--ref` दूसरी सर्विस के अपने वेरिएबल और सीक्रेट्स लिस्ट नहीं करता। उनके रेफरेंस काम करते हैं; उनकी कीज़ `lizard secrets list --service <target>` से जाँचें।
+
+अगर आपका अपेक्षित मान नहीं मिलता, तो [समस्या निवारण → कोई सीक्रेट या रेफरेंस दिख नहीं रहा](/variables/troubleshooting/reference-not-applied) देखें।
+
+<span id="local-development" />
+
+## लोकल डेवलपमेंट
+
+सर्विस के प्रोजेक्ट और सर्विस सीक्रेट्स इंजेक्ट करके कोई कमांड **लोकल** चलाएँ:
+
+```bash
+lizard run --service api -- node scripts/seed.js
+```
+
+मान वैसे ही मिलते हैं जैसे स्टोर हैं: `${{…}}` रेफरेंस सादे टेक्स्ट के रूप में ही रहते हैं, और प्लेटफ़ॉर्म वेरिएबल (`PORT`, `LIZARD_*`) इंजेक्ट नहीं होते। जिस स्क्रिप्ट को डेटाबेस चाहिए, उसे ऐडऑन के असली कनेक्शन मानों के साथ चलाएँ:
+
+```bash
+lizard run --service postgres -- node scripts/seed.js
+```
+
+देखें कि [`lizard run` क्या इंजेक्ट करता है](/cli/run#what-run-injects)।
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [क्रॉस-सर्विस रेफरेंस](/variables/references) — क्रेडेंशियल्स कॉपी-पेस्ट किए बिना एक सर्विस के मान दूसरी सर्विस से पढ़ें।
+- [`lizard secrets`](/cli/secrets) — पूरा कमांड रेफरेंस।

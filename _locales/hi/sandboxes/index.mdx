@@ -1,0 +1,115 @@
+---
+title: "AI एजेंटों के लिए Sandboxes"
+description: "Lizard SDK या Lizard CLI से Firecracker microVMs में AI का लिखा कोड चलाएँ: Sandboxes कब इस्तेमाल करें, स्टार्टअप टाइम, टेम्प्लेट, साइज़, लाइफसाइकिल और स्टोरेज।"
+---
+
+<span id="sandboxes-for-ai-agents" />
+
+# AI एजेंटों के लिए Sandboxes
+
+<span id="when-to-use-a-sandbox" />
+<span id="what-makes-them-fast" />
+<span id="templates" />
+<span id="resources--limits" />
+<span id="ways-to-drive-sandboxes" />
+
+Sandboxes, Lizard पर कोड और AI एजेंट के काम चलाने के लिए आइसोलेटेड Linux मशीनें हैं। Sandboxes, Firecracker microVMs के रूप में चलते हैं और हर एक का अपना कर्नेल होता है। Lizard SDK (TypeScript के लिए `@lizard-build/sdk`, Python के लिए `lizard-sdk`) से सैंडबॉक्स बनाएँ या टर्मिनल में `lizard sandbox create` चलाएँ। इसके बाद आप कमांड चला सकते हैं, फ़ाइलें पढ़ और लिख सकते हैं और पोर्ट खोल सकते हैं। 2026-10-12 को हुए एक टेस्ट में सैंडबॉक्स बनाने से लेकर उसके पहले Python आउटपुट तक का मीडियन समय 228 ms था।
+
+<span id="when-to-use-sandboxes" />
+
+## Sandboxes कब इस्तेमाल करें
+
+- **मॉडल का लिखा कोड चलाएँ।** LLM को एक [कोड इंटरप्रेटर](/sandboxes/code-interpreter) दें, जो कॉल्स के बीच Python स्टेट बनाए रखता है।
+- **कोडिंग एजेंट को उसकी अपनी मशीन दें।** [Claude Code](/sandboxes/guides/claude-code), [OpenCode](/sandboxes/guides/opencode) या Codex को अपने लैपटॉप के बजाय सैंडबॉक्स में चलाएँ। उसके क्रेडेंशियल्स [`lizard agents`](/cli/agents) से कनेक्ट करें और प्रॉम्प्ट [`lizard sandbox prompt`](/cli/sandbox#coding-agents) से भेजें।
+- **एजेंट ने जो बनाया, उसका प्रीव्यू देखें।** डेव सर्वर शुरू करें और उसे [प्राइवेट प्रीव्यू URL](/sandboxes/preview-urls) से खोलें।
+- **एक साथ कई रास्ते आज़माएँ।** चल रहे सैंडबॉक्स को उसकी मेमोरी और प्रोसेस समेत फ़ोर्क करें, या एक स्नैपशॉट से कई कॉपी रिस्टोर करें।
+- **ब्राउज़र कंट्रोल करें।** `desktop` टेम्प्लेट एक ग्राफ़िकल डेस्कटॉप चलाता है, जिसे एजेंट स्क्रीनशॉट, क्लिक और कीज़ से कंट्रोल करता है।
+
+जो वेब सर्विस या वर्कर लगातार चलते रहने चाहिए, उनके लिए सैंडबॉक्स के बजाय ऐप डिप्लॉय करें; [ऐप क्विकस्टार्ट](/getting-started) देखें।
+
+<span id="how-fast-does-a-sandbox-start" />
+
+## सैंडबॉक्स कितनी जल्दी शुरू होता है?
+
+2026-10-12 को हुए एक टेस्ट में सैंडबॉक्स बनाने से लेकर उसके पहले Python आउटपुट तक का मीडियन समय 228 ms और 95वाँ पर्सेंटाइल 310 ms था। यह टेस्ट Railway के US East रीजन से `us-east-1` पर 300 बार चलाया गया, `base` टेम्प्लेट और Small साइज़ के साथ। E2B, Daytona और Modal पर इसी टेस्ट के नतीजे [Sandboxes पेज](https://lizard.build/#sandbox-benchmarks) पर हैं।
+
+<span id="sandboxes-at-a-glance" />
+
+## Sandboxes एक नज़र में
+
+| सवाल | जवाब |
+|---|---|
+| कोड किस पर चलता है? | अपने कर्नेल वाली Firecracker microVM पर; [रनटाइम और टेम्प्लेट](#runtime-and-templates) देखें |
+| सैंडबॉक्स कैसे बनाएँ? | [Lizard SDK](/sandboxes/sdk-reference), [`lizard sandbox`](/cli/sandbox), [डैशबोर्ड](/sandboxes/dashboard) या [HTTP API](/sandboxes/sdk-reference#http-api) से |
+| कौन-से टेम्प्लेट हैं? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop` और `desktop-camoufox` (सिर्फ़ US East) |
+| कौन-से साइज़ हैं? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, डिफ़ॉल्ट) और Large (8 vCPU / 16 GB)। ट्रायल में सिर्फ़ Small चलता है, US रीजन में। [साइज़ और कीमतें](/platform/limits#sandbox-sizes) देखें |
+| सैंडबॉक्स कितनी देर चलता है? | SDK और CLI से डिफ़ॉल्ट रूप से पाँच मिनट; रॉ API और डैशबोर्ड से डिफ़ॉल्ट रूप से कोई एक्सपायरी नहीं |
+| पॉज़ के बाद क्या बचता है? | पूरी डिस्क, `/workspace` के बाहर इंस्टॉल किए गए पैकेज समेत, साथ ही मेमोरी और चल रहे प्रोसेस |
+| स्टॉप (किल या एक्सपायरी) के बाद क्या बचता है? | `/workspace` पर लगे [Persistent Volume](/sandboxes/volumes) की फ़ाइलें और आपके लिए गए सभी [स्नैपशॉट](/sandboxes/quickstart#pause-and-resume); स्नैपशॉट में पूरी डिस्क होती है |
+| एक साथ कितने चल सकते हैं? | Pro पर 100, ट्रायल के दौरान 5; [अकाउंट लिमिट](/platform/limits#sandbox-account-limits) देखें |
+
+<span id="runtime-and-templates" />
+
+## रनटाइम और टेम्प्लेट
+
+मौजूदा कैटलॉग से टेम्प्लेट चुनें: `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop` या `desktop-camoufox`। उपलब्धता रीजन और पूल की क्षमता पर निर्भर करती है। `interpreter` में Python, आम डेटा लाइब्रेरी और Node 22 शामिल हैं। `desktop` एक ग्राफ़िकल डेस्कटॉप चलाता है, जिसे आप `sandbox.desktop` या `lizard sandbox desktop` से कंट्रोल करते हैं। `desktop-camoufox` असल में `desktop` टेम्प्लेट है जिसमें Camoufox भी है — स्क्रैपिंग के लिए Firefox का एक बिल्ड, जिसे आप Playwright से कंट्रोल करते हैं; फ़िलहाल यह सिर्फ़ `us-east-1` में चलता है। टूल्स के वर्ज़न अपने सैंडबॉक्स के अंदर जाँचें। पब्लिक CLI में कस्टम टेम्प्लेट अपलोड करने का फ़्लो नहीं है।
+
+Lizard Sandboxes, Firecracker microVMs के रूप में चलते हैं और हर एक का अपना कर्नेल होता है। एजेंट को सिर्फ़ वही क्रेडेंशियल्स और एक्सेस दें जो उसके काम के लिए ज़रूरी हैं।
+
+<span id="lifecycle" />
+
+## लाइफसाइकिल
+
+सैंडबॉक्स बनाएँ, कमांड चलाएँ, फिर `kill` कॉल करें। `connect` किसी मौजूदा सैंडबॉक्स से उसकी स्टेट बदले बिना जुड़ता है, इसलिए यह पॉज़ या स्टॉप किए गए सैंडबॉक्स को रिज़्यूम नहीं करता। पॉज़, रिज़्यूम, स्नैपशॉट और रिस्टोर उपलब्ध हैं; [पॉज़, रिज़्यूम और स्नैपशॉट](/sandboxes/quickstart#pause-and-resume) देखें। `fork` चल रहे सैंडबॉक्स को उसकी मेमोरी और प्रोसेस समेत कॉपी करता है; वॉल्यूम अटैच होने पर यह 409 लौटाता है। फ़ाइल वॉचिंग अभी उपलब्ध नहीं है। `lizard sandbox ssh` आपके CLI क्रेडेंशियल्स के साथ इंटरैक्टिव शेल खोलता है। SSH प्रोटोकॉल से एक्सेस उपलब्ध नहीं है, इसलिए SSH क्लाइंट, `scp` और पोर्ट फ़ॉरवर्डिंग काम नहीं करते।
+
+```text
+create -> running -> stopped (kill / expiration)
+running -> paused -> running (pause / resume)
+running -> new sandboxes (fork)
+snapshot -> new sandbox (restore)
+```
+
+<span id="resources-and-timeouts" />
+
+## रिसोर्स और टाइमआउट
+
+सैंडबॉक्स बनाते समय साइज़ चुनें: Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, डिफ़ॉल्ट) या Large (8 vCPU / 16 GB)। ट्रायल के दौरान हर सैंडबॉक्स Small होता है और US रीजन में चलता है। [साइज़ और कीमतें](/platform/limits#sandbox-sizes) देखें। ज़रूरत हो तो रीजन साफ़ तौर पर चुनें; कैटलॉग में एंट्री होने का मतलब यह नहीं कि वहाँ खाली क्षमता उपलब्ध होगी।
+
+SDK और CLI में डिफ़ॉल्ट लाइफटाइम पाँच मिनट है। रॉ API और डैशबोर्ड में डिफ़ॉल्ट रूप से कोई एक्सपायरी नहीं होती। लाइफटाइम साफ़ तौर पर सेट करें: बनाते समय `timeoutMs: 0` देने पर एक्सपायरी बंद हो जाती है; शून्य से बड़ा मान डेडलाइन सेट करता है। `setTimeout` 1000 से 2147483647 ms तक के मान लेता है, शून्य नहीं। कमांड चलाने से डेडलाइन रीसेट नहीं होती। यह आइडल टाइमर नहीं है।
+
+<span id="storage-and-billing" />
+
+## स्टोरेज और बिलिंग
+
+जब तक सैंडबॉक्स चलता है, फ़ाइलें और चल रहे प्रोसेस उपलब्ध रहते हैं। पॉज़ पूरी डिस्क को रखता है, `/workspace` के बाहर इंस्टॉल किए गए पैकेज समेत, साथ ही मेमोरी और चल रहे प्रोसेस भी; रिज़्यूम यह सब वापस ले आता है। स्नैपशॉट में भी यही सब होता है, और सोर्स सैंडबॉक्स हट जाने के बाद भी आप उसे रिस्टोर कर सकते हैं। स्टॉप (किल या एक्सपायरी) सैंडबॉक्स की डिस्क डिलीट कर देता है: सिर्फ़ `/workspace` पर अटैच किए गए Persistent Volume की फ़ाइलें और आपके लिए गए स्नैपशॉट बचते हैं। वॉल्यूम के बिना `/workspace` उसी डिस्क का हिस्सा है। हर वॉल्यूम एक समय में एक ही सैंडबॉक्स से अटैच होता है और नोड-लोकल स्टोरेज इस्तेमाल करता है; जिन फ़ाइलों को नोड खराब होने पर भी बचना चाहिए, उन्हें एक्सपोर्ट करें।
+
+हर साइज़ की एक तय प्रति घंटा कीमत होती है, जिसका बिल सैंडबॉक्स चलने के दौरान प्रति सेकंड बनता है, आइडल टाइम समेत। रोलिंग 30 दिनों में [प्रति अकाउंट 2 TB](/platform/limits#sandbox-egress) तक एग्रेस शामिल है। स्नैपशॉट से रिस्टोर किया गया सैंडबॉक्स अपने सोर्स के साइज़ और कीमत पर चलता है। सफल पॉज़ के बाद कंप्यूट का चार्ज रुक जाता है; जब तक आप डेटा रखते हैं, Persistent Volumes का बिल अलग से बनता है। काम खत्म होने पर सैंडबॉक्स को पॉज़ या किल करें। हर रिसोर्स की दरें [बिलिंग पेज](/platform/billing) और [प्राइसिंग](https://lizard.build/pricing) पर हैं।
+
+<span id="guides" />
+
+## गाइड
+
+- [सैंडबॉक्स में Claude Code चलाएँ](/sandboxes/guides/claude-code)
+- [सैंडबॉक्स में OpenCode चलाएँ](/sandboxes/guides/opencode)
+- [डेव सर्वर के लिए प्रीव्यू URL](/sandboxes/preview-urls)
+- [LLM के लिखे कोड के लिए कोड इंटरप्रेटर](/sandboxes/code-interpreter)
+- [Persistent Volumes में फ़ाइलें रखें](/sandboxes/volumes)
+
+Lizard ब्लॉग के लेख:
+
+- [Claude Code सैंडबॉक्स: बिल्ट-इन आइसोलेशन, Docker और क्लाउड](https://lizard.build/blog/claude-code-sandbox)
+- [Claude Code --dangerously-skip-permissions: इस्तेमाल और सीमाएँ](https://lizard.build/blog/dangerously-skip-permissions)
+- [Lizard Sandboxes से एक दिन में Lovable क्लोन बनाएँ](https://lizard.build/blog/build-lovable-clone)
+- [E2B बनाम Daytona बनाम Modal: 1,200 सैंडबॉक्स स्टार्ट की तुलना](https://lizard.build/blog/e2b-vs-daytona-vs-modal)
+- [Vercel Sandbox की प्राइसिंग: लागत, लिमिट और विकल्प](https://lizard.build/blog/vercel-sandbox-pricing)
+- [AI सैंडबॉक्स: आइसोलेशन, कोड चलाना और लागत](https://lizard.build/blog/ai-sandbox)
+
+<span id="reference" />
+
+## रेफरेंस
+
+- [Sandboxes क्विकस्टार्ट](/sandboxes/quickstart): आपका पहला सैंडबॉक्स, स्टेप-बाय-स्टेप।
+- [Sandbox API और SDK रेफरेंस](/sandboxes/sdk-reference): TypeScript और Python में हर कॉल।
+- [`lizard sandbox`](/cli/sandbox): टर्मिनल से create, exec, शेल, स्नैपशॉट और कोडिंग एजेंट।
+- [Sandboxes डैशबोर्ड](/sandboxes/dashboard): ब्राउज़र में सैंडबॉक्स बनाएँ, इंस्पेक्ट करें और स्टॉप करें।
+- [लिमिट](/platform/limits#sandboxes): साइज़, कीमतें, कॉन्करेंसी और एग्रेस।

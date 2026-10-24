@@ -1,0 +1,41 @@
+---
+title: "रीजन: सर्विसेज़ और ऐडऑन कहाँ चलते हैं"
+description: "चुनें कि आपकी सर्विसेज़ और ऐडऑन कहाँ चलें, लेटेंसी घटाने के लिए स्टेटफुल रिसोर्स एक ही रीजन में रखें, और देखें कि सर्विसेज़ और ऑब्जेक्ट स्टोरेज को कौन-से होस्टनेम मिलते हैं।"
+---
+
+<span id="regions" />
+
+# रीजन
+
+Lizard सर्विसेज़, ऐडऑन और Sandboxes को US East (`us-east-1`) और EU West (`eu-west-lim-a`) जैसे रीजन में चलाता है। रिसोर्स बनाते समय आप रीजन चुनते हैं; `--region` न देने पर `lizard add` उसे `us-east-1` में बनाता है। लेटेंसी कम रखने के लिए सर्विस और उसके डेटाबेस एक ही रीजन में रखें। [`lizard regions`](/cli/regions) वे रीजन दिखाता है जो आपके अकाउंट के लिए उपलब्ध हैं।
+
+<span id="list-regions" />
+
+## रीजन की सूची देखें
+
+```bash
+lizard regions
+lizard regions --json
+```
+
+<span id="choose-a-region" />
+
+## रीजन चुनें
+
+सर्विस या ऐडऑन बनाते समय `--region <code>` पास करें:
+
+```bash
+lizard add -r your-org/your-app --region <code>
+lizard add postgres --region <code>
+lizard up --region <code>          # new services only
+```
+
+प्रोजेक्ट का कोई डिफ़ॉल्ट रीजन नहीं होता। `--region` न देने पर `lizard add` रिसोर्स `us-east-1` में बनाता है, और `lizard up` नई सर्विस उस API सर्वर के रीजन में बनाता है जो रिक्वेस्ट को हैंडल करता है। रीजन ख़ुद चुनने के लिए `--region` पास करें।
+
+> **स्टेटफुल रिसोर्स एक ही रीजन में रखें।** लेटेंसी कम रखने और क्रॉस-रीजन डेटा शुल्क से बचने के लिए सर्विस और जिन ऐडऑन से वह बात करती है (Managed Postgres, Managed Redis, Managed Object Storage), उन्हें **एक ही रीजन** में रखें। [प्राइवेट नेटवर्किंग](/networking#private-networking) भी सिर्फ़ एक रीजन के अंदर काम करती है।
+
+<span id="generated-domains" />
+
+## जनरेट किए गए डोमेन
+
+हर सर्विस को ऑटोमैटिक TLS के साथ एक जनरेट किया गया डोमेन मिलता है: नई सर्विसेज़ के लिए `<name>-<suffix>.onlizard.com`, जबकि पुरानी सर्विसेज़ का `<words>.<region>.onlizard.com` डोमेन बना रहता है। [Managed Object Storage](/addons/storage) हर रीजन के लिए अलग गेटवे होस्ट इस्तेमाल करता है: `us-east-1` के लिए `s3-us-east-1.onlizard.com` और `eu-west-lim-a` के लिए `s3-eu-west-1.onlizard.com`। अपना होस्टनेम जोड़ने के लिए [नेटवर्किंग](/networking) देखें।

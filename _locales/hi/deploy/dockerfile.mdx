@@ -1,0 +1,157 @@
+---
+title: "Dockerfile से Docker कंटेनर डिप्लॉय करें"
+description: "Lizard पर Docker कंटेनर होस्ट करें: Dockerfile कमिट करें, lizard up चलाएँ या GitHub कनेक्ट करें; Lizard उसे बिल्ड करता है, पोर्ट EXPOSE से लेता है और कंटेनर को HTTPS पर सर्व करता है।"
+---
+
+<span id="deploy-a-docker-container-from-a-dockerfile" />
+
+# Dockerfile से Docker कंटेनर डिप्लॉय करें
+
+Lizard ऐसे Docker कंटेनर होस्ट करता है जिन्हें वह आपके `Dockerfile` से बिल्ड करता है। फ़ाइल को प्रोजेक्ट के रूट में रखें और `lizard up` चलाएँ, या GitHub रिपॉज़िटरी कनेक्ट करें: Lizard इमेज अपनी बिल्ड मशीनों पर बिल्ड करता है, इसलिए आपको लोकल Docker की ज़रूरत नहीं है। वह पोर्ट `EXPOSE` या `--port` से लेता है, उसे `PORT` में कंटेनर को पास करता है, और कंटेनर को `onlizard.com` डोमेन पर HTTPS के ज़रिए सर्व करता है। Lizard किसी रजिस्ट्री से तैयार इमेज पुल नहीं करता; पब्लिक इमेज चलाने के लिए एक लाइन का Dockerfile लिखें जो उसी इमेज से `FROM` करता हो।
+
+**टेस्ट स्टेटस:** यह पेज 2026-10-21 की स्थिति के अनुसार Lizard के बिल्डर, डिप्लॉयर और CLI 4.0.65 के व्यवहार को बताता है, और इसे उनके सोर्स कोड से मिलाकर जाँचा गया है। इसके लिए हमने अलग से कोई नया डिप्लॉय नहीं चलाया। [Umami गाइड](/guides/umami) इसी तरह एक लाइन वाले `FROM` Dockerfile को डिप्लॉय करती है और उसका टेस्ट रिकॉर्ड करती है।
+
+<span id="before-you-start" />
+
+## शुरू करने से पहले
+
+- एक `Dockerfile`, जिसका ऐप `0.0.0.0` पर सुनता हो। `127.0.0.1` से बंधा सर्वर कंटेनर के बाहर से कोई कनेक्शन स्वीकार नहीं करता।
+- Lizard CLI, जिसमें `lizard login` से साइन इन किया गया हो, और Pro प्लान या 7 दिन का Pro ट्रायल (कार्ड ज़रूरी)। [प्राइसिंग](https://lizard.build/pricing) देखें।
+
+अगर आपके पास Dockerfile नहीं है, तो पहले उसके बिना डिप्लॉय करके देखें: lizardpack Go, Node.js, Python, Ruby, PHP, Java, Rust और स्टैटिक साइटों को पहचान लेता है। [बिल्ड पाइपलाइन](/concepts/build-pipeline) देखें।
+
+<span id="an-example-dockerfile" />
+
+## Dockerfile का उदाहरण
+
+Node.js सर्वर के लिए, जैसे [Node.js ऐप डिप्लॉय करें](/framework-guides/nodejs) गाइड वाला सर्वर:
+
+```dockerfile
+FROM node:22-slim
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY . .
+ENV NODE_ENV=production
+EXPOSE 3000
+CMD ["node", "server.js"]
+```
+
+`.dockerignore` जोड़ें, ताकि लोकल फ़ाइलें इमेज में न जाएँ:
+
+```text
+node_modules
+.git
+.env*
+```
+
+<span id="deploy-with-lizard-up" />
+
+## lizard up से डिप्लॉय करें
+
+```bash
+lizard init --name my-container
+lizard add --service web
+lizard up --service web
+```
+
+`lizard up` लोकल `Dockerfile` की पहली `EXPOSE` लाइन पढ़ता है, `Detected port 3000 from Dockerfile` प्रिंट करता है और उसे सर्विस पोर्ट के रूप में सेट करता है। कोई दूसरा पोर्ट चुनने के लिए `--port <number>` पास करें। `EXPOSE` लाइन न हो, तो `lizard up` से बनी सर्विस को पोर्ट `3000` मिलता है; [Lizard किस पोर्ट पर रूट करता है](#which-port-lizard-routes-to) देखें। अपलोड में रूट का `Dockerfile` हमेशा जस का तस इस्तेमाल होता है। अपलोड में क्या-क्या शामिल होता है, यह जानने के लिए [लोकल कोड से डिप्लॉय करें](/deploy/upload) देखें।
+
+<span id="deploy-from-github" />
+
+## GitHub से डिप्लॉय करें
+
+```bash
+lizard add -r your-org/your-app -n web
+```
+
+ट्रैक की गई ब्रांच पर हर पुश के बाद इमेज फिर से बिल्ड होती है। Lizard रूट का `Dockerfile` इस्तेमाल करता है, सिवाय तब जब वह सिर्फ़ कहीं और बिल्ड किया गया आउटपुट कॉपी करता हो (`COPY dist …`, बिना `npm`, `pip`, `go build` या ऐसे ही किसी `RUN` स्टेप के); तब lizardpack उसकी जगह नया Dockerfile लिखता है। हमेशा अपना Dockerfile इस्तेमाल करवाने के लिए `dockerfilePath` सेट करें:
+
+```bash
+lizard service set web --set dockerfilePath=Dockerfile
+```
+
+[Dockerfile में बदलाव लागू नहीं होते](/deploy/troubleshooting/incomplete-dockerfile) और [GitHub से डिप्लॉय करें](/deploy/github) देखें।
+
+<span id="a-dockerfile-in-a-subdirectory-or-with-another-name" />
+
+## सबडायरेक्टरी में या दूसरे नाम वाला Dockerfile
+
+`dockerfilePath` बिल्ड डायरेक्टरी के सापेक्ष होता है, जिसे `rootDirectory` तय करता है। मोनोरेपो की सर्विस के लिए:
+
+```bash
+lizard service set api --set rootDirectory=apps/api --set dockerfilePath=Dockerfile.prod
+```
+
+Dockerfile वाली सर्विस में `buildCommand` और `startCommand` खाली छोड़ें। `dockerfilePath` के बिना इनमें से कोई एक भी सेट हो, तो Lizard आपके Dockerfile के बजाय उन कमांड से अपना Dockerfile लिखता है। `dockerfilePath` सेट होने पर भी `startCommand` इमेज के `ENTRYPOINT` और `CMD` की जगह ले लेती है: Lizard `sh -c "<start command>"` चलाता है।
+
+<span id="which-port-lizard-routes-to" />
+
+## Lizard किस पोर्ट पर रूट करता है
+
+Lizard सर्विस पोर्ट इस क्रम में चुनता है:
+
+1. आपका सेट किया हुआ पोर्ट: `lizard up --port`, `lizard port`, `lizard service set` में `containerPort`, डैशबोर्ड, या वह `EXPOSE` लाइन जिसे `lizard up` ने पढ़ा। `lizard up` जब सर्विस बनाता है, तो हमेशा एक पोर्ट भेजता है: `--port`, लोकल `EXPOSE` लाइन, या Dockerfile में ऐसी लाइन न होने पर `3000`। यह भी आपका सेट किया हुआ पोर्ट माना जाता है।
+2. `0`, यानी [वर्कर मोड](/deploy/workers): कोई पोर्ट नहीं, कोई रूट नहीं।
+3. सर्विस पर आपका सेट किया हुआ `PORT` वेरिएबल।
+4. बिल्ड हुई इमेज का पहला एक्सपोज़ किया गया पोर्ट, बेस इमेज के पोर्ट समेत। पोर्ट टेक्स्ट की तरह सॉर्ट होते हैं, इसलिए `3000` `80` से पहले आता है।
+5. `3000`।
+
+स्टेप 3 और 4 सिर्फ़ उन सर्विसेज़ पर लागू होते हैं जिनका पोर्ट कभी सेट नहीं हुआ, जैसे `lizard add --service` से बनी सर्विस, या ऐसी रिपॉज़िटरी से बनी सर्विस जिसके Dockerfile में `EXPOSE` लाइन नहीं है। अगर आपकी इमेज पोर्ट अपनी बेस इमेज से लेती है, जैसे पोर्ट 80 वाली `FROM nginx`, तो `EXPOSE` लाइन जोड़ें या `--port` पास करें: वरना `lizard up` से बनी सर्विस `3000` पर रूट करेगी और कभी हेल्दी नहीं होगी। `PORT` वेरिएबल से आपका सेट किया हुआ पोर्ट नहीं बदलता; पोर्ट बदलने के लिए `lizard port` इस्तेमाल करें।
+
+कंटेनर के अंदर `PORT` में चुना गया पोर्ट होता है। उसे पढ़ें, या उसी तय पोर्ट पर सुनें। बाद में पोर्ट बदलने के लिए `lizard port 8080 --service web` चलाएँ, फिर `lizard redeploy --service web`। [नेटवर्किंग](/networking) देखें।
+
+<span id="what-reaches-the-build" />
+
+## बिल्ड तक क्या पहुँचता है
+
+- **बिल्ड आर्गुमेंट:** सिर्फ़ `COMMIT_SHA`। इसे इस्तेमाल करने के लिए `ARG COMMIT_SHA` डिक्लेयर करें। बाकी `ARG` लाइनों में उनका डिफ़ॉल्ट मान रहता है या वे खाली रहती हैं।
+- **वेरिएबल्स:** सर्विस के वेरिएबल्स और सीक्रेट्स Dockerfile बिल्ड तक नहीं पहुँचते। इसका एक ही अपवाद है: `VITE_*` और `NEXT_PUBLIC_*` मान, जिनका ब्योरा [बिल्ड-टाइम वेरिएबल्स](/concepts/build-pipeline#build-time-variables) में है। पब्लिक मान Dockerfile में लिखें या कमिट करें; सीक्रेट्स को रनटाइम के लिए रखें।
+- **बेस इमेज:** बिल्डर के पास आपकी रजिस्ट्री का लॉगिन नहीं होता, इसलिए हर `FROM` इमेज पब्लिक होनी चाहिए।
+- **Lizard के किए बदलाव:** बिल्ड से पहले Lizard आपके सोर्स वाले `COPY` से पहले `ARG COMMIT_SHA` जोड़ता है, और `npm`, `yarn`, `pnpm` और `bun` के इंस्टॉल स्टेप में BuildKit कैश माउंट जोड़ता है। आपके ख़ुद लिखे कैश माउंट काम करते रहते हैं और इसी सर्विस तक सीमित रहते हैं; कोट्स के साथ लिखा `--mount` विकल्प बिल्ड को फ़ेल कर देता है।
+
+बिल्ड की प्रगति `lizard logs --build --service web` से देखें।
+
+<span id="at-run-time" />
+
+## रनटाइम पर
+
+- **हेल्थ चेक:** Lizard `HEALTHCHECK` को अनदेखा करता है और जाँचता है कि कंटेनर सर्विस पोर्ट पर TCP कनेक्शन स्वीकार करता है या नहीं। [सर्विस कभी हेल्दी नहीं होती](/deploy/troubleshooting/service-never-healthy) देखें।
+- **यूज़र:** इमेज का `USER` लागू होता है। नॉन-रूट यूज़र को 1024 से नीचे का पोर्ट खोलने की अनुमति नहीं भी हो सकती, इसलिए ऐसी इमेज में `80` के बजाय `8080` चुनें।
+- **वेरिएबल्स:** कंटेनर को आपकी सर्विस के वेरिएबल्स, `PORT` और `LIZARD_*` प्लेटफ़ॉर्म वेरिएबल्स मिलते हैं। [वेरिएबल्स और सीक्रेट्स](/variables) देखें।
+- **फ़ाइलें:** अटैच किए गए वॉल्यूम के बाहर लिखी फ़ाइलें अगले डिप्लॉय पर मिट जाती हैं। रीस्टार्ट और डिप्लॉय के बाद भी फ़ाइलें बनाए रखने के लिए वॉल्यूम अटैच करें, हर सर्विस पर एक (1 से 100 GB, `/data` पर माउंट होता है, जब तक आप `--mount-path` पास न करें): `lizard volume create data --service web`। वॉल्यूम वाली सर्विस नया पॉड शुरू करने से पहले पुराना पॉड बंद करती है, इसलिए हर डिप्लॉय और रीस्टार्ट में थोड़ा गैप आता है। रिकॉर्ड [Managed Postgres](/addons/postgres) या [Managed Object Storage](/addons/storage) में रखें; [`lizard volume`](/cli/volume) और [स्टोरेज और रिकवरी](/platform/storage-and-recovery) देखें।
+
+<span id="run-a-public-image" />
+
+## पब्लिक इमेज चलाएँ
+
+Lizard हर सर्विस को सोर्स से बिल्ड करता है, इसलिए पब्लिक इमेज को Dockerfile में रैप करें:
+
+```dockerfile
+FROM ghcr.io/umami-software/umami:3.3.1
+EXPOSE 3000
+```
+
+सही रिलीज़ चुनने के लिए `latest` के बजाय वर्ज़न टैग इस्तेमाल करें। [Umami चलाएँ](/guides/umami) और [Flowise चलाएँ](/guides/flowise) गाइड Managed Postgres के साथ यही तरीका इस्तेमाल करती हैं।
+
+<span id="common-problems" />
+
+## आम समस्याएँ
+
+| लक्षण | समाधान |
+|---|---|
+| Dockerfile में किए बदलाव दिखते नहीं | GitHub पर Lizard फ़ाइल को अधूरा मान सकता है; `dockerfilePath` सेट करें। यह भी जाँचें कि सर्विस में कोई `buildCommand` या `startCommand` सेट न हो। |
+| डिप्लॉय कभी हेल्दी नहीं होता | ऐप किसी दूसरे पोर्ट पर या `127.0.0.1` पर सुन रहा है। `lizard port --service web` के आउटपुट की लॉग से तुलना करें। |
+| बेस इमेज के लिए `pull access denied` | इमेज प्राइवेट है या नाम गलत है। पब्लिक इमेज इस्तेमाल करें। |
+| किसी `ARG` का मान खाली है | Lizard `COMMIT_SHA` के अलावा कोई बिल्ड आर्गुमेंट पास नहीं करता। Dockerfile में डिफ़ॉल्ट मान सेट करें। |
+| सर्विस चल रही है, पर कुछ सर्व नहीं करती | वह वर्कर मोड में हो सकती है: तब `lizard port --service web` `worker mode` प्रिंट करता है। |
+
+<span id="related" />
+
+## संबंधित
+
+- [बिल्ड पाइपलाइन](/concepts/build-pipeline)
+- [रनटाइम वर्ज़न](/deploy/runtime-versions)
+- [Rails ऐप डिप्लॉय करें](/framework-guides/rails)
+- [बैकग्राउंड वर्कर](/deploy/workers)
+- [`lizard up`](/cli/up)

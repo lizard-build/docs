@@ -1,0 +1,78 @@
+---
+title: "लॉग: रनटाइम, बिल्ड और क्रैश लॉग"
+description: "CLI या डैशबोर्ड से रनटाइम लॉग स्ट्रीम करें, फ़ेल हुए डिप्लॉय के बाद बिल्ड लॉग पढ़ें, और क्रैश के आसपास का लॉग टेल देखें।"
+---
+
+<span id="logs" />
+
+# लॉग
+
+Lizard **रनटाइम** लॉग, **बिल्ड** लॉग और **क्रैश** के आसपास का लॉग टेल सेव करता है। इन्हें अपने टर्मिनल में लाइव स्ट्रीम करें या डैशबोर्ड में देखें।
+
+Lizard रनटाइम लॉग तब इकट्ठा करता है जब कोई लॉग स्ट्रीम खुली हो (`lizard logs` या डैशबोर्ड का लॉग पेज, और स्ट्रीम बंद होने के बाद 60 सेकंड तक), डिप्लॉय और रीस्टार्ट के आसपास, और जब कोई सर्विस क्रैश-लूप में हो। स्ट्रीम खोलते ही हर रेप्लिका की पिछली 500 लाइनें भी दिख जाती हैं।
+
+<span id="runtime-logs" />
+
+## रनटाइम लॉग
+
+```bash
+lizard logs                       # last 200 runtime lines, then live tail
+lizard logs --service api         # a specific service
+lizard logs --tail 1000           # print the last 1000 lines and exit (max 1000)
+lizard logs --level error         # filter by level
+```
+
+<span id="behavior-with---json" />
+
+### `--json` के साथ व्यवहार
+
+`lizard logs --json` आख़िरी 200 लाइनें लौटाता है (`--tail N` से बदलें, अधिकतम 1000) और बंद हो जाता है। इसे स्नैपशॉट और स्क्रिप्टिंग के लिए इस्तेमाल करें। जब कोई स्ट्रीम नहीं कर रहा हो, उस समय लिए गए स्नैपशॉट में हाल की लाइनें छूट सकती हैं; अगर वे चाहिए, तो पहले एक स्ट्रीम खोलें।
+
+टर्मिनल के बिना (पाइप किया गया आउटपुट, CI, कोई एजेंट) `lizard logs` ऐसे चलता है जैसे आपने `--json` दिया हो: यह आख़िरी 200 लाइनें प्रिंट करके बंद हो जाता है। लॉग लाइव फ़ॉलो करने के लिए इसे टर्मिनल में `--json` के बिना चलाएँ।
+
+<span id="build-logs" />
+
+## बिल्ड लॉग
+
+```bash
+lizard logs --build               # the most recent build's logs
+```
+
+डिप्लॉय फ़ेल होने पर सबसे पहले यही देखें: लॉग पढ़ें, कारण ठीक करें, फिर `lizard redeploy` चलाएँ। [बिल्ड पाइपलाइन](/concepts/build-pipeline) देखें।
+
+<span id="restart--crash-logs" />
+
+## रीस्टार्ट / क्रैश लॉग
+
+जब कोई रेप्लिका क्रैश होती है, तो Lizard क्रैश के आसपास का लॉग टेल सेव करता है। मैन्युअल रीस्टार्ट और वेरिएबल बदलाव भी सूची में दिखते हैं, लेकिन उनका कोई टेल नहीं होता।
+
+```bash
+lizard logs --restarts            # list recent restarts with their ids
+lizard logs --restart <id>        # the log tail of one crash
+lizard logs --restart latest      # the most recent event, which may be a manual restart
+```
+
+<span id="paging-through-history" />
+
+## पुराने लॉग पेज-दर-पेज देखना
+
+`lizard service logs` से आप लॉग की पुरानी विंडो पेज-दर-पेज देख सकते हैं:
+
+```bash
+lizard service logs --service api --tail all     # last 2,000 lines (no follow)
+lizard service logs --service api --page 2       # older window (implies --tail 200)
+```
+
+<span id="dashboard" />
+
+## डैशबोर्ड
+
+डैशबोर्ड (`lizard open`) रनटाइम और बिल्ड लॉग को सर्च और लेवल फ़िल्टर के साथ स्ट्रीम करता है। किसी डिप्लॉय का बिल्ड आउटपुट देखने के लिए सर्विस खोलें और उसके इतिहास में उस डिप्लॉय पर क्लिक करें।
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [`lizard logs`](/cli/logs): कमांड का पूरा संदर्भ।
+- [इवेंट्स और इतिहास](/observability/events): डिप्लॉय इतिहास और रेप्लिका की स्थिति।
+- [Claude Code से डिप्लॉय](https://lizard.build/blog/deploy-from-claude-code): एजेंट की मदद से लॉग के ज़रिए डिप्लॉय की समस्या का पता लगाना।

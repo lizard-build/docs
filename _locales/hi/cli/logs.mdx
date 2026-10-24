@@ -1,0 +1,94 @@
+---
+description: "lizard logs किसी सर्विस के रनटाइम लॉग स्ट्रीम करता है, या --build, --tail और --level से बिल्ड लॉग, रीस्टार्ट लॉग और फ़िल्टर की गई हिस्ट्री लाता है।"
+---
+
+# lizard logs
+
+किसी सर्विस के रनटाइम लॉग स्ट्रीम करें: पहले आखिरी 200 लाइनें, फिर लाइव टेल। `-s` के बिना रनटाइम लॉग के लिए `logs` लिंक की गई सर्विस का उपयोग नहीं करता: TTY पर यह पूछता है कि किस सर्विस के लॉग दिखाने हैं, वरना प्रोजेक्ट की सभी सर्विसेज़ के लॉग दिखाता है। `--build` और `--restarts` लिंक की गई सर्विस का उपयोग करते हैं।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard logs [flags]
+```
+
+<span id="flags" />
+
+## फ़्लैग्स
+
+| फ़्लैग | विवरण |
+|------|-------------|
+| `--build` | इसके बजाय बिल्ड लॉग दिखाएँ |
+| `--tail <n>` | आखिरी N लाइनें प्रिंट करें (ज़्यादा से ज़्यादा 1000) और एग्ज़िट करें |
+| `-l, --level <level>` | सिर्फ़ इस लेवल के रनटाइम लॉग: `error`, `warn`, `info` या `debug` |
+| `--restarts [n]` | आखिरी N रीस्टार्ट की सूची दिखाएँ (डिफ़ॉल्ट 20) |
+| `--restart <id>` | किसी खास रीस्टार्ट के आसपास के लॉग (सबसे हाल के लिए `latest`) |
+| `-s, --service <id>` | सर्विस |
+| `-p, --project <id>` | प्रोजेक्ट का नाम, स्लग या ID |
+
+`--json` के साथ `lizard logs` स्ट्रीम नहीं करता — यह आखिरी 200 लाइनें लौटाता है (`--tail N` से बदलें, ज़्यादा से ज़्यादा 1000) और एग्ज़िट हो जाता है। इसे स्नैपशॉट और स्क्रिप्टिंग के लिए इस्तेमाल करें; लाइव स्ट्रीम सिर्फ़ `--json` के बिना मिलती है।
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="tail-runtime-logs" />
+
+### रनटाइम लॉग लाइव देखें
+
+```bash
+lizard logs
+```
+
+<span id="tail-logs-for-a-specific-service" />
+
+### किसी खास सर्विस के लॉग लाइव देखें
+
+```bash
+lizard logs --service api
+```
+
+<span id="get-more-history" />
+
+### ज़्यादा हिस्ट्री देखें
+
+```bash
+lizard logs --tail 1000
+```
+
+<span id="filter-by-log-level" />
+
+### लॉग लेवल के हिसाब से फ़िल्टर करें
+
+```bash
+lizard logs --level error
+```
+
+<span id="check-the-most-recent-build" />
+
+### सबसे हाल का बिल्ड जाँचें
+
+```bash
+lizard logs --build
+```
+
+<span id="inspect-a-crash-or-restart" />
+
+### क्रैश या रीस्टार्ट की जाँच करें
+
+```bash
+lizard logs --restarts
+lizard logs --restart latest
+lizard logs --restart <id>
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [लॉग्स](/observability/logs) — रनटाइम, बिल्ड और रीस्टार्ट लॉग कैसे काम करते हैं, और `lizard service logs` से हिस्ट्री के पेज कैसे देखें
+- [अधूरा Dockerfile](/deploy/troubleshooting/incomplete-dockerfile) — `lizard logs --build` से फ़ेल हुए बिल्ड की वजह पता करना
+- [lizard events](/cli/events) — डिप्लॉय हिस्ट्री और रेप्लिका स्टेटस
+- [Claude Code से डिप्लॉय करें](https://lizard.build/blog/deploy-from-claude-code#check-the-result-from-the-outside) — वे लॉग कमांड जिन्हें एजेंट डिप्लॉय जाँचने के लिए चलाता है

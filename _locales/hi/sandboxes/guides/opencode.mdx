@@ -1,0 +1,124 @@
+---
+title: "सैंडबॉक्स में OpenCode चलाएँ"
+description: "Lizard सैंडबॉक्स में OpenCode चलाएँ: ChatGPT या API की कनेक्ट करें, lizard sandbox prompt से प्रॉम्प्ट भेजें, या प्राइवेट प्रीव्यू URL पर OpenCode का वेब UI खोलें।"
+---
+
+<span id="run-opencode-in-a-sandbox" />
+
+# सैंडबॉक्स में OpenCode चलाएँ
+
+Lizard पर सैंडबॉक्स में OpenCode चलाने के लिए `lizard agents` से कोई क्रेडेंशियल कनेक्ट करें (ChatGPT सब्सक्रिप्शन, या Anthropic, OpenAI, OpenRouter या LLM Gateway की API की), `opencode` टेम्प्लेट से सैंडबॉक्स बनाएँ और `lizard sandbox prompt <id> --agent opencode "…"` से प्रॉम्प्ट भेजें। इसके बजाय OpenCode का वेब UI इस्तेमाल करना हो, तो सैंडबॉक्स में `opencode web --hostname 0.0.0.0 --port 4096` शुरू करें और `lizard sandbox expose` से पोर्ट खोलें।
+
+**टेस्ट स्टेटस:** कमांड 2026-10-12 की स्थिति के अनुसार Lizard CLI 4.0.42 और प्लेटफ़ॉर्म के एजेंट रनर से ली गई हैं। वेब UI वाले स्टेप हमने OpenCode 1.18.34 के सोर्स से जाँचे, जो अपना UI और API एक ही पोर्ट से सर्व करता है, और Lizard के सैंडबॉक्स राउटर के सोर्स से, जो एक्सेस टोकन को कुकी में रखता है और WebSockets को आगे जाने देता है। इस पेज के लिए हमने अभी तक इनमें से कोई भी तरीका किसी लाइव सैंडबॉक्स में शुरू से आखिर तक नहीं चलाया है।
+
+<span id="before-you-start" />
+
+## शुरू करने से पहले
+
+- Lizard CLI, जिसमें `lizard login` से साइन इन किया गया हो, और एक प्रोजेक्ट: किसी फ़ोल्डर में `lizard init` चलाएँ, या सैंडबॉक्स कमांड में `-p <project>` पास करें।
+- Lizard Pro या 7 दिन का Pro ट्रायल (कार्ड ज़रूरी)। Sandboxes का बिल चलने के दौरान साइज़ के हिसाब से प्रति सेकंड बनता है; [लिमिट](/platform/limits#sandbox-sizes) और [प्राइसिंग](https://lizard.build/pricing) देखें।
+
+<span id="connect-credentials" />
+
+## क्रेडेंशियल्स कनेक्ट करें
+
+| क्रेडेंशियल | कमांड |
+|---|---|
+| ChatGPT सब्सक्रिप्शन | `lizard agents login chatgpt --open` |
+| Anthropic API की | `lizard agents add anthropic` |
+| OpenAI API की | `lizard agents add openai` |
+| OpenRouter API की | `lizard agents add openrouter` |
+| LLM Gateway API की | `lizard agents add llmgateway` |
+
+OpenCode हर उस कनेक्टेड क्रेडेंशियल को लेता है जिसे वह सपोर्ट करता है, ताकि उन प्रोवाइडर्स के मॉडल इस्तेमाल कर सके। यह Claude सब्सक्रिप्शन टोकन नहीं लेता; उसके लिए [Claude Code](/sandboxes/guides/claude-code) इस्तेमाल करें। ChatGPT लॉगिन रन तक कम अवधि वाले एक्सेस टोकन के रूप में पहुँचता है, रिफ़्रेश टोकन कभी नहीं भेजा जाता। API कीज़ रन तक `ANTHROPIC_API_KEY` जैसे एनवायरनमेंट वेरिएबल के रूप में पहुँचती हैं।
+
+OpenCode में मॉडल के नाम `provider/model` फ़ॉर्मेट में होते हैं। डिफ़ॉल्ट सेट करें, या हर प्रॉम्प्ट में `-m` पास करें:
+
+```bash
+lizard agents use opencode -m openrouter/anthropic/claude-sonnet-4.5
+lizard agents status
+```
+
+अगर सिर्फ़ OpenRouter की API की कनेक्ट है और कोई मॉडल नहीं चुना गया, तो Lizard `openrouter/openai/gpt-5.3-codex` चलाता है।
+
+<span id="create-a-sandbox" />
+
+## सैंडबॉक्स बनाएँ
+
+```bash
+lizard sandbox create -t opencode --timeout 3600000
+```
+
+प्रिंट हुई ID को एक वेरिएबल में रखें: `SB=genuine-toddler-jasj`। CLI में डिफ़ॉल्ट लाइफटाइम पाँच मिनट है, जिसके बाद Lizard सैंडबॉक्स और उसकी फ़ाइलें डिलीट कर देता है; `--timeout 3600000` उसे एक घंटा देता है। `opencode` टेम्प्लेट में Node.js 22, OpenCode का एक पिन किया हुआ रिलीज़, git, Python 3, ripgrep, curl, jq, unzip और Lizard CLI हैं।
+
+अपना कोड उसी तरह कॉपी करें जैसे Claude Code के लिए करते हैं:
+
+```bash
+lizard sandbox exec $SB -- git clone https://github.com/your-org/your-app /workspace/app
+```
+
+प्राइवेट या लोकल रिपॉज़िटरी के लिए [अपना कोड सैंडबॉक्स में डालें](/sandboxes/guides/claude-code#put-your-code-in-the-sandbox) देखें।
+
+<span id="send-a-prompt" />
+
+## प्रॉम्प्ट भेजें
+
+```bash
+lizard sandbox prompt $SB --agent opencode --cwd /workspace/app "add input validation to the signup form"
+```
+
+हर टर्न `opencode run --auto` चलाता है, जो हर उस परमिशन रिक्वेस्ट को अप्रूव कर देता है जिसे साफ़ तौर पर मना नहीं किया गया: OpenCode बिना पूछे फ़ाइलें एडिट करता है और कमांड चलाता है। `--effort <level>` OpenCode का `--variant` बन जाता है। बातचीत `-c <conversation-id>` से जारी रखें, और हर फ़ॉलो-अप में `--agent opencode` और `--cwd` फिर से पास करें। Ctrl-C सिर्फ़ देखना बंद करता है; एजेंट को `lizard sandbox interrupt $SB` रोकता है।
+
+बदलाव पैच के रूप में वापस पाने के लिए [बदलाव वापस पाएँ](/sandboxes/guides/claude-code#get-the-changes-back) देखें।
+
+<span id="open-the-opencode-web-ui" />
+
+## OpenCode का वेब UI खोलें
+
+`opencode web` OpenCode का ब्राउज़र इंटरफ़ेस और उसका API एक ही पोर्ट से सर्व करता है। इसे सैंडबॉक्स में चलाएँ और उस पोर्ट को [प्रीव्यू URL](/sandboxes/preview-urls) से खोलें।
+
+`lizard agents` के क्रेडेंशियल्स सिर्फ़ `lizard sandbox prompt` वाले रन तक पहुँचते हैं, इसलिए इस सर्वर को अपनी अलग API की चाहिए। उसे फ़ाइल के रूप में कॉपी करें, ताकि वह कमांड लाइन में न दिखे:
+
+```bash
+printf 'export ANTHROPIC_API_KEY=%s\n' "$ANTHROPIC_API_KEY" > opencode.env
+lizard sandbox files put $SB opencode.env /root/opencode.env
+rm opencode.env
+```
+
+सर्वर शुरू करें और पोर्ट खोलें:
+
+```bash
+lizard sandbox exec $SB -- sh -c '. /root/opencode.env && cd /workspace/app && nohup opencode web --hostname 0.0.0.0 --port 4096 >/tmp/opencode.log 2>&1 </dev/null & echo $! > /tmp/opencode.pid'
+lizard sandbox expose $SB 4096
+```
+
+`expose` का प्रिंट किया हुआ URL खोलें। उसमें `?lizard_token=` होता है; Lizard टोकन को उस होस्ट की कुकी में रख देता है और टोकन के बिना उसी पेज पर रीडायरेक्ट करता है। यही कुकी UI की रिक्वेस्ट, इवेंट स्ट्रीम और टर्मिनल WebSockets को ऑथेंटिकेट करती है।
+
+- `--hostname 0.0.0.0` ज़रूरी है। डिफ़ॉल्ट रूप से OpenCode `127.0.0.1` पर लिसन करता है, और तब प्रीव्यू URL `The sandbox is running but port is not open` के साथ 502 लौटाता है।
+- `--port` तय करके दें। इसके बिना OpenCode कोई भी खाली पोर्ट रैंडम तरीके से चुन लेता है।
+- URL पासवर्ड की तरह काम करता है: जिसके पास यह है, वह OpenCode के ज़रिए सैंडबॉक्स में कमांड चला सकता है। साथ में पासवर्ड भी ज़रूरी करना हो, तो `opencode.env` में `export OPENCODE_SERVER_PASSWORD=…` जोड़ें; यूज़रनेम `opencode` है।
+- सर्वर का लॉग `lizard sandbox exec $SB -- tail -n 50 /tmp/opencode.log` से पढ़ें। सर्वर को `lizard sandbox exec $SB -- sh -c 'kill $(cat /tmp/opencode.pid)'` से रोकें।
+- सैंडबॉक्स स्टॉप होने पर UI भी बंद हो जाता है। समय `lizard sandbox timeout $SB 3600000` से बढ़ाएँ।
+
+<span id="common-problems" />
+
+## आम समस्याएँ
+
+| मैसेज या लक्षण | समाधान |
+|---|---|
+| `OpenCode has no credential. Connect one of: …` | ऊपर दिए गए क्रेडेंशियल्स में से कोई एक `lizard agents` से कनेक्ट करें। |
+| `Your ChatGPT login expired` | `lizard agents login chatgpt` फिर से चलाएँ। |
+| आउटपुट में Codex का ज़िक्र है | प्रॉम्प्ट `--agent opencode` के बिना भेजा गया। |
+| प्रीव्यू URL 401 लौटाता है | `expose` का प्रिंट किया हुआ पूरा URL, उसके `lizard_token` समेत, खोलें। [प्रीव्यू URL](/sandboxes/preview-urls) देखें। |
+| प्रीव्यू URL 502 लौटाता है | सर्वर नहीं चल रहा या `127.0.0.1` पर लिसन कर रहा है। `/tmp/opencode.log` जाँचें। |
+| वेब UI खुलता है, पर हर मॉडल फ़ेल होता है | सर्वर के पास किसी प्रोवाइडर की API की नहीं है। `/root/opencode.env` ठीक करें, सर्वर रोकें और फिर से शुरू करें। |
+
+<span id="related" />
+
+## संबंधित
+
+- [सैंडबॉक्स में Claude Code चलाएँ](/sandboxes/guides/claude-code)
+- [प्रीव्यू URL](/sandboxes/preview-urls)
+- [`lizard agents`](/cli/agents)
+- [`lizard sandbox`](/cli/sandbox#coding-agents)
+- [Sandboxes](/sandboxes)

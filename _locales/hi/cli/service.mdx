@@ -1,0 +1,101 @@
+---
+description: "lizard service सर्विस की बिल्ड, स्टार्ट, सोर्स और वेरिएबल सेटिंग्स पढ़ता और बदलता है, और रीनेम, डिलीट, लॉग्स और लिंकिंग संभालता है।"
+---
+
+# lizard service
+
+किसी एक सर्विस का कॉन्फ़िगरेशन, सोर्स और लाइफसाइकिल मैनेज करें।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard service set [service] [flags]
+lizard service show [service] [flags]
+lizard service rename <new-name> [flags]
+lizard service delete [service] [flags]
+lizard service logs [service] [flags]
+lizard service link [name]
+```
+
+<span id="subcommands" />
+
+## सबकमांड
+
+### `lizard service set`
+
+सर्विस में बिल्ड/स्टार्ट/सोर्स/वेरिएबल्स/रीनेम से जुड़े बदलाव लागू करें।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `--set <path>=<value>` | कोई फ़ील्ड सेट करें (कई बार दे सकते हैं; `service` आर्गुमेंट ज़रूरी है) |
+| `-f, --file <path>` | लागू करने के लिए JSON कॉन्फ़िगरेशन फ़ाइल |
+| `--force` | रिमोट पर बदलाव हुआ हो तब भी ओवरराइट करें |
+
+आम फ़ील्ड फ़्लैट हैं और वायर स्कीमा से 1:1 मैप होते हैं: `sourceType`, `repoUrl`, `branch`, `rootDirectory`, `dockerfilePath`, `buildCommand`, `startCommand`, `preDeployCommand`, `watchPatterns`, `containerPort`, `cpuLimit` (उदाहरण के लिए `2000m`), `memoryLimit` (उदाहरण के लिए `2Gi`), `name`। `variables.<KEY>=<value>` सर्विस का सीक्रेट सेट करता है, ठीक `lizard secrets set --service` की तरह।
+
+`service set` `configRevision` के ज़रिए ऑप्टिमिस्टिक कंकरेंसी का उपयोग करता है। `409` मिलने पर `lizard service show` से कॉन्फ़िगरेशन दोबारा पढ़ें, बदलावों का मिलान करें और फिर से कोशिश करें — या `--force` दें।
+
+### `lizard service show`
+
+मौजूदा सर्विस कॉन्फ़िगरेशन JSON में दिखाएँ। किसी एक सर्विस तक सीमित करने के लिए `-s` का उपयोग करें।
+
+### `lizard service rename <new-name>`
+
+सर्विस या ऐडऑन का नाम बदलें: लिंक की गई सर्विस का, या उसका जो आप `-s` से देते हैं। रेफ़रेंस टारगेट के मौजूदा नाम का उपयोग करते हैं, इसलिए नाम बदलने के बाद हर `${{old-name.KEY}}` को नए नाम से अपडेट करें।
+
+### `lizard service delete`
+
+सर्विस डिलीट करें (उपनाम `rm`)। `-y, --yes` पुष्टि छोड़ देता है; TTY के बिना यह ज़रूरी है।
+
+### `lizard service logs`
+
+सर्विस के लॉग्स स्ट्रीम करें ([lizard logs](/cli/logs) भी देखें)।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `--build` | लेटेस्ट बिल्ड के लॉग्स दिखाएँ |
+| `-n, --tail <n>` | आखिरी N लाइनें (2000 तक) प्रिंट करें और बाहर निकलें; `--tail all` 2000 लाइनें प्रिंट करता है |
+| `--page <n>` | पुराने लॉग्स पेज-दर-पेज देखें, हर पेज पर 200 लाइनें (1 = सबसे नया) |
+
+### `lizard service link`
+
+किसी सर्विस को मौजूदा डायरेक्टरी से लिंक करें।
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="update-a-services-build-and-start-commands" />
+
+### सर्विस की बिल्ड और स्टार्ट कमांड अपडेट करें
+
+```bash
+lizard service set api --set branch=main --set buildCommand="npm run build"
+```
+
+<span id="inspect-a-services-full-configuration" />
+
+### सर्विस का पूरा कॉन्फ़िगरेशन देखें
+
+```bash
+lizard service show -s api
+```
+
+<span id="delete-a-service-without-a-confirmation-prompt" />
+
+### पुष्टि पूछे बिना सर्विस डिलीट करें
+
+```bash
+lizard service delete -y
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [lizard port](/cli/port) — सर्विस का कंटेनर पोर्ट दिखाएँ या बदलें
+- [lizard scale](/cli/scale) — सर्विस के रेप्लिका, CPU, मेमोरी या स्टोरेज को स्केल करें
+- [आर्किटेक्चर](/concepts/architecture) — सर्विसेज़ का प्रोजेक्ट्स और ऐडऑन से क्या संबंध है
+- [बिल्ड पाइपलाइन](/concepts/build-pipeline) — बिल्ड के समय `buildCommand`, `startCommand` और सोर्स सेटिंग्स का उपयोग कैसे होता है

@@ -1,0 +1,118 @@
+---
+title: "Managed Object Storage: S3-संगत बकेट"
+description: "अपलोड, एसेट्स और बैकअप के लिए S3-संगत ऑब्जेक्ट स्टोरेज। एक lizard add s3 कमांड से प्राइवेट डिफ़ॉल्ट बकेट और कनेक्शन वेरिएबल्स पाएँ।"
+---
+
+# Managed Object Storage
+
+Lizard पर Managed Object Storage अपलोड, एसेट्स और बैकअप के लिए S3-संगत स्टोरेज है। `lizard add s3` `default` नाम का एक प्राइवेट बकेट और `S3_ENDPOINT` से `S3_REGION` तक पाँच कनेक्शन वेरिएबल्स बनाता है। इन्हें किसी भी AWS SDK और path-style एड्रेसिंग के साथ इस्तेमाल करें। हर Managed Object Storage ऐडऑन में 16 GiB तक डेटा रखा जा सकता है, और आप सिर्फ़ स्टोर किए गए बाइट्स के लिए भुगतान करते हैं। बिना ऑथेंटिकेशन के फ़ाइलें सर्व करने के लिए डैशबोर्ड के S3 ब्राउज़र में बकेट को पब्लिक बनाएँ। ओवरव्यू और कीमतों के लिए [Managed Object Storage पेज](https://lizard.build/object-storage) देखें।
+
+<span id="provision" />
+
+## प्रोविज़न
+
+```bash
+lizard add s3
+```
+
+पहले Managed Object Storage ऐडऑन का नाम `s3` होता है, इसलिए `${{s3.S3_ENDPOINT}}` जैसे रेफरेंस तुरंत काम करते हैं।
+
+<span id="environment-variables" />
+
+## एनवायरनमेंट वेरिएबल्स
+
+| वेरिएबल | विवरण |
+|----------|-------------|
+| `S3_ENDPOINT` | S3-संगत एंडपॉइंट URL |
+| `S3_DEFAULT_BUCKET` | अपने-आप बने बकेट का नाम (`default`) |
+| `S3_ACCESS_KEY_ID` | एक्सेस की |
+| `S3_SECRET_ACCESS_KEY` | सीक्रेट की |
+| `S3_REGION` | रीजन |
+
+<span id="connect-a-service" />
+
+## सर्विस कनेक्ट करें
+
+```bash
+lizard secrets set \
+  S3_ENDPOINT='${{s3.S3_ENDPOINT}}' \
+  S3_DEFAULT_BUCKET='${{s3.S3_DEFAULT_BUCKET}}' \
+  S3_ACCESS_KEY_ID='${{s3.S3_ACCESS_KEY_ID}}' \
+  S3_SECRET_ACCESS_KEY='${{s3.S3_SECRET_ACCESS_KEY}}' \
+  S3_REGION='${{s3.S3_REGION}}' \
+  --service api
+lizard redeploy --service api
+```
+
+<span id="using-an-aws-sdk" />
+
+## AWS SDK का उपयोग
+
+एंडपॉइंट S3-संगत है। **path-style** एड्रेसिंग सेट करें:
+
+```ts
+import { S3Client } from "@aws-sdk/client-s3";
+
+const s3 = new S3Client({
+  endpoint: process.env.S3_ENDPOINT,
+  region: process.env.S3_REGION,
+  forcePathStyle: true, // required
+  credentials: {
+    accessKeyId: process.env.S3_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
+  },
+});
+```
+
+<span id="public-files" />
+
+## पब्लिक फ़ाइलें
+
+बकेट डिफ़ॉल्ट रूप से प्राइवेट होते हैं। बकेट को पब्लिक बनाने के बाद कोई भी इन दोनों में से किसी भी एड्रेस से उसके ऑब्जेक्ट पढ़ सकता है:
+
+1. **गेटवे URL** (डैशबोर्ड में दिखता है):
+   ```
+   https://s3-<region>.onlizard.com/<addonId>/<bucket>/<key>
+   ```
+   `<region>` `S3_REGION` की वैल्यू है (`eu-west-1` या `us-east-1`)।
+2. **प्लेटफ़ॉर्म प्रॉक्सी** (डैशबोर्ड होस्ट, लंबी अवधि वाले immutable कैश हेडर के साथ):
+   ```
+   <dashboard-host>/api/s3/<addonId>/public/<bucket>/<key>
+   ```
+
+`default` बकेट को पब्लिक बनाने के बाद कोई भी उसके ऑब्जेक्ट यहाँ पढ़ सकता है:
+
+```
+<dashboard-host>/api/s3/<addonId>/public/default/<key>
+```
+
+S3 ब्राउज़र में हर बकेट के लिए दो स्विच होते हैं। **पब्लिक व्यू** से कोई भी उसके ऑब्जेक्ट पढ़ सकता है। **पब्लिक एडिट** से कोई भी उन्हें अपलोड या डिलीट कर सकता है, इसलिए इसे सिर्फ़ उसी बकेट के लिए चालू करें जिसमें किसी को भी बदलाव करने देना ठीक हो।
+
+प्राइवेट बकेट से किसी एक ऑब्जेक्ट को कुछ समय के लिए शेयर करने के लिए एक अस्थायी लिंक प्रिंट करें। यह लिंक एक्सपायर होने तक बिना क्रेडेंशियल्स के काम करता है (डिफ़ॉल्ट रूप से एक घंटा, ज़्यादा से ज़्यादा 7 दिन):
+
+```bash
+lizard s3 url report.pdf --expires 86400
+```
+
+AWS SDK से बने presigned URL भी काम करते हैं।
+
+<span id="browse-objects" />
+
+## ऑब्जेक्ट ब्राउज़ करें
+
+ऑब्जेक्ट अपलोड और डिलीट करने, फ़ोल्डर बनाने और बकेट को पब्लिक या प्राइवेट बनाने के लिए डैशबोर्ड (`lizard open`) में **S3 ब्राउज़र** खोलें। CLI में `lizard s3 upload <file>` फ़ाइल अपलोड करता है, `lizard s3 list` ऑब्जेक्ट्स की सूची दिखाता है और `lizard s3 url <key>` अस्थायी लिंक प्रिंट करता है; [`lizard s3`](/cli/s3) देखें।
+
+> **बकेट ACL बदलने** (बकेट को पब्लिक/प्राइवेट बनाने) के लिए डैशबोर्ड चाहिए; CLI अभी इसे सपोर्ट नहीं करता।
+
+<span id="storage-limit" />
+
+## स्टोरेज लिमिट
+
+हर Managed Object Storage ऐडऑन में 16 GiB तक ऑब्जेक्ट रखे जा सकते हैं, जिसमें उसका `default` बकेट और आपके बनाए बाकी सभी बकेट शामिल हैं। एक और ऐडऑन (`lizard add s3`) को अपनी अलग 16 GiB लिमिट मिलती है। आप स्टोर किए गए बाइट्स के लिए भुगतान करते हैं, किसी रिज़र्व साइज़ के लिए नहीं; `lizard scale --storage` इस लिमिट को नहीं बदलता।
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [Managed ऐडऑन](/addons): नामकरण, रेफरेंस और डैशबोर्ड ब्राउज़र।
+- [क्रॉस-सर्विस रेफरेंस](/variables/references): रेफरेंस सिंटैक्स और रिज़ॉल्यूशन।

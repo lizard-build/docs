@@ -1,0 +1,1 @@
+export default { index: "गाइड चुनें", 'deploy-from-coding-agent': "कोडिंग एजेंट से डिप्लॉय करें", 'deploy-mcp-server': "रिमोट MCP सर्वर होस्ट करें", 'telegram-bot': "Telegram बॉट चलाएँ", 'discord-bot': "Discord बॉट होस्ट करें", umami: "Umami चलाएँ", flowise: "PostgreSQL के साथ Flowise चलाएँ", validation: "टेस्ट के नतीजे" };

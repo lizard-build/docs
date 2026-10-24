@@ -1,0 +1,154 @@
+---
+title: "LLM के लिखे कोड के लिए कोड इंटरप्रेटर API"
+description: "LLM का लिखा कोड Lizard SDK से सैंडबॉक्स में चलाएँ: स्टेटफ़ुल Python कर्नेल, PNG के रूप में चार्ट, traceback के साथ एरर, टाइमआउट और LLM टूल का उदाहरण।"
+---
+
+<span id="code-interpreter-api-for-llm-generated-code" />
+
+# LLM के लिखे कोड के लिए कोड इंटरप्रेटर API
+
+<span id="code-interpreter" />
+<span id="run-code" />
+<span id="choose-a-language" />
+<span id="streaming-output" />
+<span id="isolated-contexts" />
+<span id="checkpointing-a-session" />
+<span id="see-also" />
+
+कोड इंटरप्रेटर लैंग्वेज मॉडल का लिखा कोड चलाता है और आउटपुट वापस मॉडल को देता है। Lizard पर यह काम Lizard SDK का `CodeSandbox` एक सैंडबॉक्स, यानी Firecracker microVM, के अंदर करता है, जो कोड को आपके ऐप और कंप्यूटर से अलग रखता है। यह `interpreter` टेम्प्लेट बूट करता है, जिसमें Python और आम डेटा लाइब्रेरी पहले से होती हैं। Python एक Jupyter कर्नेल में चलता है जो कॉल्स के बीच वेरिएबल बनाए रखता है, और हर नतीजे में प्रिंट किया गया आउटपुट, आख़िरी एक्सप्रेशन की वैल्यू, `image/png` के रूप में चार्ट, और अगर कोई एरर हो तो उसका traceback होता है।
+
+<span id="run-code-with-state" />
+
+## स्टेट के साथ कोड चलाएँ
+
+```ts
+import { CodeSandbox } from '@lizard-build/sdk';
+
+const sandbox = await CodeSandbox.create({ projectId: 'proj_123', timeoutMs: 300_000 });
+try {
+  await sandbox.runCode('import pandas as pd\ndf = pd.DataFrame({"x": [1, 2, 3]})');
+  const run = await sandbox.runCode('df.x.sum()');
+  console.log(run.results[0]?.data); // "np.int64(6)"
+  const bad = await sandbox.runCode('1/0');
+  console.log(bad.error?.name); // "ZeroDivisionError"
+} finally {
+  await sandbox.kill();
+}
+```
+
+```python
+from lizard import CodeSandbox
+
+with CodeSandbox.create(project_id="proj_123", timeout_ms=300_000) as sandbox:
+    sandbox.run_code('import pandas as pd\ndf = pd.DataFrame({"x": [1, 2, 3]})')
+    run = sandbox.run_code("df.x.sum()")
+    print(run.results[0].data)  # "np.int64(6)"
+    print(sandbox.run_code("1/0").error.name)  # "ZeroDivisionError"
+```
+
+कोड का एरर नतीजे का हिस्सा होता है, exception नहीं। रिक्वेस्ट से जुड़ी गड़बड़ियाँ, जैसे गलत API की, exception थ्रो करती हैं।
+
+<span id="what-does-runcode-return" />
+
+## runCode क्या लौटाता है?
+
+`runCode` (Python: `run_code`) एक `Execution` लौटाता है:
+
+| फ़ील्ड | क्या होता है |
+|---|---|
+| `stdout`, `stderr` | कोड ने जो कुछ प्रिंट किया |
+| `results` | रिच आउटपुट: आख़िरी एक्सप्रेशन की वैल्यू, matplotlib चार्ट और इमेज, हर एक `mime` और `data` के साथ |
+| `error` | `name`, `message` और `traceback`, जब कोड ने exception रेज़ किया हो |
+| `executionCount` | कर्नेल का सेल काउंटर (Python: `execution_count`) |
+
+हर नतीजे में एक ही MIME टाइप होता है — आउटपुट में मौजूद सबसे रिच टाइप, इस क्रम में: `image/png`, `image/jpeg`, `image/svg+xml`, `text/html`, `text/markdown`, `application/json`, `text/latex`, `text/plain`। इमेज base64 में आती हैं। संख्या `text/plain` के रूप में लौटती है, लेकिन pandas DataFrame सिर्फ़ `text/html` के रूप में लौटता है।
+
+कोड चलते समय ही आउटपुट पाने के लिए `onStdout`, `onStderr`, `onResult` या `onError` (Python: `on_stdout` वगैरह) दें।
+
+<span id="use-it-as-an-llm-tool" />
+
+## इसे LLM टूल की तरह इस्तेमाल करें
+
+मॉडल को एक टूल दें, जैसे `run_python`, जिसमें एक ही स्ट्रिंग आर्गुमेंट `code` हो। जब मॉडल इसे कॉल करे, तो कोड सैंडबॉक्स में चलाएँ और टेक्स्ट को टूल के नतीजे के रूप में वापस भेजें। उदाहरण HTML समेत हर टेक्स्ट नतीजा लौटाता है, ताकि DataFrame भी मॉडल तक पहुँचे। पूरी बातचीत के लिए एक ही सैंडबॉक्स रखें, ताकि मॉडल के वेरिएबल कॉल्स के बीच बने रहें।
+
+```ts
+import { CodeSandbox } from '@lizard-build/sdk';
+
+const sandbox = await CodeSandbox.create({ projectId: 'proj_123', timeoutMs: 600_000 });
+
+// Call this when the model asks to run Python. Return the text to send back to it.
+async function runPython(code: string): Promise<string> {
+  const run = await sandbox.runCode(code, { timeoutMs: 30_000 });
+  if (run.error) return `${run.error.name}: ${run.error.message}\n${run.error.traceback}`;
+  const values = run.results.flatMap((r) =>
+    r.type === 'result' && r.mime.startsWith('text/') ? [r.data] : [],
+  );
+  return [run.stdout, ...values].filter(Boolean).join('\n');
+}
+
+// When the conversation ends:
+await sandbox.kill();
+```
+
+```python
+from lizard import CodeSandbox
+
+sandbox = CodeSandbox.create(project_id="proj_123", timeout_ms=600_000)
+
+def run_python(code: str) -> str:
+    """Call this when the model asks to run Python. Return the text to send back to it."""
+    run = sandbox.run_code(code, timeout_ms=30_000)
+    if run.error:
+        return f"{run.error.name}: {run.error.message}\n{run.error.traceback}"
+    values = [r.data for r in run.results if r.mime.startswith("text/")]
+    return "\n".join(filter(None, [run.stdout, *values]))
+
+# When the conversation ends:
+sandbox.kill()
+```
+
+यहाँ सैंडबॉक्स का लाइफटाइम दस मिनट है। लंबी बातचीत के लिए इसे `setTimeout` (Python: `set_timeout`) से बढ़ाएँ, या `timeoutMs: 0` सेट करें और सैंडबॉक्स को खुद बंद (kill) करें।
+
+<span id="charts" />
+
+## चार्ट
+
+जब कोड matplotlib चार्ट बनाता है, तो `results` में एक आइटम होता है जिसमें `mime` की वैल्यू `image/png` होती है और `data` में इमेज base64 के रूप में होती है:
+
+```python
+import base64
+from pathlib import Path
+
+run = sandbox.run_code("import matplotlib.pyplot as plt\nplt.plot([1, 4, 9])\nplt.show()")
+png = next(r.data for r in run.results if r.mime == "image/png")
+Path("chart.png").write_bytes(base64.b64decode(png))
+```
+
+<span id="contexts-timeouts-and-languages" />
+
+## कॉन्टेक्स्ट, टाइमआउट और भाषाएँ
+
+- **कॉन्टेक्स्ट।** `createContext()` (Python: `create_context()`) एक अलग कर्नेल शुरू करता है, जिसके अपने वेरिएबल और अपनी वर्किंग डायरेक्टरी होती है; इसे `runCode` को `context` के रूप में दें। `listContexts()`, `restartContext(ctx)` और `deleteContext(ctx)` इन्हें मैनेज करते हैं। कॉन्टेक्स्ट न देने पर हर भाषा अपना डिफ़ॉल्ट कॉन्टेक्स्ट इस्तेमाल करती है।
+- **टाइमआउट।** `timeoutMs` (Python: `timeout_ms`) एक कॉल की अधिकतम अवधि तय करता है और डिफ़ॉल्ट 60 सेकंड है। इससे ज़्यादा चलने वाला Python कर्नेल इंटरप्ट हो जाता है, लेकिन उसकी स्टेट बनी रहती है; नतीजे का `error.name` `TimeoutError` होता है।
+- **दूसरी भाषाएँ।** JavaScript और bash हर कॉल पर नए प्रोसेस में चलते हैं, इसलिए एक कॉल की स्टेट अगली कॉल में नहीं रहती और `results` खाली रहता है। JavaScript टेम्प्लेट के Node 22 पर चलता है, जिसमें npm नहीं है।
+- **पॉज़ और स्नैपशॉट।** कर्नेल सैंडबॉक्स के अंदर रहते हैं, इसलिए `pause()` और `resume()` के बाद भी उनके वेरिएबल बने रहते हैं, और `snapshot()` और `fork()` उन्हें कॉपी करते हैं।
+
+<span id="run-commands" />
+
+## कमांड चलाएँ
+
+`process.exec` हर कमांड के लिए एक अलग प्रोसेस शुरू करता है, इसलिए Python वेरिएबल कॉल्स के बीच नहीं बचते। इसे `pip install` जैसे शेल स्टेप के लिए इस्तेमाल करें, और जो नतीजे बाद में चाहिए उन्हें फ़ाइलों में सेव करें। [कमांड चलाएँ](/sandboxes/quickstart#run-a-command) और [SDK संदर्भ](/sandboxes/sdk-reference#run-commands) देखें।
+
+<span id="untrusted-code" />
+
+## अनट्रस्टेड कोड
+
+मॉडल जो भी लिखे, उसे अनट्रस्टेड (भरोसे लायक नहीं) मानें। `lizardToken` तभी दें जब कोड को Lizard CLI की ज़रूरत हो। अगर आप इसे देते हैं, तो सैंडबॉक्स को एक नई की मिलती है जो सिर्फ़ उसके प्रोजेक्ट तक सीमित होती है और सैंडबॉक्स के साथ ही डिलीट हो जाती है, यानी उसमें चलने वाला कोड उस प्रोजेक्ट में बदलाव कर सकता है। दूसरे सीक्रेट `envs` में न डालें।
+
+<span id="storage-and-billing" />
+
+## स्टोरेज और बिलिंग
+
+वेरिएबल और फ़ाइलें सिर्फ़ तब तक रहती हैं जब तक सैंडबॉक्स रहता है। बिलिंग और स्टोरेज के नियम [स्टोरेज और बिलिंग](/sandboxes#storage-and-billing) में हैं; साइज़ और कीमतें [सीमाएँ](/platform/limits#sandbox-sizes) में हैं।
+
+[Sandboxes ओवरव्यू](/sandboxes) · [क्विकस्टार्ट](/sandboxes/quickstart) · [SDK संदर्भ](/sandboxes/sdk-reference) · [Persistent Volumes](/sandboxes/volumes) · [Sandboxes प्रोडक्ट पेज](https://lizard.build/)

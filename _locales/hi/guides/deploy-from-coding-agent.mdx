@@ -1,0 +1,144 @@
+---
+title: "Claude Code, Codex या Cursor से डिप्लॉय करें"
+description: "Lizard Skill और Lizard CLI की मदद से Claude Code, Codex या Cursor से ऐप डिप्लॉय करें। GitHub या लोकल सोर्स चुनें, डेटाबेस कनेक्ट करें और नतीजे की जाँच करें।"
+---
+
+<span id="deploy-from-claude-code-codex-or-cursor" />
+
+# Claude Code, Codex या Cursor से डिप्लॉय करें
+
+Claude Code, Codex और Cursor अपने बनाए ऐप को Lizard Skill और Lizard CLI की मदद से Lizard पर डिप्लॉय कर सकते हैं। एजेंट इंस्टॉल किए गए CLI की गाइड पढ़ता है, टारगेट प्रोजेक्ट जाँचता है, बिल्ड चलाता है और लाइव URL की जाँच करता है। इसके लिए अलग MCP ट्रांसपोर्ट की ज़रूरत नहीं है। लोकल या GitHub सोर्स डिप्लॉय करने के लिए नीचे दिया गया प्रॉम्प्ट इस्तेमाल करें, फिर बिल्ड, पब्लिक URL और डेटाबेस कनेक्शन जाँचें।
+
+<span id="before-you-start" />
+
+## शुरू करने से पहले
+
+आपके पास एक चालू एप्लिकेशन, उसे डिप्लॉय करने की अनुमति, और Pro या 7-दिन के Pro ट्रायल (कार्ड ज़रूरी) वाला Lizard अकाउंट होना चाहिए। ट्रायल शुरू होने तक `lizard add` और `lizard up` HTTP 402 के साथ एक Checkout लिंक लौटाते हैं; `lizard billing start` उसे खोलता है। एप्लिकेशन को `0.0.0.0` और कॉन्फ़िगर किए गए पोर्ट पर सुनना चाहिए। क्लाउड बिल्ड शुरू करने से पहले उसके लोकल चेक चलाएँ।
+
+<span id="give-the-agent-the-current-guide" />
+
+## एजेंट को मौजूदा गाइड दें
+
+```bash
+curl -fsSL https://lizard.build/install.sh | bash
+lizard skills get core --json
+lizard --help --json
+```
+
+Windows पर PowerShell में `irm https://lizard.build/api/cli/install.ps1 | iex` चलाएँ, या npm से `npm install -g @lizard-build/cli` के ज़रिए इंस्टॉल करें।
+
+स्किल को अपनी मशीन के हर एजेंट के लिए उपलब्ध कराने के लिए उसे एक बार `npx skills add lizard-build/skill -g` से इंस्टॉल करें; [कोडिंग एजेंट](/agents) देखें। Lizard Skill वही निर्देश लोड करता है जो इंस्टॉल किए गए CLI से मेल खाते हैं। किसी ख़ास कमांड के लिए फ़्लैग का अंदाज़ा लगाने के बजाय उसका स्कीमा पढ़ें:
+
+```bash
+lizard up --help --json
+lizard service set --help --json
+```
+
+Claude Code, Codex या Cursor में पेस्ट करने के लिए एक उपयोगी प्रॉम्प्ट:
+
+> इस ऐप को Lizard से डिप्लॉय करें। इंस्टॉल किए गए CLI की गाइड पढ़ें, लिंक किए गए प्रोजेक्ट और सर्विस की जाँच करें, ऐप के चेक चलाएँ, और बिल्ड का नतीजा और एक चालू URL दिखाएँ। किसी मौजूदा प्रोडक्शन सर्विस को बदलने या डेटा हटाने से पहले पूछें।
+
+<span id="deploy-local-source" />
+
+## लोकल सोर्स डिप्लॉय करें
+
+पूरे टेस्ट के लिए [agent-app उदाहरण](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/agent-app) इस्तेमाल करें। यह Node.js 22 और `pg` 8.16.3 का उपयोग करता है, पोर्ट 3000 पर सुनता है और Managed Postgres से एक रो पढ़ता है। स्टार्ट होते समय यह डेमो टेबल और रो बना देता है, अगर वे पहले से मौजूद न हों। बड़े एप्लिकेशन के लिए अपनी माइग्रेशन प्रक्रिया अपनाएँ।
+
+उदाहरण को उसकी अलग डायरेक्टरी में कॉपी करें और उसके लोकल चेक चलाएँ:
+
+```bash
+npm ci
+npm run check
+lizard status --json
+```
+
+यह JavaScript सिंटैक्स जाँचता है। डेटाबेस और पब्लिक HTTP चेक डिप्लॉय के बाद होते हैं। अगर यह डायरेक्टरी पहले से लिंक है, तो जाँचें कि वह सही प्रोजेक्ट से लिंक है। नए टेस्ट प्रोजेक्ट के लिए:
+
+```bash
+lizard init --name agent-example --json
+lizard add --service api --json
+lizard add postgres --json
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api --json
+lizard up --service api --port 3000 --json
+```
+
+अगर डेटाबेस का नाम `postgres` नहीं है, तो उसका असली नाम इस्तेमाल करें। `DATABASE_PRIVATE_URL` प्रोजेक्ट के प्राइवेट नेटवर्क से डेटाबेस तक पहुँचता है और उसी प्रोजेक्ट और रीजन की सर्विसेज़ से काम करता है; [Postgres कनेक्शन स्ट्रिंग](/addons/postgres#postgres-connection-string) देखें। रेफ़रेंस को quotes में ही रखें, ताकि लोकल शेल उसे expand न करे। इसे पहले डिप्लॉय से पहले कॉन्फ़िगर करें। `lizard login` से साइन इन तभी करें जब कोई कमांड बताए कि ऑथेंटिकेशन ज़रूरी है।
+
+इस कॉपी किए गए उदाहरण के लिए अपलोड का तरीका इस्तेमाल करें। जो एप्लिकेशन पहले से GitHub पर है, उसके लिए इसके बजाय अगला सेक्शन देखें। फ़ेल हुआ बिल्ड एग्ज़िट कोड 1 के साथ ख़त्म होता है; फिर भी अंतिम `failed`/`deployed` इवेंट देखें और एप्लिकेशन की जाँच करें। [ज्ञात समस्याएँ](/platform/known-issues) देखें।
+
+<span id="deploy-from-github" />
+
+## GitHub से डिप्लॉय करें
+
+यह तरीका तब अपनाएँ जब एप्लिकेशन की GitHub रिपॉज़िटरी हो। पहले रिमोट जाँचें:
+
+```bash
+git remote get-url origin
+lizard status --json
+lizard ps --json
+```
+
+किसी लिंक किए गए टेस्ट प्रोजेक्ट का उपयोग करें या `lizard init --name YOUR_PROJECT_NAME` से नया बनाएँ। बिल्ड शुरू किए बिना रिपॉज़िटरी जोड़ें, ताकि उसका एनवायरनमेंट कॉन्फ़िगर करने का समय मिल जाए:
+
+```bash
+lizard add --repo YOUR_ORG/YOUR_REPO --name api-git --no-deploy --json
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api-git --json
+```
+
+अगर इस प्रोजेक्ट में Managed Postgres नहीं है, तो पहले उसे प्रोविज़न करें। यह क्रम ऊपर वाले Node.js उदाहरण का ही उपयोग करता है। अगर रिपॉज़िटरी में यह ऐप किसी सबडायरेक्टरी में या किसी दूसरी ब्रांच पर है, तो डिप्लॉय से पहले उसे कॉन्फ़िगर करें:
+
+```bash
+lizard service set api-git --set branch=YOUR_BRANCH --set rootDirectory=YOUR_APP_DIRECTORY --set containerPort=3000 --json
+lizard redeploy --service api-git --json
+```
+
+अगर ऐप `main` ब्रांच पर रिपॉज़िटरी के रूट में है, तो `service set` कमांड छोड़ दें। अगर आपका एप्लिकेशन कोई दूसरा पोर्ट इस्तेमाल करता है, तो सही पोर्ट सेट करें। अगर रिपॉज़िटरी Lizard को उपलब्ध नहीं है, तो GitHub App कनेक्ट करें; चुपचाप इस तरीके की जगह अपलोड का इस्तेमाल न करें।
+
+किसी मौजूदा GitHub सर्विस के बाद के अपडेट के लिए `lizard redeploy --service api-git` का उपयोग करें, या ऑटो-डिप्लॉय चालू होने पर उसकी ट्रैक की गई ब्रांच पर पुश करें। `lizard up` सर्विस का सोर्स GitHub से बदलकर अपलोड पर स्विच कर देता है। पहले से चल रही सर्विस की बिल्ड सेटिंग्स बदलने से उसका अपना बिल्ड शुरू हो सकता है; दूसरा बिल्ड माँगने से पहले इवेंट देख लें।
+
+<span id="verify-the-result" />
+
+## नतीजे की जाँच करें
+
+बिल्ड और रनटाइम लॉग अलग-अलग पढ़ें:
+
+```bash
+lizard logs --build --service api --json
+lizard logs --service api --json
+lizard ps --json
+```
+
+GitHub वाले तरीके के लिए `api` की जगह `api-git` इस्तेमाल करें। `APP_URL` को CLI के बताए HTTPS URL पर सेट करें, फिर चलाएँ:
+
+```bash
+curl --fail "$APP_URL/health"
+curl --fail "$APP_URL/data"
+```
+
+पहला रिस्पॉन्स `App ready` है। दूसरा `{"value":"database-connected"}` है। सिर्फ़ बिल्ड सफल होने से यह साबित नहीं होता कि डेटाबेस रेफ़रेंस resolve हो गया। उदाहरण सिर्फ़ इसी तय डेमो रो को दिखाता है, कोई डेटाबेस एडमिनिस्ट्रेशन API नहीं।
+
+इस टेस्ट सर्विस के लिए रनटाइम रीस्टार्ट की जाँच करें:
+
+```bash
+lizard restart --service api --json
+```
+
+`lizard ps --json` में सर्विस के फिर से `running` होने तक इंतज़ार करें और दोनों HTTP रिक्वेस्ट दोहराएँ। रनटाइम लॉग का tail खाली हो सकता है; एप्लिकेशन की असली जाँच HTTP रिस्पॉन्स है। रो Managed Postgres में स्टोर होती है, इसलिए सर्विस रीस्टार्ट होने पर भी बनी रहती है। मौजूदा डेटा दोबारा इस्तेमाल होता है या नहीं, यह जाँचने के लिए रीस्टार्ट से पहले डेटाबेस एडिटर में डेमो रो को कोई अलग वैल्यू दें और बाद में पुष्टि करें कि `/data` वही वैल्यू लौटाता है।
+
+`logs --json` लॉग का tail लौटाकर ख़त्म हो जाता है। असली एप्लिकेशन डेटा बदलने से पहले [स्टोरेज और रिकवरी](/platform/storage-and-recovery) पढ़ें।
+
+<span id="when-deployment-fails" />
+
+## जब डिप्लॉयमेंट फ़ेल हो
+
+फ़ेल हुए कमांड का एग्ज़िट कोड और JSON एरर देखें। कंपाइल एरर, बंद हो जाने वाले प्रोसेस और न पहुँचने वाले पोर्ट के लिए अलग-अलग फ़िक्स चाहिए। [JSON और ऑटोमेशन](/cli/json) और [सर्विस कभी हेल्दी नहीं होती](/deploy/troubleshooting/service-never-healthy) देखें। `redeploy` एक नया बिल्ड है, पुराने वर्ज़न पर रोलबैक नहीं।
+
+<span id="limits-and-cost" />
+
+## सीमाएँ और लागत
+
+एजेंट भी किसी इंसान की तरह उसी CLI से ऐसे रिसोर्स बना सकता है जिनका बिल लगता है। [सीमाएँ](/platform/limits) और [प्राइसिंग](https://lizard.build/pricing) देखें, और क्रेडेंशियल्स को सिर्फ़ उसी प्रोजेक्ट और उन्हीं सर्विसेज़ तक सीमित रखें जिनकी एजेंट को ज़रूरत है।
+
+एजेंट को अपने लैपटॉप के बजाय किसी अलग मशीन पर चलाने के लिए [सैंडबॉक्स में Claude Code](/sandboxes/guides/claude-code) देखें।
+
+जाँचे गए वर्ज़न, क्लाउड नतीजों और बाकी सीमाओं के लिए [सिनेरियो टेस्ट के नतीजे](/guides/validation) देखें।

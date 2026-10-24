@@ -1,0 +1,84 @@
+---
+description: "lizard skills आपके CLI वर्ज़न के साथ आने वाली एजेंट गाइड पढ़ता है, ताकि AI एजेंट को हमेशा बाइनरी से मेल खाने वाले निर्देश मिलें।"
+---
+
+# lizard skills
+
+इस CLI वर्ज़न के साथ आने वाली एम्बेडेड एजेंट स्किल्स पढ़ें। उपनाम: `lizard skill`।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard skills list
+lizard skills get core [flags]
+lizard skills path [name] [flags]
+```
+
+<span id="subcommands" />
+
+## सबकमांड
+
+### `lizard skills list`
+
+उपलब्ध एम्बेडेड स्किल्स को उनके विवरण और रेफ़रेंस के साथ लिस्ट करें।
+
+### `lizard skills get core`
+
+कोर गाइड पढ़ें: एजेंटों के लिए प्लेटफ़ॉर्म का ओवरव्यू, जिसका वर्ज़न CLI के साथ बदलता है। इसमें सैंडबॉक्स, डिप्लॉय, डेटाबेस, सीक्रेट्स, डोमेन, लॉग्स और एग्ज़िट कोड शामिल हैं। विस्तार से जानकारी तीन रेफ़रेंस में है: `deploys`, `sandboxes` और `sdk`।
+
+`--json` के साथ यह `{ name, path, frontmatter, content, references }` लौटाता है। `content` कोर गाइड है, और `references` में हर रेफ़रेंस का `name`, `path` और उसे प्रिंट करने वाली `command` होती है।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `--ref <name>` | इसके बजाय एक रेफ़रेंस प्रिंट करें: `deploys`, `sandboxes` या `sdk`। `--json` के साथ यह `{ name, ref, path, content }` लौटाता है |
+| `--full` | कोर गाइड के बाद सभी रेफ़रेंस जोड़ें |
+
+### `lizard skills path [name]`
+
+प्रिंट करें कि कोई स्किल कहाँ से आती है। स्किल्स CLI में बिल्ट-इन हैं, इसलिए `lizard skills path` `embedded://skills` प्रिंट करता है और `lizard skills path core` `embedded://skills/core/SKILL.md`, जब तक `LIZARD_SKILLS_DIR` CLI को डिस्क की किसी डायरेक्टरी पर न भेजे। `--ref <name>` किसी एक रेफ़रेंस का पाथ प्रिंट करता है।
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="load-the-core-guide-as-an-agent" />
+
+### एजेंट के रूप में कोर गाइड लोड करें
+
+```bash
+lizard skills get core --json
+```
+
+<span id="load-one-reference" />
+
+### एक रेफ़रेंस लोड करें
+
+```bash
+lizard skills get core --ref deploys --json
+```
+
+<span id="print-the-core-guide-with-every-reference" />
+
+### सभी रेफ़रेंस के साथ कोर गाइड प्रिंट करें
+
+```bash
+lizard skills get core --full
+```
+
+<span id="list-available-embedded-skills" />
+
+### उपलब्ध एम्बेडेड स्किल्स लिस्ट करें
+
+```bash
+lizard skills list
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [AI एजेंट और MCP](/agents) — एजेंट एम्बेडेड स्किल और खुद का विवरण देने वाली कमांड्स से कैसे शुरुआत करते हैं
+- [JSON और ऑटोमेशन](/cli/json) — `--json` आउटपुट फ़ॉर्मेट, जिसका उपयोग `lizard skills get core --json` करता है
+- [Claude Code से डिप्लॉय करें](https://lizard.build/blog/deploy-from-claude-code) — स्किल इंस्टॉल करना और डिप्लॉय का पूरा काम एजेंट को सौंपना

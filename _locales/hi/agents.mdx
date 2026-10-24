@@ -1,0 +1,146 @@
+---
+description: "Claude Code, Codex या Cursor से Lizard पर डिप्लॉय कराएँ: Lizard Skill इंस्टॉल करें, --json से कमांड स्कीमा पढ़ें, या किसी MCP क्लाइंट को Lizard MCP से कनेक्ट करें।"
+---
+
+<span id="coding-agents" />
+
+# कोडिंग एजेंट
+
+Claude Code, Codex, Cursor और दूसरे AI कोडिंग एजेंट Lizard CLI के ज़रिए Lizard पर सैंडबॉक्स बनाते हैं, ऐप्स डिप्लॉय करते हैं और उन्हें मैनेज करते हैं। Lizard Skill को एक बार `npx skills add lizard-build/skill -g` से इंस्टॉल करें; इसके बाद एजेंट `lizard skills get core --json` से CLI में बिल्ट-इन गाइड लोड करता है और `--help --json` से किसी भी कमांड के फ़्लैग पढ़ता है। MCP सपोर्ट करने वाले क्लाइंट, जैसे ChatGPT और Claude, इसके बजाय [Lizard MCP](#lizard-mcp) का उपयोग कर सकते हैं। एजेंट से पूरा डिप्लॉय कैसे होता है, यह देखने के लिए [Claude Code, Codex या Cursor से डिप्लॉय करें](/guides/deploy-from-coding-agent) देखें।
+
+<span id="the-embedded-skill" />
+
+## बिल्ट-इन स्किल
+
+CLI में इंस्टॉल किए गए वर्ज़न के लिए उपयोग की गाइड शामिल है। एजेंट इसे ऐसे पढ़ता है:
+
+```bash
+lizard skills get core --json
+```
+
+यह `{ name, frontmatter, content, references, … }` लौटाता है: `content` मुख्य गाइड है (सैंडबॉक्स, डिप्लॉय, डेटाबेस, सीक्रेट्स, डिस्कवरी, एग्ज़िट कोड), और `references` में डिप्लॉय, सैंडबॉक्स और Lizard SDK की विस्तृत गाइड की सूची होती है। इससे जुड़े सबकमांड:
+
+```bash
+lizard skills list                     # available embedded skills
+lizard skills get core                 # the core guide
+lizard skills get core --ref deploys   # one reference: deploys, sandboxes or sdk
+lizard skills get core --full          # the guide plus every reference
+lizard skills path                     # where skills are stored
+```
+
+गाइड बाइनरी के साथ ही आती है, इसलिए `lizard upgrade` एजेंट के निर्देश भी अपडेट कर देता है।
+
+<span id="self-describing-commands" />
+
+## खुद का विवरण देने वाले कमांड
+
+एजेंट याद किए गए सिंटैक्स पर भरोसा करने के बजाय रनटाइम पर ही फ़्लैग्स का सटीक फ़ॉर्मेट पता कर लेते हैं:
+
+```bash
+lizard --help --json                # full command tree + exit codes
+lizard <cmd> --help --json          # a specific command's schema
+```
+
+[JSON और ऑटोमेशन](/cli/json) देखें।
+
+<span id="bootstrapping-in-an-agent" />
+
+## एजेंट में शुरुआत
+
+एजेंट का आम फ़्लो:
+
+1. **गाइड लोड करें:** `lizard skills get core --json` → `content` पढ़ें, फिर वह रेफरेंस गाइड जो काम के लिए ज़रूरी है (`--ref sandboxes`, `deploys` या `sdk`)।
+2. **ऑथ पहले से न जाँचें, सीधे काम चलाएँ:** यूज़र का काम चलाएँ। एग्ज़िट कोड `2` (`NOT_AUTHENTICATED`) मिलने पर एरर के `body.login` में साइन-इन लिंक होते हैं: यूज़र से पूछें कि वे GitHub से साइन इन करेंगे या Google से, उन्हें `authUrls` से वही लिंक दें, और जब ब्राउज़र में "CLI authorized" दिखे तब दोबारा कोशिश करें। [`lizard login --json`](/cli/login#output-for-agents) भी यही लिंक प्रिंट करता है, और साइन-इन के बाद `account.state` में प्लान की जानकारी देता है।
+3. **यूज़र कहे तो ट्रायल शुरू करें:** नए अकाउंट पर कोई प्लान नहीं होता, इसलिए कुछ भी बनाने की पहली कोशिश HTTP 402 (`code: "PAYMENT_REQUIRED"`, एग्ज़िट कोड `1`) के साथ फ़ेल हो जाती है। पहले यूज़र से पूछें। अगर वे सहमत हों, तो `lizard billing start --json` चलाएँ, Checkout का `url` यूज़र को दें, और उनके कार्ड जोड़ने के बाद दोबारा कोशिश करें।
+4. **बदलाव करने से पहले कॉन्टेक्स्ट पता करें:** `lizard status` (मौजूदा डायरेक्टरी का लिंक) और `lizard ps --json` (सर्विसेज़)। जो फ़ोल्डर लिंक नहीं है, उसमें `up`, `add`, `sandbox create` और प्रोजेक्ट के दूसरे कमांड अकाउंट के डिफ़ॉल्ट प्रोजेक्ट का उपयोग करते हैं।
+5. **गाइड के अनुसार काम करें:** `sandbox create`, `add`, `up`, `secrets`, `domain` आदि, हमेशा `--json` के साथ।
+
+अगर `lizard` बाइनरी मौजूद नहीं है, तो पहले उसे इंस्टॉल करें। macOS या Linux पर इंस्टॉल स्क्रिप्ट का उपयोग करें:
+
+```bash
+curl -fsSL https://lizard.build/install.sh | bash
+```
+
+इसके लिए न Node.js चाहिए, न `sudo`, और यह `lizard` को ऐसे फ़ोल्डर में लिंक करती है जो पहले से `PATH` में है, इसलिए एजेंट उसी सेशन में इसे कॉल कर सकता है। अगर स्क्रिप्ट कहे कि `lizard` शायद न मिले, तो इसके बजाय `~/.lizard/bin/lizard` को कॉल करें। टर्मिनल न होने पर स्क्रिप्ट आखिर में `lizard login --json` का आउटपुट दिखाती है: साइन-इन लिंक और एक `instruction`। लिंक यूज़र को दें। Windows पर PowerShell में यह चलाएँ:
+
+```powershell
+irm https://lizard.build/api/cli/install.ps1 | iex
+```
+
+या किसी भी सिस्टम पर npm से इंस्टॉल करें (Node.js 20 या उससे नया वर्ज़न चाहिए):
+
+```bash
+npm install -g @lizard-build/cli
+```
+
+<span id="conventions-agents-should-follow" />
+
+## एजेंट्स को किन नियमों का पालन करना चाहिए
+
+- नॉन-इंटरैक्टिव कॉल में **हमेशा `--json` पास करें**।
+- **डेटा मिटाने या बदलने वाले कामों से पहले यूज़र से पुष्टि लें** (सर्विस डिलीट करना, ऐडऑन हटाना, पूरे प्रोजेक्ट का सीक्रेट ओवरराइट करना, प्रोडक्शन रीस्टार्ट): CLI के अपने प्रॉम्प्ट सिर्फ़ TTY पर ही आते हैं।
+- डिफ़ॉल्ट रूप से **सीक्रेट्स को सिर्फ़ उसी सर्विस तक सीमित रखें जो उनका उपयोग करती है**; `--global` सिर्फ़ उन वैल्यू के लिए रखें जो पक्के तौर पर पब्लिक हैं। [वेरिएबल्स और सीक्रेट्स](/variables#scoping) देखें।
+- **बिना कहे Dockerfile न लिखें**: lizardpack ज़्यादातर स्टैक अपने-आप पहचान लेता है। पहले डिप्लॉय करके देखें। [बिल्ड पाइपलाइन](/concepts/build-pipeline) देखें।
+- **git-backed सर्विस को अपलोड मोड पर स्विच करने के लिए `lizard up` का उपयोग न करें**: `service set` + `redeploy` का उपयोग करें।
+
+<span id="editor-integrations" />
+
+## एडिटर इंटीग्रेशन
+
+Lizard Skill एडिटर के एजेंट्स और असिस्टेंट्स को Lizard CLI इंस्टॉल करने और इस्तेमाल करने के निर्देश देती है। इसे अपने सभी एजेंट्स के लिए एक बार इंस्टॉल करें:
+
+```bash
+npx skills add lizard-build/skill -g
+```
+
+यह Claude Code, Cursor, Codex, Copilot, Gemini CLI और Agent Skills फ़ॉर्मेट पढ़ने वाले दूसरे एजेंट्स के साथ काम करती है। जो क्लाइंट शेल कमांड चलाने के बजाय MCP सपोर्ट करते हैं, उनके लिए [Lizard MCP](#lizard-mcp) का उपयोग करें।
+
+AI IDE ऐप लिख और टेस्ट कर सकता है; उसका नतीजा Lizard होस्ट करता है। एडिटर की चैट से शुरू किए गए डिप्लॉय का उदाहरण [Google Antigravity में बने ऐप को डिप्लॉय करना](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#deploy-from-the-antigravity-chat) में देखें।
+
+Chrome में आपके खुले पेज को Claude Code या ChatGPT से एडिट कराने के लिए [Lizard Studio](/studio/getting-started) का उपयोग करें।
+
+## Lizard MCP
+
+Lizard MCP से ChatGPT, Claude और दूसरे MCP क्लाइंट आपके Lizard प्रोजेक्ट्स मैनेज कर सकते हैं: सैंडबॉक्स बनाना, उनमें कमांड चलाना और फ़ाइलें पढ़ना या लिखना; सर्विसेज़ और ऐडऑन बनाना, रीडिप्लॉय करना, सर्विस, प्रोजेक्ट या वर्कस्पेस को [पॉज़ और रिज़्यूम करना](/cli/pause), सर्विस को [आइडल होने पर स्लीप करने देना](/cli/sleep), लॉग और मेट्रिक्स पढ़ना, सीक्रेट्स सेट करना, रेप्लिका स्केल करना और डोमेन जोड़ना। यह एक होस्टेड सर्वर है, जो इस पते पर Streamable HTTP ट्रांसपोर्ट से काम करता है:
+
+```text
+https://employ-woman-g1q2.us-east-1.onlizard.com/mcp
+```
+
+OAuth सपोर्ट करने वाला क्लाइंट पहली बार उपयोग करने पर आपको साइन इन कराता है। दूसरे क्लाइंट `Authorization: Bearer` हेडर में `liz_` API की भेजते हैं; की `lizard keys create <name>` से बनाएँ।
+
+इसे Claude Code में जोड़ें:
+
+```bash
+claude mcp add --transport http lizard https://employ-woman-g1q2.us-east-1.onlizard.com/mcp
+```
+
+Cursor और JSON से कॉन्फ़िगर होने वाले दूसरे क्लाइंट्स के लिए:
+
+```json
+{
+  "mcpServers": {
+    "lizard": {
+      "url": "https://employ-woman-g1q2.us-east-1.onlizard.com/mcp",
+      "headers": { "Authorization": "Bearer liz_your_key" }
+    }
+  }
+}
+```
+
+ट्रायल शुरू करना, भुगतान करना और Pro कैंसल करना बिलिंग पेज पर होता है। अगर कुछ बनाने से पहले अकाउंट को भुगतान करना ज़रूरी हो, तो टूल के एरर में `PAYMENT_REQUIRED` और खोलने के लिए लिंक होता है।
+
+<span id="hosting-your-own-mcp-server" />
+
+## अपना MCP सर्वर होस्ट करना
+
+Lizard CLI इस्तेमाल करने वाला एजेंट और MCP एक्सपोज़ करने वाला ऐप्लिकेशन, दो अलग-अलग वर्कफ़्लो हैं। ऊपर दिए गए CLI कमांड कोई MCP ट्रांसपोर्ट नहीं देते। Streamable HTTP के साथ अपना सर्वर डिप्लॉय करने के लिए [रिमोट MCP गाइड](/guides/deploy-mcp-server) देखें।
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [`lizard skills`](/cli/skills): पूरा कमांड रेफरेंस।
+- [JSON और ऑटोमेशन](/cli/json): `--json` आउटपुट और स्कीमा डिस्कवरी।
+- [वेरिएबल्स और सीक्रेट्स](/variables#scoping): सीक्रेट-स्कोपिंग के नियम जिनका एजेंट्स को पालन करना चाहिए।
+- [Claude Code से अपना ऐप डिप्लॉय करें](https://lizard.build/blog/deploy-from-claude-code#a-prompt-that-defines-the-deployment-task): इंस्टॉलेशन के स्टेप और डिप्लॉय के लिए एक प्रॉम्प्ट।

@@ -1,0 +1,183 @@
+---
+title: "Discord बॉट होस्ट करें"
+description: "Lizard पर Discord बॉट को बैकग्राउंड वर्कर के रूप में होस्ट करें: discord.js उदाहरण, सीक्रेट के रूप में बॉट टोकन, बिना पोर्ट का वर्कर मोड, एक रेप्लिका, लॉग।"
+---
+
+<span id="host-a-discord-bot" />
+
+# Discord बॉट होस्ट करें
+
+Lizard पर Discord बॉट होस्ट करने के लिए उसे बैकग्राउंड वर्कर के रूप में चलाएँ। गेटवे बॉट Discord से एक आउटबाउंड कनेक्शन खोलता है और कोई HTTP सर्व नहीं करता, इसलिए उसे `lizard up --port 0` (`containerPort=0`) से डिप्लॉय करें और हर बॉट टोकन के लिए एक ही रेप्लिका रखें। Lizard `package.json` से Node.js बॉट को पहचान लेता है और उसे `npm run start` से शुरू करता है; Python बॉट के लिए Procfile में `web:` लाइन चाहिए।
+
+**टेस्ट की स्थिति:** उदाहरण बॉट discord.js 14.27.0 के साथ लोकल में चलता है और नकली टोकन देने पर `TokenInvalid` के साथ बंद हो जाता है। हमने इसका बिल्ड प्लान lizardpack से जाँचा — यह वह बिल्ड प्लानर है जिसे Lizard चलाता है। हमने यह गाइड अभी तक Lizard से असली Discord के साथ नहीं चलाई है; इस पर भरोसा करने से पहले एक टेस्ट मैसेज भेजें और लॉग देखें।
+
+<span id="before-you-start" />
+
+## शुरू करने से पहले
+
+- **बॉट टोकन।** [Discord Developer Portal](https://discord.com/developers/applications) में एक ऐप्लिकेशन बनाएँ, **Bot** खोलें और **Reset Token** दबाएँ। टोकन किसी को न दिखाएँ: जिसके पास टोकन है, वही बॉट को कंट्रोल करता है।
+- **Message Content intent।** उदाहरण `!ping` पढ़ता है, इसलिए **Bot → Privileged Gateway Intents** में **Message Content Intent** चालू करें। जो बॉट सिर्फ़ स्लैश कमांड का जवाब देता है, उसे इसकी ज़रूरत नहीं।
+- **सर्वर में बॉट।** **OAuth2 → URL Generator** में `bot` स्कोप और **View Channels**, **Send Messages** और **Read Message History** परमिशन पर टिक करें, फिर URL खोलकर एक सर्वर चुनें।
+- **Lizard CLI और प्लान।** CLI इंस्टॉल करें और `lizard login` चलाएँ। सर्विसेज़ Lizard Pro या उसके 7-दिन के ट्रायल (कार्ड ज़रूरी) पर चलती हैं; [प्राइसिंग](https://lizard.build/pricing) देखें।
+
+<span id="write-the-bot" />
+
+## बॉट लिखें
+
+एक फ़ोल्डर बनाएँ जिसमें दो फ़ाइलें हों।
+
+`package.json`:
+
+```json
+{
+  "name": "discord-bot",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.27.0"
+  }
+}
+```
+
+`bot.js`:
+
+```js
+import { Client, Events, GatewayIntentBits } from "discord.js";
+
+const token = process.env.DISCORD_TOKEN;
+if (!token) {
+  console.error("DISCORD_TOKEN is not set");
+  process.exit(1);
+}
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
+});
+
+client.once(Events.ClientReady, (ready) => {
+  console.log(`Logged in as ${ready.user.tag}`);
+});
+
+client.on(Events.MessageCreate, async (message) => {
+  if (message.author.bot) return;
+  if (message.content === "!ping") {
+    await message.reply("pong");
+  }
+});
+
+client.login(token);
+```
+
+`package-lock.json` बनाने के लिए `npm install` चलाएँ, और लॉक फ़ाइल को `package.json` के बगल में रखें: लॉक फ़ाइल होने पर Lizard डिपेंडेंसी `npm ci` से इंस्टॉल करता है। एक `.gitignore` जोड़ें जिसमें `node_modules` और `.env` हों।
+
+बॉट को अपने कंप्यूटर पर आज़माने के लिए टोकन को किसी फ़ाइल में सेव किए बिना पेस्ट करें, फिर बॉट शुरू करें:
+
+```bash
+read -rs DISCORD_TOKEN && export DISCORD_TOKEN
+npm start
+```
+
+जिस चैनल को बॉट देख सकता है, उसमें `!ping` टाइप करें; बॉट `pong` जवाब देगा। डिप्लॉय करने से पहले लोकल कॉपी बंद कर दें। अगर दो कॉपी चल रही हों, तो दोनों हर मैसेज का जवाब देंगी।
+
+<span id="deploy-as-a-worker" />
+
+## वर्कर के रूप में डिप्लॉय करें
+
+बॉट के फ़ोल्डर से:
+
+```bash
+lizard init --name discord-bot
+lizard add --service bot
+read -rs DISCORD_TOKEN
+lizard secrets set DISCORD_TOKEN="$DISCORD_TOKEN" --service bot
+lizard up --service bot --port 0
+```
+
+- `lizard add --service bot` एक खाली सर्विस बनाता है; `lizard up --service bot` कोड अपलोड करके उसी सर्विस में डिप्लॉय करता है।
+- `lizard secrets set` टोकन को सिर्फ़ **bot** सर्विस पर स्टोर करता है। [वेरिएबल्स और सीक्रेट्स](/variables) देखें।
+- `--port 0` [वर्कर मोड](/deploy/workers) चालू करता है: Lizard न `PORT` सेट करता है, न पोर्ट हेल्थ चेक चलाता है, न कोई HTTP रूट जोड़ता है। सर्विस पर अब भी `onlizard.com` डोमेन दिख सकता है, लेकिन वहाँ कुछ जवाब नहीं देता।
+
+git रिपॉज़िटरी के अंदर `lizard up` वे फ़ाइलें छोड़ देता है जो `.gitignore` में लिखी हैं। git के बाहर यह `.env` फ़ाइलें भी अपलोड कर देता है, इसलिए इस फ़ोल्डर की किसी फ़ाइल में टोकन न रखें, या पहले `git init` चलाएँ। [लोकल कोड से डिप्लॉय करें](/deploy/upload) देखें।
+
+अगर आप git push to deploy रखना चाहते हैं, तो फ़ोल्डर को GitHub पर पुश करें और [रिपॉज़िटरी कनेक्ट करें](/deploy/github), फिर सर्विस को वर्कर मोड में बदलें:
+
+```bash
+lizard port 0 --service bot
+lizard redeploy --service bot
+```
+
+<span id="one-replica-per-token" />
+
+### हर टोकन के लिए एक रेप्लिका
+
+हर रेप्लिका उसी टोकन से अपना गेटवे सेशन खोलती है, इसलिए हर रेप्लिका हर मैसेज का जवाब देती है। बॉट सर्विस को एक ही रेप्लिका पर रखें। जब आप वर्कर का नया वर्ज़न डिप्लॉय करते हैं, तो Lizard नया प्रोसेस शुरू करने से पहले पुराना प्रोसेस बंद कर देता है, इसलिए बॉट थोड़ी देर के लिए उपलब्ध नहीं रहेगा। 2,500 से ज़्यादा सर्वर में मौजूद बॉट को Discord की sharding इस्तेमाल करनी होगी; यह कोड में बदलाव है, उसी प्रोसेस की ज़्यादा रेप्लिका चलाना नहीं।
+
+<span id="python-bots" />
+
+## Python बॉट
+
+discord.py के लिए उसे `requirements.txt` में लिखें और एक `Procfile` जोड़ें:
+
+```text
+web: python bot.py
+```
+
+lizardpack Procfile की सिर्फ़ `web:` लाइन पढ़ता है, वर्कर के लिए भी, और `worker:` लाइन को नज़रअंदाज़ करता है। Procfile न होने पर यह `python main.py` चलाता है, इसलिए अगर बॉट `main.py` में है, तो Procfile की ज़रूरत नहीं। उन्हीं कमांड और `--port 0` से डिप्लॉय करें। Python वर्ज़न चुनने के लिए [रनटाइम वर्ज़न](/deploy/runtime-versions) देखें।
+
+<span id="keep-data-in-managed-postgres" />
+
+## डेटा Managed Postgres में रखें
+
+कंटेनर के अंदर लिखी गई फ़ाइलें अगले डिप्लॉय पर खो जाती हैं। सेटिंग्स, स्कोर या क्यू [Managed Postgres](/addons/postgres) में रखें:
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service bot
+```
+
+सिंगल कोट्स आपके शेल को `${{…}}` पढ़ने से रोकते हैं; बॉट शुरू होने पर Lizard [रेफ़रेंस](/variables/references) को असली वैल्यू में बदलता है, और वेरिएबल बदलने से बॉट रीस्टार्ट होता है। `process.env.DATABASE_URL` को `pg` जैसे क्लाइंट से पढ़ें। हैंडलर ऐसे बनाएँ कि दो बार चलने पर भी कोई नुकसान न हो: रीस्टार्ट होने पर अधूरा काम दोबारा चल सकता है।
+
+<span id="check-that-it-works" />
+
+## जाँचें कि बॉट काम कर रहा है
+
+```bash
+lizard port --service bot
+lizard logs --service bot --tail 50
+lizard ps
+```
+
+`lizard port` `worker mode` प्रिंट करता है। लॉग में `Logged in as` और बॉट का नाम दिखता है। फिर अपने सर्वर में `!ping` टाइप करें और एक `pong` का इंतज़ार करें। running दिखने वाले वर्कर की भी यह जाँच ज़रूरी है: हो सकता है प्रोसेस चल रहा हो, लेकिन Discord उसे रिजेक्ट कर रहा हो।
+
+<span id="common-problems" />
+
+## आम समस्याएँ
+
+| लक्षण | समाधान |
+|---|---|
+| `An invalid token was provided`, फिर रीस्टार्ट | Developer Portal में टोकन रीसेट करें और bot सर्विस पर `DISCORD_TOKEN` फिर से सेट करें। |
+| `Privileged intent provided is not enabled or whitelisted` | **Message Content Intent** चालू करें, या कोड से `GatewayIntentBits.MessageContent` हटा दें। |
+| बॉट ऑनलाइन है लेकिन `!ping` पर जवाब नहीं देता | intent के बिना मैसेज का कंटेंट खाली आता है। यह भी जाँचें कि बॉट उस चैनल को देख सकता है और उसमें मैसेज भेज सकता है। |
+| हर मैसेज के दो जवाब आते हैं | कोई दूसरी कॉपी भी यही टोकन इस्तेमाल कर रही है: कोई लोकल प्रोसेस, दूसरी रेप्लिका या कोई दूसरा होस्ट। `lizard ps` देखें। |
+| डिप्लॉय हेल्थ चेक का इंतज़ार करता रहता है | सर्विस वर्कर मोड में नहीं है। `lizard port 0 --service bot` चलाएँ, फिर `lizard redeploy --service bot`। |
+| `DISCORD_TOKEN is not set` | सीक्रेट किसी दूसरी सर्विस पर या प्रोजेक्ट लेवल पर है। `lizard secrets list --service bot` चलाएँ। |
+
+जो बॉट सिर्फ़ **Interactions Endpoint URL** के ज़रिए स्लैश कमांड का जवाब देता है, वह असल में HTTP सर्विस है: उसे असली पोर्ट के साथ डिप्लॉय करें और Discord को उसका HTTPS URL दें।
+
+<span id="related" />
+
+## संबंधित
+
+- [बैकग्राउंड वर्कर्स](/deploy/workers)
+- [Telegram बॉट चलाएँ](/guides/telegram-bot)
+- [Node.js ऐप डिप्लॉय करें](/framework-guides/nodejs)
+- [लॉग](/observability/logs)
+- [सीमाएँ](/platform/limits)
+- [discord.js गाइड](https://discordjs.guide/)

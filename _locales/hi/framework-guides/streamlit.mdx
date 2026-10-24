@@ -1,0 +1,171 @@
+---
+title: "Streamlit ऐप डिप्लॉय करें"
+description: "Lizard पर Streamlit ऐप डिप्लॉय करें: Procfile 0.0.0.0:8501 पर streamlit run app.py चलाता है, requirements.txt Streamlit का वर्ज़न पिन करता है, और सीक्रेट्स वेरिएबल्स से आते हैं।"
+---
+
+<span id="deploy-a-streamlit-app" />
+
+# Streamlit ऐप डिप्लॉय करें
+
+Lizard Streamlit ऐप को उसी कमांड से चलाता है जो आप लोकल रूप से इस्तेमाल करते हैं: `streamlit run app.py`। इसे `--server.address 0.0.0.0` और `8501` जैसे तय पोर्ट के साथ Procfile की `web:` लाइन में रखें, फिर `lizard up --port 8501` से डिप्लॉय करें। Procfile के बिना lizardpack `python app.py` शुरू करता है, जो ऐप सर्व करने के बजाय एक चेतावनी प्रिंट करके बंद हो जाता है।
+
+**टेस्ट स्टेटस:** नीचे दिया गया सैंपल Streamlit 1.65.0 के साथ लोकल रूप से चलाया गया, और उसका डेटाबेस वाला वर्ज़न psycopg 3.3.5 के साथ PostgreSQL 14 पर। हमने इसका बिल्ड प्लान lizardpack से जाँचा, यानी उस बिल्ड प्लानर से जिसे Lizard चलाता है। हमने अभी तक इसे शुरू से आख़िर तक डिप्लॉय नहीं किया है। ब्राउज़र Streamlit से एक WebSocket खुला रखता है, और हमने अभी तक Lizard की रूटिंग से होकर उस कनेक्शन की जाँच नहीं की है।
+
+<span id="before-you-start" />
+
+## शुरू करने से पहले
+
+- ऐप टेस्ट करने के लिए आपके कंप्यूटर पर Python 3।
+- Lizard CLI, `lizard login` से साइन इन किया हुआ, Pro या 7-दिन के Pro ट्रायल (कार्ड ज़रूरी) पर। [प्राइसिंग](https://lizard.build/pricing) देखें।
+
+<span id="a-minimal-app" />
+
+## एक छोटा-सा ऐप
+
+`app.py`:
+
+```python
+import streamlit as st
+
+st.title("Hello from Streamlit on Lizard")
+name = st.text_input("Your name", "world")
+st.write(f"Hello, {name}!")
+```
+
+`requirements.txt`:
+
+```text
+streamlit==1.65.0
+```
+
+`.python-version`:
+
+```text
+3.13
+```
+
+`Procfile`:
+
+```text
+web: streamlit run app.py --server.port 8501 --server.address 0.0.0.0
+```
+
+इसे लोकल रूप से चलाएँ:
+
+```bash
+python -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+Streamlit `http://localhost:8501` पर खुलता है। `.venv/`, `.env` और `.streamlit/secrets.toml` को `.gitignore` में जोड़ें।
+
+<span id="what-lizardpack-builds" />
+
+## lizardpack क्या बिल्ड करता है
+
+| चरण | क्या होता है |
+|---|---|
+| डिटेक्शन | `requirements.txt`, `pyproject.toml`, `Pipfile` या कोई भी `.py` फ़ाइल |
+| Python वर्ज़न | `.python-version`, फिर `.tool-versions`, फिर `pyproject.toml` में `requires-python`; सिर्फ़ major और minor वर्ज़न, `python:<x.y>-slim` पर। डिफ़ॉल्ट `3.13`। |
+| इंस्टॉल | `pip install -r requirements.txt`; uv, Poetry या Pipenv, अगर उनकी लॉक या कॉन्फ़िग फ़ाइल मौजूद हो |
+| स्टार्ट | Procfile की `web:` लाइन |
+| रनटाइम | `PYTHONUNBUFFERED=1`, ताकि `print` का आउटपुट तुरंत लॉग में पहुँचे |
+
+`--port` से सर्विस पोर्ट को Procfile के `--server.port` के बराबर सेट करें। वर्ज़न के नियमों और उनके एज केस के लिए [रनटाइम वर्ज़न](/deploy/runtime-versions) देखें।
+
+<span id="deploy" />
+
+## डिप्लॉय
+
+ऐप के फ़ोल्डर से:
+
+```bash
+lizard init --name streamlit-app
+lizard add --service web
+lizard up --service web --port 8501
+```
+
+`lizard up` फ़ोल्डर अपलोड करता है, उसे Lizard पर बिल्ड करता है और URL प्रिंट करता है। git रिपॉज़िटरी के अंदर यह वे फ़ाइलें छोड़ देता है जो `.gitignore` में हैं; git के बाहर यह `.env` फ़ाइलें भी अपलोड कर देता है। git push to deploy के लिए [GitHub रिपॉज़िटरी कनेक्ट करें](/deploy/github) और `lizard port 8501 --service web` से पोर्ट सेट करें।
+
+<span id="secrets-and-settings" />
+
+## सीक्रेट्स और सेटिंग्स
+
+`st.secrets` `.streamlit/secrets.toml` पढ़ता है, और यह फ़ाइल आपको अपलोड नहीं करनी चाहिए। Lizard पर सीक्रेट्स को सर्विस वेरिएबल्स के रूप में स्टोर करें और उन्हें एनवायरनमेंट से पढ़ें:
+
+```bash
+lizard secrets set OPENAI_API_KEY=sk-... --service web
+```
+
+```python
+import os
+
+api_key = os.environ["OPENAI_API_KEY"]
+```
+
+वेरिएबल बदलने पर ऐप बिना रीबिल्ड के रीस्टार्ट हो जाता है। [वेरिएबल्स और सीक्रेट्स](/variables) देखें।
+
+<span id="add-managed-postgres" />
+
+## Managed Postgres जोड़ें
+
+```bash
+lizard add postgres
+lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service web
+```
+
+सिंगल कोट्स `${{…}}` को आपके शेल से बचाकर रखते हैं; Lizard डिप्लॉय के समय [रेफ़रेंस](/variables/references) को resolve करता है। `requirements.txt` में `psycopg[binary]==3.3.5` जोड़ें और हर सर्वर प्रोसेस के लिए एक कनेक्शन खोलें:
+
+```python
+import os
+
+import psycopg
+import streamlit as st
+
+
+@st.cache_resource
+def get_conn():
+    return psycopg.connect(os.environ["DATABASE_URL"], autocommit=True)
+
+
+with get_conn().cursor() as cur:
+    cur.execute("SELECT now()")
+    st.write("Database time:", cur.fetchone()[0])
+```
+
+`st.cache_resource` कनेक्शन को रीरन और ब्राउज़र सेशन के बीच बनाए रखता है। डेटा [Managed Postgres](/addons/postgres) या [Managed Object Storage](/addons/storage) में रखें: ऐप कंटेनर के अंदर जो फ़ाइलें लिखता है, वे अगले डिप्लॉय पर मिट जाती हैं।
+
+<span id="check-that-it-works" />
+
+## जाँचें कि यह काम करता है
+
+```bash
+lizard logs --service web --tail 100
+lizard domain --service web
+curl https://<your-domain>/_stcore/health
+```
+
+लॉग में `You can now view your Streamlit app in your browser` दिखता है, और हेल्थ URL `ok` लौटाता है। ऐप का URL खोलें और टेक्स्ट बॉक्स में कुछ बदलें: अभिवादन वाला टेक्स्ट अपडेट होना चाहिए।
+
+<span id="common-problems" />
+
+## आम समस्याएँ
+
+| लक्षण | समाधान |
+|---|---|
+| लॉग में `to view this Streamlit app on a browser, run it with the following command` दिखता है | Procfile नहीं है या उसमें `web:` लाइन नहीं है, इसलिए lizardpack ने `python app.py` चलाया। |
+| डिप्लॉय कभी हेल्दी नहीं होता | सर्विस पोर्ट और `--server.port` अलग-अलग हैं। `lizard port --service web` चलाएँ। [सर्विस कभी हेल्दी नहीं होती](/deploy/troubleshooting/service-never-healthy) देखें। |
+| `ModuleNotFoundError` | पैकेज को `requirements.txt` में जोड़ें और फिर से डिप्लॉय करें। |
+| किसी सीक्रेट के लिए `KeyError` | `web` सर्विस पर वह वेरिएबल नहीं है: `lizard secrets list --service web`। |
+| पेज पर कनेक्ट होने का मैसेज दिखता है और वह कभी लोड नहीं होता | ब्राउज़र `/_stcore/stream` से अपना WebSocket कनेक्शन बनाए नहीं रख पाता। ब्राउज़र कंसोल में वह फ़ेल हुई रिक्वेस्ट और `lizard logs` में एरर देखें। |
+
+<span id="related" />
+
+## संबंधित
+
+- [फ्रेमवर्क गाइड](/framework-guides)
+- [FastAPI डिप्लॉय करें](/framework-guides/fastapi)
+- [रनटाइम वर्ज़न](/deploy/runtime-versions)
+- [Managed Postgres](/addons/postgres)
+- [लॉग्स](/observability/logs)

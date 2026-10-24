@@ -1,0 +1,80 @@
+---
+description: "lizard add GitHub रेपो से सर्विस, खाली सर्विस या managed ऐडऑन बनाता है। उदाहरणों के साथ पूरा फ़्लैग रेफरेंस।"
+---
+
+# lizard add
+
+प्रोजेक्ट में डेटाबेस, सर्विस या रेपो जोड़ें।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard add [types...] [flags]
+```
+
+`add` मौजूदा डायरेक्टरी से लिंक किए गए प्रोजेक्ट पर काम करता है; जो फ़ोल्डर लिंक नहीं है, उसमें यह आपके अकाउंट का डिफ़ॉल्ट प्रोजेक्ट इस्तेमाल करता है। `add` में `--project` फ़्लैग नहीं है: किसी दूसरे प्रोजेक्ट में जोड़ने के लिए पहले फ़ोल्डर को [`lizard link --project <name>`](/cli/link) या [`lizard init`](/cli/init) से लिंक करें।
+
+<span id="flags" />
+
+## फ़्लैग्स
+
+| फ़्लैग | विवरण |
+|------|-------------|
+| `-r, --repo <owner/repo>` | GitHub रेपो से सर्विस बनाएँ |
+| `-s, --service <name>` | खाली सर्विस बनाएँ |
+| `-a, --addon <type...>` | managed ऐडऑन जोड़ें (`postgres` / `redis` / `s3`) |
+| `-n, --name <name>` | `${{name.KEY}}` रेफरेंस में इस्तेमाल होने वाला नाम |
+| `-v, --variables <K=V>` | शुरुआती env var सेट करें (कई बार दिया जा सकता है) |
+| `--region <code>` | किस रीजन में प्रोविज़न करना है (डिफ़ॉल्ट `us-east-1`) |
+| `--no-deploy` | रेपो जोड़ें, लेकिन पहला बिल्ड न चलाएँ |
+| `--list` | उपलब्ध डेटाबेस टाइप दिखाएँ |
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="create-a-service-from-a-github-repo" />
+
+### GitHub रेपो से सर्विस बनाएँ
+
+```bash
+lizard add -r your-org/your-app
+```
+
+यह `github`-सोर्स वाली सर्विस बनाता है और पहला बिल्ड शुरू करता है, जो रेपो को क्लोन करता है और स्टैक अपने-आप पहचानता है। सर्विस बनते ही कमांड पूरा हो जाता है; बिल्ड की प्रोग्रेस `lizard logs --build` से देखें।
+
+<span id="provision-addons" />
+
+### ऐडऑन प्रोविज़न करें
+
+```bash
+lizard add postgres            # one addon
+lizard add postgres redis s3   # several at once
+lizard add --list              # show available types
+```
+
+<span id="create-an-empty-service" />
+
+### खाली सर्विस बनाएँ
+
+```bash
+lizard add -s worker
+```
+
+<span id="name-a-service-and-seed-variables" />
+
+### सर्विस को नाम दें और शुरुआती वेरिएबल्स सेट करें
+
+```bash
+lizard add -r your-org/monorepo -n api -v NODE_ENV=production -v LOG_LEVEL=info
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [GitHub से डिप्लॉय करें](/deploy/github) — रेपो कनेक्ट करना, प्राइवेट एक्सेस और पुश पर ऑटो-रीडिप्लॉय
+- [Managed ऐडऑन](/addons) — Managed Postgres, Managed Redis और Managed Object Storage को प्रोविज़न करना, नाम देना और इस्तेमाल करना
+- [lizard up](/cli/up) — रेपो लिंक करने के बजाय मौजूदा डायरेक्टरी को अपलोड और डिप्लॉय करें

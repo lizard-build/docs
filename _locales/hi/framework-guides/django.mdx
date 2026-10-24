@@ -1,0 +1,225 @@
+---
+description: "Gunicorn, साफ़ तौर पर दिए WSGI मॉड्यूल, पोर्ट 8000, प्रोडक्शन सेटिंग्स, डेटाबेस माइग्रेशन और स्टैटिक व अपलोड की गई फ़ाइलों की योजना के साथ Lizard पर Django डिप्लॉय करें।"
+---
+
+<span id="deploy-django-on-lizard" />
+
+# Lizard पर Django डिप्लॉय करें
+
+Lizard पर Django को Gunicorn और अपने प्रोजेक्ट के WSGI मॉड्यूल के साथ पोर्ट `8000` पर चलाएँ। डिप्लॉय किए गए ऐप पर भरोसा करने से पहले प्रोडक्शन सेटिंग्स, डेटाबेस एक्सेस और स्टैटिक फ़ाइलें सर्व करने का इंतज़ाम तैयार करें। `manage.py runserver` डेवलपमेंट सर्वर है।
+
+<span id="set-the-start-command" />
+
+## स्टार्ट कमांड सेट करें
+
+यह गाइड मानकर चलती है कि प्रोजेक्ट में `manage.py`, `requirements.txt` और `config` नाम का प्रोजेक्ट पैकेज है, जिसमें `wsgi.py` है। `config` की जगह अपने पैकेज का असली नाम लिखें।
+
+Django, Gunicorn और आपका ऐप जो डेटाबेस ड्राइवर इस्तेमाल करता है, उन्हें अपनी टेस्ट की हुई requirements में शामिल करें। एक `Procfile` जोड़ें:
+
+```text
+web: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+```
+
+जब सेटिंग्स नेस्टेड पैकेज में हों, तब साफ़ तौर पर दिया गया मॉड्यूल किसी भ्रम की गुंजाइश नहीं छोड़ता। WebSockets वाले ASGI ऐप को ASGI सर्वर और अलग लॉन्च कमांड चाहिए; यह गाइड WSGI के बारे में है।
+
+| सेटिंग | मान |
+|---|---|
+| इंस्टॉल | `pip install -r requirements.txt` |
+| रनटाइम | आपके WSGI मॉड्यूल के साथ Gunicorn |
+| सर्विस पोर्ट | `8000` |
+| वर्किंग डायरेक्टरी | वह डायरेक्टरी जिसमें `manage.py` है |
+
+<span id="prepare-production-settings" />
+
+## प्रोडक्शन सेटिंग्स तैयार करें
+
+Django `settings.py` में `DATABASES` डिक्शनरी की उम्मीद करता है। सर्विस पर सिर्फ़ `DATABASE_URL` सेट करने से Django PostgreSQL से कनेक्ट नहीं होता। नीचे दिए स्टेप [Managed Postgres](/addons/postgres) बनाते हैं, उसका URL ऐप को पास करते हैं और उस URL को Django की कनेक्शन सेटिंग्स में बदलते हैं।
+
+ये पैकेज `requirements.txt` में जोड़ें, और आपके ऐप को जो दूसरी डिपेंडेंसी चाहिए, उन्हें भी रखें। [पूरे उदाहरण](https://github.com/lizard-build/docs/tree/main/_examples/django) में यही वर्ज़न इस्तेमाल हुए हैं:
+
+```text
+Django==6.1.1
+gunicorn==26.2.0
+whitenoise==6.12.0
+psycopg[binary]==3.3.5
+dj-database-url==3.1.2
+```
+
+`psycopg` PostgreSQL ड्राइवर है। `dj-database-url` कनेक्शन URL से डेटाबेस का नाम, यूज़र, पासवर्ड, होस्ट और पोर्ट पढ़ता है। अपने प्रोजेक्ट की `settings.py` में इनसे जुड़ी सेटिंग्स को इस ब्लॉक से बदलें; अपने मौजूदा ऐप्स, मिडलवेयर, टेम्प्लेट और बाकी सेटिंग्स जैसी हैं वैसी रखें:
+
+```python
+import os
+from pathlib import Path
+
+import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def required_env(name):
+    value = os.environ.get(name, "").strip()
+    if not value:
+        raise ImproperlyConfigured(f"Set the {name} environment variable.")
+    return value
+
+
+def env_list(name):
+    values = [item.strip() for item in required_env(name).split(",") if item.strip()]
+    if not values:
+        raise ImproperlyConfigured(f"Set at least one value in {name}.")
+    return values
+
+
+SECRET_KEY = required_env("SECRET_KEY")
+debug_value = os.environ.get("DEBUG", "false").strip().lower()
+if debug_value not in {"true", "false"}:
+    raise ImproperlyConfigured("DEBUG must be true or false.")
+DEBUG = debug_value == "true"
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
+DATABASES = {
+    "default": dj_database_url.parse(
+        required_env("DATABASE_URL"),
+        conn_max_age=60,
+        conn_health_checks=True,
+    )
+}
+```
+
+फ़ाइल में आगे कहीं पुराना `DATABASES`, `SECRET_KEY` या `DEBUG` असाइनमेंट न छोड़ें: वह इन मानों को बदल देगा। इस उदाहरण में `SECRET_KEY`, `DATABASE_URL`, `ALLOWED_HOSTS` और `CSRF_TRUSTED_ORIGINS` के मान खाली नहीं होने चाहिए। कोई मान न हो या खाली हो, तो स्टार्टअप उस वेरिएबल का नाम बताते हुए रुक जाता है। `DEBUG` का डिफ़ॉल्ट `false` है; डिप्लॉय की गई सर्विस पर इसे `false` ही रखें।
+
+`ALLOWED_HOSTS` में कॉमा से अलग किए होस्टनेम दें, बिना स्कीम या पाथ के, जैसे `app.example.com,www.example.com`। `CSRF_TRUSTED_ORIGINS` में कॉमा से अलग किए origin दें, स्कीम के साथ, जैसे `https://app.example.com`। जो लोकल origin किसी पोर्ट पर चलते हैं, उनमें पोर्ट भी लिखें। इस उदाहरण में origin की साफ़ सूची ज़रूरी है; Django ख़ुद उन ऐप्स के लिए खाली सूची की अनुमति देता है जिन्हें अतिरिक्त भरोसेमंद origin की ज़रूरत नहीं होती। सिर्फ़ उन्हीं origin पर भरोसा करें जिनसे इस ऐप में फ़ॉर्म सबमिट होने चाहिए। ये सेटिंग्स CSRF टोकन की जगह नहीं लेतीं।
+
+URL सर्विस के [सीक्रेट या रेफ़रेंस](/variables) से आता है, सोर्स में कमिट किए गए मान से नहीं। डिप्लॉय किए गए ऐप के लिए कंटेनर के अंदर की लोकल SQLite को टिकाऊ डेटाबेस की तरह इस्तेमाल न करें। URL पार्सिंग और कनेक्शन विकल्पों के लिए [dj-database-url का इस्तेमाल](https://pypi.org/project/dj-database-url/) देखें।
+
+लोकल एनवायरनमेंट वेरिएबल्स सेट हों और PostgreSQL तक पहुँच हो, तो चलाएँ:
+
+```bash
+python -m pip install -r requirements.txt
+python manage.py check --deploy
+gunicorn config.wsgi:application --bind 0.0.0.0:8000
+```
+
+अपने ऐप से जुड़ी सेटिंग्स के लिए Django की [डिप्लॉयमेंट चेकलिस्ट](https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/) देखें। यह छोटा उदाहरण प्रोडक्शन की हर सिक्योरिटी सेटिंग कॉन्फ़िगर नहीं करता। secure कुकीज़, HSTS या रीडायरेक्ट चालू करने से पहले असली पब्लिक URL पर प्रॉक्सी और HTTPS का व्यवहार जाँच लें। फ़ॉरवर्ड किए गए HTTPS हेडर पर तभी भरोसा करें जब उन्हें प्रॉक्सी नियंत्रित करता हो।
+
+<span id="plan-static-files-and-migrations" />
+
+## स्टैटिक फ़ाइलों और माइग्रेशन की योजना बनाएँ
+
+अकेला Gunicorn Django की स्टैटिक फ़ाइलें सर्व नहीं करता। ऐप में कॉन्फ़िगर किया गया स्टैटिक-फ़ाइल मिडलवेयर या कोई अलग स्टैटिक होस्ट चुनें। एसेट्स को उसी पाथ में collect करें जिसे यह सेटअप सर्व करता है। lizardpack Django बिल्ड के दौरान `python manage.py collectstatic --noinput` चलाता है, लेकिन वहाँ एरर होने पर सिर्फ़ चेतावनी प्रिंट होती है, जैसे तब जब सेटिंग्स को रनटाइम सीक्रेट्स चाहिए हों। नीचे दिया Dockerfile `collectstatic` को सिर्फ़ बिल्ड के लिए मान देता है और एरर होने पर बिल्ड फ़ेल कर देता है।
+
+WhiteNoise के लिए `django.contrib.staticfiles` को `INSTALLED_APPS` में रखें और `whitenoise.middleware.WhiteNoiseMiddleware` को Django के `SecurityMiddleware` के ठीक बाद जोड़ें। ये सेटिंग्स जोड़ें या अपडेट करें:
+
+```python
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+```
+
+अगर ऐप अपलोड पहले से कहीं और स्टोर करता है, तो अपना मौजूदा `STORAGES["default"]` बैकएंड रहने दें। WhiteNoise collect किए गए स्टैटिक एसेट्स सर्व करता है, यूज़र के अपलोड नहीं।
+
+प्रोजेक्ट के रूट में यह Dockerfile इस्तेमाल करें:
+
+```dockerfile
+FROM python:3.13-slim
+WORKDIR /app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+RUN SECRET_KEY=build-only-placeholder \
+    DATABASE_URL=postgresql://build:build@127.0.0.1:1/build \
+    ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
+    python manage.py collectstatic --noinput
+EXPOSE 8000
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+```
+
+`RUN` लाइन के मान सिर्फ़ `collectstatic` के लिए हैं। डेटाबेस URL एक प्लेसहोल्डर है, जो एक खाली लोकल पोर्ट की ओर इशारा करता है; वहाँ कोई डेटाबेस नहीं चलता। सेटिंग्स लोड होते समय URL पार्स होता है, लेकिन एसेट्स collect करने के लिए डेटाबेस कनेक्शन की ज़रूरत नहीं होती। मॉड्यूल इम्पोर्ट या `AppConfig.ready()` में डेटाबेस से क्वेरी न करें। यह उदाहरण कंटेनर की नेटवर्किंग बंद होने पर भी `collectstatic` को सफलतापूर्वक पूरा करता है।
+
+ये असाइनमेंट रनटाइम एनवायरनमेंट वेरिएबल नहीं बनते। स्टार्टअप से पहले सर्विस पर नया `SECRET_KEY` और डेटाबेस का असली रेफ़रेंस सेट करें। प्रोडक्शन सीक्रेट्स Docker बिल्ड में पास न करें।
+
+`.dockerignore` बनाएँ और यही पाथ [सोर्स अपलोड](/cli/up) से भी बाहर रखें:
+
+```text
+.env*
+.venv/
+venv/
+.git/
+__pycache__/
+*.pyc
+*.sqlite3
+staticfiles/
+```
+
+यूज़र के अपलोड कंटेनर की स्टैटिक डायरेक्टरी के बजाय टिकाऊ स्टोरेज में रखें, जैसे [Managed Object Storage](/addons/storage)। [स्टोरेज और रिकवरी](/platform/storage-and-recovery) देखें।
+
+डेटाबेस माइग्रेशन को रिलीज़ का अलग स्टेप मानें। ज़रूरत हो तो डेटा का बैकअप लें, माइग्रेशन ऐसे बनाएँ कि उन्हें दोबारा चलाना सुरक्षित हो, और रिक्वेस्ट्स को नए स्कीमा की ज़रूरत पड़ने से पहले ही उन्हें लागू कर दें। यह गाइड उन्हें `lizard run` से लागू करती है, जैसा नीचे दिखाया गया है। `preDeployCommand` यहाँ नहीं चलेगी: Lizard उसे सिर्फ़ तब चलाता है जब स्टार्ट कमांड भी सेट हो, और यह सेटअप कोई स्टार्ट कमांड सेट नहीं करता। दोनों सेट हों, तो वह हर कंटेनर के शुरू होने पर, हर रेप्लिका में और हर रीस्टार्ट पर चलती है; [डिप्लॉय पर माइग्रेशन](/addons/postgres#run-migrations-on-deploy) देखें।
+
+<span id="deploy-and-verify" />
+
+## डिप्लॉय करें और जाँचें
+
+[CLI सेटअप](/framework-guides#prepare-the-project) के बाद [GitHub सर्विस](/deploy/github) कनेक्ट करें, उसके सीक्रेट्स और प्रोडक्शन सेटिंग्स कॉन्फ़िगर करें और कंटेनर पोर्ट `8000` के साथ डिप्लॉय करें। अपलोड पर आधारित नए प्रोजेक्ट के लिए:
+
+```bash
+lizard init --name django-app
+lizard add --service web
+```
+
+इस प्रोजेक्ट में [Managed Postgres](/addons/postgres) बनाएँ। अगर आपके पास पहले से कोई इंस्टेंस है, तो `add postgres` छोड़ दें और रेफ़रेंस में उसका नाम इस्तेमाल करें:
+
+```bash
+lizard add postgres --name postgres
+```
+
+ऐप के [सर्विस सीक्रेट्स](/cli/secrets) सेट करें। `${{postgres.DATABASE_PRIVATE_URL}}` में `postgres` डेटाबेस सर्विस का नाम है, Django के डेटाबेस alias का नहीं। Lizard डिप्लॉय के समय [रेफ़रेंस](/variables/references) को resolve करता है और प्रोजेक्ट के प्राइवेट नेटवर्क पर डेटाबेस का एड्रेस `web` प्रोसेस में इंजेक्ट करता है; यह उसी प्रोजेक्ट और उसी रीजन की सर्विसेज़ से काम करता है। सिंगल कोट्स आपके शेल को रेफ़रेंस expand करने से रोकते हैं। इसके बाद ऊपर वाला `settings.py` ब्लॉक URL को `DATABASES["default"]` में बदल देता है।
+
+```bash
+DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
+lizard secrets set SECRET_KEY="$DJANGO_SECRET_KEY" \
+  DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' DEBUG=false \
+  ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
+  --service web
+lizard up --service web --port 8000
+lizard ps --json
+```
+
+`localhost` एक अस्थायी होस्ट सेटिंग है, जिससे प्रोसेस तब तक शुरू हो सके जब तक आप उसका पब्लिक होस्टनेम पता करते हैं; पब्लिक रिक्वेस्ट्स पर 400 लौटेगा। अगर आपको होस्टनेम पहले से पता है, तो उसे पहले अपलोड से पहले सेट करें। वरना इन प्लेसहोल्डर की जगह अपनी सर्विस के लिए मिला होस्टनेम और HTTPS origin लिखें:
+
+```bash
+lizard secrets set ALLOWED_HOSTS=YOUR_PUBLIC_HOST \
+  CSRF_TRUSTED_ORIGINS=https://YOUR_PUBLIC_HOST --service web
+```
+
+अगर रेफ़रेंस का टारगेट या की मौजूद नहीं है, तो वह खाली स्ट्रिंग में resolve हो सकता है। तब ज़रूरी मान वाली जाँच Django को `Set the DATABASE_URL environment variable.` के साथ रोक देती है। डेटाबेस सर्विस का नाम और उसकी `DATABASE_PRIVATE_URL` की जाँचें; `lizard logs --build --service web` हर उस रेफ़रेंस के बारे में चेतावनी देता है जो खाली मान में resolve हुआ। कनेक्शन URL को लॉग में प्रिंट न करें।
+
+वेरिएबल बदलने पर प्रोसेस रीस्टार्ट होता है। लोकल वर्चुअल एनवायरनमेंट, सीक्रेट्स और लोकल डेटाबेस अपलोड से बाहर रखें।
+
+माइग्रेशन अपने कंप्यूटर से लागू करें। `lizard run --service postgres` डेटाबेस की कनेक्शन वैल्यू के साथ, जिसमें उसका पब्लिक `DATABASE_URL` भी शामिल है, एक लोकल कमांड चलाता है। इस उदाहरण के लिए ज़रूरी बाकी सेटिंग्स इनलाइन पास करें; उन्हें सिर्फ़ लोकल कमांड इस्तेमाल करती है:
+
+```bash
+python -m pip install -r requirements.txt
+SECRET_KEY=local-migrate ALLOWED_HOSTS=localhost CSRF_TRUSTED_ORIGINS=http://localhost \
+  lizard run --service postgres -- python manage.py migrate --noinput
+```
+
+यह जाँचने के लिए कि कोई माइग्रेशन बाकी नहीं है, कमांड दोबारा चलाएँ। पोर्ट चेक सफल होने को इस बात का सबूत न मानें कि टेबल मौजूद हैं।
+
+ऐप का URL, डेटाबेस से जुड़ा कोई पेज, एक फ़ॉर्म सबमिशन और एक स्टैटिक एसेट जाँचें। अगर ऐप Django admin इस्तेमाल करता है, तो उसकी CSS भी जाँचें। इम्पोर्ट या सेटिंग्स के एरर के लिए `lizard logs --service web --json` पढ़ें। 400 रिस्पॉन्स का मतलब अक्सर यह होता है कि `ALLOWED_HOSTS` गलत है; CSS न दिखे, तो आम तौर पर स्टैटिक एसेट्स collect या सर्व नहीं हुए। सेटिंग्स बदलने से पहले असली एरर देखें।
+
+9 सितंबर 2026 को किए गए डिप्लॉयमेंट चेक और उनकी सीमाओं के लिए [टेस्ट किए गए वर्ज़न और क्लाउड के नतीजे](/framework-guides/validation) देखें।
+
+
+<span id="reproduce-this-example" />
+
+## इस उदाहरण को ख़ुद चलाकर देखें
+
+[Django उदाहरण](https://github.com/lizard-build/docs/tree/main/_examples/django) में सेटिंग्स, Dockerfile, requirements, डेटाबेस से जुड़ा एक फ़ॉर्म और एक टेस्ट रनर शामिल हैं। इसे किसी अलग डायरेक्टरी में कॉपी करें और Docker चालू रखकर `python3 tests/verify.py` चलाएँ। यह इमेज बिल्ड करता है, लोकल PostgreSQL शुरू करता है, माइग्रेशन और HTTP व्यवहार जाँचता है, और अपने टेस्ट कंटेनर बंद कर देता है। यह Lizard पर सर्विसेज़ नहीं बनाता। जाँचों और बचे रहने वाले Docker रिसोर्स की जानकारी के लिए उसकी README देखें।
+
+14 सितंबर 2026 की जाँच इस संशोधित उदाहरण को लोकल Linux कंटेनरों में कवर करती है। ऊपर लिंक किए गए पुराने क्लाउड नतीजे 9 सितंबर की गाइड के लिए हैं; संशोधित सेटिंग्स के साथ अभी तक नया क्लाउड डिप्लॉयमेंट नहीं हुआ है।

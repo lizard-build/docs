@@ -1,0 +1,102 @@
+---
+description: "Lizard सोर्स को कंटेनर इमेज में कैसे बदलता है: सिंथेसाइज़्ड Dockerfile, रिपॉज़िटरी का Dockerfile या lizardpack ऑटो-डिटेक्ट, और रीबिल्ड कब ट्रिगर होता है।"
+---
+
+<span id="build-pipeline" />
+
+# बिल्ड पाइपलाइन
+
+Lizard अपने बिल्ड नोड्स पर आपके सोर्स से कंटेनर इमेज बिल्ड करता है, फिर उस इमेज को एक अलग (isolated) पॉड में चलाता है। आपको लोकल मशीन पर Docker की ज़रूरत नहीं है। नीचे दिए गए नियम तय करते हैं कि Lizard इमेज कैसे बिल्ड करता है। जो होस्ट खुद इमेज बिल्ड करते हैं और जिन्हें तैयार इमेज चाहिए, उनकी तुलना के लिए [container as a service](https://lizard.build/blog/container-as-a-service) देखें।
+
+<span id="build-decision-order" />
+
+## बिल्ड का तरीका चुनने का क्रम
+
+प्लेटफ़ॉर्म इस क्रम में ठीक एक बिल्ड स्ट्रैटेजी चुनता है:
+
+1. **`dockerfilePath` पर रिपॉज़िटरी का Dockerfile**: अगर सर्विस पर `dockerfilePath` सेट है, तो वही Dockerfile बिना बदलाव के इस्तेमाल होता है, भले ही बिल्ड या स्टार्ट कमांड भी सेट हों। सेट किया गया `startCommand` फिर भी रनटाइम पर Dockerfile के `ENTRYPOINT` और `CMD` की जगह ले लेता है। [Dockerfile से डिप्लॉय करें](/deploy/dockerfile) देखें।
+2. **सिंथेसाइज़्ड Dockerfile**: नहीं तो, अगर सर्विस पर `buildCommand` और/या `startCommand` सेट हैं (या `lizard up --build-command` / `--start-command` से दिए गए हैं), तो Lizard इन कमांड्स से एक Dockerfile जेनरेट करता है। lizardpack नहीं चलाया जाता।
+3. **सोर्स में मौजूद Dockerfile**: नहीं तो बिल्ड डायरेक्टरी के रूट का `Dockerfile` इस्तेमाल होता है (नीचे GitHub वाला अपवाद देखें)।
+4. **lizardpack ऑटो-डिटेक्ट**: नहीं तो प्लेटफ़ॉर्म **lizardpack** चलाता है, जो उसका बिल्डपैक/Dockerfile जेनरेटर है।
+
+<span id="lizardpack-auto-detect" />
+
+### lizardpack ऑटो-डिटेक्ट
+
+lizardpack आपकी रिपॉज़िटरी की जाँच करता है और मल्टी-स्टेज इमेज बिल्ड करता है। सपोर्टेड स्टैक, जिन्हें इसी क्रम में मिलाया जाता है:
+
+**Hugo → Go → Node → Python → Rust → Ruby → PHP → Java → static**
+
+प्रोडक्शन स्क्रिप्ट्स, एडैप्टर, आउटपुट पाथ और पोर्ट के लिए [फ़्रेमवर्क गाइड्स](/framework-guides) देखें: [Hugo](/framework-guides/hugo), [Go](/framework-guides/go), Node ([Node.js](/framework-guides/nodejs), [Next.js](/framework-guides/nextjs), [Nuxt](/framework-guides/nuxt), [SvelteKit](/framework-guides/sveltekit), [Astro](/framework-guides/astro), [React](/framework-guides/react), [Vue](/framework-guides/vue), [Docusaurus](/framework-guides/docusaurus), [VitePress](/framework-guides/vitepress)), Python ([Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Streamlit](/framework-guides/streamlit)) और Ruby ([Rails](/framework-guides/rails))। डिटेक्शन प्रोजेक्ट फ़ाइलों और डिपेंडेंसीज़ के आधार पर होता है; जो रिपॉज़िटरी कई प्रोवाइडर्स से मेल खाती है, उस पर यही क्रम लागू होता है। Node.js या Python का वर्ज़न पिन करने के लिए [रनटाइम वर्ज़न](/deploy/runtime-versions) देखें।
+
+इस रास्ते पर:
+
+- अपलोड किया गया सोर्स (`lizard up`) हमेशा रूट `Dockerfile` को वैसे ही इस्तेमाल करता है जैसा वह लिखा है।
+- GitHub सोर्स रूट `Dockerfile` को वैसे ही इस्तेमाल करता है, जब तक वह अधूरा न लगे: यानी उसमें `build`, `dist`, `out`, `.next` या `public` का `COPY` बिना आखिरी स्लैश के लिखा हो (`COPY dist /usr/share/nginx/html`) और कोई ऐसी `RUN` लाइन न हो जो `npm`, `yarn`, `pnpm`, `bun`, `pip`, `pip3`, `bundle`, `cargo`, `go build`, `mvn` या `gradle` से शुरू होती हो। ऐसे में lizardpack उसकी जगह नया Dockerfile जेनरेट करता है।
+- Dockerfile न होने पर lizardpack आपके लिए एक जेनरेट कर देता है।
+- **स्टार्ट कमांड** अपने-आप पहचानी जाती है: `Procfile` की `web:` लाइन (Python/Ruby) या `package.json` का `scripts.start` (Node) अपने-आप ले लिया जाता है। Django, Flask और FastAPI की स्टार्ट कमांड के लिए [Python ऐप होस्टिंग](https://lizard.build/blog/python-app-hosting) देखें।
+- **पोर्ट** `EXPOSE`, फ़्रेमवर्क के डिफ़ॉल्ट या साफ़ तौर पर सेट किए गए `PORT` env से तय होता है।
+
+> **ध्यान दें:** GitHub सोर्स पर, जो Dockerfile पहले से बिल्ड किया गया आउटपुट (`COPY dist /dest`) कॉपी करता है और जिसमें पैकेज मैनेजर वाला कोई `RUN` स्टेप नहीं है, उसे अधूरा माना जाता है और lizardpack उसे दोबारा जेनरेट करता है। असली बिल्ड स्टेप जोड़ें, या Dockerfile को जस का तस इस्तेमाल कराने के लिए `dockerfilePath` सेट करें। [Dockerfile में बदलाव लागू नहीं होते](/deploy/troubleshooting/incomplete-dockerfile) देखें।
+
+<span id="what-triggers-a-rebuild" />
+
+## रीबिल्ड कब ट्रिगर होता है
+
+| कार्रवाई | रीबिल्ड? |
+|--------|-----------|
+| ट्रैक की गई ब्रांच पर `git push` | ✅ GitHub वेबहुक के ज़रिए |
+| `lizard redeploy` / `lizard up` | ✅ सीधे |
+| `VITE_*` या `NEXT_PUBLIC_*` वेरिएबल्स बदलना | ✅ चल रही सर्विस को रीबिल्ड करता है; वैल्यूज़ बिल्ड तक कब पहुँचती हैं, यह [बिल्ड-टाइम वेरिएबल्स](#build-time-variables) में देखें |
+| बिल्ड फ़ील्ड्स (`repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath`, `rootDirectory`) का `service set` | ✅ चल रही सर्विस को अपने-आप रीबिल्ड करता है; वरना `lizard redeploy` चलाएँ |
+| सिर्फ़ रनटाइम वाले फ़ील्ड्स (`startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns`) का `service set` | ❌ लागू करने के लिए `lizard redeploy` चलाएँ |
+| किसी दूसरे env वेरिएबल / सीक्रेट में बदलाव | ❌ तेज़ रीस्टार्ट पर लागू होता है (रीबिल्ड नहीं) |
+
+> **दो बार बिल्ड न करें।** चल रही सर्विस पर कोई बिल्ड फ़ील्ड बदलने वाले `service set` के बाद Lizard रीबिल्ड शुरू कर देता है। इसके बाद `lizard redeploy` चलाने से वह बिल्ड रद्द होकर फिर से शुरू होता है ([क्यों](/deploy/troubleshooting/double-build))। क्रैश हुई या कभी डिप्लॉय न हुई सर्विस अपने-आप रीबिल्ड नहीं होती; `lizard redeploy` चलाएँ।
+
+<span id="build-time-variables" />
+
+## बिल्ड-टाइम वेरिएबल्स
+
+Lizard `VITE_*` और `NEXT_PUBLIC_*` वेरिएबल्स को दो स्थितियों में Dockerfile में `ENV` लाइनों के रूप में लिखता है:
+
+- `dockerfilePath` के बिना GitHub सर्विसेज़: इन्हें lizardpack का Dockerfile या रिपॉज़िटरी का रूट `Dockerfile` पाता है।
+- `buildCommand` या `startCommand` वाली वे सर्विसेज़ जिनका सिंथेसाइज़्ड Dockerfile Node बिल्ड है।
+
+`lizard up` से डिप्लॉय की गई जिन सर्विसेज़ में न बिल्ड कमांड है न स्टार्ट कमांड, उन्हें बिल्ड के समय Lizard का कोई वेरिएबल नहीं मिलता। किसी भी सर्विस को `COMMIT_SHA` के अलावा कोई बिल्ड आर्गुमेंट नहीं मिलता, इसलिए आपके Dockerfile का `ARG` खाली रहता है। `lizard up` के साथ पब्लिक वैल्यूज़ के लिए उन्हें `.env.production` में कमिट करें (जाँच लें कि `.gitignore` उसे बाहर नहीं करता), उन्हें अपने Dockerfile में लिखें, या Node सर्वर ऐप के लिए `buildCommand` और `startCommand` दोनों सेट करें।
+
+<span id="watching-a-build" />
+
+## बिल्ड पर नज़र रखना
+
+`lizard up` के दौरान बिल्ड लॉग स्ट्रीम होते हैं। किसी भी सर्विस के लिए:
+
+```bash
+lizard logs --build            # the most recent build's logs
+lizard events                  # deploy history + replica status
+```
+
+अगर बिल्ड फ़ेल हो जाए, तो `lizard logs --build` पढ़ें, वजह ठीक करें (अपनी रिपॉज़िटरी में, या `lizard service set` से `buildCommand` / `startCommand` बदलकर), फिर `lizard redeploy` चलाएँ।
+
+<span id="runtime-notes" />
+
+## रनटाइम से जुड़ी बातें
+
+- **Docker `HEALTHCHECK` नहीं चलता।** रनटाइम Docker का healthcheck लूप नहीं चलाता, इसलिए `HEALTHCHECK` डायरेक्टिव्स अनदेखे कर दिए जाते हैं। इसकी जगह Lizard आपके पोर्ट पर TCP प्रोब चलाता है ([वर्कर मोड](/deploy/workers) में नहीं)।
+- **बिना ज़रूरत Dockerfile न लिखें।** lizardpack ज़्यादातर स्टैक अपने-आप पहचान लेता है: पहले डिप्लॉय करके देखें, और Dockerfile तभी जोड़ें (या `dockerfilePath` सेट करें) जब ऑटो-बिल्ड आपके काम का न हो।
+
+<span id="build-configuration-reference" />
+
+## बिल्ड कॉन्फ़िगरेशन रेफ़रेंस
+
+| फ़ील्ड | विवरण |
+|-------|-------------|
+| `buildCommand` | आपका ऐप बिल्ड करने की कमांड → **सिंथेसाइज़्ड Dockerfile** वाला रास्ता चुनती है, जब तक `dockerfilePath` सेट न हो |
+| `startCommand` | रनटाइम पर आपका ऐप शुरू करने की कमांड; इमेज के `ENTRYPOINT` और `CMD` की जगह लेती है |
+| `preDeployCommand` | हर कंटेनर की शुरुआत में (हर रेप्लिका, हर रीस्टार्ट) `startCommand` से पहले चलती है; सिर्फ़ तब चलती है जब `startCommand` सेट हो। इसे ऐसा बनाएँ कि कई बार और एक साथ चलाना सुरक्षित हो |
+| `dockerfilePath` | रिपॉज़िटरी के उस Dockerfile का पाथ जिसे **जस का तस** इस्तेमाल करना है; इमेज बिल्ड में `buildCommand` / `startCommand` से ऊपर प्राथमिकता रखता है |
+| `rootDirectory` | वह सबडायरेक्टरी जहाँ से बिल्ड करना है (मोनोरेपो के लिए) |
+| `watchPatterns` | सिर्फ़ मेल खाने वाले पाथ बदलने पर रीडिप्लॉय करें |
+| `containerPort` | वह TCP पोर्ट जिस पर आपका ऐप सुनता है (डिफ़ॉल्ट `3000`; `0` = [वर्कर](/deploy/workers)) |
+
+इनमें से कोई भी फ़ील्ड `lizard service set <svc> --set <field>=<value>` से सेट करें। फ़ील्ड खाली करने के लिए खाली वैल्यू दें, जैसे `--set buildCommand=`। [`lizard service`](/cli/service) देखें।

@@ -1,0 +1,114 @@
+---
+description: "lizard agents सैंडबॉक्स में चलने वाले कोडिंग एजेंट्स के लिए आपके ChatGPT, Claude या API की क्रेडेंशियल्स कनेक्ट करता है, और हर एजेंट का डिफ़ॉल्ट मॉडल सेट करता है।"
+---
+
+# lizard agents
+
+सैंडबॉक्स में कोडिंग एजेंट्स जिन क्रेडेंशियल्स का उपयोग करते हैं, उन्हें कनेक्ट करें और हर एजेंट के डिफ़ॉल्ट सेट करें। एजेंट्स को [`lizard sandbox prompt`](/cli/sandbox#coding-agents) से चलाएँ।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard agents status
+lizard agents login [chatgpt] [flags]
+lizard agents add <credential> [flags]
+lizard agents remove <credential>
+lizard agents use <agent> [flags]
+```
+
+क्रेडेंशियल्स आपके अकाउंट से जुड़े होते हैं। किसी क्रेडेंशियल को एक बार कनेक्ट करें और फिर किसी भी सैंडबॉक्स में एजेंट रन के लिए उसका उपयोग करें। ChatGPT लॉगिन के मामले में प्लेटफ़ॉर्म लंबे समय तक चलने वाला टोकन अपने पास रखता है और हर रन के लिए सैंडबॉक्स को थोड़े समय का एक्सेस टोकन देता है। API की और सेव किया गया Claude सब्सक्रिप्शन टोकन Lizard हर रन के एनवायरनमेंट में बिना बदले पास करता है। ऐसे क्रेडेंशियल्स इस्तेमाल करें जिन्हें आप रिवोक कर सकें। ये कमांड `-p, --project` स्वीकार करते हैं, लेकिन उसे अनदेखा करते हैं।
+
+<span id="agents-and-credentials" />
+
+## एजेंट और क्रेडेंशियल्स
+
+| एजेंट | नाम | क्या स्वीकार करता है |
+|-------|------|---------|
+| Codex | `codex` | इनमें से एक: `chatgpt`, `openai`, `deepseek`, `openrouter` |
+| Claude Code | `claude` | इनमें से एक: `claude`, `anthropic`, `openrouter` |
+| pi | `pi` | इनमें से कोई भी: `claude`, `chatgpt`, `anthropic`, `openai`, `openrouter`, `llmgateway` |
+| OpenCode | `opencode` | इनमें से कोई भी: `chatgpt`, `anthropic`, `openai`, `openrouter`, `llmgateway` |
+| Prime Agent | `prime` | इनमें से कोई भी: `claude`, `chatgpt`, `anthropic`, `openai`, `openrouter`, `llmgateway` |
+
+Kimi Code (`kimi`, `kimi` या `moonshot` क्रेडेंशियल्स के साथ) सूची में है, लेकिन अभी चल नहीं सकता।
+
+<span id="subcommands" />
+
+## सबकमांड
+
+### `lizard agents status`
+
+दिखाएँ कि कौन-से क्रेडेंशियल्स कनेक्ट हैं और कौन-से एजेंट चल सकते हैं। सिर्फ़ `lizard agents` भी यही करता है।
+
+### `lizard agents login [chatgpt]`
+
+डिवाइस कोड से अपना ChatGPT सब्सक्रिप्शन कनेक्ट करें। CLI एक URL और एक कोड प्रिंट करता है; URL खोलें, साइन इन करें और 15 मिनट के अंदर कोड डालें। आपके अप्रूव करने तक कमांड इंतज़ार करता है।
+
+| फ़्लैग | विवरण |
+|------|-------------|
+| `--open` | साइन-इन पेज को अपने ब्राउज़र में खोलें |
+
+### `lizard agents add <credential>`
+
+API की जोड़ें: `anthropic`, `openai`, `openrouter`, `llmgateway`, `deepseek` या `moonshot`। Claude सब्सक्रिप्शन के लिए अपनी मशीन पर `claude setup-token` चलाएँ और उसका टोकन `claude` के रूप में जोड़ें।
+
+| फ़्लैग | विवरण |
+|------|-------------|
+| `--key <value>` | की या टोकन। इसके बिना CLI stdin से पढ़ता है या पूछता है |
+
+### `lizard agents remove <credential>`
+
+कनेक्ट किया गया क्रेडेंशियल हटाएँ (कमांड का एलियास `logout`)।
+
+### `lizard agents use <agent>`
+
+किसी एजेंट का क्रेडेंशियल और डिफ़ॉल्ट सेट करें।
+
+| फ़्लैग | विवरण |
+|------|-------------|
+| `--credential <name>` | Codex और Claude Code के लिए: कौन-सा क्रेडेंशियल इस्तेमाल करना है |
+| `-m, --model <model>` | डिफ़ॉल्ट मॉडल (`none` इसे हटा देता है) |
+| `--effort <level>` | डिफ़ॉल्ट reasoning effort (`none` इसे हटा देता है) |
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="connect-chatgpt-and-run-codex" />
+
+### ChatGPT कनेक्ट करें और Codex चलाएँ
+
+```bash
+lizard agents login chatgpt --open
+lizard sandbox create -t codex
+lizard sandbox prompt genuine-toddler-jasj "add a health check endpoint and test it"
+```
+
+<span id="add-a-claude-subscription-for-claude-code" />
+
+### Claude Code के लिए Claude सब्सक्रिप्शन जोड़ें
+
+```bash
+claude setup-token
+lizard agents add claude
+lizard sandbox create -t claude
+lizard sandbox prompt genuine-toddler-jasj --agent claude "fix the failing tests"
+```
+
+<span id="run-codex-on-an-openai-api-key" />
+
+### OpenAI API की से Codex चलाएँ
+
+```bash
+lizard agents add openai < openai.key
+lizard agents use codex --credential openai --effort high
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [lizard sandbox](/cli/sandbox#coding-agents): `sandbox prompt`, `conversations` और `interrupt`
+- [Sandboxes](/sandboxes): टेम्प्लेट और लाइफ़साइकिल

@@ -1,0 +1,64 @@
+---
+description: "lizard regions आपके अकाउंट के लिए उपलब्ध रीजन लिस्ट करता है और बताता है कि सर्विस या ऐडऑन बनाते समय --region कैसे दें।"
+---
+
+# lizard regions
+
+उपलब्ध रीजन लिस्ट करें।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard regions [flags]
+```
+
+<span id="flags" />
+
+## फ्लैग्स
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `--json` | JSON में आउटपुट दें |
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="list-available-regions" />
+
+### उपलब्ध रीजन लिस्ट करें
+
+```bash
+lizard regions
+```
+
+<span id="list-regions-as-json" />
+
+### रीजन को JSON में लिस्ट करें
+
+```bash
+lizard regions --json
+```
+
+<span id="choose-a-region-when-you-create-a-resource" />
+
+### रिसोर्स बनाते समय रीजन चुनें
+
+`lizard add`, `lizard up`, `lizard sandbox create` या `lizard volume create` में `--region <code>` दें:
+
+```bash
+lizard add -r your-org/your-app --region <code>
+lizard add postgres --region <code>
+lizard up --region <code>
+```
+
+`--region` के बिना `lizard add` `us-east-1` का उपयोग करता है और `lizard up` प्लेटफ़ॉर्म के डिफ़ॉल्ट रीजन का। `lizard up` में `--region` सिर्फ़ तब लागू होता है जब वह नई सर्विस बनाता है। डेटाबेस का प्राइवेट URL सिर्फ़ उसी रीजन की सर्विसेज़ से काम करता है, इसलिए Postgres या Redis उसी रीजन में बनाएँ जिसमें उनका उपयोग करने वाली सर्विसेज़ हैं।
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [रीजन](/deploy/regions) — रीजन चुनना, को-लोकेशन और जेनरेटेड डोमेन
+- [`lizard add`](/cli/add) — `--region` के साथ सर्विस, रिपॉज़िटरी या ऐडऑन जोड़ें

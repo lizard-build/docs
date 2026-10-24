@@ -1,0 +1,18 @@
+export default {
+  index: "परिचय",
+  'getting-started': "ऐप क्विकस्टार्ट",
+  studio: "Lizard Studio",
+  'framework-guides': "फ्रेमवर्क गाइड",
+  guides: "गाइड",
+  platform: "सीमाएँ और संचालन",
+  concepts: "मुख्य अवधारणाएँ",
+  deploy: "डिप्लॉयमेंट",
+  variables: "वेरिएबल्स",
+  networking: "नेटवर्किंग",
+  addons: "मैनेज्ड ऐडऑन",
+  sandboxes: "Sandboxes",
+  observability: "ऑब्जर्वेबिलिटी",
+  cli: "CLI रेफ़रेंस",
+  dashboard: "ऐप डैशबोर्ड",
+  agents: "कोडिंग एजेंट",
+};

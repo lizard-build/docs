@@ -1,0 +1,115 @@
+---
+description: "Lizard CLI को स्क्रिप्ट करें: हर कमांड पर --json, स्ट्रीमिंग बिल्ड के लिए लाइन-डिलिमिटेड इवेंट, स्कीमा डिस्कवरी और CI में टोकन से ऑथ।"
+---
+
+<span id="json--automation" />
+
+# JSON और ऑटोमेशन
+
+CLI को स्क्रिप्ट में इस्तेमाल करने के लिए बनाया गया है। मशीन के पढ़ने लायक आउटपुट के लिए `--json` पास करें, टोकन के साथ इसे CI से चलाएँ, और किसी भी कमांड का स्कीमा रनटाइम पर पता करें।
+
+इस आउटपुट को पढ़ने वाला दूसरा पाठक AI कोडिंग एजेंट है — [Claude Code से डिप्लॉय करना](https://lizard.build/blog/deploy-from-claude-code#check-the-result-from-the-outside) में वे JSON लॉग कमांड दिए गए हैं जिन्हें एजेंट डिप्लॉय जाँचने के लिए चलाता है।
+
+<span id="--json-everywhere" />
+
+## हर जगह `--json`
+
+स्ट्रक्चर्ड आउटपुट के लिए किसी भी कमांड में `--json` जोड़ें। जब stdout TTY नहीं होता, तब भी CLI अपने-आप JSON पर स्विच हो जाता है।
+
+```bash
+lizard ps --json
+lizard secrets list --json
+lizard metrics --json
+```
+
+<span id="streaming-commands" />
+
+### स्ट्रीमिंग कमांड
+
+स्ट्रीमिंग कमांड (`--detach` के बिना `lizard up`) के लिए `--json` **हर लाइन में एक JSON ऑब्जेक्ट** देता है:
+
+```json
+{ "event": "log", "line": "Step 1/8 : FROM node:20" }
+{ "event": "log", "line": "..." }
+{ "event": "deployed", "status": "running", "url": "https://app.onlizard.com" }
+```
+
+बिल्ड स्ट्रीम `done` या `error` पर खत्म होती है। `done` के बाद `--ci` के बिना `lizard up` आखिर में `status` के साथ `deployed`, `failed` या `deploying` इवेंट भेजता है। सिर्फ़ `deployed` में `url` होता है (जो `null` भी हो सकता है)। `error` के बाद कोई आखिरी इवेंट नहीं आता, और कमांड कोड `1` के साथ एग्ज़िट होता है।
+
+<span id="logs---json-is-a-snapshot-not-a-stream" />
+
+### `logs --json` एक स्नैपशॉट है, स्ट्रीम नहीं
+
+`lizard logs --json` **आखिरी 200 लाइनें** लौटाता है (`--tail N` से बदलें, ज़्यादा से ज़्यादा 1000) और एग्ज़िट हो जाता है। और आउटपुट की उम्मीद में इस पर इंतज़ार न करें। किसी खास घटना के लिए `--restart latest` या `--restart <id>` का उपयोग करें।
+
+<span id="errors" />
+
+### एरर
+
+JSON मोड में फ़ेल हुआ कमांड stdout पर एक एरर ऑब्जेक्ट प्रिंट करता है और नॉन-ज़ीरो कोड के साथ एग्ज़िट होता है (नीचे CI / हेडलेस उपयोग वाली टेबल देखें):
+
+```json
+{
+  "error": {
+    "code": "ERROR",
+    "status": null,
+    "message": "Project \"my-projet\" not found.",
+    "body": null
+  }
+}
+```
+
+`code` API का एरर कोड होता है, `NOT_AUTHENTICATED` या `PROJECT_DELETED` जैसा CLI कोड, या किसी सामान्य गड़बड़ी के लिए `ERROR`; फ़्लैग की गलतियों पर `commander.unknownOption` जैसे कोड मिलते हैं। `status` HTTP स्टेटस है; अगर API के जवाब देने से पहले ही CLI फ़ेल हो गया, तो `null`। `body` में API का रिस्पॉन्स होता है, या `null`।
+
+साइन इन न होने पर कमांड `NOT_AUTHENTICATED` के साथ फ़ेल होते हैं और कोड `2` के साथ एग्ज़िट होते हैं। CI के बाहर `body.login` में साइन-इन लिंक (`authUrl`, `authUrls`) और एक `instruction` होता है: एजेंट यूज़र को लिंक दे सकता है और फिर कमांड दोबारा चला सकता है।
+
+<span id="schema-discovery" />
+
+## स्कीमा डिस्कवरी
+
+किसी भी कमांड के सटीक आर्गुमेंट, ऑप्शन और एग्ज़िट कोड देखें:
+
+```bash
+lizard --help --json                 # whole tree + global flags + exit codes
+lizard service set --help --json     # one command
+```
+
+रिस्पॉन्स का स्ट्रक्चर `{ cli, version, agents, command: { arguments, options, subcommands }, globalOptions, exitCodes }` है। यह आपकी इंस्टॉल की गई बाइनरी से जेनरेट होता है, इसलिए हमेशा आपके वर्ज़न से मेल खाता है — फ़्लैग्स को हार्ड-कोड करने के बजाय इसी का उपयोग करें।
+
+<span id="ci--headless-usage" />
+
+## CI / हेडलेस उपयोग
+
+टोकन से ऑथेंटिकेट करें और प्रोजेक्ट को स्पष्ट रूप से लिंक करें। वरना हेडलेस `up` आपके अकाउंट के डिफ़ॉल्ट प्रोजेक्ट में डिप्लॉय करेगा:
+
+```bash
+# Set LIZARD_TOKEN through your CI secret store.
+lizard init --name my-project
+lizard up --ci --service api --detach   # creates api on the first run
+```
+
+पाइपलाइन में ब्रांचिंग के लिए एग्ज़िट कोड जाँचें:
+
+| कोड | मतलब |
+|------|---------|
+| `0` | सफल |
+| `1` | सामान्य एरर |
+| `2` | ऑथ — टोकन नहीं है या एक्सपायर हो गया |
+| `3` | नहीं मिला: API में उस ID से कुछ भी नहीं है |
+| `4` | टाइमआउट |
+| `5` | कैंसल किया गया |
+
+अगर प्रोजेक्ट या सर्विस का नाम किसी से मेल नहीं खाता, तो कमांड कोड `1` के साथ एग्ज़िट होता है। `lizard run`, `lizard sandbox exec` और `lizard sandbox ssh` चलाए गए कमांड के अपने कोड के साथ एग्ज़िट होते हैं (`run` को कमांड न मिले तो `127`)।
+
+`--wait` के साथ `redeploy` बिल्ड पूरा होने और नए डिप्लॉय के तैयार होने तक इंतज़ार करता है। इसके बिना JSON मोड में कमांड, Lizard के बिल्ड रिक्वेस्ट स्वीकार करते ही, कोड `0` के साथ एग्ज़िट हो जाता है।
+
+```bash
+if lizard redeploy --service api --wait --json; then
+  echo "Deploy succeeded"
+else
+  status=$?
+  echo "Deploy failed with code $status" >&2
+  lizard logs --build --json || true
+  exit "$status"
+fi
+```

@@ -1,0 +1,64 @@
+---
+description: "Lizard बिना बिल्ड स्टेप वाले रिपॉज़िटरी Dockerfile को क्यों बदल देता है, अधूरे Dockerfile का नियम कैसे काम करता है, और अपना Dockerfile बिना बदलाव के कैसे इस्तेमाल करवाएँ।"
+---
+
+<span id="my-dockerfile-changes-dont-seem-to-apply" />
+
+# मेरे Dockerfile में किए बदलाव लागू नहीं हो रहे
+
+आपकी रिपॉज़िटरी में `Dockerfile` है, आपने उसमें बदलाव किया, लेकिन Lizard जो बिल्ड चलाता है वह आपके लिखे से मेल नहीं खाता।
+
+<span id="what-this-means" />
+
+## इसका क्या मतलब है
+
+प्लेटफ़ॉर्म ने आपकी रिपॉज़िटरी के Dockerfile को **अधूरा** माना और उसे जस का तस इस्तेमाल करने के बजाय [lizardpack](/concepts/build-pipeline) से आपके लिए नया Dockerfile जनरेट किया।
+
+<span id="why-this-can-happen" />
+
+## ऐसा क्यों हो सकता है
+
+यह जाँच सिर्फ़ GitHub सोर्स वाली सर्विसेज़ पर चलती है। अपलोड (`lizard up`) में रूट का `Dockerfile` हमेशा जैसा लिखा है, वैसा ही इस्तेमाल होता है।
+
+GitHub सोर्स पर Lizard रूट Dockerfile को तब अधूरा मानता है, जब ये दोनों बातें सही हों:
+
+- उसमें `build`, `dist`, `out`, `.next` या `public` का ऐसा `COPY` है जो आख़िर में स्लैश के बिना लिखा गया है, जैसे `COPY dist /usr/share/nginx/html`;
+- उसमें ऐसी कोई `RUN` लाइन नहीं है जो `npm`, `yarn`, `pnpm`, `bun`, `pip`, `pip3`, `bundle`, `cargo`, `go build`, `mvn` या `gradle` से शुरू होती हो।
+
+Lizard मान लेता है कि ये आर्टिफ़ैक्ट इमेज के बाहर बिल्ड किए गए थे, और lizardpack उसकी जगह ऐसा Dockerfile जनरेट करता है जिसमें छूटा हुआ बिल्ड स्टेप शामिल हो।
+
+दो और सेटिंग्स भी आपकी रिपॉज़िटरी के रूट Dockerfile को बायपास करती हैं। `dockerfilePath` सेट हो, तो Lizard वही फ़ाइल जस की तस इस्तेमाल करता है। वह सेट न हो और `buildCommand` या `startCommand` सेट हो, तो Lizard उन कमांड से अपना Dockerfile बना लेता है।
+
+<span id="possible-solutions" />
+
+## संभावित समाधान
+
+<span id="add-a-real-build-step" />
+
+### असली बिल्ड स्टेप जोड़ें
+
+अगर आप चाहते हैं कि आपका Dockerfile जैसा है वैसा ही इस्तेमाल हो, तो पहले से बिल्ड किया आउटपुट कॉपी करने के बजाय उसमें असली बिल्ड स्टेप जोड़ें:
+
+```dockerfile
+RUN npm ci && npm run build
+```
+
+<span id="or-force-verbatim-use" />
+
+### या Dockerfile को जस का तस इस्तेमाल करवाएँ
+
+`dockerfilePath` सेट करें। इमेज बिल्ड के लिए इसे बिल्ड और स्टार्ट कमांड पर प्राथमिकता मिलती है, लेकिन सेट की गई `startCommand` रनटाइम पर फिर भी आपके Dockerfile की `CMD` की जगह ले लेती है, इसलिए एक ही अपडेट में दोनों कमांड खाली करें। खाली मान देने से फ़ील्ड खाली हो जाता है:
+
+```bash
+lizard service set api --set buildCommand= --set startCommand= --set dockerfilePath=Dockerfile
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [बिल्ड पाइपलाइन](/concepts/build-pipeline) — बिल्ड का पूरा निर्णय क्रम।
+- [बिल्ड कॉन्फ़िगरेशन रेफ़रेंस](/concepts/build-pipeline#build-configuration-reference)
+- [एक मिनिमल FastAPI कंटेनर](https://lizard.build/blog/python-app-hosting#a-minimal-fastapi-container) — Python का पूरा Dockerfile, और सोर्स बिल्ड के बजाय अपना Dockerfile कब लाना चाहिए।
+
+इन बिल्ड फ़ील्ड को बदलने से बिल्ड शुरू हो सकता है। दूसरा बिल्ड शुरू होने से बचाने के लिए, एक और `redeploy` भेजने से पहले `lizard events` देखें।

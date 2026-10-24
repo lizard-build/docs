@@ -1,0 +1,91 @@
+---
+title: "Managed Redis: कनेक्शन URL और ड्यूरेबिलिटी"
+description: "कैशिंग, क्यू, रेट लिमिटिंग और pub/sub के लिए Lizard पर Redis 8 इंस्टेंस जोड़ें, उसे रेफरेंस से कनेक्ट करें, और जानें कि मेमोरी खत्म होने पर क्या होता है।"
+---
+
+# Managed Redis
+
+Lizard पर Managed Redis कैशिंग, क्यू, रेट लिमिटिंग और pub/sub के लिए एक Redis सर्वर है। नए इंस्टेंस डिफ़ॉल्ट रूप से Redis 8 पर चलते हैं। इसे `lizard add redis` से जोड़ें; आपकी सर्विसेज़ `${{redis.REDIS_PRIVATE_URL}}` जैसे रेफरेंस के ज़रिए `REDIS_PRIVATE_URL` या `REDIS_URL` पढ़ती हैं। इसमें न कोई eviction policy है और न append-only file, इसलिए इसमें सिर्फ़ वही डेटा रखें जिसे आप दोबारा बना सकते हैं। ओवरव्यू और कीमतों के लिए [Managed Redis पेज](https://lizard.build/redis) देखें।
+
+<span id="provision" />
+
+## प्रोविज़न
+
+```bash
+lizard add redis
+```
+
+पहले Redis ऐडऑन का नाम `redis` होता है, इसलिए `${{redis.REDIS_URL}}` तुरंत काम करता है।
+
+<span id="environment-variables" />
+
+## एनवायरनमेंट वेरिएबल्स
+
+| वेरिएबल | विवरण |
+|----------|-------------|
+| `REDIS_URL` | पब्लिक एंडपॉइंट के ज़रिए पूरा कनेक्शन स्ट्रिंग (`redis://…`) |
+| `REDIS_PRIVATE_URL` | प्रोजेक्ट के प्राइवेट नेटवर्क के ज़रिए कनेक्शन स्ट्रिंग (`<name>.lizard.internal:6379`) |
+
+दोनों स्ट्रिंग `redis://default:<password>@<host>:<port>` फ़ॉर्मेट में होते हैं। प्राइवेट स्ट्रिंग सिर्फ़ उसी प्रोजेक्ट और उसी रीजन की सर्विसेज़ से काम करता है; [प्राइवेट नेटवर्किंग](/networking#private-networking) देखें। किसी दूसरे रीजन की सर्विस को `REDIS_URL` का उपयोग करना होगा; उसे प्राइवेट URL देने के लिए Redis को उसी के रीजन में `lizard add redis --region <code>` से बनाएँ। `<name>` वह नाम है जो प्राइवेट एड्रेस मिलते समय ऐडऑन का था; पहले ऐडऑन के लिए यह `redis` है। नाम बदलने से यह नहीं बदलता।
+
+<span id="connect-a-service" />
+
+## सर्विस कनेक्ट करें
+
+```bash
+lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service api
+lizard redeploy --service api
+```
+
+रेफरेंस डिप्लॉय के समय रिज़ॉल्व होता है; कंज्यूमर सर्विसेज़ को अपने अगले डिप्लॉय पर ऐडऑन की मौजूदा वैल्यू मिलती हैं। प्रोजेक्ट के बाहर या किसी दूसरे रीजन के क्लाइंट के लिए `REDIS_URL` का उपयोग करें। प्रोजेक्ट की हर सर्विस को ऐडऑन का पब्लिक `REDIS_URL` सबसे कम प्राथमिकता पर भी मिलता है; स्पष्ट रेफरेंस इसे ओवरराइड करता है।
+
+<span id="does-managed-redis-keep-data" />
+
+## क्या Managed Redis डेटा सुरक्षित रखता है?
+
+Managed Redis हाल में लिखा गया डेटा खो सकता है। इसमें न कोई eviction policy है और न append-only file। अगर इसकी मेमोरी खत्म हो जाती है, तो इंस्टेंस रीस्टार्ट हो जाता है और हाल में लिखा गया डेटा खो सकता है। इसमें वही डेटा रखें जिसे आप दोबारा बना सकते हैं, और जो डेटा आप खो नहीं सकते, उसे [Managed Postgres](/addons/postgres) में रखें।
+
+<span id="common-uses" />
+
+## आम उपयोग
+
+- **कैश**: कंप्यूट किए गए नतीजों को रिक्वेस्ट के हिसाब से key बनाकर स्टोर करें।
+- **क्यू / वर्कर**: Redis को [वर्कर-मोड सर्विस](/deploy/workers) के साथ जोड़ें, जो जॉब्स प्रोसेस करती है। [क्यू कंज्यूमर चलाएँ](/deploy/workers#run-a-queue-consumer) गाइड में redis-worker उदाहरण स्टेप-बाय-स्टेप समझाया गया है।
+- **रेट लिमिटिंग / सेशन**: सभी [रेप्लिका](/deploy/scaling) के बीच तेज़ शेयर्ड स्टेट।
+
+```bash
+# A worker that drains a Redis queue
+lizard add -r your-org/worker -n jobs --no-deploy
+lizard service set jobs --set containerPort=0
+lizard secrets set REDIS_URL='${{redis.REDIS_PRIVATE_URL}}' --service jobs
+lizard redeploy --service jobs
+```
+
+<span id="browse-keys" />
+
+## Keys ब्राउज़ करें
+
+keys और उनकी वैल्यू देखने के लिए डैशबोर्ड (`lizard open`) में **Redis ब्राउज़र** खोलें। ऐडऑन की कनेक्शन वैल्यू के साथ लोकल एक्सेस के लिए:
+
+```bash
+lizard run --service redis -- sh -c 'exec redis-cli -u "$REDIS_URL"'
+```
+
+<span id="grow-storage" />
+
+## स्टोरेज बढ़ाएँ
+
+```bash
+lizard scale --service redis --storage 4096
+```
+
+स्टोरेज सिर्फ़ बढ़ाया जा सकता है, घटाया नहीं जा सकता। साइज़ 512, 1024, 2048, 4096, 8192 या 16384 MB हो सकते हैं। वॉल्यूम बढ़ाने पर Redis तब तक बंद रहता है जब तक Lizard उसका डेटा बड़े वॉल्यूम में कॉपी नहीं कर लेता, फिर उसे दोबारा चालू कर दिया जाता है, इसलिए थोड़ी देर के आउटेज के लिए तैयार रहें। पॉज़ किए गए इंस्टेंस का साइज़ बदलने से पहले उसे [`lizard resume`](/cli/pause) से फिर से चालू करें।
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [Managed ऐडऑन](/addons): नामकरण, रेफरेंस और डैशबोर्ड ब्राउज़र।
+- [बैकग्राउंड वर्कर्स](/deploy/workers): Redis को क्यू से जॉब्स लेने वाले वर्कर के साथ जोड़ना।
+
+`lizard run --service redis` ऐडऑन की पब्लिक कनेक्शन वैल्यू के साथ कमांड आपकी मशीन पर शुरू करता है। `redis-cli` को अपनी मशीन पर इंस्टॉल करें।

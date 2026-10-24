@@ -1,0 +1,131 @@
+---
+description: "बिना HTTP पोर्ट के क्यू कंज्यूमर और पोलिंग लूप चलाएँ। containerPort=0 से क्या बदलता है, वर्कर मोड कैसे चालू करें, और कब इसे इस्तेमाल न करें।"
+---
+
+<span id="background-workers" />
+
+# बैकग्राउंड वर्कर
+
+Lizard पर बैकग्राउंड वर्कर ऐसी सर्विस है जिसका कोई HTTP पोर्ट नहीं होता: क्यू कंज्यूमर, अपडेट के लिए पोल करने वाला बॉट, रिकंसाइलर या पोलिंग लूप। कंटेनर पोर्ट को `0` पर सेट करके इसे **वर्कर मोड** में चलाएँ, जैसे `lizard up --port 0` से। वर्कर को न `PORT` मिलता है, न रेडीनेस प्रोब और न पब्लिक रूट, इसलिए HTTP का जवाब न देने पर उसे कभी अनहेल्दी नहीं माना जाता। जॉब क्यू के लिए इसे [Managed Redis](/addons/redis) के साथ इस्तेमाल करें। चैट बॉट भी वर्कर ही होते हैं; [Telegram बॉट](/guides/telegram-bot) और [Discord बॉट](/guides/discord-bot) की गाइड देखें।
+
+<span id="what-worker-mode-changes" />
+
+## वर्कर मोड से क्या बदलता है
+
+जब `containerPort=0` होता है, तो प्लेटफ़ॉर्म:
+
+- **`PORT` इंजेक्ट नहीं करता**: वर्कर किसी पोर्ट से बाइंड नहीं होता।
+- **TCP रेडीनेस प्रोब नहीं चलाता**: इसलिए गलत "unhealthy" स्टेटस नहीं आता। नया पॉड शुरू होने से पहले पुराना पॉड बंद हो जाता है।
+- synthesized Dockerfile में **`EXPOSE` नहीं जोड़ता**।
+- **लोड बैलेंसर में रूट रजिस्टर नहीं करता**: कुछ भी सर्व नहीं होता। (सर्विस पर जनरेट किया गया `*.onlizard.com` डोमेन दिख सकता है, लेकिन वह रिस्पॉन्स नहीं देगा।)
+
+<span id="enable-worker-mode" />
+
+## वर्कर मोड चालू करें
+
+तीन बराबर तरीके:
+
+```bash
+# New upload-source worker
+lizard up --port 0
+
+# Flip an existing service
+lizard port 0 --service worker
+
+# Via the config:apply path
+lizard service set worker --set containerPort=0
+```
+
+पोर्ट बदलने के बाद वर्कर मोड लागू करने के लिए रीडिप्लॉय करें।
+
+<span id="check-the-current-port" />
+
+## मौजूदा पोर्ट देखें
+
+```bash
+lizard port --service worker
+```
+
+कमांड मौजूदा कंटेनर पोर्ट प्रिंट करती है, या पोर्ट `0` होने पर `worker mode`।
+
+<span id="when-not-to-use-worker-mode" />
+
+## वर्कर मोड कब *न* इस्तेमाल करें
+
+जो सामान्य HTTP सर्विस बस धीरे शुरू होती है, उसके लिए वर्कर मोड इस्तेमाल न करें। वर्कर मोड रीचेबिलिटी चेक को पूरी तरह बंद कर देता है, इसलिए वह ऐसे सर्वर को नहीं पकड़ पाएगा जो पोर्ट पर सुन ही नहीं रहा। अगर आपकी सर्विस को ट्रैफ़िक सर्व करना है, तो असली पोर्ट रखें और इसके बजाय स्टार्टअप की समस्या ठीक करें।
+
+<span id="run-a-queue-consumer" />
+
+## क्यू कंज्यूमर चलाएँ
+
+[redis-worker उदाहरण](https://github.com/lizard-build/docs/tree/23635ba7e162bafce75d3f6206553b3ef2c0c48e/_examples/redis-worker) इस्तेमाल करें। यह जॉब को pending लिस्ट से processing लिस्ट में ले जाता है, उसका अपरकेस नतीजा सेव करता है, और Redis ट्रांज़ैक्शन में जॉब को acknowledge (ack) करता है। एक ही रेप्लिका रखें: स्टार्टअप पर रिकवरी यह मानकर चलती है कि कंज्यूमर एक ही है। उदाहरण Python 3.13 और redis-py 6.4.0 इस्तेमाल करता है।
+
+उस डायरेक्टरी से, जिसमें इसका Dockerfile है:
+
+```bash
+lizard init --name queue-example
+lizard add --service worker
+lizard add redis
+lizard secrets set REDIS_URL='${{redis.REDIS_URL}}' --service worker
+lizard up --service worker --port 0
+```
+
+अगर कोई कमांड बताए कि ऑथेंटिकेशन ज़रूरी है, तो `lizard login` से साइन इन करें। अगर डेटाबेस का नाम `redis` नहीं है, तो उसका असली नाम इस्तेमाल करें। रेफ़रेंस को सिंगल कोट्स में ही रहने दें। इसे ऐप अपलोड करने से पहले सेट करें।
+
+आख़िरी डिप्लॉय इवेंट देखें, फिर वर्कर जाँचें:
+
+```bash
+lizard port --service worker
+lizard logs --service worker --json
+```
+
+अपने कंप्यूटर से एक जॉब भेजें। `lizard run --service redis` Redis ऐडऑन की कनेक्शन वैल्यू के साथ एक लोकल कमांड चलाता है, जिसमें उसका पब्लिक `REDIS_URL` भी शामिल है:
+
+```bash
+python3 -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+lizard run --service redis -- python jobs.py enqueue first-job
+lizard run --service redis -- python jobs.py result first-job
+```
+
+प्रोसेस पहले `Queue worker ready` प्रिंट करता है, फिर जॉब चलने के बाद `Processed first-job`। अगर लॉग टेल खाली है, तो जॉब वाली जाँच पर भरोसा करें; [टेस्ट के नतीजों](/guides/validation) में लॉगिंग की वह सीमा दर्ज है जो टेस्ट में दिखी। result कमांड 30 सेकंड तक इंतज़ार करती है और `{"id": "first-job", "result": "HELLO"}` प्रिंट करती है। सिर्फ़ प्रोसेस का चलना यह साबित नहीं करता कि वह जॉब प्रोसेस कर सकता है।
+
+<span id="verify-a-restart" />
+
+## रीस्टार्ट जाँचें
+
+इस टेस्ट सर्विस के लिए वर्कर को रीस्टार्ट करें और एक और जॉब भेजें:
+
+```bash
+lizard restart --service worker
+lizard run --service redis -- python jobs.py result first-job
+lizard run --service redis -- python jobs.py enqueue after-restart
+lizard run --service redis -- python jobs.py result after-restart
+```
+
+अगर 30 सेकंड बाद भी `after-restart` का नतीजा नहीं आता, तो `lizard ps --json` में सर्विस के फिर से `running` होने का इंतज़ार करें और result कमांड दोबारा चलाएँ। दोनों नतीजे `HELLO` होने चाहिए। पहला नतीजा Redis में रहता है, इसलिए वर्कर के रीस्टार्ट से वह नहीं मिटता। स्टार्टअप पर अकेला कंज्यूमर processing लिस्ट की अधूरी एंट्रियों को वापस pending लिस्ट में डाल देता है।
+
+यह डेमो सिर्फ़ `jobs.py` से बनाई गई JSON जॉब्स स्वीकार करता है। इसमें डेड-लेटर क्यू, untrusted प्रोड्यूसर से आने वाले डेटा का वैलिडेशन या exactly-once बाहरी साइड इफ़ेक्ट नहीं हैं। पेमेंट, ईमेल या दूसरे साइड इफ़ेक्ट के लिए कोई भरोसेमंद क्यू लाइब्रेरी और idempotent हैंडलर इस्तेमाल करें। Redis की ड्यूरेबिलिटी और बैकअप वर्कर के रीस्टार्ट व्यवहार से अलग विषय हैं; [स्टोरेज और रिकवरी](/platform/storage-and-recovery) देखें।
+
+<span id="troubleshooting" />
+
+## समस्या निवारण
+
+| लक्षण | क्या जाँचें |
+|---|---|
+| सर्विस मौजूद नहीं है | प्रोजेक्ट बनाने के बाद `lizard add --service worker` चलाएँ। |
+| `Queue worker ready` नहीं दिखता | सर्विस-स्कोप वाला `REDIS_URL`, ऐडऑन की रेडीनेस और कनेक्शन एरर जाँचें। कनेक्शन स्ट्रिंग कभी प्रिंट न करें। |
+| वर्कर HTTP पोर्ट की उम्मीद करता है | `containerPort=0` सेट करें; चल रही सर्विस पर इसे बदलने के बाद रीडिप्लॉय ज़रूरी है। |
+| 30 सेकंड बाद भी नतीजा नहीं | वर्कर के लॉग पढ़ें और जॉब ID जाँचें। यह उदाहरण सिर्फ़ अपनी `jobs.py` से आई जॉब्स स्वीकार करता है। |
+| साइड इफ़ेक्ट दो बार हुए | रीट्राय से काम दोबारा चल सकता है। यह उदाहरण नतीजा जॉब ID के हिसाब से सेव करता है; बाहरी साइड इफ़ेक्ट के लिए अलग से idempotency चाहिए। |
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [`lizard port`](/cli/port): सर्विस का कंटेनर पोर्ट देखें या बदलें।
+- [सर्विस कभी हेल्दी नहीं होती](/deploy/troubleshooting/service-never-healthy): वर्कर मोड से जुड़ी सबसे आम गलत कॉन्फ़िगरेशन।
+- [मैनेज्ड ऐडऑन](/addons): स्टेटफुल वर्कलोड के लिए Redis, Postgres और S3।
+- [Python ऐप होस्टिंग](https://lizard.build/blog/python-app-hosting#django-postgres-and-celery-need-separate-checks): Celery वर्कर वही इमेज है, बस कमांड अलग है और HTTP पोर्ट नहीं है।
+
+जाँचे गए वर्ज़न, क्लाउड पर मिले नतीजों और बाकी सीमाओं के लिए [सिनेरियो टेस्ट के नतीजे](/guides/validation) देखें।

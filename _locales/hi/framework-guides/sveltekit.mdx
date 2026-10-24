@@ -1,0 +1,133 @@
+---
+description: "adapter-node के साथ Lizard पर SvelteKit 2 या 3 डिप्लॉय करें। मेल खाता एडेप्टर वर्ज़न चुनें, पोर्ट 3000 के लिए बिल्ड करें, पब्लिक origin सेट करें, और adapter-static वाला तरीका इस्तेमाल करें।"
+---
+
+<span id="deploy-sveltekit-on-lizard" />
+
+# Lizard पर SvelteKit डिप्लॉय करें
+
+Lizard के लिए SvelteKit सर्वर बिल्ड करने के लिए `@sveltejs/adapter-node` इस्तेमाल करें। यह `build/` बनाता है, जो पोर्ट `3000` पर `node build` से शुरू होता है। एडेप्टर को साफ़ तौर पर इंस्टॉल और कॉन्फ़िगर करें; जो स्कैफ़ोल्ड अब भी `adapter-auto` इस्तेमाल करता है, उससे Node डिप्लॉयमेंट टारगेट तय नहीं होता।
+
+[पूरे सोर्स उदाहरण](https://github.com/lizard-build/docs/tree/main/_examples/sveltekit) से शुरू करें, जिसमें इस रेसिपी में इस्तेमाल हुई कॉन्फ़िगरेशन और फ़ाइलें शामिल हैं।
+
+<span id="configure-the-adapter" />
+
+## एडेप्टर कॉन्फ़िगर करें
+
+एडेप्टर का major वर्ज़न SvelteKit के major वर्ज़न से मेल खाना चाहिए। SvelteKit 2 पर, जिसे उदाहरण और क्लाउड चेक इस्तेमाल करते हैं, adapter-node 5 इंस्टॉल करें:
+
+```bash
+npm install --save-dev @sveltejs/adapter-node@5
+```
+
+`@5` के बिना npm adapter-node 6 चुनता है, जिसे SvelteKit 3 चाहिए, और `ERESOLVE` एरर के साथ रुक जाता है।
+
+`svelte.config.js` में अपनी मौजूदा preprocess और दूसरी सेटिंग्स रहने दें, लेकिन `kit.adapter` को Node एडेप्टर पर सेट करें:
+
+```js
+import adapter from '@sveltejs/adapter-node';
+
+export default {
+  kit: { adapter: adapter() },
+};
+```
+
+SvelteKit 3 पर adapter-node 6 पाने के लिए `npm install --save-dev @sveltejs/adapter-node` चलाएँ। SvelteKit 3 अब `svelte.config.js` नहीं पढ़ता; एडेप्टर को `vite.config.js` में `sveltekit()` प्लगइन को दें:
+
+```js
+import adapter from '@sveltejs/adapter-node';
+import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  plugins: [sveltekit({ adapter: adapter() })],
+});
+```
+
+SvelteKit 3 को Node 22.17 या उसके बाद का वर्ज़न चाहिए; डिफ़ॉल्ट Node 22 बिल्ड इमेज यह शर्त पूरी करती है। हमने SvelteKit 3 वाले चरण लोकल रूप से बिल्ड किए हैं, लेकिन अभी तक Lizard पर डिप्लॉय नहीं किए हैं।
+
+सिर्फ़ वही डिप्लॉयमेंट एडेप्टर रखें जिसे आप इस्तेमाल करना चाहते हैं। ख़ास तौर पर, बिना इस्तेमाल वाली `@sveltejs/adapter-static` डिपेंडेंसी मौजूदा डिटेक्टर में स्टैटिक तरीका चुनवा सकती है, भले ही आपका कॉन्फ़िगरेशन adapter-node इम्पोर्ट करता हो।
+
+| सेटिंग | वैल्यू |
+|---|---|
+| बिल्ड | `npm run build`, आमतौर पर `vite build` |
+| आउटपुट | `build/` |
+| रनटाइम | `node build` |
+| होस्ट और पोर्ट | `HOST=0.0.0.0`, `PORT=3000` |
+| सर्विस पोर्ट | `3000` |
+
+<span id="test-the-production-server" />
+
+## प्रोडक्शन सर्वर टेस्ट करें
+
+```bash
+npm ci
+npm run build
+HOST=0.0.0.0 PORT=3000 ORIGIN=http://localhost:3000 node build
+```
+
+सर्वर पर रेंडर होने वाला कोई पेज खोलें, और अगर ऐप में form action है तो उसे सबमिट करें। इस गाइड में इस्तेमाल होने वाले डिटेक्शन के लिए एडेप्टर का डिफ़ॉल्ट आउटपुट पाथ न बदलें।
+
+adapter-node 6 `ORIGIN` को नज़रअंदाज़ करता है। यह origin को `https` और रिक्वेस्ट के `Host` हेडर से बनाता है, इसलिए SvelteKit 3 पर इस लोकल टेस्ट में `http://localhost:3000` से भेजे गए फ़ॉर्म को 403 मिलता है। फ़ॉर्म की जाँच डिप्लॉय किए गए HTTPS URL पर करें।
+
+<span id="deploy-and-set-the-public-origin" />
+
+## डिप्लॉय करें और पब्लिक origin सेट करें
+
+[CLI सेटअप](/framework-guides#prepare-the-project) के बाद:
+
+```bash
+lizard init --name sveltekit-app
+lizard add --service web
+lizard up --service web --port 3000
+lizard ps --json
+```
+
+SvelteKit 2 पर `ORIGIN` को डिप्लॉयमेंट आउटपुट में दिए गए सटीक पब्लिक HTTPS origin पर सेट करें, बिना पाथ के। उदाहरण के लिए, इस प्लेसहोल्डर की जगह अपना असली URL लिखें:
+
+```bash
+lizard secrets set ORIGIN=https://YOUR_PUBLIC_HOST --service web
+```
+
+अगर विज़िटर आपके कस्टम डोमेन से साइट खोलेंगे, तो इसके बजाय कस्टम डोमेन को origin के रूप में सेट करें। वेरिएबल बदलने के बाद फ़ॉर्म फिर से जाँचें। कई allowed origins या प्रॉक्सी से बनने वाले URL के लिए [SvelteKit Node सर्वर गाइड](https://svelte.dev/docs/kit/adapter-node) पढ़ें और भरोसेमंद प्रॉक्सी हेडर सोच-समझकर कॉन्फ़िगर करें।
+
+SvelteKit 3 पर `ORIGIN` सेट न करें: ऐप अपना origin `Host` हेडर से लेता है, जिसमें पब्लिक होस्टनेम या आपका कस्टम डोमेन होता है। एक तय origin पिन करने के लिए `sveltekit()` ऑप्शन में `paths: { origin: 'https://YOUR_PUBLIC_HOST' }` सेट करें; SvelteKit इसे बिल्ड के समय पढ़ता है।
+
+<span id="verify-and-troubleshoot" />
+
+## जाँच और समस्या का समाधान
+
+`lizard logs --build --service web --json` और `lizard logs --service web --json` से बिल्ड और रनटाइम लॉग पढ़ें। किसी अंदरूनी रूट को सीधे खोलें, एक फ़ॉर्म सबमिट करें, और किसी न मौजूद रूट की रिक्वेस्ट भेजें।
+
+अगर फ़ॉर्म cross-site सबमिशन एरर दिखाते हैं, तो सिक्योरिटी चेक बंद करने से पहले `ORIGIN` (SvelteKit 2) या `paths.origin` (SvelteKit 3) जाँचें। अगर `node build` को सर्वर नहीं मिलता, तो चालू एडेप्टर और आउटपुट पाथ जाँचें। lizardpack वाला तरीका इस्तेमाल करने के लिए सर्विस के कमांड ओवरराइड सेट न करें।
+
+<span id="static-sveltekit-sites" />
+
+## स्टैटिक SvelteKit साइटें
+
+जो ऐप अपने सभी ज़रूरी पेज प्रीरेंडर कर सकता है, वह `@sveltejs/adapter-static`, उसका डिफ़ॉल्ट `build/` आउटपुट और सर्विस पोर्ट `80` इस्तेमाल कर सकता है। यह आउटपुट server actions या रिक्वेस्ट-टाइम एंडपॉइंट नहीं चला सकता। जिन रूट्स की ज़रूरत है, उनके लिए प्रीरेंडरिंग कॉन्फ़िगर करें; सिर्फ़ पैकेज इंस्टॉल करना काफ़ी नहीं है।
+
+SvelteKit 2 पर `@sveltejs/adapter-static@3` इंस्टॉल करें (वर्ज़न 4 को SvelteKit 3 चाहिए) और `svelte.config.js` में एडेप्टर का इम्पोर्ट बदलें:
+
+```js
+import adapter from '@sveltejs/adapter-static';
+
+export default {
+  kit: { adapter: adapter() },
+};
+```
+
+SvelteKit 3 पर `@sveltejs/adapter-static` इंस्टॉल करें और `vite.config.js` में adapter-node की जगह इसे इम्पोर्ट करें।
+
+जिस साइट के सभी रूट्स जेनरेट किए जा सकते हैं, उसके लिए `src/routes/+layout.js` में यह जोड़ें:
+
+```js
+export const prerender = true;
+export const trailingSlash = 'always';
+```
+
+बिना इस्तेमाल वाले डिप्लॉयमेंट एडेप्टर डिपेंडेंसी से हटा दें। `npm run build` चलाएँ और जाँचें कि `build/` में हर ज़रूरी पेज मौजूद है। डिफ़ॉल्ट आउटपुट के लिए सर्विस के कमांड ओवरराइड सेट न करें और पोर्ट `80` पर नई सर्विस डिप्लॉय करें। नए बिल्ड जेनरेट हुआ HTML सर्व करते हैं और न मिलने वाले पेजों के लिए HTTP 404 लौटाते हैं। nginx के लिए सर्वर रेसिपी वाला पोर्ट `3000` दोबारा इस्तेमाल न करें।
+
+जेनरेट किए गए HTML रूट्स और SPA फ़ॉलबैक में से चुनने के लिए [स्टैटिक रूट्स और 404](/framework-guides/static-routing) देखें। फ्रेमवर्क के विकल्पों और सीमाओं के लिए [SvelteKit स्टैटिक एडेप्टर](https://svelte.dev/docs/kit/adapter-static) देखें।
+
+9 सितंबर 2026 के डिप्लॉयमेंट चेक और उनकी सीमाओं के लिए [टेस्ट किए गए वर्ज़न और क्लाउड नतीजे](/framework-guides/validation) देखें।

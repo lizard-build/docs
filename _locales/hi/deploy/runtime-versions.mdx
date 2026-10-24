@@ -1,0 +1,113 @@
+---
+title: "Node.js, Python, Go या Ruby का वर्ज़न सेट करें"
+description: "वह Node.js, Python, Go या Ruby वर्ज़न सेट करें जिससे Lizard बिल्ड करता है: .nvmrc, engines.node, .python-version, requires-python, go.mod या .ruby-version।"
+---
+
+<span id="set-the-nodejs-python-go-or-ruby-version" />
+
+# Node.js, Python, Go या Ruby का वर्ज़न सेट करें
+
+जब lizardpack आपका प्रोजेक्ट बिल्ड करता है, तब Lizard रनटाइम वर्ज़न प्रोजेक्ट की फ़ाइलों से पढ़ता है: Node.js के लिए `.nvmrc` या `engines.node`, Python के लिए `.python-version` या `requires-python`, Go के लिए `go.mod` की `go` लाइन, और Ruby के लिए `.ruby-version` या `Gemfile` की `ruby` लाइन। वर्ज़न बदलने के लिए वह फ़ाइल एडिट करें और फिर से डिप्लॉय करें। ऐसी कोई फ़ाइल न हो, तो Lizard Node.js 22, Python 3.13, Go 1.24 या Ruby 3.4 इस्तेमाल करता है।
+
+**टेस्ट स्टेटस:** हमने 2026-10-12 को सैंपल प्रोजेक्ट्स पर lizardpack (वह बिल्ड प्लानर जिसे Lizard के बिल्डर चलाते हैं) चलाकर इस पेज का हर नियम जाँचा।
+
+<span id="where-lizard-looks" />
+
+## Lizard वर्ज़न कहाँ देखता है
+
+| भाषा | फ़ाइलें (जो पहले मिले, वही लागू) | वर्ज़न का कौन-सा हिस्सा लिया जाता है | डिफ़ॉल्ट | बेस इमेज |
+|---|---|---|---|---|
+| Node.js | `.nvmrc`, `.node-version`, `.tool-versions` (`nodejs` या `node`), `package.json` में `engines.node` | मेजर: `20.11.1` → `20` | `22` | `node:<major>-slim` |
+| Python | `.python-version`, `.tool-versions` (`python`), `pyproject.toml` में `requires-python` | मेजर और माइनर: `3.12.4` → `3.12` | `3.13` | `python:<x.y>-slim` |
+| Go | `go.mod` की `go` लाइन | मेजर और माइनर: `1.24.3` → `1.24` | `1.24` | बिल्ड के लिए `golang:<x.y>-alpine`, चलाने के लिए `alpine:3.19` |
+| Ruby | `.ruby-version`, `Gemfile` की `ruby` लाइन | मेजर और माइनर: `3.4.1` → `3.4` | `3.4` | `ruby:<x.y>-slim` |
+
+Lizard मेजर या मेजर/माइनर वर्ज़न का आधिकारिक इमेज टैग इस्तेमाल करता है और पैच नंबर हटा देता है। बिल्ड चलते समय वह टैग जिस पैच रिलीज़ की ओर इशारा करता है, हर बिल्ड को वही मिलती है।
+
+ये फ़ाइलें सिर्फ़ तब लागू होती हैं जब Dockerfile lizardpack लिखता है। [Lizard वर्ज़न फ़ाइलों को कब अनदेखा करता है](#when-lizard-ignores-version-files) देखें।
+
+<span id="change-the-nodejs-version" />
+
+## Node.js का वर्ज़न बदलें
+
+```bash
+echo 24 > .nvmrc
+lizard up --service web
+```
+
+GitHub सर्विस हो, तो इसके बजाय फ़ाइल कमिट करके पुश करें। नियम:
+
+- संख्या लिखें: `24`, `v24` और `24.1.0` तीनों से Node.js 24 चुना जाता है। `#` से शुरू होने वाली लाइनें Lizard छोड़ देता है।
+- `.nvmrc` में `lts/*` और `node` को Lizard छोड़ देता है और अगली फ़ाइल देखता है। `lts/iron` जैसे दूसरे उपनाम वह जैसे लिखे हैं वैसे ही इस्तेमाल करता है, और बिल्ड फ़ेल हो जाता है।
+- `.nvmrc` को `engines.node` पर प्राथमिकता मिलती है।
+- `engines.node` अपनी रेंज का सबसे छोटा वर्ज़न लेता है: `>=18` से Node.js 18 पर और `^20.11.0` से Node.js 20 पर बिल्ड होता है। `||` वाली रेंज के पहले हिस्से में डॉट न हो, जैसे `18 || 20`, तो बिल्ड फ़ेल हो जाता है; `^18.0.0 || ^20.0.0` से Node.js 18 पर बिल्ड होता है। वर्ज़न साफ़ तौर पर तय करने के लिए `.nvmrc` इस्तेमाल करें।
+
+<span id="change-the-python-version" />
+
+## Python का वर्ज़न बदलें
+
+```bash
+echo 3.12 > .python-version
+lizard up --service web
+```
+
+- `.python-version` में `3.12` या `3.12.4` जैसा वर्ज़न नंबर होना चाहिए। `#` से शुरू होने वाली लाइनें Lizard छोड़ देता है। `pypy3.10` जैसे दूसरे मान भी वह छोड़ देता है और अगली फ़ाइल पर चला जाता है।
+- `requires-python = ">=3.11"` से Python 3.11 पर बिल्ड होता है, जो रेंज का सबसे छोटा वर्ज़न है।
+- `">=3.11,<3.14"` जैसी ऊपरी सीमा वाली रेंज से ऐसा इमेज नाम बनता है जो मौजूद ही नहीं है, और बिल्ड फ़ेल हो जाता है। `.python-version` फ़ाइल जोड़ें; उसे प्राथमिकता मिलती है।
+- `runtime.txt` नहीं पढ़ी जाती।
+
+<span id="change-the-go-version" />
+
+## Go का वर्ज़न बदलें
+
+```bash
+go mod edit -go=1.25
+lizard up --service api
+```
+
+Lizard सिर्फ़ `go` लाइन पढ़ता है। `toolchain` लाइन वह नहीं पढ़ता।
+
+<span id="change-the-ruby-version" />
+
+## Ruby का वर्ज़न बदलें
+
+```bash
+echo 3.4.1 > .ruby-version
+lizard up --service web
+```
+
+सिर्फ़ संख्या लिखें। `rails new` फ़ाइल में `ruby-3.4.1` लिखता है, और Lizard `ruby-` प्रीफ़िक्स नहीं हटाता, इसलिए बिल्ड फ़ेल हो जाता है। `ruby "~> 3.3.0"` जैसी `Gemfile` लाइन से Ruby 3.3 पर बिल्ड होता है। जो Rails ऐप अपना जनरेट किया हुआ `Dockerfile` रखता है, वह वर्ज़न उसी फ़ाइल से लेता है; [Rails ऐप डिप्लॉय करें](/framework-guides/rails) देखें।
+
+<span id="when-lizard-ignores-version-files" />
+
+## Lizard वर्ज़न फ़ाइलों को कब अनदेखा करता है
+
+- **आपका अपना Dockerfile।** तब उसकी `FROM` लाइन तय करती है, जैसे `FROM node:24-slim`। [Dockerfile से Docker कंटेनर डिप्लॉय करें](/deploy/dockerfile) देखें।
+- **सर्विस पर सेट बिल्ड या स्टार्ट कमांड।** तब Lizard उन कमांड से एक तय इमेज पर Dockerfile लिखता है: `node:22-alpine`, `python:3.13-slim` या `golang:1.24-alpine`। वह पहले बिल्ड कमांड का पहला शब्द पढ़ता है, फिर स्टार्ट कमांड का। `go` से Go चुना जाता है; `python`, `python3`, `uv`, `gunicorn` या `uvicorn` से Python। अगर कोई भी कमांड इनमें से किसी से शुरू नहीं होती, जैसे `pip install …` के साथ `streamlit run …`, तो बिल्ड `node:22-alpine` इस्तेमाल करता है। वर्ज़न फ़ाइलों पर लौटने के लिए दोनों कमांड खाली करें:
+
+```bash
+lizard service set web --set buildCommand= --set startCommand=
+```
+
+चल रही सर्विस पर `buildCommand` खाली करने से रीबिल्ड अपने आप शुरू हो जाता है। `lizard redeploy` चलाने से पहले `lizard events` देखें: रीडिप्लॉय उस बिल्ड को रद्द करके दोबारा शुरू कर देगा। [बिल्ड का निर्णय क्रम](/concepts/build-pipeline#build-decision-order) देखें।
+
+<span id="check-which-version-a-build-used" />
+
+## देखें कि बिल्ड ने कौन-सा वर्ज़न इस्तेमाल किया
+
+```bash
+lizard logs --build --service web
+```
+
+बिल्ड लॉग में बेस इमेज का नाम दिखता है, जैसे `node:24-slim` या `python:3.12-slim`। रनटाइम पर वर्ज़न जाँचने के लिए ऐप शुरू होते समय उसे प्रिंट करें, जैसे Node.js में `process.version` या Python में `sys.version`, और `lizard logs --service web` पढ़ें।
+
+<span id="related" />
+
+## संबंधित
+
+- [बिल्ड पाइपलाइन](/concepts/build-pipeline)
+- [Node.js ऐप डिप्लॉय करें](/framework-guides/nodejs)
+- [Go ऐप डिप्लॉय करें](/framework-guides/go)
+- [Streamlit ऐप डिप्लॉय करें](/framework-guides/streamlit)
+- [FastAPI डिप्लॉय करें](/framework-guides/fastapi)
+- [Django डिप्लॉय करें](/framework-guides/django)

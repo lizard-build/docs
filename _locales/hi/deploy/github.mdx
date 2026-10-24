@@ -1,0 +1,106 @@
+---
+title: "GitHub से डिप्लॉय करें: git push to deploy"
+description: "GitHub रिपॉज़िटरी कनेक्ट करें, ताकि ट्रैक की गई ब्रांच पर हर पुश के बाद बिल्ड और रीडिप्लॉय हो। इसमें प्राइवेट रिपॉज़िटरी, ब्रांच बदलना और मोनोरेपो भी शामिल हैं।"
+---
+
+<span id="deploy-from-github" />
+
+# GitHub से डिप्लॉय करें
+
+git push to deploy के लिए GitHub रिपॉज़िटरी कनेक्ट करें: जब भी आप ट्रैक की गई ब्रांच पर पुश करते हैं, Lizard आपका ऐप बिल्ड और रीडिप्लॉय करता है। सर्विस बनाने के लिए `lizard add -r owner/repo` चलाएँ; प्राइवेट रिपॉज़िटरी के लिए पहले `lizard git connect` से Lizard GitHub App कनेक्ट करें। GitHub में रखे ऐप को चलाने का यही सुझाया गया तरीका है। जिस कोड का कोई रिमोट नहीं है, उसके लिए इसके बजाय [लोकल कोड से डिप्लॉय करें](/deploy/upload)।
+
+<span id="create-a-service-from-a-repo" />
+
+## रिपॉज़िटरी से सर्विस बनाएँ
+
+```bash
+lizard add -r your-org/your-app
+```
+
+यह `github` सोर्स वाली सर्विस बनाता है और बैकग्राउंड में पहला बिल्ड शुरू करता है: Lizard रिपॉज़िटरी क्लोन करता है और स्टैक का पता लगाता है ([lizardpack](/concepts/build-pipeline))। कमांड कोई URL प्रिंट नहीं करती। बिल्ड की प्रगति `lizard logs --build --service <name>` से देखें; सर्विस लाइव होने के बाद `lizard ps` URL दिखाता है। काम के फ़्लैग:
+
+| फ़्लैग | उद्देश्य |
+|------|---------|
+| `-r, --repo <owner/repo>` | सोर्स रिपॉज़िटरी |
+| `-n, --name <name>` | सर्विस का नाम (`${{name.KEY}}` रेफ़रेंस और डैशबोर्ड में इस्तेमाल होता है) |
+| `-v, --variables <K=V>` | शुरुआती एनवायरनमेंट वेरिएबल सेट करें; कई बार दिया जा सकता है |
+| `--region <code>` | किस रीजन में डिप्लॉय करना है |
+| `--no-deploy` | रिपॉज़िटरी जोड़ें, लेकिन पहला बिल्ड न चलाएँ |
+
+<span id="private-repositories" />
+
+## प्राइवेट रिपॉज़िटरी
+
+प्राइवेट रिपॉज़िटरी का एक्सेस देने के लिए हर अकाउंट पर एक बार Lizard GitHub App कनेक्ट करें:
+
+```bash
+lizard git connect
+lizard git status        # show connection + repo status
+```
+
+डैशबोर्ड (`lizard open`) के **GitHub इंटीग्रेशन** पेज से भी आप कनेक्ट कर सकते हैं और रिपॉज़िटरी एक्सेस मैनेज कर सकते हैं।
+
+<span id="point-an-existing-service-at-a-repo" />
+
+## मौजूदा सर्विस को रिपॉज़िटरी से जोड़ें
+
+किसी सर्विस को Git सोर्स पर स्विच करने (या रिपॉज़िटरी/ब्रांच बदलने) के लिए:
+
+```bash
+lizard service set api \
+  --set sourceType=github \
+  --set repoUrl=https://github.com/your-org/your-app \
+  --set branch=main
+```
+
+बिल्ड फ़ील्ड बदलने पर चल रही सर्विस अपने आप रीबिल्ड होती है। इसके बाद `redeploy` चलाने से [वह बिल्ड रद्द हो जाता है और दूसरा शुरू हो जाता है](/deploy/troubleshooting/double-build)। क्रैश हुई या कभी डिप्लॉय न हुई सर्विस के लिए `lizard redeploy` चलाना ज़रूरी है।
+
+> **नोट:** `lizard up` हमेशा `sourceType=upload` ज़बरदस्ती सेट कर देता है। Git से जुड़ी सर्विस को अपडेट करने के लिए इसे इस्तेमाल न करें: इसके बजाय रिमोट पर पुश करें या `lizard redeploy` इस्तेमाल करें। जिस फ़ोल्डर से कोई सर्विस लिंक नहीं है, उसमें `up` वह सर्विस चुनता है जिसका नाम फ़ोल्डर या `package.json` के नाम पर है, इसलिए रिपॉज़िटरी के क्लोन में वह आपकी GitHub सर्विस को अपलोड पर स्विच कर सकता है।
+
+<span id="auto-redeploy-on-push" />
+
+## पुश पर ऑटो-रीडिप्लॉय
+
+`repoUrl` सेट होने के बाद, मेल खाने वाली `branch` पर हर पुश GitHub वेबहुक के ज़रिए अपने आप रीडिप्लॉय करवाता है। Lizard GitHub App (`lizard git connect`) कनेक्ट करें, ताकि Lizard को रिपॉज़िटरी के पुश इवेंट मिलें। कौन-से पुश रीडिप्लॉय ट्रिगर करें, यह सीमित करने के लिए:
+
+- **`rootDirectory`**: सिर्फ़ एक सबडायरेक्टरी को बिल्ड करें (मोनोरेपो के लिए)।
+- **`watchPatterns`**: सिर्फ़ तभी रीडिप्लॉय करें जब मेल खाने वाले पाथ बदलें।
+
+```bash
+lizard service set api --set watchPatterns='apps/api/**,packages/**'
+```
+
+पुश से डिप्लॉय रोकने के लिए डैशबोर्ड में सर्विस की सेटिंग्स में **ऑटो-डिप्लॉय** बंद करें। [पॉज़ की गई](/cli/pause) सर्विस भी तब तक पुश को अनदेखा करती है जब तक आप उसे resume नहीं करते।
+
+<span id="switch-branches" />
+
+## ब्रांच बदलें
+
+```bash
+lizard git checkout api staging      # move the `api` service to the `staging` branch and redeploy
+```
+
+<span id="monorepos" />
+
+## मोनोरेपो
+
+जिस रिपॉज़िटरी में कई ऐप्स हों, उसमें हर ऐप के लिए एक सर्विस बनाएँ और उसकी `rootDirectory` को सबपाथ पर सेट करें:
+
+```bash
+lizard add -r your-org/monorepo -n api --no-deploy
+lizard service set api --set rootDirectory=apps/api
+lizard redeploy --service api
+```
+
+अगर आपकी मौजूदा डायरेक्टरी किसी रिपॉज़िटरी के अंदर का सब-ऐप है और उसका पैरेंट पहले से लिंक है, तो सर्विस पैरेंट के प्रोजेक्ट में जोड़ें और `rootDirectory` को cwd के सबपाथ पर सेट करें।
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [बिल्ड पाइपलाइन](/concepts/build-pipeline): आपके स्टैक का पता कैसे लगाया जाता है और उसे कैसे बिल्ड किया जाता है।
+- [फ़्रेमवर्क गाइड](/framework-guides): [Next.js](/framework-guides/nextjs), [Nuxt](/framework-guides/nuxt), [Django](/framework-guides/django), [FastAPI](/framework-guides/fastapi), [Rails](/framework-guides/rails), [Go](/framework-guides/go) और दूसरे फ़्रेमवर्क के लिए बिल्ड कमांड और पोर्ट।
+- [Dockerfile से डिप्लॉय करें](/deploy/dockerfile): जब रिपॉज़िटरी में अपना Dockerfile हो।
+- [लोकल कोड से डिप्लॉय करें](/deploy/upload): जब आपके पास रिमोट न हो।
+- [`lizard git`](/cli/git): `connect`, `status` और `checkout` का पूरा कमांड रेफ़रेंस।
+- [एप्लिकेशन के हिसाब से होस्ट चुनें](https://lizard.build/blog/google-antigravity-how-to-deploy-your-app-to-production#choose-the-host-by-the-application): किसी एजेंट के लिखे ऐप के लिए होस्ट चुनना।

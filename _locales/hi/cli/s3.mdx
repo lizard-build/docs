@@ -1,0 +1,104 @@
+---
+description: "lizard s3 लोकल फ़ाइल को Managed Object Storage बकेट में अपलोड करता है, उसके ऑब्जेक्ट्स लिस्ट करता है और अस्थायी डाउनलोड लिंक प्रिंट करता है, AWS SDK के बिना।"
+---
+
+# lizard s3
+
+[Managed Object Storage](/addons/storage) बकेट में ऑब्जेक्ट अपलोड और लिस्ट करें, और अस्थायी डाउनलोड लिंक प्रिंट करें।
+
+<span id="usage" />
+
+## उपयोग
+
+```bash
+lizard s3 upload <file> [flags]
+lizard s3 list [flags]
+lizard s3 url <key> [flags]
+```
+
+तीनों कमांड प्रोजेक्ट के इकलौते S3 ऐडऑन और उसके `default` बकेट पर काम करती हैं, जब तक आप `--addon` और `--bucket` न दें। पहले `lizard add s3` से ऐडऑन जोड़ें।
+
+<span id="subcommands" />
+
+## सबकमांड
+
+### `lizard s3 upload <file>`
+
+लोकल फ़ाइल अपलोड करें। यह की (key), ETag और साइज़ प्रिंट करता है, और बकेट पब्लिक हो तो URL भी। `default` बकेट प्राइवेट है; किसी बकेट को पब्लिक बनाने के लिए डैशबोर्ड में S3 ब्राउज़र का उपयोग करें।
+
+`upload` पूरी फ़ाइल को Lizard API से एक ही रिक्वेस्ट में भेजता है, 150 MB तक। बड़ी फ़ाइलों के लिए ऐडऑन के क्रेडेंशियल्स के साथ S3 क्लाइंट का उपयोग करें; [Managed Object Storage](/addons/storage) देखें।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `--addon <name>` | S3 ऐडऑन का नाम या ID (डिफ़ॉल्ट: प्रोजेक्ट का इकलौता S3 ऐडऑन) |
+| `--bucket <name>` | टारगेट बकेट (डिफ़ॉल्ट `default`) |
+| `--key <key>` | ऑब्जेक्ट की (डिफ़ॉल्ट: फ़ाइल का नाम) |
+| `--content-type <type>` | Content-Type हेडर (डिफ़ॉल्ट: फ़ाइल एक्सटेंशन से अनुमानित) |
+| `-p, --project <id>` | प्रोजेक्ट का नाम, स्लग या ID |
+
+### `lizard s3 url <key>`
+
+किसी ऑब्जेक्ट का अस्थायी डाउनलोड लिंक प्रिंट करें। लिंक एक्सपायर होने तक जिसके पास भी यह लिंक है, वह बिना किसी क्रेडेंशियल के ऑब्जेक्ट डाउनलोड कर सकता है, प्राइवेट बकेट से भी। `--json` के साथ यह `url`, `key`, `bucket`, `expiresIn` और `expiresAt` प्रिंट करता है।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `--addon <name>` | S3 ऐडऑन का नाम या ID (डिफ़ॉल्ट: प्रोजेक्ट का इकलौता S3 ऐडऑन) |
+| `--bucket <name>` | बकेट (डिफ़ॉल्ट `default`) |
+| `--expires <seconds>` | लिंक कितने सेकंड तक काम करेगा (डिफ़ॉल्ट `3600`, अधिकतम `604800` = 7 दिन) |
+| `-p, --project <id>` | प्रोजेक्ट का नाम, स्लग या ID |
+
+### `lizard s3 list`
+
+बकेट के ऑब्जेक्ट लिस्ट करें (उपनाम `ls`)।
+
+| फ्लैग | विवरण |
+|------|-------------|
+| `--addon <name>` | S3 ऐडऑन का नाम या ID |
+| `--bucket <name>` | लिस्ट करने के लिए बकेट (डिफ़ॉल्ट `default`) |
+| `--prefix <prefix>` | सिर्फ़ इस प्रीफ़िक्स के अंदर की keys |
+| `-p, --project <id>` | प्रोजेक्ट का नाम, स्लग या ID |
+
+हर अकाउंट अपने सभी ऐडऑन में कुल 16 GiB तक स्टोर कर सकता है। स्टोरेज का बिल स्टोर किए गए बाइट्स के हिसाब से $0.0135 प्रति GB-माह की दर से बनता है।
+
+<span id="examples" />
+
+## उदाहरण
+
+<span id="upload-a-file" />
+
+### फ़ाइल अपलोड करें
+
+```bash
+lizard s3 upload ./logo.png --key assets/logo.png
+```
+
+<span id="share-a-private-file-for-a-day" />
+
+### प्राइवेट फ़ाइल एक दिन के लिए शेयर करें
+
+```bash
+lizard s3 url assets/logo.png --expires 86400
+```
+
+<span id="list-objects-under-a-prefix" />
+
+### किसी प्रीफ़िक्स के अंदर के ऑब्जेक्ट लिस्ट करें
+
+```bash
+lizard s3 list --prefix assets/
+```
+
+<span id="use-a-second-s3-addon" />
+
+### दूसरा S3 ऐडऑन इस्तेमाल करें
+
+```bash
+lizard s3 upload ./backup.tar.gz --addon s3-autumn-bear
+```
+
+<span id="see-also" />
+
+## यह भी देखें
+
+- [Managed Object Storage](/addons/storage) — एनवायरनमेंट वेरिएबल्स, AWS SDK सेटअप और पब्लिक फ़ाइलें
+- [lizard add](/cli/add) — `lizard add s3` से S3 ऐडऑन जोड़ें
