@@ -1,40 +1,40 @@
 ---
-description: "Lizard AI एजेंटों के लिए क्लाउड सैंडबॉक्स चलाता है: Firecracker microVMs जिन्हें आप Lizard SDK या Lizard CLI से बनाते हैं। एजेंट Managed Postgres, Redis और ऑब्जेक्ट स्टोरेज के साथ ऐप भी डिप्लॉय कर सकते हैं।"
+description: "Lizard AI एजेंट्स के लिए क्लाउड सैंडबॉक्स चलाता है: Firecracker microVMs, जिन्हें आप Lizard SDK या Lizard CLI से बनाते हैं। एजेंट Managed Postgres, Redis और Object Storage के साथ ऐप भी डिप्लॉय कर सकते हैं।"
 ---
 
 <span id="lizard-documentation" />
 
-# Lizard दस्तावेज़ीकरण
+# Lizard डॉक्यूमेंटेशन
 
 <span id="what-is-lizard" />
 
 ## Lizard क्या है?
 
-Lizard AI एजेंटों के लिए एक क्लाउड सैंडबॉक्स प्लेटफ़ॉर्म है। Lizard Sandboxes Firecracker microVMs हैं, जिनमें से प्रत्येक का अपना कर्नेल होता है: एक एजेंट उनमें कोड और शेल कमांड चलाता है, डेस्कटॉप और ब्राउज़र का उपयोग करता है, अपने पोर्ट के लिए निजी HTTPS URL खोलता है और Persistent Volumes पर फ़ाइलें रखता है। TypeScript या Python के लिए Lizard SDK से या टर्मिनल से Lizard CLI के साथ अपने कोड से सैंडबॉक्स बनाएं। जब एजेंट कुछ बना लेता है, तो उसे उसी प्लेटफ़ॉर्म पर डिप्लॉय करें: `lizard up` वर्तमान फ़ोल्डर अपलोड करता है, `lizard add -r owner/repo` एक GitHub रिपॉजिटरी डिप्लॉय करता है, और Lizard अपने सर्वर पर इमेज बनाता है और प्रत्येक वेब सेवा को `onlizard.com` पर एक HTTPS पता देता है। Managed Postgres, Managed Redis या S3-संगत Managed Object Storage को उसी CLI के साथ जोड़ें और `${{postgres.DATABASE_URL}}` जैसे संदर्भों के माध्यम से सेवाओं से कनेक्ट करें। Lizard, डिस्ट्रिब्यूटेड फ़ाइल सिस्टम LizardFS नहीं है, और न ही Python टूल `lizard` है जो कोड जटिलता को मापता है।
+Lizard AI एजेंट्स के लिए एक क्लाउड सैंडबॉक्स प्लेटफ़ॉर्म है। Lizard Sandboxes Firecracker microVMs हैं, और हर एक का अपना कर्नेल होता है: एजेंट इनमें कोड और शेल कमांड चलाता है, डेस्कटॉप और ब्राउज़र इस्तेमाल करता है, अपने पोर्ट के लिए प्राइवेट HTTPS URL खोलता है और फ़ाइलें Persistent Volumes पर रखता है। सैंडबॉक्स अपने कोड से TypeScript या Python के लिए Lizard SDK के ज़रिए बनाएँ, या टर्मिनल से Lizard CLI के ज़रिए। जब एजेंट कुछ बना ले, तो उसे इसी प्लेटफ़ॉर्म पर डिप्लॉय करें: `lizard up` मौजूदा फ़ोल्डर अपलोड करता है, `lizard add -r owner/repo` किसी GitHub रिपॉज़िटरी को डिप्लॉय करता है, और Lizard अपने सर्वर पर इमेज बिल्ड करके हर वेब सर्विस को `onlizard.com` पर एक HTTPS पता देता है। इसी CLI से Managed Postgres, Managed Redis या S3-कम्पैटिबल Managed Object Storage जोड़ें और `${{postgres.DATABASE_URL}}` जैसे रेफ़रेंस के ज़रिए उन्हें सर्विसेज़ से कनेक्ट करें। Lizard, डिस्ट्रिब्यूटेड फ़ाइल सिस्टम LizardFS नहीं है, और न ही कोड की जटिलता मापने वाला Python टूल `lizard` है।
 
 <span id="choose-a-task" />
 
-## एक कार्य चुनें
+## एक काम चुनें
 
-| मैं… करना चाहता हूँ | यहाँ से शुरू करें |
+| मैं यह करना चाहता/चाहती हूँ… | यहाँ से शुरू करें |
 |---|---|
-| जेनरेट किए गए कोड को एक अलग वातावरण में चलाएं | [Sandboxes क्विकस्टार्ट](/sandboxes/quickstart) |
-| सैंडबॉक्स के अंदर Claude Code चलाएं | [सैंडबॉक्स में Claude Code](/sandboxes/guides/claude-code) |
-| सैंडबॉक्स समाप्त होने के बाद फ़ाइलें रखें | [Persistent Volumes](/sandboxes/volumes) |
-| अपना पहला ऐप डिप्लॉय करें | [ऐप क्विकस्टार्ट](/getting-started) |
-| Next.js, React, Vue, या Python ऐप डिप्लॉय करें | [फ्रेमवर्क गाइड](/framework-guides) |
-| Claude Code या किसी अन्य कोडिंग एजेंट से डिप्लॉय करें | [कोडिंग एजेंट गाइड](/guides/deploy-from-coding-agent) |
-| Dockerfile वाले ऐप को डिप्लॉय करें | [Dockerfile के साथ डिप्लॉय करें](/deploy/dockerfile) |
-| एक रिमोट MCP सर्वर होस्ट करें | [रिमोट MCP गाइड](/guides/deploy-mcp-server) |
-| Telegram या Discord बॉट को चालू रखें | [Telegram गाइड](/guides/telegram-bot) या [Discord गाइड](/guides/discord-bot) |
-| डेटाबेस कनेक्ट करें | [Managed Postgres](/addons/postgres) |
-| Claude Code या ChatGPT के साथ विज़ुअली एक पेज एडिट करें | [Lizard Studio](/studio/getting-started) |
+| जेनरेट किए गए कोड को अलग एनवायरनमेंट में चलाना | [Sandboxes क्विकस्टार्ट](/sandboxes/quickstart) |
+| सैंडबॉक्स के अंदर Claude Code चलाना | [सैंडबॉक्स में Claude Code](/sandboxes/guides/claude-code) |
+| सैंडबॉक्स खत्म होने के बाद भी फ़ाइलें रखना | [Persistent Volumes](/sandboxes/volumes) |
+| अपना पहला ऐप डिप्लॉय करना | [ऐप क्विकस्टार्ट](/getting-started) |
+| Next.js, React, Vue या Python ऐप डिप्लॉय करना | [फ़्रेमवर्क गाइड](/framework-guides) |
+| Claude Code या किसी दूसरे कोडिंग एजेंट से डिप्लॉय करना | [कोडिंग एजेंट गाइड](/guides/deploy-from-coding-agent) |
+| Dockerfile वाला ऐप डिप्लॉय करना | [Dockerfile के साथ डिप्लॉय करें](/deploy/dockerfile) |
+| रिमोट MCP सर्वर होस्ट करना | [रिमोट MCP गाइड](/guides/deploy-mcp-server) |
+| Telegram या Discord बॉट को लगातार चालू रखना | [Telegram गाइड](/guides/telegram-bot) या [Discord गाइड](/guides/discord-bot) |
+| डेटाबेस कनेक्ट करना | [Managed Postgres](/addons/postgres) |
+| Claude Code या ChatGPT से किसी पेज को विज़ुअली एडिट करना | [Lizard Studio](/studio/getting-started) |
 
 <span id="run-code-in-a-sandbox" />
 
-## सैंडबॉक्स में कोड चलाएं
+## सैंडबॉक्स में कोड चलाएँ
 
-एक API कुंजी और डैशबोर्ड में एक प्रोजेक्ट बनाएं, `LIZARD_API_KEY` सेट करें, और Lizard SDK इंस्टॉल करें। यह कोड एक सैंडबॉक्स बनाता है, एक कमांड चलाता है और सैंडबॉक्स को बंद कर देता है:
+डैशबोर्ड में एक API की और एक प्रोजेक्ट बनाएँ, `LIZARD_API_KEY` सेट करें, और Lizard SDK इंस्टॉल करें। यह कोड एक सैंडबॉक्स बनाता है, एक कमांड चलाता है और फिर सैंडबॉक्स को बंद कर देता है:
 
 ```bash
 npm install @lizard-build/sdk
@@ -54,40 +54,40 @@ try {
 }
 ```
 
-Small साइज़ (2 vCPU, 4 GB RAM) प्रति घंटे $0.0162 का खर्च आता है, जिसका बिल सेकंड के हिसाब से होता है। Python, टेम्प्लेट और लाइफटाइम के लिए, [Sandboxes क्विकस्टार्ट](/sandboxes/quickstart) और [Sandboxes अवलोकन](/sandboxes) देखें।
+Small साइज़ (2 vCPU, 4 GB RAM) का खर्च $0.0162 प्रति घंटा है, और बिलिंग सेकंड के हिसाब से होती है। Python, टेम्प्लेट और लाइफटाइम के लिए [Sandboxes क्विकस्टार्ट](/sandboxes/quickstart) और [Sandboxes ओवरव्यू](/sandboxes) देखें।
 
 <span id="deploy-an-app" />
 
-## एक ऐप डिप्लॉय करें
+## ऐप डिप्लॉय करें
 
-Lizard CLI इंस्टॉल करें। इंस्टॉलर आपको साइन इन करता है और 7-दिन का Pro ट्रायल प्रदान करता है: आप Stripe Checkout में एक कार्ड जोड़ते हैं, और ट्रायल के दौरान कोई शुल्क नहीं लिया जाता है। फिर एक रिपॉजिटरी डिप्लॉय करें जिसे आप एक्सेस कर सकते हैं:
+Lizard CLI इंस्टॉल करें। इंस्टॉलर आपसे साइन इन करवाता है और 7-दिन का Pro ट्रायल ऑफ़र करता है: आप Stripe Checkout में एक कार्ड जोड़ते हैं, और ट्रायल के दौरान कोई चार्ज नहीं लगता। इसके बाद कोई ऐसी रिपॉज़िटरी डिप्लॉय करें जिसका एक्सेस आपके पास हो:
 
 ```bash
 curl -fsSL https://lizard.build/install.sh | bash   # then signs you in and offers the trial
 lizard add -r your-org/your-app
 ```
 
-Windows पर या npm के साथ, [इंस्टॉल करने के अन्य तरीके](/getting-started#1-install-the-cli) देखें।
+Windows पर या npm से इंस्टॉल करने के लिए [इंस्टॉल करने के दूसरे तरीके](/getting-started#1-install-the-cli) देखें।
 
-Lizard अपने सर्वर पर इमेज बनाता है, इसलिए इस पाथ को लोकल Docker की आवश्यकता नहीं है। [lizardpack](/concepts/build-pipeline) समर्थित प्रोजेक्ट्स का पता लगाता है; विशेष बिल्ड आवश्यकताओं वाले प्रोजेक्ट स्पष्ट कमांड या Dockerfile का उपयोग कर सकते हैं। बिल्ड लॉग की जाँच करें और डिप्लॉयमेंट के बाद एप्लिकेशन URL को सत्यापित करें।
+Lizard इमेज अपने सर्वर पर बिल्ड करता है, इसलिए इस तरीके में लोकल Docker की ज़रूरत नहीं होती। [lizardpack](/concepts/build-pipeline) सपोर्टेड प्रोजेक्ट्स को अपने-आप पहचान लेता है; जिन प्रोजेक्ट्स की बिल्ड की ज़रूरतें खास हैं, वे साफ़ तौर पर दी गई कमांड या Dockerfile इस्तेमाल कर सकते हैं। डिप्लॉयमेंट के बाद बिल्ड लॉग देखें और ऐप का URL खोलकर जाँचें।
 
 <span id="understand-your-resources" />
 
 ## अपने संसाधनों को समझें
 
-एक **वर्कस्पेस** सदस्यों और प्रोजेक्ट्स को समूहित करता है। एक **प्रोजेक्ट** सेवाओं, डेटाबेस और Sandboxes को समूहित करता है; प्रत्येक खाते में एक डिफ़ॉल्ट प्रोजेक्ट (एक नए खाते के लिए `<username>'s Project`) होता है जिसका उपयोग Lizard CLI उस फ़ोल्डर में करता है जिसे आपने लिंक नहीं किया है। एक **सेवा** एक एप्लिकेशन या वर्कर चलाती है। Managed Postgres, Managed Redis, और Managed Object Storage डेटा सेवाएँ प्रदान करते हैं जिनसे एप्लिकेशन पर्यावरण संदर्भों के माध्यम से जुड़ते हैं।
+**वर्कस्पेस** में सदस्य और प्रोजेक्ट्स होते हैं। **प्रोजेक्ट** में सर्विसेज़, डेटाबेस और Sandboxes होते हैं; हर अकाउंट का एक डिफ़ॉल्ट प्रोजेक्ट होता है (नए अकाउंट के लिए `<username>'s Project`), जिसे Lizard CLI ऐसे फ़ोल्डर में इस्तेमाल करता है जिसे आपने लिंक नहीं किया है। **सर्विस** एक ऐप या वर्कर चलाती है। Managed Postgres, Managed Redis और Managed Object Storage डेटा सर्विसेज़ देते हैं, जिनसे ऐप्स एनवायरनमेंट रेफ़रेंस के ज़रिए जुड़ते हैं।
 
-ऐप्स और Sandboxes के अलग-अलग रनटाइम और स्टोरेज नियम हैं। किसी संसाधन के आकार, जीवनकाल या डेटा प्रतिधारण पर निर्भर होने से पहले [सीमाएं](/platform/limits) और [भंडारण और पुनर्प्राप्ति](/platform/storage-and-recovery) पढ़ें।
+ऐप्स और Sandboxes के रनटाइम और स्टोरेज के नियम अलग-अलग हैं। किसी संसाधन के साइज़, लाइफटाइम या डेटा रिटेंशन पर निर्भर होने से पहले [सीमाएँ](/platform/limits) और [स्टोरेज और रिकवरी](/platform/storage-and-recovery) पढ़ें।
 
 <span id="find-the-right-level-of-detail" />
 
-## विवरण का सही स्तर खोजें
+## सही स्तर का ब्योरा खोजें
 
-- [गाइड](/guides) सेटअप से लेकर परिणाम की जाँच तक एक कार्य को कवर करते हैं।
-- [फ्रेमवर्क गाइड](/framework-guides) प्रत्येक स्टैक के लिए बिल्ड कमांड, एडेप्टर, पोर्ट और जांच प्रदान करते हैं।
-- [डिप्लॉय](/deploy) GitHub और लोकल स्रोतों, वर्कर्स, स्केलिंग और क्षेत्रों को कवर करता है।
-- [मुख्य अवधारणाएं](/concepts) प्रोजेक्ट्स, बिल्ड और डिप्लॉयमेंट की व्याख्या करती हैं।
-- [ऑब्जर्वेबिलिटी](/observability) लॉग, मेट्रिक्स, लागत और डिप्लॉयमेंट इतिहास को कवर करती है।
-- [Lizard CLI संदर्भ](/cli) कमांड, फ़्लैग और एग्जिट कोड सूचीबद्ध करता है।
-- [समस्या निवारण](/deploy/troubleshooting/service-never-healthy) विफल शुरुआत का निदान करने में मदद करता है।
-- [ज्ञात समस्याएँ](/platform/known-issues) किसी रिलीज़ से पहले जांच करने के लिए सीमाओं और पुनर्प्राप्ति मामलों को रिकॉर्ड करती हैं।
+- [गाइड](/guides) किसी काम को सेटअप से लेकर नतीजे की जाँच तक कवर करती हैं।
+- [फ़्रेमवर्क गाइड](/framework-guides) हर स्टैक के लिए बिल्ड कमांड, अडैप्टर, पोर्ट और जाँच बताती हैं।
+- [डिप्लॉय](/deploy) GitHub और लोकल सोर्स, वर्कर्स, स्केलिंग और रीजन को कवर करता है।
+- [मुख्य कॉन्सेप्ट](/concepts) प्रोजेक्ट्स, बिल्ड और डिप्लॉयमेंट समझाते हैं।
+- [ऑब्ज़र्वेबिलिटी](/observability) लॉग, मेट्रिक्स, लागत और डिप्लॉय इतिहास को कवर करती है।
+- [Lizard CLI संदर्भ](/cli) में कमांड, फ़्लैग और एग्ज़िट कोड की सूची है।
+- [समस्या निवारण](/deploy/troubleshooting/service-never-healthy) से पता लगाएँ कि सर्विस शुरू क्यों नहीं हो रही।
+- [ज्ञात समस्याएँ](/platform/known-issues) में वे सीमाएँ और रिकवरी के मामले दर्ज हैं जिन्हें किसी रिलीज़ से पहले जाँच लेना चाहिए।

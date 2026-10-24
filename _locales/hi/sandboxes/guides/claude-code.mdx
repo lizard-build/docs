@@ -1,35 +1,35 @@
 ---
-title: "सैंडबॉक्स में Claude Code चलाएं"
-description: "Lizard सैंडबॉक्स में Claude Code चलाएँ: एक Claude सदस्यता या API कुंजी को lizard एजेंटों के साथ कनेक्ट करें, एक claude सैंडबॉक्स बनाएँ, प्रॉम्प्ट भेजें और परिवर्तन वापस प्राप्त करें।"
+title: "सैंडबॉक्स में Claude Code चलाएँ"
+description: "Lizard सैंडबॉक्स में Claude Code चलाएँ: lizard agents से Claude सब्सक्रिप्शन या API की कनेक्ट करें, claude सैंडबॉक्स बनाएँ, प्रॉम्प्ट भेजें और बदलाव वापस पाएँ।"
 ---
 
 <span id="run-claude-code-in-a-sandbox" />
 
-# सैंडबॉक्स में Claude Code चलाएं
+# सैंडबॉक्स में Claude Code चलाएँ
 
-Lizard पर सैंडबॉक्स में Claude Code चलाने के लिए, `lizard agents add claude` (`claude setup-token` से एक टोकन) या `lizard agents add anthropic` (एक API कुंजी) के साथ एक बार क्रेडेंशियल कनेक्ट करें। फिर `claude` टेम्पलेट से एक सैंडबॉक्स बनाएँ और `lizard sandbox prompt <id> --agent claude "…"` के साथ इसे काम भेजें। Claude Code अपने स्वयं के लिनक्स मशीन पर `--dangerously-skip-permissions` पर चलता है: यह फ़ाइलों को संपादित करता है और बिना पूछे कमांड चलाता है, और इसे आपके कंप्यूटर तक पहुँच नहीं है।
+Lizard पर सैंडबॉक्स में Claude Code चलाने के लिए एक बार क्रेडेंशियल कनेक्ट करें: `lizard agents add claude` (`claude setup-token` से मिला टोकन) या `lizard agents add anthropic` (API की)। फिर `claude` टेम्प्लेट से सैंडबॉक्स बनाएँ और `lizard sandbox prompt <id> --agent claude "…"` से उसे काम भेजें। Claude Code अपनी अलग Linux मशीन पर `--dangerously-skip-permissions` के साथ चलता है: वह बिना पूछे फ़ाइलें एडिट करता है और कमांड चलाता है, और उसकी आपके कंप्यूटर तक कोई पहुँच नहीं होती।
 
-**परीक्षण स्थिति:** इस पृष्ठ पर कमांड और व्यवहार Lizard CLI 4.0.42 और प्लेटफ़ॉर्म के एजेंट रनर से 2026-10-12 के अनुसार हैं; `--with-token` नोट Lizard CLI 4.0.65. से है। हमने इस वॉकथ्रू को इस पृष्ठ के लिए लाइव सैंडबॉक्स में एंड-टू-एंड नहीं चलाया है। हमने `git bundle` और पैच चरणों को स्थानीय रूप से जांचा है।
+**टेस्ट स्टेटस:** इस पेज की कमांड और व्यवहार 2026-10-12 की स्थिति के अनुसार Lizard CLI 4.0.42 और प्लेटफ़ॉर्म के एजेंट रनर से लिए गए हैं; `--with-token` वाला नोट Lizard CLI 4.0.65 से है। इस पेज के लिए हमने यह पूरा वॉकथ्रू किसी लाइव सैंडबॉक्स में शुरू से आखिर तक नहीं चलाया है। `git bundle` और पैच वाले स्टेप हमने लोकल तौर पर जाँचे हैं।
 
 <span id="before-you-start" />
 
 ## शुरू करने से पहले
 
-- Lizard CLI, `lizard login` के साथ साइन इन, और एक प्रोजेक्ट: एक फ़ोल्डर में `lizard init` चलाएँ, या सैंडबॉक्स कमांड को `-p <project>` पास करें।
-- Lizard Pro या 7-दिन Pro परीक्षण (कार्ड आवश्यक)। Sandboxes चलने के दौरान आकार के अनुसार प्रति सेकंड बिल करते हैं; [सीमाओं](/platform/limits#sandbox-sizes) और [मूल्य निर्धारण](https://lizard.build/pricing) देखें।
-- Claude सदस्यता के लिए: अपने कंप्यूटर पर Claude Code, `claude setup-token` चलाने के लिए।
+- Lizard CLI, जिसमें `lizard login` से साइन इन किया गया हो, और एक प्रोजेक्ट: किसी फ़ोल्डर में `lizard init` चलाएँ, या सैंडबॉक्स कमांड में `-p <project>` पास करें।
+- Lizard Pro या 7 दिन का Pro ट्रायल (कार्ड ज़रूरी)। Sandboxes का बिल चलने के दौरान साइज़ के हिसाब से प्रति सेकंड बनता है; [लिमिट](/platform/limits#sandbox-sizes) और [प्राइसिंग](https://lizard.build/pricing) देखें।
+- Claude सब्सक्रिप्शन के लिए: `claude setup-token` चलाने के लिए आपके कंप्यूटर पर Claude Code।
 
 <span id="connect-a-credential" />
 
-## एक क्रेडेंशियल कनेक्ट करें
+## क्रेडेंशियल कनेक्ट करें
 
-| क्रेडेंशियल | कमांड | रन क्या प्राप्त करता है |
+| क्रेडेंशियल | कमांड | रन को क्या मिलता है |
 |---|---|---|
-| Claude सदस्यता | `claude setup-token`, फिर `lizard agents add claude` और `sk-ant-oat01-…` टोकन पेस्ट करें | `CLAUDE_CODE_OAUTH_TOKEN` |
-| Anthropic की API कुंजी | `lizard agents add anthropic` | `ANTHROPIC_API_KEY` |
-| OpenRouter API key | `lizard agents add openrouter` | OpenRouter का Anthropic-संगत एंडपॉइंट |
+| Claude सब्सक्रिप्शन | `claude setup-token`, फिर `lizard agents add claude` चलाएँ और `sk-ant-oat01-…` टोकन पेस्ट करें | `CLAUDE_CODE_OAUTH_TOKEN` |
+| Anthropic API की | `lizard agents add anthropic` | `ANTHROPIC_API_KEY` |
+| OpenRouter API की | `lizard agents add openrouter` | OpenRouter का Anthropic-कम्पैटिबल एंडपॉइंट |
 
-क्रेडेंशियल आपके Lizard खाते के हैं, किसी प्रोजेक्ट के नहीं, और आपके द्वारा शुरू किया गया प्रत्येक सैंडबॉक्स उनका उपयोग कर सकता है। Claude Code एक समय में एक क्रेडेंशियल का उपयोग करता है। यदि आप कई क्रेडेंशियल कनेक्ट करते हैं, तो एक चुनें। आप एक डिफ़ॉल्ट मॉडल भी सेट कर सकते हैं:
+क्रेडेंशियल्स आपके Lizard अकाउंट के होते हैं, किसी प्रोजेक्ट के नहीं, और आपका शुरू किया हर सैंडबॉक्स इन्हें इस्तेमाल कर सकता है। Claude Code एक समय में एक ही क्रेडेंशियल इस्तेमाल करता है। अगर आपने कई क्रेडेंशियल्स कनेक्ट किए हैं, तो उनमें से एक चुनें। आप डिफ़ॉल्ट मॉडल भी सेट कर सकते हैं:
 
 ```bash
 lizard agents use claude --credential anthropic
@@ -41,29 +41,29 @@ lizard agents status
 
 <span id="create-a-sandbox" />
 
-## एक सैंडबॉक्स बनाएं
+## सैंडबॉक्स बनाएँ
 
 ```bash
 lizard sandbox create -t claude --timeout 3600000
 ```
 
-कमांड सैंडबॉक्स आईडी प्रिंट करता है, जैसे `genuine-toddler-jasj`। इसे नीचे दिए गए चरणों के लिए एक वेरिएबल में रखें: `SB=genuine-toddler-jasj`।
+कमांड सैंडबॉक्स ID प्रिंट करती है, जैसे `genuine-toddler-jasj`। नीचे के स्टेप्स के लिए इसे एक वेरिएबल में रखें: `SB=genuine-toddler-jasj`।
 
-- `--timeout 3600000` सैंडबॉक्स को एक घंटा देता है। CLI डिफ़ॉल्ट पांच मिनट है, जिसके बाद Lizard सैंडबॉक्स और उसकी फ़ाइलों को हटा देता है, कार्य के बीच में भी। चल रहे को `lizard sandbox timeout $SB 3600000` से बढ़ाएँ।
-- `claude` टेम्प्लेट में Node.js 22, एक पिन किया हुआ Claude Code रिलीज़, git, Python 3, ripgrep, curl, jq, unzip और Lizard CLI है। Claude Code संस्करण को `lizard sandbox exec $SB -- claude --version` से जांचें।
-- डिफ़ॉल्ट आकार मध्यम है (4 vCPU, 8 GB)। इसे बदलने के लिए `--size small` या `--size large` पास करें। परीक्षण के दौरान, प्रत्येक सैंडबॉक्स छोटा होता है और यूएस क्षेत्र में चलता है।
+- `--timeout 3600000` सैंडबॉक्स को एक घंटा देता है। CLI में डिफ़ॉल्ट पाँच मिनट है, जिसके बाद Lizard सैंडबॉक्स और उसकी फ़ाइलें डिलीट कर देता है, भले ही काम बीच में हो। चल रहे सैंडबॉक्स का समय `lizard sandbox timeout $SB 3600000` से बढ़ाएँ।
+- `claude` टेम्प्लेट में Node.js 22, Claude Code का एक पिन किया हुआ रिलीज़, git, Python 3, ripgrep, curl, jq, unzip और Lizard CLI हैं। Claude Code का वर्ज़न `lizard sandbox exec $SB -- claude --version` से जाँचें।
+- डिफ़ॉल्ट साइज़ Medium (4 vCPU, 8 GB) है। इसे बदलने के लिए `--size small` या `--size large` पास करें। ट्रायल के दौरान हर सैंडबॉक्स Small होता है और US रीजन में चलता है।
 
 <span id="put-your-code-in-the-sandbox" />
 
-## अपने कोड को सैंडबॉक्स में रखें
+## अपना कोड सैंडबॉक्स में डालें
 
-एक सार्वजनिक रिपॉजिटरी से:
+पब्लिक रिपॉज़िटरी से:
 
 ```bash
 lizard sandbox exec $SB -- git clone https://github.com/your-org/your-app /workspace/app
 ```
 
-एक स्थानीय git रिपॉजिटरी से, निजी वाले सहित:
+लोकल git रिपॉज़िटरी से, प्राइवेट रिपॉज़िटरी समेत:
 
 ```bash
 git bundle create /tmp/app.bundle HEAD
@@ -71,40 +71,40 @@ lizard sandbox files put $SB /tmp/app.bundle /workspace/app.bundle
 lizard sandbox exec $SB -- git clone -q /workspace/app.bundle /workspace/app
 ```
 
-एक बंडल केवल कमिट की गई फ़ाइलों को रखता है, इसलिए `.env` और अन्य अनट्रैक की गई फ़ाइलें आपके कंप्यूटर पर रहती हैं।
+बंडल में सिर्फ़ कमिट की गई फ़ाइलें होती हैं, इसलिए `.env` और दूसरी अनट्रैक्ड फ़ाइलें आपके कंप्यूटर पर ही रहती हैं।
 
 <span id="send-a-prompt" />
 
-## एक प्रॉम्प्ट भेजें
+## प्रॉम्प्ट भेजें
 
 ```bash
 lizard sandbox prompt $SB --agent claude --cwd /workspace/app "run the tests and fix any that fail"
 ```
 
-CLI प्रत्येक टूल कॉल को स्ट्रीम करता है, फिर Claude का उत्तर, टोकन गणना और वार्तालाप आईडी। उपयोगी फ़्लैग: `-m <model>`, `--effort <level>`, `-v` कमांड आउटपुट प्रिंट करने के लिए, और `--no-wait` तुरंत वापस आने के लिए। Ctrl-C देखना बंद कर देता है; Claude काम करना जारी रखता है। इसे `lizard sandbox interrupt $SB` से रोकें।
+CLI हर टूल कॉल को स्ट्रीम करता है, फिर Claude का जवाब, टोकन की संख्या और बातचीत (conversation) की ID दिखाता है। काम के फ़्लैग: `-m <model>`, `--effort <level>`, कमांड आउटपुट प्रिंट करने के लिए `-v`, और तुरंत लौटने के लिए `--no-wait`। Ctrl-C सिर्फ़ देखना बंद करता है; Claude काम करता रहता है। उसे `lizard sandbox interrupt $SB` से रोकें।
 
-उसी Claude Code सत्र को जारी रखने के लिए, वार्तालाप आईडी पास करें:
+उसी Claude Code सेशन को जारी रखने के लिए बातचीत की ID पास करें:
 
 ```bash
 lizard sandbox prompt $SB --agent claude -c conv_0123456789abcdef --cwd /workspace/app "now add a test for an empty list"
 lizard sandbox conversations $SB
 ```
 
-प्रत्येक प्रॉम्प्ट, फॉलो-अप सहित `--agent claude` और `--cwd` पास करें। `--agent` के बिना CLI Codex के लिए पूछता है, और `--cwd` के बिना एजेंट `/workspace` में काम करता है।
+हर प्रॉम्प्ट में, फ़ॉलो-अप समेत, `--agent claude` और `--cwd` पास करें। `--agent` के बिना CLI Codex को रिक्वेस्ट भेजता है, और `--cwd` के बिना एजेंट `/workspace` में काम करता है।
 
 <span id="what-claude-code-can-reach" />
 
-## Claude Code क्या पहुंच सकता है
+## Claude Code किन चीज़ों तक पहुँच सकता है
 
-- **अनुमतियाँ।** हर टर्न में सैंडबॉक्स के अंदर root के रूप में `claude -p` को `--dangerously-skip-permissions` के साथ चलाते हैं। Claude बिना पूछे फ़ाइलें बदलता है, पैकेज इंस्टॉल करता है और कमांड चलाता है। ये अनुमतियाँ सैंडबॉक्स के अंदर लागू होती हैं।
-- **फ़ाइलें।** सैंडबॉक्स की सभी फ़ाइलों तक पहुँच है, आपके कंप्यूटर की फ़ाइलों तक नहीं।
-- **नेटवर्क।** इंटरनेट पर बाहर जाने वाले कनेक्शन मिलते हैं, ताकि पैकेज डाउनलोड और API कॉल कर सके। सैंडबॉक्स की कीमत में पिछले 30 दिनों में [हर खाते के लिए 2 TB](/platform/limits#sandbox-egress) तक egress शामिल है।
-- **आपका क्रेडेंशियल।** रन के दौरान टोकन Claude Code के environment में `CLAUDE_CODE_OAUTH_TOKEN` या `ANTHROPIC_API_KEY` के रूप में रहता है। उसकी चलाई कमांड को भी यह मिलता है। सब्सक्रिप्शन के लिए यह `claude setup-token` का लंबे समय तक मान्य टोकन है; सिर्फ़ ChatGPT लॉगिन को हर रन के लिए कम अवधि की कॉपी मिलती है। मानकर चलें कि सैंडबॉक्स में चलने वाला कोड इसे पढ़ सकता है। ज़रूरत खत्म होने पर इसे `lizard agents remove claude` से हटाएँ।
-- **आपका Lizard खाता।** डिफ़ॉल्ट रूप से कोई पहुँच नहीं मिलती। सैंडबॉक्स के अंदर `lizard` में साइन इन करने के लिए उसे `--with-token` के साथ बनाएँ, जैसे Claude का बनाया ऐप डिप्लॉय करने के लिए। आपकी अपनी कुंजी सिर्फ़ अनुरोध की अनुमति देती है: सैंडबॉक्स को उसके प्रोजेक्ट तक सीमित नई कुंजी मिलती है, जो सैंडबॉक्स के साथ हट जाती है। फिर Claude उस प्रोजेक्ट को बदल सकता है, आपके खाते में और कुछ नहीं; [`lizard keys`](/cli/keys) देखें।
+- **अनुमतियाँ।** हर टर्न सैंडबॉक्स के अंदर root के रूप में `--dangerously-skip-permissions` के साथ `claude -p` चलाता है। Claude बिना पूछे फ़ाइलें बदलता है, पैकेज इंस्टॉल करता है और कमांड चलाता है। ये अनुमतियाँ सैंडबॉक्स के अंदर लागू होती हैं।
+- **फ़ाइलें।** सैंडबॉक्स की सभी फ़ाइलों तक पहुँच है, आपके कंप्यूटर की किसी फ़ाइल तक नहीं।
+- **नेटवर्क।** इंटरनेट पर बाहर जाने वाले कनेक्शन मिलते हैं, ताकि वह पैकेज डाउनलोड और API कॉल कर सके। सैंडबॉक्स की कीमत में रोलिंग 30 दिनों में [प्रति अकाउंट 2 TB](/platform/limits#sandbox-egress) तक एग्रेस शामिल है।
+- **आपका क्रेडेंशियल।** रन के दौरान टोकन Claude Code के एनवायरनमेंट में `CLAUDE_CODE_OAUTH_TOKEN` या `ANTHROPIC_API_KEY` के रूप में रहता है, और उसकी चलाई कमांड को भी यह मिलता है। सब्सक्रिप्शन के लिए यह `claude setup-token` से मिला लंबे समय तक मान्य टोकन है; हर रन के लिए कम अवधि वाली कॉपी सिर्फ़ ChatGPT लॉगिन को मिलती है। मानकर चलें कि सैंडबॉक्स में चलने वाला कोड इसे पढ़ सकता है, और ज़रूरत खत्म होने पर इसे `lizard agents remove claude` से हटा दें।
+- **आपका Lizard अकाउंट।** डिफ़ॉल्ट रूप से कोई पहुँच नहीं। सैंडबॉक्स के अंदर `lizard` में साइन इन करने के लिए उसे `--with-token` के साथ बनाएँ, जैसे Claude का बनाया ऐप डिप्लॉय करने के लिए। आपकी अपनी की सिर्फ़ रिक्वेस्ट को ऑथराइज़ करती है: सैंडबॉक्स को उसके प्रोजेक्ट तक सीमित एक नई की मिलती है, जो सैंडबॉक्स के साथ डिलीट हो जाती है। इसके बाद Claude उस प्रोजेक्ट को बदल सकता है, आपके अकाउंट में और कुछ नहीं; [`lizard keys`](/cli/keys) देखें।
 
 <span id="get-the-changes-back" />
 
-## परिवर्तनों को वापस प्राप्त करें
+## बदलाव वापस पाएँ
 
 ```bash
 lizard sandbox exec $SB -- sh -c 'cd /workspace/app && git add -A && git diff --cached > /tmp/claude.patch'
@@ -112,17 +112,17 @@ lizard sandbox files get $SB /tmp/claude.patch claude.patch
 git apply claude.patch
 ```
 
-कमिट करने से पहले पैच की समीक्षा करें। Claude द्वारा शुरू किए गए वेब ऐप को आज़माने के लिए, उसके पोर्ट के लिए [पूर्वावलोकन URL](/sandboxes/preview-urls) खोलें, उदाहरण के लिए `lizard sandbox expose $SB 3000`।
+कमिट करने से पहले पैच रिव्यू करें। Claude का शुरू किया हुआ वेब ऐप आज़माने के लिए उसके पोर्ट का [प्रीव्यू URL](/sandboxes/preview-urls) खोलें, जैसे `lizard sandbox expose $SB 3000`।
 
 <span id="use-claude-code-by-hand" />
 
-## Claude Code का उपयोग हाथ से करें
+## Claude Code को मैन्युअली चलाएँ
 
-`lizard sandbox ssh $SB` सैंडबॉक्स में एक शेल खोलता है। `lizard agents` से क्रेडेंशियल केवल `lizard sandbox prompt` रन तक पहुंचते हैं, इसलिए उस शेल में अपना `CLAUDE_CODE_OAUTH_TOKEN` या `ANTHROPIC_API_KEY` निर्यात करें, फिर `claude` चलाएं।
+`lizard sandbox ssh $SB` सैंडबॉक्स में शेल खोलता है। `lizard agents` के क्रेडेंशियल्स सिर्फ़ `lizard sandbox prompt` वाले रन तक पहुँचते हैं, इसलिए उस शेल में अपना `CLAUDE_CODE_OAUTH_TOKEN` या `ANTHROPIC_API_KEY` export करें, फिर `claude` चलाएँ।
 
 <span id="pause-or-remove-the-sandbox" />
 
-## सैंडबॉक्स को रोकें या हटा दें
+## सैंडबॉक्स को पॉज़ करें या हटाएँ
 
 ```bash
 lizard sandbox pause $SB
@@ -130,27 +130,27 @@ lizard sandbox resume $SB
 lizard sandbox rm $SB
 ```
 
-एक सफल पॉज़ कंप्यूट चार्ज को रोकता है; Persistent Volumes में स्टोरेज पर बिलिंग जारी रहती है। फिर से शुरू करने से सैंडबॉक्स की फ़ाइलें और प्रक्रियाएं बहाल हो जाती हैं और कंप्यूट बिलिंग फिर से शुरू हो जाती है। वार्तालाप स्थिति `/workspace/.lizard-agent` में रहती है, सैंडबॉक्स के अंदर। सैंडबॉक्स हटाने के बाद फ़ाइलों को रखने के लिए, `--volume` के साथ बनाते समय [स्थायी वॉल्यूम](/sandboxes/volumes) संलग्न करें।
+सफल पॉज़ के बाद कंप्यूट का चार्ज रुक जाता है; Persistent Volumes के स्टोरेज का बिल बनता रहता है। रिज़्यूम करने पर सैंडबॉक्स की फ़ाइलें और प्रोसेस वापस आ जाते हैं और कंप्यूट बिलिंग फिर शुरू हो जाती है। बातचीत की स्टेट सैंडबॉक्स के अंदर `/workspace/.lizard-agent` में रहती है। सैंडबॉक्स हटाने के बाद भी फ़ाइलें रखनी हों, तो बनाते समय `--volume` से [Persistent Volume](/sandboxes/volumes) अटैच करें।
 
 <span id="common-problems" />
 
-## सामान्य समस्याएं
+## आम समस्याएँ
 
-| संदेश या लक्षण | समाधान |
+| मैसेज या लक्षण | समाधान |
 |---|---|
-| `Claude Code has no credential. Connect one of: …` | `lizard agents add claude` या `lizard agents add anthropic` चलाएं। |
-| `Claude rejected the credential (authentication_failed)` | टोकन या कुंजी अब मान्य नहीं है। एक नया बनाएं और इसे फिर से जोड़ें। |
-| `create` पर चेकआउट लिंक के साथ HTTP 402 | परीक्षण या Pro शुरू करें: `lizard billing start`। |
-| `create` पर `TRIAL_SANDBOX_SIZE` या `TRIAL_SANDBOX_REGION` के साथ HTTP 403 | परीक्षण केवल यूएस क्षेत्रों में छोटे सैंडबॉक्स चलाता है। `--size small` और एक यूएस `--region` का उपयोग करें, या अभी Pro शुरू करें: `lizard billing start-now`। |
-| कार्य के बीच में सैंडबॉक्स चला गया | इसका जीवनकाल समाप्त हो गया। `--timeout` के साथ अगला बनाएं, या `lizard sandbox timeout` के साथ इसे बढ़ाएं। |
-| आउटपुट में Codex का उल्लेख है | प्रॉम्प्ट `--agent claude` के बिना बाहर चला गया। |
-| एक चरण `installing Claude Code` कहता है | सैंडबॉक्स `claude` टेम्प्लेट से नहीं बनाया गया था, इसलिए रनर पहले npm के साथ Claude Code स्थापित करता है। |
+| `Claude Code has no credential. Connect one of: …` | `lizard agents add claude` या `lizard agents add anthropic` चलाएँ। |
+| `Claude rejected the credential (authentication_failed)` | टोकन या की अब मान्य नहीं है। नया बनाएँ और फिर से जोड़ें। |
+| `create` पर Checkout लिंक के साथ HTTP 402 | ट्रायल या Pro शुरू करें: `lizard billing start`। |
+| `create` पर `TRIAL_SANDBOX_SIZE` या `TRIAL_SANDBOX_REGION` के साथ HTTP 403 | ट्रायल में सिर्फ़ US रीजन में Small सैंडबॉक्स चलते हैं। `--size small` और US का कोई `--region` इस्तेमाल करें, या अभी Pro शुरू करें: `lizard billing start-now`। |
+| काम के बीच में सैंडबॉक्स गायब हो गया | उसका लाइफटाइम खत्म हो गया। अगला सैंडबॉक्स `--timeout` के साथ बनाएँ, या `lizard sandbox timeout` से समय बढ़ाएँ। |
+| आउटपुट में Codex का ज़िक्र है | प्रॉम्प्ट `--agent claude` के बिना भेजा गया। |
+| किसी स्टेप में `installing Claude Code` दिखता है | सैंडबॉक्स `claude` टेम्प्लेट से नहीं बना था, इसलिए रनर पहले npm से Claude Code इंस्टॉल करता है। |
 
 <span id="related" />
 
 ## संबंधित
 
-- [सैंडबॉक्स में OpenCode चलाएं](/sandboxes/guides/opencode)
+- [सैंडबॉक्स में OpenCode चलाएँ](/sandboxes/guides/opencode)
 - [Sandboxes](/sandboxes)
 - [`lizard sandbox`](/cli/sandbox#coding-agents)
-- [कोडिंग एजेंट से तैनात करें](/guides/deploy-from-coding-agent)
+- [कोडिंग एजेंट से डिप्लॉय करें](/guides/deploy-from-coding-agent)

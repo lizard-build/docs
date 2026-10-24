@@ -1,10 +1,10 @@
 ---
-description: "lizard upgrade npm के माध्यम से या बाइनरी को बदलकर नवीनतम सीएलआई रिलीज़ इंस्टॉल करता है, या --check के साथ नए संस्करण की जांच करता है।"
+description: "lizard upgrade npm के ज़रिए या बाइनरी बदलकर CLI की लेटेस्ट रिलीज़ इंस्टॉल करता है, या --check के साथ नया वर्ज़न उपलब्ध है या नहीं, यह जाँचता है।"
 ---
 
 # lizard upgrade
 
-सीएलआई को नवीनतम संस्करण में अपग्रेड करें।
+CLI को लेटेस्ट वर्ज़न पर अपग्रेड करें।
 
 <span id="usage" />
 
@@ -14,13 +14,13 @@ description: "lizard upgrade npm के माध्यम से या बा�
 lizard upgrade [flags]
 ```
 
-यह कैसे अपग्रेड होता है, यह इस बात पर निर्भर करता है कि आपने सीएलआई कैसे इंस्टॉल किया है:
+अपग्रेड कैसे होता है, यह इस पर निर्भर करता है कि आपने CLI कैसे इंस्टॉल किया था:
 
-- **macOS या Linux पर इंस्टॉल स्क्रिप्ट:** नया रिलीज़ डाउनलोड करती है और बाइनरी को बदलती है।
-- **npm:** आपके लिए `npm install -g @lizard-build/cli@<version>` चलाता है। अगर npm विफल हो, जैसे ग्लोबल फ़ोल्डर में लिखने की अनुमति न मिलने पर, तो CLI `npm install -g @lizard-build/cli@latest` दिखाता है। उसे npm के लिए ज़रूरी अनुमतियों के साथ चलाएँ।
-- **Windows:** बाइनरी खुद को बदल नहीं सकती। इंस्टॉलर फिर से चलाएँ: `irm https://lizard.build/api/cli/install.ps1 | iex`।
+- **macOS या Linux पर इंस्टॉल स्क्रिप्ट:** लेटेस्ट रिलीज़ डाउनलोड करती है और बाइनरी को बदल देती है।
+- **npm:** आपके लिए `npm install -g @lizard-build/cli@<version>` चलाता है। अगर npm फ़ेल हो जाए, जैसे ग्लोबल फ़ोल्डर में लिखने की अनुमति न होने पर, तो CLI `npm install -g @lizard-build/cli@latest` प्रिंट करता है; इसे उन अनुमतियों के साथ चलाएँ जो npm को चाहिए।
+- **Windows:** बाइनरी खुद को नहीं बदल सकती। इंस्टॉलर दोबारा चलाएँ: `irm https://lizard.build/api/cli/install.ps1 | iex`।
 
-macOS और Linux पर इंस्टॉल स्क्रिप्ट से बाइनरी पृष्ठभूमि में खुद को अपडेट भी करती है: केवल इंटरैक्टिव टर्मिनल में, हर 6 घंटे में अधिकतम एक बार, और कभी भी जब `CI` या `LIZARD_NO_UPDATE` सेट हो। अगला कमांड तब `lizard auto-updated: v<old> → v<new>` प्रिंट करता है। npm इंस्टॉल और Windows बाइनरी पृष्ठभूमि में अपडेट नहीं होते हैं।
+macOS और Linux पर इंस्टॉल स्क्रिप्ट से आई बाइनरी बैकग्राउंड में खुद को अपडेट भी करती है: सिर्फ़ इंटरैक्टिव टर्मिनल में, हर 6 घंटे में ज़्यादा से ज़्यादा एक बार, और `CI` या `LIZARD_NO_UPDATE` सेट होने पर कभी नहीं। इसके बाद अगली कमांड `lizard auto-updated: v<old> → v<new>` प्रिंट करती है। npm से इंस्टॉल किया गया CLI और Windows बाइनरी बैकग्राउंड में अपडेट नहीं होते।
 
 <span id="flags" />
 
@@ -28,9 +28,9 @@ macOS और Linux पर इंस्टॉल स्क्रिप्ट स�
 
 | फ्लैग | विवरण |
 |------|-------------|
-| `--check` | इंस्टॉल किए बिना नए संस्करण की जांच करें |
+| `--check` | इंस्टॉल किए बिना नया वर्ज़न जाँचें |
 
-`--json` के साथ, `lizard upgrade --check` `{ currentVersion, latestVersion, updateAvailable }` लौटाता है।
+`--json` के साथ `lizard upgrade --check` `{ currentVersion, latestVersion, updateAvailable }` लौटाता है।
 
 <span id="examples" />
 
@@ -38,7 +38,7 @@ macOS और Linux पर इंस्टॉल स्क्रिप्ट स�
 
 <span id="update-to-the-latest-version" />
 
-### नवीनतम संस्करण में अपडेट करें
+### लेटेस्ट वर्ज़न पर अपडेट करें
 
 ```bash
 lizard upgrade
@@ -46,7 +46,7 @@ lizard upgrade
 
 <span id="check-for-updates-without-installing" />
 
-### इंस्टॉल किए बिना अपडेट की जांच करें
+### इंस्टॉल किए बिना अपडेट जाँचें
 
 ```bash
 lizard upgrade --check
@@ -56,5 +56,5 @@ lizard upgrade --check
 
 ## यह भी देखें
 
-- [सीएलआई संदर्भ](/cli) — इंस्टॉल, ग्लोबल फ़्लैग, एग्जिट कोड
-- [शुरुआत करना](/getting-started) — पहली बार सीएलआई इंस्टॉल करना
+- [CLI रेफ़रेंस](/cli) — इंस्टॉल, ग्लोबल फ्लैग्स, एग्ज़िट कोड
+- [शुरुआत करें](/getting-started) — पहली बार CLI इंस्टॉल करना

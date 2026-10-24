@@ -1,26 +1,26 @@
 ---
-title: "एक Go ऐप डिप्लॉय करें"
-description: "Lizard पर एक Go ऐप होस्ट करें: lizardpack go.mod को ढूंढता है, Go संस्करण से एक स्थिर बाइनरी बनाता है, और इसे PORT सेट के साथ 8080 पर चलाता है।"
+title: "Go ऐप डिप्लॉय करें"
+description: "Lizard पर Go ऐप होस्ट करें: lizardpack go.mod ढूँढता है, go लाइन वाले Go वर्ज़न से स्टैटिक बाइनरी बिल्ड करता है और उसे PORT सेट करके पोर्ट 8080 पर चलाता है।"
 ---
 
 <span id="deploy-a-go-app" />
 
-# एक Go ऐप डिप्लॉय करें
+# Go ऐप डिप्लॉय करें
 
-Lizard पर एक Go ऐप डिप्लॉय करने के लिए, `go.mod` फ़ाइल के साथ एक मॉड्यूल अपलोड या पुश करें। lizardpack इसे `go` लाइन से Go संस्करण के साथ बनाता है, एक स्थिर बाइनरी (`CGO_ENABLED=0`) संकलित करता है और इसे Alpine Linux पर चलाता है। सेवा पोर्ट `8080` है, और Lizard इसे `PORT` में आपकी प्रक्रिया में पास करता है, इसलिए अपने ऐप में `PORT` पढ़ें और सभी इंटरफेस पर सुनें।
+Lizard पर Go ऐप डिप्लॉय करने के लिए `go.mod` फ़ाइल वाला मॉड्यूल अपलोड या पुश करें। lizardpack उसे `go` लाइन में लिखे Go वर्ज़न से बिल्ड करता है, स्टैटिक बाइनरी (`CGO_ENABLED=0`) कंपाइल करता है और उसे Alpine Linux पर चलाता है। सर्विस पोर्ट `8080` है, और Lizard उसे `PORT` में आपके प्रोसेस को पास करता है, इसलिए ऐप में `PORT` पढ़ें और सभी इंटरफ़ेस पर सुनें।
 
-**परीक्षण स्थिति:** नीचे दिया गया नमूना ऐप Go 1.27, के साथ स्थानीय रूप से बनता और चलता है और हमने lizardpack के साथ इसकी बिल्ड योजना की जाँच की है, बिल्ड प्लानर Lizard चलता है। हमने अभी तक इस गाइड के साथ इसे एंड-टू-एंड डिप्लॉय नहीं किया है।
+**टेस्ट स्टेटस:** नीचे दिया गया सैंपल ऐप Go 1.27 के साथ लोकल बिल्ड होता है और चलता है, और हमने इसका बिल्ड प्लान lizardpack से जाँचा, जो Lizard का बिल्ड प्लानर है। हमने अभी इस गाइड के साथ इसे शुरू से आख़िर तक डिप्लॉय करके नहीं देखा है।
 
 <span id="before-you-start" />
 
 ## शुरू करने से पहले
 
-- एक Go मॉड्यूल जिसमें आपके द्वारा डिप्लॉय किए जाने वाले डायरेक्टरी में `go.mod` है, और यदि इसमें निर्भरताएँ हैं तो `go.sum`।
-- Lizard CLI, `lizard login` के साथ साइन इन, Pro पर या 7-दिन Pro ट्रायल (कार्ड आवश्यक) पर। [मूल्य निर्धारण](https://lizard.build/pricing) देखें।
+- एक Go मॉड्यूल, जिसकी डिप्लॉय की जाने वाली डायरेक्टरी में `go.mod` हो, और अगर डिपेंडेंसी हैं तो `go.sum` भी।
+- Lizard CLI, जिसमें `lizard login` से साइन इन किया गया हो, और Pro प्लान या 7 दिन का Pro ट्रायल (कार्ड ज़रूरी)। [प्राइसिंग](https://lizard.build/pricing) देखें।
 
 <span id="a-minimal-app" />
 
-## एक न्यूनतम ऐप
+## मिनिमल ऐप
 
 `go.mod`:
 
@@ -60,9 +60,9 @@ func main() {
 }
 ```
 
-`":"+port` हर इंटरफ़ेस पर सुनता है। `127.0.0.1:8080` जैसा पता केवल कंटेनर के अंदर से कनेक्शन स्वीकार करता है, और डिप्लॉय कभी स्वस्थ नहीं होता है।
+`":"+port` हर इंटरफ़ेस पर सुनता है। `127.0.0.1:8080` जैसा एड्रेस सिर्फ़ कंटेनर के अंदर से कनेक्शन स्वीकार करता है, और डिप्लॉय कभी हेल्दी नहीं होता।
 
-इसे स्थानीय रूप से जांचें:
+इसे लोकल जाँचें:
 
 ```bash
 go run .
@@ -71,18 +71,18 @@ curl http://localhost:8080/healthz
 
 <span id="what-lizardpack-builds" />
 
-## lizardpack क्या बनाता है
+## lizardpack क्या बिल्ड करता है
 
-| चरण | क्या होता है |
+| स्टेप | क्या होता है |
 |---|---|
-| पहचान | `go.mod`, `go.work` या कोई भी `.go` फ़ाइल। lizardpack Go की जाँच Python और Node.js से पहले करता है। |
-| Go संस्करण | `go.mod` में `go` लाइन, केवल प्रमुख और लघु: `go 1.27.3` `golang:1.27-alpine` पर बनता है। `go.mod` के बिना, Go 1.24, जो अब सुरक्षा फिक्स प्राप्त नहीं करता है। |
+| डिटेक्शन | `go.mod`, `go.work` या कोई भी `.go` फ़ाइल। lizardpack Go की जाँच Node.js और Python से पहले करता है। |
+| Go वर्ज़न | `go.mod` की `go` लाइन, सिर्फ़ मेजर और माइनर: `go 1.27.3` से `golang:1.27-alpine` पर बिल्ड होता है। `go.mod` न हो, तो Go 1.24, जिसे अब सिक्योरिटी फ़िक्स नहीं मिलते। |
 | बिल्ड | `go mod download`, फिर `CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w' -o /app/server <package>` |
-| मुख्य पैकेज | `./cmd` यदि `cmd/main.go` मौजूद है; अन्यथा वर्णानुक्रम में पहला `cmd/<name>/main.go`; अन्यथा रूट डायरेक्टरी। `cmd/` या `cmd/<name>/` में एक `main.go` रूट `main.go` पर जीतता है। |
-| रनटाइम | `alpine:3.19` `ca-certificates` और `tzdata` के साथ। lizardpack पूरे स्रोत डायरेक्टरी को बाइनरी के बगल में `/app` में कॉपी करता है, इसलिए `templates/` और `static/` जैसे सापेक्ष पथ अभी भी काम करते हैं। |
-| प्रारंभ और पोर्ट | `/app/server` पोर्ट `8080` पर |
+| main पैकेज | `cmd/main.go` हो तो `./cmd`; वरना वर्णक्रम में पहला `cmd/<name>/main.go`; वरना रूट डायरेक्टरी। `cmd/` या `cmd/<name>/` वाले `main.go` को रूट के `main.go` पर प्राथमिकता मिलती है। |
+| रनटाइम | `ca-certificates` और `tzdata` के साथ `alpine:3.19`। lizardpack पूरी सोर्स डायरेक्टरी को बाइनरी के साथ `/app` में कॉपी करता है, इसलिए `templates/` और `static/` जैसे रिलेटिव पाथ काम करते रहते हैं। |
+| स्टार्ट और पोर्ट | पोर्ट `8080` पर `/app/server` |
 
-उत्पन्न Dockerfile:
+जनरेट किया गया Dockerfile:
 
 ```dockerfile
 FROM golang:1.27-alpine AS build
@@ -100,7 +100,7 @@ EXPOSE 8080
 CMD ["/app/server"]
 ```
 
-इस इमेज को प्राप्त करने के लिए सेवा के बिल्ड और स्टार्ट कमांड को खाली छोड़ दें। किसी एक को सेट करने पर, Lizard उन कमांड से एक अलग Dockerfile लिखता है और `go` लाइन को अनदेखा करता है: एक `go build …` कमांड Go 1.24, पर बनता है जो अब सुरक्षा फिक्स प्राप्त नहीं करता है। अन्य बिल्ड चरणों के लिए, अपना स्वयं का `Dockerfile` कमिट करें; [Dockerfile से एक Docker कंटेनर डिप्लॉय करें](/deploy/dockerfile) देखें।
+यही इमेज पाने के लिए सर्विस की बिल्ड और स्टार्ट कमांड खाली छोड़ें। इनमें से कोई एक भी सेट हो, तो Lizard उन कमांड से अलग Dockerfile लिखता है और `go` लाइन को अनदेखा करता है: तब `go build …` कमांड Go 1.24 पर बिल्ड होती है, जिसे अब सिक्योरिटी फ़िक्स नहीं मिलते। दूसरे बिल्ड स्टेप के लिए अपना `Dockerfile` कमिट करें; [Dockerfile से Docker कंटेनर डिप्लॉय करें](/deploy/dockerfile) देखें।
 
 <span id="deploy" />
 
@@ -114,38 +114,38 @@ lizard add --service api
 lizard up --service api --port 8080
 ```
 
-`lizard up` डायरेक्टरी को अपलोड करता है, इसे Lizard के बिल्ड मशीनों पर बनाता है और URL प्रिंट करता है। आपको कमांड चलाने वाली मशीन पर Docker या Go की आवश्यकता नहीं है। git push to deploy के लिए, [एक GitHub रिपॉजिटरी कनेक्ट करें](/deploy/github) `lizard add -r your-org/your-app -n api` के साथ, फिर जांचें कि `lizard port --service api` `8080` प्रिंट करता है।
+`lizard up` डायरेक्टरी अपलोड करता है, उसे Lizard की बिल्ड मशीनों पर बिल्ड करता है और URL प्रिंट करता है। कमांड चलाने वाली मशीन पर Docker या Go की ज़रूरत नहीं है। git push to deploy के लिए `lizard add -r your-org/your-app -n api` से [GitHub रिपॉज़िटरी कनेक्ट करें](/deploy/github), फिर जाँचें कि `lizard port --service api` `8080` प्रिंट करता है।
 
 <span id="frameworks" />
 
-## फ्रेमवर्क
+## फ़्रेमवर्क
 
-- **net/http, chi, gorilla/mux:** `":" + os.Getenv("PORT")` को `http.ListenAndServe` पर पास करें, जैसा कि ऊपर है।
-- **Gin:** बिना एड्रेस के `r.Run()` `PORT` को पढ़ता है और `:8080` पर वापस आ जाता है। सेवा पर `GIN_MODE=release` सेट करें।
-- **Echo, Fiber:** एड्रेस स्वयं पास करें: `e.Start(":" + os.Getenv("PORT"))` या `app.Listen(":" + os.Getenv("PORT"))`।
+- **net/http, chi, gorilla/mux:** ऊपर की तरह `http.ListenAndServe` को `":" + os.Getenv("PORT")` पास करें।
+- **Gin:** बिना एड्रेस के `r.Run()` `PORT` पढ़ता है, और वह न हो तो `:8080` इस्तेमाल करता है। सर्विस पर `GIN_MODE=release` सेट करें।
+- **Echo, Fiber:** एड्रेस ख़ुद पास करें: `e.Start(":" + os.Getenv("PORT"))` या `app.Listen(":" + os.Getenv("PORT"))`।
 
 <span id="variables-and-databases" />
 
 ## वेरिएबल्स और डेटाबेस
 
-सेवा पर कॉन्फ़िगरेशन सेट करें और इसे `os.Getenv` के साथ पढ़ें:
+कॉन्फ़िगरेशन सर्विस पर सेट करें और उसे `os.Getenv` से पढ़ें:
 
 ```bash
 lizard secrets set GIN_MODE=release API_KEY=change-me --service api
 ```
 
-डेटाबेस के लिए, [Managed Postgres](/addons/postgres) जोड़ें और [संदर्भ](/variables/references) के साथ इसका निजी URL पास करें:
+डेटाबेस के लिए [Managed Postgres](/addons/postgres) जोड़ें और उसका प्राइवेट URL [रेफ़रेंस](/variables/references) से पास करें:
 
 ```bash
 lizard add postgres
 lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service api
 ```
 
-फिर इसे अपने ड्राइवर से खोलें, उदाहरण के लिए `pgxpool.New(ctx, os.Getenv("DATABASE_URL"))`। एक वेरिएबल परिवर्तन रीबिल्ड के बिना सेवा को पुनरारंभ करता है।
+फिर उसे अपने ड्राइवर से खोलें, जैसे `pgxpool.New(ctx, os.Getenv("DATABASE_URL"))`। वेरिएबल बदलने पर सर्विस बिना रीबिल्ड के रीस्टार्ट होती है।
 
 <span id="check-that-it-works" />
 
-## जांचें कि यह काम करता है
+## जाँचें कि ऐप काम कर रहा है
 
 ```bash
 lizard logs --build --service api
@@ -153,27 +153,27 @@ lizard logs --service api --tail 100
 lizard ps
 ```
 
-`/healthz` द्वारा प्रिंट किए गए URL पर `lizard up` का अनुरोध करें, फिर एक ऐसा रूट जो वास्तविक काम करता हो। बिल्ड लॉग `golang:` इमेज दिखाता है जिसका बिल्ड ने उपयोग किया।
+`lizard up` ने जो URL प्रिंट किया था, उस पर `/healthz` खोलें, फिर कोई ऐसा रूट जाँचें जो असली काम करता हो। बिल्ड लॉग में वह `golang:` इमेज दिखती है जिससे बिल्ड हुआ।
 
 <span id="common-problems" />
 
-## सामान्य समस्याएं
+## आम समस्याएँ
 
 | लक्षण | समाधान |
 |---|---|
-| `no Go files in /app` | `main` पैकेज रूट पर या `cmd/` के नीचे नहीं है। इसे ले जाएं, या एक Dockerfile जोड़ें। |
-| गलत बाइनरी शुरू होती है | `cmd/` या `cmd/<name>/` में एक `main.go`, रूट `main.go` पर जीत जाता है, और कई `cmd/<name>/main.go` के साथ, lizardpack वर्णानुक्रम में पहला नाम बनाता है। वह बनाने के लिए एक Dockerfile जोड़ें जो आप चाहते हैं। |
-| SQLite `CGO_ENABLED=0` के साथ विफल | बिल्ड cgo को बंद कर देता है, इसलिए `mattn/go-sqlite3` काम नहीं कर सकता। एक शुद्ध-Go ड्राइवर का उपयोग करें, या [Managed Postgres](/addons/postgres): कंटेनर फ़ाइलें प्रत्येक परिनियोजन पर खो जाती हैं। |
-| परिनियोजन कभी स्वस्थ नहीं होता | प्रक्रिया को सभी इंटरफेस पर `PORT` (या `8080`) पर सुनना चाहिए। [सेवा कभी स्वस्थ नहीं](/deploy/troubleshooting/service-never-healthy) देखें। |
-| आपको एक नया Go चाहिए | `go` लाइन बदलें, उदाहरण के लिए `go mod edit -go=1.27`, और फिर से परिनियोजित करें। [रनटाइम संस्करण](/deploy/runtime-versions) देखें। |
+| `no Go files in /app` | `main` पैकेज न रूट में है, न `cmd/` के अंदर। उसे वहाँ ले जाएँ, या Dockerfile जोड़ें। |
+| गलत बाइनरी शुरू होती है | `cmd/` या `cmd/<name>/` वाले `main.go` को रूट के `main.go` पर प्राथमिकता मिलती है, और कई `cmd/<name>/main.go` हों तो lizardpack वर्णक्रम में पहले नाम वाला बिल्ड करता है। ऐसा Dockerfile जोड़ें जो आपकी चाही बाइनरी बिल्ड करे। |
+| `CGO_ENABLED=0` के साथ SQLite फ़ेल होता है | बिल्ड में cgo बंद रहता है, इसलिए `mattn/go-sqlite3` काम नहीं कर सकता। pure-Go ड्राइवर या [Managed Postgres](/addons/postgres) इस्तेमाल करें: कंटेनर की फ़ाइलें हर डिप्लॉय पर मिट जाती हैं। |
+| डिप्लॉय कभी हेल्दी नहीं होता | प्रोसेस को सभी इंटरफ़ेस पर `PORT` (या `8080`) पर सुनना चाहिए। [सर्विस कभी हेल्दी नहीं होती](/deploy/troubleshooting/service-never-healthy) देखें। |
+| Go का नया वर्ज़न चाहिए | `go` लाइन बदलें, जैसे `go mod edit -go=1.27`, और फिर से डिप्लॉय करें। [रनटाइम वर्ज़न](/deploy/runtime-versions) देखें। |
 
-एक Go प्रक्रिया जो कोई HTTP सेवा नहीं देती है, जैसे कि एक क्यू उपभोक्ता, `--port 0` के साथ [बैकग्राउंड वर्कर](/deploy/workers) के रूप में चलती है।
+जो Go प्रोसेस HTTP सर्व नहीं करता, जैसे क्यू कंज्यूमर, वह `--port 0` के साथ [बैकग्राउंड वर्कर](/deploy/workers) के रूप में चलता है।
 
 <span id="related" />
 
 ## संबंधित
 
-- [फ्रेमवर्क गाइड](/framework-guides)
+- [फ़्रेमवर्क गाइड](/framework-guides)
 - [बिल्ड पाइपलाइन](/concepts/build-pipeline)
-- [चर और रहस्य](/variables)
+- [वेरिएबल्स और सीक्रेट्स](/variables)
 - [नेटवर्किंग और डोमेन](/networking)

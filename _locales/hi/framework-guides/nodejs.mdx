@@ -1,28 +1,28 @@
 ---
 title: "Node.js ऐप (Express) डिप्लॉय करें"
-description: "Lizard पर Node.js या Express ऐप होस्ट करें: lizardpack package.json को पढ़ता है, .nvmrc या engines से Node चुनता है, पोर्ट 3000 पर npm start चलाता है और PORT सेट करता है।"
+description: "Lizard पर Node.js या Express ऐप होस्ट करें: lizardpack package.json पढ़ता है, .nvmrc या engines से Node चुनता है, पोर्ट 3000 पर npm start चलाता है और PORT सेट करता है।"
 ---
 
 <span id="deploy-a-nodejs-app-express" />
 
 # Node.js ऐप (Express) डिप्लॉय करें
 
-Lizard पर Node.js ऐप होस्ट करने के लिए, `package.json` के साथ एक फ़ोल्डर डिप्लॉय करें। lizardpack आपकी लॉक फ़ाइल से पैकेज मैनेजर चुनता है, डिपेंडेंसी इंस्टॉल करता है, यदि कोई हो तो `build` स्क्रिप्ट चलाता है और पोर्ट `3000` पर `start` स्क्रिप्ट के साथ ऐप शुरू करता है। यह Node.js 22 का उपयोग करता है जब तक कि `.nvmrc` या `engines.node` कोई अन्य प्रमुख संस्करण निर्दिष्ट न करे। Lizard पोर्ट को `PORT` में पास करता है; इसे अपने ऐप के लिसनर में पढ़ें।
+Lizard पर Node.js ऐप होस्ट करने के लिए `package.json` वाला फ़ोल्डर डिप्लॉय करें। lizardpack आपकी लॉक फ़ाइल से पैकेज मैनेजर चुनता है, डिपेंडेंसी इंस्टॉल करता है, अगर `build` स्क्रिप्ट है तो उसे चलाता है, और `start` स्क्रिप्ट से ऐप को पोर्ट `3000` पर शुरू करता है। जब तक `.nvmrc` या `engines.node` कोई दूसरा major वर्ज़न न बताए, यह Node.js 22 इस्तेमाल करता है। Lizard पोर्ट को `PORT` में देता है; अपने ऐप के लिसनर में इसे पढ़ें।
 
-**टेस्ट स्टेटस:** नीचे दिया गया एक्सप्रेस सैंपल एक्सप्रेस 5.3.0, और डेटाबेस रूट के साथ pg 8.23.1 का उपयोग करके PostgreSQL 14. के विरुद्ध स्थानीय रूप से चला। हमने lizardpack के साथ इसके बिल्ड प्लान की जाँच की, बिल्ड प्लानर Lizard चलता है। हमने अभी तक इस गाइड के साथ इसे एंड-टू-एंड डिप्लॉय नहीं किया है।
+**टेस्ट स्टेटस:** नीचे दिया गया Express सैंपल Express 5.3.0 के साथ लोकल रूप से चलाया गया, और डेटाबेस वाला रूट pg 8.23.1 के साथ PostgreSQL 14 पर। हमने इसका बिल्ड प्लान lizardpack से जाँचा, यानी उस बिल्ड प्लानर से जिसे Lizard चलाता है। इस गाइड से अभी तक हमने इसे शुरू से आख़िर तक डिप्लॉय नहीं किया है।
 
 <span id="before-you-start" />
 
 ## शुरू करने से पहले
 
-- लॉक फ़ाइल बनाने और स्थानीय रूप से टेस्ट करने के लिए आपके कंप्यूटर पर Node.js और npm।
-- Lizard CLI, `lizard login` के साथ साइन इन, Pro या 7-दिन Pro ट्रायल (कार्ड आवश्यक) पर। [मूल्य निर्धारण](https://lizard.build/pricing) देखें।
+- लॉक फ़ाइल बनाने और लोकल रूप से टेस्ट करने के लिए आपके कंप्यूटर पर Node.js और npm।
+- Lizard CLI, `lizard login` से साइन इन किया हुआ, Pro या 7-दिन के Pro ट्रायल (कार्ड ज़रूरी) पर। [प्राइसिंग](https://lizard.build/pricing) देखें।
 
-Next.js, Nuxt, Astro, SvelteKit और Vite ऐप्स के अपने गाइड हैं: [फ्रेमवर्क गाइड](/framework-guides) देखें।
+Next.js, Nuxt, Astro, SvelteKit और Vite ऐप्स की अपनी अलग गाइड हैं: [फ्रेमवर्क गाइड](/framework-guides) देखें।
 
 <span id="a-minimal-express-app" />
 
-## एक न्यूनतम Express ऐप
+## एक छोटा-सा Express ऐप
 
 `package.json`:
 
@@ -64,7 +64,7 @@ app.listen(port, "0.0.0.0", () => {
 });
 ```
 
-`package-lock.json` बनाएं, दोनों फ़ाइलों को कमिट करें, और `node_modules` और `.env` को `.gitignore` में जोड़ने के लिए `npm install` चलाएं। इसे स्थानीय रूप से जांचें:
+`package-lock.json` बनाने के लिए `npm install` चलाएँ, दोनों फ़ाइलें कमिट करें, और `node_modules` व `.env` को `.gitignore` में जोड़ें। इसे लोकल रूप से जाँचें:
 
 ```bash
 npm start
@@ -77,13 +77,13 @@ curl http://localhost:3000/healthz
 
 | चरण | क्या होता है |
 |---|---|
-| पैकेज मैनेजर | `bun.lock` या `bun.lockb`: Bun. `pnpm-lock.yaml`: pnpm. `yarn.lock`: Yarn. `package-lock.json`: `npm ci`. कोई लॉक फ़ाइल नहीं: `npm install`। |
-| Node.js संस्करण | `.nvmrc`, फिर `.node-version`, फिर `.tool-versions`, फिर `engines.node`। `node:<major>-slim` पर केवल प्रमुख संस्करण। डिफ़ॉल्ट `22`। |
-| बिल्ड | `package.json` में यदि कोई हो तो `build` स्क्रिप्ट, एक अलग स्टेज में जिसमें आपके devDependencies हों |
-| स्टार्ट | `start` स्क्रिप्ट; अन्यथा `node <main>`; अन्यथा `server.js`, `index.js`, `app.js`, `main.js`, `dist/index.js` में से पहला |
+| पैकेज मैनेजर | `bun.lock` या `bun.lockb`: Bun। `pnpm-lock.yaml`: pnpm। `yarn.lock`: Yarn। `package-lock.json`: `npm ci`। लॉक फ़ाइल नहीं: `npm install`। |
+| Node.js वर्ज़न | `.nvmrc`, फिर `.node-version`, फिर `.tool-versions`, फिर `engines.node`। सिर्फ़ major वर्ज़न, `node:<major>-slim` पर। डिफ़ॉल्ट `22`। |
+| बिल्ड | `build` स्क्रिप्ट, अगर `package.json` में हो; एक अलग स्टेज में, जिसमें आपकी devDependencies मौजूद होती हैं |
+| स्टार्ट | `start` स्क्रिप्ट; नहीं तो `node <main>`; नहीं तो `server.js`, `index.js`, `app.js`, `main.js`, `dist/index.js` में से जो पहले मिले |
 | रनटाइम | `NODE_ENV=production`, पोर्ट `3000` |
 
-`build` स्क्रिप्ट के बिना, इमेज पैकेज इंस्टॉल करने से पहले `NODE_ENV=production` सेट करती है, इसलिए devDependencies छोड़ दिए जाते हैं। एक स्टार्ट स्क्रिप्ट जो devDependencies से `nodemon`, `tsx` या `ts-node` को कॉल करती है, वह विफल हो जाती है। TypeScript के लिए, `build` में कंपाइल करें और आउटपुट शुरू करें:
+`build` स्क्रिप्ट न होने पर इमेज पैकेज इंस्टॉल करने से पहले `NODE_ENV=production` सेट कर देती है, इसलिए devDependencies इंस्टॉल नहीं होतीं। तब devDependencies से `nodemon`, `tsx` या `ts-node` को कॉल करने वाली स्टार्ट स्क्रिप्ट फ़ेल हो जाती है। TypeScript के लिए `build` में कंपाइल करें और कंपाइल हुआ आउटपुट स्टार्ट करें:
 
 ```json
 {
@@ -94,7 +94,7 @@ curl http://localhost:3000/healthz
 }
 ```
 
-संस्करण फ़ाइलों और पार्सिंग नियमों के लिए, [रनटाइम संस्करण](/deploy/runtime-versions) देखें। सेवा के बिल्ड और स्टार्ट कमांड को खाली छोड़ दें: किसी एक को सेट करने पर, Lizard `node:22-alpine` पर अपना Dockerfile लिखता है और आपकी संस्करण फ़ाइलों को अनदेखा करता है। [बिल्ड पाइपलाइन](/concepts/build-pipeline) देखें।
+वर्ज़न फ़ाइलों और पार्सिंग के नियमों के लिए [रनटाइम वर्ज़न](/deploy/runtime-versions) देखें। सर्विस के बिल्ड और स्टार्ट कमांड खाली छोड़ें: इनमें से कोई भी सेट होने पर Lizard `node:22-alpine` पर अपना Dockerfile बनाता है और आपकी वर्ज़न फ़ाइलों को नज़रअंदाज़ कर देता है। [बिल्ड पाइपलाइन](/concepts/build-pipeline) देखें।
 
 <span id="deploy" />
 
@@ -108,9 +108,9 @@ lizard add --service web
 lizard up --service web --port 3000
 ```
 
-`lizard up` फ़ोल्डर अपलोड करता है, इसे Lizard पर बनाता है और URL प्रिंट करता है। गिट रिपॉजिटरी के अंदर यह `.gitignore` द्वारा सूचीबद्ध को छोड़ देता है; गिट के बाहर यह `node_modules` को छोड़ देता है लेकिन `.env` फ़ाइलों को अपलोड करता है। [स्थानीय कोड से डिप्लॉय करें](/deploy/upload) देखें।
+`lizard up` फ़ोल्डर अपलोड करता है, उसे Lizard पर बिल्ड करता है और URL प्रिंट करता है। git रिपॉज़िटरी के अंदर यह वे फ़ाइलें छोड़ देता है जो `.gitignore` में हैं; git के बाहर यह `node_modules` तो छोड़ देता है, लेकिन `.env` फ़ाइलें अपलोड कर देता है। [लोकल कोड से डिप्लॉय करें](/deploy/upload) देखें।
 
-git push to deploy के लिए, रिपॉजिटरी को GitHub पर पुश करें और इसे `lizard add -r your-org/your-app -n web` से कनेक्ट करें। [GitHub से डिप्लॉय करें](/deploy/github) देखें।
+git push to deploy के लिए रिपॉज़िटरी को GitHub पर पुश करें और उसे `lizard add -r your-org/your-app -n web` से कनेक्ट करें। [GitHub से डिप्लॉय करें](/deploy/github) देखें।
 
 <span id="set-variables" />
 
@@ -120,7 +120,7 @@ git push to deploy के लिए, रिपॉजिटरी को GitHub �
 lizard secrets set SESSION_SECRET="$(openssl rand -hex 32)" --service web
 ```
 
-`process.env.SESSION_SECRET` के साथ मान पढ़ें। एक वेरिएबल परिवर्तन के बिना रीबिल्ड के सेवा को पुनरारंभ करता है। [वेरिएबल्स और सीक्रेट्स](/variables) देखें।
+वैल्यू `process.env.SESSION_SECRET` से पढ़ें। वेरिएबल बदलने पर सर्विस बिना रीबिल्ड के रीस्टार्ट हो जाती है। [वेरिएबल्स और सीक्रेट्स](/variables) देखें।
 
 <span id="add-managed-postgres" />
 
@@ -132,7 +132,7 @@ lizard secrets set DATABASE_URL='${{postgres.DATABASE_PRIVATE_URL}}' --service w
 npm install pg
 ```
 
-सिंगल कोट्स `${{…}}` को आपके शेल से दूर रखते हैं; Lizard डिप्लॉय समय पर [संदर्भ](/variables/references) को प्रोजेक्ट के निजी नेटवर्क पर डेटाबेस के पते पर हल करता है। एक पूल और `server.js` के लिए एक रूट जोड़ें:
+सिंगल कोट्स `${{…}}` को आपके शेल से बचाकर रखते हैं; Lizard डिप्लॉय के समय [रेफ़रेंस](/variables/references) को प्रोजेक्ट के प्राइवेट नेटवर्क पर डेटाबेस के पते में resolve करता है। `server.js` में एक पूल और एक रूट जोड़ें:
 
 ```js
 import pg from "pg";
@@ -145,17 +145,17 @@ app.get("/db", async (req, res) => {
 });
 ```
 
-Express 5 एक रूट से अस्वीकृत प्रॉमिस को उसके एरर हैंडलर को पास करता है, इसलिए एक विफल क्वेरी प्रोसेस को क्रैश करने के बजाय HTTP 500 लौटाती है। डेटाबेस के पब्लिक URL के साथ अपने कंप्यूटर से माइग्रेशन चलाएं:
+Express 5 किसी रूट से reject हुए promise को अपने एरर हैंडलर तक पहुँचा देता है, इसलिए फ़ेल हुई क्वेरी प्रोसेस को क्रैश करने के बजाय HTTP 500 लौटाती है। माइग्रेशन अपने कंप्यूटर से डेटाबेस के पब्लिक URL के साथ चलाएँ:
 
 ```bash
 lizard run --service postgres -- npm run migrate
 ```
 
-कैश या जॉब क्यू के लिए, [Managed Redis](/addons/redis) को उसी तरह जोड़ें: `lizard add redis`, फिर `REDIS_URL='${{redis.REDIS_PRIVATE_URL}}'`।
+कैश या जॉब क्यू के लिए [Managed Redis](/addons/redis) इसी तरह जोड़ें: `lizard add redis`, फिर `REDIS_URL='${{redis.REDIS_PRIVATE_URL}}'`।
 
 <span id="check-that-it-works" />
 
-## जांचें कि यह काम करता है
+## जाँचें कि यह काम करता है
 
 ```bash
 lizard logs --build --service web
@@ -163,27 +163,27 @@ lizard logs --service web --tail 100
 lizard ps
 ```
 
-रनटाइम लॉग `listening on 3000` दिखाता है। `lizard up` द्वारा प्रिंट किए गए URL पर `/healthz` और `/db` का अनुरोध करें।
+रनटाइम लॉग में `listening on 3000` दिखता है। `lizard up` के प्रिंट किए URL पर `/healthz` और `/db` की रिक्वेस्ट भेजें।
 
 <span id="common-problems" />
 
-## सामान्य समस्याएं
+## आम समस्याएँ
 
 | लक्षण | समाधान |
 |---|---|
-| `npm ci` लॉक फ़ाइल के सिंक से बाहर होने के कारण विफल हो जाता है | `npm install` को स्थानीय रूप से चलाएं और `package-lock.json` को कमिट करें। |
-| `nodemon: not found` या `tsx: not found` | वे टूल्स devDependencies हैं और स्टार्ट के लिए इंस्टॉल नहीं किए जाते हैं। `build` स्टेप जोड़ें, या टूल को `dependencies` में ले जाएं। |
-| Deploy कभी स्वस्थ नहीं होता | `process.env.PORT` पर सुनें। `5000` जैसा एक निश्चित पोर्ट सेवा पोर्ट से मेल नहीं खाता। [सेवा कभी स्वस्थ नहीं होती](/deploy/troubleshooting/service-never-healthy) देखें। |
-| गलत Node.js संस्करण | `.nvmrc` में प्रमुख संस्करण डालें, उदाहरण के लिए `24`, और फिर से डिप्लॉय करें। |
-| `Cannot use import statement outside a module` | `"type": "module"` को `package.json` में जोड़ें, या `require` का उपयोग करें। |
+| लॉक फ़ाइल सिंक में न होने से `npm ci` फ़ेल होता है | लोकल रूप से `npm install` चलाएँ और `package-lock.json` कमिट करें। |
+| `nodemon: not found` या `tsx: not found` | ये टूल devDependencies हैं और स्टार्ट के लिए इंस्टॉल नहीं होते। `build` स्टेप जोड़ें, या टूल को `dependencies` में ले जाएँ। |
+| डिप्लॉय कभी हेल्दी नहीं होता | `process.env.PORT` पर सुनें। `5000` जैसा तय पोर्ट सर्विस पोर्ट से मेल नहीं खाता। [सर्विस कभी हेल्दी नहीं होती](/deploy/troubleshooting/service-never-healthy) देखें। |
+| Node.js का गलत वर्ज़न | `.nvmrc` में major वर्ज़न डालें, जैसे `24`, और फिर से डिप्लॉय करें। |
+| `Cannot use import statement outside a module` | `package.json` में `"type": "module"` जोड़ें, या `require` इस्तेमाल करें। |
 
-एक Node.js प्रक्रिया जो कोई HTTP सर्व नहीं करती है, जैसे कि एक क्यू कंज्यूमर या एक [Discord बॉट](/guides/discord-bot), एक [बैकग्राउंड वर्कर](/deploy/workers) के रूप में चलती है।
+जो Node.js प्रोसेस HTTP सर्व नहीं करता, जैसे क्यू कंज़्यूमर या [Discord बॉट](/guides/discord-bot), वह [बैकग्राउंड वर्कर](/deploy/workers) के रूप में चलता है।
 
 <span id="related" />
 
 ## संबंधित
 
 - [फ्रेमवर्क गाइड](/framework-guides)
-- [रनटाइम संस्करण](/deploy/runtime-versions)
+- [रनटाइम वर्ज़न](/deploy/runtime-versions)
 - [Managed Postgres](/addons/postgres)
 - [लॉग्स](/observability/logs)

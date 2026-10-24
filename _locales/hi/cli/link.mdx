@@ -1,10 +1,10 @@
 ---
-description: "lizard link वर्तमान डायरेक्टरी को एक मौजूदा प्रोजेक्ट, और वैकल्पिक रूप से एक विशिष्ट सेवा या वर्कस्पेस से जोड़ता है।"
+description: "lizard link मौजूदा डायरेक्टरी को किसी मौजूदा प्रोजेक्ट से जोड़ता है, और चाहें तो किसी खास सर्विस या वर्कस्पेस से भी।"
 ---
 
 # lizard link
 
-वर्तमान डायरेक्टरी को एक मौजूदा प्रोजेक्ट (और वैकल्पिक रूप से एक सेवा) से जोड़ें। लिंक इस सटीक फ़ोल्डर को कवर करता है, न कि उसके सबफ़ोल्डर्स को। बिना लिंक वाला फ़ोल्डर आपके खाते के डिफ़ॉल्ट प्रोजेक्ट का उपयोग करता है।
+मौजूदा डायरेक्टरी को किसी मौजूदा प्रोजेक्ट से जोड़ें (और चाहें तो किसी सर्विस से भी)। लिंक सिर्फ़ इसी फ़ोल्डर पर लागू होता है, इसके सबफ़ोल्डर्स पर नहीं। जो फ़ोल्डर लिंक नहीं है, वह आपके अकाउंट का डिफ़ॉल्ट प्रोजेक्ट इस्तेमाल करता है।
 
 <span id="usage" />
 
@@ -16,12 +16,12 @@ lizard link [service] [flags]
 
 <span id="flags" />
 
-## फ्लैग्स
+## फ़्लैग्स
 
-| फ्लैग | विवरण |
+| फ़्लैग | विवरण |
 |------|-------------|
-| `-p, --project <id>` | प्रोजेक्ट का नाम, स्लग, या आईडी |
-| `-s, --service <name>` | लिंक करने के लिए सेवा |
+| `-p, --project <id>` | प्रोजेक्ट का नाम, स्लग या ID |
+| `-s, --service <name>` | लिंक करने के लिए सर्विस |
 | `-w, --workspace <ws>` | वर्कस्पेस |
 
 <span id="examples" />
@@ -30,7 +30,7 @@ lizard link [service] [flags]
 
 <span id="link-to-an-existing-project" />
 
-### एक मौजूदा प्रोजेक्ट से लिंक करें
+### किसी मौजूदा प्रोजेक्ट से लिंक करें
 
 ```bash
 lizard link --project my-project
@@ -38,7 +38,7 @@ lizard link --project my-project
 
 <span id="link-to-a-project-and-a-specific-service" />
 
-### किसी प्रोजेक्ट और एक विशिष्ट सेवा का लिंक
+### किसी प्रोजेक्ट और उसकी खास सर्विस से लिंक करें
 
 ```bash
 lizard link my-service --project my-project
@@ -46,7 +46,7 @@ lizard link my-service --project my-project
 
 <span id="link-within-a-specific-workspace" />
 
-### किसी विशिष्ट वर्कस्पेस के भीतर लिंक
+### किसी खास वर्कस्पेस के अंदर लिंक करें
 
 ```bash
 lizard link --project my-project --workspace my-workspace
@@ -56,7 +56,7 @@ lizard link --project my-project --workspace my-workspace
 
 ## यह भी देखें
 
-- [lizard init](/cli/init) — एक प्रोजेक्ट बनाएं या चुनें और उसे एक ही चरण में लिंक करें
-- [lizard unlink](/cli/unlink) — वर्तमान डायरेक्टरी से लिंक हटाएं
-- [lizard status](/cli/status) — लिंक किया गया वर्कस्पेस, प्रोजेक्ट और सेवा दिखाएं
-- [Architecture: Project](/concepts/architecture) — डायरेक्टरी-से-प्रोजेक्ट लिंक कैसे काम करता है
+- [lizard init](/cli/init) — एक ही स्टेप में प्रोजेक्ट बनाएँ या चुनें और उसे लिंक करें
+- [lizard unlink](/cli/unlink) — मौजूदा डायरेक्टरी से लिंक हटाएँ
+- [lizard status](/cli/status) — लिंक किया गया वर्कस्पेस, प्रोजेक्ट और सर्विस दिखाएँ
+- [आर्किटेक्चर: प्रोजेक्ट](/concepts/architecture) — डायरेक्टरी और प्रोजेक्ट का लिंक कैसे काम करता है

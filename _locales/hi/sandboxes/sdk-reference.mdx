@@ -1,11 +1,11 @@
 ---
-title: "Sandbox API और SDK संदर्भ"
-description: "TypeScript और Python के लिए Lizard SDK संदर्भ: विकल्प, कमांड, फ़ाइलें, पोर्ट, पॉज़, स्नैपशॉट, फ़ोर्क, त्रुटियाँ और HTTP API बनाएं, कोड उदाहरणों के साथ।"
+title: "Sandbox API और SDK रेफरेंस"
+description: "TypeScript और Python के लिए Lizard SDK रेफरेंस: create के विकल्प, कमांड, फ़ाइलें, पोर्ट, पॉज़, स्नैपशॉट, फ़ोर्क, एरर और HTTP API, कोड उदाहरणों के साथ।"
 ---
 
 <span id="sandbox-api-and-sdk-reference" />
 
-# Sandbox API और SDK संदर्भ
+# Sandbox API और SDK रेफरेंस
 
 <span id="install--authenticate" />
 <span id="lizard" />
@@ -17,11 +17,11 @@ description: "TypeScript और Python के लिए Lizard SDK संदर�
 <span id="see-also" />
 <span id="lifecycle-status" />
 
-Lizard SDK, Sandboxes के लिए Lizard का क्लाइंट है: TypeScript और JavaScript के लिए npm पर `@lizard-build/sdk`, और Python के लिए `lizard-sdk`, जिसे `lizard` के रूप में इम्पोर्ट किया गया है। दोनों एक ही [HTTP API](#http-api) को कॉल करते हैं। नीचे प्रत्येक सैंडबॉक्स कॉल को उसके TypeScript और Python नामों के साथ, दोनों भाषाओं में उदाहरणों के साथ पाएं। एक गाइडेड फर्स्ट रन के लिए, [क्विकस्टार्ट](/sandboxes/quickstart) का उपयोग करें; Sandboxes क्या हैं, यह जानने के लिए [ओवरव्यू](/sandboxes) पढ़ें।
+Lizard SDK, Lizard पर Sandboxes के लिए क्लाइंट है: TypeScript और JavaScript के लिए npm पर `@lizard-build/sdk`, और Python के लिए PyPI पर `lizard-sdk`, जो `lizard` नाम से इम्पोर्ट होता है। दोनों एक ही [HTTP API](#http-api) को कॉल करते हैं। नीचे हर सैंडबॉक्स कॉल उसके TypeScript और Python नाम के साथ दी गई है, दोनों भाषाओं के उदाहरणों समेत। पहली बार स्टेप-बाय-स्टेप चलाने के लिए [क्विकस्टार्ट](/sandboxes/quickstart) देखें; Sandboxes क्या हैं, यह जानने के लिए [ओवरव्यू](/sandboxes) पढ़ें।
 
 <span id="install-and-authenticate" />
 
-## इंस्टॉल और प्रमाणित करें
+## इंस्टॉल और ऑथेंटिकेट करें
 
 ```sh
 npm install @lizard-build/sdk
@@ -29,11 +29,11 @@ pip install lizard-sdk
 export LIZARD_API_KEY="<your-api-key>"
 ```
 
-Settings → API keys में या [`lizard keys create <name>`](/cli/keys) के साथ एक API कुंजी बनाएं। SDK `LIZARD_API_KEY` को पढ़ता है; एक अलग कुंजी का उपयोग करने के लिए `apiKey` (Python: `api_key`) पास करें। प्रत्येक सैंडबॉक्स को एक प्रोजेक्ट की आवश्यकता होती है: `projectId` (Python: `project_id`) पास करें या `project` के साथ एक ID, स्लग, या नाम को रिजोल्व करें।
+Settings → API keys में या [`lizard keys create <name>`](/cli/keys) से API की बनाएँ। SDK `LIZARD_API_KEY` पढ़ता है; कोई दूसरी की इस्तेमाल करने के लिए `apiKey` (Python: `api_key`) पास करें। हर सैंडबॉक्स को एक प्रोजेक्ट चाहिए: `projectId` (Python: `project_id`) पास करें या `project` से ID, स्लग या नाम रिज़ॉल्व करें।
 
 <span id="create-options" />
 
-## विकल्प बनाएं
+## Create के विकल्प
 
 | TypeScript | Python |
 |---|---|
@@ -73,55 +73,55 @@ sandbox = Sandbox.create(
 )
 ```
 
-- पहला आर्गुमेंट [रनटाइम और टेम्प्लेट](/sandboxes#runtime-and-templates) में कैटलॉग से एक टेम्प्लेट है। इसके बिना, SDK `base` को बूट करता है।
-- `size`, `'small'`, `'medium'`, या `'large'` है: 2 vCPU / 4 GB, 4 vCPU / 8 GB (डिफ़ॉल्ट), या 8 vCPU / 16 GB; [आकार और कीमतें](/platform/limits#sandbox-sizes) देखें। ट्रायल के दौरान, `'small'` डिफ़ॉल्ट और एकमात्र आकार है, और केवल US क्षेत्र काम करते हैं; एक अलग आकार या क्षेत्र `AuthenticationError` को HTTP 403. के साथ फेंकता है। `size` स्नैपशॉट से पुनर्स्थापित सैंडबॉक्स पर लागू नहीं होता है; यह उसके स्रोत के आकार पर चलता है।
-- `timeoutMs` डिफ़ॉल्ट रूप से 300000, पांच मिनट है। `0` समाप्ति को अक्षम करता है। [संसाधन और टाइमआउट](/sandboxes#resources-and-timeouts) देखें।
-- आवश्यकता पड़ने पर स्पष्ट रूप से एक क्षेत्र चुनें; कैटलॉग प्रविष्टि मुफ्त क्षमता की गारंटी नहीं देती है। जब आप वॉल्यूम संलग्न करते हैं तो `region` को अनसेट छोड़ दें: सैंडबॉक्स वहीं चलता है जहां वॉल्यूम है।
-- `metadata` आपके अपने लेबल हैं; `getInfo()` इसे लौटाता है, `list()` नहीं।
-- `lizardToken` आपकी `liz_` API कुंजियों में से एक लेता है और सैंडबॉक्स के अंदर `lizard` में साइन इन करता है। आपकी कुंजी केवल अनुरोध को अधिकृत करती है: सैंडबॉक्स को अपनी एक नई कुंजी मिलती है, जो सैंडबॉक्स के प्रोजेक्ट तक सीमित होती है और सैंडबॉक्स के साथ हटा दी जाती है, इसलिए `lizard` केवल उस प्रोजेक्ट पर कार्य कर सकता है। `base` टेम्प्लेट में कोई `lizard` नहीं है।
+- पहला आर्गुमेंट [रनटाइम और टेम्प्लेट](/sandboxes#runtime-and-templates) वाले कैटलॉग का कोई टेम्प्लेट है। यह न दिया जाए, तो SDK `base` बूट करता है।
+- `size` की वैल्यू `'small'`, `'medium'` या `'large'` होती है: 2 vCPU / 4 GB, 4 vCPU / 8 GB (डिफ़ॉल्ट) या 8 vCPU / 16 GB; [साइज़ और कीमतें](/platform/limits#sandbox-sizes) देखें। ट्रायल के दौरान `'small'` ही डिफ़ॉल्ट और इकलौता साइज़ है, और सिर्फ़ US रीजन काम करते हैं; कोई और साइज़ या रीजन देने पर HTTP 403 के साथ `AuthenticationError` थ्रो होता है। स्नैपशॉट से रिस्टोर किए गए सैंडबॉक्स पर `size` लागू नहीं होता; वह अपने सोर्स के साइज़ पर चलता है।
+- `timeoutMs` का डिफ़ॉल्ट 300000, यानी पाँच मिनट है। `0` देने पर एक्सपायरी बंद हो जाती है। [रिसोर्स और टाइमआउट](/sandboxes#resources-and-timeouts) देखें।
+- ज़रूरत हो तो रीजन साफ़ तौर पर चुनें; कैटलॉग में एंट्री होने का मतलब यह नहीं कि वहाँ खाली क्षमता उपलब्ध होगी। वॉल्यूम अटैच करते समय `region` सेट न करें: सैंडबॉक्स वहीं चलता है जहाँ वॉल्यूम है।
+- `metadata` आपके अपने लेबल हैं; `getInfo()` इन्हें लौटाता है, `list()` नहीं।
+- `lizardToken` आपकी `liz_` API कीज़ में से एक लेता है और सैंडबॉक्स के अंदर `lizard` में साइन इन करता है। आपकी की सिर्फ़ रिक्वेस्ट को ऑथराइज़ करती है: सैंडबॉक्स को अपनी एक नई की मिलती है, जो सैंडबॉक्स के प्रोजेक्ट तक सीमित होती है और सैंडबॉक्स के साथ डिलीट हो जाती है, इसलिए वहाँ `lizard` सिर्फ़ उसी प्रोजेक्ट पर काम कर सकता है। `base` टेम्प्लेट में `lizard` नहीं है।
 
 <span id="methods" />
 
-## तरीके
+## मेथड्स
 
-| TypeScript | Python | यह क्या करता है |
+| TypeScript | Python | क्या करता है |
 |---|---|---|
-| `Sandbox.create(template, options)` | `Sandbox.create(template, ...)` | कैटलॉग टेम्प्लेट से एक प्रोजेक्ट में बनाएं। |
-| `Sandbox.connect(sandboxId)` | `Sandbox.connect(sandbox_id)` | मौजूदा सैंडबॉक्स से अटैच करें; कोई स्वचालित रिज्यूमे नहीं। |
-| `Sandbox.list({ projectId })` | `Sandbox.list(project_id=...)` | सुलभ सैंडबॉक्स की सूची बनाएं; उनकी स्थिति का निरीक्षण करें। |
-| `sandbox.getInfo()` | `sandbox.get_info()` | स्थिति, रनटाइम और मेटाडेटा प्राप्त करें। |
-| `sandbox.process.exec(cmd, opts)` | `sandbox.process.exec_(cmd, ...)` | एक शेल कमांड या एक argv ऐरे चलाएं; stdout, stderr, और एग्जिट कोड लौटाएं। |
-| `sandbox.process.list()` | `sandbox.process.list()` | `exec` के साथ शुरू की गई प्रक्रियाओं की सूची बनाएं। |
-| `sandbox.process.kill(pid, signal)` | `sandbox.process.kill(pid, signal)` | एक प्रक्रिया और उसके बच्चों को सिग्नल करें; डिफ़ॉल्ट रूप से `SIGTERM`। |
-| `sandbox.fs.write(path, data)` | `sandbox.fs.write(path, data)` | टेक्स्ट या बाइट्स लिखें; पैरेंट डायरेक्टरी बनाएं। |
-| `sandbox.fs.read(path)` | `sandbox.fs.read(path)` | UTF-8 टेक्स्ट फ़ाइल पढ़ें। |
-| `sandbox.fs.readBytes(path)` | `sandbox.fs.read_bytes(path)` | फ़ाइल से बाइट्स पढ़ें। |
-| `sandbox.fs.list(path)` | `sandbox.fs.list(path)` | डायरेक्टरी एंट्री की सूची बनाएं। |
-| `sandbox.fs.stat(path)` | `sandbox.fs.stat(path)` | प्रकार, आकार, मोड, मालिक और संशोधन समय लौटाएं। |
-| `sandbox.fs.makeDir(path)` | `sandbox.fs.make_dir(path)` | एक डायरेक्टरी और अनुपलब्ध पैरेंट बनाएं। |
-| `sandbox.fs.move(from, to)` | `sandbox.fs.move(src, dst)` | एक फ़ाइल या डायरेक्टरी को मूव करें। |
-| `sandbox.fs.remove(path)` | `sandbox.fs.remove(path)` | एक फ़ाइल या डायरेक्टरी हटाएं। |
-| `sandbox.exposePort(port)` | `sandbox.expose_port(port)` | एक पोर्ट प्रकाशित करें; `url`, `hostname`, और एक्सेस टोकन लौटाएं। |
-| `sandbox.getHost(port)` | `sandbox.get_host(port)` | एक पोर्ट प्रकाशित करें और उसका होस्टनाम लौटाएं; अनुरोधों के लिए `sandbox.accessToken` की आवश्यकता होती है। |
-| `sandbox.unexpose(port)` | `sandbox.unexpose(port)` | एक प्रकाशित पोर्ट हटाएं। |
-| `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | शेष जीवनकाल सेट करें, कम से कम 1000 ms। |
-| `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | पॉज़ या रिज्यूमे को कतार में लगाएं और तुरंत वापस आएं। |
-| `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | `paused` या `running` की प्रतीक्षा करें; यदि पॉज़ विफल हो जाता है तो थ्रो करें। |
-| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | एक चल रहे सैंडबॉक्स 1 को 100 बार कॉपी करें, जिसमें मेमोरी और प्रक्रियाएं शामिल हैं; प्रत्येक कॉपी आपकी रनिंग-सैंडबॉक्स सीमा की ओर गिनी जाती है। |
-| `sandbox.snapshot(name, { scope })` | `sandbox.snapshot(name, scope=...)` | मेमोरी, प्रक्रियाओं और हर फ़ाइल को स्नैपशॉट के रूप में सहेजें। `scope`, `'workspace'` (डिफ़ॉल्ट), `'user'` या `'project'` है। |
-| `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | स्नैपशॉट तैयार होने तक प्रतीक्षा करें। |
-| `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | किसी प्रोजेक्ट में उसके दायरे की अनुमति वाले किसी भी प्रोजेक्ट में स्नैपशॉट से एक नया सैंडबॉक्स शुरू करें। |
-| `Sandbox.snapshots(projectId)` | `Sandbox.snapshots(project_id)` | किसी प्रोजेक्ट में लिए गए स्नैपशॉट की सूची बनाएं। |
-| `Sandbox.mySnapshots()` | `Sandbox.my_snapshots()` | आपके द्वारा लिए गए सभी स्नैपशॉट की सूची बनाएं, अपने सभी वर्कस्पेस में। |
-| `Sandbox.setSnapshotScope(snapshotId, scope)` | `Sandbox.set_snapshot_scope(snapshot_id, scope)` | बदलें कि आपके द्वारा लिया गया स्नैपशॉट कहाँ से पुनर्स्थापित किया जा सकता है। |
-| `Sandbox.deleteSnapshot(snapshotId)` | `Sandbox.delete_snapshot(snapshot_id)` | एक स्नैपशॉट हटाएं; इससे पुनर्स्थापित सैंडबॉक्स चलते रहेंगे। |
-| `sandbox.kill()` | `sandbox.kill()` | सैंडबॉक्स को रोकें और उसके वॉल्यूम को अलग करें। |
+| `Sandbox.create(template, options)` | `Sandbox.create(template, ...)` | कैटलॉग टेम्प्लेट से प्रोजेक्ट में सैंडबॉक्स बनाता है। |
+| `Sandbox.connect(sandboxId)` | `Sandbox.connect(sandbox_id)` | मौजूदा सैंडबॉक्स से जुड़ता है; अपने-आप रिज़्यूम नहीं करता। |
+| `Sandbox.list({ projectId })` | `Sandbox.list(project_id=...)` | जिन सैंडबॉक्स तक आपकी पहुँच है, उन्हें लिस्ट करता है; उनका स्टेटस देखें। |
+| `sandbox.getInfo()` | `sandbox.get_info()` | स्टेटस, रनटाइम और मेटाडेटा लाता है। |
+| `sandbox.process.exec(cmd, opts)` | `sandbox.process.exec_(cmd, ...)` | शेल कमांड या argv ऐरे चलाता है; stdout, stderr और एग्ज़िट कोड लौटाता है। |
+| `sandbox.process.list()` | `sandbox.process.list()` | `exec` से शुरू किए गए प्रोसेस लिस्ट करता है। |
+| `sandbox.process.kill(pid, signal)` | `sandbox.process.kill(pid, signal)` | प्रोसेस और उसके चाइल्ड प्रोसेस को सिग्नल भेजता है; डिफ़ॉल्ट `SIGTERM`। |
+| `sandbox.fs.write(path, data)` | `sandbox.fs.write(path, data)` | टेक्स्ट या बाइट्स लिखता है; पैरेंट डायरेक्टरी बना देता है। |
+| `sandbox.fs.read(path)` | `sandbox.fs.read(path)` | UTF-8 टेक्स्ट फ़ाइल पढ़ता है। |
+| `sandbox.fs.readBytes(path)` | `sandbox.fs.read_bytes(path)` | फ़ाइल से बाइट्स पढ़ता है। |
+| `sandbox.fs.list(path)` | `sandbox.fs.list(path)` | डायरेक्टरी की एंट्री लिस्ट करता है। |
+| `sandbox.fs.stat(path)` | `sandbox.fs.stat(path)` | टाइप, साइज़, मोड, ओनर और बदलाव का समय लौटाता है। |
+| `sandbox.fs.makeDir(path)` | `sandbox.fs.make_dir(path)` | डायरेक्टरी और न मौजूद पैरेंट डायरेक्टरी बनाता है। |
+| `sandbox.fs.move(from, to)` | `sandbox.fs.move(src, dst)` | फ़ाइल या डायरेक्टरी मूव करता है। |
+| `sandbox.fs.remove(path)` | `sandbox.fs.remove(path)` | फ़ाइल या डायरेक्टरी डिलीट करता है। |
+| `sandbox.exposePort(port)` | `sandbox.expose_port(port)` | पोर्ट पब्लिश करता है; `url`, `hostname` और एक्सेस टोकन लौटाता है। |
+| `sandbox.getHost(port)` | `sandbox.get_host(port)` | पोर्ट पब्लिश करता है और उसका होस्टनेम लौटाता है; रिक्वेस्ट के लिए `sandbox.accessToken` चाहिए। |
+| `sandbox.unexpose(port)` | `sandbox.unexpose(port)` | पब्लिश किया गया पोर्ट हटाता है। |
+| `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | बचा हुआ लाइफटाइम सेट करता है, कम से कम 1000 ms। |
+| `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | पॉज़ या रिज़्यूम को कतार में डालकर तुरंत लौटता है। |
+| `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | `paused` या `running` का इंतज़ार करता है; पॉज़ फ़ेल हो तो एरर थ्रो करता है। |
+| `sandbox.fork({ count })` | `sandbox.fork(count=...)` | चल रहे सैंडबॉक्स की 1 से 100 कॉपी बनाता है, मेमोरी और प्रोसेस समेत; हर कॉपी चल रहे सैंडबॉक्स की आपकी लिमिट में गिनी जाती है। |
+| `sandbox.snapshot(name, { scope })` | `sandbox.snapshot(name, scope=...)` | मेमोरी, प्रोसेस और हर फ़ाइल को स्नैपशॉट के रूप में सेव करता है। `scope` की वैल्यू `'workspace'` (डिफ़ॉल्ट), `'user'` या `'project'` होती है। |
+| `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | स्नैपशॉट तैयार होने तक इंतज़ार करता है। |
+| `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | स्नैपशॉट से उसी के रीजन में नया सैंडबॉक्स शुरू करता है, किसी भी ऐसे प्रोजेक्ट में जिसकी अनुमति उसका स्कोप देता है। |
+| `Sandbox.snapshots(projectId)` | `Sandbox.snapshots(project_id)` | किसी प्रोजेक्ट में लिए गए स्नैपशॉट लिस्ट करता है। |
+| `Sandbox.mySnapshots()` | `Sandbox.my_snapshots()` | आपके सभी वर्कस्पेस में आपके लिए गए सभी स्नैपशॉट लिस्ट करता है। |
+| `Sandbox.setSnapshotScope(snapshotId, scope)` | `Sandbox.set_snapshot_scope(snapshot_id, scope)` | बदलता है कि आपका लिया हुआ स्नैपशॉट कहाँ रिस्टोर किया जा सकता है। |
+| `Sandbox.deleteSnapshot(snapshotId)` | `Sandbox.delete_snapshot(snapshot_id)` | स्नैपशॉट डिलीट करता है; उससे रिस्टोर किए गए सैंडबॉक्स चलते रहते हैं। |
+| `sandbox.kill()` | `sandbox.kill()` | सैंडबॉक्स को स्टॉप करता है और उसका वॉल्यूम डिटैच करता है। |
 
 <span id="run-commands" />
 
 ## कमांड चलाएँ
 
-`process.exec` (Python: `exec_`) एक कमांड चलाता है और उसके समाप्त होने की प्रतीक्षा करता है। कमांड चलते समय आउटपुट प्राप्त करने के लिए `onStdout` या `onStderr` (Python: `on_stdout`, `on_stderr`) पास करें, प्रति कॉल एक लाइन बिना ट्रेलिंग न्यूलाइन के; कॉल अभी भी अंत में पूर्ण परिणाम लौटाता है। शेल को छोड़ने के लिए स्ट्रिंग के बजाय एक argv ऐरे पास करें, जो किसी अविश्वसनीय टेक्स्ट को तर्क के रूप में पास करने का सुरक्षित तरीका है।
+`process.exec` (Python: `exec_`) कमांड चलाता है और उसके खत्म होने का इंतज़ार करता है। कमांड चलते समय आउटपुट पाने के लिए `onStdout` या `onStderr` (Python: `on_stdout`, `on_stderr`) पास करें — हर कॉल में एक लाइन आती है, आखिरी न्यूलाइन के बिना; आखिर में कॉल फिर भी पूरा नतीजा लौटाती है। शेल को बायपास करने के लिए स्ट्रिंग के बजाय argv ऐरे पास करें; अनट्रस्टेड टेक्स्ट को आर्गुमेंट के रूप में पास करने का यही सुरक्षित तरीका है।
 
 ```ts
 const result = await sandbox.process.exec('npm test', {
@@ -149,13 +149,13 @@ if result.exit_code != 0:
 sandbox.process.exec_(["grep", "-rn", "--", user_query, "/workspace"])
 ```
 
-कमांड परिणामों में stdout, stderr और एग्जिट कोड शामिल होते हैं। एक गैर-शून्य एग्जिट कोड एक परिणाम है जिसे आप जांचते हैं; अनुरोध विफलताएं थ्रो करती हैं। `timeoutMs` (Python: `timeout_ms`) सेट करता है कि कोई कमांड कितने समय तक चल सकता है, 1 से 600 सेकंड तक। इसके बिना, सर्वर कमांड को 150 सेकंड के बाद रोक देता है, और TypeScript SDK 60 सेकंड के बाद प्रतीक्षा करना बंद कर देता है और `TimeoutError` नामक `DOMException` थ्रो करता है। एक मिनट से अधिक समय तक चलने वाली किसी भी कमांड के लिए `timeoutMs` पास करें। `process.exec`, `envs`, `workdir`, और `user` स्वीकार करता है; कमांड `root` के रूप में चलते हैं जब तक कि आप `user` पास न करें। क्रिएट-टाइम `envs` हर कमांड तक पहुंचते हैं।
+कमांड के नतीजे में stdout, stderr और एग्ज़िट कोड होते हैं। नॉन-ज़ीरो एग्ज़िट कोड एक नतीजा है जिसे आप खुद जाँचते हैं; रिक्वेस्ट फ़ेल होने पर एरर थ्रो होता है। `timeoutMs` (Python: `timeout_ms`) तय करता है कि कमांड कितनी देर चल सकती है, 1 से 600 सेकंड तक। इसके बिना सर्वर 150 सेकंड बाद कमांड रोक देता है, और TypeScript SDK 60 सेकंड बाद इंतज़ार छोड़कर `TimeoutError` नाम का `DOMException` थ्रो करता है। जो भी कमांड एक मिनट से ज़्यादा चल सकती है, उसके लिए `timeoutMs` पास करें। `process.exec` में `envs`, `workdir` और `user` दिए जा सकते हैं; जब तक आप `user` पास नहीं करते, कमांड `root` के रूप में चलती हैं। create के समय दिए गए `envs` हर कमांड तक पहुँचते हैं।
 
 <span id="files" />
 
 ## फ़ाइलें
 
-टेक्स्ट या बाइट्स के लिए `fs.write` और टेक्स्ट के लिए `fs.read` का उपयोग करें। बाइनरी फ़ाइलों के लिए, बाइट्स लिखें और उन्हें `fs.readBytes` (Python: `read_bytes`) के साथ वापस पढ़ें। पूर्ण पथ का उपयोग करें। एक अनुपलब्ध पथ `NotFoundError` थ्रो करता है।
+टेक्स्ट या बाइट्स के लिए `fs.write` और टेक्स्ट के लिए `fs.read` इस्तेमाल करें। बाइनरी फ़ाइलों के लिए बाइट्स लिखें और उन्हें `fs.readBytes` (Python: `read_bytes`) से वापस पढ़ें। एब्सोल्यूट पाथ इस्तेमाल करें। मौजूद न होने वाले पाथ पर `NotFoundError` थ्रो होता है।
 
 ```ts
 await sandbox.fs.write('/app/data.csv', 'x,y\n1,2\n');
@@ -171,13 +171,13 @@ entries = sandbox.fs.list("/app")
 png = sandbox.fs.read_bytes("/app/chart.png")
 ```
 
-एक पॉज़ या एक स्नैपशॉट डिस्क पर हर फ़ाइल को रखता है, जहाँ भी आपने इसे लिखा है। स्टॉप (किल या समाप्ति) के बाद, `/workspace` पर [Persistent Volume](/sandboxes/volumes) के बाहर की फाइलें चली जाती हैं, जब तक कि आपने पहले स्नैपशॉट न लिया हो।
+पॉज़ या स्नैपशॉट डिस्क की हर फ़ाइल रखता है, चाहे आपने उसे कहीं भी लिखा हो। स्टॉप (किल या एक्सपायरी) के बाद `/workspace` पर लगे [Persistent Volume](/sandboxes/volumes) के बाहर की फ़ाइलें हट जाती हैं, जब तक कि आपने पहले स्नैपशॉट न लिया हो।
 
 <span id="ports" />
 
-## पोर्ट्स
+## पोर्ट
 
-सैंडबॉक्स के अंदर `0.0.0.0` पर एक सर्वर शुरू करें, फिर उसके पोर्ट को प्रकाशित करें। हर अनुरोध के लिए एक्सेस टोकन की आवश्यकता होती है, `X-Lizard-Access-Token` हेडर के रूप में या ब्राउज़र में `?lizard_token=` के रूप में एक बार। [प्रीव्यू यूआरएल](/sandboxes/preview-urls) देखें।
+सैंडबॉक्स के अंदर `0.0.0.0` पर सर्वर शुरू करें, फिर उसका पोर्ट पब्लिश करें। हर रिक्वेस्ट के साथ एक्सेस टोकन चाहिए — `X-Lizard-Access-Token` हेडर में, या ब्राउज़र में एक बार `?lizard_token=` के रूप में। [प्रीव्यू URL](/sandboxes/preview-urls) देखें।
 
 ```ts
 const { url, hostname, accessToken } = await sandbox.exposePort(3000);
@@ -197,9 +197,9 @@ sandbox.unexpose(3000)
 
 <span id="pause-snapshot-and-fork" />
 
-## पॉज़, स्नैपशॉट, और फोर्क
+## पॉज़, स्नैपशॉट और फ़ोर्क
 
-ये कॉल मेमोरी, चल रही प्रक्रियाओं और फ़ाइलों को रखते हैं। [क्विकस्टार्ट](/sandboxes/quickstart#pause-and-resume) बताता है कि प्रत्येक क्या रखता है, कौन स्नैपशॉट पुनर्स्थापित कर सकता है, पुनर्स्थापनाओं का बिल कैसे लिया जाता है, और क्या विफल रहता है।
+ये कॉल मेमोरी, चल रहे प्रोसेस और फ़ाइलें रखती हैं। हर कॉल क्या रखती है, स्नैपशॉट कौन रिस्टोर कर सकता है, रिस्टोर का बिल कैसे बनता है और क्या फ़ेल हो सकता है — यह सब [क्विकस्टार्ट](/sandboxes/quickstart#pause-and-resume) में बताया गया है।
 
 ```ts
 await sandbox.pause();
@@ -232,19 +232,19 @@ for f in sandbox.fork(count=2):
         print("fork failed:", f.error)
 ```
 
-`fork` प्रत्येक कॉपी के लिए एक प्रविष्टि लौटाता है: नया सैंडबॉक्स, या खाता की सैंडबॉक्स सीमा जैसी त्रुटि। प्रत्येक कॉपी अपने स्रोत की तरह बिल करती है।
+`fork` हर कॉपी के लिए एक एंट्री लौटाता है: नया सैंडबॉक्स, या कोई एरर, जैसे अकाउंट की सैंडबॉक्स लिमिट पूरी होने का एरर। हर कॉपी का बिल उसके सोर्स की तरह ही बनता है।
 
 <span id="run-code-with-state" />
 
-## स्टेट के साथ कोड चलाएं
+## स्टेट के साथ कोड चलाएँ
 
-`CodeSandbox` `interpreter` टेम्पलेट को बूट करता है और `runCode` (Python: `run_code`) के साथ कोड चलाता है। उस टेम्पलेट में, Python प्रत्येक संदर्भ के लिए एक स्थायी Jupyter कर्नेल में चलता है, इसलिए चर कॉलों के बीच बने रहते हैं और परिणाम में `image/png` के रूप में चार्ट शामिल हो सकते हैं। JavaScript और bash प्रत्येक कॉल पर एक ताज़ा प्रक्रिया के रूप में चलते हैं। [कोड इंटरप्रेटर](/sandboxes/code-interpreter) देखें।
+`CodeSandbox` `interpreter` टेम्प्लेट बूट करता है और `runCode` (Python: `run_code`) से कोड चलाता है। इस टेम्प्लेट में Python हर कॉन्टेक्स्ट के लिए एक स्थायी Jupyter कर्नेल में चलता है, इसलिए वेरिएबल कॉल्स के बीच बने रहते हैं और नतीजों में `image/png` के रूप में चार्ट भी आ सकते हैं। JavaScript और bash हर कॉल पर नए प्रोसेस के रूप में चलते हैं। [कोड इंटरप्रेटर](/sandboxes/code-interpreter) देखें।
 
 <span id="volumes" />
 
 ## वॉल्यूम
 
-`/workspace` को सैंडबॉक्स के बीच रखने के लिए नाम से एक [Persistent Volume](/sandboxes/volumes) संलग्न करें:
+सैंडबॉक्स के बीच `/workspace` बचाए रखने के लिए नाम से [Persistent Volume](/sandboxes/volumes) अटैच करें:
 
 ```ts
 import { Sandbox, Volume } from '@lizard-build/sdk';
@@ -262,42 +262,42 @@ sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workd
 
 <span id="unsupported-apis" />
 
-## असमर्थित एपीआई
+## जो API अभी सपोर्ट नहीं हैं
 
-फ़ाइल देखना अभी उपलब्ध नहीं है। `sandbox.fork()` वॉल्यूम संलग्न होने पर 409 लौटाता है। `Sandbox.connect` एक पॉज़ या स्टॉप किए गए सैंडबॉक्स को फिर से शुरू नहीं करता है; पॉज़ किए गए पर `resume()` को कॉल करें। SSH प्रोटोकॉल एक्सेस उपलब्ध नहीं है; `lizard sandbox ssh` आपके सीएलआई क्रेडेंशियल्स के साथ एक इंटरैक्टिव शेल खोलता है।
+फ़ाइल वॉचिंग अभी उपलब्ध नहीं है। वॉल्यूम अटैच होने पर `sandbox.fork()` 409 लौटाता है। `Sandbox.connect` पॉज़ या स्टॉप किए गए सैंडबॉक्स को रिज़्यूम नहीं करता; पॉज़ किए गए सैंडबॉक्स पर `resume()` कॉल करें। SSH प्रोटोकॉल से एक्सेस उपलब्ध नहीं है; `lizard sandbox ssh` आपके CLI क्रेडेंशियल्स के साथ इंटरैक्टिव शेल खोलता है।
 
 <span id="errors" />
 
-## त्रुटियाँ
+## एरर
 
-एपीआई विफलताएं इन त्रुटियों को थ्रो (Python: raise) करती हैं। प्रत्येक HTTP स्थिति और, जब एपीआई एक भेजता है, एक `code` ले जाता है।
+API फ़ेल होने पर ये एरर थ्रो होते हैं (Python में raise)। हर एरर में HTTP स्टेटस होता है, और अगर API ने भेजा हो, तो `code` भी।
 
-| त्रुटि | अर्थ |
+| एरर | मतलब |
 |---|---|
-| `PaymentRequiredError` | HTTP 402: खाते को Pro शुरू करना होगा या कुछ भी बनाने से पहले चालान का भुगतान करना होगा। `url` वह पृष्ठ है जिसे खोलना है। |
-| `AuthenticationError` | HTTP 401 या 403: अमान्य कुंजी या कोई एक्सेस नहीं। परीक्षण के दौरान, स्मॉल के अलावा कोई अन्य आकार या अमेरिका के बाहर का क्षेत्र भी 403, के साथ `code` को `TRIAL_SANDBOX_SIZE` या `TRIAL_SANDBOX_REGION` पर सेट करके लौटाता है। |
-| `NotFoundError` | HTTP 404: सैंडबॉक्स, फ़ाइल, या स्नैपशॉट मौजूद नहीं है या समाप्त हो गया है। |
-| `ConflictError` | HTTP 409: विरोधाभासी स्थिति, जैसे वॉल्यूम के साथ सैंडबॉक्स को फोर्क करना। |
-| `LimitExceededError` | HTTP 429: एक साथ बहुत सारे सैंडबॉक्स या बहुत सारे स्टार्ट। `code` बताता है कि कौन सी सीमा है, जैसे `SANDBOX_LIMIT_REACHED` या `SANDBOX_RATE_LIMITED`; `retryAfterS` (Python: `retry_after_s`) बताता है कि कब फिर से प्रयास करना है। |
-| `TimeoutError` | HTTP 408 या 504. TypeScript SDK का अपना 60-सेकंड `process.exec` के लिए प्रतीक्षा `DOMException` नामक `TimeoutError` थ्रो करता है। |
-| `LizardError` | अन्य एपीआई विफलताएं, जिसमें असमर्थित ऑपरेशन शामिल हैं। |
+| `PaymentRequiredError` | HTTP 402: कुछ भी बनाने से पहले अकाउंट को Pro शुरू करना होगा या इनवॉइस का भुगतान करना होगा। `url` वह पेज है जिसे खोलना है। |
+| `AuthenticationError` | HTTP 401 या 403: की अमान्य है या एक्सेस नहीं है। ट्रायल के दौरान Small के अलावा कोई साइज़ या US के बाहर का रीजन देने पर भी 403 मिलता है, जिसमें `code` की वैल्यू `TRIAL_SANDBOX_SIZE` या `TRIAL_SANDBOX_REGION` होती है। |
+| `NotFoundError` | HTTP 404: सैंडबॉक्स, फ़ाइल या स्नैपशॉट मौजूद नहीं है या एक्सपायर हो चुका है। |
+| `ConflictError` | HTTP 409: स्टेट में टकराव, जैसे वॉल्यूम वाले सैंडबॉक्स को फ़ोर्क करना। |
+| `LimitExceededError` | HTTP 429: एक साथ बहुत ज़्यादा सैंडबॉक्स या बहुत ज़्यादा स्टार्ट। `code` बताता है कि कौन-सी लिमिट लगी, जैसे `SANDBOX_LIMIT_REACHED` या `SANDBOX_RATE_LIMITED`; `retryAfterS` (Python: `retry_after_s`) बताता है कि दोबारा कब कोशिश करें। |
+| `TimeoutError` | HTTP 408 या 504। लेकिन `process.exec` पर TypeScript SDK का अपना 60 सेकंड का इंतज़ार इसके बजाय `TimeoutError` नाम का `DOMException` थ्रो करता है। |
+| `LizardError` | API की बाकी विफलताएँ, जिनमें सपोर्ट न होने वाले ऑपरेशन भी शामिल हैं। |
 
-HTTP 429 के पीछे की संख्याएं [खाता सीमाओं](/platform/limits#sandbox-account-limits) में हैं।
+HTTP 429 के पीछे की संख्याएँ [अकाउंट लिमिट](/platform/limits#sandbox-account-limits) में हैं।
 
 ## HTTP API
 
-SDK Lizard के REST API को `https://lizard.build` पर कॉल करता है। अपनी API कुंजी `Authorization: Bearer liz_...` के रूप में या `X-API-Key` हेडर में भेजें।
+SDK, `https://lizard.build` पर Lizard का REST API कॉल करता है। अपनी API की `Authorization: Bearer liz_...` के रूप में या `X-API-Key` हेडर में भेजें।
 
-| कॉल | अनुरोध |
+| कॉल | रिक्वेस्ट |
 |---|---|
-| बनाएँ | `POST /api/sandboxes` को `template`, `projectId`, `size`, `timeoutMs`, `envs`, `metadata`, `region`, `volumeName` के साथ; 201 को `sandboxId` के साथ लौटाता है |
-| स्थिति प्राप्त करें | `GET /api/sandboxes/{id}` |
-| सूची | `GET /api/sandboxes`, या एक प्रोजेक्ट के लिए `GET /api/projects/{projectId}/sandboxes` |
-| कमांड चलाएँ | `POST /api/sandboxes/{id}/exec` को `cmd`, `envs`, `workdir`, `user`, `timeoutMs` के साथ; `stdout`, `stderr`, `exitCode` लौटाता है |
-| जीवनकाल बदलें | `POST /api/sandboxes/{id}/timeout` को `timeoutMs` के साथ |
-| रोकें या फिर से शुरू करें | `POST /api/sandboxes/{id}/pause`, `POST /api/sandboxes/{id}/resume` |
-| पोर्ट प्रकाशित करें | `POST /api/sandboxes/{id}/expose/{port}`; उसी पाथ पर `DELETE` इसे हटा देता है |
-| मारें | `DELETE /api/sandboxes/{id}` |
+| बनाएँ | `template`, `projectId`, `size`, `timeoutMs`, `envs`, `metadata`, `region`, `volumeName` के साथ `POST /api/sandboxes`; `sandboxId` के साथ 201 लौटाता है |
+| स्टेटस देखें | `GET /api/sandboxes/{id}` |
+| लिस्ट | `GET /api/sandboxes`, या एक प्रोजेक्ट के लिए `GET /api/projects/{projectId}/sandboxes` |
+| कमांड चलाएँ | `cmd`, `envs`, `workdir`, `user`, `timeoutMs` के साथ `POST /api/sandboxes/{id}/exec`; `stdout`, `stderr`, `exitCode` लौटाता है |
+| लाइफटाइम बदलें | `timeoutMs` के साथ `POST /api/sandboxes/{id}/timeout` |
+| पॉज़ या रिज़्यूम | `POST /api/sandboxes/{id}/pause`, `POST /api/sandboxes/{id}/resume` |
+| पोर्ट पब्लिश करें | `POST /api/sandboxes/{id}/expose/{port}`; उसी पाथ पर `DELETE` उसे हटा देता है |
+| किल | `DELETE /api/sandboxes/{id}` |
 
 ```bash
 curl -X POST https://lizard.build/api/sandboxes \
@@ -306,10 +306,10 @@ curl -X POST https://lizard.build/api/sandboxes \
   -d '{"template": "base", "projectId": "proj_123", "timeoutMs": 300000}'
 ```
 
-रॉ API एक सैंडबॉक्स बनाता है जिसकी कोई समाप्ति तिथि नहीं होती है जब तक कि आप `timeoutMs` पास न करें।
+जब तक आप `timeoutMs` पास नहीं करते, रॉ API बिना एक्सपायरी वाला सैंडबॉक्स बनाता है।
 
 <span id="storage-and-billing" />
 
-## भंडारण और बिलिंग
+## स्टोरेज और बिलिंग
 
-बिलिंग, ईग्रेस और स्टॉप के बाद बने रहने वाली फ़ाइलों के लिए, [स्टोरेज और बिलिंग](/sandboxes#storage-and-billing) देखें। आकार और घंटे की कीमतें [सीमाओं](/platform/limits#sandbox-sizes) में हैं।
+बिलिंग, एग्रेस और स्टॉप के बाद बचने वाली फ़ाइलों के लिए [स्टोरेज और बिलिंग](/sandboxes#storage-and-billing) देखें। साइज़ और प्रति घंटा कीमतें [लिमिट](/platform/limits#sandbox-sizes) में हैं।

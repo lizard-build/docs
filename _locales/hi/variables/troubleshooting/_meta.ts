@@ -1,3 +1,3 @@
 export default {
-  'reference-not-applied': "एक रहस्य या संदर्भ प्रदर्शित नहीं हो रहा",
+  'reference-not-applied': "कोई सीक्रेट या रेफरेंस दिख नहीं रहा",
 };

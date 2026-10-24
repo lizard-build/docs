@@ -1,5 +1,5 @@
 ---
-description: "lizard add GitHub रेपो, एक खाली सर्विस, या एक प्रबंधित एडऑन से एक सर्विस बनाता है। काम किए गए उदाहरणों के साथ पूरा फ्लैग रेफरेंस।"
+description: "lizard add GitHub रेपो से सर्विस, खाली सर्विस या managed ऐडऑन बनाता है। उदाहरणों के साथ पूरा फ़्लैग रेफरेंस।"
 ---
 
 # lizard add
@@ -14,22 +14,22 @@ description: "lizard add GitHub रेपो, एक खाली सर्व�
 lizard add [types...] [flags]
 ```
 
-`add` वर्तमान डायरेक्टरी से लिंक किए गए प्रोजेक्ट पर काम करता है; एक अनलिंक्ड फ़ोल्डर में यह आपके खाते के डिफ़ॉल्ट प्रोजेक्ट का उपयोग करता है। `add` में कोई `--project` फ्लैग नहीं है: दूसरे प्रोजेक्ट में जोड़ने के लिए, पहले फ़ोल्डर को [`lizard link --project <name>`](/cli/link) या [`lizard init`](/cli/init) के साथ लिंक करें।
+`add` मौजूदा डायरेक्टरी से लिंक किए गए प्रोजेक्ट पर काम करता है; जो फ़ोल्डर लिंक नहीं है, उसमें यह आपके अकाउंट का डिफ़ॉल्ट प्रोजेक्ट इस्तेमाल करता है। `add` में `--project` फ़्लैग नहीं है: किसी दूसरे प्रोजेक्ट में जोड़ने के लिए पहले फ़ोल्डर को [`lizard link --project <name>`](/cli/link) या [`lizard init`](/cli/init) से लिंक करें।
 
 <span id="flags" />
 
-## फ्लैग्स
+## फ़्लैग्स
 
-| फ्लैग | विवरण |
+| फ़्लैग | विवरण |
 |------|-------------|
-| `-r, --repo <owner/repo>` | GitHub रेपो से सर्विस बनाएं |
-| `-s, --service <name>` | एक खाली सर्विस बनाएं |
-| `-a, --addon <type...>` | प्रबंधित एडऑन जोड़ें (`postgres` / `redis` / `s3`) |
-| `-n, --name <name>` | `${{name.KEY}}` संदर्भों में प्रयुक्त नाम |
-| `-v, --variables <K=V>` | एक env var को सीड करें (दोहराया जा सकता है) |
-| `--region <code>` | प्रोविज़न करने के लिए क्षेत्र (डिफ़ॉल्ट `us-east-1`) |
-| `--no-deploy` | रेपो अटैच करें लेकिन पहली बिल्ड छोड़ दें |
-| `--list` | उपलब्ध डेटाबेस प्रकार दिखाएं |
+| `-r, --repo <owner/repo>` | GitHub रेपो से सर्विस बनाएँ |
+| `-s, --service <name>` | खाली सर्विस बनाएँ |
+| `-a, --addon <type...>` | managed ऐडऑन जोड़ें (`postgres` / `redis` / `s3`) |
+| `-n, --name <name>` | `${{name.KEY}}` रेफरेंस में इस्तेमाल होने वाला नाम |
+| `-v, --variables <K=V>` | शुरुआती env var सेट करें (कई बार दिया जा सकता है) |
+| `--region <code>` | किस रीजन में प्रोविज़न करना है (डिफ़ॉल्ट `us-east-1`) |
+| `--no-deploy` | रेपो जोड़ें, लेकिन पहला बिल्ड न चलाएँ |
+| `--list` | उपलब्ध डेटाबेस टाइप दिखाएँ |
 
 <span id="examples" />
 
@@ -37,17 +37,17 @@ lizard add [types...] [flags]
 
 <span id="create-a-service-from-a-github-repo" />
 
-### GitHub रेपो से सर्विस बनाएं
+### GitHub रेपो से सर्विस बनाएँ
 
 ```bash
 lizard add -r your-org/your-app
 ```
 
-यह एक `github`-स्रोत सर्विस बनाता है और पहली बिल्ड शुरू करता है, जो रेपो को क्लोन करता है और स्टैक का स्वतः पता लगाता है। कमांड सर्विस के मौजूद होने पर वापस आ जाता है; `lizard logs --build` के साथ बिल्ड का पालन करें।
+यह `github`-सोर्स वाली सर्विस बनाता है और पहला बिल्ड शुरू करता है, जो रेपो को क्लोन करता है और स्टैक अपने-आप पहचानता है। सर्विस बनते ही कमांड पूरा हो जाता है; बिल्ड की प्रोग्रेस `lizard logs --build` से देखें।
 
 <span id="provision-addons" />
 
-### एडऑन प्रोविज़न करें
+### ऐडऑन प्रोविज़न करें
 
 ```bash
 lizard add postgres            # one addon
@@ -57,7 +57,7 @@ lizard add --list              # show available types
 
 <span id="create-an-empty-service" />
 
-### एक खाली सर्विस बनाएं
+### खाली सर्विस बनाएँ
 
 ```bash
 lizard add -s worker
@@ -65,7 +65,7 @@ lizard add -s worker
 
 <span id="name-a-service-and-seed-variables" />
 
-### एक सर्विस का नाम दें और वेरिएबल्स को सीड करें
+### सर्विस को नाम दें और शुरुआती वेरिएबल्स सेट करें
 
 ```bash
 lizard add -r your-org/monorepo -n api -v NODE_ENV=production -v LOG_LEVEL=info
@@ -75,6 +75,6 @@ lizard add -r your-org/monorepo -n api -v NODE_ENV=production -v LOG_LEVEL=info
 
 ## यह भी देखें
 
-- [GitHub से डिप्लॉय करें](/deploy/github) — रेपो कनेक्ट करना, निजी एक्सेस, और पुश पर ऑटो-रीडिप्लॉय
-- [प्रबंधित एडऑन](/addons) — Managed Postgres, Managed Redis, और Managed Object Storage को प्रोविज़न करना, नाम देना और उपयोग करना
-- [lizard up](/cli/up) — वर्तमान डायरेक्टरी को रेपो को लिंक करने के बजाय अपलोड और डिप्लॉय करें
+- [GitHub से डिप्लॉय करें](/deploy/github) — रेपो कनेक्ट करना, प्राइवेट एक्सेस और पुश पर ऑटो-रीडिप्लॉय
+- [Managed ऐडऑन](/addons) — Managed Postgres, Managed Redis और Managed Object Storage को प्रोविज़न करना, नाम देना और इस्तेमाल करना
+- [lizard up](/cli/up) — रेपो लिंक करने के बजाय मौजूदा डायरेक्टरी को अपलोड और डिप्लॉय करें

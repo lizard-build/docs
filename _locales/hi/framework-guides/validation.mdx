@@ -1,74 +1,74 @@
 ---
-description: "Framework guide के परिणाम 16 real Lizard CLI deployments पर सितंबर 9, 2026 को मिले: tested versions, routes, forms, migrations, canonical URLs, और limits।"
+description: "9 सितंबर 2026 को Lizard CLI से किए गए 16 असली डिप्लॉयमेंट के फ्रेमवर्क गाइड नतीजे: टेस्ट किए गए वर्ज़न, रूट्स, फ़ॉर्म, माइग्रेशन, canonical URL और सीमाएँ।"
 ---
 
 <span id="framework-guide-test-results" />
 
-# फ्रेमवर्क गाइड परीक्षण परिणाम
+# फ्रेमवर्क गाइड के टेस्ट नतीजे
 
-सितंबर 9, 2026, को 11 फ्रेमवर्क में सभी 16 रेसिपी ने Lizard CLI 0.3.95. के साथ स्थानीय बिल्ड और एक नया क्लाउड डिप्लॉयमेंट पास किया। हमने प्रकाशित सेटअप का पालन किया, प्रत्येक रेसिपी के लिए एक नया प्रोजेक्ट और सेवा बनाई, और `lizard up` के साथ स्रोत अपलोड किया। ये परिणाम नीचे दिए गए संस्करणों और छोटे परीक्षण ऐप्स को कवर करते हैं।
+9 सितंबर 2026 को 11 फ्रेमवर्क की सभी 16 रेसिपी Lizard CLI 0.3.95 के साथ लोकल बिल्ड और नए क्लाउड डिप्लॉयमेंट, दोनों में पास हुईं। हमने प्रकाशित सेटअप का पालन किया, हर रेसिपी के लिए नया प्रोजेक्ट और नई सर्विस बनाई, और `lizard up` से सोर्स अपलोड किया। ये नतीजे नीचे दिए गए वर्ज़न और छोटे टेस्ट ऐप्स पर ही लागू होते हैं।
 
-ये परिणाम Lizard CLI 4 (सितंबर 17, 2026) और सितंबर 2026. के अंत में वर्तमान बिल्डर में बिल्ड के स्थानांतरण से पहले के हैं। हमने तब से उन्हें फिर से नहीं चलाया है। नीचे दिए गए अधिकांश फ्रेमवर्क के नए रिलीज़ हैं, और SvelteKit 3 अक्टूबर 1, 2026 को जारी किया गया था; इसके एडाप्टर चरण [SvelteKit गाइड](/framework-guides/sveltekit#configure-the-adapter) में हैं।
+ये नतीजे Lizard CLI 4 (17 सितंबर 2026) और सितंबर 2026 के आख़िर में बिल्ड के मौजूदा बिल्डर पर जाने से पहले के हैं। तब से हमने इन्हें दोबारा नहीं चलाया है। नीचे दिए गए ज़्यादातर फ्रेमवर्क के नए रिलीज़ आ चुके हैं, और 1 अक्टूबर 2026 को SvelteKit 3 रिलीज़ हुआ; उसके एडेप्टर के चरण [SvelteKit गाइड](/framework-guides/sveltekit#configure-the-adapter) में हैं।
 
-क्लाउड रन ने रूट्स, एपीआई और फ़ॉर्म की 100 जांच पास की, साथ ही लिंक की गई जावास्क्रिप्ट और सीएसएस फ़ाइलों की 45 जांच भी पास की। Django माइग्रेशन, एक डेटाबेस राइट और रीड, और अंतिम Docusaurus और Hugo साइट यूआरएल भी पास हुए।
+क्लाउड रन में रूट्स, API और फ़ॉर्म के 100 चेक पास हुए, साथ ही लिंक की गई JavaScript और CSS फ़ाइलों के 45 चेक भी। Django माइग्रेशन, डेटाबेस में एक राइट और रीड, और Docusaurus व Hugo साइट के अंतिम URL भी पास हुए।
 
 <span id="tested-recipes" />
 
-## परीक्षण की गई रेसिपी
+## टेस्ट की गई रेसिपी
 
-| रेसिपी | परीक्षण किए गए संस्करण | पोर्ट | क्लाउड जांच |
+| रेसिपी | टेस्ट किए गए वर्ज़न | पोर्ट | क्लाउड चेक |
 |---|---|---|---|
-| Next.js सर्वर | Next.js 16.3.4, React 19.2.8 | `3000` | पास हुआ |
-| Next.js स्टेटिक एक्सपोर्ट | Next.js 16.3.4, React 19.2.8 | `80` | पास हुआ |
-| React with Vite | React 19.2.8, Vite 8.2.2 | `80` | पास हुआ |
-| Vue with Vite | Vue 3.5.42, Vue Router 5.3.1, Vite 8.2.2 | `80` | पास हुआ |
-| Astro स्टेटिक | Astro 7.3.1 | `80` | पास हुआ |
-| Astro Node सर्वर | Astro 7.3.1, Node adapter 11.1.5 | `3000` | पास हुआ |
-| Nuxt Node सर्वर | Nuxt 4.5.2 | `3000` | पास हुआ |
-| Nuxt जनरेट | Nuxt 4.5.2 | `80` | पास हुआ |
-| SvelteKit Node सर्वर | SvelteKit 2.70.3, Svelte 5.57.0, adapter-node 5.5.7 | `3000` | पास हुआ |
-| SvelteKit स्टेटिक | SvelteKit 2.70.3, Svelte 5.57.0, adapter-static 3.0.10 | `80` | पास हुआ |
-| Docusaurus | Docusaurus 3.10.2 | `80` | पास हुआ |
-| VitePress, डॉक्स रूट | VitePress 1.6.4 | `80` | पास हुआ |
-| VitePress, प्रोजेक्ट रूट | VitePress 1.6.4 | `80` | पास हुआ |
-| FastAPI | FastAPI 0.141.1, Uvicorn 0.52.4 | `8000` | पास हुआ |
-| Django | Django 6.1.1, Gunicorn 26.2.0, WhiteNoise 6.12.0, psycopg 3.3.5 | `8000` | पास हुआ |
-| Hugo | Hugo 0.165.0 (विस्तारित) | `80` | पास हुआ |
+| Next.js सर्वर | Next.js 16.3.4, React 19.2.8 | `3000` | पास |
+| Next.js स्टैटिक एक्सपोर्ट | Next.js 16.3.4, React 19.2.8 | `80` | पास |
+| Vite के साथ React | React 19.2.8, Vite 8.2.2 | `80` | पास |
+| Vite के साथ Vue | Vue 3.5.42, Vue Router 5.3.1, Vite 8.2.2 | `80` | पास |
+| Astro स्टैटिक | Astro 7.3.1 | `80` | पास |
+| Astro Node सर्वर | Astro 7.3.1, Node adapter 11.1.5 | `3000` | पास |
+| Nuxt Node सर्वर | Nuxt 4.5.2 | `3000` | पास |
+| Nuxt generate | Nuxt 4.5.2 | `80` | पास |
+| SvelteKit Node सर्वर | SvelteKit 2.70.3, Svelte 5.57.0, adapter-node 5.5.7 | `3000` | पास |
+| SvelteKit स्टैटिक | SvelteKit 2.70.3, Svelte 5.57.0, adapter-static 3.0.10 | `80` | पास |
+| Docusaurus | Docusaurus 3.10.2 | `80` | पास |
+| VitePress, docs रूट | VitePress 1.6.4 | `80` | पास |
+| VitePress, प्रोजेक्ट रूट | VitePress 1.6.4 | `80` | पास |
+| FastAPI | FastAPI 0.141.1, Uvicorn 0.52.4 | `8000` | पास |
+| Django | Django 6.1.1, Gunicorn 26.2.0, WhiteNoise 6.12.0, psycopg 3.3.5 | `8000` | पास |
+| Hugo | Hugo 0.165.0 (extended) | `80` | पास |
 
-जावास्क्रिप्ट बिल्ड ने Node 22 का उपयोग किया; Python बिल्ड ने Python 3.13. का उपयोग किया। अपलोड `COPYFILE_DISABLE` के बिना macOS से चलाए गए। पैकेज मैनिफ़ेस्ट और लॉकफ़ाइल ऊपर दिए गए संस्करणों को पिन करते हैं। कंटेनर इमेज टैग लॉकफ़ाइल पैकेज से स्वतंत्र रूप से बदल सकते हैं।
+JavaScript बिल्ड में Node 22 और Python बिल्ड में Python 3.13 इस्तेमाल हुआ। अपलोड macOS से `COPYFILE_DISABLE` के बिना किए गए। पैकेज मैनिफ़ेस्ट और लॉकफ़ाइल ऊपर दिए गए वर्ज़न पिन करते हैं। कंटेनर इमेज टैग पैकेज लॉकफ़ाइल से अलग, स्वतंत्र रूप से बदल सकते हैं।
 
 <span id="what-we-checked-on-september-9" />
 
-## हमने सितंबर 9 को क्या जांचा
+## 9 सितंबर को हमने क्या जाँचा
 
-- Linux containers में documented local build और server commands चलाए, फिर प्रत्येक recipe के लिए `lizard init`, `lizard add`, और `lizard up` चलाए। Cloud build और runtime logs पढ़े और अंतिम service state और port की जाँच की।
-- Public home page, एक inner route, एक real asset, एक missing page, और एक missing JavaScript path का अनुरोध किया। Static content sites ने real 404s लौटाए; React और Vue ने अपने documented SPA fallback को बनाए रखा। दोनों VitePress layouts ने clean URLs पर सही content लौटाई।
-- Request-time API responses, POST handlers, SvelteKit form results, और एक untrusted origin से form की अस्वीकृति की जाँच की। Deployed Next.js Server Action form को उसके generated action ID का उपयोग करके HTTP पर सबमिट किया और redirect और लौटे हुए मान की जाँच की।
-- Generated hostname को config में सेट करने के बाद Docusaurus और Hugo को फिर से बनाया। Docusaurus canonical URLs और दोनों sitemaps ने public host का उपयोग किया।
-- Django migrations को Managed Postgres पर दो बार चलाया, एक test row लिखी और पढ़ी, collected static files सर्व की, एक valid CSRF form स्वीकार की, और token के बिना एक form को अस्वीकार कर दिया।
+- Linux कंटेनरों में डॉक्यूमेंटेशन में दिए गए लोकल बिल्ड और सर्वर कमांड चलाए, फिर हर रेसिपी के लिए `lizard init`, `lizard add` और `lizard up` चलाए। क्लाउड बिल्ड और रनटाइम लॉग पढ़े और सर्विस की अंतिम स्थिति और पोर्ट जाँचे।
+- पब्लिक होम पेज, एक अंदरूनी रूट, एक असली एसेट, एक न मौजूद पेज और एक न मौजूद JavaScript पाथ की रिक्वेस्ट भेजी। स्टैटिक कंटेंट साइट्स ने असली 404 लौटाए; React और Vue ने डॉक्यूमेंटेशन में बताया गया SPA फ़ॉलबैक बनाए रखा। VitePress के दोनों लेआउट ने क्लीन URL पर सही कंटेंट लौटाया।
+- रिक्वेस्ट-टाइम API रिस्पॉन्स, POST हैंडलर, SvelteKit फ़ॉर्म के नतीजे, और किसी अविश्वसनीय origin से आए फ़ॉर्म का अस्वीकार होना जाँचा। डिप्लॉय किए गए Next.js Server Action फ़ॉर्म को उसके जेनरेट हुए action ID के साथ HTTP पर सबमिट किया और रीडायरेक्ट व लौटाई गई वैल्यू जाँची।
+- कॉन्फ़िगरेशन में जेनरेट हुआ होस्टनेम सेट करने के बाद Docusaurus और Hugo को रीबिल्ड किया। Docusaurus के canonical URL और दोनों sitemap में पब्लिक होस्ट इस्तेमाल हुआ।
+- Managed Postgres पर Django माइग्रेशन दो बार चलाए, एक टेस्ट रो लिखी और पढ़ी, collect की गई स्टैटिक फ़ाइलें सर्व कीं, सही CSRF टोकन वाला फ़ॉर्म स्वीकार किया और बिना टोकन वाला फ़ॉर्म अस्वीकार किया।
 
-प्रत्येक recipe ने एक अलग test project का उपयोग किया, जिसमें run को अलग रखने के लिए अलग-अलग नाम थे। Workspace, region, और JSON flags ने test context को स्पष्ट बनाया। Build, start, और Dockerfile-path service overrides को unset रखा गया। केवल Next.js static export, Nuxt generate, और Django recipes ने अपने guides में documented Dockerfiles प्रदान किए। Docusaurus, VitePress, Hugo, और SvelteKit Node tests में [published source examples](https://github.com/lizard-build/docs/tree/main/_examples) शामिल थे।
+हर रेसिपी के लिए अलग टेस्ट प्रोजेक्ट इस्तेमाल हुआ, और रन को अलग रखने के लिए नाम भी अलग-अलग रखे गए। वर्कस्पेस, रीजन और JSON फ़्लैग से टेस्ट का संदर्भ साफ़ रहा। बिल्ड, स्टार्ट और Dockerfile-path वाले सर्विस ओवरराइड सेट नहीं किए गए। सिर्फ़ Next.js स्टैटिक एक्सपोर्ट, Nuxt generate और Django रेसिपी में उनकी गाइड में दिए गए Dockerfile इस्तेमाल हुए। Docusaurus, VitePress, Hugo और SvelteKit Node के टेस्ट में [प्रकाशित सोर्स उदाहरण](https://github.com/lizard-build/docs/tree/main/_examples) शामिल थे।
 
 <span id="browser-checks" />
 
 ## ब्राउज़र में जाँच
 
-September 9 run ने browser में React button click की पुष्टि की। Browser connection ने navigation और page reads के दौरान बार-बार timeouts लौटाए, इसलिए यह run सभी 16 recipes के लिए एक fresh browser pass का दावा **नहीं** करती है। HTTP route और form checks स्वतंत्र रूप से पास हुए।
+9 सितंबर के रन में ब्राउज़र में React बटन क्लिक की पुष्टि हुई। इसके बाद नेविगेशन और पेज पढ़ते समय ब्राउज़र कनेक्शन बार-बार टाइमआउट होता रहा, इसलिए यह रन सभी 16 रेसिपी के लिए ब्राउज़र में नए सिरे से पास होने का दावा **नहीं** करता। HTTP रूट और फ़ॉर्म चेक अलग से पास हुए।
 
-September 7 run में browser में direct-route reloads, React interaction, Vue Router navigation, Next.js Server Actions, और SvelteKit form submissions शामिल थे। ये उस पहले के run के परिणाम बने हुए हैं।
+7 सितंबर के रन में ब्राउज़र में डायरेक्ट-रूट रीलोड, React इंटरैक्शन, Vue Router नेविगेशन, Next.js Server Actions और SvelteKit फ़ॉर्म सबमिशन जाँचे गए थे। ये नतीजे उसी पुराने रन के हैं।
 
 <span id="fixes-since-the-first-run" />
 
 ## पहले रन के बाद के सुधार
 
-September 7 run में missing service-creation steps, एक Nuxt static preset mismatch, static routing defects, macOS archive metadata, failed-build exit codes, और port-change errors पाए गए। Guides में अब `lizard add` और corrected Nuxt static setup शामिल हैं।
+7 सितंबर के रन में ये समस्याएँ मिलीं: सर्विस बनाने के छूटे हुए चरण, Nuxt स्टैटिक प्रीसेट का मेल न खाना, स्टैटिक रूटिंग की ख़ामियाँ, macOS आर्काइव मेटाडेटा, फ़ेल हुए बिल्ड के एग्ज़िट कोड और पोर्ट बदलने पर आने वाले एरर। अब गाइड्स में `lizard add` और Nuxt का सुधारा हुआ स्टैटिक सेटअप शामिल है।
 
-September 8 static-routing recheck Astro static, SvelteKit static, Docusaurus, Hugo, और दोनों VitePress layouts के लिए custom Dockerfiles के बिना पास हुआ। New builds में ये routing rules शामिल हैं; existing images को rebuild करने की आवश्यकता है।
+8 सितंबर को स्टैटिक रूटिंग की दोबारा जाँच Astro स्टैटिक, SvelteKit स्टैटिक, Docusaurus, Hugo और VitePress के दोनों लेआउट के लिए बिना कस्टम Dockerfile के पास हुई। नए बिल्ड में ये रूटिंग नियम शामिल हैं; मौजूदा इमेज को रीबिल्ड करना होगा।
 
-Lizard CLI 0.3.95 में archive और failed-build exit-code fixes शामिल हैं। September 9 production checks ने service port changes और upload और rebuild के दौरान explicit port के preservation को भी सत्यापित किया। Release notes और शेष सीमाओं के लिए [known issues](/platform/known-issues) देखें।
+Lizard CLI 0.3.95 में आर्काइव और फ़ेल हुए बिल्ड के एग्ज़िट कोड वाले फ़िक्स शामिल हैं। 9 सितंबर के प्रोडक्शन चेक में सर्विस पोर्ट बदलने और अपलोड व रीबिल्ड के दौरान साफ़ तौर पर सेट किए गए पोर्ट के बने रहने की भी पुष्टि हुई। रिलीज़ नोट्स और बाकी सीमाओं के लिए [ज्ञात समस्याएँ](/platform/known-issues) देखें।
 
 <span id="limits-of-these-results" />
 
 ## इन नतीजों की सीमाएँ
 
-ये checks source uploads और documented modes को कवर करते हैं। Run के बाद से, Django guide public `DATABASE_URL` के बजाय `DATABASE_PRIVATE_URL` के माध्यम से कनेक्ट होता है; उस परिवर्तन का अभी तक कोई cloud run नहीं है। Checks हर plugin, adapter, theme, framework version, GitHub deployment path, database recovery procedure, या multiple-replica workload के लिए support स्थापित नहीं करते हैं। Django का छोटा test app अभी भी `check --deploy` से security warnings रिपोर्ट करता है; यह एक पूर्ण production security setup नहीं है। ये tests search rankings या AI citations को मापते नहीं हैं। Release से पहले अपने app के own routes और data operations की जाँच करें।
+ये चेक सोर्स अपलोड और डॉक्यूमेंटेशन में बताए गए मोड पर लागू होते हैं। इस रन के बाद से Django गाइड पब्लिक `DATABASE_URL` के बजाय `DATABASE_PRIVATE_URL` से कनेक्ट होती है; इस बदलाव का अभी कोई क्लाउड रन नहीं हुआ है। ये चेक हर प्लगइन, एडेप्टर, थीम, फ्रेमवर्क वर्ज़न, GitHub डिप्लॉयमेंट के तरीके, डेटाबेस रिकवरी प्रक्रिया या कई रेप्लिका वाले वर्कलोड के सपोर्ट की गारंटी नहीं देते। Django का छोटा टेस्ट ऐप अब भी `check --deploy` से सिक्योरिटी चेतावनियाँ दिखाता है; यह पूरा प्रोडक्शन सिक्योरिटी सेटअप नहीं है। ये टेस्ट सर्च रैंकिंग या AI साइटेशन नहीं मापते। रिलीज़ से पहले अपने ऐप के रूट्स और डेटा ऑपरेशन ख़ुद जाँचें।

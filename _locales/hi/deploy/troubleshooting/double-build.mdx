@@ -1,26 +1,26 @@
 ---
-description: "क्यों lizard सेवा सेट के बाद रीडिप्लॉय एक बिल्ड को रद्द करता है और उसे फिर से शुरू करता है, कौन से फ़ील्ड अपने आप फिर से बनते हैं, और कब रीडिप्लॉय करना है।"
+description: "lizard service set के बाद redeploy चलाने पर बिल्ड रद्द होकर दोबारा क्यों शुरू होता है, कौन-से फ़ील्ड बदलने पर अपने आप रीबिल्ड होता है, और रीडिप्लॉय कब करें।"
 ---
 
 <span id="my-redeploy-cancelled-the-build-my-change-started" />
 
-# मेरे रीडिप्लॉय ने उस बिल्ड को रद्द कर दिया जो मेरे परिवर्तन ने शुरू किया था
+# मेरे रीडिप्लॉय ने वह बिल्ड रद्द कर दिया जो मेरे बदलाव से शुरू हुआ था
 
-आपने किसी फ़ील्ड को बदलने के लिए `lizard service set` चलाया, फिर `lizard redeploy`। परिनियोजन में अपेक्षा से अधिक समय लगा, और इतिहास में एक रद्द बिल्ड दिखाई दे सकता है।
+आपने कोई फ़ील्ड बदलने के लिए `lizard service set` चलाया, फिर `lizard redeploy`। डिप्लॉय में उम्मीद से ज़्यादा समय लगा, और हिस्ट्री में एक रद्द किया गया बिल्ड दिख सकता है।
 
 <span id="what-this-means" />
 
 ## इसका क्या मतलब है
 
-`service set` कॉल ने पहले ही अपने आप एक पुनर्निर्माण शुरू कर दिया था। अनुवर्ती `redeploy` ने उस बिल्ड को रद्द कर दिया, जिसका लॉग `--- Build cancelled: a newer deploy was triggered ---` के साथ समाप्त होता है, और उसी बिल्ड को फिर से शुरू से शुरू किया।
+`service set` कॉल ने अपने आप रीबिल्ड पहले ही शुरू कर दिया था। उसके बाद चलाए गए `redeploy` ने वह बिल्ड रद्द कर दिया, जिसका लॉग `--- Build cancelled: a newer deploy was triggered ---` पर ख़त्म होता है, और वही बिल्ड शुरू से दोबारा चला दिया।
 
 <span id="why-this-can-happen" />
 
-## यह क्यों हो सकता है
+## ऐसा क्यों हो सकता है
 
-किसी सेवा पर **बिल्ड-प्रभावित** फ़ील्ड बदलना — `repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath`, या `rootDirectory` — तुरंत एक चल रही सेवा का पुनर्निर्माण करता है। क्रैश हुई या कभी तैनात न हुई सेवा अपने आप पुनर्निर्माण नहीं करती है। **रनटाइम-केवल** फ़ील्ड बदलना — `startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns` — **नहीं** स्वचालित रूप से पुनर्निर्माण करता है; यह केवल अगले परिनियोजन पर प्रभावी होता है।
+किसी सर्विस पर **बिल्ड को प्रभावित करने वाला** फ़ील्ड — `repoUrl`, `branch`, `sourceType`, `buildCommand`, `dockerfilePath` या `rootDirectory` — बदलते ही चल रही सर्विस अपने आप रीबिल्ड होती है। क्रैश हुई या कभी डिप्लॉय न हुई सर्विस अपने आप रीबिल्ड नहीं होती। **सिर्फ़ रनटाइम वाला** फ़ील्ड — `startCommand`, `preDeployCommand`, `containerPort`, `watchPatterns` — बदलने पर अपने आप रीबिल्ड **नहीं** होता; वह बदलाव सिर्फ़ अगले डिप्लॉय पर लागू होता है।
 
-हर `service set` के बाद आँख बंद करके `redeploy` को चेन करना आसान है, लेकिन यह केवल रनटाइम-केवल फ़ील्ड के लिए समझ में आता है।
+हर `service set` के बाद आदतन `redeploy` चला देना आसान है, लेकिन ऐसा करना सिर्फ़ रनटाइम वाले फ़ील्ड के लिए सही है।
 
 <span id="possible-solutions" />
 
@@ -28,9 +28,9 @@ description: "क्यों lizard सेवा सेट के बाद र
 
 <span id="check-which-kind-of-field-you-changed" />
 
-### जांचें कि आपने किस प्रकार का फ़ील्ड बदला है
+### देखें कि आपने किस तरह का फ़ील्ड बदला
 
-[रीबिल्ड शुरू करने वाले बदलावों की तालिका](/concepts/build-pipeline#what-triggers-a-rebuild) देखें। अगर वह बिल्ड फ़ील्ड है और सेवा चल रही थी, तो रीबिल्ड शुरू हो चुका है — आगे कुछ न करें। अगर सेवा क्रैश थी या कभी डिप्लॉय नहीं हुई थी, तो `lizard redeploy` एक बार चलाएँ।
+[रीबिल्ड ट्रिगर करने वाले फ़ील्ड की टेबल](/concepts/build-pipeline#what-triggers-a-rebuild) देखें। अगर वह बिल्ड फ़ील्ड है और सर्विस चल रही थी, तो रीबिल्ड शुरू हो चुका है — और कुछ न करें। अगर सर्विस क्रैश थी या कभी डिप्लॉय नहीं हुई थी, तो `lizard redeploy` एक बार चलाएँ।
 
 ```bash
 lizard events   # is a build already running?
@@ -38,7 +38,7 @@ lizard events   # is a build already running?
 
 <span id="only-redeploy-after-runtime-only-changes" />
 
-### केवल रनटाइम-केवल परिवर्तनों के बाद रीडिप्लॉय करें
+### रीडिप्लॉय सिर्फ़ रनटाइम वाले बदलावों के बाद करें
 
 ```bash
 lizard service set api --set startCommand="node server.js"
@@ -49,5 +49,5 @@ lizard redeploy --service api   # needed here — startCommand doesn't auto-rebu
 
 ## यह भी देखें
 
-- [बिल्ड पाइपलाइन → क्या पुनर्निर्माण को ट्रिगर करता है](/concepts/build-pipeline#what-triggers-a-rebuild)
-- [`lizard service`](/cli/service) — पूर्ण कमांड संदर्भ।
+- [बिल्ड पाइपलाइन → रीबिल्ड किससे ट्रिगर होता है](/concepts/build-pipeline#what-triggers-a-rebuild)
+- [`lizard service`](/cli/service) — कमांड का पूरा रेफ़रेंस।

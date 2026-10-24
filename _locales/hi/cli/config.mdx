@@ -1,5 +1,5 @@
 ---
-description: "lizard config apply एक lizard-config.json फ़ाइल को आपके प्रोजेक्ट में पुश करता है, जिसमें परिवर्तनों का पूर्वावलोकन करने के लिए --dry-run फ़्लैग होता है।"
+description: "lizard config apply किसी lizard-config.json फ़ाइल को आपके प्रोजेक्ट पर लागू करता है; बदलावों को पहले देखने के लिए इसमें --dry-run फ़्लैग है।"
 ---
 
 # lizard config
@@ -22,11 +22,11 @@ lizard config apply [flags]
 
 प्रोजेक्ट पर `lizard-config.json` फ़ाइल लागू करें।
 
-| फ्लैग | विवरण |
+| फ़्लैग | विवरण |
 |------|-------------|
-| `-f, --file <path>` | कॉन्फ़िगरेशन फ़ाइल (डिफ़ॉल्ट `lizard-config.json`) |
-| `-p, --project <id>` | प्रोजेक्ट का नाम, स्लग, या आईडी |
-| `--dry-run` | पार्स की गई फ़ाइल और लक्ष्य प्रोजेक्ट को लागू किए बिना प्रिंट करें। यह वर्तमान कॉन्फ़िगरेशन से तुलना नहीं करता है |
+| `-f, --file <path>` | कॉन्फ़िग फ़ाइल (डिफ़ॉल्ट `lizard-config.json`) |
+| `-p, --project <id>` | प्रोजेक्ट का नाम, स्लग या ID |
+| `--dry-run` | पार्स की गई फ़ाइल और टारगेट प्रोजेक्ट प्रिंट करें, लागू किए बिना। यह मौजूदा कॉन्फ़िग से तुलना नहीं करता |
 
 <span id="examples" />
 
@@ -34,7 +34,7 @@ lizard config apply [flags]
 
 <span id="apply-the-default-config-file" />
 
-### डिफ़ॉल्ट कॉन्फ़िगरेशन फ़ाइल लागू करें
+### डिफ़ॉल्ट कॉन्फ़िग फ़ाइल लागू करें
 
 ```bash
 lizard config apply
@@ -42,7 +42,7 @@ lizard config apply
 
 <span id="apply-a-config-file-from-a-custom-path" />
 
-### कस्टम पथ से कॉन्फ़िगरेशन फ़ाइल लागू करें
+### कस्टम पाथ से कॉन्फ़िग फ़ाइल लागू करें
 
 ```bash
 lizard config apply -f ./configs/prod.json
@@ -50,7 +50,7 @@ lizard config apply -f ./configs/prod.json
 
 <span id="preview-changes-without-applying-them" />
 
-### लागू किए बिना परिवर्तनों का पूर्वावलोकन करें
+### बदलाव लागू किए बिना उन्हें पहले देखें
 
 ```bash
 lizard config apply --dry-run
@@ -60,5 +60,5 @@ lizard config apply --dry-run
 
 ## यह भी देखें
 
-- [lizard service](/cli/service) — व्यक्तिगत सेवाओं का प्रबंधन करें
-- [आर्किटेक्चर](/concepts/architecture) — वर्कस्पेस, प्रोजेक्ट और सेवाएं कैसे संबंधित हैं
+- [lizard service](/cli/service) — अलग-अलग सर्विसेज़ मैनेज करें
+- [आर्किटेक्चर](/concepts/architecture) — वर्कस्पेस, प्रोजेक्ट और सर्विसेज़ आपस में कैसे जुड़े हैं

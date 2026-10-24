@@ -1,20 +1,20 @@
 ---
-description: "Deploy VitePress on Lizard with docs:build, the .vitepress/dist directory, nginx और port 80. Configure clean URLs और verify documentation routes और 404s।"
+description: "docs:build, .vitepress/dist डायरेक्टरी, nginx और पोर्ट 80 के साथ Lizard पर VitePress डिप्लॉय करें। क्लीन URL कॉन्फ़िगर करें और डॉक्यूमेंटेशन के रूट्स व 404 जाँचें।"
 ---
 
 <span id="deploy-vitepress-on-lizard" />
 
 # Lizard पर VitePress डिप्लॉय करें
 
-Lizard एक VitePress documentation site बना सकता है और nginx के माध्यम से port `80` पर generated HTML सर्व कर सकता है। अपने docs root से npm script और output directory का मिलान करें: `vitepress build docs` `docs/.vitepress/dist` लिखता है, जबकि `vitepress build` `.vitepress/dist` लिखता है।
+Lizard VitePress डॉक्यूमेंटेशन साइट को बिल्ड कर सकता है और जेनरेट हुए HTML को nginx के ज़रिए पोर्ट `80` पर सर्व कर सकता है। npm स्क्रिप्ट और आउटपुट डायरेक्टरी को अपने docs रूट से मिलाएँ: `vitepress build docs` आउटपुट `docs/.vitepress/dist` में लिखता है, जबकि `vitepress build` उसे `.vitepress/dist` में लिखता है।
 
-The [complete source example](https://github.com/lizard-build/docs/tree/main/_examples/vitepress) में इस guide में उपयोग की गई configuration और files शामिल हैं।
+[पूरे सोर्स उदाहरण](https://github.com/lizard-build/docs/tree/main/_examples/vitepress) में इस गाइड में इस्तेमाल हुई कॉन्फ़िगरेशन और फ़ाइलें शामिल हैं।
 
 <span id="set-the-build-script" />
 
 ## बिल्ड स्क्रिप्ट सेट करें
 
-`docs/` में Markdown files के लिए, इन scripts को `package.json` में रखें:
+अगर Markdown फ़ाइलें `docs/` में हैं, तो `package.json` में ये स्क्रिप्ट्स रखें:
 
 ```json
 {
@@ -26,19 +26,19 @@ The [complete source example](https://github.com/lizard-build/docs/tree/main/_ex
 }
 ```
 
-| सेटिंग | इस गाइड में मान |
+| सेटिंग | इस गाइड में वैल्यू |
 |---|---|
 | बिल्ड | `npm run docs:build` |
-| दस्तावेज़ों की मूल डायरेक्टरी | `docs/` |
+| docs रूट | `docs/` |
 | आउटपुट | `docs/.vitepress/dist/` |
 | प्रोडक्शन सर्वर | nginx |
 | सर्विस पोर्ट | `80` |
 
-Detector को `vitepress build` युक्त एक script मिलती है और वह उसके root argument का उपयोग करता है। एक script का उपयोग करें जो सीधे build command को कॉल करती है। Shell wrappers, कई matching scripts, या एक custom `outDir` को explicit build configuration या Dockerfile की आवश्यकता होती है।
+डिटेक्टर `vitepress build` वाली स्क्रिप्ट ढूँढता है और उसके रूट आर्गुमेंट का उपयोग करता है। ऐसी स्क्रिप्ट रखें जो बिल्ड कमांड को सीधे चलाए। शेल रैपर, मेल खाने वाली कई स्क्रिप्ट्स या कस्टम `outDir` होने पर अलग से बिल्ड कॉन्फ़िगरेशन या Dockerfile चाहिए।
 
 <span id="check-the-site-locally" />
 
-## साइट को स्थानीय रूप से जाँचें
+## साइट को लोकल रूप से जाँचें
 
 ```bash
 npm ci
@@ -46,13 +46,13 @@ npm run docs:build
 npm run docs:preview
 ```
 
-एक inner Markdown page और एक asset की जाँच करें। `cleanUrls: true` के साथ, VitePress extensionless routes को लिंक करता है; production server को उन URLs को generated HTML files पर resolve करना होगा। `base` को actual path prefix पर सेट करें, या `/` को domain root पर। [VitePress deployment](https://vitepress.dev/guide/deploy) देखें।
+कोई अंदरूनी Markdown पेज और कोई एसेट जाँचें। `cleanUrls: true` होने पर VitePress बिना एक्सटेंशन वाले रूट्स से लिंक करता है; प्रोडक्शन सर्वर को इन URL को जेनरेट हुई HTML फ़ाइलों पर resolve करना होगा। `base` को असली पाथ प्रीफ़िक्स पर सेट करें, या डोमेन रूट के लिए `/` रखें। [VitePress डिप्लॉयमेंट](https://vitepress.dev/guide/deploy) देखें।
 
 <span id="deploy" />
 
 ## डिप्लॉय
 
-[CLI setup](/framework-guides#prepare-the-project) के बाद, `package.json` युक्त directory से run करें, न कि `docs/` के अंदर से:
+[CLI सेटअप](/framework-guides#prepare-the-project) के बाद `package.json` वाली डायरेक्टरी से चलाएँ, `docs/` के अंदर से नहीं:
 
 ```bash
 lizard init --name vitepress-docs
@@ -62,17 +62,16 @@ lizard logs --build --service web --json
 lizard ps --json
 ```
 
-VitePress config, Markdown, source assets, package manifest, और lockfile शामिल करें। Local dependencies, generated output, caches, और secrets को बाहर रखें। `vitepress dev` या `vitepress preview` को service start command के रूप में सेट न करें।
+VitePress कॉन्फ़िगरेशन, Markdown, सोर्स एसेट्स, पैकेज मैनिफ़ेस्ट और लॉकफ़ाइल शामिल करें। लोकल डिपेंडेंसी, जेनरेट हुआ आउटपुट, कैश और सीक्रेट्स बाहर रखें। `vitepress dev` या `vitepress preview` को सर्विस का स्टार्ट कमांड न बनाएँ।
 
 <span id="check-clean-routes-and-http-status" />
 
-## क्लीन रूट और HTTP स्टेटस जाँचें
+## क्लीन रूट्स और HTTP स्टेटस जाँचें
 
-New VitePress builds extensionless routes को उनके generated `.html` files पर resolve करते हैं और missing URLs के लिए HTTP 404 लौटाते हैं, nginx के default error page के साथ न कि generated `404.html` के। इस detection path का उपयोग करने के लिए command overrides को unset रखें। Standard output के लिए किसी custom Dockerfile की आवश्यकता नहीं है। Custom routing या अपने own 404 page के लिए [static routes and 404s](/framework-guides/static-routing) देखें।
+नए VitePress बिल्ड बिना एक्सटेंशन वाले रूट्स को उनकी जेनरेट हुई `.html` फ़ाइलों पर resolve करते हैं और न मिलने वाले URL के लिए HTTP 404 लौटाते हैं, लेकिन जेनरेट हुए `404.html` के बजाय nginx के डिफ़ॉल्ट एरर पेज के साथ। डिटेक्शन का यही तरीका इस्तेमाल करने के लिए कमांड ओवरराइड सेट न करें। स्टैंडर्ड आउटपुट के लिए कस्टम Dockerfile की ज़रूरत नहीं है। कस्टम रूटिंग या अपने 404 पेज के लिए [स्टैटिक रूट्स और 404](/framework-guides/static-routing) देखें।
 
-एक clean URL को सीधे जाँचें और उसे reload करें। एक ऐसे path का अनुरोध करें जो मौजूद नहीं है और HTTP 404. की पुष्टि करें। यदि कोई पुराना image missing paths के लिए home page सर्व करता है, तो current routing rules को pick up करने के लिए service को rebuild करें।
+किसी क्लीन URL को सीधे खोलें और उसे रीलोड करें। ऐसे पाथ की रिक्वेस्ट भेजें जो मौजूद नहीं है और पुष्टि करें कि HTTP 404 मिलता है। अगर कोई पुरानी इमेज न मिलने वाले पाथ पर होम पेज सर्व करती है, तो मौजूदा रूटिंग नियम लागू करने के लिए सर्विस को रीबिल्ड करें।
 
-यदि बिल्ड `Missing script: build` रिपोर्ट करता है, तो जांचें कि चयनित पथ VitePress डिटेक्टर का उपयोग करता है और कोई सर्विस कमांड ओवरराइड इसे बदलता नहीं है। यदि बिल्ड सफल होता है लेकिन nginx कोई डॉक्स सर्व नहीं करता है, तो स्क्रिप्ट के डॉक्स रूट की तुलना कॉपी किए गए आउटपुट डायरेक्टरी से करें। सामग्री या कॉन्फ़िगरेशन परिवर्तनों के बाद पुनः बिल्ड करें।
+अगर बिल्ड `Missing script: build` दिखाता है, तो जाँचें कि चुना गया तरीका VitePress डिटेक्टर का उपयोग करता है और कोई सर्विस कमांड ओवरराइड उसकी जगह नहीं ले रहा। अगर बिल्ड सफल होता है लेकिन nginx कोई डॉक्स सर्व नहीं करता, तो स्क्रिप्ट के docs रूट की तुलना कॉपी की गई आउटपुट डायरेक्टरी से करें। कंटेंट या कॉन्फ़िगरेशन बदलने के बाद रीबिल्ड करें।
 
-सितंबर 9, 2026 डिप्लॉयमेंट चेक और उनकी सीमाओं के लिए [टेस्टेड वर्जन और क्लाउड रिजल्ट्स](/framework-guides/validation) देखें।
-
+9 सितंबर 2026 के डिप्लॉयमेंट चेक और उनकी सीमाओं के लिए [टेस्ट किए गए वर्ज़न और क्लाउड नतीजे](/framework-guides/validation) देखें।
