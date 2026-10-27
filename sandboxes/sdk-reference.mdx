@@ -68,7 +68,7 @@ sandbox = Sandbox.create(
 ```
 
 - The first argument is a template from the catalog in [runtime and templates](/sandboxes#runtime-and-templates). Without one, the SDK boots `base`.
-- `size` is `'small'`, `'medium'`, or `'large'`: 2 vCPU / 4 GB, 4 vCPU / 8 GB (the default), or 8 vCPU / 16 GB; see [sizes and prices](/platform/limits#sandbox-sizes). During the trial, `'small'` is the default and only size, and only US regions work; another size or region throws `AuthenticationError` with HTTP 403. `size` does not apply to a sandbox restored from a snapshot; it runs at its source's size.
+- `size` is `'small'`, `'medium'`, or `'large'`: 2 vCPU / 4 GB, 4 vCPU / 8 GB (the default), or 8 vCPU / 16 GB; see [sizes and prices](/platform/limits#sandbox-sizes). During the trial, `'small'` is the default, `'large'` is not available, and only US regions work; `'large'` or another region throws `AuthenticationError` with HTTP 403. `size` does not apply to a sandbox restored from a snapshot; it runs at its source's size.
 - `timeoutMs` defaults to 300000, five minutes. `0` disables expiration. See [resources and timeouts](/sandboxes#resources-and-timeouts).
 - Select a region explicitly when needed; a catalog entry does not guarantee free capacity. Leave `region` unset when you attach a volume: the sandbox runs where the volume is.
 - `metadata` is your own labels; `getInfo()` returns it, `list()` does not.
@@ -252,10 +252,10 @@ API failures throw (Python: raise) these errors. Each carries the HTTP status an
 | Error | Meaning |
 |---|---|
 | `PaymentRequiredError` | HTTP 402: the account must start Pro or pay an invoice before it can create anything. `url` is the page to open. |
-| `AuthenticationError` | HTTP 401 or 403: invalid key or no access. During the trial, a size other than Small or a region outside the US also returns 403, with `code` set to `TRIAL_SANDBOX_SIZE` or `TRIAL_SANDBOX_REGION`. |
+| `AuthenticationError` | HTTP 401 or 403: invalid key or no access. A size above your plan's largest also returns 403 with `code` set to `SANDBOX_SIZE_NOT_ALLOWED` (Large during the trial), and a region outside the US during the trial returns 403 with `TRIAL_SANDBOX_REGION`. |
 | `NotFoundError` | HTTP 404: the sandbox, file, or snapshot does not exist or has expired. |
 | `ConflictError` | HTTP 409: conflicting state, such as forking a sandbox with a volume. |
-| `LimitExceededError` | HTTP 429: too many sandboxes at once or too many starts. `code` says which limit, such as `SANDBOX_LIMIT_REACHED` or `SANDBOX_RATE_LIMITED`; `retryAfterS` (Python: `retry_after_s`) says when to try again. |
+| `LimitExceededError` | HTTP 429: too many vCPU of sandboxes at once or too many starts. `code` says which limit, such as `SANDBOX_LIMIT_REACHED` or `SANDBOX_RATE_LIMITED`. A `SANDBOX_LIMIT_REACHED` body also has `unit`, `limit`, `running` and `needed`; `retryAfterS` (Python: `retry_after_s`) says when to try again. |
 | `TimeoutError` | HTTP 408 or 504. The TypeScript SDK's own 60-second wait for `process.exec` throws a `DOMException` named `TimeoutError` instead. |
 | `LizardError` | Other API failures, including unsupported operations. |
 
@@ -275,6 +275,7 @@ The SDK calls Lizard's REST API at `https://lizard.build`. Send your API key as 
 | Pause or resume | `POST /api/sandboxes/{id}/pause`, `POST /api/sandboxes/{id}/resume` |
 | Publish a port | `POST /api/sandboxes/{id}/expose/{port}`; `DELETE` on the same path removes it |
 | Kill | `DELETE /api/sandboxes/{id}` |
+| Check limits | `GET /api/sandboxes/limits`; returns `tier`, `unit`, `limits`, `running` and `runningVcpu` |
 
 ```bash
 curl -X POST https://lizard.build/api/sandboxes \

@@ -1,10 +1,10 @@
 ---
-description: "lizard billing shows your Pro plan, trial and usage, starts or cancels Pro, redeems promo codes, and lists Enterprise balance history and saved cards."
+description: "lizard billing shows your plan, trial and usage, starts Pro, cancels your plan, redeems promo codes, and lists Enterprise balance history and saved cards."
 ---
 
 # lizard billing
 
-Show and manage your Lizard (lizard.build) plan: the trial, Pro, this month's usage and promo codes. `lizard credits` is the old name. It still works but prints a warning, and a later release will remove it.
+Show and manage your Lizard (lizard.build) plan: the trial, Pro, the $99 plan, the $499 plan, this month's usage and promo codes. `lizard credits` is the old name. It still works but prints a warning, and a later release will remove it.
 
 ## Usage
 
@@ -12,7 +12,7 @@ Show and manage your Lizard (lizard.build) plan: the trial, Pro, this month's us
 lizard billing [subcommand] [flags]
 ```
 
-With no subcommand, `lizard billing` shows the same as `lizard billing status`. The commands act on the plan of the account you are signed in with. See [Billing](/platform/billing) for how Pro, the trial and overage work.
+With no subcommand, `lizard billing` shows the same as `lizard billing status`. The commands act on the plan of the account you are signed in with. See [Billing](/platform/billing) for how the plans, the trial and overage work. To start the $99 plan or the $499 plan, or to move between plans, use the Billing page: `lizard billing open`.
 
 Commands that charge, cancel or remove a card ask you to confirm. Without a terminal, for example in CI or an agent, pass `-y` instead. Commands that open a page always print its link, and open your browser only in an interactive terminal.
 
@@ -20,7 +20,7 @@ Commands that charge, cancel or remove a card ask you to confirm. Without a term
 
 ### `lizard billing status`
 
-Show your plan and where it stands: days and trial usage left, how much of the $19 of included usage you have used, overage so far, the next charge and its date, and any unpaid invoice.
+Show your plan and where it stands: days and trial usage left, how much of your plan's included usage you have used, overage so far, the next charge and its date, and any unpaid invoice.
 
 | Flag | Description |
 |------|-------------|
@@ -54,7 +54,7 @@ End the trial and start your first paid month now. Lizard charges $19 and adds $
 
 ### `lizard billing cancel`
 
-Cancel at the end of the current month or trial. Pro stays active until then. Cancelling during the trial costs nothing.
+Cancel at the end of the current month or trial. Your plan stays active until then. Cancelling during the trial costs nothing.
 
 | Flag | Description |
 |------|-------------|
@@ -127,6 +127,6 @@ Start your 7-day Pro trial with $5 in credits to deploy. No charge today, then $
 
 ## See also
 
-- [Billing](/platform/billing) — Pro, the trial, overage, payment failures and cancelling
-- [Limits](/platform/limits) — trial and Pro limits for Sandboxes and replicas
+- [Billing](/platform/billing) — the plans, the trial, overage, changing plans, payment failures and cancelling
+- [Limits](/platform/limits) — trial and plan limits for Sandboxes and replicas
 - [lizard whoami](/cli/whoami) — shows the account you are signed in with
