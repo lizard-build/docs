@@ -110,7 +110,7 @@ sandbox = Sandbox.create(
 | `sandbox.unexpose(port)` | `sandbox.unexpose(port)` | Убрать опубликованный порт. |
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | Задать оставшийся срок жизни, минимум 1000 мс. |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | Поставить паузу или возобновление в очередь и сразу вернуть ответ. |
-| `sandbox.pause({ memory: false })` | `sandbox.pause(memory=False)` | Пауза с сохранением только файлов, примерно за секунду при любом объёме памяти; процессы завершаются, а возобновление загружает песочницу заново. |
+| `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | Пауза с сохранением только файлов, примерно за секунду при любом объёме памяти; процессы завершаются, а возобновление загружает песочницу заново. |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | Дождаться `paused` или `running`; выбросить ошибку, если пауза не удалась. |
 | `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Скопировать работающий sandbox от 1 до 100 раз вместе с памятью и процессами; каждая копия учитывается в лимите запущенных sandbox. |
 | `sandbox.snapshot(name, { scope })` | `sandbox.snapshot(name, scope=...)` | Сохранить память, процессы и все файлы в снимок. `scope` принимает `'workspace'` (по умолчанию), `'user'` или `'project'`. |

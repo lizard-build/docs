@@ -110,7 +110,7 @@ sandbox = Sandbox.create(
 | `sandbox.unexpose(port)` | `sandbox.unexpose(port)` | 公開したポートを削除。 |
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | 残りの有効期間を設定。最小 1000 ミリ秒。 |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | 一時停止または再開をキューに入れ、すぐに戻る。 |
-| `sandbox.pause({ memory: false })` | `sandbox.pause(memory=False)` | ファイルだけを保持して一時停止します。メモリのサイズにかかわらず約 1 秒です。プロセスは終了し、再開時にサンドボックスは新しく起動します。 |
+| `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | ファイルだけを保持して一時停止します。メモリのサイズにかかわらず約 1 秒です。プロセスは終了し、再開時にサンドボックスは新しく起動します。 |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | `paused` または `running` を待つ。一時停止に失敗した場合はエラーを投げる。 |
 | `sandbox.fork({ count })` | `sandbox.fork(count=...)` | 実行中の sandbox を、メモリとプロセスを含めて 1～100 個コピー。各コピーは実行中の sandbox の上限に数えられる。 |
 | `sandbox.snapshot(name, { scope })` | `sandbox.snapshot(name, scope=...)` | メモリ、プロセス、すべてのファイルをスナップショットとして保存。`scope` は `'workspace'`（既定）、`'user'`、`'project'` のいずれか。 |

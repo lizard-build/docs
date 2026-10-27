@@ -106,7 +106,7 @@ sandbox = Sandbox.create(
 | `sandbox.unexpose(port)` | `sandbox.unexpose(port)` | पब्लिश किया गया पोर्ट हटाता है। |
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | बचा हुआ लाइफटाइम सेट करता है, कम से कम 1000 ms। |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | पॉज़ या रिज़्यूम को कतार में डालकर तुरंत लौटता है। |
-| `sandbox.pause({ memory: false })` | `sandbox.pause(memory=False)` | केवल फ़ाइलें रखते हुए pause करें, मेमोरी कितनी भी हो लगभग एक सेकंड में; प्रोसेस बंद हो जाते हैं और resume sandbox को नए सिरे से बूट करता है। |
+| `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | केवल फ़ाइलें रखते हुए pause करें, मेमोरी कितनी भी हो लगभग एक सेकंड में; प्रोसेस बंद हो जाते हैं और resume sandbox को नए सिरे से बूट करता है। |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | `paused` या `running` का इंतज़ार करता है; पॉज़ फ़ेल हो तो एरर थ्रो करता है। |
 | `sandbox.fork({ count })` | `sandbox.fork(count=...)` | चल रहे सैंडबॉक्स की 1 से 100 कॉपी बनाता है, मेमोरी और प्रोसेस समेत; हर कॉपी चल रहे सैंडबॉक्स की आपकी लिमिट में गिनी जाती है। |
 | `sandbox.snapshot(name, { scope })` | `sandbox.snapshot(name, scope=...)` | मेमोरी, प्रोसेस और हर फ़ाइल को स्नैपशॉट के रूप में सेव करता है। `scope` की वैल्यू `'workspace'` (डिफ़ॉल्ट), `'user'` या `'project'` होती है। |

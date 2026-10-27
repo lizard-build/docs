@@ -133,10 +133,10 @@ await sandbox.waitForStatus('running');
 - If the processes cannot be saved, the sandbox keeps running and `waitForStatus` throws with the reason. If a resume fails, the sandbox stays paused with its checkpoint; call `resume()` again.
 - The lifetime deadline stops while the sandbox is paused and continues after the resume. A paused sandbox does not count toward the running limit.
 
-**Pause without memory.** `pause({ memory: false })` (Python: `pause(memory=False)`, CLI: `lizard sandbox pause <id> --fast`) keeps only the files: the whole disk and `/workspace`. It takes about a second at any memory size, while a full pause takes longer the more memory is in use. Running processes end, and `resume()` boots the sandbox fresh with its files, like a restart; the resume response has `memoryRestored: false`. Use it when nothing that is running needs to survive. Billing and the lifetime deadline work as for any pause.
+**Fast pause.** `pause({ fast: true })` (Python: `pause(fast=True)`, CLI: `lizard sandbox pause <id> --fast`) keeps only the files: the whole disk and `/workspace`. It takes about a second at any memory size, while a full pause takes longer the more memory is in use. Running processes end, and `resume()` boots the sandbox fresh with its files, like a restart; the resume response has `memoryRestored: false`. Use it when nothing that is running needs to survive. Billing and the lifetime deadline work as for any pause.
 
 ```ts
-await sandbox.pause({ memory: false });
+await sandbox.pause({ fast: true });
 await sandbox.waitForStatus('paused');
 ```
 

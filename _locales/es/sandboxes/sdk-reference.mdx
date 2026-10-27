@@ -110,7 +110,7 @@ sandbox = Sandbox.create(
 | `sandbox.unexpose(port)` | `sandbox.unexpose(port)` | Retirar un puerto publicado. |
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | Fijar la duración restante, mínimo 1000 ms. |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | Poner en cola una pausa o reanudación y responder al instante. |
-| `sandbox.pause({ memory: false })` | `sandbox.pause(memory=False)` | Pausa conservando solo los archivos, en alrededor de un segundo con cualquier tamaño de memoria; los procesos terminan y la reanudación arranca el sandbox de nuevo. |
+| `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | Pausa conservando solo los archivos, en alrededor de un segundo con cualquier tamaño de memoria; los procesos terminan y la reanudación arranca el sandbox de nuevo. |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | Esperar a `paused` o `running`; lanzar un error si falla la pausa. |
 | `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Copiar un sandbox en marcha de 1 a 100 veces, incluidos la memoria y los procesos; cada copia cuenta para tu límite de sandboxes en marcha. |
 | `sandbox.snapshot(name, { scope })` | `sandbox.snapshot(name, scope=...)` | Guardar la memoria, los procesos y todos los archivos en un snapshot. `scope` es `'workspace'` (el predeterminado), `'user'` o `'project'`. |
