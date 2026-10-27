@@ -1,13 +1,13 @@
 ---
 title: "Facturación: plan Pro, prueba y tarifas de uso"
-description: "Lizard Pro cuesta $19 al mes con $19 en créditos mensuales. Cómo funcionan la prueba, pay as you go por encima de los créditos, los límites, los pagos fallidos, la cancelación y Enterprise."
+description: "Lizard Pro cuesta $19 al mes con $19 de uso incluidos. Cómo funcionan la prueba, pay as you go por encima de $19, los límites, los pagos fallidos, la cancelación y Enterprise."
 ---
 
 <span id="billing" />
 
 # Facturación
 
-Lizard (lizard.build) tiene un plan de alta propia: Pro. Cuesta $19 al mes y trae $19 en créditos mensuales. Los créditos pagan el uso en toda la plataforma: apps, Sandboxes, Managed Postgres, Managed Redis, Managed Object Storage, Persistent Volumes y tráfico saliente. Cuando gastas los créditos, pagas pay as you go a las tarifas publicadas.
+Lizard (lizard.build) tiene un plan de alta propia: Pro. Cuesta $19 al mes e incluye $19 de uso cada mes. Ese uso cubre toda la plataforma: apps, Sandboxes, Managed Postgres, Managed Redis, Managed Object Storage, Persistent Volumes y tráfico saliente. Por encima de eso, pagas pay as you go a las tarifas publicadas.
 
 Gestiona tu plan, tu tarjeta y tus facturas en la página **Facturación**: abre **Configuración** desde la barra lateral o el menú de la cuenta y luego **Facturación** en **Cuenta**. También puedes usar [`lizard billing`](/cli/billing). El plan pertenece al propietario del workspace. El uso en todos los workspaces que te pertenecen cuenta para tu plan, y los miembros no tienen costo por usuario.
 
@@ -16,18 +16,18 @@ Gestiona tu plan, tu tarjeta y tus facturas en la página **Facturación**: abre
 | | Pro |
 | --- | --- |
 | Precio | $19 al mes |
-| Créditos mensuales | $19 para el uso en toda la plataforma |
-| Uso por encima de los créditos | Pay as you go a las [tarifas de recursos](#resource-rates) |
-| Prueba | 7 días con $5 en créditos de prueba |
+| Uso incluido | $19 al mes en toda la plataforma |
+| Uso por encima de $19 | Pay as you go a las [tarifas de recursos](#resource-rates) |
+| Prueba | 7 días con $5 de uso |
 | Pago | Tarjeta, cobro mensual |
 
-Pro se renueva cada mes hasta que lo canceles. Los créditos mensuales que no uses no pasan al mes siguiente.
+Pro se renueva cada mes hasta que lo canceles. El uso incluido que no gastes no pasa al mes siguiente.
 
-<span id="monthly-credits-and-overage" />
+<span id="included-usage-and-overage" />
 
-## Créditos mensuales y uso adicional
+## Uso incluido y uso adicional
 
-Cada mes empieza con $19 en créditos, y el uso se descuenta primero de ellos. El uso por encima de $19 es uso adicional y se cobra a las mismas tarifas.
+Cada mes incluye $19 de uso. El uso por encima de $19 es uso adicional y se cobra a las mismas tarifas.
 
 Lizard cobra el uso adicional a medida que se acumula, no en una sola factura al final del mes. Cuando el uso adicional sin facturar llega a $20, Lizard lo cobra a tu tarjeta. Cada cobro pagado sube el siguiente escalón: $100, luego $200, $400 y $1,000, y después $1,000 cada vez. Los escalones vuelven a empezar en $20 cada mes. Al terminar el mes, el uso adicional que aún no se cobró va en una factura final. No hay tope de gasto.
 
@@ -55,29 +55,29 @@ Por ejemplo, una vCPU y 1 GB de memoria durante una hora cuestan $0.0375192 en c
 
 ## Prueba
 
-Una cuenta nueva puede explorar, pero necesita Pro para crear apps, Sandboxes, bases de datos o volúmenes. Pro empieza con una prueba de 7 días y $5 en créditos de prueba. Para empezarla, añade una tarjeta; Apple Pay también sirve. No se cobra nada al empezar la prueba. Cuando termina, Pro empieza a $19 al mes, salvo que lo canceles antes.
+Una cuenta nueva puede explorar, pero necesita Pro para crear apps, Sandboxes, bases de datos o volúmenes. Pro empieza con una prueba de 7 días que incluye $5 de uso. Para empezarla, añade una tarjeta; Apple Pay también sirve. No se cobra nada al empezar la prueba. Cuando termina, Pro empieza a $19 al mes, salvo que lo canceles antes.
 
 Cada cuenta y cada tarjeta tiene una prueba. Si la cuenta ya tuvo una, Pro empieza de inmediato y cobra $19 ese mismo día. Si la tarjeta ya tuvo una, la prueba no empieza y no se cobra nada; empieza Pro a $19 en la página Facturación.
 
 La prueba incluye todas las funciones de Pro, con [límites](#limits) más bajos hasta tu primera factura pagada. Hasta entonces, los Sandboxes solo se ejecutan con el tamaño Small y solo en regiones de EE. UU., tanto desde el panel como con Lizard CLI, Lizard SDK o Lizard MCP. Si no indicas un tamaño, el sandbox es Small. Una solicitud de Medium o Large, ya sea por nombre o al restaurar o hacer fork de un sandbox de ese tamaño, devuelve HTTP 403 con `code` igual a `TRIAL_SANDBOX_SIZE`; una solicitud con una región fuera de EE. UU. devuelve HTTP 403 con `code` igual a `TRIAL_SANDBOX_REGION`. **Start Pro now** desbloquea los demás tamaños y regiones.
 
-<span id="when-trial-credits-run-out" />
+<span id="when-trial-usage-runs-out" />
 
-### Cuando se agotan los créditos de prueba
+### Cuando se agota el uso de la prueba
 
-- Cuando se agotan tus créditos de prueba, los recursos en marcha se pausan y no puedes crear otros nuevos. Sus datos se conservan; consulta [qué conserva una pausa por facturación](#what-a-billing-pause-keeps).
-- Para seguir, elige **Start Pro now** en la página Facturación o ejecuta `lizard billing start-now`. Esto termina la prueba, cobra $19 y empieza tu primer mes pagado con $19 en créditos. Las apps y bases de datos en pausa vuelven a arrancar en cuanto se completa el pago.
+- Cuando se agota el uso incluido en la prueba, los recursos en marcha se pausan y no puedes crear otros nuevos. Sus datos se conservan; consulta [qué conserva una pausa por facturación](#what-a-billing-pause-keeps).
+- Para seguir, elige **Start Pro now** en la página Facturación o ejecuta `lizard billing start-now`. Esto termina la prueba, cobra $19 y empieza tu primer mes pagado con $19 de uso. Las apps y bases de datos en pausa vuelven a arrancar en cuanto se completa el pago.
 
-Los créditos de prueba que no uses terminan con la prueba. No pasan al mes pagado.
+El uso de prueba que no gastes termina con la prueba. No pasa al mes pagado.
 
 <span id="promo-codes" />
 
 ## Códigos promocionales
 
-Un código promocional puede dar una prueba más larga, de hasta 730 días, y más créditos de prueba. Sustituye los 7 días y $5 estándar. Canjea un código en la página Facturación o con `lizard billing promo <code>`.
+Un código promocional puede dar una prueba más larga, de hasta 730 días, y más uso de prueba. Sustituye los 7 días y $5 estándar. Canjea un código en la página Facturación o con `lizard billing promo <code>`.
 
 - Antes de que empiece la prueba, Lizard guarda el código y lo aplica cuando añades tu tarjeta.
-- Durante la prueba, un código sube su duración y sus créditos a lo que da el código. No se suma a lo que ya tienes.
+- Durante la prueba, un código sube su duración y su uso incluido a lo que da el código. No se suma a lo que ya tienes.
 - Los códigos solo funcionan antes de tu primer pago.
 - Cada cuenta y cada tarjeta puede usar un código.
 

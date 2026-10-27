@@ -1,13 +1,13 @@
 ---
 title: "Abrechnung: Pro-Plan, Testphase und Nutzungstarife"
-description: "Lizard Pro kostet $19 im Monat, mit $19 monatlichem Guthaben. So funktionieren Testphase, pay as you go über das Guthaben hinaus, Limits, fehlgeschlagene Zahlungen, Kündigung und Enterprise."
+description: "Lizard Pro kostet $19 im Monat, mit $19 Nutzung inklusive. So funktionieren Testphase, pay as you go über $19 hinaus, Limits, fehlgeschlagene Zahlungen, Kündigung und Enterprise."
 ---
 
 <span id="billing" />
 
 # Abrechnung
 
-Lizard (lizard.build) hat einen Plan zum Selbstbuchen: Pro. Er kostet $19 im Monat und enthält $19 monatliches Guthaben. Das Guthaben bezahlt die Nutzung auf der ganzen Plattform: Apps, Sandboxes, Managed Postgres, Managed Redis, Managed Object Storage, Persistent Volumes und ausgehenden Traffic. Ist das Guthaben aufgebraucht, zahlen Sie pay as you go zu den veröffentlichten Preisen.
+Lizard (lizard.build) hat einen Plan zum Selbstbuchen: Pro. Er kostet $19 im Monat und enthält jeden Monat $19 Nutzung. Diese Nutzung gilt für die ganze Plattform: Apps, Sandboxes, Managed Postgres, Managed Redis, Managed Object Storage, Persistent Volumes und ausgehenden Traffic. Darüber hinaus zahlen Sie pay as you go zu den veröffentlichten Preisen.
 
 Verwalten Sie Plan, Karte und Rechnungen auf der Seite **Abrechnung**: Öffnen Sie **Einstellungen** in der Seitenleiste oder im Kontomenü und dann **Abrechnung** unter **Konto**. Sie können auch [`lizard billing`](/cli/billing) verwenden. Der Plan gehört dem Eigentümer des Workspace. Die Nutzung in allen Workspaces, die Ihnen gehören, zählt zu Ihrem Plan, und für Mitglieder fällt keine Sitzplatzgebühr an.
 
@@ -18,18 +18,18 @@ Verwalten Sie Plan, Karte und Rechnungen auf der Seite **Abrechnung**: Öffnen S
 | | Pro |
 | --- | --- |
 | Preis | $19 im Monat |
-| Monatliches Guthaben | $19 für die Nutzung auf der ganzen Plattform |
-| Nutzung über das Guthaben hinaus | Pay as you go zu den [Ressourcenpreisen](#resource-rates) |
-| Testphase | 7 Tage mit $5 Testguthaben |
+| Enthaltene Nutzung | $19 im Monat auf der ganzen Plattform |
+| Nutzung über $19 hinaus | Pay as you go zu den [Ressourcenpreisen](#resource-rates) |
+| Testphase | 7 Tage mit $5 Nutzung |
 | Zahlung | Karte, monatlich abgerechnet |
 
-Pro verlängert sich jeden Monat, bis Sie kündigen. Nicht genutztes monatliches Guthaben wird nicht in den nächsten Monat übertragen.
+Pro verlängert sich jeden Monat, bis Sie kündigen. Nicht verbrauchte Nutzung wird nicht in den nächsten Monat übertragen.
 
-<span id="monthly-credits-and-overage" />
+<span id="included-usage-and-overage" />
 
-## Monatliches Guthaben und Mehrnutzung
+## Enthaltene Nutzung und Mehrnutzung
 
-Jeder Monat beginnt mit $19 Guthaben, und die Nutzung wird zuerst davon abgezogen. Nutzung über $19 ist Mehrnutzung und kostet dieselben Preise.
+Jeder Monat enthält $19 Nutzung. Nutzung über $19 ist Mehrnutzung und kostet dieselben Preise.
 
 Lizard belastet die Mehrnutzung, während sie anfällt, nicht in einer Rechnung am Monatsende. Erreicht die noch nicht berechnete Mehrnutzung $20, belastet Lizard Ihre Karte. Jede bezahlte Belastung hebt die nächste Stufe an: $100, dann $200, $400 und $1,000, danach jeweils $1,000. Jeden Monat beginnen die Stufen wieder bei $20. Am Monatsende kommt die noch nicht belastete Mehrnutzung auf eine letzte Rechnung. Es gibt keine Ausgabenobergrenze.
 
@@ -57,29 +57,29 @@ Zum Beispiel kosten eine vCPU und 1 GB Arbeitsspeicher eine Stunde lang $0.03751
 
 ## Testphase
 
-Mit einem neuen Konto können Sie sich umsehen, aber um Apps, Sandboxes, Datenbanken oder Volumes zu erstellen, brauchen Sie Pro. Pro beginnt mit einer 7-tägigen Testphase und $5 Testguthaben. Zum Start hinterlegen Sie eine Karte; Apple Pay funktioniert auch. Beim Start der Testphase wird nichts berechnet. Endet sie, beginnt Pro für $19 im Monat, sofern Sie nicht vorher kündigen.
+Mit einem neuen Konto können Sie sich umsehen, aber um Apps, Sandboxes, Datenbanken oder Volumes zu erstellen, brauchen Sie Pro. Pro beginnt mit einer 7-tägigen Testphase mit $5 Nutzung inklusive. Zum Start hinterlegen Sie eine Karte; Apple Pay funktioniert auch. Beim Start der Testphase wird nichts berechnet. Endet sie, beginnt Pro für $19 im Monat, sofern Sie nicht vorher kündigen.
 
 Jedes Konto und jede Karte bekommt eine Testphase. Hatte das Konto schon eine, beginnt Pro sofort, und $19 werden am selben Tag belastet. Hatte die Karte schon eine, startet die Testphase nicht, und es wird nichts belastet; starten Sie Pro für $19 auf der Seite „Abrechnung“.
 
 Die Testphase enthält alle Funktionen von Pro, mit niedrigeren [Limits](#limits) bis zur ersten bezahlten Rechnung. Bis dahin laufen Sandboxes nur in der Größe Small und nur in US-Regionen, ob über das Dashboard, Lizard CLI, Lizard SDK oder Lizard MCP. Ein Create ohne Größe startet eine Small-Sandbox. Eine Anfrage mit Medium oder Large, ob direkt angegeben oder durch Wiederherstellen oder Forken einer solchen Sandbox, gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_SIZE` zurück; eine Anfrage mit einer Region außerhalb der USA gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_REGION` zurück. **Start Pro now** schaltet die anderen Größen und Regionen frei.
 
-<span id="when-trial-credits-run-out" />
+<span id="when-trial-usage-runs-out" />
 
-### Wenn das Testguthaben aufgebraucht ist
+### Wenn die Nutzung der Testphase aufgebraucht ist
 
-- Ist Ihr Testguthaben aufgebraucht, pausieren laufende Ressourcen, und Sie können keine neuen erstellen. Ihre Daten bleiben erhalten; siehe [was eine Pause wegen der Abrechnung behält](#what-a-billing-pause-keeps).
-- Um weiterzumachen, wählen Sie **Start Pro now** auf der Seite „Abrechnung“ oder führen `lizard billing start-now` aus. Damit endet die Testphase, $19 werden belastet, und Ihr erster bezahlter Monat beginnt mit $19 Guthaben. Pausierte Apps und Datenbanken starten wieder, sobald die Zahlung durch ist.
+- Ist die Nutzung der Testphase aufgebraucht, pausieren laufende Ressourcen, und Sie können keine neuen erstellen. Ihre Daten bleiben erhalten; siehe [was eine Pause wegen der Abrechnung behält](#what-a-billing-pause-keeps).
+- Um weiterzumachen, wählen Sie **Start Pro now** auf der Seite „Abrechnung“ oder führen `lizard billing start-now` aus. Damit endet die Testphase, $19 werden belastet, und Ihr erster bezahlter Monat beginnt mit $19 Nutzung. Pausierte Apps und Datenbanken starten wieder, sobald die Zahlung durch ist.
 
-Nicht genutztes Testguthaben endet mit der Testphase. Es geht nicht in den bezahlten Monat über.
+Nicht verbrauchte Nutzung der Testphase endet mit ihr. Sie geht nicht in den bezahlten Monat über.
 
 <span id="promo-codes" />
 
 ## Promo-Codes
 
-Ein Promo-Code kann eine längere Testphase geben, bis zu 730 Tage, und mehr Testguthaben. Er ersetzt die üblichen 7 Tage und $5. Lösen Sie einen Code auf der Seite „Abrechnung“ oder mit `lizard billing promo <code>` ein.
+Ein Promo-Code kann eine längere Testphase geben, bis zu 730 Tage, und mehr Nutzung in der Testphase. Er ersetzt die üblichen 7 Tage und $5. Lösen Sie einen Code auf der Seite „Abrechnung“ oder mit `lizard billing promo <code>` ein.
 
 - Vor dem Start der Testphase speichert Lizard den Code und wendet ihn an, wenn Sie Ihre Karte hinterlegen.
-- Während der Testphase hebt ein Code Dauer und Guthaben auf das an, was der Code gibt. Er wird nicht zu dem addiert, was Sie schon haben.
+- Während der Testphase hebt ein Code Dauer und enthaltene Nutzung auf das an, was der Code gibt. Er wird nicht zu dem addiert, was Sie schon haben.
 - Codes gelten nur vor Ihrer ersten Zahlung.
 - Jedes Konto und jede Karte kann einen Code nutzen.
 
