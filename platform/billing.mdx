@@ -54,7 +54,7 @@ You can browse with a new account, but you need a plan to create apps, Sandboxes
 
 Each account and each card gets one trial. If the account had one before, Pro starts at once and charges $19 that day. If the card had one, the trial does not start and nothing is charged; start Pro at $19 on the Billing page.
 
-The trial includes every Pro feature, with lower [limits](#limits) until your first paid invoice. Until then, Sandboxes run up to 8 vCPU at once, only at the Small and Medium sizes, and only in US regions, from the dashboard, Lizard CLI, Lizard SDK or Lizard MCP alike. A create with no size gets Small. Asking for Large, by name or by restoring or forking such a sandbox, returns HTTP 403 with `code` set to `SANDBOX_SIZE_NOT_ALLOWED`; asking for a region outside the US returns HTTP 403 with `code` set to `TRIAL_SANDBOX_REGION`. **Start Pro now** unlocks Large, the other regions and the Pro limits.
+The trial includes every Pro feature, with lower [limits](#limits) until your first paid invoice. Until then, Sandboxes run only at the Small size and only in US regions, up to 4 Small Sandboxes (8 vCPU) at once, from the dashboard, Lizard CLI, Lizard SDK or Lizard MCP alike. A create with no size gets Small. Creating a Medium or Large sandbox returns HTTP 403 with `code` set to `TRIAL_SANDBOX_SIZE`; asking for a region outside the US returns HTTP 403 with `code` set to `TRIAL_SANDBOX_REGION`. Resuming or forking a sandbox above 4 vCPU (Large), or restoring one from a snapshot, returns HTTP 403 with `code` set to `SANDBOX_SIZE_NOT_ALLOWED`. **Start Pro now** unlocks the other sizes, the other regions and the Pro limits.
 
 To move to the $99 plan or the $499 plan during the trial, choose **Start Pro now** first, then [change plans](#changing-plans).
 
@@ -78,19 +78,19 @@ A promo code can give a longer trial, up to 730 days, and more trial usage. It r
 
 | | Trial, until the first paid invoice | Pro | $99 plan | $499 plan |
 | --- | ---: | ---: | ---: | ---: |
-| Sandboxes running at once | 8 vCPU | 40 vCPU | 220 vCPU | 1,200 vCPU |
-| Largest sandbox | Medium (4 vCPU) | Large (8 vCPU) | Large (8 vCPU) | Large (8 vCPU) |
+| Sandboxes running at once | 8 vCPU (up to 4 Small) | 40 vCPU | 220 vCPU | 1,200 vCPU |
+| Sandbox sizes | Small only (2 vCPU) | Up to Large (8 vCPU) | Up to Large (8 vCPU) | Up to Large (8 vCPU) |
 | Sandbox starts per minute | 6 | 24 | 60 | 120 |
 | Replicas per app | 1 | 5 | 5 | 5 |
 
-Sandbox limits count the vCPU of running sandboxes, not the number of sandboxes. Small uses 2 vCPU, Medium 4 and Large 8, so 40 vCPU runs 20 Small, 10 Medium or 5 Large sandboxes at once. Pro limits apply from your first paid invoice, including a **Start Pro now** payment. The $99 plan and the $499 plan are paid from the first day, so their limits apply at once. See [Limits](/platform/limits#sandbox-account-limits) for start rates per hour and per day, and for other limits.
+Sandbox limits count the vCPU of running sandboxes, not the number of sandboxes. Small uses 2 vCPU, Medium 4 and Large 8, so 40 vCPU runs 20 Small, 10 Medium or 5 Large sandboxes at once. The trial's 8 vCPU runs up to 4 Small Sandboxes. Pro limits apply from your first paid invoice, including a **Start Pro now** payment. The $99 plan and the $499 plan are paid from the first day, so their limits apply at once. See [Limits](/platform/limits#sandbox-account-limits) for start rates per hour and per day, and for other limits.
 
 ## Changing plans
 
 Move between Pro, the $99 plan and the $499 plan on the Billing page.
 
 - **Upgrade:** a move to a plan with a higher price starts at once. Lizard charges the difference for the rest of the current month, prorated, and adds the same amount to this month's included usage. The new limits apply at once. For example, a move from Pro to the $99 plan halfway through the month charges about $40 and adds about $40 of included usage.
-- **Downgrade:** a move to a plan with a lower price starts with the next month. Until then, you keep your current plan, its included usage and its limits. The Billing page shows the plan that comes next. Choose your current plan again to cancel the downgrade.
+- **Downgrade:** a move to a plan with a lower price starts with the next month. Until then, you keep your current plan, its included usage and its limits. The Billing page shows the plan that comes next. Choose your current plan again to cancel the downgrade. If your running sandboxes use more vCPU than the new limit when it starts, they keep running, but Lizard refuses new starts and resumes until the running vCPU is below the new limit.
 - You cannot change plans during the trial. Start Pro now first.
 - You cannot change plans while an invoice is unpaid. Pay it first.
 
