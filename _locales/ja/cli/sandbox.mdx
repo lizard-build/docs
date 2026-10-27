@@ -122,6 +122,7 @@ sandbox 内のポートに HTTPS URL を割り当てます。ポートは非公�
 | コマンド | 動作 |
 |---------|--------------|
 | `lizard sandbox pause <id>` | メモリとプロセスを保存して sandbox を一時停止します。完了すると計算料金は止まりますが、Persistent Volumes のストレージ料金は別途かかります |
+| `lizard sandbox pause <id> --fast` | ファイルだけを保持して約 1 秒で一時停止します。メモリは保存されず、実行中のプロセスは終了し、`resume` はファイルを保ったままサンドボックスを新しく起動します |
 | `lizard sandbox resume <id>` | 一時停止中の sandbox を、保存したメモリとファイルで再び起動します |
 | `lizard sandbox snapshot <id> --name <name>` | 実行中の sandbox を、メモリとファイルを含めて、自分が所有するスナップショットとして保存します。`--scope` で復元できる場所を決めます: `workspace`（既定値）は sandbox のワークスペース内の任意のプロジェクト、`user` は自分のすべてのワークスペースの任意のプロジェクト、`project` は sandbox 自身のプロジェクトだけです |
 | `lizard sandbox restore <snapshot-id>` | スナップショットのリージョンで、スナップショットから新しい sandbox を起動します。`-p <project>` でプロジェクトを選びます（既定はボリュームのプロジェクト、なければスナップショット自身のプロジェクト）。`--volume <name-or-id>` はボリュームを `/workspace` にマウントし、`--timeout <ms>` は有効期間を設定します（既定値 `300000`） |

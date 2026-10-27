@@ -122,6 +122,7 @@ Conecta una app VNC (Compartir Pantalla de macOS, TigerVNC, RealVNC) al escritor
 | Comando | Qué hace |
 |---------|--------------|
 | `lizard sandbox pause <id>` | Guarda la memoria y los procesos y pausa el sandbox. Una pausa completada detiene los cargos de cómputo; el almacenamiento en Persistent Volumes se cobra aparte |
+| `lizard sandbox pause <id> --fast` | Pausa en alrededor de un segundo conservando solo los archivos: la memoria no se guarda, los procesos en ejecución terminan y `resume` arranca el sandbox de nuevo con sus archivos |
 | `lizard sandbox resume <id>` | Vuelve a iniciar un sandbox en pausa con su memoria y sus archivos guardados |
 | `lizard sandbox snapshot <id> --name <name>` | Guarda un sandbox en ejecución, con su memoria y sus archivos, como un snapshot que te pertenece. `--scope` fija dónde se puede restaurar: `workspace` (por defecto) en cualquier proyecto del espacio de trabajo del sandbox, `user` en cualquier proyecto de cualquiera de tus espacios de trabajo, `project` solo en su propio proyecto |
 | `lizard sandbox restore <snapshot-id>` | Inicia un sandbox nuevo desde un snapshot, en la región del snapshot. `-p <project>` elige el proyecto (por defecto, el proyecto del volumen; si no, el del snapshot), `--volume <name-or-id>` monta un volumen en `/workspace` y `--timeout <ms>` fija la duración (por defecto `300000`) |

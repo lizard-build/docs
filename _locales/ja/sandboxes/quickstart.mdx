@@ -158,6 +158,13 @@ await sandbox.waitForStatus('running');
 - プロセスを保存できない場合、sandbox は実行を続け、`waitForStatus` が理由付きのエラーを投げます。再開に失敗した場合、sandbox はチェックポイントを保持したまま一時停止状態に残ります。`resume()` を再度呼び出してください。
 - 一時停止中は有効期間の期限が止まり、再開後に続きから進みます。一時停止中の sandbox は実行数の上限に数えられません。
 
+**メモリを保存しない一時停止。** `pause({ memory: false })`（Python: `pause(memory=False)`、CLI: `lizard sandbox pause <id> --fast`）はファイルだけを保持します。ディスク全体と `/workspace` です。メモリのサイズにかかわらず約 1 秒で完了します。通常の一時停止は、使用中のメモリが多いほど時間がかかります。実行中のプロセスは終了し、`resume()` は再起動と同じようにファイルを保ったままサンドボックスを新しく起動します。再開のレスポンスには `memoryRestored: false` が含まれます。実行中のものを残す必要がないときに使ってください。課金と有効期限の扱いは通常の一時停止と同じです。
+
+```ts
+await sandbox.pause({ memory: false });
+await sandbox.waitForStatus('paused');
+```
+
 スナップショットは、実行中の sandbox のメモリ、実行中のプロセス、ディスク上のすべてのファイルを保存します。スナップショットは、それを作成したユーザーのものです。restore するたびに、スナップショットと同じリージョンで新しい sandbox が起動します。起動先は、スナップショットのスコープが許す任意のプロジェクトです:
 
 - `workspace`（既定）: 元の sandbox のワークスペース内の任意のプロジェクト。

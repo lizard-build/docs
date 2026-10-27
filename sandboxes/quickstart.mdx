@@ -133,6 +133,13 @@ await sandbox.waitForStatus('running');
 - If the processes cannot be saved, the sandbox keeps running and `waitForStatus` throws with the reason. If a resume fails, the sandbox stays paused with its checkpoint; call `resume()` again.
 - The lifetime deadline stops while the sandbox is paused and continues after the resume. A paused sandbox does not count toward the running limit.
 
+**Pause without memory.** `pause({ memory: false })` (Python: `pause(memory=False)`, CLI: `lizard sandbox pause <id> --fast`) keeps only the files: the whole disk and `/workspace`. It takes about a second at any memory size, while a full pause takes longer the more memory is in use. Running processes end, and `resume()` boots the sandbox fresh with its files, like a restart; the resume response has `memoryRestored: false`. Use it when nothing that is running needs to survive. Billing and the lifetime deadline work as for any pause.
+
+```ts
+await sandbox.pause({ memory: false });
+await sandbox.waitForStatus('paused');
+```
+
 A snapshot saves a running sandbox's memory, running processes and every file on its disk. It belongs to the user who took it. Each restore starts a new sandbox in the snapshot's region, in any project the snapshot's scope allows:
 
 - `workspace` (the default): any project in the source sandbox's workspace.

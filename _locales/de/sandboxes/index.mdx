@@ -49,7 +49,7 @@ In einem Test am 2026-10-12 dauerte es vom Erstellen einer Sandbox bis zur erste
 | Welche Vorlagen gibt es? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop` und `desktop-camoufox` (nur US East) |
 | Welche Größen gibt es? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, Standard) und Large (8 vCPU / 16 GB). Die Testphase erlaubt nur Small in US-Regionen. Siehe [Größen und Preise](/platform/limits#sandbox-sizes) |
 | Wie lange lebt eine? | Standardmäßig fünf Minuten über SDK und CLI; standardmäßig kein Ablauf über die direkte API und das Dashboard |
-| Was übersteht eine Pause? | Die ganze Festplatte, auch Pakete außerhalb von `/workspace`, dazu Arbeitsspeicher und laufende Prozesse |
+| Was übersteht eine Pause? | Die ganze Festplatte, auch Pakete außerhalb von `/workspace`, dazu Arbeitsspeicher und laufende Prozesse (eine Pause mit `memory: false` behält nur die Festplatte) |
 | Was übersteht einen Stopp (Kill oder Ablauf)? | Dateien auf einem Volume aus [Persistent Volumes](/sandboxes/volumes) unter `/workspace` und jeder [Snapshot](/sandboxes/quickstart#pause-and-resume), den Sie erstellt haben; ein Snapshot enthält die ganze Festplatte |
 | Wie viele können gleichzeitig laufen? | 100 mit Pro, 5 während der Testphase; siehe [Kontolimits](/platform/limits#sandbox-account-limits) |
 

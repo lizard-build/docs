@@ -36,7 +36,7 @@ In a test on 2026-10-12, the median time from creating a sandbox to its first Py
 | Which templates exist? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop` and `desktop-camoufox` (US East only) |
 | What sizes are there? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, the default) and Large (8 vCPU / 16 GB). The trial runs only Small, in US regions. See [sizes and prices](/platform/limits#sandbox-sizes) |
 | How long does one live? | Five minutes by default from the SDK and CLI; no expiration by default from the raw API and dashboard |
-| What survives a pause? | The whole disk, including packages installed outside `/workspace`, plus memory and running processes |
+| What survives a pause? | The whole disk, including packages installed outside `/workspace`, plus memory and running processes (a pause with `memory: false` keeps the disk only) |
 | What survives a stop (kill or expiration)? | Files on a [Persistent Volume](/sandboxes/volumes) at `/workspace`, and any [snapshot](/sandboxes/quickstart#pause-and-resume) you took; a snapshot holds the whole disk |
 | How many can run at once? | 100 on Pro, 5 during the trial; see [account limits](/platform/limits#sandbox-account-limits) |
 

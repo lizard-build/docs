@@ -157,6 +157,13 @@ await sandbox.waitForStatus('running');
 - Si no se pueden guardar los procesos, el sandbox sigue en marcha y `waitForStatus` lanza un error con el motivo. Si falla la reanudación, el sandbox sigue pausado con su checkpoint; vuelve a llamar a `resume()`.
 - El plazo de vida se detiene mientras el sandbox está pausado y continúa al reanudar. Un sandbox pausado no cuenta para el límite de sandboxes en marcha.
 
+**Pausar sin memoria.** `pause({ memory: false })` (Python: `pause(memory=False)`, CLI: `lizard sandbox pause <id> --fast`) conserva solo los archivos: todo el disco y `/workspace`. Tarda alrededor de un segundo con cualquier tamaño de memoria, mientras que una pausa completa tarda más cuanta más memoria esté en uso. Los procesos en ejecución terminan y `resume()` arranca el sandbox de nuevo con sus archivos, como tras un reinicio; la respuesta de la reanudación incluye `memoryRestored: false`. Úsalo cuando nada de lo que se está ejecutando deba sobrevivir. La facturación y el plazo de vida funcionan igual que en cualquier pausa.
+
+```ts
+await sandbox.pause({ memory: false });
+await sandbox.waitForStatus('paused');
+```
+
 Un snapshot guarda la memoria de un sandbox en marcha, sus procesos en ejecución y todos los archivos de su disco. Pertenece al usuario que lo tomó. Cada restauración inicia un sandbox nuevo en la región del snapshot, en cualquier proyecto que permita el ámbito del snapshot:
 
 - `workspace` (el predeterminado): cualquier proyecto del workspace del sandbox de origen.

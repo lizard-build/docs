@@ -122,6 +122,7 @@ Verbindet eine VNC-App (macOS-Bildschirmfreigabe, TigerVNC, RealVNC) mit dem Des
 | Befehl | Was er macht |
 |---------|--------------|
 | `lizard sandbox pause <id>` | Speichert Arbeitsspeicher und Prozesse und pausiert die Sandbox. Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes wird separat berechnet |
+| `lizard sandbox pause <id> --fast` | In etwa einer Sekunde pausieren und nur die Dateien behalten: der Arbeitsspeicher wird nicht gesichert, laufende Prozesse enden, und `resume` startet die Sandbox mit ihren Dateien neu |
 | `lizard sandbox resume <id>` | Startet eine pausierte Sandbox mit ihrem gespeicherten Arbeitsspeicher und ihren Dateien erneut |
 | `lizard sandbox snapshot <id> --name <name>` | Speichert eine laufende Sandbox samt Arbeitsspeicher und Dateien als Snapshot, der dir gehört. `--scope` legt fest, wo er sich wiederherstellen lässt: `workspace` (Standard) in jedem Projekt im Workspace der Sandbox, `user` in jedem Projekt in jedem deiner Workspaces, `project` nur im eigenen Projekt |
 | `lizard sandbox restore <snapshot-id>` | Startet eine neue Sandbox aus einem Snapshot in der Region des Snapshots. `-p <project>` wählt das Projekt (Standard: das Projekt des Volumes, sonst das des Snapshots), `--volume <name-or-id>` hängt ein Volume unter `/workspace` ein, `--timeout <ms>` setzt die Lebensdauer (Standard `300000`) |

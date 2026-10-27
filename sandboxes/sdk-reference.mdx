@@ -98,6 +98,7 @@ sandbox = Sandbox.create(
 | `sandbox.unexpose(port)` | `sandbox.unexpose(port)` | Remove a published port. |
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | Set the remaining lifetime, at least 1000 ms. |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | Queue a pause or resume and return at once. |
+| `sandbox.pause({ memory: false })` | `sandbox.pause(memory=False)` | Pause keeping files only, in about a second at any memory size; processes end and the resume boots the sandbox fresh. |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | Wait for `paused` or `running`; throw if the pause failed. |
 | `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Copy a running sandbox 1 to 100 times, memory and processes included; each copy counts toward your running-sandbox limit. |
 | `sandbox.snapshot(name, { scope })` | `sandbox.snapshot(name, scope=...)` | Save memory, processes and every file as a snapshot. `scope` is `'workspace'` (the default), `'user'` or `'project'`. |
