@@ -20,7 +20,7 @@ Commands that charge, cancel or remove a card ask you to confirm. Without a term
 
 ### `lizard billing status`
 
-Show your plan and where it stands: days and trial credits left, how much of the $19 in monthly credits you have used, overage so far, the next charge and its date, and any unpaid invoice.
+Show your plan and where it stands: days and trial usage left, how much of the $19 of included usage you have used, overage so far, the next charge and its date, and any unpaid invoice.
 
 | Flag | Description |
 |------|-------------|
@@ -36,7 +36,7 @@ Open the Billing page in your browser. Pay an open invoice, add or change your c
 
 ### `lizard billing start`
 
-Start Pro in Stripe Checkout, where you add a card. The command opens Checkout in your browser. A new account gets the 7-day trial with $5 in trial credits, and nothing is charged until the trial ends. If the account had a trial before, Pro starts at once and charges $19. If the card had one, the trial does not start and nothing is charged; start Pro at $19 on the Billing page.
+Start Pro in Stripe Checkout, where you add a card. The command opens Checkout in your browser. A new account gets the 7-day trial with $5 of usage, and nothing is charged until the trial ends. If the account had a trial before, Pro starts at once and charges $19. If the card had one, the trial does not start and nothing is charged; start Pro at $19 on the Billing page.
 
 | Flag | Description |
 |------|-------------|
@@ -45,7 +45,7 @@ Start Pro in Stripe Checkout, where you add a card. The command opens Checkout i
 
 ### `lizard billing start-now`
 
-End the trial and start your first paid month now. Lizard charges $19 and adds $19 in monthly credits. Use it when trial credits run out. If your bank asks you to confirm the payment, the command gives you the invoice page to do so; the trial goes on until the payment goes through.
+End the trial and start your first paid month now. Lizard charges $19 and adds $19 of included usage. Use it when the trial usage runs out. If your bank asks you to confirm the payment, the command gives you the invoice page to do so; the trial goes on until the payment goes through.
 
 | Flag | Description |
 |------|-------------|
@@ -66,7 +66,7 @@ Undo a cancel before the end date.
 
 ### `lizard billing promo <code>`
 
-Redeem a promo code for a longer trial and more trial credits. Before the trial starts, Lizard saves the code for it. During the trial, the code extends it. Codes work only before your first payment, one per account.
+Redeem a promo code for a longer trial and more trial usage. Before the trial starts, Lizard saves the code for it. During the trial, the code extends it. Codes work only before your first payment, one per account.
 
 ### `lizard billing balance`
 
@@ -119,7 +119,7 @@ lizard billing resume
 
 ## Payment required
 
-If you try to create a resource while the account has no plan, has used up its trial credits or has an unpaid invoice, Lizard answers with HTTP 402. Lizard CLI prints the reason and a link to the Billing page, for example:
+If you try to create a resource while the account has no plan, has used up its trial usage or has an unpaid invoice, Lizard answers with HTTP 402. Lizard CLI prints the reason and a link to the Billing page, for example:
 
 ```text
 Start your 7-day Pro trial with $5 in credits to deploy. No charge today, then $19/month.

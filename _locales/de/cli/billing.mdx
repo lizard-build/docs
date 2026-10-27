@@ -24,7 +24,7 @@ Befehle, die belasten, kündigen oder eine Karte entfernen, fragen nach einer Be
 
 ### `lizard billing status`
 
-Zeigt deinen Plan und seinen Stand: verbleibende Tage und Testguthaben, wie viel der $19 monatlichen Guthabens du genutzt hast, die bisherige Mehrnutzung, Betrag und Datum der nächsten Belastung und eine offene Rechnung, falls es eine gibt.
+Zeigt deinen Plan und seinen Stand: verbleibende Tage und Nutzung der Testphase, wie viel der enthaltenen $19 du genutzt hast, die bisherige Mehrnutzung, Betrag und Datum der nächsten Belastung und eine offene Rechnung, falls es eine gibt.
 
 | Flag | Beschreibung |
 |------|-------------|
@@ -40,7 +40,7 @@ Zeigt deinen Plan und seinen Stand: verbleibende Tage und Testguthaben, wie viel
 
 ### `lizard billing start`
 
-Startet Pro in Stripe Checkout, wo du eine Karte hinterlegst. Der Befehl öffnet Checkout in deinem Browser. Ein neues Konto bekommt die 7-tägige Testphase mit $5 Testguthaben, und bis zu ihrem Ende wird nichts berechnet. Hatte das Konto schon eine Testphase, beginnt Pro sofort, und $19 werden belastet. Hatte die Karte schon eine, startet die Testphase nicht, und es wird nichts berechnet; starte Pro für $19 auf der Seite „Abrechnung“.
+Startet Pro in Stripe Checkout, wo du eine Karte hinterlegst. Der Befehl öffnet Checkout in deinem Browser. Ein neues Konto bekommt die 7-tägige Testphase mit $5 Nutzung, und bis zu ihrem Ende wird nichts berechnet. Hatte das Konto schon eine Testphase, beginnt Pro sofort, und $19 werden belastet. Hatte die Karte schon eine, startet die Testphase nicht, und es wird nichts berechnet; starte Pro für $19 auf der Seite „Abrechnung“.
 
 | Flag | Beschreibung |
 |------|-------------|
@@ -49,7 +49,7 @@ Startet Pro in Stripe Checkout, wo du eine Karte hinterlegst. Der Befehl öffnet
 
 ### `lizard billing start-now`
 
-Beendet die Testphase und beginnt sofort deinen ersten bezahlten Monat. Lizard belastet $19 und gibt $19 monatliches Guthaben. Nutze den Befehl, wenn das Testguthaben aufgebraucht ist. Verlangt deine Bank eine Bestätigung der Zahlung, gibt der Befehl dir die Rechnungsseite dafür; die Testphase läuft weiter, bis die Zahlung durch ist.
+Beendet die Testphase und beginnt sofort deinen ersten bezahlten Monat. Lizard belastet $19 und gibt $19 Nutzung. Nutze den Befehl, wenn die Nutzung der Testphase aufgebraucht ist. Verlangt deine Bank eine Bestätigung der Zahlung, gibt der Befehl dir die Rechnungsseite dafür; die Testphase läuft weiter, bis die Zahlung durch ist.
 
 | Flag | Beschreibung |
 |------|-------------|
@@ -70,7 +70,7 @@ Nimmt eine Kündigung vor dem Enddatum zurück.
 
 ### `lizard billing promo <code>`
 
-Löst einen Promo-Code für eine längere Testphase und mehr Testguthaben ein. Vor dem Start der Testphase speichert Lizard den Code dafür. Während der Testphase verlängert der Code sie. Codes gelten nur vor deiner ersten Zahlung, einer pro Konto.
+Löst einen Promo-Code für eine längere Testphase und mehr Nutzung in der Testphase ein. Vor dem Start der Testphase speichert Lizard den Code dafür. Während der Testphase verlängert der Code sie. Codes gelten nur vor deiner ersten Zahlung, einer pro Konto.
 
 ### `lizard billing balance`
 
@@ -133,7 +133,7 @@ lizard billing resume
 
 ## Zahlung erforderlich
 
-Wenn du eine Ressource erstellst, während das Konto keinen Plan hat, das Testguthaben aufgebraucht ist oder eine Rechnung offen ist, antwortet Lizard mit HTTP 402. Lizard CLI gibt den Grund und einen Link zur Seite „Abrechnung“ aus, zum Beispiel:
+Wenn du eine Ressource erstellst, während das Konto keinen Plan hat, die Nutzung der Testphase aufgebraucht ist oder eine Rechnung offen ist, antwortet Lizard mit HTTP 402. Lizard CLI gibt den Grund und einen Link zur Seite „Abrechnung“ aus, zum Beispiel:
 
 ```text
 Start your 7-day Pro trial with $5 in credits to deploy. No charge today, then $19/month.

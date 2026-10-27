@@ -24,7 +24,7 @@ Los comandos que cobran, cancelan o quitan una tarjeta piden confirmación. Sin 
 
 ### `lizard billing status`
 
-Muestra tu plan y su estado: días y créditos de prueba que quedan, cuánto de los $19 en créditos mensuales has usado, el uso adicional hasta ahora, el importe y la fecha del próximo cobro, y cualquier factura sin pagar.
+Muestra tu plan y su estado: días y uso de prueba que quedan, cuánto de los $19 de uso incluidos has usado, el uso adicional hasta ahora, el importe y la fecha del próximo cobro, y cualquier factura sin pagar.
 
 | Flag | Descripción |
 |------|-------------|
@@ -40,7 +40,7 @@ Abre la página Facturación en el navegador. Allí puedes pagar una factura pen
 
 ### `lizard billing start`
 
-Activa Pro en Stripe Checkout, donde añades una tarjeta. El comando abre Checkout en tu navegador. Una cuenta nueva recibe la prueba de 7 días con $5 en créditos de prueba, y no se cobra nada hasta que termina. Si la cuenta ya tuvo una prueba, Pro empieza de inmediato y cobra $19. Si la tarjeta ya tuvo una, la prueba no empieza y no se cobra nada; activa Pro por $19 en la página Facturación.
+Activa Pro en Stripe Checkout, donde añades una tarjeta. El comando abre Checkout en tu navegador. Una cuenta nueva recibe la prueba de 7 días con $5 de uso, y no se cobra nada hasta que termina. Si la cuenta ya tuvo una prueba, Pro empieza de inmediato y cobra $19. Si la tarjeta ya tuvo una, la prueba no empieza y no se cobra nada; activa Pro por $19 en la página Facturación.
 
 | Flag | Descripción |
 |------|-------------|
@@ -49,7 +49,7 @@ Activa Pro en Stripe Checkout, donde añades una tarjeta. El comando abre Checko
 
 ### `lizard billing start-now`
 
-Termina la prueba y empieza ya tu primer mes pagado. Lizard cobra $19 y añade $19 en créditos mensuales. Úsalo cuando se agoten los créditos de prueba. Si tu banco pide confirmar el pago, el comando te da la página de la factura para hacerlo; la prueba sigue hasta que se completa el pago.
+Termina la prueba y empieza ya tu primer mes pagado. Lizard cobra $19 y añade $19 de uso. Úsalo cuando se agote el uso de la prueba. Si tu banco pide confirmar el pago, el comando te da la página de la factura para hacerlo; la prueba sigue hasta que se completa el pago.
 
 | Flag | Descripción |
 |------|-------------|
@@ -70,7 +70,7 @@ Deshace una cancelación antes de la fecha de fin.
 
 ### `lizard billing promo <code>`
 
-Canjea un código promocional para una prueba más larga y más créditos de prueba. Antes de que empiece la prueba, Lizard guarda el código para ella. Durante la prueba, el código la amplía. Los códigos solo funcionan antes de tu primer pago, uno por cuenta.
+Canjea un código promocional para una prueba más larga y más uso de prueba. Antes de que empiece la prueba, Lizard guarda el código para ella. Durante la prueba, el código la amplía. Los códigos solo funcionan antes de tu primer pago, uno por cuenta.
 
 ### `lizard billing balance`
 
@@ -133,7 +133,7 @@ lizard billing resume
 
 ## Pago requerido
 
-Si creas un recurso cuando la cuenta no tiene plan, ha agotado los créditos de prueba o tiene una factura sin pagar, Lizard responde con HTTP 402. Lizard CLI muestra el motivo y un enlace a la página Facturación, por ejemplo:
+Si creas un recurso cuando la cuenta no tiene plan, ha agotado el uso de la prueba o tiene una factura sin pagar, Lizard responde con HTTP 402. Lizard CLI muestra el motivo y un enlace a la página Facturación, por ejemplo:
 
 ```text
 Start your 7-day Pro trial with $5 in credits to deploy. No charge today, then $19/month.
