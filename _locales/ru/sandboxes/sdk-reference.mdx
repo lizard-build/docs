@@ -280,10 +280,10 @@ sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workd
 | Ошибка | Значение |
 |---|---|
 | `PaymentRequiredError` | HTTP 402: аккаунту нужно подключить Pro или оплатить счёт, прежде чем что-то создавать. В `url` указан адрес страницы, которую нужно открыть. |
-| `AuthenticationError` | HTTP 401 или 403: неверный ключ или нет доступа. В пробном периоде API отвечает 403 и на размер, отличный от Small, или регион за пределами США: `code` равен `TRIAL_SANDBOX_SIZE` или `TRIAL_SANDBOX_REGION`. |
+| `AuthenticationError` | HTTP 401 или 403: неверный ключ или нет доступа. В пробном периоде API отвечает 403 и на sandbox размера Medium или регион за пределами США: `code` равен `TRIAL_SANDBOX_SIZE` или `TRIAL_SANDBOX_REGION`; на sandbox размера Large API отвечает 403 с `SANDBOX_SIZE_NOT_ALLOWED`, будь то создание, возобновление или fork. |
 | `NotFoundError` | HTTP 404: sandbox, файл или снимок не существует либо его срок истёк. |
 | `ConflictError` | HTTP 409: конфликт состояния, например fork sandbox с томом. |
-| `LimitExceededError` | HTTP 429: слишком много sandbox одновременно или слишком много запусков. `code` указывает лимит, например `SANDBOX_LIMIT_REACHED` или `SANDBOX_RATE_LIMITED`; `retryAfterS` (в Python: `retry_after_s`) указывает, когда повторить попытку. |
+| `LimitExceededError` | HTTP 429: слишком много vCPU у одновременно запущенных sandbox или слишком много запусков. `code` указывает лимит, например `SANDBOX_LIMIT_REACHED` или `SANDBOX_RATE_LIMITED`. Для `SANDBOX_LIMIT_REACHED` значения `limit` и `running` указаны в vCPU. `retryAfterS` (в Python: `retry_after_s`) указывает, когда повторить попытку. |
 | `TimeoutError` | HTTP 408 или 504. Собственное 60-секундное ожидание `process.exec` в TypeScript SDK вместо этого выбрасывает `DOMException` с именем `TimeoutError`. |
 | `LizardError` | Другие сбои API, включая неподдерживаемые операции. |
 
@@ -303,6 +303,7 @@ SDK обращается к REST API Lizard по адресу `https://lizard.bu
 | Пауза или возобновление | `POST /api/sandboxes/{id}/pause`, `POST /api/sandboxes/{id}/resume` |
 | Публикация порта | `POST /api/sandboxes/{id}/expose/{port}`; `DELETE` по тому же пути убирает его |
 | Остановка | `DELETE /api/sandboxes/{id}` |
+| Проверка лимитов | `GET /api/sandboxes/limits`; возвращает `tier`, `unit`, `limits`, `running` и `runningVcpu` |
 
 ```bash
 curl -X POST https://lizard.build/api/sandboxes \

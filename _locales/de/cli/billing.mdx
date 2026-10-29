@@ -1,10 +1,10 @@
 ---
-description: "lizard billing zeigt deinen Pro-Plan, die Testphase und die Nutzung, startet oder kündigt Pro, löst Promo-Codes ein und zeigt den Guthabenverlauf von Enterprise und gespeicherte Karten."
+description: "lizard billing zeigt deinen Plan, die Testphase und die Nutzung, startet Pro, kündigt deinen Plan, löst Promo-Codes ein und zeigt den Guthabenverlauf von Enterprise und gespeicherte Karten."
 ---
 
 # lizard billing
 
-Zeigt und verwaltet deinen Plan bei Lizard (lizard.build): Testphase, Pro, die Nutzung in diesem Monat und Promo-Codes. `lizard credits` ist der alte Name. Er funktioniert noch, gibt aber eine Warnung aus, und ein späteres Release entfernt ihn.
+Zeigt und verwaltet deinen Plan bei Lizard (lizard.build): Testphase, Pro, Pro 5x, Pro 20x, die Nutzung in diesem Monat und Promo-Codes. `lizard credits` ist der alte Name. Er funktioniert noch, gibt aber eine Warnung aus, und ein späteres Release entfernt ihn.
 
 <span id="usage" />
 
@@ -14,7 +14,7 @@ Zeigt und verwaltet deinen Plan bei Lizard (lizard.build): Testphase, Pro, die N
 lizard billing [subcommand] [flags]
 ```
 
-Ohne Unterbefehl zeigt `lizard billing` dasselbe wie `lizard billing status`. Die Befehle wirken auf den Plan des Kontos, mit dem du angemeldet bist. Wie Pro, die Testphase und Mehrnutzung funktionieren, steht unter [Abrechnung](/platform/billing).
+Ohne Unterbefehl zeigt `lizard billing` dasselbe wie `lizard billing status`. Die Befehle wirken auf den Plan des Kontos, mit dem du angemeldet bist. Wie die Pläne, die Testphase und Mehrnutzung funktionieren, steht unter [Abrechnung](/platform/billing). Um Pro 5x oder Pro 20x zu starten oder zwischen Plänen zu wechseln, nutze die Seite „Abrechnung“: `lizard billing open`.
 
 Befehle, die belasten, kündigen oder eine Karte entfernen, fragen nach einer Bestätigung. Ohne Terminal, etwa in CI oder bei einem Agenten, übergibst du stattdessen `-y`. Befehle, die eine Seite öffnen, geben immer ihren Link aus und öffnen den Browser nur in einem interaktiven Terminal.
 
@@ -24,7 +24,7 @@ Befehle, die belasten, kündigen oder eine Karte entfernen, fragen nach einer Be
 
 ### `lizard billing status`
 
-Zeigt deinen Plan und seinen Stand: verbleibende Tage und Nutzung der Testphase, wie viel der enthaltenen $19 du genutzt hast, die bisherige Mehrnutzung, Betrag und Datum der nächsten Belastung und eine offene Rechnung, falls es eine gibt.
+Zeigt deinen Plan und seinen Stand: verbleibende Tage und Nutzung der Testphase, wie viel der in deinem Plan enthaltenen Nutzung du verbraucht hast, die bisherige Mehrnutzung, Betrag und Datum der nächsten Belastung und eine offene Rechnung, falls es eine gibt.
 
 | Flag | Beschreibung |
 |------|-------------|
@@ -58,7 +58,7 @@ Beendet die Testphase und beginnt sofort deinen ersten bezahlten Monat. Lizard b
 
 ### `lizard billing cancel`
 
-Kündigt zum Ende des laufenden Monats oder der Testphase. Bis dahin bleibt Pro aktiv. Eine Kündigung während der Testphase kostet nichts.
+Kündigt zum Ende des laufenden Monats oder der Testphase. Bis dahin bleibt dein Plan aktiv. Eine Kündigung während der Testphase kostet nichts.
 
 | Flag | Beschreibung |
 |------|-------------|
@@ -143,6 +143,6 @@ Start your 7-day Pro trial with $5 in credits to deploy. No charge today, then $
 
 ## Siehe auch
 
-- [Abrechnung](/platform/billing) — Pro, Testphase, Mehrnutzung, fehlgeschlagene Zahlungen und Kündigung
-- [Limits](/platform/limits) — Limits der Testphase und von Pro für Sandboxes und Replikas
+- [Abrechnung](/platform/billing) — Pläne, Testphase, Mehrnutzung, Planwechsel, fehlgeschlagene Zahlungen und Kündigung
+- [Limits](/platform/limits) — Limits der Testphase und der Pläne für Sandboxes und Replikas
 - [lizard whoami](/cli/whoami) — zeigt das Konto, mit dem du angemeldet bist

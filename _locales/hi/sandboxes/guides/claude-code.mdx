@@ -51,7 +51,7 @@ lizard sandbox create -t claude --timeout 3600000
 
 - `--timeout 3600000` सैंडबॉक्स को एक घंटा देता है। CLI में डिफ़ॉल्ट पाँच मिनट है, जिसके बाद Lizard सैंडबॉक्स और उसकी फ़ाइलें डिलीट कर देता है, भले ही काम बीच में हो। चल रहे सैंडबॉक्स का समय `lizard sandbox timeout $SB 3600000` से बढ़ाएँ।
 - `claude` टेम्प्लेट में Node.js 22, Claude Code का एक पिन किया हुआ रिलीज़, git, Python 3, ripgrep, curl, jq, unzip और Lizard CLI हैं। Claude Code का वर्ज़न `lizard sandbox exec $SB -- claude --version` से जाँचें।
-- डिफ़ॉल्ट साइज़ Medium (4 vCPU, 8 GB) है। इसे बदलने के लिए `--size small` या `--size large` पास करें। ट्रायल के दौरान हर सैंडबॉक्स Small होता है और US रीजन में चलता है।
+- डिफ़ॉल्ट साइज़ Medium (4 vCPU, 8 GB) है। इसे बदलने के लिए `--size small` या `--size large` पास करें। ट्रायल के दौरान हर सैंडबॉक्स Small होता है और US रीजन में चलता है, और एक साथ 4 तक चल सकते हैं।
 
 <span id="put-your-code-in-the-sandbox" />
 
@@ -141,7 +141,8 @@ lizard sandbox rm $SB
 | `Claude Code has no credential. Connect one of: …` | `lizard agents add claude` या `lizard agents add anthropic` चलाएँ। |
 | `Claude rejected the credential (authentication_failed)` | टोकन या की अब मान्य नहीं है। नया बनाएँ और फिर से जोड़ें। |
 | `create` पर Checkout लिंक के साथ HTTP 402 | ट्रायल या Pro शुरू करें: `lizard billing start`। |
-| `create` पर `TRIAL_SANDBOX_SIZE` या `TRIAL_SANDBOX_REGION` के साथ HTTP 403 | ट्रायल में सिर्फ़ US रीजन में Small सैंडबॉक्स चलते हैं। `--size small` और US का कोई `--region` इस्तेमाल करें, या अभी Pro शुरू करें: `lizard billing start-now`। |
+| `create` पर `TRIAL_SANDBOX_SIZE`, `TRIAL_SANDBOX_REGION` या `SANDBOX_SIZE_NOT_ALLOWED` के साथ HTTP 403 | ट्रायल में सिर्फ़ US रीजन में Small सैंडबॉक्स चलते हैं। `--size small` और US का कोई `--region` इस्तेमाल करें, या अभी Pro शुरू करें: `lizard billing start-now`। |
+| `create` पर `SANDBOX_LIMIT_REACHED` के साथ HTTP 429 | आपके चल रहे सैंडबॉक्स आपके प्लान की पूरी vCPU लिमिट इस्तेमाल कर रहे हैं। किसी एक को स्टॉप या पॉज़ करें, छोटा `--size` इस्तेमाल करें, या बिलिंग पेज पर बड़े प्लान पर जाएँ। |
 | काम के बीच में सैंडबॉक्स गायब हो गया | उसका लाइफटाइम खत्म हो गया। अगला सैंडबॉक्स `--timeout` के साथ बनाएँ, या `lizard sandbox timeout` से समय बढ़ाएँ। |
 | आउटपुट में Codex का ज़िक्र है | प्रॉम्प्ट `--agent claude` के बिना भेजा गया। |
 | किसी स्टेप में `installing Claude Code` दिखता है | सैंडबॉक्स `claude` टेम्प्लेट से नहीं बना था, इसलिए रनर पहले npm से Claude Code इंस्टॉल करता है। |

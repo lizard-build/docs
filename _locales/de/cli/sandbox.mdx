@@ -50,7 +50,7 @@ Lizard rechnet jede Größe sekundengenau zum Festpreis ab, solange die Sandbox 
 
 Alles in der Sandbox kann den Key lesen, den `--with-token` installiert, und ihn bis zum Löschen der Sandbox für das Projekt der Sandbox nutzen.
 
-Bis deine Testphase oder dein Pro-Plan beginnt, gibt `create` HTTP 402 mit einem Checkout-Link zurück; führe `lizard billing start` aus. Während der Testphase kannst du 5 Sandboxes gleichzeitig betreiben, nach der ersten bezahlten Rechnung 100. Pausierte Sandboxes zählen nicht mit. In der Testphase muss eine Sandbox `small` sein und in einer US-Region laufen; eine andere Größe oder Region gibt HTTP 403 zurück. Siehe [Limits](/platform/limits#sandbox-account-limits).
+Bis deine Testphase oder dein Plan beginnt, gibt `create` HTTP 402 mit einem Checkout-Link zurück; führe `lizard billing start` aus. Die Limits zählen die vCPU laufender Sandboxes: 8 während der Testphase, 40 bei Pro nach der ersten bezahlten Rechnung, 220 bei Pro 5x und 1,200 bei Pro 20x. Pausierte Sandboxes zählen nicht mit. In der Testphase muss eine Sandbox `small` sein und in einer US-Region laufen, daher sind höchstens 4 gleichzeitig möglich. `medium` gibt HTTP 403 mit `TRIAL_SANDBOX_SIZE` zurück, eine andere Region HTTP 403 mit `TRIAL_SANDBOX_REGION`. `large` gibt HTTP 403 mit `SANDBOX_SIZE_NOT_ALLOWED` zurück, ebenso das Fortsetzen, Forken oder Wiederherstellen einer Large-Sandbox. Über dem vCPU-Limit gibt `create` HTTP 429 mit `SANDBOX_LIMIT_REACHED` zurück. Siehe [Limits](/platform/limits#sandbox-account-limits).
 
 ### `lizard sandbox list`
 

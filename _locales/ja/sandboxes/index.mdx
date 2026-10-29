@@ -50,7 +50,7 @@ Lizard (lizard.build) の Sandboxes は、AI エージェントがコードや�
 | どのくらい存続しますか? | SDK と CLI からは既定で 5 分。直接の API とダッシュボードからは既定で期限なし |
 | 一時停止後に何が残りますか? | ディスク全体（`/workspace` 以外にインストールしたパッケージも含む）と、メモリ、実行中のプロセスです（`fast: true` の一時停止ではディスクのみ） |
 | 停止（kill または期限切れ）後に何が残りますか? | `/workspace` の [Persistent Volumes](/sandboxes/volumes) 上のファイルと、自分で作成した[スナップショット](/sandboxes/quickstart#pause-and-resume)です。スナップショットはディスク全体を保持します |
-| 同時にいくつ実行できますか? | Pro で 100、トライアル中は 5。[アカウントの上限](/platform/limits#sandbox-account-limits) を参照してください |
+| 同時にいくつ実行できますか? | 上限は vCPU で数えます。Pro で 40（たとえば Medium なら 10 個）、Pro 5x で 220、Pro 20x で 1,200、トライアル中は 8（Small 4 個まで）。[アカウントの上限](/platform/limits#sandbox-account-limits) を参照してください |
 
 <span id="runtime-and-templates" />
 

@@ -280,10 +280,10 @@ Fehlgeschlagene API-Aufrufe lösen diese Fehler aus (Python: raise). Jeder enth�
 | Fehler | Bedeutung |
 |---|---|
 | `PaymentRequiredError` | HTTP 402: Das Konto muss Pro starten oder eine Rechnung bezahlen, bevor es etwas erstellen kann. `url` ist die Seite, die Sie öffnen. |
-| `AuthenticationError` | HTTP 401 oder 403: ungültiger Schlüssel oder kein Zugriff. In der Testphase gibt auch eine andere Größe als Small oder eine Region außerhalb der USA 403 zurück, mit `code` gleich `TRIAL_SANDBOX_SIZE` oder `TRIAL_SANDBOX_REGION`. |
+| `AuthenticationError` | HTTP 401 oder 403: ungültiger Schlüssel oder kein Zugriff. In der Testphase gibt auch eine Medium-Sandbox oder eine Region außerhalb der USA 403 zurück, mit `code` gleich `TRIAL_SANDBOX_SIZE` oder `TRIAL_SANDBOX_REGION`; eine Large-Sandbox gibt 403 mit `SANDBOX_SIZE_NOT_ALLOWED` zurück, ob beim Erstellen, Fortsetzen oder Forken. |
 | `NotFoundError` | HTTP 404: Die Sandbox, Datei oder der Snapshot existiert nicht oder ist abgelaufen. |
 | `ConflictError` | HTTP 409: widersprüchlicher Zustand, etwa beim Forken einer Sandbox mit Volume. |
-| `LimitExceededError` | HTTP 429: zu viele Sandboxes gleichzeitig oder zu viele Starts. `code` nennt das Limit, etwa `SANDBOX_LIMIT_REACHED` oder `SANDBOX_RATE_LIMITED`; `retryAfterS` (Python: `retry_after_s`) sagt, wann Sie es erneut versuchen können. |
+| `LimitExceededError` | HTTP 429: zu viele vCPU an Sandboxes gleichzeitig oder zu viele Starts. `code` nennt das Limit, etwa `SANDBOX_LIMIT_REACHED` oder `SANDBOX_RATE_LIMITED`. Bei `SANDBOX_LIMIT_REACHED` sind `limit` und `running` in vCPU angegeben. `retryAfterS` (Python: `retry_after_s`) sagt, wann Sie es erneut versuchen können. |
 | `TimeoutError` | HTTP 408 oder 504. Das eigene 60-Sekunden-Warten des TypeScript-SDK bei `process.exec` löst stattdessen eine `DOMException` mit dem Namen `TimeoutError` aus. |
 | `LizardError` | Andere API-Fehler, einschließlich nicht unterstützter Operationen. |
 
@@ -305,6 +305,7 @@ Das SDK ruft die REST-API von Lizard unter `https://lizard.build` auf. Senden Si
 | Pausieren oder fortsetzen | `POST /api/sandboxes/{id}/pause`, `POST /api/sandboxes/{id}/resume` |
 | Port veröffentlichen | `POST /api/sandboxes/{id}/expose/{port}`; `DELETE` auf demselben Pfad entfernt ihn |
 | Beenden | `DELETE /api/sandboxes/{id}` |
+| Limits prüfen | `GET /api/sandboxes/limits`; gibt `tier`, `unit`, `limits`, `running` und `runningVcpu` zurück |
 
 ```bash
 curl -X POST https://lizard.build/api/sandboxes \

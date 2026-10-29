@@ -1,10 +1,10 @@
 ---
-description: "lizard billing muestra tu plan Pro, la prueba y el uso, activa o cancela Pro, canjea códigos promocionales y muestra el historial de saldo de Enterprise y las tarjetas guardadas."
+description: "lizard billing muestra tu plan, la prueba y el uso, activa Pro, cancela tu plan, canjea códigos promocionales y muestra el historial de saldo de Enterprise y las tarjetas guardadas."
 ---
 
 # lizard billing
 
-Muestra y gestiona tu plan de Lizard (lizard.build): la prueba, Pro, el uso de este mes y los códigos promocionales. `lizard credits` es el nombre antiguo. Sigue funcionando, pero muestra un aviso, y una versión futura lo quitará.
+Muestra y gestiona tu plan de Lizard (lizard.build): la prueba, Pro, Pro 5x, Pro 20x, el uso de este mes y los códigos promocionales. `lizard credits` es el nombre antiguo. Sigue funcionando, pero muestra un aviso, y una versión futura lo quitará.
 
 <span id="usage" />
 
@@ -14,7 +14,7 @@ Muestra y gestiona tu plan de Lizard (lizard.build): la prueba, Pro, el uso de e
 lizard billing [subcommand] [flags]
 ```
 
-Sin subcomando, `lizard billing` muestra lo mismo que `lizard billing status`. Los comandos actúan sobre el plan de la cuenta con la que iniciaste sesión. Consulta [Facturación](/platform/billing) para ver cómo funcionan Pro, la prueba y el uso adicional.
+Sin subcomando, `lizard billing` muestra lo mismo que `lizard billing status`. Los comandos actúan sobre el plan de la cuenta con la que iniciaste sesión. Consulta [Facturación](/platform/billing) para ver cómo funcionan los planes, la prueba y el uso adicional. Para activar Pro 5x o Pro 20x, o para cambiar de plan, usa la página Facturación: `lizard billing open`.
 
 Los comandos que cobran, cancelan o quitan una tarjeta piden confirmación. Sin una terminal, por ejemplo en CI o en un agente, pasa `-y`. Los comandos que abren una página siempre muestran su enlace, y abren el navegador solo en una terminal interactiva.
 
@@ -24,7 +24,7 @@ Los comandos que cobran, cancelan o quitan una tarjeta piden confirmación. Sin 
 
 ### `lizard billing status`
 
-Muestra tu plan y su estado: días y uso de prueba que quedan, cuánto de los $19 de uso incluidos has usado, el uso adicional hasta ahora, el importe y la fecha del próximo cobro, y cualquier factura sin pagar.
+Muestra tu plan y su estado: días y uso de prueba que quedan, cuánto del uso incluido en tu plan has usado, el uso adicional hasta ahora, el importe y la fecha del próximo cobro, y cualquier factura sin pagar.
 
 | Flag | Descripción |
 |------|-------------|
@@ -58,7 +58,7 @@ Termina la prueba y empieza ya tu primer mes pagado. Lizard cobra $19 y añade $
 
 ### `lizard billing cancel`
 
-Cancela al final del mes en curso o de la prueba. Pro sigue activo hasta entonces. Cancelar durante la prueba no cuesta nada.
+Cancela al final del mes en curso o de la prueba. Tu plan sigue activo hasta entonces. Cancelar durante la prueba no cuesta nada.
 
 | Flag | Descripción |
 |------|-------------|
@@ -143,6 +143,6 @@ Start your 7-day Pro trial with $5 in credits to deploy. No charge today, then $
 
 ## Véase también
 
-- [Facturación](/platform/billing) — Pro, la prueba, el uso adicional, los pagos fallidos y la cancelación
-- [Límites](/platform/limits) — límites de la prueba y de Pro para Sandboxes y réplicas
+- [Facturación](/platform/billing) — los planes, la prueba, el uso adicional, el cambio de plan, los pagos fallidos y la cancelación
+- [Límites](/platform/limits) — límites de la prueba y de los planes para Sandboxes y réplicas
 - [lizard whoami](/cli/whoami) — muestra la cuenta con la que iniciaste sesión

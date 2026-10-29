@@ -1,10 +1,10 @@
 ---
-description: "lizard billing は Pro プラン、トライアル、利用状況を表示し、Pro の開始や解約、プロモコードの利用を行います。Enterprise の残高の履歴と保存済みカードも表示できます。"
+description: "lizard billing はプラン、トライアル、利用状況を表示し、Pro の開始、プランの解約、プロモコードの利用を行います。Enterprise の残高の履歴と保存済みカードも表示できます。"
 ---
 
 # lizard billing
 
-Lizard (lizard.build) のプランを表示・管理します。対象はトライアル、Pro、今月の利用、プロモコードです。`lizard credits` は以前の名前です。今も使えますが警告が表示され、今後のリリースで削除されます。
+Lizard (lizard.build) のプランを表示・管理します。対象はトライアル、Pro、Pro 5x、Pro 20x、今月の利用、プロモコードです。`lizard credits` は以前の名前です。今も使えますが警告が表示され、今後のリリースで削除されます。
 
 <span id="usage" />
 
@@ -14,7 +14,7 @@ Lizard (lizard.build) のプランを表示・管理します。対象はトラ�
 lizard billing [subcommand] [flags]
 ```
 
-サブコマンドなしの `lizard billing` は `lizard billing status` と同じ内容を表示します。コマンドは、サインインしているアカウントのプランに対して動作します。Pro、トライアル、超過分の仕組みは[請求](/platform/billing)を参照してください。
+サブコマンドなしの `lizard billing` は `lizard billing status` と同じ内容を表示します。コマンドは、サインインしているアカウントのプランに対して動作します。プラン、トライアル、超過分の仕組みは[請求](/platform/billing)を参照してください。Pro 5x や Pro 20x を始めるときや、プランを切り替えるときは、請求ページを使います。開くには `lizard billing open` を実行します。
 
 請求、解約、カードの削除を行うコマンドは確認を求めます。CI やエージェントなど端末がない環境では、代わりに `-y` を渡してください。ページを開くコマンドは常にリンクを表示し、ブラウザを開くのは対話型の端末で実行したときだけです。
 
@@ -24,7 +24,7 @@ lizard billing [subcommand] [flags]
 
 ### `lizard billing status`
 
-プランと現在の状態を表示します。残りの日数とトライアルの利用分、含まれる $19 のうち使った額、現時点の超過分、次回の請求額と日付、未払いの請求書があればそれも表示します。
+プランと現在の状態を表示します。残りの日数とトライアルの利用分、プランに含まれる利用分のうち使った額、現時点の超過分、次回の請求額と日付、未払いの請求書があればそれも表示します。
 
 | フラグ | 説明 |
 |------|-------------|
@@ -58,7 +58,7 @@ Stripe Checkout で Pro を開始します。Checkout ではカードを登録�
 
 ### `lizard billing cancel`
 
-今月またはトライアルの終わりに解約します。それまで Pro は有効です。トライアル中の解約に費用はかかりません。
+今月またはトライアルの終わりに解約します。それまでプランは有効です。トライアル中の解約に費用はかかりません。
 
 | フラグ | 説明 |
 |------|-------------|
@@ -143,6 +143,6 @@ Start your 7-day Pro trial with $5 in credits to deploy. No charge today, then $
 
 ## 関連項目
 
-- [請求](/platform/billing) — Pro、トライアル、超過分、支払いの失敗、解約
-- [制限](/platform/limits) — Sandboxes とレプリカに関するトライアルと Pro の上限
+- [請求](/platform/billing) — プラン、トライアル、超過分、プランの変更、支払いの失敗、解約
+- [制限](/platform/limits) — Sandboxes とレプリカに関するトライアルと各プランの上限
 - [lizard whoami](/cli/whoami) — サインインしているアカウントを表示します
