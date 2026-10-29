@@ -279,7 +279,7 @@ API फ़ेल होने पर ये एरर थ्रो होते 
 | `AuthenticationError` | HTTP 401 या 403: की अमान्य है या एक्सेस नहीं है। ट्रायल के दौरान Medium सैंडबॉक्स या US के बाहर का रीजन देने पर भी 403 मिलता है, जिसमें `code` की वैल्यू `TRIAL_SANDBOX_SIZE` या `TRIAL_SANDBOX_REGION` होती है; Large सैंडबॉक्स पर `SANDBOX_SIZE_NOT_ALLOWED` के साथ 403 मिलता है, चाहे आप उसे बनाएँ, रिज़्यूम करें या फ़ोर्क करें। |
 | `NotFoundError` | HTTP 404: सैंडबॉक्स, फ़ाइल या स्नैपशॉट मौजूद नहीं है या एक्सपायर हो चुका है। |
 | `ConflictError` | HTTP 409: स्टेट में टकराव, जैसे वॉल्यूम वाले सैंडबॉक्स को फ़ोर्क करना। |
-| `LimitExceededError` | HTTP 429: एक साथ चल रहे सैंडबॉक्स के बहुत ज़्यादा vCPU या बहुत ज़्यादा स्टार्ट। `code` बताता है कि कौन-सी लिमिट लगी, जैसे `SANDBOX_LIMIT_REACHED` या `SANDBOX_RATE_LIMITED`। `SANDBOX_LIMIT_REACHED` में `limit` और `running` vCPU में होते हैं। `retryAfterS` (Python: `retry_after_s`) बताता है कि दोबारा कब कोशिश करें। |
+| `LimitExceededError` | HTTP 429: एक साथ चल रहे सैंडबॉक्स के बहुत ज़्यादा vCPU या बहुत ज़्यादा स्टार्ट। `code` बताता है कि कौन-सी लिमिट लगी, जैसे `SANDBOX_LIMIT_REACHED` या `SANDBOX_RATE_LIMITED`। `SANDBOX_LIMIT_REACHED` में `limit` और `running` vCPU में होते हैं, `unit` यही बताता है (`vcpu`), और `needed` बताता है कि मना किए गए सैंडबॉक्स को कितने vCPU चाहिए। `retryAfterS` (Python: `retry_after_s`) बताता है कि दोबारा कब कोशिश करें। |
 | `TimeoutError` | HTTP 408 या 504। लेकिन `process.exec` पर TypeScript SDK का अपना 60 सेकंड का इंतज़ार इसके बजाय `TimeoutError` नाम का `DOMException` थ्रो करता है। |
 | `LizardError` | API की बाकी विफलताएँ, जिनमें सपोर्ट न होने वाले ऑपरेशन भी शामिल हैं। |
 
