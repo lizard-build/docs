@@ -255,7 +255,7 @@ API failures throw (Python: raise) these errors. Each carries the HTTP status an
 | `AuthenticationError` | HTTP 401 or 403: invalid key or no access. During the trial, a Medium sandbox or a region outside the US also returns 403, with `code` set to `TRIAL_SANDBOX_SIZE` or `TRIAL_SANDBOX_REGION`; a Large sandbox returns 403 with `SANDBOX_SIZE_NOT_ALLOWED`, on create, resume or fork alike. |
 | `NotFoundError` | HTTP 404: the sandbox, file, or snapshot does not exist or has expired. |
 | `ConflictError` | HTTP 409: conflicting state, such as forking a sandbox with a volume. |
-| `LimitExceededError` | HTTP 429: too many vCPU of sandboxes at once or too many starts. `code` says which limit, such as `SANDBOX_LIMIT_REACHED` or `SANDBOX_RATE_LIMITED`. For `SANDBOX_LIMIT_REACHED`, `limit` and `running` are in vCPU. `retryAfterS` (Python: `retry_after_s`) says when to try again. |
+| `LimitExceededError` | HTTP 429: too many vCPU of sandboxes at once or too many starts. `code` says which limit, such as `SANDBOX_LIMIT_REACHED` or `SANDBOX_RATE_LIMITED`. For `SANDBOX_LIMIT_REACHED`, `limit` and `running` are in vCPU, `unit` says so (`vcpu`), and `needed` is the vCPU the refused sandbox needs. `retryAfterS` (Python: `retry_after_s`) says when to try again. |
 | `TimeoutError` | HTTP 408 or 504. The TypeScript SDK's own 60-second wait for `process.exec` throws a `DOMException` named `TimeoutError` instead. |
 | `LizardError` | Other API failures, including unsupported operations. |
 

@@ -283,7 +283,7 @@ Los fallos de la API lanzan (Python: raise) estos errores. Cada uno incluye el e
 | `AuthenticationError` | HTTP 401 o 403: clave no válida o sin acceso. Durante la prueba, un sandbox Medium o una región fuera de EE. UU. también devuelve 403, con `code` igual a `TRIAL_SANDBOX_SIZE` o `TRIAL_SANDBOX_REGION`; un sandbox Large devuelve 403 con `SANDBOX_SIZE_NOT_ALLOWED`, tanto al crearlo como al reanudarlo o hacer fork de él. |
 | `NotFoundError` | HTTP 404: el sandbox, el archivo o el snapshot no existe o ha vencido. |
 | `ConflictError` | HTTP 409: estado en conflicto, como hacer fork de un sandbox con volumen. |
-| `LimitExceededError` | HTTP 429: demasiadas vCPU de sandboxes a la vez o demasiados inicios. `code` indica qué límite, como `SANDBOX_LIMIT_REACHED` o `SANDBOX_RATE_LIMITED`. Para `SANDBOX_LIMIT_REACHED`, `limit` y `running` están en vCPU. `retryAfterS` (Python: `retry_after_s`) indica cuándo volver a intentarlo. |
+| `LimitExceededError` | HTTP 429: demasiadas vCPU de sandboxes a la vez o demasiados inicios. `code` indica qué límite, como `SANDBOX_LIMIT_REACHED` o `SANDBOX_RATE_LIMITED`. Para `SANDBOX_LIMIT_REACHED`, `limit` y `running` están en vCPU, `unit` lo indica (`vcpu`) y `needed` son las vCPU que necesita el sandbox rechazado. `retryAfterS` (Python: `retry_after_s`) indica cuándo volver a intentarlo. |
 | `TimeoutError` | HTTP 408 o 504. La espera propia de 60 segundos del SDK de TypeScript para `process.exec` lanza en su lugar una `DOMException` llamada `TimeoutError`. |
 | `LizardError` | Otros fallos de la API, incluidas las operaciones no compatibles. |
 

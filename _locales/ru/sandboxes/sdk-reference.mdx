@@ -283,7 +283,7 @@ sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workd
 | `AuthenticationError` | HTTP 401 или 403: неверный ключ или нет доступа. В пробном периоде API отвечает 403 и на sandbox размера Medium или регион за пределами США: `code` равен `TRIAL_SANDBOX_SIZE` или `TRIAL_SANDBOX_REGION`; на sandbox размера Large API отвечает 403 с `SANDBOX_SIZE_NOT_ALLOWED`, будь то создание, возобновление или fork. |
 | `NotFoundError` | HTTP 404: sandbox, файл или снимок не существует либо его срок истёк. |
 | `ConflictError` | HTTP 409: конфликт состояния, например fork sandbox с томом. |
-| `LimitExceededError` | HTTP 429: слишком много vCPU у одновременно запущенных sandbox или слишком много запусков. `code` указывает лимит, например `SANDBOX_LIMIT_REACHED` или `SANDBOX_RATE_LIMITED`. Для `SANDBOX_LIMIT_REACHED` значения `limit` и `running` указаны в vCPU. `retryAfterS` (в Python: `retry_after_s`) указывает, когда повторить попытку. |
+| `LimitExceededError` | HTTP 429: слишком много vCPU у одновременно запущенных sandbox или слишком много запусков. `code` указывает лимит, например `SANDBOX_LIMIT_REACHED` или `SANDBOX_RATE_LIMITED`. Для `SANDBOX_LIMIT_REACHED` значения `limit` и `running` указаны в vCPU, `unit` это подтверждает (`vcpu`), а `needed` — сколько vCPU нужно отклонённой sandbox. `retryAfterS` (в Python: `retry_after_s`) указывает, когда повторить попытку. |
 | `TimeoutError` | HTTP 408 или 504. Собственное 60-секундное ожидание `process.exec` в TypeScript SDK вместо этого выбрасывает `DOMException` с именем `TimeoutError`. |
 | `LizardError` | Другие сбои API, включая неподдерживаемые операции. |
 
