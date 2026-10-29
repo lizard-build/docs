@@ -1,13 +1,13 @@
 ---
 title: "Limits: App-Replikate, Sandbox-Größen und Kontingente"
-description: "Replikatlimits für Apps, Sandbox-Größen und Stundenpreise, wie viele Sandboxes gleichzeitig laufen können, Startraten, ausgehender Traffic, Laufzeiten und Regionen auf Lizard."
+description: "Replikatlimits für Apps, Sandbox-Größen und Stundenpreise, wie viele vCPU an Sandboxes jeder Plan gleichzeitig ausführt, Startraten, ausgehender Traffic, Laufzeiten und Regionen auf Lizard."
 ---
 
 <span id="limits" />
 
 # Limits
 
-Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung mit bis zu 5 Replikaten pro Service, während der Testphase mit 1. Pro führt bis zu 100 Sandboxes gleichzeitig aus und startet bis zu 24 pro Minute; die Testphase erlaubt 5 gleichzeitig, nur in der Größe Small und nur in US-Regionen. Die Sandbox-Größen reichen von Small (2 vCPU / 4 GB) bis Large (8 vCPU / 16 GB), und ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum von 30 Tagen inklusive. Der Inhaber eines Workspace kann außerdem [Workspace-Limits](#workspace-limits) für einen einzelnen Workspace festlegen. Limits hängen von der Ressource, dem Tarif und dem Konto ab: Eine Einstellung pro Replikat entspricht nicht der insgesamt für einen Service oder ein Konto verfügbaren Kapazität. Prüfen Sie Ihren aktuellen Tarif und das Ergebnis der Erstellungs- oder Skalierungsanfrage, bevor Sie eine Workload dimensionieren.
+Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung mit bis zu 5 Replikaten pro Service, während der Testphase mit 1. Sandbox-Limits zählen vCPU, nicht Sandboxes: Pro führt bis zu 40 vCPU an Sandboxes gleichzeitig aus, Pro 5x 220 und Pro 20x 1,200. Die Testphase erlaubt bis zu 4 Small-Sandboxes (8 vCPU) gleichzeitig, nur in der Größe Small und nur in US-Regionen. Die Sandbox-Größen reichen von Small (2 vCPU / 4 GB) bis Large (8 vCPU / 16 GB), und ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum von 30 Tagen inklusive. Der Inhaber eines Workspace kann außerdem [Workspace-Limits](#workspace-limits) für einen einzelnen Workspace festlegen. Limits hängen von der Ressource, dem Tarif und dem Konto ab: Eine Einstellung pro Replikat entspricht nicht der insgesamt für einen Service oder ein Konto verfügbaren Kapazität. Prüfen Sie Ihren aktuellen Tarif und das Ergebnis der Erstellungs- oder Skalierungsanfrage, bevor Sie eine Workload dimensionieren.
 
 <span id="applications" />
 
@@ -16,7 +16,7 @@ Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung
 | Einstellung | Geltungsbereich | Was zu prüfen ist |
 |---|---|---|
 | CPU und Arbeitsspeicher | Jedes Replikat | Drei Replikate mit einer Obergrenze von 2 vCPU / 2 GiB haben zusammen eine konfigurierte Obergrenze von 6 vCPU / 6 GiB. Das ist keine Nutzungsvorhersage. |
-| Anzahl der Replikate | Service und Tarif | Ihr Plan legt das Limit fest: 1 pro App in der Testphase von Pro, 5 in Pro nach der ersten bezahlten Rechnung und in Enterprise. Die API akzeptiert höchstens 10, was nur eine Ausnahme für das Konto erreicht. |
+| Anzahl der Replikate | Service und Tarif | Ihr Plan legt das Limit fest: 1 pro App in der Testphase von Pro, 5 in jedem bezahlten Plan nach der ersten bezahlten Rechnung und in Enterprise. Die API akzeptiert höchstens 10, was nur eine Ausnahme für das Konto erreicht. |
 | Ressourcenobergrenze des Kontos | Kontoinhaber | Ein zweites Projekt erzeugt nicht zwangsläufig ein zweites Kontingent. Fragen Sie vor der Planung eines großen Deployments nach dem geltenden Kontolimit. |
 | Worker-Modus | Service | `containerPort=0` läuft ohne HTTP-Listener oder öffentliche Load-Balancer-Route. |
 | Benutzerdefinierte Domain | Hostname | Benutzerdefinierte Wildcard-Domains werden nicht akzeptiert. Verwenden Sie einen spezifischen Hostnamen und schließen Sie die Prüfungen zu Eigentümerschaft und DNS ab. |
@@ -47,20 +47,63 @@ CPU und Arbeitsspeicher sind im Preis enthalten. Persistent Volumes werden separ
 
 ### Kontolimits
 
-Diese Limits begrenzen, wie viele Sandboxes ein Konto gleichzeitig ausführt und wie schnell es neue startet. Sie richten sich nach dem Plan des Kontoinhabers. Die Limits der Testphase gelten bis zur ersten bezahlten Rechnung; siehe [Abrechnung](/platform/billing#limits).
+Diese Limits begrenzen, wie viel Sandbox-vCPU ein Konto gleichzeitig ausführt, wie groß seine größte Sandbox sein darf und wie schnell es neue startet. Sie richten sich nach dem Plan des Kontoinhabers. Die Limits der Testphase gelten bis zur ersten bezahlten Rechnung; siehe [Abrechnung](/platform/billing#limits).
 
-| Plan | Gleichzeitig aktiv | Starts pro Minute | Pro Stunde | Pro Tag |
-|---|---|---|---|---|
-| Testphase von Pro | 5 | 6 | 30 | 100 |
-| Pro | 100 | 24 | 120 | 400 |
-| Enterprise | Pro Workspace, laut Ihrem Vertrag | 120 pro Benutzer | Kein Limit | Kein Limit |
+| Plan | vCPU gleichzeitig | Maximale Größe | Starts pro Minute | Pro Stunde | Pro Tag |
+|---|---|---|---|---|---|
+| Testphase von Pro | 8 (bis zu 4 Small) | Small | 6 | 30 | 100 |
+| Pro | 40 | Large | 24 | 120 | 400 |
+| Pro 5x | 220 | Large | 60 | 300 | 1,000 |
+| Pro 20x | 1,200 | Large | 120 | 600 | 3,000 |
+| Enterprise | Pro Workspace, laut Ihrem Vertrag | Large | 120 pro Benutzer | Kein Limit | Kein Limit |
+
+Eine Sandbox nutzt die vCPU ihrer Größe: Small 2, Medium 4, Large 8. Eine neue Sandbox passt, wenn die bereits laufenden vCPU plus ihre eigenen vCPU Ihr Limit nicht überschreiten. Sie können Größen beliebig mischen. Diese Tabelle zeigt, wie viele Sandboxes einer Größe gleichzeitig passen:
+
+| Plan | Small | Medium | Large |
+|---|---|---|---|
+| Testphase von Pro | 4 | Nicht verfügbar | Nicht verfügbar |
+| Pro | 20 | 10 | 5 |
+| Pro 5x | 110 | 55 | 27 |
+| Pro 20x | 600 | 300 | 150 |
+
+Bei Pro nutzen 3 Large- und 6 Small-Sandboxes 36 von 40 vCPU, daher passt noch eine Medium-Sandbox, aber keine weitere Large-Sandbox.
 
 - Die Limits gelten pro Kontoinhaber, über alle Workspaces des Inhabers hinweg. Ein zweiter Workspace bringt kein zweites Kontingent.
-- Bei Pro und in der Testphase bedeutet aktiv laufend oder fortsetzend. Eine pausierte Sandbox zählt nicht; um eine fortzusetzen, braucht es einen freien Platz.
+- In der Testphase und in den bezahlten Plänen bedeutet aktiv laufend oder fortsetzend. Eine pausierte Sandbox nutzt keine vCPU; um eine fortzusetzen, braucht es Platz für ihre vCPU.
 - Ein Start ist eine neue Sandbox. Ein Fortsetzen ist kein Start. Eine Erstellung, die auf Seiten von Lizard fehlschlägt, zählt nicht.
-- Bei Überschreitung geben Create und Resume HTTP 429 zurück, mit `code` gleich `SANDBOX_LIMIT_REACHED` (aktiv) oder `SANDBOX_RATE_LIMITED` (Starts). Eine Ablehnung wegen der Startrate enthält einen `Retry-After`-Header.
+- Bei Überschreitung geben Create und Resume HTTP 429 zurück, mit `code` gleich `SANDBOX_LIMIT_REACHED` (vCPU gleichzeitig) oder `SANDBOX_RATE_LIMITED` (Starts). Eine Ablehnung wegen der Startrate enthält einen `Retry-After`-Header.
+- In der Testphase gibt eine Medium-Sandbox, ob direkt angegeben, aus einem Snapshot oder als Fork, HTTP 403 mit `code` gleich `TRIAL_SANDBOX_SIZE` zurück, und eine Region außerhalb der USA gibt HTTP 403 mit `TRIAL_SANDBOX_REGION` zurück. Eine Large-Sandbox gibt HTTP 403 mit `code` gleich `SANDBOX_SIZE_NOT_ALLOWED` zurück, ob Sie sie erstellen, fortsetzen, forken oder wiederherstellen.
+- `GET /api/sandboxes/limits` gibt Ihre Limits und das, was gerade läuft, zurück, mit `running` (Sandboxes) und `runningVcpu`.
 - Enterprise hat kein festes Limit für gleichzeitig laufende Sandboxes. Der Vertrag jedes Kunden legt das Limit pro Workspace fest. Laufende, pausierte und abgestürzte Sandboxes zählen alle mit. Darüber geben Create und Fork HTTP 429 mit `code` gleich `SANDBOX_LIMIT_REACHED` zurück. Ein Benutzer kann pro Region bis zu 120 Sandboxes pro Minute erstellen.
-- Das Dashboard zeigt neben **New Sandbox**, wie viele Sandboxes im Verhältnis zu Ihrem Limit laufen. Für mehr als 100 gleichzeitig sprechen Sie uns auf Enterprise an.
+- Das Dashboard zeigt neben **New Sandbox** die genutzten vCPU und Ihr vCPU-Limit. Für mehr als 1,200 vCPU gleichzeitig sprechen Sie uns auf Enterprise an.
+
+Eine Ablehnung mit `SANDBOX_LIMIT_REACHED` sagt, wie viel bei Ihnen läuft und wie viel die neue Sandbox braucht. `unit` ist `vcpu`, `limit` und `running` sind in vCPU angegeben, und `needed` ist die vCPU-Zahl der angefragten Sandbox:
+
+```json
+{
+  "error": "Your plan runs up to 40 vCPU of Sandboxes at once. 38 are in use and this sandbox needs 4. Stop or pause a sandbox, or move to a higher Pro tier.",
+  "code": "SANDBOX_LIMIT_REACHED",
+  "tier": "pro",
+  "unit": "vcpu",
+  "limit": 40,
+  "running": 38,
+  "needed": 4
+}
+```
+
+Eine Ablehnung mit `SANDBOX_SIZE_NOT_ALLOWED` nennt Ihre Limitstufe und, in vCPU, die größte Sandbox, die sie erlaubt:
+
+```json
+{
+  "error": "Large Sandboxes start after your first Pro payment. Start Pro now in Billing to use them.",
+  "message": "Large Sandboxes start after your first Pro payment. Start Pro now in Billing to use them.",
+  "code": "SANDBOX_SIZE_NOT_ALLOWED",
+  "tier": "trial",
+  "maxSandboxCpus": 4
+}
+```
+
+Um mehr auszuführen, stoppen oder pausieren Sie eine Sandbox, wählen eine kleinere Größe oder wechseln zu einem größeren Plan; siehe [Plan wechseln](/platform/billing#changing-plans).
 
 <span id="sandbox-egress" />
 

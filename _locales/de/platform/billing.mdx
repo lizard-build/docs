@@ -1,39 +1,42 @@
 ---
-title: "Abrechnung: Pro-Plan, Testphase und Nutzungstarife"
-description: "Lizard Pro kostet $19 im Monat, mit $19 Nutzung inklusive. So funktionieren Testphase, pay as you go über $19 hinaus, Limits, fehlgeschlagene Zahlungen, Kündigung und Enterprise."
+title: "Abrechnung: Pläne, Testphase und Nutzungstarife"
+description: "Lizard hat drei Monatspläne: Pro für $19, Pro 5x für $99 und Pro 20x für $499, jeweils mit Nutzung in Höhe des Preises inklusive. So funktionieren Testphase, Nutzung mit pay as you go, Limits, Planwechsel, fehlgeschlagene Zahlungen, Kündigung und Enterprise."
 ---
 
 <span id="billing" />
 
 # Abrechnung
 
-Lizard (lizard.build) hat einen Plan zum Selbstbuchen: Pro. Er kostet $19 im Monat und enthält jeden Monat $19 Nutzung. Diese Nutzung gilt für die ganze Plattform: Apps, Sandboxes, Managed Postgres, Managed Redis, Managed Object Storage, Persistent Volumes und ausgehenden Traffic. Darüber hinaus zahlen Sie pay as you go zu den veröffentlichten Preisen.
+Lizard (lizard.build) hat drei Pläne zum Selbstbuchen: Pro für $19 im Monat, Pro 5x für $99 und Pro 20x für $499. Jeder Plan enthält jeden Monat Nutzung in Höhe seines Preises. Diese Nutzung gilt für die ganze Plattform: Apps, Sandboxes, Managed Postgres, Managed Redis, Managed Object Storage, Persistent Volumes und ausgehenden Traffic. Darüber hinaus zahlen Sie pay as you go zu den veröffentlichten Preisen. Die größeren Pläne heben außerdem Ihre [Limits](#limits) an.
 
 Verwalten Sie Plan, Karte und Rechnungen auf der Seite **Abrechnung**: Öffnen Sie **Einstellungen** in der Seitenleiste oder im Kontomenü und dann **Abrechnung** unter **Konto**. Sie können auch [`lizard billing`](/cli/billing) verwenden. Der Plan gehört dem Eigentümer des Workspace. Die Nutzung in allen Workspaces, die Ihnen gehören, zählt zu Ihrem Plan, und für Mitglieder fällt keine Sitzplatzgebühr an.
 
-<span id="pro" />
+<span id="plans" />
 
-## Pro
+## Pläne
 
-| | Pro |
-| --- | --- |
-| Preis | $19 im Monat |
-| Enthaltene Nutzung | $19 im Monat auf der ganzen Plattform |
-| Nutzung über $19 hinaus | Pay as you go zu den [Ressourcenpreisen](#resource-rates) |
-| Testphase | 7 Tage mit $5 Nutzung |
-| Zahlung | Karte, monatlich abgerechnet |
+| | Pro | Pro 5x | Pro 20x |
+| --- | --- | --- | --- |
+| Preis | $19 im Monat | $99 im Monat | $499 im Monat |
+| Enthaltene Nutzung | $19 im Monat | $99 im Monat | $499 im Monat |
+| Nutzung darüber hinaus | Pay as you go zu den [Ressourcenpreisen](#resource-rates) | Ebenso | Ebenso |
+| Gleichzeitig laufende Sandboxes | 40 vCPU | 220 vCPU | 1,200 vCPU |
+| Testphase | 7 Tage mit $5 Nutzung | Keine, Zahlung ab dem ersten Tag | Keine, Zahlung ab dem ersten Tag |
+| Zahlung | Karte, monatlich abgerechnet | Karte, monatlich abgerechnet | Karte, monatlich abgerechnet |
 
-Pro verlängert sich jeden Monat, bis Sie kündigen. Nicht verbrauchte Nutzung wird nicht in den nächsten Monat übertragen.
+Die Preise enthalten Steuern. Die enthaltene Nutzung gilt für die ganze Plattform. Jeder Plan verlängert sich jeden Monat, bis Sie kündigen. Nicht verbrauchte Nutzung wird nicht in den nächsten Monat übertragen.
+
+Um Pro 5x oder Pro 20x zu starten, wählen Sie den Plan auf der Seite „Abrechnung“. Lizard belastet am selben Tag den vollen Preis. Wie Sie von einem Plan zum anderen wechseln, steht unter [Plan wechseln](#changing-plans).
 
 <span id="included-usage-and-overage" />
 
 ## Enthaltene Nutzung und Mehrnutzung
 
-Jeder Monat enthält $19 Nutzung. Nutzung über $19 ist Mehrnutzung und kostet dieselben Preise.
+Jeder Monat enthält Nutzung in Höhe des Preises Ihres Plans: $19 bei Pro, $99 bei Pro 5x und $499 bei Pro 20x. Nutzung darüber hinaus ist Mehrnutzung und kostet dieselben Preise.
 
 Lizard belastet die Mehrnutzung, während sie anfällt, nicht in einer Rechnung am Monatsende. Erreicht die noch nicht berechnete Mehrnutzung $20, belastet Lizard Ihre Karte. Jede bezahlte Belastung hebt die nächste Stufe an: $100, dann $200, $400 und $1,000, danach jeweils $1,000. Jeden Monat beginnen die Stufen wieder bei $20. Am Monatsende kommt die noch nicht belastete Mehrnutzung auf eine letzte Rechnung. Es gibt keine Ausgabenobergrenze.
 
-Die Seite „Abrechnung“ zeigt, wie viel Ihrer $19 Sie in diesem Monat genutzt haben, die bisherige Mehrnutzung und die nächste Belastung.
+Die Seite „Abrechnung“ zeigt, wie viel Ihrer enthaltenen Nutzung Sie in diesem Monat verbraucht haben, die bisherige Mehrnutzung und die nächste Belastung.
 
 <span id="resource-rates" />
 
@@ -57,11 +60,13 @@ Zum Beispiel kosten eine vCPU und 1 GB Arbeitsspeicher eine Stunde lang $0.03751
 
 ## Testphase
 
-Mit einem neuen Konto können Sie sich umsehen, aber um Apps, Sandboxes, Datenbanken oder Volumes zu erstellen, brauchen Sie Pro. Pro beginnt mit einer 7-tägigen Testphase mit $5 Nutzung inklusive. Zum Start hinterlegen Sie eine Karte; Apple Pay funktioniert auch. Beim Start der Testphase wird nichts berechnet. Endet sie, beginnt Pro für $19 im Monat, sofern Sie nicht vorher kündigen.
+Mit einem neuen Konto können Sie sich umsehen, aber um Apps, Sandboxes, Datenbanken oder Volumes zu erstellen, brauchen Sie einen Plan. Nur Pro hat eine Testphase. Pro beginnt mit einer 7-tägigen Testphase mit $5 Nutzung inklusive. Zum Start hinterlegen Sie eine Karte; Apple Pay funktioniert auch. Beim Start der Testphase wird nichts berechnet. Endet sie, beginnt Pro für $19 im Monat, sofern Sie nicht vorher kündigen.
 
 Jedes Konto und jede Karte bekommt eine Testphase. Hatte das Konto schon eine, beginnt Pro sofort, und $19 werden am selben Tag belastet. Hatte die Karte schon eine, startet die Testphase nicht, und es wird nichts belastet; starten Sie Pro für $19 auf der Seite „Abrechnung“.
 
-Die Testphase enthält alle Funktionen von Pro, mit niedrigeren [Limits](#limits) bis zur ersten bezahlten Rechnung. Bis dahin laufen Sandboxes nur in der Größe Small und nur in US-Regionen, ob über das Dashboard, Lizard CLI, Lizard SDK oder Lizard MCP. Ein Create ohne Größe startet eine Small-Sandbox. Eine Anfrage mit Medium oder Large, ob direkt angegeben oder durch Wiederherstellen oder Forken einer solchen Sandbox, gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_SIZE` zurück; eine Anfrage mit einer Region außerhalb der USA gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_REGION` zurück. **Start Pro now** schaltet die anderen Größen und Regionen frei.
+Die Testphase enthält alle Funktionen von Pro, mit niedrigeren [Limits](#limits) bis zur ersten bezahlten Rechnung. Bis dahin laufen Sandboxes nur in der Größe Small und nur in US-Regionen, höchstens 4 Small-Sandboxes (8 vCPU) gleichzeitig, ob über das Dashboard, Lizard CLI, Lizard SDK oder Lizard MCP. Ein Create ohne Größe startet eine Small-Sandbox. Eine Medium-Sandbox, ob direkt angegeben, aus einem Snapshot oder als Fork, gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_SIZE` zurück. Eine Large-Sandbox gibt HTTP 403 mit `code` gleich `SANDBOX_SIZE_NOT_ALLOWED` zurück, ob Sie sie erstellen, fortsetzen, forken oder wiederherstellen. Eine Region außerhalb der USA gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_REGION` zurück. **Start Pro now** schaltet die anderen Größen, die anderen Regionen und die Limits von Pro frei.
+
+Um während der Testphase zu Pro 5x oder Pro 20x zu wechseln, wählen Sie zuerst **Start Pro now** und [wechseln dann den Plan](#changing-plans).
 
 <span id="when-trial-usage-runs-out" />
 
@@ -87,34 +92,49 @@ Ein Promo-Code kann eine längere Testphase geben, bis zu 730 Tage, und mehr Nut
 
 ## Limits
 
-| | Testphase, bis zur ersten bezahlten Rechnung | Pro |
-| --- | ---: | ---: |
-| Gleichzeitig laufende Sandboxes | 5 | 100 |
-| Replikas pro App | 1 | 5 |
+| | Testphase, bis zur ersten bezahlten Rechnung | Pro | Pro 5x | Pro 20x |
+| --- | ---: | ---: | ---: | ---: |
+| Gleichzeitig laufende Sandboxes | 8 vCPU (bis zu 4 Small) | 40 vCPU | 220 vCPU | 1,200 vCPU |
+| Sandbox-Größen | Nur Small (2 vCPU) | Bis Large (8 vCPU) | Bis Large (8 vCPU) | Bis Large (8 vCPU) |
+| Sandbox-Starts pro Minute | 6 | 24 | 60 | 120 |
+| Replikas pro App | 1 | 5 | 5 | 5 |
 
-Die Limits von Pro gelten ab Ihrer ersten bezahlten Rechnung, auch nach einer Zahlung über **Start Pro now**. Startraten für Sandboxes und weitere Limits finden Sie unter [Limits](/platform/limits#sandbox-account-limits).
+Sandbox-Limits zählen die vCPU laufender Sandboxes, nicht die Zahl der Sandboxes. Small nutzt 2 vCPU, Medium 4 und Large 8, daher reichen 40 vCPU für 20 Small-, 10 Medium- oder 5 Large-Sandboxes gleichzeitig. Die 8 vCPU der Testphase reichen für bis zu 4 Small-Sandboxes. Die Limits von Pro gelten ab Ihrer ersten bezahlten Rechnung, auch nach einer Zahlung über **Start Pro now**. Pro 5x und Pro 20x zahlen Sie ab dem ersten Tag, daher gelten ihre Limits sofort. Startraten pro Stunde und pro Tag sowie weitere Limits finden Sie unter [Limits](/platform/limits#sandbox-account-limits).
+
+<span id="changing-plans" />
+
+## Plan wechseln
+
+Zwischen Pro, Pro 5x und Pro 20x wechseln Sie auf der Seite „Abrechnung“.
+
+- **Upgrade:** Ein Wechsel zu einem Plan mit höherem Preis gilt sofort. Lizard belastet die Differenz anteilig für den Rest des laufenden Monats und erhöht die enthaltene Nutzung dieses Monats um denselben Betrag. Die neuen Limits gelten sofort. Ein Wechsel von Pro zu Pro 5x zur Monatsmitte belastet zum Beispiel etwa $40 und fügt etwa $40 enthaltene Nutzung hinzu.
+- **Downgrade:** Ein Wechsel zu einem Plan mit niedrigerem Preis gilt ab dem nächsten Monat. Bis dahin behalten Sie Ihren aktuellen Plan, seine enthaltene Nutzung und seine Limits. Die Seite „Abrechnung“ zeigt den Plan, der danach kommt. Wählen Sie Ihren aktuellen Plan erneut, um das Downgrade zurückzunehmen. Nutzen Ihre laufenden Sandboxes beim Start des neuen Plans mehr vCPU, als sein Limit erlaubt, laufen sie weiter, aber Lizard lehnt neue Starts und Fortsetzungen ab, bis sie unter das neue Limit passen.
+- Während der Testphase können Sie den Plan nicht wechseln. Wählen Sie zuerst **Start Pro now**.
+- Solange eine Rechnung offen ist, können Sie den Plan nicht wechseln. Bezahlen Sie sie zuerst.
+
+Verlangt Ihre Bank eine Bestätigung der Zahlung für ein Upgrade, verlinkt die Seite „Abrechnung“ auf die Rechnungsseite, wo Sie die Zahlung bestätigen.
 
 <span id="payment-failures" />
 
 ## Fehlgeschlagene Zahlungen
 
-Schlägt eine Belastung fehl, ob die monatlichen $19 oder eine Belastung für Mehrnutzung:
+Schlägt eine Belastung fehl, ob der monatliche Preis des Plans, ein Upgrade oder eine Belastung für Mehrnutzung:
 
 - Ab diesem Moment können Sie keine neuen Ressourcen erstellen.
 - Laufende Ressourcen laufen noch 72 Stunden weiter und pausieren dann.
 - Pausierte Ressourcen behalten ihre Daten; siehe [was eine Pause wegen der Abrechnung behält](#what-a-billing-pause-keeps).
 
-Bezahlen Sie die offene Rechnung auf der Seite „Abrechnung“. Sobald sie bezahlt ist, hebt Lizard die Sperre auf und startet pausierte Apps und Datenbanken wieder. Pausierte Sandboxes setzen Sie selbst fort. Stripe versucht eine fehlgeschlagene Belastung erneut; schlägt auch der letzte Versuch fehl, endet Pro.
+Bezahlen Sie die offene Rechnung auf der Seite „Abrechnung“. Sobald sie bezahlt ist, hebt Lizard die Sperre auf und startet pausierte Apps und Datenbanken wieder. Pausierte Sandboxes setzen Sie selbst fort. Stripe versucht eine fehlgeschlagene Belastung erneut; schlägt auch der letzte Versuch fehl, endet Ihr Plan.
 
 <span id="cancelling" />
 
 ## Kündigung
 
-Sie können jederzeit kündigen: auf der Seite „Abrechnung“, im Kundenportal von Stripe oder mit `lizard billing cancel`. Pro bleibt bis zum Ende des laufenden Monats oder der Testphase aktiv. Die Mehrnutzung bis zu diesem Datum kommt auf eine letzte Rechnung. Eine Kündigung während der Testphase kostet nichts.
+Sie können jederzeit kündigen: auf der Seite „Abrechnung“, im Kundenportal von Stripe oder mit `lizard billing cancel`. Ihr Plan bleibt bis zum Ende des laufenden Monats oder der Testphase aktiv. Die Mehrnutzung bis zu diesem Datum kommt auf eine letzte Rechnung. Eine Kündigung während der Testphase kostet nichts.
 
 Bis zum Enddatum können Sie die Kündigung auf der Seite „Abrechnung“ oder mit `lizard billing resume` zurücknehmen.
 
-Endet Pro, können Sie keine Ressourcen mehr erstellen, und laufende pausieren. Ihre Daten bleiben erhalten, wie unten beschrieben. Um sie wieder zu nutzen, starten Sie Pro auf der Seite „Abrechnung“. Eine zweite Testphase gibt es nicht, daher beginnt Pro sofort für $19.
+Endet Ihr Plan, können Sie keine Ressourcen mehr erstellen, und laufende pausieren. Ihre Daten bleiben erhalten, wie unten beschrieben. Um sie wieder zu nutzen, starten Sie einen Plan auf der Seite „Abrechnung“. Eine zweite Testphase gibt es nicht, daher beginnt Pro sofort für $19.
 
 <span id="what-a-billing-pause-keeps" />
 
@@ -126,7 +146,7 @@ Apps und Datenbanken behalten ihre Daten, solange sie pausiert sind. Eine laufen
 
 ## Enterprise
 
-Enterprise-Konten zahlen pay as you go und erhalten jeden Monat eine Rechnung für den Vormonat. Preise, Limits und Zahlungsbedingungen richten sich nach Ihrem Vertrag. Wenn Sie mehr brauchen, als die Limits von Pro erlauben, fragen Sie uns auf der Seite [Preise](https://lizard.build/pricing) nach Enterprise.
+Enterprise-Konten zahlen pay as you go und erhalten jeden Monat eine Rechnung für den Vormonat. Preise, Limits und Zahlungsbedingungen richten sich nach Ihrem Vertrag. Wenn Sie mehr brauchen, als die Limits von Pro 20x erlauben, fragen Sie uns auf der Seite [Preise](https://lizard.build/pricing) nach Enterprise.
 
 <span id="idle-apps-and-stored-data" />
 

@@ -51,7 +51,7 @@ El comando muestra el ID del sandbox, por ejemplo `genuine-toddler-jasj`. Guárd
 
 - `--timeout 3600000` le da al sandbox una hora. El valor predeterminado de la CLI es de cinco minutos; pasado ese tiempo, Lizard elimina el sandbox y sus archivos, aunque esté a mitad de una tarea. Amplía la duración de uno en marcha con `lizard sandbox timeout $SB 3600000`.
 - La plantilla `claude` incluye Node.js 22, una versión fijada de Claude Code, git, Python 3, ripgrep, curl, jq, unzip y Lizard CLI. Comprueba la versión de Claude Code con `lizard sandbox exec $SB -- claude --version`.
-- El tamaño predeterminado es Medium (4 vCPU, 8 GB). Pasa `--size small` o `--size large` para cambiarlo. Durante la prueba, todo sandbox es Small y se ejecuta en una región de EE. UU.
+- El tamaño predeterminado es Medium (4 vCPU, 8 GB). Pasa `--size small` o `--size large` para cambiarlo. Durante la prueba, todo sandbox es Small y se ejecuta en una región de EE. UU., con hasta 4 a la vez.
 
 <span id="put-your-code-in-the-sandbox" />
 
@@ -141,7 +141,8 @@ Una pausa completada detiene los cargos de cómputo; el almacenamiento en Persis
 | `Claude Code has no credential. Connect one of: …` | Ejecuta `lizard agents add claude` o `lizard agents add anthropic`. |
 | `Claude rejected the credential (authentication_failed)` | El token o la clave ya no es válido. Crea uno nuevo y vuelve a añadirlo. |
 | HTTP 402 con un enlace de Checkout en `create` | Empieza la prueba o Pro: `lizard billing start`. |
-| HTTP 403 con `TRIAL_SANDBOX_SIZE` o `TRIAL_SANDBOX_REGION` en `create` | La prueba solo permite sandboxes Small en regiones de EE. UU. Usa `--size small` y una `--region` de EE. UU., o empieza Pro ya: `lizard billing start-now`. |
+| HTTP 403 con `TRIAL_SANDBOX_SIZE`, `TRIAL_SANDBOX_REGION` o `SANDBOX_SIZE_NOT_ALLOWED` en `create` | La prueba solo permite sandboxes Small en regiones de EE. UU. Usa `--size small` y una `--region` de EE. UU., o empieza Pro ya: `lizard billing start-now`. |
+| HTTP 429 con `SANDBOX_LIMIT_REACHED` en `create` | Tus sandboxes en marcha usan todo el límite de vCPU de tu plan. Detén o pausa uno, usa un `--size` más pequeño o pasa a un plan más grande en la página Facturación. |
 | El sandbox desaparece a mitad de una tarea | Se agotó su duración. Crea el siguiente con `--timeout` o amplíala con `lizard sandbox timeout`. |
 | La salida menciona Codex | El prompt salió sin `--agent claude`. |
 | Un paso dice `installing Claude Code` | El sandbox no se creó desde la plantilla `claude`, así que el ejecutor instala antes Claude Code con npm. |

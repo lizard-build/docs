@@ -46,7 +46,7 @@ Lizard bills each size per second at a flat rate while it runs, including idle t
 
 Anything in the sandbox can read the key that `--with-token` installs and use it on the sandbox's project until the sandbox is deleted.
 
-Until your trial or plan starts, `create` returns HTTP 402 with a Checkout link; run `lizard billing start`. Limits count the vCPU of running sandboxes: 8 during the trial, 40 on Pro after the first paid invoice, 220 on the $99 plan and 1,200 on the $499 plan. Paused sandboxes don't count. During the trial, a sandbox must be `small` and in a US region, so up to 4 run at once. `medium` or `large` returns HTTP 403 with `TRIAL_SANDBOX_SIZE`, and another region returns HTTP 403 with `TRIAL_SANDBOX_REGION`. Resuming or forking a Large sandbox, or restoring one from a snapshot, returns HTTP 403 with `SANDBOX_SIZE_NOT_ALLOWED`. Over the vCPU limit, `create` returns HTTP 429 with `SANDBOX_LIMIT_REACHED`. See [Limits](/platform/limits#sandbox-account-limits).
+Until your trial or plan starts, `create` returns HTTP 402 with a Checkout link; run `lizard billing start`. Limits count the vCPU of running sandboxes: 8 during the trial, 40 on Pro after the first paid invoice, 220 on Pro 5x and 1,200 on Pro 20x. Paused sandboxes don't count. During the trial, a sandbox must be `small` and in a US region, so up to 4 run at once. `medium` returns HTTP 403 with `TRIAL_SANDBOX_SIZE`, and another region returns HTTP 403 with `TRIAL_SANDBOX_REGION`. `large` returns HTTP 403 with `SANDBOX_SIZE_NOT_ALLOWED`, and so does resuming, forking or restoring a Large sandbox. Over the vCPU limit, `create` returns HTTP 429 with `SANDBOX_LIMIT_REACHED`. See [Limits](/platform/limits#sandbox-account-limits).
 
 ### `lizard sandbox list`
 

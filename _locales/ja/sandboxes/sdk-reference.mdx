@@ -280,10 +280,10 @@ API の失敗時には、以下のエラーが投げられます（Python では
 | エラー | 意味 |
 |---|---|
 | `PaymentRequiredError` | HTTP 402: 何かを作成する前に、アカウントで Pro を開始するか請求書を支払う必要があります。`url` は開くべきページです。 |
-| `AuthenticationError` | HTTP 401 または 403: キーが無効か、アクセス権がありません。トライアル中に Small 以外のサイズや US 以外のリージョンを指定した場合も 403 になり、`code` は `TRIAL_SANDBOX_SIZE` または `TRIAL_SANDBOX_REGION` です。 |
+| `AuthenticationError` | HTTP 401 または 403: キーが無効か、アクセス権がありません。トライアル中に Medium の sandbox や US 以外のリージョンを指定した場合も 403 になり、`code` は `TRIAL_SANDBOX_SIZE` または `TRIAL_SANDBOX_REGION` です。Large の sandbox を作成、再開、fork したときは、どれも `SANDBOX_SIZE_NOT_ALLOWED` 付きの 403 になります。 |
 | `NotFoundError` | HTTP 404: sandbox、ファイル、スナップショットが存在しないか、期限切れです。 |
 | `ConflictError` | HTTP 409: ボリュームが接続された sandbox の fork など、状態の競合。 |
-| `LimitExceededError` | HTTP 429: 同時に実行する sandbox が多すぎるか、起動が多すぎます。`code` はどの上限かを示します（`SANDBOX_LIMIT_REACHED` や `SANDBOX_RATE_LIMITED` など）。`retryAfterS`（Python では `retry_after_s`）は再試行できるまでの時間を示します。 |
+| `LimitExceededError` | HTTP 429: 同時に実行する sandbox の vCPU が多すぎるか、起動が多すぎます。`code` はどの上限かを示します（`SANDBOX_LIMIT_REACHED` や `SANDBOX_RATE_LIMITED` など）。`SANDBOX_LIMIT_REACHED` では、`limit` と `running` は vCPU 単位です。`retryAfterS`（Python では `retry_after_s`）は再試行できるまでの時間を示します。 |
 | `TimeoutError` | HTTP 408 または 504。`process.exec` に対する TypeScript SDK 自身の 60 秒の待機では、代わりに `TimeoutError` という名前の `DOMException` を投げます。 |
 | `LizardError` | 未対応の操作を含む、その他の API の失敗。 |
 
@@ -305,6 +305,7 @@ SDK は `https://lizard.build` にある Lizard の REST API を呼び出しま�
 | 一時停止または再開 | `POST /api/sandboxes/{id}/pause`、`POST /api/sandboxes/{id}/resume` |
 | ポートの公開 | `POST /api/sandboxes/{id}/expose/{port}`。同じパスへの `DELETE` で削除します |
 | 停止 | `DELETE /api/sandboxes/{id}` |
+| 上限の確認 | `GET /api/sandboxes/limits`。`tier`、`unit`、`limits`、`running`、`runningVcpu` を返します |
 
 ```bash
 curl -X POST https://lizard.build/api/sandboxes \

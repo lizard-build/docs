@@ -29,7 +29,7 @@ lizard metrics --watch            # live-updating view
 lizard metrics --cost
 ```
 
-Dieser Befehl zeigt Kosten statt Metriken: den Preis pro Stunde jeder laufenden Ressource, die Nutzung im aktuellen Abrechnungszeitraum (inklusive Egress) und wie viel deiner in Pro enthaltenen Nutzung du in diesem Zeitraum verbraucht hast (während der 7-tägigen Testphase deren $5, danach die $19, die jeden Monat enthalten sind). Er umfasst das gesamte Projekt, ignoriert `--service` und `--range`, und nur der Workspace-Eigentümer kann die Kosten sehen.
+Dieser Befehl zeigt Kosten statt Metriken: den Preis pro Stunde jeder laufenden Ressource, die Nutzung im aktuellen Abrechnungszeitraum (inklusive Egress) und wie viel der in deinem Plan enthaltenen Nutzung du in diesem Zeitraum verbraucht hast (während der 7-tägigen Testphase deren $5, danach den Betrag, den dein Plan jeden Monat enthält: $19, $99 oder $499). Er umfasst das gesamte Projekt, ignoriert `--service` und `--range`, und nur der Workspace-Eigentümer kann die Kosten sehen.
 
 <span id="dashboard" />
 
@@ -46,7 +46,7 @@ lizard open
 ## Auf Basis der Werte handeln
 
 - Hohe CPU-/Arbeitsspeicherauslastung → hochskalieren: `lizard scale --service api --cpu 2 --memory 2048`.
-- Anhaltende Last → Replikate hinzufügen: `lizard scale --service api --replicas 3`. Pro erlaubt 1 Replikat pro Service während der Testphase und 5 nach der ersten bezahlten Rechnung.
+- Anhaltende Last → Replikate hinzufügen: `lizard scale --service api --replicas 3`. Dein Plan erlaubt 1 Replikat pro Service während der Testphase und 5 nach der ersten bezahlten Rechnung.
 - Speicherengpass bei einem Add-on → Speicher erweitern: `lizard scale --service postgres --storage 8192`.
 
 Siehe [Scaling](/deploy/scaling).

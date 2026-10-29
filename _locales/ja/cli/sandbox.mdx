@@ -50,7 +50,7 @@ Lizard は sandbox の稼働中、アイドル時間も含めてサイズごと�
 
 `--with-token` がインストールしたキーは、sandbox 内のあらゆるものから読み取れ、sandbox が削除されるまで sandbox のプロジェクトに対して使えます。
 
-トライアルまたは Pro プランが始まるまで、`create` は Checkout へのリンク付きで HTTP 402 を返します。`lizard billing start` を実行してください。トライアル中は同時に 5 個、最初の有料の請求書の後は 100 個の sandbox を実行できます。一時停止中の sandbox は数えません。トライアル中の sandbox は `small` で US リージョンにある必要があり、ほかのサイズやリージョンでは HTTP 403 が返ります。[制限](/platform/limits#sandbox-account-limits)を参照してください。
+トライアルまたはプランが始まるまで、`create` は Checkout へのリンク付きで HTTP 402 を返します。`lizard billing start` を実行してください。上限は実行中の sandbox の vCPU で数えます。トライアル中は 8、最初の有料の請求書の後の Pro は 40、Pro 5x は 220、Pro 20x は 1,200 です。一時停止中の sandbox は数えません。トライアル中の sandbox は `small` で US リージョンにある必要があるため、同時に実行できるのは 4 個までです。`medium` を指定すると `TRIAL_SANDBOX_SIZE` 付きの HTTP 403 が返り、ほかのリージョンを指定すると `TRIAL_SANDBOX_REGION` 付きの HTTP 403 が返ります。`large` を指定すると `SANDBOX_SIZE_NOT_ALLOWED` 付きの HTTP 403 が返ります。Large の sandbox を再開、フォーク、復元したときも同じです。vCPU の上限を超えると、`create` は `SANDBOX_LIMIT_REACHED` 付きの HTTP 429 を返します。[制限](/platform/limits#sandbox-account-limits)を参照してください。
 
 ### `lizard sandbox list`
 

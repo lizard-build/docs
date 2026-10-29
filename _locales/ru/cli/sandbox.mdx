@@ -50,7 +50,7 @@ Lizard тарифицирует каждый размер посекундно �
 
 Ключ, который устанавливает `--with-token`, может прочитать любой процесс в sandbox и пользоваться им в проекте sandbox, пока sandbox не удалят.
 
-Пока не начался пробный период или план Pro, `create` возвращает HTTP 402 со ссылкой на Checkout; выполните `lizard billing start`. Во время пробного периода можно одновременно запускать 5 sandbox, а после первого оплаченного счёта — 100. Приостановленные sandbox не учитываются. В пробном периоде sandbox должен быть размера `small` и в регионе США; другой размер или регион возвращает HTTP 403. См. [Лимиты](/platform/limits#sandbox-account-limits).
+Пока не начался пробный период или тариф, `create` возвращает HTTP 402 со ссылкой на Checkout; выполните `lizard billing start`. Лимиты считают vCPU запущенных sandbox: 8 в пробном периоде, 40 на тарифе Pro после первого оплаченного счёта, 220 на тарифе Pro 5x и 1,200 на тарифе Pro 20x. Приостановленные sandbox не учитываются. В пробном периоде sandbox должен быть размера `small` и в регионе США, поэтому одновременно работают до 4. `medium` возвращает HTTP 403 с `TRIAL_SANDBOX_SIZE`, а другой регион — HTTP 403 с `TRIAL_SANDBOX_REGION`. `large` возвращает HTTP 403 с `SANDBOX_SIZE_NOT_ALLOWED`, как и возобновление, fork или восстановление sandbox размера Large. При превышении лимита vCPU `create` возвращает HTTP 429 с `SANDBOX_LIMIT_REACHED`. См. [Лимиты](/platform/limits#sandbox-account-limits).
 
 ### `lizard sandbox list`
 
