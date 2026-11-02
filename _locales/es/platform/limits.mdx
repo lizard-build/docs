@@ -7,7 +7,7 @@ description: "Límites de réplicas de apps, tamaños y precios por hora de los 
 
 # Límites
 
-En Lizard (lizard.build), una app ejecuta hasta 5 réplicas por servicio tras la primera factura pagada de Pro, y 1 durante la prueba. Los límites de sandboxes cuentan vCPU, no sandboxes: Pro ejecuta hasta 40 vCPU de sandboxes a la vez, Pro 5x 220 y Pro 20x 1,200. La prueba permite hasta 4 sandboxes Small (8 vCPU) a la vez, solo de tamaño Small y solo en regiones de EE. UU. Los tamaños de sandbox van de Small (2 vCPU / 4 GB) a Large (8 vCPU / 16 GB), y el tráfico de salida de los sandboxes está incluido hasta 2 TB por cuenta en un periodo móvil de 30 días. El propietario de un espacio de trabajo también puede fijar [límites del espacio de trabajo](#workspace-limits) para uno solo. Los límites dependen del recurso, el plan y la cuenta: una configuración por réplica no es el total disponible para un servicio o una cuenta. Consulta tu plan actual y el resultado de la solicitud de creación o escalado antes de dimensionar una carga de trabajo.
+En Lizard (lizard.build), una app ejecuta hasta 5 réplicas por servicio tras la primera factura pagada de Pro, y 1 durante la prueba. Los límites de sandboxes cuentan vCPU, no sandboxes: Pro ejecuta hasta 40 vCPU de sandboxes a la vez, Pro 5x 220 y Pro 20x 1,200. Pro 5x y Pro 20x no tienen límite de inicios de sandbox. La prueba permite hasta 4 sandboxes Small (8 vCPU) a la vez, solo de tamaño Small y solo en regiones de EE. UU. Los tamaños de sandbox van de Small (2 vCPU / 4 GB) a Large (8 vCPU / 16 GB), y el tráfico de salida de los sandboxes está incluido hasta 2 TB por cuenta en un periodo móvil de 30 días. El propietario de un espacio de trabajo también puede fijar [límites del espacio de trabajo](#workspace-limits) para uno solo. Los límites dependen del recurso, el plan y la cuenta: una configuración por réplica no es el total disponible para un servicio o una cuenta. Consulta tu plan actual y el resultado de la solicitud de creación o escalado antes de dimensionar una carga de trabajo.
 
 <span id="applications" />
 
@@ -47,8 +47,8 @@ Estos límites fijan cuántas vCPU de sandboxes ejecuta una cuenta a la vez, el 
 |---|---|---|---|---|---|
 | Prueba de Pro | 8 (hasta 4 Small) | Small | 6 | 30 | 100 |
 | Pro | 40 | Large | 24 | 120 | 400 |
-| Pro 5x | 220 | Large | 60 | 300 | 1,000 |
-| Pro 20x | 1,200 | Large | 120 | 600 | 3,000 |
+| Pro 5x | 220 | Large | Ilimitados | Ilimitados | Ilimitados |
+| Pro 20x | 1,200 | Large | Ilimitados | Ilimitados | Ilimitados |
 | Enterprise | Por espacio de trabajo, según tu contrato | Large | 120 por usuario | Sin límite | Sin límite |
 
 Un sandbox usa las vCPU de su tamaño: Small 2, Medium 4, Large 8. Un sandbox nuevo cabe cuando las vCPU ya en ejecución más las suyas no superan tu límite. Combina tamaños como quieras. Esta tabla muestra cuántos sandboxes de un mismo tamaño caben a la vez:
