@@ -1,9 +1,9 @@
 ---
-title: "Code interpreter API for LLM-generated code"
-description: "Run code an LLM wrote in a sandbox with Lizard SDK: a stateful Python kernel, charts as PNG, errors with tracebacks, timeouts and an LLM tool example."
+title: "Code interpreter API with Lizard Sandboxes"
+description: "Run LLM-generated code with Lizard Sandboxes and Lizard SDK. Use a stateful Python kernel, return charts and errors, set timeouts, and build an agent tool."
 ---
 
-# Code interpreter API for LLM-generated code
+# Code interpreter API with Lizard Sandboxes
 
 <span id="code-interpreter" />
 <span id="run-code" />
@@ -13,7 +13,9 @@ description: "Run code an LLM wrote in a sandbox with Lizard SDK: a stateful Pyt
 <span id="checkpointing-a-session" />
 <span id="see-also" />
 
-A code interpreter runs code that a language model writes and returns the output to the model. On Lizard, `CodeSandbox` from Lizard SDK does this inside a sandbox, a Firecracker microVM, which isolates the code from your app and computer. It boots the `interpreter` template, which has Python and common data libraries. Python runs in a Jupyter kernel that keeps variables between calls, and each result carries the printed output, the value of the last expression, charts as `image/png`, and any error with its traceback.
+Lizard Sandboxes run LLM-generated code in Firecracker microVMs, each with its own kernel. This guide covers the `CodeSandbox` API in Lizard SDK: `@lizard-build/sdk` for TypeScript and JavaScript, and `lizard-sdk` for Python. The examples below create a sandbox on Lizard and return its output to your agent.
+
+`CodeSandbox` isolates the code from your app and computer. It boots the `interpreter` template, which has Python and common data libraries. Python runs in a Jupyter kernel that keeps variables between calls, and each result carries the printed output, the value of the last expression, charts as `image/png`, and any error with its traceback.
 
 ## Run code with state
 
