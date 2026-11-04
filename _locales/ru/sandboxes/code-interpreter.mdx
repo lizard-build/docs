@@ -1,11 +1,12 @@
 ---
-title: "API интерпретатора кода для кода, который пишет LLM"
-description: "Запускайте код, написанный LLM, в sandbox через Lizard SDK: ядро Python с сохранением состояния, графики в PNG, ошибки с трассировкой, таймауты и пример инструмента для LLM."
+title: "API интерпретатора кода в Lizard Sandboxes"
+description: "Запускайте код LLM через Lizard Sandboxes и Lizard SDK. Используйте Python с сохранением состояния, получайте графики и ошибки, задавайте таймауты и создавайте инструменты для агентов."
 ---
 
 <span id="code-interpreter-api-for-llm-generated-code" />
+<span id="code-interpreter-api-with-lizard-sandboxes" />
 
-# API интерпретатора кода для кода, который пишет LLM
+# API интерпретатора кода в Lizard Sandboxes
 
 <span id="интерпретатор-кода" />
 <span id="запуск-кода" />
@@ -22,7 +23,9 @@ description: "Запускайте код, написанный LLM, в sandbox 
 <span id="checkpointing-a-session" />
 <span id="see-also" />
 
-Интерпретатор кода запускает код, который пишет языковая модель, и возвращает ей результат. В Lizard (lizard.build) это делает `CodeSandbox` из Lizard SDK внутри sandbox на базе microVM Firecracker. Поэтому код выполняется отдельно от вашего приложения и компьютера. `CodeSandbox` запускает шаблон `interpreter` с Python и основными библиотеками для работы с данными. Python работает в ядре Jupyter, которое сохраняет переменные между вызовами, а каждый результат содержит напечатанный вывод, значение последнего выражения, графики в формате `image/png` и ошибку с трассировкой, если она возникла.
+Lizard Sandboxes запускают код LLM в microVM Firecracker, каждая со своим ядром. Это руководство описывает API `CodeSandbox` в Lizard SDK: `@lizard-build/sdk` для TypeScript и JavaScript и `lizard-sdk` для Python. Примеры ниже создают sandbox в Lizard и возвращают его вывод вашему агенту.
+
+`CodeSandbox` изолирует код от вашего приложения и компьютера. Он запускает шаблон `interpreter` с Python и основными библиотеками для работы с данными. Python работает в ядре Jupyter, которое сохраняет переменные между вызовами, а каждый результат содержит напечатанный вывод, значение последнего выражения, графики в формате `image/png` и ошибку с трассировкой, если она возникла.
 
 <span id="run-code-with-state" />
 

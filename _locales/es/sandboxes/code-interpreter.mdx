@@ -1,11 +1,12 @@
 ---
-title: "API de intérprete de código para código generado por LLM"
-description: "Ejecuta en un sandbox el código que escribió un LLM con Lizard SDK: un kernel de Python con estado, gráficos como PNG, errores con traceback, tiempos de espera y un ejemplo de herramienta para LLM."
+title: "API de intérprete de código con Lizard Sandboxes"
+description: "Ejecuta código generado por LLM con Lizard Sandboxes y Lizard SDK. Usa Python con estado, devuelve gráficos y errores, fija tiempos de espera y crea una herramienta para agentes."
 ---
 
 <span id="code-interpreter-api-for-llm-generated-code" />
+<span id="code-interpreter-api-with-lizard-sandboxes" />
 
-# API de intérprete de código para código generado por LLM
+# API de intérprete de código con Lizard Sandboxes
 
 <span id="intérprete-de-código" />
 <span id="ejecutar-código" />
@@ -22,7 +23,9 @@ description: "Ejecuta en un sandbox el código que escribió un LLM con Lizard S
 <span id="checkpointing-a-session" />
 <span id="see-also" />
 
-Un intérprete de código ejecuta el código que escribe un modelo de lenguaje y le devuelve la salida al modelo. En Lizard (lizard.build), `CodeSandbox` de Lizard SDK lo hace dentro de un sandbox, una microVM de Firecracker, así que el código se ejecuta aparte de tu app y de tu máquina. Arranca la plantilla `interpreter`, que incluye Python y bibliotecas de datos habituales. Python se ejecuta en un kernel de Jupyter que conserva las variables entre llamadas, y cada resultado incluye la salida impresa, el valor de la última expresión, los gráficos como `image/png` y cualquier error con su traceback.
+Lizard Sandboxes ejecuta código generado por LLM en microVMs de Firecracker, cada una con su propio kernel. Esta guía cubre la API `CodeSandbox` de Lizard SDK: `@lizard-build/sdk` para TypeScript y JavaScript, y `lizard-sdk` para Python. Los ejemplos crean un sandbox en Lizard y devuelven su salida a tu agente.
+
+`CodeSandbox` aísla el código de tu app y tu computadora. Arranca la plantilla `interpreter`, que incluye Python y bibliotecas de datos habituales. Python se ejecuta en un kernel de Jupyter que conserva las variables entre llamadas, y cada resultado incluye la salida impresa, el valor de la última expresión, los gráficos como `image/png` y cualquier error con su traceback.
 
 <span id="run-code-with-state" />
 
