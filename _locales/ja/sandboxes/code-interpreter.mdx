@@ -1,11 +1,12 @@
 ---
-title: "LLM が生成したコード向けのコードインタープリター API"
-description: "LLM が書いたコードを Lizard SDK で sandbox 内で実行: 状態を保持する Python カーネル、PNG 形式のグラフ、トレースバック付きのエラー、タイムアウト、LLM ツールの例。"
+title: "Lizard Sandboxes のコードインタープリター API"
+description: "Lizard Sandboxes と Lizard SDK で LLM が生成したコードを実行します。状態を保持する Python カーネル、グラフとエラーの出力、タイムアウト、エージェント用ツールの例を紹介します。"
 ---
 
 <span id="code-interpreter-api-for-llm-generated-code" />
+<span id="code-interpreter-api-with-lizard-sandboxes" />
 
-# LLM が生成したコード向けのコードインタープリター API
+# Lizard Sandboxes のコードインタープリター API
 
 <span id="コード-インタープリタ" />
 <span id="コードを実行する" />
@@ -22,7 +23,9 @@ description: "LLM が書いたコードを Lizard SDK で sandbox 内で実行: 
 <span id="checkpointing-a-session" />
 <span id="see-also" />
 
-コードインタープリターは、言語モデルが書いたコードを実行し、その出力をモデルに返します。Lizard (lizard.build) では、Lizard SDK の `CodeSandbox` がこれを sandbox（Firecracker microVM）の中で行うため、コードはアプリや手元のマシンから切り離されて実行されます。`CodeSandbox` は、Python と一般的なデータ処理ライブラリを含む `interpreter` テンプレートを起動します。Python は呼び出し間で変数を保持する Jupyter カーネルで実行され、各結果には出力されたテキスト、最後の式の値、`image/png` 形式のグラフ、そしてエラーがあればそのトレースバックが含まれます。
+Lizard Sandboxes は、それぞれが独自のカーネルを持つ Firecracker microVM で LLM が生成したコードを実行します。このガイドでは、Lizard SDK の `CodeSandbox` API を説明します。TypeScript と JavaScript では `@lizard-build/sdk`、Python では `lizard-sdk` を使います。以下の例は Lizard で sandbox を作成し、その出力をエージェントに返します。
+
+`CodeSandbox` はコードをアプリや手元のコンピューターから隔離します。Python と一般的なデータ処理ライブラリを含む `interpreter` テンプレートを起動します。Python は呼び出し間で変数を保持する Jupyter カーネルで実行され、各結果には出力されたテキスト、最後の式の値、`image/png` 形式のグラフ、そしてエラーがあればそのトレースバックが含まれます。
 
 <span id="run-code-with-state" />
 

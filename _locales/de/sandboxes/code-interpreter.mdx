@@ -1,11 +1,12 @@
 ---
-title: "Code-Interpreter-API für LLM-generierten Code"
-description: "Code, den ein LLM geschrieben hat, mit Lizard SDK in einer Sandbox ausführen: zustandsbehafteter Python-Kernel, Diagramme als PNG, Fehler mit Traceback, Timeouts und ein Beispiel als LLM-Tool."
+title: "Code-Interpreter-API mit Lizard Sandboxes"
+description: "Führe LLM-generierten Code mit Lizard Sandboxes und Lizard SDK aus. Nutze Python mit Zustand, gib Diagramme und Fehler zurück, setze Timeouts und baue ein Agent-Tool."
 ---
 
 <span id="code-interpreter-api-for-llm-generated-code" />
+<span id="code-interpreter-api-with-lizard-sandboxes" />
 
-# Code-Interpreter-API für LLM-generierten Code
+# Code-Interpreter-API mit Lizard Sandboxes
 
 <span id="code-interpreter" />
 <span id="code-ausführen" />
@@ -21,7 +22,9 @@ description: "Code, den ein LLM geschrieben hat, mit Lizard SDK in einer Sandbox
 <span id="checkpointing-a-session" />
 <span id="see-also" />
 
-Ein Code Interpreter führt Code aus, den ein Sprachmodell schreibt, und gibt die Ausgabe an das Modell zurück. Auf Lizard (lizard.build) erledigt das `CodeSandbox` aus Lizard SDK in einer Sandbox, einer Firecracker-MicroVM, sodass der Code getrennt von Ihrer App und Ihrem Rechner läuft. Es startet die Vorlage `interpreter`, die Python und gängige Datenbibliotheken enthält. Python läuft in einem Jupyter-Kernel, der Variablen zwischen Aufrufen behält, und jedes Ergebnis enthält die Konsolenausgabe, den Wert des letzten Ausdrucks, Diagramme als `image/png` und einen etwaigen Fehler mit Traceback.
+Lizard Sandboxes führen LLM-generierten Code in Firecracker-MicroVMs mit jeweils eigenem Kernel aus. Diese Anleitung beschreibt die `CodeSandbox`-API von Lizard SDK: `@lizard-build/sdk` für TypeScript und JavaScript sowie `lizard-sdk` für Python. Die Beispiele erstellen eine Sandbox auf Lizard und geben ihre Ausgabe an Ihren Agenten zurück.
+
+`CodeSandbox` isoliert den Code von Ihrer App und Ihrem Rechner. Es startet die Vorlage `interpreter`, die Python und gängige Datenbibliotheken enthält. Python läuft in einem Jupyter-Kernel, der Variablen zwischen Aufrufen behält, und jedes Ergebnis enthält die Konsolenausgabe, den Wert des letzten Ausdrucks, Diagramme als `image/png` und einen etwaigen Fehler mit Traceback.
 
 <span id="run-code-with-state" />
 

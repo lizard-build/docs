@@ -1,11 +1,12 @@
 ---
-title: "LLM के लिखे कोड के लिए कोड इंटरप्रेटर API"
-description: "LLM का लिखा कोड Lizard SDK से सैंडबॉक्स में चलाएँ: स्टेटफ़ुल Python कर्नेल, PNG के रूप में चार्ट, traceback के साथ एरर, टाइमआउट और LLM टूल का उदाहरण।"
+title: "Lizard Sandboxes के साथ कोड इंटरप्रेटर API"
+description: "Lizard Sandboxes और Lizard SDK से LLM का लिखा कोड चलाएँ। स्टेटफ़ुल Python कर्नेल इस्तेमाल करें, चार्ट और एरर पाएँ, टाइमआउट तय करें और एजेंट के लिए टूल बनाएँ।"
 ---
 
 <span id="code-interpreter-api-for-llm-generated-code" />
+<span id="code-interpreter-api-with-lizard-sandboxes" />
 
-# LLM के लिखे कोड के लिए कोड इंटरप्रेटर API
+# Lizard Sandboxes के साथ कोड इंटरप्रेटर API
 
 <span id="code-interpreter" />
 <span id="run-code" />
@@ -15,7 +16,9 @@ description: "LLM का लिखा कोड Lizard SDK से सैंड�
 <span id="checkpointing-a-session" />
 <span id="see-also" />
 
-कोड इंटरप्रेटर लैंग्वेज मॉडल का लिखा कोड चलाता है और आउटपुट वापस मॉडल को देता है। Lizard पर यह काम Lizard SDK का `CodeSandbox` एक सैंडबॉक्स, यानी Firecracker microVM, के अंदर करता है, जो कोड को आपके ऐप और कंप्यूटर से अलग रखता है। यह `interpreter` टेम्प्लेट बूट करता है, जिसमें Python और आम डेटा लाइब्रेरी पहले से होती हैं। Python एक Jupyter कर्नेल में चलता है जो कॉल्स के बीच वेरिएबल बनाए रखता है, और हर नतीजे में प्रिंट किया गया आउटपुट, आख़िरी एक्सप्रेशन की वैल्यू, `image/png` के रूप में चार्ट, और अगर कोई एरर हो तो उसका traceback होता है।
+Lizard Sandboxes, Firecracker microVM में LLM का लिखा कोड चलाता है। हर microVM का अपना कर्नेल होता है। यह गाइड Lizard SDK के `CodeSandbox` API के बारे में है: TypeScript और JavaScript के लिए `@lizard-build/sdk`, और Python के लिए `lizard-sdk`। नीचे दिए उदाहरण Lizard पर एक सैंडबॉक्स बनाते हैं और उसका आउटपुट आपके एजेंट को लौटाते हैं।
+
+`CodeSandbox` कोड को आपके ऐप और कंप्यूटर से अलग रखता है। यह `interpreter` टेम्प्लेट बूट करता है, जिसमें Python और आम डेटा लाइब्रेरी पहले से होती हैं। Python एक Jupyter कर्नेल में चलता है जो कॉल्स के बीच वेरिएबल बनाए रखता है, और हर नतीजे में प्रिंट किया गया आउटपुट, आख़िरी एक्सप्रेशन की वैल्यू, `image/png` के रूप में चार्ट, और अगर कोई एरर हो तो उसका traceback होता है।
 
 <span id="run-code-with-state" />
 
