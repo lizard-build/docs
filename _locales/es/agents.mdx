@@ -106,7 +106,7 @@ Para que Claude Code o ChatGPT editen la página que tienes abierta en Chrome, u
 Lizard MCP permite que ChatGPT, Claude y otros clientes MCP gestionen tus proyectos de Lizard: crear sandboxes, ejecutar comandos y leer o escribir archivos en ellos; crear servicios y addons, redesplegar, [pausar y reanudar](/cli/pause) un servicio, un proyecto o un workspace, dejar que un servicio [duerma cuando está inactivo](/cli/sleep), leer logs y métricas, definir secretos, escalar réplicas y asociar dominios. Es un servidor alojado que usa Streamable HTTP en:
 
 ```text
-https://employ-woman-g1q2.us-east-1.onlizard.com/mcp
+https://lizard.build/mcp
 ```
 
 Un cliente que admita OAuth te hace iniciar sesión en el primer uso. Otros clientes envían una clave de API `liz_` en la cabecera `Authorization: Bearer`; crea una con `lizard keys create <name>`.
@@ -114,7 +114,7 @@ Un cliente que admita OAuth te hace iniciar sesión en el primer uso. Otros clie
 Añádelo a Claude Code:
 
 ```bash
-claude mcp add --transport http lizard https://employ-woman-g1q2.us-east-1.onlizard.com/mcp
+claude mcp add --transport http lizard https://lizard.build/mcp
 ```
 
 Para Cursor y otros clientes configurados mediante JSON:
@@ -123,7 +123,7 @@ Para Cursor y otros clientes configurados mediante JSON:
 {
   "mcpServers": {
     "lizard": {
-      "url": "https://employ-woman-g1q2.us-east-1.onlizard.com/mcp",
+      "url": "https://lizard.build/mcp",
       "headers": { "Authorization": "Bearer liz_your_key" }
     }
   }
