@@ -104,7 +104,7 @@ Chrome में आपके खुले पेज को Claude Code या C
 Lizard MCP से ChatGPT, Claude और दूसरे MCP क्लाइंट आपके Lizard प्रोजेक्ट्स मैनेज कर सकते हैं: सैंडबॉक्स बनाना, उनमें कमांड चलाना और फ़ाइलें पढ़ना या लिखना; सर्विसेज़ और ऐडऑन बनाना, रीडिप्लॉय करना, सर्विस, प्रोजेक्ट या वर्कस्पेस को [पॉज़ और रिज़्यूम करना](/cli/pause), सर्विस को [आइडल होने पर स्लीप करने देना](/cli/sleep), लॉग और मेट्रिक्स पढ़ना, सीक्रेट्स सेट करना, रेप्लिका स्केल करना और डोमेन जोड़ना। यह एक होस्टेड सर्वर है, जो इस पते पर Streamable HTTP ट्रांसपोर्ट से काम करता है:
 
 ```text
-https://employ-woman-g1q2.us-east-1.onlizard.com/mcp
+https://lizard.build/mcp
 ```
 
 OAuth सपोर्ट करने वाला क्लाइंट पहली बार उपयोग करने पर आपको साइन इन कराता है। दूसरे क्लाइंट `Authorization: Bearer` हेडर में `liz_` API की भेजते हैं; की `lizard keys create <name>` से बनाएँ।
@@ -112,7 +112,7 @@ OAuth सपोर्ट करने वाला क्लाइंट पह�
 इसे Claude Code में जोड़ें:
 
 ```bash
-claude mcp add --transport http lizard https://employ-woman-g1q2.us-east-1.onlizard.com/mcp
+claude mcp add --transport http lizard https://lizard.build/mcp
 ```
 
 Cursor और JSON से कॉन्फ़िगर होने वाले दूसरे क्लाइंट्स के लिए:
@@ -121,7 +121,7 @@ Cursor और JSON से कॉन्फ़िगर होने वाले 
 {
   "mcpServers": {
     "lizard": {
-      "url": "https://employ-woman-g1q2.us-east-1.onlizard.com/mcp",
+      "url": "https://lizard.build/mcp",
       "headers": { "Authorization": "Bearer liz_your_key" }
     }
   }
