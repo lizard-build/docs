@@ -7,7 +7,7 @@ description: "Replikatlimits für Apps, Sandbox-Größen und Stundenpreise, wie 
 
 # Limits
 
-Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung mit bis zu 5 Replikaten pro Service, während der Testphase mit 1. Sandbox-Limits zählen vCPU, nicht Sandboxes: Pro führt bis zu 40 vCPU an Sandboxes gleichzeitig aus, Pro 5x 220 und Pro 20x 1,200. Pro 5x und Pro 20x haben kein Limit für Sandbox-Starts. Die Testphase erlaubt bis zu 4 Small-Sandboxes (8 vCPU) gleichzeitig, nur in der Größe Small und nur in US-Regionen. Die Sandbox-Größen reichen von Small (2 vCPU / 4 GB) bis Large (8 vCPU / 16 GB), und ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum von 30 Tagen inklusive. Der Inhaber eines Workspace kann außerdem [Workspace-Limits](#workspace-limits) für einen einzelnen Workspace festlegen. Limits hängen von der Ressource, dem Tarif und dem Konto ab: Eine Einstellung pro Replikat entspricht nicht der insgesamt für einen Service oder ein Konto verfügbaren Kapazität. Prüfen Sie Ihren aktuellen Tarif und das Ergebnis der Erstellungs- oder Skalierungsanfrage, bevor Sie eine Workload dimensionieren.
+Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung mit bis zu 5 Replikaten pro Service, während der Testphase mit 1. Sandbox-Limits zählen vCPU, nicht Sandboxes: Pro führt bis zu 40 vCPU an Sandboxes gleichzeitig aus, Pro 5x 220 und Pro 20x 1,200. Pro, Pro 5x und Pro 20x haben kein Limit für Sandbox-Starts. Die Testphase erlaubt bis zu 4 Small-Sandboxes (8 vCPU) gleichzeitig, nur in der Größe Small und nur in US-Regionen. Die Sandbox-Größen reichen von Small (2 vCPU / 4 GB) bis Large (8 vCPU / 16 GB), und ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum von 30 Tagen inklusive. Der Inhaber eines Workspace kann außerdem [Workspace-Limits](#workspace-limits) für einen einzelnen Workspace festlegen. Limits hängen von der Ressource, dem Tarif und dem Konto ab: Eine Einstellung pro Replikat entspricht nicht der insgesamt für einen Service oder ein Konto verfügbaren Kapazität. Prüfen Sie Ihren aktuellen Tarif und das Ergebnis der Erstellungs- oder Skalierungsanfrage, bevor Sie eine Workload dimensionieren.
 
 <span id="applications" />
 
@@ -52,7 +52,7 @@ Diese Limits begrenzen, wie viel Sandbox-vCPU ein Konto gleichzeitig ausführt, 
 | Plan | vCPU gleichzeitig | Maximale Größe | Starts pro Minute | Pro Stunde | Pro Tag |
 |---|---|---|---|---|---|
 | Testphase von Pro | 8 (bis zu 4 Small) | Small | 6 | 30 | 100 |
-| Pro | 40 | Large | 24 | 120 | Unbegrenzt |
+| Pro | 40 | Large | Unbegrenzt | Unbegrenzt | Unbegrenzt |
 | Pro 5x | 220 | Large | Unbegrenzt | Unbegrenzt | Unbegrenzt |
 | Pro 20x | 1,200 | Large | Unbegrenzt | Unbegrenzt | Unbegrenzt |
 | Enterprise | Pro Workspace, laut Ihrem Vertrag | Large | 120 pro Benutzer | Kein Limit | Kein Limit |
