@@ -161,15 +161,9 @@ await sandbox.pause({ fast: true });
 await sandbox.waitForStatus('paused');
 ```
 
-Снимок (snapshot) сохраняет память работающего sandbox, запущенные процессы и все файлы на его диске. Он принадлежит пользователю, который его сделал. Каждый restore запускает новый sandbox в регионе снимка, в любом проекте, который допускает область (scope) снимка:
+Снимок (snapshot) сохраняет память работающего sandbox, запущенные процессы и все файлы на его диске. Он восстанавливается только в своём проекте и регионе. Восстановить его могут пользователь, который его сделал, и участники этого проекта. `Sandbox.restore(id, { projectId })` (в Python: `project_id=`) с любым другим проектом возвращает HTTP 403 с `code`, равным `SNAPSHOT_SCOPE`. Перед снимком закройте клиенты и терминалы и остановите запись в `/workspace`.
 
-- `workspace` (по умолчанию): любой проект в рабочем пространстве исходного sandbox.
-- `user`: любой проект в любом из ваших рабочих пространств.
-- `project`: только проект исходного sandbox.
-
-Задайте область через `snapshot(name, { scope })` (в Python: `scope=`) и выберите проект через `Sandbox.restore(id, { projectId })` (в Python: `project_id=`). Перед снимком закройте клиенты и терминалы и остановите запись в `/workspace`.
-
-Если к sandbox подключён Persistent Volume, снимок содержит копию файлов тома на момент снимка. Каждый restore получает эту копию, а не сам том, и не может подключить другой том. Любой, кто может восстановить снимок, может прочитать эти файлы, поэтому, поделившись таким снимком, вы делитесь и данными тома. Снимок sandbox без тома может при restore смонтировать том из того же региона через `volumeId` (в Python: `volume_id`).
+Если к sandbox подключён Persistent Volume, снимок содержит копию файлов тома на момент снимка. Каждый restore получает эту копию, а не сам том, и не может подключить другой том. Любой, кто может восстановить снимок, может прочитать эти файлы. Снимок sandbox без тома может при restore смонтировать том из того же проекта и региона через `volumeId` (в Python: `volume_id`).
 
 ```ts
 const saved = await sandbox.snapshot('my-app');
@@ -177,7 +171,7 @@ await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-Снимок готов сразу после возврата вызова и восстанавливается с диска, поэтому `poolSize` к нему не применяется. Каждый restore запускается с размером источника и оплачивается по почасовой цене этого размера; `size` к restore не применяется. В CLI используйте `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` и `lizard sandbox restore <snapshot-id>`; об областях и `--volume` см. [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots).
+Снимок готов сразу после возврата вызова и восстанавливается с диска, поэтому `poolSize` к нему не применяется. Каждый restore запускается с размером источника и оплачивается по почасовой цене этого размера; `size` к restore не применяется. В CLI используйте `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` и `lizard sandbox restore <snapshot-id>`; о `--volume` см. [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots).
 
 <span id="clean-up-and-next-steps" />
 

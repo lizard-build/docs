@@ -109,12 +109,11 @@ sandbox = Sandbox.create(
 | `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | केवल फ़ाइलें रखते हुए pause करें, मेमोरी कितनी भी हो लगभग एक सेकंड में; प्रोसेस बंद हो जाते हैं और resume sandbox को नए सिरे से बूट करता है। |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | `paused` या `running` का इंतज़ार करता है; पॉज़ फ़ेल हो तो एरर थ्रो करता है। |
 | `sandbox.fork({ count })` | `sandbox.fork(count=...)` | चल रहे सैंडबॉक्स की 1 से 100 कॉपी बनाता है, मेमोरी और प्रोसेस समेत; हर कॉपी चल रहे सैंडबॉक्स की आपकी लिमिट में गिनी जाती है। |
-| `sandbox.snapshot(name, { scope })` | `sandbox.snapshot(name, scope=...)` | मेमोरी, प्रोसेस और हर फ़ाइल को स्नैपशॉट के रूप में सेव करता है। `scope` की वैल्यू `'workspace'` (डिफ़ॉल्ट), `'user'` या `'project'` होती है। |
+| `sandbox.snapshot(name)` | `sandbox.snapshot(name)` | मेमोरी, प्रोसेस और हर फ़ाइल को स्नैपशॉट के रूप में सेव करता है। यह सिर्फ़ इसी सैंडबॉक्स के प्रोजेक्ट और रीजन में रिस्टोर होता है। |
 | `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | स्नैपशॉट तैयार होने तक इंतज़ार करता है। |
-| `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | स्नैपशॉट से उसी के रीजन में नया सैंडबॉक्स शुरू करता है, किसी भी ऐसे प्रोजेक्ट में जिसकी अनुमति उसका स्कोप देता है। |
+| `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | स्नैपशॉट से, उसी के प्रोजेक्ट और रीजन में, नया सैंडबॉक्स शुरू करता है। कोई और `projectId` देने पर HTTP 403 के साथ `AuthenticationError` थ्रो होता है, जिसमें `code` की वैल्यू `SNAPSHOT_SCOPE` होती है। |
 | `Sandbox.snapshots(projectId)` | `Sandbox.snapshots(project_id)` | किसी प्रोजेक्ट में लिए गए स्नैपशॉट लिस्ट करता है। |
 | `Sandbox.mySnapshots()` | `Sandbox.my_snapshots()` | आपके सभी वर्कस्पेस में आपके लिए गए सभी स्नैपशॉट लिस्ट करता है। |
-| `Sandbox.setSnapshotScope(snapshotId, scope)` | `Sandbox.set_snapshot_scope(snapshot_id, scope)` | बदलता है कि आपका लिया हुआ स्नैपशॉट कहाँ रिस्टोर किया जा सकता है। |
 | `Sandbox.deleteSnapshot(snapshotId)` | `Sandbox.delete_snapshot(snapshot_id)` | स्नैपशॉट डिलीट करता है; उससे रिस्टोर किए गए सैंडबॉक्स चलते रहते हैं। |
 | `sandbox.kill()` | `sandbox.kill()` | सैंडबॉक्स को स्टॉप करता है और उसका वॉल्यूम डिटैच करता है। |
 

@@ -124,15 +124,14 @@ Conecta una app VNC (Compartir Pantalla de macOS, TigerVNC, RealVNC) al escritor
 | `lizard sandbox pause <id>` | Guarda la memoria y los procesos y pausa el sandbox. Una pausa completada detiene los cargos de cómputo; el almacenamiento en Persistent Volumes se cobra aparte |
 | `lizard sandbox pause <id> --fast` | Pausa en alrededor de un segundo conservando solo los archivos: la memoria no se guarda, los procesos en ejecución terminan y `resume` arranca el sandbox de nuevo con sus archivos |
 | `lizard sandbox resume <id>` | Vuelve a iniciar un sandbox en pausa con su memoria y sus archivos guardados |
-| `lizard sandbox snapshot <id> --name <name>` | Guarda un sandbox en ejecución, con su memoria y sus archivos, como un snapshot que te pertenece. `--scope` fija dónde se puede restaurar: `workspace` (por defecto) en cualquier proyecto del espacio de trabajo del sandbox, `user` en cualquier proyecto de cualquiera de tus espacios de trabajo, `project` solo en su propio proyecto |
-| `lizard sandbox restore <snapshot-id>` | Inicia un sandbox nuevo desde un snapshot, en la región del snapshot. `-p <project>` elige el proyecto (por defecto, el proyecto del volumen; si no, el del snapshot), `--volume <name-or-id>` monta un volumen en `/workspace` y `--timeout <ms>` fija la duración (por defecto `300000`) |
+| `lizard sandbox snapshot <id> --name <name>` | Guarda un sandbox en ejecución, con su memoria y sus archivos, como un snapshot que solo se restaura en el proyecto y la región del sandbox |
+| `lizard sandbox restore <snapshot-id>` | Inicia un sandbox nuevo desde un snapshot, en el proyecto y la región del snapshot. `--volume <name-or-id>` monta en `/workspace` un volumen de ese proyecto y `--timeout <ms>` fija la duración (por defecto `300000`) |
 | `lizard sandbox snapshots` | Lista los snapshots tomados en el proyecto (`-p` para otro proyecto, `--mine` para todos los snapshots que tomaste) |
-| `lizard sandbox snapshot-scope <snapshot-id> <scope>` | Cambia dónde se puede restaurar un snapshot que tomaste: `user`, `workspace` o `project` |
 | `lizard sandbox snapshot-rm <snapshot-id>` | Elimina un snapshot (alias `snapshot-delete`; `-y` omite la confirmación) |
 
 `pause`, `resume` y `snapshot` esperan hasta que termina el trabajo; pasa `--no-wait` para volver en cuanto quede en cola. Consulta [Pausa, reanudación y snapshots](/sandboxes/quickstart#pause-and-resume) para ver qué conserva cada paso.
 
-Un snapshot de un sandbox con un volumen conectado incluye una copia de los archivos del volumen tal como estaban al capturar. Cada restauración recibe esa copia y no acepta `--volume`, y cualquiera que pueda restaurar el snapshot puede leer esos archivos. `--volume` solo funciona con un snapshot de un sandbox que no tenía volumen, y el volumen debe estar en la región del snapshot.
+Un snapshot de un sandbox con un volumen conectado incluye una copia de los archivos del volumen tal como estaban al capturar. Cada restauración recibe esa copia y no acepta `--volume`, y cualquiera que pueda restaurar el snapshot puede leer esos archivos. `--volume` solo funciona con un snapshot de un sandbox que no tenía volumen, y el volumen debe estar en el proyecto y la región del snapshot.
 
 <span id="sandbox-fork" />
 
@@ -243,7 +242,7 @@ lizard sandbox prompt genuine-toddler-jasj "add a health check endpoint and test
 ```bash
 lizard sandbox snapshot genuine-toddler-jasj --name my-app
 lizard sandbox snapshots --mine                     # find the snapshot ID
-lizard sandbox restore <snapshot-id> -p other-project
+lizard sandbox restore <snapshot-id>
 ```
 
 <span id="fork-a-prepared-sandbox" />

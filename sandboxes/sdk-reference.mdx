@@ -101,12 +101,11 @@ sandbox = Sandbox.create(
 | `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | Pause keeping files only, in about a second at any memory size; processes end and the resume boots the sandbox fresh. |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | Wait for `paused` or `running`; throw if the pause failed. |
 | `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Copy a running sandbox 1 to 100 times, memory and processes included; each copy counts toward your running-sandbox limit. |
-| `sandbox.snapshot(name, { scope })` | `sandbox.snapshot(name, scope=...)` | Save memory, processes and every file as a snapshot. `scope` is `'workspace'` (the default), `'user'` or `'project'`. |
+| `sandbox.snapshot(name)` | `sandbox.snapshot(name)` | Save memory, processes and every file as a snapshot. It restores only in this sandbox's project and region. |
 | `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | Wait until a snapshot is ready. |
-| `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | Start a new sandbox from a snapshot in its region, in any project its scope allows. |
+| `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | Start a new sandbox from a snapshot, in the snapshot's project and region. Any other `projectId` throws `AuthenticationError` with HTTP 403 and `code` set to `SNAPSHOT_SCOPE`. |
 | `Sandbox.snapshots(projectId)` | `Sandbox.snapshots(project_id)` | List the snapshots taken in a project. |
 | `Sandbox.mySnapshots()` | `Sandbox.my_snapshots()` | List every snapshot you took, in all your workspaces. |
-| `Sandbox.setSnapshotScope(snapshotId, scope)` | `Sandbox.set_snapshot_scope(snapshot_id, scope)` | Change where a snapshot you took can be restored. |
 | `Sandbox.deleteSnapshot(snapshotId)` | `Sandbox.delete_snapshot(snapshot_id)` | Delete a snapshot; sandboxes restored from it keep running. |
 | `sandbox.kill()` | `sandbox.kill()` | Stop the sandbox and detach its volume. |
 
