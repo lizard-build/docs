@@ -165,15 +165,9 @@ await sandbox.pause({ fast: true });
 await sandbox.waitForStatus('paused');
 ```
 
-スナップショットは、実行中の sandbox のメモリ、実行中のプロセス、ディスク上のすべてのファイルを保存します。スナップショットは、それを作成したユーザーのものです。restore するたびに、スナップショットと同じリージョンで新しい sandbox が起動します。起動先は、スナップショットのスコープが許す任意のプロジェクトです:
+スナップショットは、実行中の sandbox のメモリ、実行中のプロセス、ディスク上のすべてのファイルを保存します。スナップショットは、それ自身のプロジェクトとリージョンでのみ restore できます。restore できるのは、作成したユーザーとそのプロジェクトのメンバーです。ほかのプロジェクトを指定した `Sandbox.restore(id, { projectId })`（Python では `project_id=`）は HTTP 403 で失敗し、`code` は `SNAPSHOT_SCOPE` になります。取得前にクライアントとターミナルを閉じ、`/workspace` への書き込みを止めてください。
 
-- `workspace`（既定）: 元の sandbox のワークスペース内の任意のプロジェクト。
-- `user`: 自分のすべてのワークスペースの任意のプロジェクト。
-- `project`: 元の sandbox のプロジェクトだけ。
-
-スコープは `snapshot(name, { scope })`（Python では `scope=`）で設定し、プロジェクトは `Sandbox.restore(id, { projectId })`（Python では `project_id=`）で選びます。取得前にクライアントとターミナルを閉じ、`/workspace` への書き込みを止めてください。
-
-sandbox に Persistent Volume が接続されている場合、スナップショットには取得時点のボリュームのファイルのコピーが含まれます。どの restore も、現在のボリュームではなくそのコピーを受け取り、別のボリュームは接続できません。スナップショットを restore できる人は誰でもそのファイルを読めるため、このスナップショットを共有するとボリュームのデータも共有することになります。ボリュームのない sandbox のスナップショットは、restore 時に `volumeId`（Python では `volume_id`）で同じリージョンのボリュームをマウントできます。
+sandbox に Persistent Volume が接続されている場合、スナップショットには取得時点のボリュームのファイルのコピーが含まれます。どの restore も、現在のボリュームではなくそのコピーを受け取り、別のボリュームは接続できません。スナップショットを restore できる人は誰でもそのファイルを読めます。ボリュームのない sandbox のスナップショットは、restore 時に `volumeId`（Python では `volume_id`）で同じプロジェクトとリージョンのボリュームをマウントできます。
 
 ```ts
 const saved = await sandbox.snapshot('my-app');
@@ -181,7 +175,7 @@ await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-スナップショットは、呼び出しが戻った時点で準備が完了し、ディスクから restore されるため、`poolSize` は適用されません。restore のたびに元の sandbox と同じサイズで実行され、そのサイズの時間単価で課金されます。restore には `size` は適用されません。CLI では `lizard sandbox pause <id>`、`lizard sandbox resume <id>`、`lizard sandbox snapshot <id> --name my-app`、`lizard sandbox restore <snapshot-id>` を使います。スコープと `--volume` については [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots) を参照してください。
+スナップショットは、呼び出しが戻った時点で準備が完了し、ディスクから restore されるため、`poolSize` は適用されません。restore のたびに元の sandbox と同じサイズで実行され、そのサイズの時間単価で課金されます。restore には `size` は適用されません。CLI では `lizard sandbox pause <id>`、`lizard sandbox resume <id>`、`lizard sandbox snapshot <id> --name my-app`、`lizard sandbox restore <snapshot-id>` を使います。`--volume` については [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots) を参照してください。
 
 <span id="clean-up-and-next-steps" />
 

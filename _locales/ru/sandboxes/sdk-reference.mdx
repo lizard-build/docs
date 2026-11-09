@@ -113,12 +113,11 @@ sandbox = Sandbox.create(
 | `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | Пауза с сохранением только файлов, примерно за секунду при любом объёме памяти; процессы завершаются, а возобновление загружает песочницу заново. |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | Дождаться `paused` или `running`; выбросить ошибку, если пауза не удалась. |
 | `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Скопировать работающий sandbox от 1 до 100 раз вместе с памятью и процессами; каждая копия учитывается в лимите запущенных sandbox. |
-| `sandbox.snapshot(name, { scope })` | `sandbox.snapshot(name, scope=...)` | Сохранить память, процессы и все файлы в снимок. `scope` принимает `'workspace'` (по умолчанию), `'user'` или `'project'`. |
+| `sandbox.snapshot(name)` | `sandbox.snapshot(name)` | Сохранить память, процессы и все файлы в снимок. Он восстанавливается только в проекте и регионе этого sandbox. |
 | `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | Дождаться готовности снимка. |
-| `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | Запустить новый sandbox из снимка в его регионе, в любом проекте, который допускает его область. |
+| `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | Запустить новый sandbox из снимка в проекте и регионе снимка. Любой другой `projectId` вызывает `AuthenticationError` с HTTP 403 и `code`, равным `SNAPSHOT_SCOPE`. |
 | `Sandbox.snapshots(projectId)` | `Sandbox.snapshots(project_id)` | Получить список снимков, сделанных в проекте. |
 | `Sandbox.mySnapshots()` | `Sandbox.my_snapshots()` | Получить список всех снимков, которые вы сделали, во всех ваших рабочих пространствах. |
-| `Sandbox.setSnapshotScope(snapshotId, scope)` | `Sandbox.set_snapshot_scope(snapshot_id, scope)` | Изменить, где можно восстановить сделанный вами снимок. |
 | `Sandbox.deleteSnapshot(snapshotId)` | `Sandbox.delete_snapshot(snapshot_id)` | Удалить снимок; sandbox, восстановленные из него, продолжают работать. |
 | `sandbox.kill()` | `sandbox.kill()` | Остановить sandbox и отключить том. |
 

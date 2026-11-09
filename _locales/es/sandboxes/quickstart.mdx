@@ -164,15 +164,9 @@ await sandbox.pause({ fast: true });
 await sandbox.waitForStatus('paused');
 ```
 
-Un snapshot guarda la memoria de un sandbox en marcha, sus procesos en ejecución y todos los archivos de su disco. Pertenece al usuario que lo tomó. Cada restauración inicia un sandbox nuevo en la región del snapshot, en cualquier proyecto que permita el ámbito del snapshot:
+Un snapshot guarda la memoria de un sandbox en marcha, sus procesos en ejecución y todos los archivos de su disco. Solo se restaura en su propio proyecto y su propia región. Pueden restaurarlo el usuario que lo tomó y los miembros de ese proyecto. `Sandbox.restore(id, { projectId })` (Python: `project_id=`) con cualquier otro proyecto falla con HTTP 403 y `code` igual a `SNAPSHOT_SCOPE`. Antes de capturar, cierra clientes y terminales y deja de escribir en `/workspace`.
 
-- `workspace` (el predeterminado): cualquier proyecto del workspace del sandbox de origen.
-- `user`: cualquier proyecto de cualquiera de tus workspaces.
-- `project`: solo el proyecto del sandbox de origen.
-
-Fija el ámbito con `snapshot(name, { scope })` (Python: `scope=`) y elige el proyecto con `Sandbox.restore(id, { projectId })` (Python: `project_id=`). Antes de capturar, cierra clientes y terminales y deja de escribir en `/workspace`.
-
-Si el sandbox tiene un volumen de Persistent Volumes conectado, el snapshot incluye una copia de los archivos del volumen tal como estaban al capturar. Cada restauración recibe esa copia, no el volumen real, y no puede conectar otro volumen. Cualquiera que pueda restaurar el snapshot puede leer esos archivos, así que compartir un snapshot así comparte los datos del volumen. Un snapshot de un sandbox sin volumen puede montar uno al restaurar con `volumeId` (Python: `volume_id`), de la misma región.
+Si el sandbox tiene un volumen de Persistent Volumes conectado, el snapshot incluye una copia de los archivos del volumen tal como estaban al capturar. Cada restauración recibe esa copia, no el volumen real, y no puede conectar otro volumen. Cualquiera que pueda restaurar el snapshot puede leer esos archivos. Un snapshot de un sandbox sin volumen puede montar uno al restaurar con `volumeId` (Python: `volume_id`), del mismo proyecto y la misma región.
 
 ```ts
 const saved = await sandbox.snapshot('my-app');
@@ -180,7 +174,7 @@ await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-Un snapshot está listo cuando la llamada termina y se restaura desde disco, así que `poolSize` no se aplica. Cada restauración se ejecuta con el tamaño del origen y se factura al precio por hora de ese tamaño; `size` no se aplica a una restauración. En la CLI, usa `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` y `lizard sandbox restore <snapshot-id>`; consulta [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots) para los ámbitos y `--volume`.
+Un snapshot está listo cuando la llamada termina y se restaura desde disco, así que `poolSize` no se aplica. Cada restauración se ejecuta con el tamaño del origen y se factura al precio por hora de ese tamaño; `size` no se aplica a una restauración. En la CLI, usa `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` y `lizard sandbox restore <snapshot-id>`; consulta [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots) para `--volume`.
 
 <span id="clean-up-and-next-steps" />
 

@@ -113,12 +113,11 @@ sandbox = Sandbox.create(
 | `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | Pausiert und behält nur die Dateien, in etwa einer Sekunde bei jeder Speichergröße; Prozesse enden und das Fortsetzen startet die Sandbox neu. |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | Auf `paused` oder `running` warten; einen Fehler auslösen, wenn die Pause scheitert. |
 | `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Eine laufende Sandbox 1- bis 100-mal kopieren, einschließlich Arbeitsspeicher und Prozessen; jede Kopie zählt zu Ihrem Limit laufender Sandboxes. |
-| `sandbox.snapshot(name, { scope })` | `sandbox.snapshot(name, scope=...)` | Arbeitsspeicher, Prozesse und jede Datei als Snapshot speichern. `scope` ist `'workspace'` (Standard), `'user'` oder `'project'`. |
+| `sandbox.snapshot(name)` | `sandbox.snapshot(name)` | Arbeitsspeicher, Prozesse und jede Datei als Snapshot speichern. Er lässt sich nur im Projekt und in der Region dieser Sandbox wiederherstellen. |
 | `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | Warten, bis ein Snapshot bereit ist. |
-| `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | Neue Sandbox aus einem Snapshot in seiner Region starten, in jedem Projekt, das sein Geltungsbereich erlaubt. |
+| `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | Neue Sandbox aus einem Snapshot starten, im Projekt und in der Region des Snapshots. Jede andere `projectId` löst `AuthenticationError` mit HTTP 403 und `code` gleich `SNAPSHOT_SCOPE` aus. |
 | `Sandbox.snapshots(projectId)` | `Sandbox.snapshots(project_id)` | Die in einem Projekt erstellten Snapshots auflisten. |
 | `Sandbox.mySnapshots()` | `Sandbox.my_snapshots()` | Alle Snapshots auflisten, die Sie erstellt haben, in all Ihren Workspaces. |
-| `Sandbox.setSnapshotScope(snapshotId, scope)` | `Sandbox.set_snapshot_scope(snapshot_id, scope)` | Ändern, wo sich ein Snapshot, den Sie erstellt haben, wiederherstellen lässt. |
 | `Sandbox.deleteSnapshot(snapshotId)` | `Sandbox.delete_snapshot(snapshot_id)` | Einen Snapshot löschen; daraus wiederhergestellte Sandboxes laufen weiter. |
 | `sandbox.kill()` | `sandbox.kill()` | Sandbox stoppen und Volume trennen. |
 
