@@ -54,7 +54,7 @@ You can browse with a new account, but you need a plan to create apps, Sandboxes
 
 Each account and each card gets one trial. If the account had one before, Pro starts at once and charges $19 that day. If the card had one, the trial does not start and nothing is charged; start Pro at $19 on the Billing page.
 
-The trial includes every Pro feature, with lower [limits](#limits) until your first paid invoice. Until then, Sandboxes run only at the Small size and only in US regions, up to 4 Small Sandboxes (8 vCPU) at once, from the dashboard, Lizard CLI, Lizard SDK or Lizard MCP alike. A create with no size gets Small. A Medium sandbox, by name, from a snapshot or as a fork, returns HTTP 403 with `code` set to `TRIAL_SANDBOX_SIZE`. A Large one returns HTTP 403 with `code` set to `SANDBOX_SIZE_NOT_ALLOWED`, whether you create, resume, fork or restore it. A region outside the US returns HTTP 403 with `code` set to `TRIAL_SANDBOX_REGION`. **Start Pro now** unlocks the other sizes, the other regions and the Pro limits.
+The trial includes every Pro feature, with lower [limits](#limits) until your first paid invoice. Until then, Sandboxes run only in US regions, up to 8 vCPU at once: Mini and Small Sandboxes, plus one Medium at a time, from the dashboard, Lizard CLI, Lizard SDK or Lizard MCP alike. A create with no size gets Small. A second Medium sandbox running at once, whether you create, fork or resume it, returns HTTP 403 with `code` set to `TRIAL_MEDIUM_RUNNING`. A Large one returns HTTP 403 with `code` set to `SANDBOX_SIZE_NOT_ALLOWED`, whether you create, resume, fork or restore it. A region outside the US returns HTTP 403 with `code` set to `TRIAL_SANDBOX_REGION`. **Start Pro now** unlocks the other sizes, the other regions and the Pro limits.
 
 To move to Pro 5x or Pro 20x during the trial, choose **Start Pro now** first, then [change plans](#changing-plans).
 
@@ -78,12 +78,12 @@ A promo code can give a longer trial, up to 730 days, and more trial usage. It r
 
 | | Trial, until the first paid invoice | Pro | Pro 5x | Pro 20x |
 | --- | ---: | ---: | ---: | ---: |
-| Sandboxes running at once | 8 vCPU (up to 4 Small) | 40 vCPU | 220 vCPU | 1,200 vCPU |
-| Sandbox sizes | Small only (2 vCPU) | Up to Large (8 vCPU) | Up to Large (8 vCPU) | Up to Large (8 vCPU) |
+| Sandboxes running at once | 8 vCPU (up to 8 Mini or 4 Small) | 40 vCPU | 220 vCPU | 1,200 vCPU |
+| Sandbox sizes | Mini, Small and one Medium (4 vCPU) | Up to Large (8 vCPU) | Up to Large (8 vCPU) | Up to Large (8 vCPU) |
 | Sandbox starts per minute | 6 | Unlimited | Unlimited | Unlimited |
 | Replicas per app | 1 | 5 | 5 | 5 |
 
-Sandbox limits count the vCPU of running sandboxes, not the number of sandboxes. Small uses 2 vCPU, Medium 4 and Large 8, so 40 vCPU runs 20 Small, 10 Medium or 5 Large sandboxes at once. The trial's 8 vCPU runs up to 4 Small Sandboxes. Pro limits apply from your first paid invoice, including a **Start Pro now** payment. Pro 5x and Pro 20x are paid from the first day, so their limits apply at once. See [Limits](/platform/limits#sandbox-account-limits) for start rates per hour and per day, and for other limits.
+Sandbox limits count the vCPU of running sandboxes, not the number of sandboxes. Mini uses 1 vCPU, Small 2, Medium 4 and Large 8, so 40 vCPU runs 40 Mini, 20 Small, 10 Medium or 5 Large sandboxes at once. The trial's 8 vCPU runs up to 8 Mini or 4 Small Sandboxes. Pro limits apply from your first paid invoice, including a **Start Pro now** payment. Pro 5x and Pro 20x are paid from the first day, so their limits apply at once. See [Limits](/platform/limits#sandbox-account-limits) for start rates per hour and per day, and for other limits.
 
 ## Changing plans
 

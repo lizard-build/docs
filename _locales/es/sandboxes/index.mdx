@@ -47,11 +47,11 @@ En una prueba del 2026-10-12, la mediana del tiempo desde crear un sandbox hasta
 | ¿Qué ejecuta el código? | Una microVM de Firecracker con su propio kernel; consulta [runtime y plantillas](#runtime-and-templates) |
 | ¿Cómo creo uno? | [Lizard SDK](/sandboxes/sdk-reference), [`lizard sandbox`](/cli/sandbox), el [panel](/sandboxes/dashboard) o la [API HTTP](/sandboxes/sdk-reference#http-api) |
 | ¿Qué plantillas hay? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop` y `desktop-camoufox` (solo en US East) |
-| ¿Qué tamaños hay? | Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, el predeterminado) y Large (8 vCPU / 16 GB). La prueba solo permite Small, en regiones de EE. UU. Consulta [tamaños y precios](/platform/limits#sandbox-sizes) |
+| ¿Qué tamaños hay? | Mini (1 vCPU / 2 GB), Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, el predeterminado) y Large (8 vCPU / 16 GB). Mini solo arranca desde las plantillas `base`, `claude`, `codex` e `interpreter`. La prueba permite Mini y Small, más un Medium a la vez, en regiones de EE. UU. Consulta [tamaños y precios](/platform/limits#sandbox-sizes) |
 | ¿Cuánto dura uno? | Cinco minutos por defecto desde el SDK y la CLI; sin vencimiento por defecto desde la API directa y el panel |
 | ¿Qué sobrevive a una pausa? | Todo el disco, incluidos los paquetes instalados fuera de `/workspace`, además de la memoria y los procesos en ejecución (una pausa con `fast: true` conserva solo el disco) |
 | ¿Qué sobrevive a una detención (kill o expiración)? | Los archivos de un volumen de [Persistent Volumes](/sandboxes/volumes) en `/workspace` y cualquier [snapshot](/sandboxes/quickstart#pause-and-resume) que hayas tomado; un snapshot guarda todo el disco |
-| ¿Cuántos pueden ejecutarse a la vez? | Los límites cuentan vCPU: 40 en Pro (por ejemplo, 10 Medium), 220 en Pro 5x, 1,200 en Pro 20x y 8 durante la prueba (hasta 4 Small); consulta [límites de la cuenta](/platform/limits#sandbox-account-limits). Pro, Pro 5x y Pro 20x no tienen límite de inicios de sandbox. |
+| ¿Cuántos pueden ejecutarse a la vez? | Los límites cuentan vCPU: 40 en Pro (por ejemplo, 10 Medium), 220 en Pro 5x, 1,200 en Pro 20x y 8 durante la prueba (hasta 8 Mini o 4 Small); consulta [límites de la cuenta](/platform/limits#sandbox-account-limits). Pro, Pro 5x y Pro 20x no tienen límite de inicios de sandbox. |
 
 <span id="runtime-and-templates" />
 
@@ -78,7 +78,7 @@ snapshot -> new sandbox (restore)
 
 ## Recursos y duración
 
-Elige un tamaño al crear un sandbox: Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, el predeterminado) o Large (8 vCPU / 16 GB). Durante la prueba, todo sandbox es Small y se ejecuta en una región de EE. UU. Consulta [tamaños y precios](/platform/limits#sandbox-sizes). Indica la región de forma explícita si hace falta; que aparezca en el catálogo no garantiza capacidad libre.
+Elige un tamaño al crear un sandbox: Mini (1 vCPU / 2 GB), Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, el predeterminado) o Large (8 vCPU / 16 GB). Mini solo arranca desde las plantillas `base`, `claude`, `codex` e `interpreter`, sin volumen. Durante la prueba, un sandbox es Mini o Small, o un solo Medium a la vez, y se ejecuta en una región de EE. UU. Consulta [tamaños y precios](/platform/limits#sandbox-sizes). Indica la región de forma explícita si hace falta; que aparezca en el catálogo no garantiza capacidad libre.
 
 El SDK y la CLI fijan cinco minutos de duración por defecto. La API directa y el panel no fijan caducidad por defecto. Indica la duración: `timeoutMs: 0` al crear desactiva la caducidad; un valor positivo fija un plazo. `setTimeout` acepta 1000 a 2147483647 ms, no cero. Los comandos no reinician el plazo. No es un temporizador de inactividad.
 

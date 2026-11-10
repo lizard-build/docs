@@ -141,7 +141,7 @@ lizard sandbox rm $SB
 | `Claude Code has no credential. Connect one of: …` | `lizard agents add claude` या `lizard agents add anthropic` चलाएँ। |
 | `Claude rejected the credential (authentication_failed)` | टोकन या की अब मान्य नहीं है। नया बनाएँ और फिर से जोड़ें। |
 | `create` पर Checkout लिंक के साथ HTTP 402 | ट्रायल या Pro शुरू करें: `lizard billing start`। |
-| `create` पर `TRIAL_SANDBOX_SIZE`, `TRIAL_SANDBOX_REGION` या `SANDBOX_SIZE_NOT_ALLOWED` के साथ HTTP 403 | ट्रायल में सिर्फ़ US रीजन में Small सैंडबॉक्स चलते हैं। `--size small` और US का कोई `--region` इस्तेमाल करें, या अभी Pro शुरू करें: `lizard billing start-now`। |
+| `create` पर `TRIAL_MEDIUM_RUNNING`, `TRIAL_SANDBOX_REGION` या `SANDBOX_SIZE_NOT_ALLOWED` के साथ HTTP 403 | ट्रायल में US रीजन में Mini और Small सैंडबॉक्स चलते हैं, साथ में एक समय पर एक Medium। `--size small` और US का कोई `--region` इस्तेमाल करें, या अभी Pro शुरू करें: `lizard billing start-now`। |
 | `create` पर `SANDBOX_LIMIT_REACHED` के साथ HTTP 429 | आपके चल रहे सैंडबॉक्स आपके प्लान की पूरी vCPU लिमिट इस्तेमाल कर रहे हैं। किसी एक को स्टॉप या पॉज़ करें, छोटा `--size` इस्तेमाल करें, या बिलिंग पेज पर बड़े प्लान पर जाएँ। |
 | काम के बीच में सैंडबॉक्स गायब हो गया | उसका लाइफटाइम खत्म हो गया। अगला सैंडबॉक्स `--timeout` के साथ बनाएँ, या `lizard sandbox timeout` से समय बढ़ाएँ। |
 | आउटपुट में Codex का ज़िक्र है | प्रॉम्प्ट `--agent claude` के बिना भेजा गया। |

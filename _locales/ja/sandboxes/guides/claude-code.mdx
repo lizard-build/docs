@@ -141,7 +141,7 @@ lizard sandbox rm $SB
 | `Claude Code has no credential. Connect one of: …` | `lizard agents add claude` または `lizard agents add anthropic` を実行します。 |
 | `Claude rejected the credential (authentication_failed)` | トークンまたはキーが無効になっています。新しく作成して、もう一度追加してください。 |
 | `create` で Checkout リンク付きの HTTP 402 が返る | トライアルまたは Pro を開始します: `lizard billing start`。 |
-| `create` で `TRIAL_SANDBOX_SIZE`、`TRIAL_SANDBOX_REGION` または `SANDBOX_SIZE_NOT_ALLOWED` 付きの HTTP 403 が返る | トライアルでは US リージョンの Small sandbox しか使えません。`--size small` と US の `--region` を指定するか、すぐに Pro を始めます: `lizard billing start-now`。 |
+| `create` で `TRIAL_MEDIUM_RUNNING`、`TRIAL_SANDBOX_REGION` または `SANDBOX_SIZE_NOT_ALLOWED` 付きの HTTP 403 が返る | トライアルでは US リージョンで Mini と Small の sandbox、および同時に 1 台までの Medium を使えます。`--size small` と US の `--region` を指定するか、すぐに Pro を始めます: `lizard billing start-now`。 |
 | `create` で `SANDBOX_LIMIT_REACHED` 付きの HTTP 429 が返る | 実行中の sandbox がプランの vCPU の上限まで使っています。1 つを停止または一時停止するか、小さい `--size` を使うか、請求ページで上位のプランに移ってください。 |
 | タスクの途中で sandbox が消えた | 有効期間が切れました。次は `--timeout` を付けて作成するか、`lizard sandbox timeout` で延長してください。 |
 | 出力に Codex が出てくる | `--agent claude` なしでプロンプトが送られました。 |

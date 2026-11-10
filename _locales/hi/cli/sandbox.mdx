@@ -32,7 +32,7 @@ lizard sandbox rm <id> [flags]
 | फ्लैग | विवरण |
 |------|-------------|
 | `-t, --template <name>` | टेम्प्लेट (डिफ़ॉल्ट `base`)। उपलब्ध टेम्प्लेट: `base`, `interpreter`, `codex`, `desktop`, `desktop-camoufox` (सिर्फ़ US East), `opencode`, `pi`, `prime`, `claude`। सर्वर रीजन की लिस्ट से जाँच करता है |
-| `-s, --size <size>` | `small`, `medium` (डिफ़ॉल्ट; ट्रायल के दौरान `small`) या `large` |
+| `-s, --size <size>` | `mini`, `small`, `medium` (डिफ़ॉल्ट; ट्रायल के दौरान `small`) या `large`। `mini` सिर्फ़ `base`, `claude`, `codex` और `interpreter` टेम्पलेट के साथ, बिना वॉल्यूम के, चलता है |
 | `--timeout <ms>` | लाइफटाइम मिलीसेकंड में (डिफ़ॉल्ट `300000`, यानी पाँच मिनट); `0` एक्सपायरी बंद कर देता है |
 | `--region <code>` | वह रीजन जिसमें सैंडबॉक्स बनाना है |
 | `--snapshot <id>` | सेव किए गए स्नैपशॉट से शुरू करें; `--size` के साथ नहीं दिया जा सकता |
@@ -50,7 +50,7 @@ Lizard हर साइज़ का बिल चलने के दौरा�
 
 सैंडबॉक्स के अंदर चलने वाली कोई भी चीज़ `--with-token` से इंस्टॉल हुई की पढ़ सकती है और सैंडबॉक्स डिलीट होने तक उसे सैंडबॉक्स के प्रोजेक्ट पर इस्तेमाल कर सकती है।
 
-जब तक आपका ट्रायल या प्लान शुरू नहीं होता, `create` Checkout लिंक के साथ HTTP 402 लौटाता है; `lizard billing start` चलाएँ। लिमिट्स चल रहे सैंडबॉक्स के vCPU गिनती हैं: ट्रायल के दौरान 8, पहले पेड इनवॉइस के बाद Pro पर 40, Pro 5x पर 220 और Pro 20x पर 1,200। Pro 5x और Pro 20x पर sandbox स्टार्ट की कोई सीमा नहीं है। पॉज़ किए गए सैंडबॉक्स इस गिनती में नहीं आते। ट्रायल के दौरान सैंडबॉक्स `small` होना चाहिए और US रीजन में होना चाहिए, इसलिए एक साथ 4 तक चलते हैं। `medium` पर `TRIAL_SANDBOX_SIZE` के साथ HTTP 403 मिलता है, और किसी दूसरे रीजन पर `TRIAL_SANDBOX_REGION` के साथ HTTP 403। `large` पर `SANDBOX_SIZE_NOT_ALLOWED` के साथ HTTP 403 मिलता है, और Large सैंडबॉक्स को रिज़्यूम, फ़ोर्क या रिस्टोर करने पर भी यही मिलता है। vCPU लिमिट पार होने पर `create` `SANDBOX_LIMIT_REACHED` के साथ HTTP 429 लौटाता है। [लिमिट्स](/platform/limits#sandbox-account-limits) देखें।
+जब तक आपका ट्रायल या प्लान शुरू नहीं होता, `create` Checkout लिंक के साथ HTTP 402 लौटाता है; `lizard billing start` चलाएँ। लिमिट्स चल रहे सैंडबॉक्स के vCPU गिनती हैं: ट्रायल के दौरान 8, पहले पेड इनवॉइस के बाद Pro पर 40, Pro 5x पर 220 और Pro 20x पर 1,200। Pro 5x और Pro 20x पर sandbox स्टार्ट की कोई सीमा नहीं है। पॉज़ किए गए सैंडबॉक्स इस गिनती में नहीं आते। ट्रायल के दौरान सैंडबॉक्स US रीजन में चलता है और `mini` या `small` होता है, या एक समय पर एक `medium`, इसलिए एक साथ 8 Mini या 4 Small तक चलते हैं। एक साथ चल रहे दूसरे `medium` पर `TRIAL_MEDIUM_RUNNING` के साथ HTTP 403 मिलता है, और किसी दूसरे रीजन पर `TRIAL_SANDBOX_REGION` के साथ HTTP 403। `large` पर `SANDBOX_SIZE_NOT_ALLOWED` के साथ HTTP 403 मिलता है, और Large सैंडबॉक्स को रिज़्यूम, फ़ोर्क या रिस्टोर करने पर भी यही मिलता है। vCPU लिमिट पार होने पर `create` `SANDBOX_LIMIT_REACHED` के साथ HTTP 429 लौटाता है। [लिमिट्स](/platform/limits#sandbox-account-limits) देखें।
 
 ### `lizard sandbox list`
 
