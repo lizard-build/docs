@@ -141,7 +141,7 @@ Una pausa completada detiene los cargos de cómputo; el almacenamiento en Persis
 | `Claude Code has no credential. Connect one of: …` | Ejecuta `lizard agents add claude` o `lizard agents add anthropic`. |
 | `Claude rejected the credential (authentication_failed)` | El token o la clave ya no es válido. Crea uno nuevo y vuelve a añadirlo. |
 | HTTP 402 con un enlace de Checkout en `create` | Empieza la prueba o Pro: `lizard billing start`. |
-| HTTP 403 con `TRIAL_SANDBOX_SIZE`, `TRIAL_SANDBOX_REGION` o `SANDBOX_SIZE_NOT_ALLOWED` en `create` | La prueba solo permite sandboxes Small en regiones de EE. UU. Usa `--size small` y una `--region` de EE. UU., o empieza Pro ya: `lizard billing start-now`. |
+| HTTP 403 con `TRIAL_MEDIUM_RUNNING`, `TRIAL_SANDBOX_REGION` o `SANDBOX_SIZE_NOT_ALLOWED` en `create` | La prueba permite sandboxes Mini y Small, más un Medium a la vez, en regiones de EE. UU. Usa `--size small` y una `--region` de EE. UU., o empieza Pro ya: `lizard billing start-now`. |
 | HTTP 429 con `SANDBOX_LIMIT_REACHED` en `create` | Tus sandboxes en marcha usan todo el límite de vCPU de tu plan. Detén o pausa uno, usa un `--size` más pequeño o pasa a un plan más grande en la página Facturación. |
 | El sandbox desaparece a mitad de una tarea | Se agotó su duración. Crea el siguiente con `--timeout` o amplíala con `lizard sandbox timeout`. |
 | La salida menciona Codex | El prompt salió sin `--agent claude`. |

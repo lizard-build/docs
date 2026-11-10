@@ -64,7 +64,7 @@ Lizard は超過分を月末にまとめてではなく、たまるたびに請�
 
 トライアルは 1 つのアカウントにつき 1 回、1 枚のカードにつき 1 回です。アカウントで以前にトライアルを使ったことがある場合、Pro はすぐに始まり、その日に $19 が請求されます。カードで以前にトライアルを使ったことがある場合、トライアルは始まらず、何も請求されません。請求ページから月額 $19 の Pro を開始してください。
 
-トライアルでは Pro のすべての機能を使えますが、最初の請求書の支払いまでは[上限](#limits)が低くなります。それまでの間、Sandboxes はダッシュボード、Lizard CLI、Lizard SDK、Lizard MCP のどれから作成しても、US リージョンの Small サイズでしか動かず、同時に実行できるのは Small 4 個（8 vCPU）までです。サイズを指定しない作成は Small になります。Medium の sandbox を名前で指定したとき、またはスナップショットや fork から作ったときは HTTP 403 が返り、`code` は `TRIAL_SANDBOX_SIZE` になります。Large の sandbox を作成、再開、fork、復元したときは、どれも HTTP 403 が返り、`code` は `SANDBOX_SIZE_NOT_ALLOWED` になります。US 以外のリージョンを指定すると HTTP 403 が返り、`code` は `TRIAL_SANDBOX_REGION` になります。**Start Pro now** で他のサイズとリージョンが使えるようになり、Pro の上限が適用されます。
+トライアルでは Pro のすべての機能を使えますが、最初の請求書の支払いまでは[上限](#limits)が低くなります。それまでの間、Sandboxes はダッシュボード、Lizard CLI、Lizard SDK、Lizard MCP のどれから作成しても、US リージョンでしか動かず、同時に実行できるのは 8 vCPU までです。Mini と Small の Sandboxes に加えて、Medium を同時に 1 個まで使えます。サイズを指定しない作成は Small になります。2 個目の Medium の sandbox を同時に実行しようとすると、作成、fork、再開のどれでも HTTP 403 が返り、`code` は `TRIAL_MEDIUM_RUNNING` になります。Large の sandbox を作成、再開、fork、復元したときは、どれも HTTP 403 が返り、`code` は `SANDBOX_SIZE_NOT_ALLOWED` になります。US 以外のリージョンを指定すると HTTP 403 が返り、`code` は `TRIAL_SANDBOX_REGION` になります。**Start Pro now** で他のサイズとリージョンが使えるようになり、Pro の上限が適用されます。
 
 トライアル中に Pro 5x や Pro 20x に移るには、まず **Start Pro now** を選び、そのあと[プランを変更](#changing-plans)します。
 
@@ -94,12 +94,12 @@ Lizard は超過分を月末にまとめてではなく、たまるたびに請�
 
 | | トライアル（最初の請求書の支払いまで） | Pro | Pro 5x | Pro 20x |
 | --- | ---: | ---: | ---: | ---: |
-| 同時に実行できる Sandboxes | 8 vCPU（Small 4 個まで） | 40 vCPU | 220 vCPU | 1,200 vCPU |
-| Sandboxes のサイズ | Small のみ（2 vCPU） | Large まで（8 vCPU） | Large まで（8 vCPU） | Large まで（8 vCPU） |
+| 同時に実行できる Sandboxes | 8 vCPU（Mini 8 個または Small 4 個まで） | 40 vCPU | 220 vCPU | 1,200 vCPU |
+| Sandboxes のサイズ | Mini、Small と Medium 1 個（4 vCPU） | Large まで（8 vCPU） | Large まで（8 vCPU） | Large まで（8 vCPU） |
 | Sandboxes の 1 分あたりの起動数 | 6 | 無制限 | 無制限 | 無制限 |
 | アプリあたりのレプリカ数 | 1 | 5 | 5 | 5 |
 
-Sandboxes の上限は、sandbox の数ではなく、実行中の sandbox の vCPU で数えます。Small は 2 vCPU、Medium は 4、Large は 8 を使うため、40 vCPU では Small 20 個、Medium 10 個、Large 5 個のいずれかを同時に実行できます。トライアルの 8 vCPU では Small を 4 個まで実行できます。Pro の上限は最初の請求書の支払いから適用されます。**Start Pro now** による支払いも含みます。Pro 5x と Pro 20x は初日から有料なので、上限もすぐに適用されます。1 時間あたりと 1 日あたりの起動レートや、その他の上限は[制限](/platform/limits#sandbox-account-limits)を参照してください。
+Sandboxes の上限は、sandbox の数ではなく、実行中の sandbox の vCPU で数えます。Mini は 1 vCPU、Small は 2、Medium は 4、Large は 8 を使うため、40 vCPU では Mini 40 個、Small 20 個、Medium 10 個、Large 5 個のいずれかを同時に実行できます。トライアルの 8 vCPU では Mini を 8 個まで、または Small を 4 個まで実行できます。Pro の上限は最初の請求書の支払いから適用されます。**Start Pro now** による支払いも含みます。Pro 5x と Pro 20x は初日から有料なので、上限もすぐに適用されます。1 時間あたりと 1 日あたりの起動レートや、その他の上限は[制限](/platform/limits#sandbox-account-limits)を参照してください。
 
 <span id="changing-plans" />
 

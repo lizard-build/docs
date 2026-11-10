@@ -32,7 +32,7 @@ Erstellt eine Sandbox und gibt ihre ID aus.
 | Flag | Beschreibung |
 |------|-------------|
 | `-t, --template <name>` | Template (Standard `base`). Aktivierte Templates: `base`, `interpreter`, `codex`, `desktop`, `desktop-camoufox` (nur US East), `opencode`, `pi`, `prime`, `claude`. Der Server prüft die Liste der Region |
-| `-s, --size <size>` | `small`, `medium` (Standard; in der Testphase `small`) oder `large` |
+| `-s, --size <size>` | `mini`, `small`, `medium` (Standard; in der Testphase `small`) oder `large`. `mini` geht nur mit den Vorlagen `base`, `claude`, `codex` und `interpreter`, ohne Volume |
 | `--timeout <ms>` | Lebensdauer in Millisekunden (Standard `300000`, fünf Minuten); `0` deaktiviert den Ablauf |
 | `--region <code>` | Region, in der die Sandbox erstellt wird |
 | `--snapshot <id>` | Aus einem gespeicherten Snapshot starten; kann nicht mit `--size` kombiniert werden |
@@ -50,7 +50,7 @@ Lizard rechnet jede Größe sekundengenau zum Festpreis ab, solange die Sandbox 
 
 Alles in der Sandbox kann den Key lesen, den `--with-token` installiert, und ihn bis zum Löschen der Sandbox für das Projekt der Sandbox nutzen.
 
-Bis deine Testphase oder dein Plan beginnt, gibt `create` HTTP 402 mit einem Checkout-Link zurück; führe `lizard billing start` aus. Die Limits zählen die vCPU laufender Sandboxes: 8 während der Testphase, 40 bei Pro nach der ersten bezahlten Rechnung, 220 bei Pro 5x und 1,200 bei Pro 20x. Pro 5x und Pro 20x haben kein Limit für Sandbox-Starts. Pausierte Sandboxes zählen nicht mit. In der Testphase muss eine Sandbox `small` sein und in einer US-Region laufen, daher sind höchstens 4 gleichzeitig möglich. `medium` gibt HTTP 403 mit `TRIAL_SANDBOX_SIZE` zurück, eine andere Region HTTP 403 mit `TRIAL_SANDBOX_REGION`. `large` gibt HTTP 403 mit `SANDBOX_SIZE_NOT_ALLOWED` zurück, ebenso das Fortsetzen, Forken oder Wiederherstellen einer Large-Sandbox. Über dem vCPU-Limit gibt `create` HTTP 429 mit `SANDBOX_LIMIT_REACHED` zurück. Siehe [Limits](/platform/limits#sandbox-account-limits).
+Bis deine Testphase oder dein Plan beginnt, gibt `create` HTTP 402 mit einem Checkout-Link zurück; führe `lizard billing start` aus. Die Limits zählen die vCPU laufender Sandboxes: 8 während der Testphase, 40 bei Pro nach der ersten bezahlten Rechnung, 220 bei Pro 5x und 1,200 bei Pro 20x. Pro 5x und Pro 20x haben kein Limit für Sandbox-Starts. Pausierte Sandboxes zählen nicht mit. In der Testphase läuft eine Sandbox in einer US-Region und ist `mini` oder `small`, oder `medium` mit höchstens einer zur selben Zeit, daher laufen höchstens 8 Mini oder 4 Small gleichzeitig. Eine zweite gleichzeitig laufende `medium` gibt HTTP 403 mit `TRIAL_MEDIUM_RUNNING` zurück, eine andere Region HTTP 403 mit `TRIAL_SANDBOX_REGION`. `large` gibt HTTP 403 mit `SANDBOX_SIZE_NOT_ALLOWED` zurück, ebenso das Fortsetzen, Forken oder Wiederherstellen einer Large-Sandbox. Über dem vCPU-Limit gibt `create` HTTP 429 mit `SANDBOX_LIMIT_REACHED` zurück. Siehe [Limits](/platform/limits#sandbox-account-limits).
 
 ### `lizard sandbox list`
 

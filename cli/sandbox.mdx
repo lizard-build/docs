@@ -28,7 +28,7 @@ Create a sandbox and print its ID.
 | Flag | Description |
 |------|-------------|
 | `-t, --template <name>` | Template (default `base`). Enabled templates: `base`, `interpreter`, `codex`, `desktop`, `desktop-camoufox` (US East only), `opencode`, `pi`, `prime`, `claude`. The server checks the region's list |
-| `-s, --size <size>` | `small`, `medium` (default; `small` during the trial), or `large` |
+| `-s, --size <size>` | `mini`, `small`, `medium` (default; `small` during the trial), or `large`. `mini` works only with the `base`, `claude`, `codex` and `interpreter` templates, without a volume |
 | `--timeout <ms>` | Lifetime in milliseconds (default `300000`, five minutes); `0` disables expiration |
 | `--region <code>` | Region to create the sandbox in |
 | `--snapshot <id>` | Start from a saved snapshot; can't be combined with `--size` |
@@ -46,7 +46,7 @@ Lizard bills each size per second at a flat rate while it runs, including idle t
 
 Anything in the sandbox can read the key that `--with-token` installs and use it on the sandbox's project until the sandbox is deleted.
 
-Until your trial or plan starts, `create` returns HTTP 402 with a Checkout link; run `lizard billing start`. Limits count the vCPU of running sandboxes: 8 during the trial, 40 on Pro after the first paid invoice, 220 on Pro 5x and 1,200 on Pro 20x. Pro 5x and Pro 20x have no limit on sandbox starts. Paused sandboxes don't count. During the trial, a sandbox must be `small` and in a US region, so up to 4 run at once. `medium` returns HTTP 403 with `TRIAL_SANDBOX_SIZE`, and another region returns HTTP 403 with `TRIAL_SANDBOX_REGION`. `large` returns HTTP 403 with `SANDBOX_SIZE_NOT_ALLOWED`, and so does resuming, forking or restoring a Large sandbox. Over the vCPU limit, `create` returns HTTP 429 with `SANDBOX_LIMIT_REACHED`. See [Limits](/platform/limits#sandbox-account-limits).
+Until your trial or plan starts, `create` returns HTTP 402 with a Checkout link; run `lizard billing start`. Limits count the vCPU of running sandboxes: 8 during the trial, 40 on Pro after the first paid invoice, 220 on Pro 5x and 1,200 on Pro 20x. Pro 5x and Pro 20x have no limit on sandbox starts. Paused sandboxes don't count. During the trial, a sandbox runs in a US region and is `mini` or `small`, or `medium` one at a time, so up to 8 Mini or 4 Small run at once. A second `medium` running at once returns HTTP 403 with `TRIAL_MEDIUM_RUNNING`, and another region returns HTTP 403 with `TRIAL_SANDBOX_REGION`. `large` returns HTTP 403 with `SANDBOX_SIZE_NOT_ALLOWED`, and so does resuming, forking or restoring a Large sandbox. Over the vCPU limit, `create` returns HTTP 429 with `SANDBOX_LIMIT_REACHED`. See [Limits](/platform/limits#sandbox-account-limits).
 
 ### `lizard sandbox list`
 
