@@ -64,7 +64,7 @@ Lizard は超過分を月末にまとめてではなく、たまるたびに請�
 
 トライアルは 1 つのアカウントにつき 1 回、1 枚のカードにつき 1 回です。アカウントで以前にトライアルを使ったことがある場合、Pro はすぐに始まり、その日に $19 が請求されます。カードで以前にトライアルを使ったことがある場合、トライアルは始まらず、何も請求されません。請求ページから月額 $19 の Pro を開始してください。
 
-トライアルでは Pro のすべての機能を使えますが、最初の請求書の支払いまでは[上限](#limits)が低くなります。それまでの間、Sandboxes はダッシュボード、Lizard CLI、Lizard SDK、Lizard MCP のどれから作成しても、US リージョンでしか動かず、同時に実行できるのは Small 1 個と Mini 2 個までです。サイズを指定しない作成は Small になります。2 個目の Small または 3 個目の Mini を同時に実行しようとすると、作成、fork、再開のどれでも HTTP 403 が返り、`code` は `TRIAL_SIZE_RUNNING` になります。1 個を一時停止するか削除してください。Small の場合は代わりに Mini を起動することもできます。Medium の sandbox では HTTP 403 が返り、`code` は `TRIAL_SANDBOX_SIZE` になります。Large では `SANDBOX_SIZE_NOT_ALLOWED` になります。US 以外のリージョンを指定すると HTTP 403 が返り、`code` は `TRIAL_SANDBOX_REGION` になります。**Start Pro now** で他のサイズとリージョンが使えるようになり、Pro の上限が適用されます。
+トライアルでは Pro のすべての機能を使えますが、最初の請求書の支払いまでは[上限](#limits)が低くなります。それまでの間、Sandboxes はダッシュボード、Lizard CLI、Lizard SDK、Lizard MCP のどれから作成しても、US リージョンでしか動かず、同時に実行できるのは Small 1 個と Mini 2 個までです。サイズを指定しない作成は Small になります。2 個目の Small または 3 個目の Mini を同時に実行しようとすると、作成、fork、再開のどれでも HTTP 403 が返り、`code` は `TRIAL_SIZE_RUNNING` になります。1 個を一時停止するか削除してください。Small の場合は代わりに Mini を起動することもできます。Medium の sandbox では HTTP 403 が返り、`code` は `TRIAL_SANDBOX_SIZE` になります。Large では `SANDBOX_SIZE_NOT_ALLOWED` になります。US 以外のリージョンを指定すると HTTP 403 が返り、`code` は `TRIAL_SANDBOX_REGION` になります。**Start Pro now** で他のサイズとリージョンが使えるようになり、Pro の上限が適用されます。トライアルの sandbox は起動から遅くとも 1 時間後に削除されます。有効期間を指定しない作成やフォークは 1 時間になり、それより長い指定は HTTP 403 (`code` は `TRIAL_SANDBOX_LIFETIME`) を返します。2026-11-10 より前に作成された sandbox には引き続き期限がありません。より長い有効期間も **Start Pro now** で使えるようになります。
 
 トライアル中に Pro 5x や Pro 20x に移るには、まず **Start Pro now** を選び、そのあと[プランを変更](#changing-plans)します。
 
@@ -96,6 +96,7 @@ Lizard は超過分を月末にまとめてではなく、たまるたびに請�
 | --- | ---: | ---: | ---: | ---: |
 | 同時に実行できる Sandboxes | 同時に Small 1 個 + Mini 2 個 | 40 vCPU | 220 vCPU | 1,200 vCPU |
 | Sandboxes のサイズ | Mini と Small | Large まで（8 vCPU） | Large まで（8 vCPU） | Large まで（8 vCPU） |
+| Sandbox の有効期間 | 最長 1 時間 | 無制限 | 無制限 | 無制限 |
 | Sandboxes の 1 分あたりの起動数 | 6 | 無制限 | 無制限 | 無制限 |
 | アプリあたりのレプリカ数 | 1 | 5 | 5 | 5 |
 

@@ -33,7 +33,7 @@ Erstellt eine Sandbox und gibt ihre ID aus.
 |------|-------------|
 | `-t, --template <name>` | Template (Standard `base`). Aktivierte Templates: `base`, `interpreter`, `codex`, `desktop`, `desktop-camoufox` (nur US East), `opencode`, `pi`, `prime`, `claude`. Der Server prüft die Liste der Region |
 | `-s, --size <size>` | `mini`, `small`, `medium` (Standard; in der Testphase `small`) oder `large`. `mini` geht nur mit den Vorlagen `base`, `claude`, `codex` und `interpreter`, ohne Volume |
-| `--timeout <ms>` | Lebensdauer in Millisekunden (Standard `300000`, fünf Minuten); `0` deaktiviert den Ablauf |
+| `--timeout <ms>` | Lebensdauer in Millisekunden (Standard `300000`, fünf Minuten); `0` deaktiviert den Ablauf. In der Testphase höchstens `3600000` (1 Stunde), und `0` ergibt 1 Stunde |
 | `--region <code>` | Region, in der die Sandbox erstellt wird |
 | `--snapshot <id>` | Aus einem gespeicherten Snapshot starten; kann nicht mit `--size` kombiniert werden |
 | `--volume <name-or-id>` | Ein [Persistent Volume](/cli/volume) anhängen |
@@ -50,7 +50,7 @@ Lizard rechnet jede Größe sekundengenau zum Festpreis ab, solange die Sandbox 
 
 Alles in der Sandbox kann den Key lesen, den `--with-token` installiert, und ihn bis zum Löschen der Sandbox für das Projekt der Sandbox nutzen.
 
-Bis deine Testphase oder dein Plan beginnt, gibt `create` HTTP 402 mit einem Checkout-Link zurück; führe `lizard billing start` aus. Die Limits zählen die vCPU laufender Sandboxes: 40 bei Pro nach der ersten bezahlten Rechnung, 220 bei Pro 5x und 1,200 bei Pro 20x. Pro 5x und Pro 20x haben kein Limit für Sandbox-Starts. Pausierte Sandboxes zählen nicht mit. In der Testphase läuft eine Sandbox in einer US-Region und ist `small` oder `mini`, 1 Small und 2 Mini zur selben Zeit. Eine zweite gleichzeitig laufende `small` oder eine dritte `mini`, ob du sie erstellst, forkst oder fortsetzt, gibt HTTP 403 mit `TRIAL_SIZE_RUNNING` zurück; pausiere oder lösche eine, oder starte statt einer `small` eine `mini`. `medium` gibt HTTP 403 mit `TRIAL_SANDBOX_SIZE` zurück, `large` HTTP 403 mit `SANDBOX_SIZE_NOT_ALLOWED` und eine andere Region HTTP 403 mit `TRIAL_SANDBOX_REGION`. Über dem vCPU-Limit gibt `create` HTTP 429 mit `SANDBOX_LIMIT_REACHED` zurück. Siehe [Limits](/platform/limits#sandbox-account-limits).
+Bis deine Testphase oder dein Plan beginnt, gibt `create` HTTP 402 mit einem Checkout-Link zurück; führe `lizard billing start` aus. Die Limits zählen die vCPU laufender Sandboxes: 40 bei Pro nach der ersten bezahlten Rechnung, 220 bei Pro 5x und 1,200 bei Pro 20x. Pro 5x und Pro 20x haben kein Limit für Sandbox-Starts. Pausierte Sandboxes zählen nicht mit. In der Testphase läuft eine Sandbox in einer US-Region und ist `small` oder `mini`, 1 Small und 2 Mini zur selben Zeit. Eine zweite gleichzeitig laufende `small` oder eine dritte `mini`, ob du sie erstellst, forkst oder fortsetzt, gibt HTTP 403 mit `TRIAL_SIZE_RUNNING` zurück; pausiere oder lösche eine, oder starte statt einer `small` eine `mini`. `medium` gibt HTTP 403 mit `TRIAL_SANDBOX_SIZE` zurück, `large` HTTP 403 mit `SANDBOX_SIZE_NOT_ALLOWED` und eine andere Region HTTP 403 mit `TRIAL_SANDBOX_REGION`. Über dem vCPU-Limit gibt `create` HTTP 429 mit `SANDBOX_LIMIT_REACHED` zurück. Siehe [Limits](/platform/limits#sandbox-account-limits). Eine Sandbox in der Testphase wird spätestens 1 Stunde nach ihrem Start gelöscht: Ohne `--timeout` (oder mit `0`) erhält sie 1 Stunde, und ein `--timeout` über `3600000` gibt HTTP 403 mit `TRIAL_SANDBOX_LIFETIME` zurück.
 
 ### `lizard sandbox list`
 
@@ -71,7 +71,7 @@ Löscht eine Sandbox (Aliasse `delete` und `kill`).
 
 ### `lizard sandbox timeout <id> <ms>`
 
-Setzt eine neue Lebensdauer in Millisekunden, gerechnet ab jetzt (mindestens `1000`). Das ist kein Leerlauf-Timer: Das Ausführen von Befehlen setzt ihn nicht zurück.
+Setzt eine neue Lebensdauer in Millisekunden, gerechnet ab jetzt (mindestens `1000`). Das ist kein Leerlauf-Timer: Das Ausführen von Befehlen setzt ihn nicht zurück. In der Testphase kann die Frist nicht über 1 Stunde nach der Erstellung der Sandbox hinaus gesetzt werden; eine spätere gibt HTTP 403 mit `TRIAL_SANDBOX_LIFETIME` und `latestExpiresAt` zurück.
 
 ### `lizard sandbox exec <id> -- <command>`
 

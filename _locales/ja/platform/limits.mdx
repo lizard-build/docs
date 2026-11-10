@@ -7,7 +7,7 @@ description: "Lizard におけるアプリのレプリカ上限、sandbox のサ
 
 # 制限
 
-Lizard (lizard.build) では、アプリはPro の初回請求の支払い後はサービスあたり最大 5 レプリカ、トライアル中は 1 レプリカで実行されます。sandbox の上限は sandbox の数ではなく vCPU で数えます。同時に実行できる sandbox の vCPU は、Pro で最大 40、Pro 5x で 220、Pro 20x で 1,200 です。Pro、Pro 5x、Pro 20x は sandbox の起動数に制限がありません。トライアルでは Small 1 個と Mini 2 個の sandbox を同時に実行でき、US リージョンに限られます。sandbox のサイズは Mini（1 vCPU / 2 GB）から Large（8 vCPU / 16 GB）まであり、sandbox の送信トラフィックは直近 30 日間でアカウントあたり 2 TB まで含まれます。ワークスペースの所有者は、1 つのワークスペースに[ワークスペースの上限](#workspace-limits)を設定することもできます。制限は、リソース、プラン、アカウントによって異なります: レプリカごとの設定は、サービスまたはアカウント全体で利用可能な合計ではありません。ワークロードのサイズを決める前に、現在のプランと、作成またはスケールリクエストの結果を確認してください。
+Lizard (lizard.build) では、アプリはPro の初回請求の支払い後はサービスあたり最大 5 レプリカ、トライアル中は 1 レプリカで実行されます。sandbox の上限は sandbox の数ではなく vCPU で数えます。同時に実行できる sandbox の vCPU は、Pro で最大 40、Pro 5x で 220、Pro 20x で 1,200 です。Pro、Pro 5x、Pro 20x は sandbox の起動数に制限がありません。トライアルでは Small 1 個と Mini 2 個の sandbox を同時に実行でき、US リージョンに限られます。sandbox のサイズは Mini（1 vCPU / 2 GB）から Large（8 vCPU / 16 GB）まであり、sandbox の送信トラフィックは直近 30 日間でアカウントあたり 2 TB まで含まれます。ワークスペースの所有者は、1 つのワークスペースに[ワークスペースの上限](#workspace-limits)を設定することもできます。制限は、リソース、プラン、アカウントによって異なります: レプリカごとの設定は、サービスまたはアカウント全体で利用可能な合計ではありません。ワークロードのサイズを決める前に、現在のプランと、作成またはスケールリクエストの結果を確認してください。トライアル中の sandbox は、起動から遅くとも 1 時間後に削除されます。
 
 <span id="applications" />
 
@@ -38,7 +38,7 @@ Lizard (lizard.build) では、アプリはPro の初回請求の支払い後は
 | Medium（既定、トライアル中を除く） | 4 vCPU / 8 GB | 20 GB | 1 時間あたり $0.0324 |
 | Large | 8 vCPU / 16 GB | 50 GB | 1 時間あたり $0.0648 |
 
-CPU とメモリは料金に含まれます。Persistent Volumes は別途課金されます。Mini は `base`、`claude`、`codex`、`interpreter` テンプレートからのみ、Persistent Volumes を接続せずに起動できます。それ以外では、作成は HTTP 400 を返し、`code` は `SANDBOX_SIZE_NOT_ALLOWED` になります。トライアル中は Small が既定のサイズで、同時に実行できるのは Small 1 個と Mini 2 個まで、Medium と Large は最初の請求書の支払い後に使えるようになり、sandbox は US リージョンでのみ動きます。[請求](/platform/billing#trial)を参照してください。
+CPU とメモリは料金に含まれます。Persistent Volumes は別途課金されます。Mini は `base`、`claude`、`codex`、`interpreter` テンプレートからのみ、Persistent Volumes を接続せずに起動できます。それ以外では、作成は HTTP 400 を返し、`code` は `SANDBOX_SIZE_NOT_ALLOWED` になります。トライアル中は Small が既定のサイズで、同時に実行できるのは Small 1 個と Mini 2 個まで、Medium と Large は最初の請求書の支払い後に使えるようになり、sandbox は US リージョンでのみ動きます。[請求](/platform/billing#trial)を参照してください。トライアル中の sandbox は、起動から遅くとも 1 時間後に削除されます。
 
 <span id="sandbox-account-limits" />
 
@@ -70,6 +70,7 @@ Pro で Large 3 個と Small 6 個を実行すると、40 vCPU のうち 36 を�
 - 起動とは新しいサンドボックスのことです。再開は起動に含まれません。Lizard 側で失敗した作成は数えません。
 - 上限を超えると、作成と再開は HTTP 429 を返し、`code` は `SANDBOX_LIMIT_REACHED`（同時実行の vCPU）または `SANDBOX_RATE_LIMITED`（起動数）になります。起動数による拒否には `Retry-After` ヘッダーが付きます。
 - トライアル中に 2 個目の Small または 3 個目の Mini を同時に実行しようとすると、作成、fork、再開のどれでも HTTP 403 が返り、`code` は `TRIAL_SIZE_RUNNING` になります。本文には `size`、`sizeLimit`、`allowedSizes`、`sizeLimits` が含まれます。1 個を一時停止するか削除してください。Small の場合は代わりに Mini を起動することもできます。Medium のサンドボックスでは `TRIAL_SANDBOX_SIZE` 付きの HTTP 403 が返り（`allowedSizes` は `["small", "mini"]`）、Large では `SANDBOX_SIZE_NOT_ALLOWED` 付きの HTTP 403、US 以外のリージョンでは `TRIAL_SANDBOX_REGION` 付きの HTTP 403 が返ります。
+- トライアル中、有効期間が 1 時間を超える作成やフォークは HTTP 403 を返し、`code` は `TRIAL_SANDBOX_LIFETIME`、`maxTimeoutMs: 3600000` です。[有効期間](#sandbox-lifetime)を参照してください。
 - `GET /api/sandboxes/limits` は、上限と現在実行中のものを返します。`running`（サンドボックスの数）と `runningVcpu` が含まれます。トライアル中は `sizeLimits`（`{"small": 1, "mini": 2}`）と `runningBySize` も返します。
 - Enterprise には同時に実行できるサンドボックス数の固定の上限はありません。お客様ごとの契約でワークスペースあたりの上限を定めます。実行中、一時停止中、クラッシュしたサンドボックスがすべて数に入ります。超えると、作成と fork は HTTP 429 を返し、`code` は `SANDBOX_LIMIT_REACHED` になります。1 人のユーザーが作成できるのは、リージョンごとに 1 分あたり最大 120 個です。
 - ダッシュボードの **New Sandbox** の横に、使用中の vCPU と vCPU の上限が表示されます。同時に 1,200 vCPU を超えて必要な場合は、Enterprise についてお問い合わせください。
@@ -119,9 +120,12 @@ sandbox の送信トラフィックには GB ごとの別料金はありませ�
 | Lizard SDK の既定の有効期間 | 300000 ms、5 分 |
 | 明示的な有効期間の範囲 | 0 から 2147483647 までの整数ミリ秒 |
 | 有効期間の更新 | 1000 ms 以上。アイドルタイマーではありません |
+| トライアルの有効期間 | sandbox の起動から最長 1 時間 (3600000 ms)。有効期間の指定がなければ 1 時間 |
 | Persistent Volumes の接続 | 一度に 1 つのサンドボックス、ボリュームのノード上 |
 
 CLI の既定値も 5 分です。ダッシュボードは既定で期限を設定しません。コマンドを実行しても期限はリセットされません。一時停止、スナップショット、fork、それぞれで保持する状態については、sandbox の [ライフサイクル](/sandboxes#lifecycle) を参照してください。
+
+トライアル中、すべての sandbox は起動から遅くとも 1 時間後に削除されます。有効期間を指定しない作成やフォーク (`timeoutMs` が `0`、未指定、または Never) は 1 時間になります。それより長い有効期間は HTTP 403 を返し、`code` は `TRIAL_SANDBOX_LIFETIME`、`maxTimeoutMs: 3600000` です。`POST /api/sandboxes/{id}/timeout` では、トライアルの sandbox の期限を作成から 1 時間より後に動かせません。この 403 には `latestExpiresAt` も含まれます。2026-11-10 より前に作成された sandbox には引き続き期限がありません。より長い有効期間は、最初の支払い済み請求書の後に使えるようになります。
 
 <span id="workspace-limits" />
 

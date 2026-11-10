@@ -43,7 +43,7 @@ The command prints the sandbox ID, such as `genuine-toddler-jasj`. Keep it in a 
 
 - `--timeout 3600000` gives the sandbox one hour. The CLI default is five minutes, after which Lizard deletes the sandbox and its files, even in the middle of a task. Extend a running one with `lizard sandbox timeout $SB 3600000`.
 - The `claude` template has Node.js 22, a pinned Claude Code release, git, Python 3, ripgrep, curl, jq, unzip and Lizard CLI. Check the Claude Code version with `lizard sandbox exec $SB -- claude --version`.
-- The default size is Medium (4 vCPU, 8 GB). Pass `--size small` or `--size large` to change it. During the trial, a sandbox is Small or Mini and runs in a US region, 1 Small and 2 Mini at a time.
+- The default size is Medium (4 vCPU, 8 GB). Pass `--size small` or `--size large` to change it. During the trial, a sandbox is Small or Mini and runs in a US region, 1 Small and 2 Mini at a time, and is deleted 1 hour after it starts at the latest.
 
 ## Put your code in the sandbox
 
@@ -120,6 +120,7 @@ A successful pause stops compute charges; storage in Persistent Volumes continue
 | `Claude rejected the credential (authentication_failed)` | The token or key is no longer valid. Create a new one and add it again. |
 | HTTP 402 with a Checkout link on `create` | Start the trial or Pro: `lizard billing start`. |
 | HTTP 403 with `TRIAL_SIZE_RUNNING`, `TRIAL_SANDBOX_SIZE`, `TRIAL_SANDBOX_REGION` or `SANDBOX_SIZE_NOT_ALLOWED` on `create` | The trial runs 1 Small and 2 Mini sandboxes at a time, in US regions. Pause or delete a running one, use `--size small` (or `--size mini`) and a US `--region`, or start Pro now: `lizard billing start-now`. |
+| HTTP 403 with `TRIAL_SANDBOX_LIFETIME` on `create` or `timeout` | Trial sandboxes live 1 hour or less, then they are deleted. Pass `--timeout 3600000` or less, or start Pro now: `lizard billing start-now`. |
 | HTTP 429 with `SANDBOX_LIMIT_REACHED` on `create` | Your running sandboxes use your plan's vCPU limit. Stop or pause one, use a smaller `--size`, or move to a bigger plan on the Billing page. |
 | The sandbox is gone in the middle of a task | Its lifetime ran out. Create the next one with `--timeout`, or extend it with `lizard sandbox timeout`. |
 | The output mentions Codex | The prompt went out without `--agent claude`. |

@@ -7,7 +7,7 @@ description: "Replikatlimits für Apps, Sandbox-Größen und Stundenpreise, wie 
 
 # Limits
 
-Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung mit bis zu 5 Replikaten pro Service, während der Testphase mit 1. Sandbox-Limits zählen vCPU, nicht Sandboxes: Pro führt bis zu 40 vCPU an Sandboxes gleichzeitig aus, Pro 5x 220 und Pro 20x 1,200. Pro, Pro 5x und Pro 20x haben kein Limit für Sandbox-Starts. Die Testphase erlaubt 1 Small- und 2 Mini-Sandboxes zur selben Zeit, nur in US-Regionen. Die Sandbox-Größen reichen von Mini (1 vCPU / 2 GB) bis Large (8 vCPU / 16 GB), und ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum von 30 Tagen inklusive. Der Inhaber eines Workspace kann außerdem [Workspace-Limits](#workspace-limits) für einen einzelnen Workspace festlegen. Limits hängen von der Ressource, dem Tarif und dem Konto ab: Eine Einstellung pro Replikat entspricht nicht der insgesamt für einen Service oder ein Konto verfügbaren Kapazität. Prüfen Sie Ihren aktuellen Tarif und das Ergebnis der Erstellungs- oder Skalierungsanfrage, bevor Sie eine Workload dimensionieren.
+Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung mit bis zu 5 Replikaten pro Service, während der Testphase mit 1. Sandbox-Limits zählen vCPU, nicht Sandboxes: Pro führt bis zu 40 vCPU an Sandboxes gleichzeitig aus, Pro 5x 220 und Pro 20x 1,200. Pro, Pro 5x und Pro 20x haben kein Limit für Sandbox-Starts. Die Testphase erlaubt 1 Small- und 2 Mini-Sandboxes zur selben Zeit, nur in US-Regionen. Die Sandbox-Größen reichen von Mini (1 vCPU / 2 GB) bis Large (8 vCPU / 16 GB), und ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum von 30 Tagen inklusive. Der Inhaber eines Workspace kann außerdem [Workspace-Limits](#workspace-limits) für einen einzelnen Workspace festlegen. Limits hängen von der Ressource, dem Tarif und dem Konto ab: Eine Einstellung pro Replikat entspricht nicht der insgesamt für einen Service oder ein Konto verfügbaren Kapazität. Prüfen Sie Ihren aktuellen Tarif und das Ergebnis der Erstellungs- oder Skalierungsanfrage, bevor Sie eine Workload dimensionieren. In der Testphase wird jede Sandbox spätestens 1 Stunde nach ihrem Start gelöscht.
 
 <span id="applications" />
 
@@ -40,7 +40,7 @@ Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung
 | Medium (Standard außerhalb der Testphase) | 4 vCPU / 8 GB | 20 GB | $0.0324 pro Stunde |
 | Large | 8 vCPU / 16 GB | 50 GB | $0.0648 pro Stunde |
 
-CPU und Arbeitsspeicher sind im Preis enthalten. Persistent Volumes werden separat abgerechnet. Mini startet nur aus den Vorlagen `base`, `claude`, `codex` und `interpreter`, ohne Persistent Volume; andernfalls gibt Create HTTP 400 mit `code` gleich `SANDBOX_SIZE_NOT_ALLOWED` zurück. In der Testphase ist Small die Standardgröße, ein Konto führt 1 Small- und 2 Mini-Sandboxes zur selben Zeit aus, Medium und Large werden nach der ersten bezahlten Rechnung freigeschaltet, und Sandboxes laufen nur in US-Regionen; siehe [Abrechnung](/platform/billing#trial).
+CPU und Arbeitsspeicher sind im Preis enthalten. Persistent Volumes werden separat abgerechnet. Mini startet nur aus den Vorlagen `base`, `claude`, `codex` und `interpreter`, ohne Persistent Volume; andernfalls gibt Create HTTP 400 mit `code` gleich `SANDBOX_SIZE_NOT_ALLOWED` zurück. In der Testphase ist Small die Standardgröße, ein Konto führt 1 Small- und 2 Mini-Sandboxes zur selben Zeit aus, Medium und Large werden nach der ersten bezahlten Rechnung freigeschaltet, und Sandboxes laufen nur in US-Regionen; siehe [Abrechnung](/platform/billing#trial). In der Testphase wird jede Sandbox spätestens 1 Stunde nach ihrem Start gelöscht.
 
 <span id="sandbox-account-limits" />
 
@@ -74,6 +74,7 @@ Bei Pro nutzen 3 Large- und 6 Small-Sandboxes 36 von 40 vCPU, daher passt noch e
 - Ein Start ist eine neue Sandbox. Ein Fortsetzen ist kein Start. Eine Erstellung, die auf Seiten von Lizard fehlschlägt, zählt nicht.
 - Bei Überschreitung geben Create und Resume HTTP 429 zurück, mit `code` gleich `SANDBOX_LIMIT_REACHED` (vCPU gleichzeitig) oder `SANDBOX_RATE_LIMITED` (Starts). Eine Ablehnung wegen der Startrate enthält einen `Retry-After`-Header.
 - In der Testphase gibt eine zweite gleichzeitig laufende Small- oder eine dritte Mini-Sandbox, ob Sie sie erstellen, forken oder fortsetzen, HTTP 403 mit `code` gleich `TRIAL_SIZE_RUNNING` zurück; die Antwort enthält `size`, `sizeLimit`, `allowedSizes` und `sizeLimits`. Pausieren oder löschen Sie eine, oder starten Sie statt einer Small eine Mini. Eine Medium-Sandbox gibt HTTP 403 mit `TRIAL_SANDBOX_SIZE` zurück (`allowedSizes` ist `["small", "mini"]`), eine Large-Sandbox HTTP 403 mit `SANDBOX_SIZE_NOT_ALLOWED` und eine Region außerhalb der USA HTTP 403 mit `TRIAL_SANDBOX_REGION`.
+- In der Testphase gibt ein Create oder Fork mit einer Lebensdauer über 1 Stunde HTTP 403 mit `code` gleich `TRIAL_SANDBOX_LIFETIME` und `maxTimeoutMs: 3600000` zurück; siehe [Laufzeit](#sandbox-lifetime).
 - `GET /api/sandboxes/limits` gibt Ihre Limits und das, was gerade läuft, zurück, mit `running` (Sandboxes) und `runningVcpu`. In der Testphase enthält die Antwort außerdem `sizeLimits` (`{"small": 1, "mini": 2}`) und `runningBySize`.
 - Enterprise hat kein festes Limit für gleichzeitig laufende Sandboxes. Der Vertrag jedes Kunden legt das Limit pro Workspace fest. Laufende, pausierte und abgestürzte Sandboxes zählen alle mit. Darüber geben Create und Fork HTTP 429 mit `code` gleich `SANDBOX_LIMIT_REACHED` zurück. Ein Benutzer kann pro Region bis zu 120 Sandboxes pro Minute erstellen.
 - Das Dashboard zeigt neben **New Sandbox** die genutzten vCPU und Ihr vCPU-Limit. Für mehr als 1,200 vCPU gleichzeitig sprechen Sie uns auf Enterprise an.
@@ -127,9 +128,12 @@ Für ausgehenden Sandbox-Traffic gibt es keinen separaten Preis pro GB. Enthalte
 | Standardlaufzeit des Lizard SDK | 300000 ms, fünf Minuten |
 | Bereich für explizite Laufzeit | Ganzzahlige Millisekunden von 0 bis 2147483647 |
 | Laufzeit aktualisieren | Mindestens 1000 ms; kein Idle-Timer |
+| Laufzeit in der Testphase | Höchstens 1 Stunde (3600000 ms) nach dem Start der Sandbox; ohne Laufzeit gilt 1 Stunde |
 | Anbindung von Persistent Volumes | Jeweils nur eine Sandbox, auf dem Node des Volumes |
 
 Auch die CLI setzt standardmäßig fünf Minuten; das Dashboard setzt standardmäßig kein Ablaufdatum. Befehle verlängern die Frist nicht. Zu Pause, Snapshots, Fork und dazu, was jeweils erhalten bleibt, siehe den [Lebenszyklus](/sandboxes#lifecycle) von Sandboxes.
+
+In der Testphase wird jede Sandbox spätestens 1 Stunde nach ihrem Start gelöscht. Ein Create oder Fork ohne Laufzeit (`timeoutMs` `0`, nicht gesetzt oder Never) erhält 1 Stunde; eine längere Laufzeit gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_LIFETIME` und `maxTimeoutMs: 3600000` zurück. `POST /api/sandboxes/{id}/timeout` kann die Frist einer Sandbox in der Testphase nicht über 1 Stunde nach ihrer Erstellung hinaus verschieben; diese 403-Antwort enthält zusätzlich `latestExpiresAt`. Sandboxes, die vor dem 2026-11-10 erstellt wurden, behalten kein Ablaufdatum. Längere Laufzeiten werden nach der ersten bezahlten Rechnung freigeschaltet.
 
 <span id="workspace-limits" />
 

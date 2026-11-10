@@ -64,7 +64,7 @@ Mit einem neuen Konto können Sie sich umsehen, aber um Apps, Sandboxes, Datenba
 
 Jedes Konto und jede Karte bekommt eine Testphase. Hatte das Konto schon eine, beginnt Pro sofort, und $19 werden am selben Tag belastet. Hatte die Karte schon eine, startet die Testphase nicht, und es wird nichts belastet; starten Sie Pro für $19 auf der Seite „Abrechnung“.
 
-Die Testphase enthält alle Funktionen von Pro, mit niedrigeren [Limits](#limits) bis zur ersten bezahlten Rechnung. Bis dahin führt ein Konto 1 Small- und 2 Mini-Sandboxes zur selben Zeit aus, nur in US-Regionen, ob über das Dashboard, Lizard CLI, Lizard SDK oder Lizard MCP. Ein Create ohne Größe startet eine Small-Sandbox. Eine zweite gleichzeitig laufende Small- oder eine dritte Mini-Sandbox, ob Sie sie erstellen, forken oder fortsetzen, gibt HTTP 403 mit `code` gleich `TRIAL_SIZE_RUNNING` zurück: Pausieren oder löschen Sie eine, oder starten Sie statt einer Small eine Mini. Eine Medium-Sandbox gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_SIZE` zurück, eine Large-Sandbox HTTP 403 mit `SANDBOX_SIZE_NOT_ALLOWED`. Eine Region außerhalb der USA gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_REGION` zurück. **Start Pro now** schaltet die anderen Größen, die anderen Regionen und die Limits von Pro frei.
+Die Testphase enthält alle Funktionen von Pro, mit niedrigeren [Limits](#limits) bis zur ersten bezahlten Rechnung. Bis dahin führt ein Konto 1 Small- und 2 Mini-Sandboxes zur selben Zeit aus, nur in US-Regionen, ob über das Dashboard, Lizard CLI, Lizard SDK oder Lizard MCP. Ein Create ohne Größe startet eine Small-Sandbox. Eine zweite gleichzeitig laufende Small- oder eine dritte Mini-Sandbox, ob Sie sie erstellen, forken oder fortsetzen, gibt HTTP 403 mit `code` gleich `TRIAL_SIZE_RUNNING` zurück: Pausieren oder löschen Sie eine, oder starten Sie statt einer Small eine Mini. Eine Medium-Sandbox gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_SIZE` zurück, eine Large-Sandbox HTTP 403 mit `SANDBOX_SIZE_NOT_ALLOWED`. Eine Region außerhalb der USA gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_REGION` zurück. **Start Pro now** schaltet die anderen Größen, die anderen Regionen und die Limits von Pro frei. Eine Sandbox in der Testphase wird spätestens 1 Stunde nach ihrem Start gelöscht: Ein Create oder Fork ohne Laufzeit erhält 1 Stunde, eine längere gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_LIFETIME` zurück. Sandboxes, die vor dem 2026-11-10 erstellt wurden, behalten kein Ablaufdatum. Auch längere Laufzeiten werden mit **Start Pro now** freigeschaltet.
 
 Um während der Testphase zu Pro 5x oder Pro 20x zu wechseln, wählen Sie zuerst **Start Pro now** und [wechseln dann den Plan](#changing-plans).
 
@@ -96,6 +96,7 @@ Ein Promo-Code kann eine längere Testphase geben, bis zu 730 Tage, und mehr Nut
 | --- | ---: | ---: | ---: | ---: |
 | Gleichzeitig laufende Sandboxes | 1 Small + 2 Mini zur selben Zeit | 40 vCPU | 220 vCPU | 1,200 vCPU |
 | Sandbox-Größen | Mini und Small | Bis Large (8 vCPU) | Bis Large (8 vCPU) | Bis Large (8 vCPU) |
+| Sandbox-Laufzeit | Bis 1 Stunde | Unbegrenzt | Unbegrenzt | Unbegrenzt |
 | Sandbox-Starts pro Minute | 6 | Unbegrenzt | Unbegrenzt | Unbegrenzt |
 | Replikas pro App | 1 | 5 | 5 | 5 |
 

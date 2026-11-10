@@ -79,7 +79,7 @@ sandbox = Sandbox.create(
 
 - 最初の引数は、[ランタイムとテンプレート](/sandboxes#runtime-and-templates) にあるカタログのテンプレートです。指定しない場合、SDK は `base` を起動します。
 - `size` は `'mini'`、`'small'`、`'medium'`、`'large'` のいずれかで、それぞれ 1 vCPU / 2 GB、2 vCPU / 4 GB、4 vCPU / 8 GB (既定)、8 vCPU / 16 GB です。[サイズと料金](/platform/limits#sandbox-sizes)を参照してください。`'mini'` は `base`、`claude`、`codex`、`interpreter` テンプレートからのみ、ボリュームを接続せずに起動できます。トライアル中は `'small'` が既定で、同時に実行できるのは Small 1 個と Mini 2 個まで、使えるのは US リージョンだけです。`'medium'`、`'large'`、2 個目の Small、3 個目の Mini、ほかのリージョンでは HTTP 403 の `AuthenticationError` が投げられます。スナップショットから復元した sandbox には `size` は適用されず、元の sandbox のサイズで動作します。
-- `timeoutMs` の既定は 300000（5 分）です。`0` は期限を無効にします。[リソースと有効期間](/sandboxes#resources-and-timeouts) を参照してください。
+- `timeoutMs` の既定は 300000（5 分）です。`0` は期限を無効にします。[リソースと有効期間](/sandboxes#resources-and-timeouts) を参照してください。トライアル中、`timeoutMs` は最大 3600000 (1 時間) で、`0` は 1 時間になり、それより長い値は HTTP 403 の `AuthenticationError` (`code` は `TRIAL_SANDBOX_LIFETIME`) を投げます。
 - 必要に応じてリージョンを指定してください。カタログへの掲載は空き容量を保証しません。ボリュームを接続する場合は `region` を指定しないでください: sandbox はボリュームのある場所で実行されます。
 - `metadata` は独自のラベルです。`getInfo()` はこれを返しますが、`list()` は返しません。
 - `lizardToken` は自分の `liz_` API キーを 1 つ受け取り、sandbox 内の `lizard` をサインインさせます。自分のキーはリクエストを許可するためだけに使います。sandbox には、sandbox のプロジェクトに限定され sandbox と一緒に削除される専用の新しいキーが渡されるため、そこでの `lizard` はそのプロジェクトにしか作用しません。`base` テンプレートには `lizard` がありません。
@@ -279,7 +279,7 @@ API の失敗時には、以下のエラーが投げられます（Python では
 | エラー | 意味 |
 |---|---|
 | `PaymentRequiredError` | HTTP 402: 何かを作成する前に、アカウントで Pro を開始するか請求書を支払う必要があります。`url` は開くべきページです。 |
-| `AuthenticationError` | HTTP 401 または 403: キーが無効か、アクセス権がありません。トライアル中に 2 台目の Small または 3 台目の Mini を同時に動かそうとすると、作成、再開、fork のどれでも 403 になり、`code` は `TRIAL_SIZE_RUNNING` です。Medium の sandbox では `TRIAL_SANDBOX_SIZE`、Large では `SANDBOX_SIZE_NOT_ALLOWED`、US 以外のリージョンでは `TRIAL_SANDBOX_REGION` になります。 |
+| `AuthenticationError` | HTTP 401 または 403: キーが無効か、アクセス権がありません。トライアル中に 2 台目の Small または 3 台目の Mini を同時に動かそうとすると、作成、再開、fork のどれでも 403 になり、`code` は `TRIAL_SIZE_RUNNING` です。Medium の sandbox では `TRIAL_SANDBOX_SIZE`、Large では `SANDBOX_SIZE_NOT_ALLOWED`、US 以外のリージョンでは `TRIAL_SANDBOX_REGION` になります。作成、フォーク、`setTimeout` で 1 時間を超える有効期間を指定すると `TRIAL_SANDBOX_LIFETIME` が返ります。 |
 | `NotFoundError` | HTTP 404: sandbox、ファイル、スナップショットが存在しないか、期限切れです。 |
 | `ConflictError` | HTTP 409: ボリュームが接続された sandbox の fork など、状態の競合。 |
 | `LimitExceededError` | HTTP 429: 同時に実行する sandbox の vCPU が多すぎるか、起動が多すぎます。`code` はどの上限かを示します（`SANDBOX_LIMIT_REACHED` や `SANDBOX_RATE_LIMITED` など）。`SANDBOX_LIMIT_REACHED` では、`limit` と `running` は vCPU 単位で、`unit` がそれを示し（`vcpu`）、`needed` は拒否された sandbox に必要な vCPU です。`retryAfterS`（Python では `retry_after_s`）は再試行できるまでの時間を示します。 |

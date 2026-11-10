@@ -78,9 +78,9 @@ snapshot -> new sandbox (restore)
 
 ## Recursos y duración
 
-Elige un tamaño al crear un sandbox: Mini (1 vCPU / 2 GB), Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, el predeterminado) o Large (8 vCPU / 16 GB). Mini solo arranca desde las plantillas `base`, `claude`, `codex` e `interpreter`, sin volumen. Durante la prueba, un sandbox es Mini o Small, con 1 Small y 2 Mini a la vez, y se ejecuta en una región de EE. UU. Consulta [tamaños y precios](/platform/limits#sandbox-sizes). Indica la región de forma explícita si hace falta; que aparezca en el catálogo no garantiza capacidad libre.
+Elige un tamaño al crear un sandbox: Mini (1 vCPU / 2 GB), Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, el predeterminado) o Large (8 vCPU / 16 GB). Mini solo arranca desde las plantillas `base`, `claude`, `codex` e `interpreter`, sin volumen. Durante la prueba, un sandbox es Mini o Small, con 1 Small y 2 Mini a la vez, y se ejecuta en una región de EE. UU. Consulta [tamaños y precios](/platform/limits#sandbox-sizes). Indica la región de forma explícita si hace falta; que aparezca en el catálogo no garantiza capacidad libre. Durante la prueba, cada sandbox se elimina como máximo 1 hora después de iniciarse.
 
-El SDK y la CLI fijan cinco minutos de duración por defecto. La API directa y el panel no fijan caducidad por defecto. Indica la duración: `timeoutMs: 0` al crear desactiva la caducidad; un valor positivo fija un plazo. `setTimeout` acepta 1000 a 2147483647 ms, no cero. Los comandos no reinician el plazo. No es un temporizador de inactividad.
+El SDK y la CLI fijan cinco minutos de duración por defecto. La API directa y el panel no fijan caducidad por defecto. Indica la duración: `timeoutMs: 0` al crear desactiva la caducidad; un valor positivo fija un plazo. `setTimeout` acepta 1000 a 2147483647 ms, no cero. Los comandos no reinician el plazo. No es un temporizador de inactividad. Durante la prueba, sin duración o con `0` se aplica 1 hora, y una duración de más de 1 hora devuelve HTTP 403 con `TRIAL_SANDBOX_LIFETIME`; consulta [Duración](/platform/limits#sandbox-lifetime).
 
 <span id="storage-and-billing" />
 

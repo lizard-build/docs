@@ -29,7 +29,7 @@ Create a sandbox and print its ID.
 |------|-------------|
 | `-t, --template <name>` | Template (default `base`). Enabled templates: `base`, `interpreter`, `codex`, `desktop`, `desktop-camoufox` (US East only), `opencode`, `pi`, `prime`, `claude`. The server checks the region's list |
 | `-s, --size <size>` | `mini`, `small`, `medium` (default; `small` during the trial), or `large`. `mini` works only with the `base`, `claude`, `codex` and `interpreter` templates, without a volume |
-| `--timeout <ms>` | Lifetime in milliseconds (default `300000`, five minutes); `0` disables expiration |
+| `--timeout <ms>` | Lifetime in milliseconds (default `300000`, five minutes); `0` disables expiration. During the trial, at most `3600000` (1 hour), and `0` gets 1 hour |
 | `--region <code>` | Region to create the sandbox in |
 | `--snapshot <id>` | Start from a saved snapshot; can't be combined with `--size` |
 | `--volume <name-or-id>` | Attach a [Persistent Volume](/cli/volume) |
@@ -46,7 +46,7 @@ Lizard bills each size per second at a flat rate while it runs, including idle t
 
 Anything in the sandbox can read the key that `--with-token` installs and use it on the sandbox's project until the sandbox is deleted.
 
-Until your trial or plan starts, `create` returns HTTP 402 with a Checkout link; run `lizard billing start`. Limits count the vCPU of running sandboxes: 40 on Pro after the first paid invoice, 220 on Pro 5x and 1,200 on Pro 20x. Pro 5x and Pro 20x have no limit on sandbox starts. Paused sandboxes don't count. During the trial, a sandbox runs in a US region and is `small` or `mini`, 1 Small and 2 Mini at a time. A second `small` or a third `mini` running at once, whether you create, fork or resume it, returns HTTP 403 with `TRIAL_SIZE_RUNNING`; pause or delete one, or start a `mini` instead of a `small`. `medium` returns HTTP 403 with `TRIAL_SANDBOX_SIZE`, `large` returns HTTP 403 with `SANDBOX_SIZE_NOT_ALLOWED`, and another region returns HTTP 403 with `TRIAL_SANDBOX_REGION`. Over the vCPU limit, `create` returns HTTP 429 with `SANDBOX_LIMIT_REACHED`. See [Limits](/platform/limits#sandbox-account-limits).
+Until your trial or plan starts, `create` returns HTTP 402 with a Checkout link; run `lizard billing start`. Limits count the vCPU of running sandboxes: 40 on Pro after the first paid invoice, 220 on Pro 5x and 1,200 on Pro 20x. Pro 5x and Pro 20x have no limit on sandbox starts. Paused sandboxes don't count. During the trial, a sandbox runs in a US region and is `small` or `mini`, 1 Small and 2 Mini at a time. A second `small` or a third `mini` running at once, whether you create, fork or resume it, returns HTTP 403 with `TRIAL_SIZE_RUNNING`; pause or delete one, or start a `mini` instead of a `small`. `medium` returns HTTP 403 with `TRIAL_SANDBOX_SIZE`, `large` returns HTTP 403 with `SANDBOX_SIZE_NOT_ALLOWED`, and another region returns HTTP 403 with `TRIAL_SANDBOX_REGION`. A trial sandbox is deleted 1 hour after it starts at the latest: without `--timeout` (or with `0`) it gets 1 hour, and a `--timeout` over `3600000` returns HTTP 403 with `TRIAL_SANDBOX_LIFETIME`. Over the vCPU limit, `create` returns HTTP 429 with `SANDBOX_LIMIT_REACHED`. See [Limits](/platform/limits#sandbox-account-limits).
 
 ### `lizard sandbox list`
 
@@ -67,7 +67,7 @@ Delete a sandbox (aliases `delete` and `kill`).
 
 ### `lizard sandbox timeout <id> <ms>`
 
-Set a new lifetime, counted from now, in milliseconds (at least `1000`). It is not an idle timer: running commands does not reset it.
+Set a new lifetime, counted from now, in milliseconds (at least `1000`). It is not an idle timer: running commands does not reset it. During the trial, the deadline can't move past 1 hour after the sandbox was created; a later one returns HTTP 403 with `TRIAL_SANDBOX_LIFETIME` and `latestExpiresAt`.
 
 ### `lizard sandbox exec <id> -- <command>`
 

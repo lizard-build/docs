@@ -54,7 +54,7 @@ You can browse with a new account, but you need a plan to create apps, Sandboxes
 
 Each account and each card gets one trial. If the account had one before, Pro starts at once and charges $19 that day. If the card had one, the trial does not start and nothing is charged; start Pro at $19 on the Billing page.
 
-The trial includes every Pro feature, with lower [limits](#limits) until your first paid invoice. Until then, an account runs 1 Small and 2 Mini Sandboxes at a time, only in US regions, from the dashboard, Lizard CLI, Lizard SDK or Lizard MCP alike. A create with no size gets Small. A second Small or a third Mini running at once, whether you create, fork or resume it, returns HTTP 403 with `code` set to `TRIAL_SIZE_RUNNING`: pause or delete one, or, for Small, start a Mini. A Medium sandbox returns HTTP 403 with `code` set to `TRIAL_SANDBOX_SIZE`, and a Large one with `SANDBOX_SIZE_NOT_ALLOWED`. A region outside the US returns HTTP 403 with `code` set to `TRIAL_SANDBOX_REGION`. **Start Pro now** unlocks the other sizes, the other regions and the Pro limits.
+The trial includes every Pro feature, with lower [limits](#limits) until your first paid invoice. Until then, an account runs 1 Small and 2 Mini Sandboxes at a time, only in US regions, from the dashboard, Lizard CLI, Lizard SDK or Lizard MCP alike. A create with no size gets Small. A second Small or a third Mini running at once, whether you create, fork or resume it, returns HTTP 403 with `code` set to `TRIAL_SIZE_RUNNING`: pause or delete one, or, for Small, start a Mini. A Medium sandbox returns HTTP 403 with `code` set to `TRIAL_SANDBOX_SIZE`, and a Large one with `SANDBOX_SIZE_NOT_ALLOWED`. A region outside the US returns HTTP 403 with `code` set to `TRIAL_SANDBOX_REGION`. A trial sandbox is deleted 1 hour after it starts at the latest: a create or fork without a lifetime gets 1 hour, and a longer one returns HTTP 403 with `code` set to `TRIAL_SANDBOX_LIFETIME`. Sandboxes created before 2026-11-10 keep no expiration. **Start Pro now** unlocks the other sizes, the other regions, longer lifetimes and the Pro limits.
 
 To move to Pro 5x or Pro 20x during the trial, choose **Start Pro now** first, then [change plans](#changing-plans).
 
@@ -80,6 +80,7 @@ A promo code can give a longer trial, up to 730 days, and more trial usage. It r
 | --- | ---: | ---: | ---: | ---: |
 | Sandboxes running at once | 1 Small + 2 Mini at a time | 40 vCPU | 220 vCPU | 1,200 vCPU |
 | Sandbox sizes | Mini and Small | Up to Large (8 vCPU) | Up to Large (8 vCPU) | Up to Large (8 vCPU) |
+| Sandbox lifetime | Up to 1 hour | Unlimited | Unlimited | Unlimited |
 | Sandbox starts per minute | 6 | Unlimited | Unlimited | Unlimited |
 | Replicas per app | 1 | 5 | 5 | 5 |
 

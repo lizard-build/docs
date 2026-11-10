@@ -51,7 +51,7 @@ lizard sandbox create -t claude --timeout 3600000
 
 - `--timeout 3600000` даёт sandbox один час. В CLI по умолчанию это пять минут, после чего Lizard удаляет sandbox вместе с файлами, даже посреди задачи. Продлить работающий sandbox можно командой `lizard sandbox timeout $SB 3600000`.
 - В шаблоне `claude` есть Node.js 22, закреплённый релиз Claude Code, git, Python 3, ripgrep, curl, jq, unzip и Lizard CLI. Версию Claude Code покажет `lizard sandbox exec $SB -- claude --version`.
-- По умолчанию используется размер Medium (4 vCPU, 8 ГБ). Чтобы изменить его, передайте `--size small` или `--size large`. В пробном периоде sandbox имеет размер Small или Mini и работает в регионе США: одновременно 1 Small и 2 Mini.
+- По умолчанию используется размер Medium (4 vCPU, 8 ГБ). Чтобы изменить его, передайте `--size small` или `--size large`. В пробном периоде sandbox имеет размер Small или Mini и работает в регионе США: одновременно 1 Small и 2 Mini. На пробном периоде каждая песочница удаляется не позже чем через 1 час после запуска.
 
 <span id="put-your-code-in-the-sandbox" />
 
@@ -142,6 +142,7 @@ lizard sandbox rm $SB
 | `Claude rejected the credential (authentication_failed)` | Токен или ключ больше не действует. Создайте новый и добавьте его снова. |
 | HTTP 402 со ссылкой на Checkout при `create` | Начните пробный период или Pro: `lizard billing start`. |
 | HTTP 403 с `TRIAL_SIZE_RUNNING`, `TRIAL_SANDBOX_SIZE`, `TRIAL_SANDBOX_REGION` или `SANDBOX_SIZE_NOT_ALLOWED` при `create` | В пробном периоде одновременно работают 1 sandbox Small и 2 Mini, в регионах США. Приостановите или удалите работающий sandbox, укажите `--size small` (или `--size mini`) и `--region` в США или сразу начните Pro: `lizard billing start-now`. |
+| HTTP 403 с `TRIAL_SANDBOX_LIFETIME` при `create` или `timeout` | Песочницы пробного периода живут не больше 1 часа, затем удаляются. Передайте `--timeout 3600000` или меньше либо начните Pro сразу: `lizard billing start-now`. |
 | HTTP 429 с `SANDBOX_LIMIT_REACHED` при `create` | Запущенные sandbox заняли весь лимит vCPU вашего тарифа. Остановите или приостановите один из них, укажите меньший `--size` или перейдите на тариф побольше на странице «Биллинг». |
 | Sandbox пропал посреди задачи | Истёк его срок жизни. Создайте следующий с `--timeout` или продлите срок командой `lizard sandbox timeout`. |
 | В выводе упоминается Codex | Промпт ушёл без `--agent claude`. |

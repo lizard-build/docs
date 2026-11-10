@@ -64,7 +64,7 @@ Una cuenta nueva puede explorar, pero necesita un plan para crear apps, Sandboxe
 
 Cada cuenta y cada tarjeta tiene una prueba. Si la cuenta ya tuvo una, Pro empieza de inmediato y cobra $19 ese mismo día. Si la tarjeta ya tuvo una, la prueba no empieza y no se cobra nada; empieza Pro a $19 en la página Facturación.
 
-La prueba incluye todas las funciones de Pro, con [límites](#limits) más bajos hasta tu primera factura pagada. Hasta entonces, una cuenta ejecuta 1 Sandbox Small y 2 Mini a la vez, solo en regiones de EE. UU., tanto desde el panel como con Lizard CLI, Lizard SDK o Lizard MCP. Si no indicas un tamaño, el sandbox es Small. Un segundo Small o un tercer Mini en marcha a la vez, tanto si lo creas como si haces fork de él o lo reanudas, devuelve HTTP 403 con `code` igual a `TRIAL_SIZE_RUNNING`: pausa o elimina uno o, en el caso de Small, inicia un Mini. Un sandbox Medium devuelve HTTP 403 con `code` igual a `TRIAL_SANDBOX_SIZE`, y uno Large con `SANDBOX_SIZE_NOT_ALLOWED`. Una región fuera de EE. UU. devuelve HTTP 403 con `code` igual a `TRIAL_SANDBOX_REGION`. **Start Pro now** desbloquea los demás tamaños, las demás regiones y los límites de Pro.
+La prueba incluye todas las funciones de Pro, con [límites](#limits) más bajos hasta tu primera factura pagada. Hasta entonces, una cuenta ejecuta 1 Sandbox Small y 2 Mini a la vez, solo en regiones de EE. UU., tanto desde el panel como con Lizard CLI, Lizard SDK o Lizard MCP. Si no indicas un tamaño, el sandbox es Small. Un segundo Small o un tercer Mini en marcha a la vez, tanto si lo creas como si haces fork de él o lo reanudas, devuelve HTTP 403 con `code` igual a `TRIAL_SIZE_RUNNING`: pausa o elimina uno o, en el caso de Small, inicia un Mini. Un sandbox Medium devuelve HTTP 403 con `code` igual a `TRIAL_SANDBOX_SIZE`, y uno Large con `SANDBOX_SIZE_NOT_ALLOWED`. Una región fuera de EE. UU. devuelve HTTP 403 con `code` igual a `TRIAL_SANDBOX_REGION`. **Start Pro now** desbloquea los demás tamaños, las demás regiones y los límites de Pro. Un sandbox de prueba se elimina como máximo 1 hora después de iniciarse: una creación o un fork sin duración recibe 1 hora, y una mayor devuelve HTTP 403 con `code` igual a `TRIAL_SANDBOX_LIFETIME`. Los sandboxes creados antes del 2026-11-10 siguen sin caducidad. **Start Pro now** también desbloquea duraciones más largas.
 
 Para pasar a Pro 5x o Pro 20x durante la prueba, elige primero **Start Pro now** y luego [cambia de plan](#changing-plans).
 
@@ -96,6 +96,7 @@ Un código promocional puede dar una prueba más larga, de hasta 730 días, y m�
 | --- | ---: | ---: | ---: | ---: |
 | Sandboxes en marcha a la vez | 1 Small + 2 Mini a la vez | 40 vCPU | 220 vCPU | 1,200 vCPU |
 | Tamaños de Sandboxes | Mini y Small | Hasta Large (8 vCPU) | Hasta Large (8 vCPU) | Hasta Large (8 vCPU) |
+| Duración de los sandboxes | Hasta 1 hora | Ilimitada | Ilimitada | Ilimitada |
 | Arranques de Sandboxes por minuto | 6 | Ilimitados | Ilimitados | Ilimitados |
 | Réplicas por app | 1 | 5 | 5 | 5 |
 

@@ -78,9 +78,9 @@ snapshot -> new sandbox (restore)
 
 ## Ressourcen und Laufzeit
 
-Wählen Sie beim Erstellen eine Größe: Mini (1 vCPU / 2 GB), Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, Standard) oder Large (8 vCPU / 16 GB). Mini startet nur aus den Vorlagen `base`, `claude`, `codex` und `interpreter`, ohne Volume. In der Testphase ist eine Sandbox Mini oder Small, 1 Small und 2 Mini zur selben Zeit, und läuft in einer US-Region. Siehe [Größen und Preise](/platform/limits#sandbox-sizes). Geben Sie bei Bedarf eine Region an; ein Katalogeintrag garantiert keine freie Kapazität.
+Wählen Sie beim Erstellen eine Größe: Mini (1 vCPU / 2 GB), Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, Standard) oder Large (8 vCPU / 16 GB). Mini startet nur aus den Vorlagen `base`, `claude`, `codex` und `interpreter`, ohne Volume. In der Testphase ist eine Sandbox Mini oder Small, 1 Small und 2 Mini zur selben Zeit, und läuft in einer US-Region. Siehe [Größen und Preise](/platform/limits#sandbox-sizes). Geben Sie bei Bedarf eine Region an; ein Katalogeintrag garantiert keine freie Kapazität. In der Testphase wird jede Sandbox spätestens 1 Stunde nach ihrem Start gelöscht.
 
-SDK und CLI setzen standardmäßig eine Laufzeit von fünf Minuten. Die direkte API und das Dashboard setzen standardmäßig kein Ablaufdatum. Geben Sie die Laufzeit ausdrücklich an: `timeoutMs: 0` bei der Erstellung deaktiviert den Ablauf; ein positiver Wert setzt eine Frist. `setTimeout` akzeptiert 1000–2147483647 ms, nicht null. Befehle verlängern die Frist nicht. Dies ist kein Leerlauf-Timer.
+SDK und CLI setzen standardmäßig eine Laufzeit von fünf Minuten. Die direkte API und das Dashboard setzen standardmäßig kein Ablaufdatum. Geben Sie die Laufzeit ausdrücklich an: `timeoutMs: 0` bei der Erstellung deaktiviert den Ablauf; ein positiver Wert setzt eine Frist. `setTimeout` akzeptiert 1000–2147483647 ms, nicht null. Befehle verlängern die Frist nicht. Dies ist kein Leerlauf-Timer. In der Testphase erhält eine Sandbox ohne Laufzeit oder mit `0` 1 Stunde, und eine Laufzeit über 1 Stunde gibt HTTP 403 mit `TRIAL_SANDBOX_LIFETIME` zurück; siehe [Laufzeit](/platform/limits#sandbox-lifetime).
 
 <span id="storage-and-billing" />
 
