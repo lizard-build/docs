@@ -64,7 +64,7 @@ Mit einem neuen Konto können Sie sich umsehen, aber um Apps, Sandboxes, Datenba
 
 Jedes Konto und jede Karte bekommt eine Testphase. Hatte das Konto schon eine, beginnt Pro sofort, und $19 werden am selben Tag belastet. Hatte die Karte schon eine, startet die Testphase nicht, und es wird nichts belastet; starten Sie Pro für $19 auf der Seite „Abrechnung“.
 
-Die Testphase enthält alle Funktionen von Pro, mit niedrigeren [Limits](#limits) bis zur ersten bezahlten Rechnung. Bis dahin laufen Sandboxes nur in US-Regionen, mit höchstens 8 vCPU gleichzeitig: Mini- und Small-Sandboxes sowie höchstens eine Medium-Sandbox zur selben Zeit, ob über das Dashboard, Lizard CLI, Lizard SDK oder Lizard MCP. Ein Create ohne Größe startet eine Small-Sandbox. Eine zweite gleichzeitig laufende Medium-Sandbox, ob Sie sie erstellen, forken oder fortsetzen, gibt HTTP 403 mit `code` gleich `TRIAL_MEDIUM_RUNNING` zurück. Eine Large-Sandbox gibt HTTP 403 mit `code` gleich `SANDBOX_SIZE_NOT_ALLOWED` zurück, ob Sie sie erstellen, fortsetzen, forken oder wiederherstellen. Eine Region außerhalb der USA gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_REGION` zurück. **Start Pro now** schaltet die anderen Größen, die anderen Regionen und die Limits von Pro frei.
+Die Testphase enthält alle Funktionen von Pro, mit niedrigeren [Limits](#limits) bis zur ersten bezahlten Rechnung. Bis dahin führt ein Konto 1 Small- und 2 Mini-Sandboxes zur selben Zeit aus, nur in US-Regionen, ob über das Dashboard, Lizard CLI, Lizard SDK oder Lizard MCP. Ein Create ohne Größe startet eine Small-Sandbox. Eine zweite gleichzeitig laufende Small- oder eine dritte Mini-Sandbox, ob Sie sie erstellen, forken oder fortsetzen, gibt HTTP 403 mit `code` gleich `TRIAL_SIZE_RUNNING` zurück: Pausieren oder löschen Sie eine, oder starten Sie statt einer Small eine Mini. Eine Medium-Sandbox gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_SIZE` zurück, eine Large-Sandbox HTTP 403 mit `SANDBOX_SIZE_NOT_ALLOWED`. Eine Region außerhalb der USA gibt HTTP 403 mit `code` gleich `TRIAL_SANDBOX_REGION` zurück. **Start Pro now** schaltet die anderen Größen, die anderen Regionen und die Limits von Pro frei.
 
 Um während der Testphase zu Pro 5x oder Pro 20x zu wechseln, wählen Sie zuerst **Start Pro now** und [wechseln dann den Plan](#changing-plans).
 
@@ -94,12 +94,12 @@ Ein Promo-Code kann eine längere Testphase geben, bis zu 730 Tage, und mehr Nut
 
 | | Testphase, bis zur ersten bezahlten Rechnung | Pro | Pro 5x | Pro 20x |
 | --- | ---: | ---: | ---: | ---: |
-| Gleichzeitig laufende Sandboxes | 8 vCPU (bis zu 8 Mini oder 4 Small) | 40 vCPU | 220 vCPU | 1,200 vCPU |
-| Sandbox-Größen | Mini, Small und eine Medium (4 vCPU) | Bis Large (8 vCPU) | Bis Large (8 vCPU) | Bis Large (8 vCPU) |
+| Gleichzeitig laufende Sandboxes | 1 Small + 2 Mini zur selben Zeit | 40 vCPU | 220 vCPU | 1,200 vCPU |
+| Sandbox-Größen | Mini und Small | Bis Large (8 vCPU) | Bis Large (8 vCPU) | Bis Large (8 vCPU) |
 | Sandbox-Starts pro Minute | 6 | Unbegrenzt | Unbegrenzt | Unbegrenzt |
 | Replikas pro App | 1 | 5 | 5 | 5 |
 
-Sandbox-Limits zählen die vCPU laufender Sandboxes, nicht die Zahl der Sandboxes. Mini nutzt 1 vCPU, Small 2, Medium 4 und Large 8, daher reichen 40 vCPU für 40 Mini-, 20 Small-, 10 Medium- oder 5 Large-Sandboxes gleichzeitig. Die 8 vCPU der Testphase reichen für bis zu 8 Mini- oder 4 Small-Sandboxes. Die Limits von Pro gelten ab Ihrer ersten bezahlten Rechnung, auch nach einer Zahlung über **Start Pro now**. Pro 5x und Pro 20x zahlen Sie ab dem ersten Tag, daher gelten ihre Limits sofort. Startraten pro Stunde und pro Tag sowie weitere Limits finden Sie unter [Limits](/platform/limits#sandbox-account-limits).
+Sandbox-Limits zählen die vCPU laufender Sandboxes, nicht die Zahl der Sandboxes. Mini nutzt 1 vCPU, Small 2, Medium 4 und Large 8, daher reichen 40 vCPU für 40 Mini-, 20 Small-, 10 Medium- oder 5 Large-Sandboxes gleichzeitig. Die Testphase zählt Sandboxes dagegen nach Größe: 1 Small und 2 Mini zur selben Zeit. Die Limits von Pro gelten ab Ihrer ersten bezahlten Rechnung, auch nach einer Zahlung über **Start Pro now**. Pro 5x und Pro 20x zahlen Sie ab dem ersten Tag, daher gelten ihre Limits sofort. Startraten pro Stunde und pro Tag sowie weitere Limits finden Sie unter [Limits](/platform/limits#sandbox-account-limits).
 
 <span id="changing-plans" />
 

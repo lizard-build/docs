@@ -5,7 +5,7 @@ description: "App replica limits, sandbox sizes and hourly prices, how many vCPU
 
 # Limits
 
-On Lizard, an app runs up to 5 replicas per service after the first paid Pro invoice, and 1 during the trial. Sandbox limits count vCPU, not sandboxes: Pro runs up to 40 vCPU of sandboxes at once, Pro 5x 220 and Pro 20x 1,200. Pro, Pro 5x and Pro 20x have no limit on sandbox starts. The trial allows up to 8 vCPU of sandboxes at once, only in US regions: Mini and Small sandboxes, plus one Medium at a time. Sandbox sizes run from Mini (1 vCPU / 2 GB) to Large (8 vCPU / 16 GB), and sandbox egress is included up to 2 TB per account over a rolling 30 days. A workspace owner can also set [workspace limits](#workspace-limits) for one workspace. Limits depend on the resource, plan, and account: a per-replica setting is not the total available to a service or an account. Check your plan and the result of the create or scale request before choosing resources.
+On Lizard, an app runs up to 5 replicas per service after the first paid Pro invoice, and 1 during the trial. Sandbox limits count vCPU, not sandboxes: Pro runs up to 40 vCPU of sandboxes at once, Pro 5x 220 and Pro 20x 1,200. Pro, Pro 5x and Pro 20x have no limit on sandbox starts. The trial runs 1 Small and 2 Mini sandboxes at a time, only in US regions. Sandbox sizes run from Mini (1 vCPU / 2 GB) to Large (8 vCPU / 16 GB), and sandbox egress is included up to 2 TB per account over a rolling 30 days. A workspace owner can also set [workspace limits](#workspace-limits) for one workspace. Limits depend on the resource, plan, and account: a per-replica setting is not the total available to a service or an account. Check your plan and the result of the create or scale request before choosing resources.
 
 ## Applications
 
@@ -32,7 +32,7 @@ On Lizard, an app runs up to 5 replicas per service after the first paid Pro inv
 | Medium (default outside the trial) | 4 vCPU / 8 GB | 20 GB | $0.0324 per hour |
 | Large | 8 vCPU / 16 GB | 50 GB | $0.0648 per hour |
 
-CPU and memory are included in the price. Persistent Volumes are billed separately. Mini starts only from the `base`, `claude`, `codex` and `interpreter` templates, without a Persistent Volume; otherwise create returns HTTP 400 with `code` set to `SANDBOX_SIZE_NOT_ALLOWED`. During the trial, Small is the default size, Medium runs one at a time, and sandboxes run only in US regions; see [Billing](/platform/billing#trial).
+CPU and memory are included in the price. Persistent Volumes are billed separately. Mini starts only from the `base`, `claude`, `codex` and `interpreter` templates, without a Persistent Volume; otherwise create returns HTTP 400 with `code` set to `SANDBOX_SIZE_NOT_ALLOWED`. During the trial, Small is the default size, an account runs 1 Small and 2 Mini at a time, Medium and Large unlock after the first paid invoice, and sandboxes run only in US regions; see [Billing](/platform/billing#trial).
 
 <span id="sandbox-account-limits" />
 
@@ -42,17 +42,17 @@ These limits cap how much sandbox vCPU an account runs at once, the largest sand
 
 | Plan | vCPU at once | Largest size | Starts per minute | Per hour | Per day |
 |---|---|---|---|---|---|
-| Pro trial | 8 (up to 8 Mini or 4 Small) | Medium, one at a time | 6 | 30 | 100 |
+| Pro trial | 1 Small + 2 Mini at a time | Small | 6 | 30 | 100 |
 | Pro | 40 | Large | Unlimited | Unlimited | Unlimited |
 | Pro 5x | 220 | Large | Unlimited | Unlimited | Unlimited |
 | Pro 20x | 1,200 | Large | Unlimited | Unlimited | Unlimited |
 | Enterprise | Per workspace, set by your agreement | Large | 120 per user | No limit | No limit |
 
-A sandbox uses the vCPU of its size: Mini 1, Small 2, Medium 4, Large 8. A new sandbox fits when the vCPU already running plus its own vCPU is at or below your limit. Mix sizes as you like. This table shows how many sandboxes of one size fit at once:
+A sandbox uses the vCPU of its size: Mini 1, Small 2, Medium 4, Large 8. On the paid plans, a new sandbox fits when the vCPU already running plus its own vCPU is at or below your limit. Mix sizes as you like. This table shows how many sandboxes of one size fit at once:
 
 | Plan | Mini | Small | Medium | Large |
 |---|---|---|---|---|
-| Pro trial | 8 | 4 | 1 | Not available |
+| Pro trial | 2 | 1 | Not available | Not available |
 | Pro | 40 | 20 | 10 | 5 |
 | Pro 5x | 220 | 110 | 55 | 27 |
 | Pro 20x | 1,200 | 600 | 300 | 150 |
@@ -63,8 +63,8 @@ On Pro, 3 Large and 6 Small sandboxes use 36 of 40 vCPU, so one more Medium fits
 - On the trial and the paid plans, running means running or resuming. A paused sandbox uses no vCPU; resuming one needs room for its vCPU.
 - A start is a new sandbox. A resume is not a start. A create that fails on Lizard's side does not count.
 - Over a limit, create and resume return HTTP 429 with `code` set to `SANDBOX_LIMIT_REACHED` (vCPU at once) or `SANDBOX_RATE_LIMITED` (starts). A start-rate refusal includes a `Retry-After` header.
-- During the trial, a second Medium sandbox running at once, whether you create, fork or resume it, returns HTTP 403 with `code` set to `TRIAL_MEDIUM_RUNNING`, and a region outside the US returns HTTP 403 with `TRIAL_SANDBOX_REGION`. A Large sandbox returns HTTP 403 with `code` set to `SANDBOX_SIZE_NOT_ALLOWED`, whether you create, resume, fork or restore it.
-- `GET /api/sandboxes/limits` returns your limits and what is running now, with `running` (sandboxes) and `runningVcpu`.
+- During the trial, a second Small or a third Mini running at once, whether you create, fork or resume it, returns HTTP 403 with `code` set to `TRIAL_SIZE_RUNNING`; the body has `size`, `sizeLimit`, `allowedSizes` and `sizeLimits`. Pause or delete one, or, for Small, start a Mini. A Medium sandbox returns HTTP 403 with `TRIAL_SANDBOX_SIZE` (`allowedSizes` is `["small", "mini"]`), a Large one returns HTTP 403 with `SANDBOX_SIZE_NOT_ALLOWED`, and a region outside the US returns HTTP 403 with `TRIAL_SANDBOX_REGION`.
+- `GET /api/sandboxes/limits` returns your limits and what is running now, with `running` (sandboxes) and `runningVcpu`. During the trial it also returns `sizeLimits` (`{"small": 1, "mini": 2}`) and `runningBySize`.
 - Enterprise has no fixed limit on sandboxes running at once. Each customer's agreement sets the limit per workspace. Running, paused and crashed sandboxes all count toward it. Over it, create and fork return HTTP 429 with `code` set to `SANDBOX_LIMIT_REACHED`. One user can create up to 120 sandboxes a minute in each region.
 - The dashboard shows the vCPU in use and your vCPU limit next to **New Sandbox**. For more than 1,200 vCPU at once, contact us about Enterprise.
 

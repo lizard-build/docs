@@ -7,7 +7,7 @@ description: "Lizard におけるアプリのレプリカ上限、sandbox のサ
 
 # 制限
 
-Lizard (lizard.build) では、アプリはPro の初回請求の支払い後はサービスあたり最大 5 レプリカ、トライアル中は 1 レプリカで実行されます。sandbox の上限は sandbox の数ではなく vCPU で数えます。同時に実行できる sandbox の vCPU は、Pro で最大 40、Pro 5x で 220、Pro 20x で 1,200 です。Pro、Pro 5x、Pro 20x は sandbox の起動数に制限がありません。トライアルでは同時に実行できる sandbox は 8 vCPU までで、US リージョンに限られます。Mini と Small の sandbox に加えて、Medium を同時に 1 個まで使えます。sandbox のサイズは Mini（1 vCPU / 2 GB）から Large（8 vCPU / 16 GB）まであり、sandbox の送信トラフィックは直近 30 日間でアカウントあたり 2 TB まで含まれます。ワークスペースの所有者は、1 つのワークスペースに[ワークスペースの上限](#workspace-limits)を設定することもできます。制限は、リソース、プラン、アカウントによって異なります: レプリカごとの設定は、サービスまたはアカウント全体で利用可能な合計ではありません。ワークロードのサイズを決める前に、現在のプランと、作成またはスケールリクエストの結果を確認してください。
+Lizard (lizard.build) では、アプリはPro の初回請求の支払い後はサービスあたり最大 5 レプリカ、トライアル中は 1 レプリカで実行されます。sandbox の上限は sandbox の数ではなく vCPU で数えます。同時に実行できる sandbox の vCPU は、Pro で最大 40、Pro 5x で 220、Pro 20x で 1,200 です。Pro、Pro 5x、Pro 20x は sandbox の起動数に制限がありません。トライアルでは Small 1 個と Mini 2 個の sandbox を同時に実行でき、US リージョンに限られます。sandbox のサイズは Mini（1 vCPU / 2 GB）から Large（8 vCPU / 16 GB）まであり、sandbox の送信トラフィックは直近 30 日間でアカウントあたり 2 TB まで含まれます。ワークスペースの所有者は、1 つのワークスペースに[ワークスペースの上限](#workspace-limits)を設定することもできます。制限は、リソース、プラン、アカウントによって異なります: レプリカごとの設定は、サービスまたはアカウント全体で利用可能な合計ではありません。ワークロードのサイズを決める前に、現在のプランと、作成またはスケールリクエストの結果を確認してください。
 
 <span id="applications" />
 
@@ -38,7 +38,7 @@ Lizard (lizard.build) では、アプリはPro の初回請求の支払い後は
 | Medium（既定、トライアル中を除く） | 4 vCPU / 8 GB | 20 GB | 1 時間あたり $0.0324 |
 | Large | 8 vCPU / 16 GB | 50 GB | 1 時間あたり $0.0648 |
 
-CPU とメモリは料金に含まれます。Persistent Volumes は別途課金されます。Mini は `base`、`claude`、`codex`、`interpreter` テンプレートからのみ、Persistent Volumes を接続せずに起動できます。それ以外では、作成は HTTP 400 を返し、`code` は `SANDBOX_SIZE_NOT_ALLOWED` になります。トライアル中は Small が既定のサイズで、Medium は同時に 1 個まで、sandbox は US リージョンでのみ動きます。[請求](/platform/billing#trial)を参照してください。
+CPU とメモリは料金に含まれます。Persistent Volumes は別途課金されます。Mini は `base`、`claude`、`codex`、`interpreter` テンプレートからのみ、Persistent Volumes を接続せずに起動できます。それ以外では、作成は HTTP 400 を返し、`code` は `SANDBOX_SIZE_NOT_ALLOWED` になります。トライアル中は Small が既定のサイズで、同時に実行できるのは Small 1 個と Mini 2 個まで、Medium と Large は最初の請求書の支払い後に使えるようになり、sandbox は US リージョンでのみ動きます。[請求](/platform/billing#trial)を参照してください。
 
 <span id="sandbox-account-limits" />
 
@@ -48,17 +48,17 @@ CPU とメモリは料金に含まれます。Persistent Volumes は別途課金
 
 | プラン | 同時実行の vCPU | 最大サイズ | 1 分あたりの起動数 | 1 時間あたり | 1 日あたり |
 |---|---|---|---|---|---|
-| Pro のトライアル | 8（Mini 8 個または Small 4 個まで） | Medium、同時に 1 個まで | 6 | 30 | 100 |
+| Pro のトライアル | 同時に Small 1 個 + Mini 2 個 | Small | 6 | 30 | 100 |
 | Pro | 40 | Large | 無制限 | 無制限 | 無制限 |
 | Pro 5x | 220 | Large | 無制限 | 無制限 | 無制限 |
 | Pro 20x | 1,200 | Large | 無制限 | 無制限 | 無制限 |
 | Enterprise | お客様ごとの契約で定めるワークスペースあたりの上限 | Large | ユーザーあたり 120 | 上限なし | 上限なし |
 
-サンドボックスはサイズに応じた vCPU を使います。Mini は 1、Small は 2、Medium は 4、Large は 8 です。実行中の vCPU に新しいサンドボックスの vCPU を足して上限以下なら、そのサンドボックスを起動できます。サイズは自由に組み合わせられます。次の表は、1 つのサイズだけで同時に実行できる数です。
+サンドボックスはサイズに応じた vCPU を使います。Mini は 1、Small は 2、Medium は 4、Large は 8 です。有料プランでは、実行中の vCPU に新しいサンドボックスの vCPU を足して上限以下なら、そのサンドボックスを起動できます。サイズは自由に組み合わせられます。次の表は、1 つのサイズだけで同時に実行できる数です。
 
 | プラン | Mini | Small | Medium | Large |
 |---|---|---|---|---|
-| Pro のトライアル | 8 | 4 | 1 | 使えません |
+| Pro のトライアル | 2 | 1 | 使えません | 使えません |
 | Pro | 40 | 20 | 10 | 5 |
 | Pro 5x | 220 | 110 | 55 | 27 |
 | Pro 20x | 1,200 | 600 | 300 | 150 |
@@ -69,8 +69,8 @@ Pro で Large 3 個と Small 6 個を実行すると、40 vCPU のうち 36 を�
 - トライアルと有料プランでは、実行中とは、実行中または再開中のことです。一時停止中のサンドボックスは vCPU を使いません。再開するには、その vCPU の分の空きが必要です。
 - 起動とは新しいサンドボックスのことです。再開は起動に含まれません。Lizard 側で失敗した作成は数えません。
 - 上限を超えると、作成と再開は HTTP 429 を返し、`code` は `SANDBOX_LIMIT_REACHED`（同時実行の vCPU）または `SANDBOX_RATE_LIMITED`（起動数）になります。起動数による拒否には `Retry-After` ヘッダーが付きます。
-- トライアル中に 2 個目の Medium のサンドボックスを同時に実行しようとすると、作成、fork、再開のどれでも HTTP 403 が返り、`code` は `TRIAL_MEDIUM_RUNNING` になります。US 以外のリージョンでは `TRIAL_SANDBOX_REGION` 付きの HTTP 403 が返ります。Large のサンドボックスを作成、再開、fork、復元したときは、どれも HTTP 403 が返り、`code` は `SANDBOX_SIZE_NOT_ALLOWED` になります。
-- `GET /api/sandboxes/limits` は、上限と現在実行中のものを返します。`running`（サンドボックスの数）と `runningVcpu` が含まれます。
+- トライアル中に 2 個目の Small または 3 個目の Mini を同時に実行しようとすると、作成、fork、再開のどれでも HTTP 403 が返り、`code` は `TRIAL_SIZE_RUNNING` になります。本文には `size`、`sizeLimit`、`allowedSizes`、`sizeLimits` が含まれます。1 個を一時停止するか削除してください。Small の場合は代わりに Mini を起動することもできます。Medium のサンドボックスでは `TRIAL_SANDBOX_SIZE` 付きの HTTP 403 が返り（`allowedSizes` は `["small", "mini"]`）、Large では `SANDBOX_SIZE_NOT_ALLOWED` 付きの HTTP 403、US 以外のリージョンでは `TRIAL_SANDBOX_REGION` 付きの HTTP 403 が返ります。
+- `GET /api/sandboxes/limits` は、上限と現在実行中のものを返します。`running`（サンドボックスの数）と `runningVcpu` が含まれます。トライアル中は `sizeLimits`（`{"small": 1, "mini": 2}`）と `runningBySize` も返します。
 - Enterprise には同時に実行できるサンドボックス数の固定の上限はありません。お客様ごとの契約でワークスペースあたりの上限を定めます。実行中、一時停止中、クラッシュしたサンドボックスがすべて数に入ります。超えると、作成と fork は HTTP 429 を返し、`code` は `SANDBOX_LIMIT_REACHED` になります。1 人のユーザーが作成できるのは、リージョンごとに 1 分あたり最大 120 個です。
 - ダッシュボードの **New Sandbox** の横に、使用中の vCPU と vCPU の上限が表示されます。同時に 1,200 vCPU を超えて必要な場合は、Enterprise についてお問い合わせください。
 

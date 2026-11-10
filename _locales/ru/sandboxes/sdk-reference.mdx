@@ -78,7 +78,7 @@ sandbox = Sandbox.create(
 ```
 
 - Первым аргументом передайте шаблон из каталога в разделе [runtime и шаблоны](/sandboxes#runtime-and-templates). Без него SDK запускает `base`.
-- `size` принимает `'mini'`, `'small'`, `'medium'` или `'large'`: 1 vCPU / 2 GB, 2 vCPU / 4 GB, 4 vCPU / 8 GB (по умолчанию) или 8 vCPU / 16 GB; см. [размеры и цены](/platform/limits#sandbox-sizes). `'mini'` запускается только из шаблонов `base`, `claude`, `codex` и `interpreter`, без тома. В пробном периоде `'small'` — размер по умолчанию, одновременно работает только один `'medium'`, и работают только регионы США; `'large'`, второй Medium или другой регион вызывает `AuthenticationError` с HTTP 403. Для sandbox, восстановленного из снимка, `size` не действует: он работает с размером источника.
+- `size` принимает `'mini'`, `'small'`, `'medium'` или `'large'`: 1 vCPU / 2 GB, 2 vCPU / 4 GB, 4 vCPU / 8 GB (по умолчанию) или 8 vCPU / 16 GB; см. [размеры и цены](/platform/limits#sandbox-sizes). `'mini'` запускается только из шаблонов `base`, `claude`, `codex` и `interpreter`, без тома. В пробном периоде `'small'` — размер по умолчанию, одновременно работают 1 Small и 2 Mini, и работают только регионы США; `'medium'`, `'large'`, второй Small, третий Mini или другой регион вызывает `AuthenticationError` с HTTP 403. Для sandbox, восстановленного из снимка, `size` не действует: он работает с размером источника.
 - `timeoutMs` по умолчанию равен 300000, то есть пяти минутам. `0` отключает истечение срока. См. [ресурсы и сроки жизни](/sandboxes#resources-and-timeouts).
 - При необходимости укажите регион явно; наличие региона в каталоге не гарантирует свободные ресурсы. Не задавайте `region`, если подключаете том: sandbox запустится там, где находится том.
 - В `metadata` укажите свои метки; их возвращает `getInfo()`, а `list()` — нет.
@@ -279,7 +279,7 @@ sandbox = Sandbox.create("base", project_id="proj_123", volume_name="agent-workd
 | Ошибка | Значение |
 |---|---|
 | `PaymentRequiredError` | HTTP 402: аккаунту нужно подключить Pro или оплатить счёт, прежде чем что-то создавать. В `url` указан адрес страницы, которую нужно открыть. |
-| `AuthenticationError` | HTTP 401 или 403: неверный ключ или нет доступа. В пробном периоде API отвечает 403 и на второй одновременно работающий sandbox размера Medium или регион за пределами США: `code` равен `TRIAL_MEDIUM_RUNNING` или `TRIAL_SANDBOX_REGION`; на sandbox размера Large API отвечает 403 с `SANDBOX_SIZE_NOT_ALLOWED`, будь то создание, возобновление или fork. |
+| `AuthenticationError` | HTTP 401 или 403: неверный ключ или нет доступа. В пробном периоде на второй одновременно работающий sandbox размера Small или третий Mini API отвечает 403 с `code`, равным `TRIAL_SIZE_RUNNING`, будь то создание, возобновление или fork; на sandbox размера Medium — `TRIAL_SANDBOX_SIZE`, на Large — `SANDBOX_SIZE_NOT_ALLOWED`, а на регион за пределами США — `TRIAL_SANDBOX_REGION`. |
 | `NotFoundError` | HTTP 404: sandbox, файл или снимок не существует либо его срок истёк. |
 | `ConflictError` | HTTP 409: конфликт состояния, например fork sandbox с томом. |
 | `LimitExceededError` | HTTP 429: слишком много vCPU у одновременно запущенных sandbox или слишком много запусков. `code` указывает лимит, например `SANDBOX_LIMIT_REACHED` или `SANDBOX_RATE_LIMITED`. Для `SANDBOX_LIMIT_REACHED` значения `limit` и `running` указаны в vCPU, `unit` это подтверждает (`vcpu`), а `needed` — сколько vCPU нужно отклонённой sandbox. `retryAfterS` (в Python: `retry_after_s`) указывает, когда повторить попытку. |
