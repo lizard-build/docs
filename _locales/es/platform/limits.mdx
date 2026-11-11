@@ -32,9 +32,9 @@ En Lizard (lizard.build), una app ejecuta hasta 5 réplicas por servicio tras la
 | Tamaño | CPU y memoria | Disco | Precio mientras se ejecuta |
 |---|---|---|---|
 | Mini | 1 vCPU / 2 GB | 5 GB | $0.0081 por hora |
-| Small | 2 vCPU / 4 GB | 5 GB | $0.0162 por hora |
-| Medium (predeterminado fuera de la prueba) | 4 vCPU / 8 GB | 20 GB | $0.0324 por hora |
-| Large | 8 vCPU / 16 GB | 50 GB | $0.0648 por hora |
+| Small | 2 vCPU / 4 GB | 20 GB | $0.0162 por hora |
+| Medium (predeterminado fuera de la prueba) | 4 vCPU / 8 GB | 40 GB | $0.0324 por hora |
+| Large | 8 vCPU / 16 GB | 80 GB | $0.0648 por hora |
 
 La CPU y la memoria están incluidas en el precio. Los Persistent Volumes se facturan aparte. Mini solo arranca desde las plantillas `base`, `claude`, `codex` e `interpreter`, sin un Persistent Volume; de lo contrario, la creación devuelve HTTP 400 con `code` igual a `SANDBOX_SIZE_NOT_ALLOWED`. Durante la prueba, Small es el tamaño predeterminado, una cuenta ejecuta 1 Small y 2 Mini a la vez, Medium y Large se desbloquean tras la primera factura pagada y los sandboxes solo se ejecutan en regiones de EE. UU.; consulta [Facturación](/platform/billing#trial). Durante la prueba, cada sandbox se elimina como máximo 1 hora después de iniciarse.
 
