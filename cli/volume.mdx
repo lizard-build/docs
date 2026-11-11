@@ -30,7 +30,7 @@ Create a volume. Names use lowercase letters, digits, and dashes, start and end 
 | Flag | Description |
 |------|-------------|
 | `--size <gb>` | Size in whole GB (default 5); a sandbox volume takes 1 to 50. The CLI reads the server's current limits first |
-| `--region <code>` | Region for the volume; it must match the sandbox that will attach it |
+| `--region <code>` | Region for the volume (default `us-east-1`); it must match the sandbox that will attach it |
 | `-s, --service <name>` | Create the volume and attach it to this service instead. A service has at most one volume, and its files survive restarts and redeploys |
 | `--mount-path <path>` | With `--service`: where the service sees the volume (default `/data`) |
 | `-p, --project <id>` | Project name, slug, or ID |

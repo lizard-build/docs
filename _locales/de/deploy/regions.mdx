@@ -7,7 +7,7 @@ description: "Wählen Sie aus, wo Ihre Services und Addons laufen, platzieren Si
 
 # Regionen
 
-Lizard (lizard.build) betreibt Services, Addons und Sandboxes in Regionen wie US East (`us-east-1`) und EU West (`eu-west-lim-a`). Sie wählen die Region beim Erstellen einer Ressource; ohne `--region` erstellt `lizard add` sie in `us-east-1`. Platzieren Sie einen Service und seine Datenbanken in derselben Region, um die Latenz niedrig zu halten. [`lizard regions`](/cli/regions) listet die für Ihr Konto verfügbaren Regionen auf.
+Lizard (lizard.build) betreibt Services, Addons und Sandboxes in Regionen wie US East (`us-east-1`) und EU West (`eu-west-lim-a`). Sie wählen die Region beim Erstellen einer Ressource; ohne Angabe werden neue Services und Addons in `us-east-1` erstellt. Platzieren Sie einen Service und seine Datenbanken in derselben Region, um die Latenz niedrig zu halten. [`lizard regions`](/cli/regions) listet die für Ihr Konto verfügbaren Regionen auf.
 
 <span id="list-regions" />
 
@@ -30,7 +30,7 @@ lizard add postgres --region <code>
 lizard up --region <code>          # new services only
 ```
 
-Projekte haben keine Standardregion. Ohne `--region` erstellt `lizard add` in `us-east-1`, und `lizard up` erstellt einen neuen Service in der Region des API-Servers, der die Anfrage verarbeitet. Übergeben Sie `--region`, um eine Region auszuwählen.
+Projekte haben keine Standardregion. Ohne `--region` erstellen `lizard up` und `lizard add` neue Services und Addons in `us-east-1`, ebenso die API, [Lizard MCP](/agents#lizard-mcp) und das Dashboard. Übergeben Sie `--region`, um eine andere Region auszuwählen.
 
 > **Zustandsbehaftete Ressourcen gemeinsam platzieren.** Platzieren Sie einen Service und die Addons, mit denen er kommuniziert (Managed Postgres, Managed Redis, Managed Object Storage), in **derselben Region**, um die Latenz niedrig zu halten und regionenübergreifende Datengebühren zu vermeiden. [Privates Netzwerk](/networking#private-networking) funktioniert außerdem nur innerhalb einer Region.
 

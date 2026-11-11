@@ -7,7 +7,7 @@ description: "Elige dónde se ejecutan tus servicios y addons, ubica juntos los 
 
 # Regiones
 
-Lizard (lizard.build) ejecuta servicios, addons y Sandboxes en regiones como US East (`us-east-1`) y EU West (`eu-west-lim-a`). Eliges la región al crear un recurso; sin `--region`, `lizard add` lo crea en `us-east-1`. Coloca un servicio y sus bases de datos en la misma región para mantener baja la latencia. [`lizard regions`](/cli/regions) lista las regiones disponibles para tu cuenta.
+Lizard (lizard.build) ejecuta servicios, addons y Sandboxes en regiones como US East (`us-east-1`) y EU West (`eu-west-lim-a`). Eliges la región al crear un recurso; si no la eliges, un servicio o addon nuevo se crea en `us-east-1`. Coloca un servicio y sus bases de datos en la misma región para mantener baja la latencia. [`lizard regions`](/cli/regions) lista las regiones disponibles para tu cuenta.
 
 <span id="list-regions" />
 
@@ -30,7 +30,7 @@ lizard add postgres --region <code>
 lizard up --region <code>          # new services only
 ```
 
-Los proyectos no tienen una región predeterminada. Sin `--region`, `lizard add` crea en `us-east-1`, y `lizard up` crea un servicio nuevo en la región del servidor de API que gestiona la solicitud. Pasa `--region` para elegir.
+Los proyectos no tienen una región predeterminada. Sin `--region`, `lizard up` y `lizard add` crean los servicios y addons nuevos en `us-east-1`, igual que la API, [Lizard MCP](/agents#lizard-mcp) y el panel. Pasa `--region` para elegir otra.
 
 > **Ubica juntos los recursos con estado.** Coloca un servicio y los addons con los que se comunica (Managed Postgres, Managed Redis, Managed Object Storage) en la **misma región** para mantener baja la latencia y evitar cargos por datos entre regiones. La [red privada](/networking#private-networking) también funciona solo dentro de una región.
 

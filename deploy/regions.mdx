@@ -5,7 +5,7 @@ description: "Pick where your services and addons run, co-locate stateful resour
 
 # Regions
 
-Lizard runs services, addons and Sandboxes in regions such as US East (`us-east-1`) and EU West (`eu-west-lim-a`). You pick the region when you create a resource; without `--region`, `lizard add` creates it in `us-east-1`. Put a service and its databases in the same region to keep latency low. [`lizard regions`](/cli/regions) lists the regions open to your account.
+Lizard runs services, addons and Sandboxes in regions such as US East (`us-east-1`) and EU West (`eu-west-lim-a`). You pick the region when you create a resource; if you don't, a new service or addon goes to `us-east-1`. Put a service and its databases in the same region to keep latency low. [`lizard regions`](/cli/regions) lists the regions open to your account.
 
 ## List regions
 
@@ -24,7 +24,7 @@ lizard add postgres --region <code>
 lizard up --region <code>          # new services only
 ```
 
-Projects have no default region. Without `--region`, `lizard add` creates resources in `us-east-1`, and `lizard up` creates a new service in the region of the API server that handles the request. Pass `--region` to choose.
+Projects have no default region. Without `--region`, `lizard up` and `lizard add` create new services and addons in `us-east-1`, as do the API, [Lizard MCP](/agents#lizard-mcp) and the dashboard. Pass `--region` to choose another.
 
 > **Co-locate stateful resources.** Put a service and the addons it talks to (Managed Postgres, Managed Redis, Managed Object Storage) in the **same region** to keep latency low and avoid cross-region data charges. [Private networking](/networking#private-networking) also works only inside one region.
 
