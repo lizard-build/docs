@@ -122,7 +122,8 @@ Si tu banco pide confirmar el pago de una subida de plan, la página Facturació
 Si falla un cobro, ya sea el precio mensual del plan, una subida de plan o un cobro de uso adicional:
 
 - Desde ese momento no puedes crear recursos nuevos.
-- Los recursos en marcha siguen 72 horas y luego se pausan.
+- Si tu cuenta aún no ha pagado ninguna factura, como cuando falla el primer cobro tras la prueba, los recursos en marcha se pausan de inmediato.
+- Si ya ha pagado antes, los recursos en marcha siguen 72 horas y luego se pausan.
 - Los recursos en pausa conservan sus datos; consulta [qué conserva una pausa por facturación](#what-a-billing-pause-keeps).
 
 Paga la factura pendiente en la página Facturación. En cuanto está pagada, Lizard quita el bloqueo y vuelve a arrancar las apps y bases de datos en pausa. Reanuda tú mismo los Sandboxes en pausa. Stripe reintenta un cobro fallido; si el último intento también falla, tu plan termina.
