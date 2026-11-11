@@ -34,7 +34,7 @@ In a test on 2026-10-12, the median time from creating a sandbox to its first Py
 | What runs the code? | A Firecracker microVM with its own kernel; see [runtime and templates](#runtime-and-templates) |
 | How do I create one? | [Lizard SDK](/sandboxes/sdk-reference), [`lizard sandbox`](/cli/sandbox), the [dashboard](/sandboxes/dashboard), or the [HTTP API](/sandboxes/sdk-reference#http-api) |
 | Which templates exist? | `base`, `interpreter`, `codex`, `claude`, `opencode`, `pi`, `prime`, `desktop` and `desktop-camoufox` (US East only) |
-| What sizes are there? | Mini (1 vCPU / 2 GB), Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, the default) and Large (8 vCPU / 16 GB). Mini starts only from the `base`, `claude`, `codex` and `interpreter` templates. The trial runs 1 Small and 2 Mini at a time, in US regions. See [sizes and prices](/platform/limits#sandbox-sizes) |
+| What sizes are there? | Mini (1 vCPU / 2 GB, 5 GB disk), Small (2 vCPU / 4 GB, 20 GB disk), Medium (4 vCPU / 8 GB, 40 GB disk, the default) and Large (8 vCPU / 16 GB, 80 GB disk). Mini starts only from the `base`, `claude`, `codex` and `interpreter` templates. The trial runs 1 Small and 2 Mini at a time, in US regions. See [sizes and prices](/platform/limits#sandbox-sizes) |
 | How long does one live? | Five minutes by default from the SDK and CLI; no expiration by default from the raw API and dashboard |
 | What survives a pause? | The whole disk, including packages installed outside `/workspace`, plus memory and running processes (a pause with `fast: true` keeps the disk only) |
 | What survives a stop (kill or expiration)? | Files on a [Persistent Volume](/sandboxes/volumes) at `/workspace`, and any [snapshot](/sandboxes/quickstart#pause-and-resume) you took; a snapshot holds the whole disk |
@@ -59,7 +59,7 @@ snapshot -> new sandbox (restore)
 
 ## Resources and timeouts
 
-Choose a size when you create a sandbox: Mini (1 vCPU / 2 GB), Small (2 vCPU / 4 GB), Medium (4 vCPU / 8 GB, the default), or Large (8 vCPU / 16 GB). Mini starts only from the `base`, `claude`, `codex` and `interpreter` templates, without a volume. During the trial, a sandbox is Mini or Small, 1 Small and 2 Mini at a time, runs in a US region, and is deleted 1 hour after it starts at the latest. See [sizes and prices](/platform/limits#sandbox-sizes). Select a region explicitly when needed; a catalog entry does not guarantee free capacity.
+Choose a size when you create a sandbox: Mini (1 vCPU / 2 GB, 5 GB disk), Small (2 vCPU / 4 GB, 20 GB disk), Medium (4 vCPU / 8 GB, 40 GB disk, the default), or Large (8 vCPU / 16 GB, 80 GB disk). Mini starts only from the `base`, `claude`, `codex` and `interpreter` templates, without a volume. During the trial, a sandbox is Mini or Small, 1 Small and 2 Mini at a time, runs in a US region, and is deleted 1 hour after it starts at the latest. See [sizes and prices](/platform/limits#sandbox-sizes). Select a region explicitly when needed; a catalog entry does not guarantee free capacity.
 
 The SDK and CLI default to a five-minute lifetime. The raw API and dashboard default to no expiration. Set an explicit lifetime: `timeoutMs: 0` at creation disables expiration; a positive value sets a deadline. `setTimeout` accepts 1000 to 2147483647 ms, not zero. Commands do not reset the deadline. This is not an idle timer. During the trial, no lifetime or `0` gets 1 hour, and a lifetime over 1 hour returns HTTP 403 with `TRIAL_SANDBOX_LIFETIME`; see [Lifetime](/platform/limits#sandbox-lifetime).
 
