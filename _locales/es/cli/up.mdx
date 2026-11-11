@@ -40,7 +40,7 @@ En este último caso, si el proyecto ya tiene un servicio con ese nombre, `up` d
 | `--start-command <cmd>` | Sobrescribe el comando de inicio |
 | `--pre-deploy-command <cmd>` | Se ejecuta antes del comando de inicio cada vez que arranca un contenedor (cada réplica, cada reinicio). Requiere un comando de inicio; haz que sea seguro ejecutarlo muchas veces |
 | `--port <number>` | Puerto del contenedor (`0` = modo worker). Los servicios nuevos usan `3000` por defecto, salvo que un `EXPOSE` del Dockerfile lo defina |
-| `--region <code>` | Región para un servicio nuevo; se ignora en un servicio existente |
+| `--region <code>` | Región para un servicio nuevo (por defecto `us-east-1`); se ignora en un servicio existente |
 | `-d, --detach` | Inicia el despliegue y sale sin transmitir logs |
 | `-c, --ci` | Transmite solo los logs de compilación y sale cuando termina la compilación |
 | `--no-gitignore` | Sube todo, ignorando `.gitignore` |

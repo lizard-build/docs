@@ -34,7 +34,7 @@ In the last case, if the project already has a service with that name, `up` depl
 | `--start-command <cmd>` | Override the start command |
 | `--pre-deploy-command <cmd>` | Run before the start command each time a container starts (every replica, every restart). Needs a start command; make it safe to run many times |
 | `--port <number>` | Container port (`0` = worker mode). New services default to `3000` unless a Dockerfile `EXPOSE` sets it |
-| `--region <code>` | Region for a new service; ignored for an existing one |
+| `--region <code>` | Region for a new service (default `us-east-1`); ignored for an existing one |
 | `-d, --detach` | Start the deploy and exit without streaming logs |
 | `-c, --ci` | Stream build logs only and exit when the build ends |
 | `--no-gitignore` | Upload everything, ignoring `.gitignore` |

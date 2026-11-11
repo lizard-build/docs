@@ -7,7 +7,7 @@ description: "サービスとアドオンをどこで実行するかを選び、
 
 # リージョン
 
-Lizard (lizard.build) は、US East (`us-east-1`) や EU West (`eu-west-lim-a`) などのリージョンでサービス、アドオン、Sandboxes を実行します。リージョンはリソースの作成時に選択します。`--region` を指定しない場合、`lizard add` は `us-east-1` にリソースを作成します。レイテンシを低く保つには、サービスとそのデータベースを同じリージョンに配置してください。[`lizard regions`](/cli/regions) は、アカウントで利用できるリージョンを一覧表示します。
+Lizard (lizard.build) は、US East (`us-east-1`) や EU West (`eu-west-lim-a`) などのリージョンでサービス、アドオン、Sandboxes を実行します。リージョンはリソースの作成時に選択します。指定しない場合、新しいサービスとアドオンは `us-east-1` に作成されます。レイテンシを低く保つには、サービスとそのデータベースを同じリージョンに配置してください。[`lizard regions`](/cli/regions) は、アカウントで利用できるリージョンを一覧表示します。
 
 <span id="list-regions" />
 
@@ -30,7 +30,7 @@ lizard add postgres --region <code>
 lizard up --region <code>          # new services only
 ```
 
-プロジェクトにはデフォルトのリージョンがありません。`--region` を指定しない場合、`lizard add` は `us-east-1` に作成し、`lizard up` はリクエストを処理した API サーバーのリージョンに新しいサービスを作成します。リージョンを選ぶには `--region` を渡してください。
+プロジェクトにはデフォルトのリージョンがありません。`--region` を指定しない場合、`lizard up` と `lizard add` は新しいサービスとアドオンを `us-east-1` に作成します。API、[Lizard MCP](/agents#lizard-mcp)、ダッシュボードも同じです。別のリージョンを選ぶには `--region` を渡してください。
 
 > **ステートフルなリソースは同じ場所に配置してください。** サービスと、それが通信するアドオン（Managed Postgres、Managed Redis、Managed Object Storage）は、レイテンシを低く保ち、リージョン間のデータ転送料金を避けるために、**同じリージョン** に配置してください。[プライベートネットワーク](/networking#private-networking) も、1 つのリージョン内でしか使えません。
 
