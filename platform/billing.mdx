@@ -102,7 +102,8 @@ If your bank asks you to confirm an upgrade payment, the Billing page links to t
 If a charge fails, whether the monthly plan price, an upgrade or an overage charge:
 
 - You cannot create new resources from the moment the charge fails.
-- Running resources keep running for 72 hours, then pause.
+- If your account has not paid an invoice yet, as when the first charge after the trial fails, running resources pause at once.
+- If it has paid before, running resources keep running for 72 hours, then pause.
 - Paused resources keep their data; see [what a billing pause keeps](#what-a-billing-pause-keeps).
 
 Pay the open invoice on the Billing page. Once it is paid, Lizard lifts the block and starts paused apps and databases again. Resume paused Sandboxes yourself. Stripe retries a failed charge; if the last retry fails, your plan ends.
