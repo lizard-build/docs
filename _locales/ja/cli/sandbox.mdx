@@ -121,10 +121,9 @@ sandbox 内のポートに HTTPS URL を割り当てます。ポートは非公�
 
 | コマンド | 動作 |
 |---------|--------------|
-| `lizard sandbox pause <id>` | メモリとプロセスを保存して sandbox を一時停止します。完了すると計算料金は止まりますが、Persistent Volumes のストレージ料金は別途かかります |
-| `lizard sandbox pause <id> --fast` | ファイルだけを保持して約 1 秒で一時停止します。メモリは保存されず、実行中のプロセスは終了し、`resume` はファイルを保ったままサンドボックスを新しく起動します |
-| `lizard sandbox resume <id>` | 一時停止中の sandbox を、保存したメモリとファイルで再び起動します |
-| `lizard sandbox snapshot <id> --name <name>` | 実行中の sandbox を、メモリとファイルを含めて、スナップショットとして保存します。復元できるのは、その sandbox と同じプロジェクトとリージョンだけです |
+| `lizard sandbox pause <id>` | sandbox のファイルを保持して一時停止します。実行中のプロセスとメモリは失われます。計算料金は止まりますが、Persistent Volumes のストレージ料金は別途かかります |
+| `lizard sandbox resume <id>` | 一時停止中の sandbox を、ファイルを保ったまま新しく起動します |
+| `lizard sandbox snapshot <id> --name <name>` | 実行中の sandbox のファイルだけをスナップショットに保存します。復元できるのは同じプロジェクトとリージョンだけです |
 | `lizard sandbox restore <snapshot-id>` | スナップショットと同じプロジェクトとリージョンで、スナップショットから新しい sandbox を起動します。`--volume <name-or-id>` はそのプロジェクトのボリュームを `/workspace` にマウントし、`--timeout <ms>` は有効期間を設定します（既定値 `300000`） |
 | `lizard sandbox snapshots` | プロジェクトで作成したスナップショットを一覧表示します（別のプロジェクトには `-p`、自分が作成したすべてのスナップショットには `--mine`） |
 | `lizard sandbox snapshot-rm <snapshot-id>` | スナップショットを削除します（エイリアス `snapshot-delete`。`-y` で確認を省略） |

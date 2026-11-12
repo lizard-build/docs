@@ -144,7 +144,7 @@ print(connected.get_info())
 
 ## Pause, Fortsetzen und Snapshots
 
-`pause()` speichert Arbeitsspeicher, laufende Prozesse und jede Datei auf der Festplatte der Sandbox. Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes wird weiter berechnet. `resume()` stellt die Sandbox mit derselben ID wieder her und startet die Berechnung der Rechenkosten erneut. Beide Aufrufe reihen die Arbeit ein und kehren sofort zurück; warten Sie auf `paused` oder `running`, um den Erfolg zu bestätigen.
+Eine Pause behält die Dateien der Sandbox und stoppt die Rechenkosten. Laufende Prozesse und Arbeitsspeicher gehen verloren; beim Fortsetzen startet die Sandbox mit ihren Dateien neu. Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes wird weiter berechnet. `resume()` stellt die Sandbox mit derselben ID wieder her und startet die Berechnung der Rechenkosten erneut. Beide Aufrufe reihen die Arbeit ein und kehren sofort zurück; warten Sie auf `paused` oder `running`, um den Erfolg zu bestätigen.
 
 ```ts
 await sandbox.pause();
@@ -154,17 +154,10 @@ await sandbox.waitForStatus('running');
 ```
 
 - Eine Pause schließt offene Netzwerkverbindungen. Programme in der Sandbox müssen sich nach dem Fortsetzen neu verbinden.
-- Lassen sich die Prozesse nicht speichern, läuft die Sandbox weiter, und `waitForStatus` löst einen Fehler mit dem Grund aus. Schlägt das Fortsetzen fehl, bleibt die Sandbox mit ihrem Checkpoint pausiert; rufen Sie `resume()` erneut auf.
+- Schlägt eine Pause fehl, wirft `waitForStatus` einen Fehler mit dem Grund. Schlägt das Fortsetzen fehl, bleibt die Sandbox mit ihren gespeicherten Dateien pausiert; rufen Sie `resume()` erneut auf.
 - Während der Pause bleibt die restliche Laufzeit unverändert. Nach dem Fortsetzen zählt sie weiter herunter. Eine pausierte Sandbox zählt nicht zum Limit laufender Sandboxes.
 
-**Schnelle Pause.** `pause({ fast: true })` (Python: `pause(fast=True)`, CLI: `lizard sandbox pause <id> --fast`) behält nur die Dateien: die ganze Festplatte und `/workspace`. Das dauert bei jeder Speichergröße etwa eine Sekunde, während eine vollständige Pause umso länger dauert, je mehr Speicher belegt ist. Laufende Prozesse werden beendet, und `resume()` startet die Sandbox mit ihren Dateien neu, wie nach einem Neustart; die Antwort auf das Fortsetzen enthält `memoryRestored: false`. Nutzen Sie es, wenn nichts Laufendes erhalten bleiben muss. Abrechnung und Lebensdauer verhalten sich wie bei jeder Pause.
-
-```ts
-await sandbox.pause({ fast: true });
-await sandbox.waitForStatus('paused');
-```
-
-Ein Snapshot speichert Arbeitsspeicher, laufende Prozesse und jede Datei auf der Festplatte einer laufenden Sandbox. Er lässt sich nur im eigenen Projekt und in der eigenen Region wiederherstellen. Wiederherstellen können ihn der Nutzer, der ihn erstellt hat, und die Mitglieder dieses Projekts. `Sandbox.restore(id, { projectId })` (Python: `project_id=`) mit einem anderen Projekt schlägt mit HTTP 403 und `code` gleich `SNAPSHOT_SCOPE` fehl. Schließen Sie vor der Aufnahme Clients und Terminals und stoppen Sie Schreibvorgänge in `/workspace`.
+Ein Snapshot behält ebenfalls nur Dateien. Er lässt sich nur im eigenen Projekt und in der eigenen Region wiederherstellen. Wiederherstellen können ihn der Nutzer, der ihn erstellt hat, und die Mitglieder dieses Projekts. `Sandbox.restore(id, { projectId })` (Python: `project_id=`) mit einem anderen Projekt schlägt mit HTTP 403 und `code` gleich `SNAPSHOT_SCOPE` fehl. Schließen Sie vor der Aufnahme Clients und Terminals und stoppen Sie Schreibvorgänge in `/workspace`.
 
 Ist an die Sandbox ein Persistent Volume angehängt, enthält der Snapshot eine Kopie der Dateien des Volumes zum Zeitpunkt der Aufnahme. Jede Wiederherstellung erhält diese Kopie, nicht das laufende Volume, und kann kein weiteres Volume anhängen. Wer den Snapshot wiederherstellen kann, kann diese Dateien lesen. Ein Snapshot einer Sandbox ohne Volume kann bei der Wiederherstellung mit `volumeId` (Python: `volume_id`) ein Volume aus demselben Projekt und derselben Region einbinden.
 

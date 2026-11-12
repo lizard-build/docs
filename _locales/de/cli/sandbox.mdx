@@ -121,10 +121,9 @@ Verbindet eine VNC-App (macOS-Bildschirmfreigabe, TigerVNC, RealVNC) mit dem Des
 
 | Befehl | Was er macht |
 |---------|--------------|
-| `lizard sandbox pause <id>` | Speichert Arbeitsspeicher und Prozesse und pausiert die Sandbox. Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes wird separat berechnet |
-| `lizard sandbox pause <id> --fast` | In etwa einer Sekunde pausieren und nur die Dateien behalten: der Arbeitsspeicher wird nicht gesichert, laufende Prozesse enden, und `resume` startet die Sandbox mit ihren Dateien neu |
-| `lizard sandbox resume <id>` | Startet eine pausierte Sandbox mit ihrem gespeicherten Arbeitsspeicher und ihren Dateien erneut |
-| `lizard sandbox snapshot <id> --name <name>` | Speichert eine laufende Sandbox samt Arbeitsspeicher und Dateien als Snapshot, der sich nur im Projekt und in der Region der Sandbox wiederherstellen lässt |
+| `lizard sandbox pause <id>` | Behält die Dateien der Sandbox und pausiert sie. Laufende Prozesse und Arbeitsspeicher gehen verloren. Die Rechenkosten stoppen; Speicher in Persistent Volumes wird separat berechnet |
+| `lizard sandbox resume <id>` | Startet eine pausierte Sandbox mit ihren Dateien frisch |
+| `lizard sandbox snapshot <id> --name <name>` | Speichert nur die Dateien einer laufenden Sandbox als Snapshot, der sich nur im eigenen Projekt und in der eigenen Region wiederherstellen lässt |
 | `lizard sandbox restore <snapshot-id>` | Startet eine neue Sandbox aus einem Snapshot im Projekt und in der Region des Snapshots. `--volume <name-or-id>` hängt ein Volume aus diesem Projekt unter `/workspace` ein, `--timeout <ms>` setzt die Lebensdauer (Standard `300000`) |
 | `lizard sandbox snapshots` | Listet die im Projekt erstellten Snapshots auf (`-p` für ein anderes Projekt, `--mine` für alle Snapshots, die du erstellt hast) |
 | `lizard sandbox snapshot-rm <snapshot-id>` | Löscht einen Snapshot (Alias `snapshot-delete`, `-y` überspringt die Bestätigung) |
