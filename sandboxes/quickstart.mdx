@@ -120,7 +120,7 @@ print(connected.get_info())
 
 ## Pause, resume, and snapshots
 
-`pause()` saves the sandbox's memory, running processes and every file on its disk. A successful pause stops compute charges; Persistent Volumes storage continues to be billed. `resume()` restores the sandbox with the same ID and restarts compute billing. Both calls queue the work and return at once; wait for `paused` or `running` to confirm success.
+A pause keeps the sandbox's files and stops compute billing. Running processes and memory end, and a resume boots the sandbox fresh with its files. A successful pause stops compute charges; Persistent Volumes storage continues to be billed. `resume()` restores the sandbox with the same ID and restarts compute billing. Both calls queue the work and return at once; wait for `paused` or `running` to confirm success.
 
 ```ts
 await sandbox.pause();
@@ -130,17 +130,10 @@ await sandbox.waitForStatus('running');
 ```
 
 - Pausing closes open network connections. Programs in the sandbox must reconnect after a resume.
-- If the processes cannot be saved, the sandbox keeps running and `waitForStatus` throws with the reason. If a resume fails, the sandbox stays paused with its checkpoint; call `resume()` again.
+- If a pause fails, `waitForStatus` throws with the reason. If a resume fails, the sandbox stays paused with its saved files; call `resume()` again.
 - The lifetime deadline stops while the sandbox is paused and continues after the resume. A paused sandbox does not count toward the running limit.
 
-**Fast pause.** `pause({ fast: true })` (Python: `pause(fast=True)`, CLI: `lizard sandbox pause <id> --fast`) keeps only the files: the whole disk and `/workspace`. It takes about a second at any memory size, while a full pause takes longer the more memory is in use. Running processes end, and `resume()` boots the sandbox fresh with its files, like a restart; the resume response has `memoryRestored: false`. Use it when nothing that is running needs to survive. Billing and the lifetime deadline work as for any pause.
-
-```ts
-await sandbox.pause({ fast: true });
-await sandbox.waitForStatus('paused');
-```
-
-A snapshot saves a running sandbox's memory, running processes and every file on its disk. It restores only in its own project and region. The user who took it and the members of that project can restore it. `Sandbox.restore(id, { projectId })` (Python: `project_id=`) with any other project fails with HTTP 403 and `code` set to `SNAPSHOT_SCOPE`. Close clients and terminals and stop writes to `/workspace` before you capture.
+A snapshot keeps files only too. It restores only in its own project and region. The user who took it and the members of that project can restore it. `Sandbox.restore(id, { projectId })` (Python: `project_id=`) with any other project fails with HTTP 403 and `code` set to `SNAPSHOT_SCOPE`. Close clients and terminals and stop writes to `/workspace` before you capture.
 
 If the sandbox has a Persistent Volume attached, the snapshot includes a copy of the volume's files as they were at capture. Every restore gets that copy, not the live volume, and cannot attach another volume. Anyone who can restore the snapshot can read those files. A snapshot of a sandbox without a volume can mount one at restore with `volumeId` (Python: `volume_id`) from the same project and region.
 
