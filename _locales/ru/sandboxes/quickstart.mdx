@@ -141,7 +141,7 @@ print(connected.get_info())
 
 ## Пауза, возобновление и снимки
 
-Пауза сохраняет файлы sandbox и останавливает оплату вычислений. Запущенные процессы завершаются, память теряется; при возобновлении sandbox загружается заново со своими файлами. Успешная пауза останавливает оплату вычислений; хранение в Persistent Volumes оплачивается дальше. `resume()` восстанавливает sandbox с тем же ID и возобновляет оплату вычислений. Оба вызова ставят задачу в очередь и сразу возвращают ответ; дождитесь статуса `paused` или `running`, чтобы подтвердить успех.
+Пауза сохраняет файлы sandbox. Запущенные процессы завершаются, память теряется; при возобновлении sandbox загружается заново со своими файлами. Успешная пауза останавливает оплату вычислений; диск sandbox на паузе стоит $0.14 за ГБ-месяц используемого пространства, пока вы не возобновите или не удалите sandbox, а Persistent Volumes оплачиваются отдельно. `resume()` восстанавливает sandbox с тем же ID и возобновляет оплату вычислений. Оба вызова ставят задачу в очередь и сразу возвращают ответ; дождитесь статуса `paused` или `running`, чтобы подтвердить успех.
 
 ```ts
 await sandbox.pause();
@@ -164,7 +164,7 @@ await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-Снимок готов сразу после возврата вызова и восстанавливается с диска, поэтому `poolSize` к нему не применяется. Каждый restore запускается с размером источника и оплачивается по почасовой цене этого размера; `size` к restore не применяется. В CLI используйте `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` и `lizard sandbox restore <snapshot-id>`; о `--volume` см. [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots).
+Снимок готов сразу после возврата вызова и восстанавливается с диска, поэтому `poolSize` к нему не применяется. Каждый restore запускается с размером источника и оплачивается по почасовой цене этого размера; `size` к restore не применяется. Каждый снимок стоит $0.14 за ГБ-месяц используемого дискового пространства, пока вы не удалите его через `Sandbox.deleteSnapshot(id)` (в Python: `delete_snapshot`). В CLI используйте `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` и `lizard sandbox restore <snapshot-id>`; о `--volume` см. [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots).
 
 <span id="clean-up-and-next-steps" />
 

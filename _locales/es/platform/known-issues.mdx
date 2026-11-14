@@ -14,7 +14,7 @@ Esta página enumera comportamientos de Lizard que debes revisar antes de usar e
 
 `connect` no reanuda un sandbox pausado ni uno detenido, y fork devuelve HTTP 409 cuando hay un volumen adjunto; consulta el [ciclo de vida](/sandboxes#lifecycle) del sandbox.
 
-La pausa cierra las conexiones de red abiertas. Si no se pueden guardar los procesos, el sandbox sigue en marcha e indica el motivo en `pauseError`.
+La pausa termina los procesos en ejecución y cierra las conexiones de red abiertas. Si una pausa falla, el sandbox sigue en marcha e indica el motivo en `pauseError`.
 
 Una pausa conserva todo el disco. Tras una detención (kill o expiración), solo se conservan los archivos de un volumen de Persistent Volumes adjunto en `/workspace` o de un snapshot que hayas tomado; un snapshot guarda todo el disco. Los volúmenes usan almacenamiento local de un nodo; exporta los archivos que deban sobrevivir a la pérdida del nodo. Consulta [almacenamiento y facturación](/sandboxes#storage-and-billing).
 

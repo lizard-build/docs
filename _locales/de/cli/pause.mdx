@@ -58,7 +58,7 @@ Lizard pausiert Apps und Datenbanken auch selbst, wenn die Nutzung der Testphase
 
 ## Ein ganzes Projekt pausieren
 
-`lizard project pause` pausiert jede App und jede Datenbank im Projekt. Außerdem pausiert der Befehl die laufenden Sandboxes des Projekts und speichert dabei ihren Arbeitsspeicher und ihre Dateien, wie es [`lizard sandbox pause`](/cli/sandbox) tut. Services, die er nicht pausieren kann, werden mit Grund aufgelistet.
+`lizard project pause` pausiert jede App und jede Datenbank im Projekt. Außerdem pausiert der Befehl die laufenden Sandboxes des Projekts und behält dabei ihre Dateien, wie es [`lizard sandbox pause`](/cli/sandbox) tut; ihre laufenden Prozesse und ihr Arbeitsspeicher gehen verloren. Services, die er nicht pausieren kann, werden mit Grund aufgelistet.
 
 `lizard project resume` setzt jede App und jede Datenbank im Projekt fort, die jemand von Hand pausiert hat, sowie die Sandboxes, die `project pause` pausiert hat. Sandboxes, die du selbst pausiert hast, bleiben pausiert. Eine Sandbox wird nur fortgesetzt, solange deine [Sandbox-Limits](/platform/limits#sandbox-account-limits) Platz lassen.
 

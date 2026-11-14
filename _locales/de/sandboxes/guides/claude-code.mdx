@@ -130,7 +130,7 @@ lizard sandbox resume $SB
 lizard sandbox rm $SB
 ```
 
-Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes wird weiter berechnet. Beim Fortsetzen kehren Dateien und Prozesse zurück und die Rechenkosten beginnen erneut. Der Zustand der Konversationen liegt in `/workspace/.lizard-agent` in der Sandbox. Um Dateien nach dem Entfernen der Sandbox zu behalten, hängen Sie beim Erstellen mit `--volume` ein Volume aus [Persistent Volumes](/sandboxes/volumes) an.
+Eine erfolgreiche Pause stoppt die Rechenkosten; die Festplatte der pausierten Sandbox kostet $0.14 pro GB und Monat für belegten Speicherplatz, bis Sie die Sandbox fortsetzen oder löschen, und Persistent Volumes werden separat abgerechnet. Eine Pause beendet laufende Prozesse, daher bricht ein gerade aktiver Lauf von Claude Code ab. Beim Fortsetzen startet die Sandbox mit ihren Dateien neu und die Rechenkosten beginnen erneut. Der Zustand der Konversationen liegt in `/workspace/.lizard-agent` in der Sandbox. Um Dateien nach dem Entfernen der Sandbox zu behalten, hängen Sie beim Erstellen mit `--volume` ein Volume aus [Persistent Volumes](/sandboxes/volumes) an.
 
 <span id="common-problems" />
 

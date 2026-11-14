@@ -40,7 +40,7 @@ Crea un sandbox y muestra su ID.
 | `--with-token [key]` | Iniciar sesión en `lizard` dentro del sandbox con una clave nueva limitada al proyecto del sandbox y que se elimina con el sandbox. La clave `liz_` que pases o, sin valor, la clave `liz_` con la que ejecutas el comando solo autoriza la solicitud; un inicio de sesión desde el navegador no tiene ninguna. La plantilla `base` no incluye `lizard` |
 | `-p, --project <id>` | Proyecto (por defecto, el vinculado; si no, tu proyecto predeterminado) |
 
-Lizard factura cada tamaño por segundo con una tarifa fija mientras el sandbox está en marcha, incluido el tiempo inactivo. El precio incluye el disco local y [2 TB de tráfico saliente por cuenta durante los últimos 30 días](/platform/limits#sandbox-egress). Una pausa completada detiene los cargos de cómputo; el almacenamiento en Persistent Volumes mantiene la [tarifa de volúmenes](/cli/volume), tanto si el volumen está conectado como si no.
+Lizard factura cada tamaño por segundo con una tarifa fija mientras el sandbox está en marcha, incluido el tiempo inactivo. El precio incluye el disco local y [2 TB de tráfico saliente por cuenta durante los últimos 30 días](/platform/limits#sandbox-egress). Una pausa completada detiene los cargos de cómputo; el disco del sandbox en pausa se factura a $0.14 por GB-mes de espacio usado hasta que reanudes o elimines el sandbox, y cada snapshot también, hasta que lo elimines. Persistent Volumes se facturan a la [tarifa de volúmenes](/cli/volume), tanto si el volumen está conectado como si no.
 
 | Tamaño | vCPU | Memoria | Disco | Precio |
 |------|------|--------|------|-------|
@@ -121,9 +121,9 @@ Conecta una app VNC (Compartir Pantalla de macOS, TigerVNC, RealVNC) al escritor
 
 | Comando | Qué hace |
 |---------|--------------|
-| `lizard sandbox pause <id>` | Conserva los archivos del sandbox y lo pausa. Los procesos en ejecución y la memoria se pierden. Los cargos de cómputo se detienen; el almacenamiento en Persistent Volumes se cobra aparte |
+| `lizard sandbox pause <id>` | Conserva los archivos del sandbox y lo pausa. Los procesos en ejecución y la memoria se pierden. Una pausa completada detiene los cargos de cómputo; el disco se factura a $0.14 por GB-mes de espacio usado hasta que reanudes o elimines el sandbox |
 | `lizard sandbox resume <id>` | Arranca de nuevo un sandbox pausado con sus archivos |
-| `lizard sandbox snapshot <id> --name <name>` | Guarda solo los archivos de un sandbox en ejecución como snapshot, restaurable solo en su propio proyecto y región |
+| `lizard sandbox snapshot <id> --name <name>` | Guarda solo los archivos de un sandbox en ejecución como snapshot, restaurable solo en su propio proyecto y región. Cuesta $0.14 por GB-mes de espacio usado en disco hasta que lo elimines |
 | `lizard sandbox restore <snapshot-id>` | Inicia un sandbox nuevo desde un snapshot, en el proyecto y la región del snapshot. `--volume <name-or-id>` monta en `/workspace` un volumen de ese proyecto y `--timeout <ms>` fija la duración (por defecto `300000`) |
 | `lizard sandbox snapshots` | Lista los snapshots tomados en el proyecto (`-p` para otro proyecto, `--mine` para todos los snapshots que tomaste) |
 | `lizard sandbox snapshot-rm <snapshot-id>` | Elimina un snapshot (alias `snapshot-delete`; `-y` omite la confirmación) |

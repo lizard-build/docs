@@ -144,7 +144,7 @@ print(connected.get_info())
 
 ## Pausa, reanudación y snapshots
 
-Una pausa conserva los archivos del sandbox y detiene los cargos de cómputo. Los procesos en ejecución y la memoria se pierden; al reanudar, el sandbox arranca de nuevo con sus archivos. Una pausa completada detiene los cargos de cómputo; el almacenamiento en Persistent Volumes se sigue cobrando. `resume()` restaura el sandbox con el mismo ID y reanuda los cargos de cómputo. Ambas llamadas ponen el trabajo en cola y responden al instante; espera a `paused` o `running` para confirmar que han terminado.
+Una pausa conserva los archivos del sandbox. Los procesos en ejecución y la memoria se pierden; al reanudar, el sandbox arranca de nuevo con sus archivos. Una pausa completada detiene los cargos de cómputo; el disco del sandbox en pausa se factura a $0.14 por GB-mes de espacio usado hasta que reanudes o elimines el sandbox, y Persistent Volumes se facturan aparte. `resume()` restaura el sandbox con el mismo ID y reanuda los cargos de cómputo. Ambas llamadas ponen el trabajo en cola y responden al instante; espera a `paused` o `running` para confirmar que han terminado.
 
 ```ts
 await sandbox.pause();
@@ -167,7 +167,7 @@ await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-Un snapshot está listo cuando la llamada termina y se restaura desde disco, así que `poolSize` no se aplica. Cada restauración se ejecuta con el tamaño del origen y se factura al precio por hora de ese tamaño; `size` no se aplica a una restauración. En la CLI, usa `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` y `lizard sandbox restore <snapshot-id>`; consulta [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots) para `--volume`.
+Un snapshot está listo cuando la llamada termina y se restaura desde disco, así que `poolSize` no se aplica. Cada restauración se ejecuta con el tamaño del origen y se factura al precio por hora de ese tamaño; `size` no se aplica a una restauración. Cada snapshot cuesta $0.14 por GB-mes de espacio usado en disco hasta que lo elimines con `Sandbox.deleteSnapshot(id)` (Python: `delete_snapshot`). En la CLI, usa `lizard sandbox pause <id>`, `lizard sandbox resume <id>`, `lizard sandbox snapshot <id> --name my-app` y `lizard sandbox restore <snapshot-id>`; consulta [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots) para `--volume`.
 
 <span id="clean-up-and-next-steps" />
 

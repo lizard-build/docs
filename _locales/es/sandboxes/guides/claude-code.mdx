@@ -130,7 +130,7 @@ lizard sandbox resume $SB
 lizard sandbox rm $SB
 ```
 
-Una pausa completada detiene los cargos de cómputo; el almacenamiento en Persistent Volumes se sigue cobrando. Reanudar restaura los archivos y procesos y vuelve a iniciar los cargos de cómputo. El estado de las conversaciones está en `/workspace/.lizard-agent`, dentro del sandbox. Para conservar archivos después de eliminar el sandbox, adjunta un volumen de [Persistent Volumes](/sandboxes/volumes) al crearlo con `--volume`.
+Una pausa completada detiene los cargos de cómputo; el disco del sandbox en pausa se factura a $0.14 por GB-mes de espacio usado hasta que reanudes o elimines el sandbox, y Persistent Volumes se facturan aparte. Una pausa termina los procesos en ejecución, así que se detiene cualquier ejecución de Claude Code en curso. Reanudar arranca el sandbox de nuevo con sus archivos y vuelve a iniciar los cargos de cómputo. El estado de las conversaciones está en `/workspace/.lizard-agent`, dentro del sandbox. Para conservar archivos después de eliminar el sandbox, adjunta un volumen de [Persistent Volumes](/sandboxes/volumes) al crearlo con `--volume`.
 
 <span id="common-problems" />
 

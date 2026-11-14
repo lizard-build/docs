@@ -40,11 +40,11 @@ Prices are in US dollars.
 | --- | ---: |
 | CPU | $0.000006948 per vCPU-second |
 | Memory | $0.000003474 per GB-second |
-| Persistent Volumes | $0.000000054 per GB-second |
+| Persistent Volumes, paused sandboxes and snapshots | $0.000000054 per GB-second |
 | Managed Object Storage | $0.0135 per GB-month |
 | Outgoing traffic | $0.045 per GB, from the first byte |
 
-Incoming traffic is free. Apps, Managed Postgres and Managed Redis use these rates. Sandboxes have a flat hourly price for each size; see [Sandbox sizes](/platform/limits#sandbox-sizes).
+Incoming traffic is free. Apps, Managed Postgres and Managed Redis use these rates. Sandboxes have a flat hourly price for each size while they run; see [Sandbox sizes](/platform/limits#sandbox-sizes). A paused sandbox and each snapshot bill for the disk space they use, about $0.14 per GB-month.
 
 For example, one vCPU and 1 GB of memory used for one hour cost $0.0375192 in compute. Storage and outgoing traffic can add to that. See [pricing](https://lizard.build/pricing) for all rates and plan terms.
 
@@ -118,7 +118,7 @@ When your plan ends, Lizard blocks new resources and pauses running ones. It kee
 
 ## What a billing pause keeps
 
-Apps and databases keep their data while paused. A running sandbox is paused with its files and memory. A sandbox that can't be paused at that moment, or one that has crashed, is deleted with its files. Keep files you need on a [Persistent Volume](/sandboxes/volumes).
+Apps and databases keep their data while paused. A running sandbox is paused with its files only; its running processes and memory end. A sandbox that can't be paused at that moment, or one that has crashed, is deleted with its files. Keep files you need on a [Persistent Volume](/sandboxes/volumes).
 
 ## Enterprise
 
@@ -126,6 +126,6 @@ Enterprise accounts pay as you go and get an invoice each month for the month be
 
 ## Idle apps and stored data
 
-An app can use memory and CPU even when it has no requests. [Pause](/cli/pause) the app to stop compute usage, or let it [sleep](/cli/sleep) when idle and wake on the next request. You pay for Persistent Volumes and Managed Object Storage while you keep data in them, even when the app is paused.
+An app can use memory and CPU even when it has no requests. [Pause](/cli/pause) the app to stop compute usage, or let it [sleep](/cli/sleep) when idle and wake on the next request. You pay for Persistent Volumes and Managed Object Storage while you keep data in them, even when the app is paused. A paused sandbox costs $0.14 per GB-month of used disk space until you resume or delete it, and so does each snapshot until you delete it.
 
 See [storage and recovery](/platform/storage-and-recovery) before removing data. Read [metrics](/observability/metrics) to compare configured limits with measured use.

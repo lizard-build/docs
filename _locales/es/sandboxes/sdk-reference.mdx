@@ -110,10 +110,10 @@ sandbox = Sandbox.create(
 | `sandbox.unexpose(port)` | `sandbox.unexpose(port)` | Retirar un puerto publicado. |
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | Fijar la duración restante, mínimo 1000 ms. |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | Poner en cola una pausa o reanudación y responder al instante. |
-| `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | Pausa conservando solo los archivos, en alrededor de un segundo con cualquier tamaño de memoria; los procesos terminan y la reanudación arranca el sandbox de nuevo. |
+| `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | Obsoleto e ignorado: toda pausa conserva solo los archivos. |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | Esperar a `paused` o `running`; lanzar un error si falla la pausa. |
 | `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Copiar un sandbox en marcha de 1 a 100 veces, incluidos la memoria y los procesos; cada copia cuenta para tu límite de sandboxes en marcha. |
-| `sandbox.snapshot(name)` | `sandbox.snapshot(name)` | Guardar la memoria, los procesos y todos los archivos en un snapshot. Solo se restaura en el proyecto y la región de este sandbox. |
+| `sandbox.snapshot(name)` | `sandbox.snapshot(name)` | Guardar todos los archivos en un snapshot, sin la memoria ni los procesos. Solo se restaura en el proyecto y la región de este sandbox. |
 | `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | Esperar a que el snapshot esté listo. |
 | `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | Iniciar un sandbox nuevo desde un snapshot, en el proyecto y la región del snapshot. Cualquier otro `projectId` lanza `AuthenticationError` con HTTP 403 y `code` igual a `SNAPSHOT_SCOPE`. |
 | `Sandbox.snapshots(projectId)` | `Sandbox.snapshots(project_id)` | Listar los snapshots tomados en un proyecto. |
@@ -203,7 +203,7 @@ sandbox.unexpose(3000)
 
 ## Pausa, snapshot y fork
 
-Estas llamadas conservan la memoria, los procesos en ejecución y los archivos. El [inicio rápido](/sandboxes/quickstart#pause-and-resume) explica qué conserva cada una, quién puede restaurar un snapshot, cómo se facturan los restores y qué puede fallar.
+La pausa y el snapshot conservan solo los archivos, no la memoria ni los procesos en ejecución: al reanudar o restaurar, el sandbox arranca de nuevo con los archivos. Un fork copia un sandbox en marcha con su memoria y sus procesos. Un sandbox en pausa cuesta $0.14 por GB-mes de espacio usado en disco hasta que lo reanudes o lo elimines, y cada snapshot cuesta lo mismo hasta que lo elimines. El [inicio rápido](/sandboxes/quickstart#pause-and-resume) explica qué conserva cada una, quién puede restaurar un snapshot, cómo se facturan los restores y qué puede fallar.
 
 ```ts
 await sandbox.pause();

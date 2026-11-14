@@ -141,7 +141,7 @@ Path("chart.png").write_bytes(base64.b64decode(png))
 - **コンテキスト。** `createContext()`（Python では `create_context()`）は、独自の変数と作業ディレクトリを持つ別のカーネルを起動します。これを `context` として `runCode` に渡します。`listContexts()`、`restartContext(ctx)`、`deleteContext(ctx)` で管理します。コンテキストを指定しない場合、各言語はそれぞれの既定のコンテキストを使います。
 - **タイムアウト。** `timeoutMs`（Python では `timeout_ms`）は 1 回の呼び出しの上限で、既定は 60 秒です。上限を超えた Python カーネルは中断されますが、状態は保持されます。結果の `error.name` は `TimeoutError` になります。
 - **その他の言語。** JavaScript と bash は呼び出しのたびに新しいプロセスとして実行されるため、状態は引き継がれず、`results` は空のままです。JavaScript はテンプレートの Node 22 で動作します。npm はありません。
-- **一時停止とスナップショット。** カーネルは sandbox の中で動作するため、`pause()` と `resume()` は変数を保持し、`snapshot()` と `fork()` は変数をコピーします。
+- **一時停止、スナップショット、fork。** カーネルは sandbox のメモリ上で動作します。`fork()` はカーネルを変数ごとコピーします。`pause()` と `snapshot()` はファイルだけを保持するため、カーネルの変数は一時停止後に残らず、スナップショットにも入りません。必要なものは先にファイルに保存してください。
 
 <span id="run-commands" />
 

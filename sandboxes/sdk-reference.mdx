@@ -98,10 +98,10 @@ sandbox = Sandbox.create(
 | `sandbox.unexpose(port)` | `sandbox.unexpose(port)` | Remove a published port. |
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | Set the remaining lifetime, at least 1000 ms. |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | Queue a pause or resume and return at once. |
-| `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | Pause keeping files only, in about a second at any memory size; processes end and the resume boots the sandbox fresh. |
+| `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | Deprecated and ignored: every pause keeps files only. |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | Wait for `paused` or `running`; throw if the pause failed. |
 | `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Copy a running sandbox 1 to 100 times, memory and processes included; each copy counts toward your running-sandbox limit. |
-| `sandbox.snapshot(name)` | `sandbox.snapshot(name)` | Save memory, processes and every file as a snapshot. It restores only in this sandbox's project and region. |
+| `sandbox.snapshot(name)` | `sandbox.snapshot(name)` | Save every file as a snapshot, without memory or processes. It restores only in this sandbox's project and region. |
 | `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | Wait until a snapshot is ready. |
 | `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | Start a new sandbox from a snapshot, in the snapshot's project and region. Any other `projectId` throws `AuthenticationError` with HTTP 403 and `code` set to `SNAPSHOT_SCOPE`. |
 | `Sandbox.snapshots(projectId)` | `Sandbox.snapshots(project_id)` | List the snapshots taken in a project. |
@@ -183,7 +183,7 @@ sandbox.unexpose(3000)
 
 ## Pause, snapshot, and fork
 
-These calls keep memory, running processes and files. The [quickstart](/sandboxes/quickstart#pause-and-resume) explains what each one keeps, who can restore a snapshot, how restores are billed, and what fails.
+Pause and snapshot keep files only, not memory or running processes: a resume or restore boots fresh with the files. Fork copies a running sandbox with its memory and processes. A paused sandbox costs $0.14 per GB-month of used disk space until you resume or delete it, and so does each snapshot until you delete it. The [quickstart](/sandboxes/quickstart#pause-and-resume) explains what each one keeps, who can restore a snapshot, how restores are billed, and what fails.
 
 ```ts
 await sandbox.pause();

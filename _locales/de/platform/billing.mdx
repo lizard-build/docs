@@ -48,11 +48,11 @@ Die Preise sind in US-Dollar.
 | --- | ---: |
 | CPU | $0.000006948 pro vCPU-Sekunde |
 | Arbeitsspeicher | $0.000003474 pro GB-Sekunde |
-| Persistent Volumes | $0.000000054 pro GB-Sekunde |
+| Persistent Volumes, pausierte Sandboxes und Snapshots | $0.000000054 pro GB-Sekunde |
 | Managed Object Storage | $0.0135 pro GB-Monat |
 | Ausgehender Traffic | $0.045 pro GB, ab dem ersten Byte |
 
-Eingehender Traffic ist kostenlos. Apps, Managed Postgres und Managed Redis nutzen diese Preise. Sandboxes haben für jede Größe einen festen Stundenpreis; siehe [Sandbox-Größen](/platform/limits#sandbox-sizes).
+Eingehender Traffic ist kostenlos. Apps, Managed Postgres und Managed Redis nutzen diese Preise. Sandboxes haben für jede Größe einen festen Stundenpreis, solange sie laufen; siehe [Sandbox-Größen](/platform/limits#sandbox-sizes). Eine pausierte Sandbox und jeder Snapshot kosten für den belegten Festplattenspeicher etwa $0.14 pro GB und Monat.
 
 Zum Beispiel kosten eine vCPU und 1 GB Arbeitsspeicher eine Stunde lang $0.0375192 an Rechenleistung. Speicher und ausgehender Traffic können hinzukommen. Das vollständige Angebot finden Sie unter [Preise](https://lizard.build/pricing).
 
@@ -142,7 +142,7 @@ Endet Ihr Plan, können Sie keine Ressourcen mehr erstellen, und laufende pausie
 
 ## Was eine Pause wegen der Abrechnung behält
 
-Apps und Datenbanken behalten ihre Daten, solange sie pausiert sind. Eine laufende Sandbox wird mit ihren Dateien und ihrem Arbeitsspeicher pausiert. Eine Sandbox, die sich in dem Moment nicht pausieren lässt, oder eine abgestürzte Sandbox wird mit ihren Dateien gelöscht. Bewahren Sie wichtige Dateien auf einem [Persistent Volume](/sandboxes/volumes) auf.
+Apps und Datenbanken behalten ihre Daten, solange sie pausiert sind. Eine laufende Sandbox wird nur mit ihren Dateien pausiert; ihre laufenden Prozesse und ihr Arbeitsspeicher gehen verloren. Eine Sandbox, die sich in dem Moment nicht pausieren lässt, oder eine abgestürzte Sandbox wird mit ihren Dateien gelöscht. Bewahren Sie wichtige Dateien auf einem [Persistent Volume](/sandboxes/volumes) auf.
 
 <span id="enterprise" />
 
@@ -154,6 +154,6 @@ Enterprise-Konten zahlen pay as you go und erhalten jeden Monat eine Rechnung f�
 
 ## Inaktive Apps und gespeicherte Daten
 
-Eine App kann auch ohne Anfragen Arbeitsspeicher und CPU nutzen. [Pausieren](/cli/pause) Sie die App, um die Rechennutzung zu beenden, oder lassen Sie sie im Leerlauf [schlafen](/cli/sleep), damit sie bei der nächsten Anfrage aufwacht. Für Persistent Volumes und Managed Object Storage zahlen Sie, solange Sie Daten darin behalten, auch wenn die App pausiert ist.
+Eine App kann auch ohne Anfragen Arbeitsspeicher und CPU nutzen. [Pausieren](/cli/pause) Sie die App, um die Rechennutzung zu beenden, oder lassen Sie sie im Leerlauf [schlafen](/cli/sleep), damit sie bei der nächsten Anfrage aufwacht. Für Persistent Volumes und Managed Object Storage zahlen Sie, solange Sie Daten darin behalten, auch wenn die App pausiert ist. Eine pausierte Sandbox kostet $0.14 pro GB und Monat für belegten Festplattenspeicher, bis Sie sie fortsetzen oder löschen, ebenso jeder Snapshot, bis Sie ihn löschen.
 
 Lesen Sie [Speicher und Wiederherstellung](/platform/storage-and-recovery), bevor Sie Daten löschen. Unter [Metriken](/observability/metrics) vergleichen Sie konfigurierte Limits mit der gemessenen Nutzung.

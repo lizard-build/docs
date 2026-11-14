@@ -145,7 +145,7 @@ print(connected.get_info())
 
 ## 一時停止、再開、スナップショット
 
-一時停止は sandbox のファイルを保持し、計算料金を止めます。実行中のプロセスとメモリは失われ、再開時はファイルを保ったまま sandbox が新しく起動します。 一時停止が完了すると計算料金は止まりますが、Persistent Volumes のストレージ料金は引き続き発生します。`resume()` は同じ ID で sandbox を復元し、計算料金を再開します。どちらも処理をキューに入れてすぐに戻るため、成功を確認するには `paused` または `running` を待ってください。
+一時停止は sandbox のファイルを保持します。実行中のプロセスとメモリは失われ、再開時はファイルを保ったまま sandbox が新しく起動します。 一時停止が完了すると計算料金は止まります。一時停止中の sandbox のディスクには、再開するか削除するまで、使用容量 1 GB あたり月額 $0.14 がかかります。Persistent Volumes は別途課金されます。`resume()` は同じ ID で sandbox を復元し、計算料金を再開します。どちらも処理をキューに入れてすぐに戻るため、成功を確認するには `paused` または `running` を待ってください。
 
 ```ts
 await sandbox.pause();
@@ -168,7 +168,7 @@ await Sandbox.waitForSnapshot(saved.id);
 const copy = await Sandbox.restore(saved.id);
 ```
 
-スナップショットは、呼び出しが戻った時点で準備が完了し、ディスクから restore されるため、`poolSize` は適用されません。restore のたびに元の sandbox と同じサイズで実行され、そのサイズの時間単価で課金されます。restore には `size` は適用されません。CLI では `lizard sandbox pause <id>`、`lizard sandbox resume <id>`、`lizard sandbox snapshot <id> --name my-app`、`lizard sandbox restore <snapshot-id>` を使います。`--volume` については [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots) を参照してください。
+スナップショットは、呼び出しが戻った時点で準備が完了し、ディスクから restore されるため、`poolSize` は適用されません。restore のたびに元の sandbox と同じサイズで実行され、そのサイズの時間単価で課金されます。restore には `size` は適用されません。各スナップショットには、`Sandbox.deleteSnapshot(id)`（Python では `delete_snapshot`）で削除するまで、ディスクの使用容量 1 GB あたり月額 $0.14 がかかります。CLI では `lizard sandbox pause <id>`、`lizard sandbox resume <id>`、`lizard sandbox snapshot <id> --name my-app`、`lizard sandbox restore <snapshot-id>` を使います。`--volume` については [`lizard sandbox`](/cli/sandbox#pause-resume-and-snapshots) を参照してください。
 
 <span id="clean-up-and-next-steps" />
 

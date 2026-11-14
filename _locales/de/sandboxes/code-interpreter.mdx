@@ -140,7 +140,7 @@ Path("chart.png").write_bytes(base64.b64decode(png))
 - **Kontexte.** `createContext()` (Python: `create_context()`) startet einen separaten Kernel mit eigenen Variablen und eigenem Arbeitsverzeichnis; übergeben Sie ihn als `context` an `runCode`. `listContexts()`, `restartContext(ctx)` und `deleteContext(ctx)` verwalten sie. Ohne Kontext verwendet jede Sprache ihren eigenen Standardkontext.
 - **Timeouts.** `timeoutMs` (Python: `timeout_ms`) begrenzt einen Aufruf und beträgt standardmäßig 60 Sekunden. Ein Python-Kernel, der länger läuft, wird unterbrochen und behält seinen Zustand; `error.name` im Ergebnis ist `TimeoutError`.
 - **Andere Sprachen.** JavaScript und Bash laufen bei jedem Aufruf als neuer Prozess, daher bleibt kein Zustand erhalten und `results` bleibt leer. JavaScript läuft auf Node 22 aus der Vorlage, ohne npm.
-- **Pause und Snapshots.** Kernel laufen in der Sandbox, daher behalten `pause()` und `resume()` ihre Variablen, und `snapshot()` und `fork()` kopieren sie.
+- **Pause, Snapshots und Fork.** Kernel laufen im Arbeitsspeicher der Sandbox. `fork()` kopiert sie samt ihren Variablen. `pause()` und `snapshot()` behalten nur Dateien, daher überstehen Kernel-Variablen keine Pause und landen in keinem Snapshot; speichern Sie, was Sie brauchen, vorher in Dateien.
 
 <span id="run-commands" />
 

@@ -50,7 +50,7 @@ Lizard also pauses apps and databases itself when trial usage runs out or a paym
 
 ## Pause a whole project
 
-`lizard project pause` pauses every app and database in the project. It also pauses the project's running sandboxes, saving their memory and files as [`lizard sandbox pause`](/cli/sandbox) does. It lists the services it can't pause, with the reason.
+`lizard project pause` pauses every app and database in the project. It also pauses the project's running sandboxes, keeping their files as [`lizard sandbox pause`](/cli/sandbox) does; their running processes and memory end. It lists the services it can't pause, with the reason.
 
 `lizard project resume` resumes every app and database in the project that someone paused by hand, and the sandboxes that `project pause` paused. Sandboxes you paused yourself stay paused. A sandbox resumes only while your [sandbox limits](/platform/limits#sandbox-account-limits) leave room.
 

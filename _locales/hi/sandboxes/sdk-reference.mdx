@@ -106,10 +106,10 @@ sandbox = Sandbox.create(
 | `sandbox.unexpose(port)` | `sandbox.unexpose(port)` | पब्लिश किया गया पोर्ट हटाता है। |
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | बचा हुआ लाइफटाइम सेट करता है, कम से कम 1000 ms। |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | पॉज़ या रिज़्यूम को कतार में डालकर तुरंत लौटता है। |
-| `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | केवल फ़ाइलें रखते हुए pause करें, मेमोरी कितनी भी हो लगभग एक सेकंड में; प्रोसेस बंद हो जाते हैं और resume sandbox को नए सिरे से बूट करता है। |
+| `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | डिप्रिकेटेड है और अनदेखा किया जाता है: हर पॉज़ केवल फ़ाइलें रखता है। |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | `paused` या `running` का इंतज़ार करता है; पॉज़ फ़ेल हो तो एरर थ्रो करता है। |
 | `sandbox.fork({ count })` | `sandbox.fork(count=...)` | चल रहे सैंडबॉक्स की 1 से 100 कॉपी बनाता है, मेमोरी और प्रोसेस समेत; हर कॉपी चल रहे सैंडबॉक्स की आपकी लिमिट में गिनी जाती है। |
-| `sandbox.snapshot(name)` | `sandbox.snapshot(name)` | मेमोरी, प्रोसेस और हर फ़ाइल को स्नैपशॉट के रूप में सेव करता है। यह सिर्फ़ इसी सैंडबॉक्स के प्रोजेक्ट और रीजन में रिस्टोर होता है। |
+| `sandbox.snapshot(name)` | `sandbox.snapshot(name)` | हर फ़ाइल को स्नैपशॉट के रूप में सेव करता है, मेमोरी या प्रोसेस के बिना। यह सिर्फ़ इसी सैंडबॉक्स के प्रोजेक्ट और रीजन में रिस्टोर होता है। |
 | `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | स्नैपशॉट तैयार होने तक इंतज़ार करता है। |
 | `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | स्नैपशॉट से, उसी के प्रोजेक्ट और रीजन में, नया सैंडबॉक्स शुरू करता है। कोई और `projectId` देने पर HTTP 403 के साथ `AuthenticationError` थ्रो होता है, जिसमें `code` की वैल्यू `SNAPSHOT_SCOPE` होती है। |
 | `Sandbox.snapshots(projectId)` | `Sandbox.snapshots(project_id)` | किसी प्रोजेक्ट में लिए गए स्नैपशॉट लिस्ट करता है। |
@@ -199,7 +199,7 @@ sandbox.unexpose(3000)
 
 ## पॉज़, स्नैपशॉट और फ़ोर्क
 
-ये कॉल मेमोरी, चल रहे प्रोसेस और फ़ाइलें रखती हैं। हर कॉल क्या रखती है, स्नैपशॉट कौन रिस्टोर कर सकता है, रिस्टोर का बिल कैसे बनता है और क्या फ़ेल हो सकता है — यह सब [क्विकस्टार्ट](/sandboxes/quickstart#pause-and-resume) में बताया गया है।
+पॉज़ और स्नैपशॉट केवल फ़ाइलें रखते हैं, मेमोरी या चल रहे प्रोसेस नहीं: रिज़्यूम या रिस्टोर के बाद सैंडबॉक्स फ़ाइलों के साथ नए सिरे से बूट होता है। फ़ोर्क चल रहे सैंडबॉक्स को उसकी मेमोरी और प्रोसेस समेत कॉपी करता है। जब तक आप पॉज़ किए गए सैंडबॉक्स को रिज़्यूम या डिलीट नहीं करते, उसकी कीमत इस्तेमाल की गई डिस्क जगह के लिए $0.14 प्रति GB-माह है; हर स्नैपशॉट की कीमत भी यही है, जब तक आप उसे डिलीट नहीं करते। हर कॉल क्या रखती है, स्नैपशॉट कौन रिस्टोर कर सकता है, रिस्टोर का बिल कैसे बनता है और क्या फ़ेल हो सकता है — यह सब [क्विकस्टार्ट](/sandboxes/quickstart#pause-and-resume) में बताया गया है।
 
 ```ts
 await sandbox.pause();

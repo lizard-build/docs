@@ -40,7 +40,7 @@ Erstellt eine Sandbox und gibt ihre ID aus.
 | `--with-token [key]` | Meldet `lizard` in der Sandbox mit einem neuen Key an, der auf das Projekt der Sandbox beschränkt ist und mit der Sandbox gelöscht wird. Der `liz_`-Key, den du angibst, oder ohne Wert der `liz_`-Key, mit dem du arbeitest, autorisiert nur die Anfrage; ein Browser-Login hat keinen. Das Template `base` enthält kein `lizard` |
 | `-p, --project <id>` | Projekt (Standard ist das verknüpfte, sonst dein Standardprojekt) |
 
-Lizard rechnet jede Größe sekundengenau zum Festpreis ab, solange die Sandbox läuft, auch im Leerlauf. Enthalten sind lokale Festplatte und [2 TB ausgehender Traffic pro Konto über die jeweils letzten 30 Tage](/platform/limits#sandbox-egress). Eine erfolgreiche Pause stoppt die Rechenkosten; Speicher in Persistent Volumes kostet weiter den [Volume-Preis](/cli/volume), auch ohne angehängte Sandbox.
+Lizard rechnet jede Größe sekundengenau zum Festpreis ab, solange die Sandbox läuft, auch im Leerlauf. Enthalten sind lokale Festplatte und [2 TB ausgehender Traffic pro Konto über die jeweils letzten 30 Tage](/platform/limits#sandbox-egress). Eine erfolgreiche Pause stoppt die Rechenkosten; die Festplatte der pausierten Sandbox kostet $0.14 pro GB und Monat für belegten Speicherplatz, bis du sie fortsetzt oder löschst, ebenso jeder Snapshot, bis du ihn löschst. Persistent Volumes kosten den [Volume-Preis](/cli/volume), auch ohne angehängte Sandbox.
 
 | Größe | vCPU | Arbeitsspeicher | Festplatte | Preis |
 |------|------|--------|------|-------|
@@ -121,9 +121,9 @@ Verbindet eine VNC-App (macOS-Bildschirmfreigabe, TigerVNC, RealVNC) mit dem Des
 
 | Befehl | Was er macht |
 |---------|--------------|
-| `lizard sandbox pause <id>` | Behält die Dateien der Sandbox und pausiert sie. Laufende Prozesse und Arbeitsspeicher gehen verloren. Die Rechenkosten stoppen; Speicher in Persistent Volumes wird separat berechnet |
+| `lizard sandbox pause <id>` | Behält die Dateien der Sandbox und pausiert sie. Laufende Prozesse und Arbeitsspeicher gehen verloren. Die Rechenkosten stoppen; die Festplatte kostet $0.14 pro GB und Monat für belegten Speicherplatz, bis du die Sandbox fortsetzt oder löschst |
 | `lizard sandbox resume <id>` | Startet eine pausierte Sandbox mit ihren Dateien frisch |
-| `lizard sandbox snapshot <id> --name <name>` | Speichert nur die Dateien einer laufenden Sandbox als Snapshot, der sich nur im eigenen Projekt und in der eigenen Region wiederherstellen lässt |
+| `lizard sandbox snapshot <id> --name <name>` | Speichert nur die Dateien einer laufenden Sandbox als Snapshot, der sich nur im eigenen Projekt und in der eigenen Region wiederherstellen lässt. Er kostet $0.14 pro GB und Monat für belegten Festplattenspeicher, bis du ihn löschst |
 | `lizard sandbox restore <snapshot-id>` | Startet eine neue Sandbox aus einem Snapshot im Projekt und in der Region des Snapshots. `--volume <name-or-id>` hängt ein Volume aus diesem Projekt unter `/workspace` ein, `--timeout <ms>` setzt die Lebensdauer (Standard `300000`) |
 | `lizard sandbox snapshots` | Listet die im Projekt erstellten Snapshots auf (`-p` für ein anderes Projekt, `--mine` für alle Snapshots, die du erstellt hast) |
 | `lizard sandbox snapshot-rm <snapshot-id>` | Löscht einen Snapshot (Alias `snapshot-delete`, `-y` überspringt die Bestätigung) |

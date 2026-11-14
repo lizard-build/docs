@@ -36,7 +36,7 @@ Create a sandbox and print its ID.
 | `--with-token [key]` | Sign in `lizard` inside the sandbox with a new key limited to the sandbox's project and deleted with the sandbox. The `liz_` key you pass, or without a value the `liz_` key you run with, only authorizes the request; a browser login has none. The `base` template has no `lizard` |
 | `-p, --project <id>` | Project (defaults to the linked one, else your default project) |
 
-Lizard bills each size per second at a flat rate while it runs, including idle time. The price includes local disk and [2 TB of egress per account over a rolling 30 days](/platform/limits#sandbox-egress). A successful pause stops compute charges; storage in Persistent Volumes continues at the [volume rate](/cli/volume), whether attached or detached.
+Lizard bills each size per second at a flat rate while it runs, including idle time. The price includes local disk and [2 TB of egress per account over a rolling 30 days](/platform/limits#sandbox-egress). A successful pause stops compute charges; the paused sandbox's disk bills at $0.14 per GB-month of used space until you resume or delete it, and so does each snapshot until you delete it. Persistent Volumes bill at the [volume rate](/cli/volume), whether attached or detached.
 
 | Size | vCPU | Memory | Disk | Price |
 |------|------|--------|------|-------|
@@ -115,9 +115,9 @@ Connect a VNC app (macOS Screen Sharing, TigerVNC, RealVNC) to the desktop of a 
 
 | Command | What it does |
 |---------|--------------|
-| `lizard sandbox pause <id>` | Save the sandbox's files and pause it. Running processes and memory end. A successful pause stops compute charges; Persistent Volumes storage is billed separately |
+| `lizard sandbox pause <id>` | Save the sandbox's files and pause it. Running processes and memory end. A successful pause stops compute charges; the disk bills at $0.14 per GB-month of used space until you resume or delete the sandbox |
 | `lizard sandbox resume <id>` | Boot a paused sandbox fresh with its files |
-| `lizard sandbox snapshot <id> --name <name>` | Save only a running sandbox's files as a snapshot that restores only in the sandbox's project and region |
+| `lizard sandbox snapshot <id> --name <name>` | Save only a running sandbox's files as a snapshot that restores only in the sandbox's project and region. It costs $0.14 per GB-month of used disk space until you delete it |
 | `lizard sandbox restore <snapshot-id>` | Start a new sandbox from a snapshot, in the snapshot's project and region. `--volume <name-or-id>` mounts a volume from that project at `/workspace`, `--timeout <ms>` sets the lifetime (default `300000`) |
 | `lizard sandbox snapshots` | List the snapshots taken in the project (`-p` for another project, `--mine` for every snapshot you took) |
 | `lizard sandbox snapshot-rm <snapshot-id>` | Delete a snapshot (alias `snapshot-delete`, `-y` skips confirmation) |

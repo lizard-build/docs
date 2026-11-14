@@ -110,10 +110,10 @@ sandbox = Sandbox.create(
 | `sandbox.unexpose(port)` | `sandbox.unexpose(port)` | 公開したポートを削除。 |
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | 残りの有効期間を設定。最小 1000 ミリ秒。 |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | 一時停止または再開をキューに入れ、すぐに戻る。 |
-| `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | ファイルだけを保持して一時停止します。メモリのサイズにかかわらず約 1 秒です。プロセスは終了し、再開時にサンドボックスは新しく起動します。 |
+| `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | 非推奨で、無視される。一時停止は常にファイルだけを保持する。 |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | `paused` または `running` を待つ。一時停止に失敗した場合はエラーを投げる。 |
 | `sandbox.fork({ count })` | `sandbox.fork(count=...)` | 実行中の sandbox を、メモリとプロセスを含めて 1～100 個コピー。各コピーは実行中の sandbox の上限に数えられる。 |
-| `sandbox.snapshot(name)` | `sandbox.snapshot(name)` | メモリ、プロセス、すべてのファイルをスナップショットとして保存。復元できるのは、この sandbox と同じプロジェクトとリージョンだけ。 |
+| `sandbox.snapshot(name)` | `sandbox.snapshot(name)` | すべてのファイルをスナップショットとして保存。メモリとプロセスは含まない。復元できるのは、この sandbox と同じプロジェクトとリージョンだけ。 |
 | `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | スナップショットの準備完了を待つ。 |
 | `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | スナップショットと同じプロジェクトとリージョンに新しい sandbox を起動。ほかの `projectId` では、`code` が `SNAPSHOT_SCOPE` の `AuthenticationError`（HTTP 403）を投げる。 |
 | `Sandbox.snapshots(projectId)` | `Sandbox.snapshots(project_id)` | プロジェクトで作成したスナップショットを一覧表示。 |
@@ -203,7 +203,7 @@ sandbox.unexpose(3000)
 
 ## 一時停止、スナップショット、fork
 
-これらの呼び出しは、メモリ、実行中のプロセス、ファイルを保持します。それぞれで何が保持されるか、誰がスナップショットを復元できるか、復元がどう課金されるか、何が失敗するかは [クイックスタート](/sandboxes/quickstart#pause-and-resume) で説明しています。
+一時停止とスナップショットが保持するのはファイルだけで、メモリや実行中のプロセスは保持しません。再開や復元では、ファイルを保ったまま新しく起動します。fork は、実行中の sandbox をメモリとプロセスごとコピーします。一時停止中の sandbox には、再開するか削除するまで、ディスクの使用容量 1 GB あたり月額 $0.14 がかかります。各スナップショットにも、削除するまで同じ料金がかかります。それぞれで何が保持されるか、誰がスナップショットを復元できるか、復元がどう課金されるか、何が失敗するかは [クイックスタート](/sandboxes/quickstart#pause-and-resume) で説明しています。
 
 ```ts
 await sandbox.pause();

@@ -60,7 +60,7 @@ lizard workspace resume <name-or-id>
 
 ## プロジェクト全体を一時停止する
 
-`lizard project pause` は、プロジェクト内のすべてのアプリとデータベースを一時停止します。また、プロジェクトの実行中の sandbox も、[`lizard sandbox pause`](/cli/sandbox) と同じようにメモリとファイルを保存して一時停止します。一時停止できなかったサービスは理由とともに表示されます。
+`lizard project pause` は、プロジェクト内のすべてのアプリとデータベースを一時停止します。また、プロジェクトの実行中の sandbox も、[`lizard sandbox pause`](/cli/sandbox) と同じようにファイルを保持して一時停止します。sandbox の実行中のプロセスとメモリは失われます。一時停止できなかったサービスは理由とともに表示されます。
 
 `lizard project resume` は、プロジェクト内で誰かが手動で一時停止したすべてのアプリとデータベースと、`project pause` が一時停止した sandbox を再開します。自分で一時停止した sandbox は一時停止したままです。sandbox が再開されるのは、[sandbox の上限](/platform/limits#sandbox-account-limits) に余裕がある場合だけです。
 

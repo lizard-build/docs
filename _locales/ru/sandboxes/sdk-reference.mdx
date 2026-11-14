@@ -110,10 +110,10 @@ sandbox = Sandbox.create(
 | `sandbox.unexpose(port)` | `sandbox.unexpose(port)` | Убрать опубликованный порт. |
 | `sandbox.setTimeout(ms)` | `sandbox.set_timeout(ms)` | Задать оставшийся срок жизни, минимум 1000 мс. |
 | `sandbox.pause()` / `sandbox.resume()` | `sandbox.pause()` / `sandbox.resume()` | Поставить паузу или возобновление в очередь и сразу вернуть ответ. |
-| `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | Пауза с сохранением только файлов, примерно за секунду при любом объёме памяти; процессы завершаются, а возобновление загружает песочницу заново. |
+| `sandbox.pause({ fast: true })` | `sandbox.pause(fast=True)` | Устарел и игнорируется: любая пауза сохраняет только файлы. |
 | `sandbox.waitForStatus(status)` | `sandbox.wait_for_status(status)` | Дождаться `paused` или `running`; выбросить ошибку, если пауза не удалась. |
 | `sandbox.fork({ count })` | `sandbox.fork(count=...)` | Скопировать работающий sandbox от 1 до 100 раз вместе с памятью и процессами; каждая копия учитывается в лимите запущенных sandbox. |
-| `sandbox.snapshot(name)` | `sandbox.snapshot(name)` | Сохранить память, процессы и все файлы в снимок. Он восстанавливается только в проекте и регионе этого sandbox. |
+| `sandbox.snapshot(name)` | `sandbox.snapshot(name)` | Сохранить все файлы в снимок, без памяти и процессов. Он восстанавливается только в проекте и регионе этого sandbox. |
 | `Sandbox.waitForSnapshot(snapshotId)` | `Sandbox.wait_for_snapshot(snapshot_id)` | Дождаться готовности снимка. |
 | `Sandbox.restore(snapshotId, { projectId, volumeId, timeoutMs })` | `Sandbox.restore(snapshot_id, project_id=..., volume_id=..., timeout_ms=...)` | Запустить новый sandbox из снимка в проекте и регионе снимка. Любой другой `projectId` вызывает `AuthenticationError` с HTTP 403 и `code`, равным `SNAPSHOT_SCOPE`. |
 | `Sandbox.snapshots(projectId)` | `Sandbox.snapshots(project_id)` | Получить список снимков, сделанных в проекте. |
@@ -203,7 +203,7 @@ sandbox.unexpose(3000)
 
 ## Пауза, снимки и fork
 
-Эти вызовы сохраняют память, запущенные процессы и файлы. В [быстром старте](/sandboxes/quickstart#pause-and-resume) описано, что сохраняет каждый из них, кто может восстановить снимок, как оплачиваются восстановленные sandbox и что может не сработать.
+Пауза и снимок сохраняют только файлы, без памяти и запущенных процессов: при возобновлении или восстановлении sandbox загружается заново с этими файлами. Fork копирует работающий sandbox вместе с памятью и процессами. Sandbox на паузе стоит $0.14 за ГБ-месяц используемого дискового пространства, пока вы его не возобновите или не удалите, и столько же стоит каждый снимок, пока вы его не удалите. В [быстром старте](/sandboxes/quickstart#pause-and-resume) описано, что сохраняет каждый из них, кто может восстановить снимок, как оплачиваются восстановленные sandbox и что может не сработать.
 
 ```ts
 await sandbox.pause();

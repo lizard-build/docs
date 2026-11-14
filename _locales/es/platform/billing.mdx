@@ -48,11 +48,11 @@ Los precios están en dólares estadounidenses.
 | --- | ---: |
 | CPU | $0.000006948 por vCPU-segundo |
 | Memoria | $0.000003474 por GB-segundo |
-| Persistent Volumes | $0.000000054 por GB-segundo |
+| Persistent Volumes, sandboxes en pausa y snapshots | $0.000000054 por GB-segundo |
 | Managed Object Storage | $0.0135 por GB-mes |
 | Tráfico saliente | $0.045 por GB, desde el primer byte |
 
-El tráfico entrante es gratis. Las apps, Managed Postgres y Managed Redis usan estas tarifas. Los Sandboxes tienen un precio fijo por hora para cada tamaño; consulta los [tamaños de Sandboxes](/platform/limits#sandbox-sizes).
+El tráfico entrante es gratis. Las apps, Managed Postgres y Managed Redis usan estas tarifas. Los Sandboxes tienen un precio fijo por hora para cada tamaño mientras están en marcha; consulta los [tamaños de Sandboxes](/platform/limits#sandbox-sizes). Un sandbox en pausa y cada snapshot se facturan por el espacio en disco que usan, unos $0.14 por GB-mes.
 
 Por ejemplo, una vCPU y 1 GB de memoria durante una hora cuestan $0.0375192 en cómputo. El almacenamiento y el tráfico saliente pueden sumar a esa cantidad. Consulta los [precios](https://lizard.build/pricing) para ver la oferta completa.
 
@@ -142,7 +142,7 @@ Cuando tu plan termina, ya no puedes crear recursos, y los que están en marcha 
 
 ## Qué conserva una pausa por facturación
 
-Las apps y bases de datos conservan sus datos mientras están en pausa. Un sandbox en marcha se pausa con sus archivos y su memoria. Un sandbox que no se puede pausar en ese momento, o uno que se ha caído, se elimina con sus archivos. Guarda los archivos que necesites en un [Persistent Volume](/sandboxes/volumes).
+Las apps y bases de datos conservan sus datos mientras están en pausa. Un sandbox en marcha se pausa solo con sus archivos; sus procesos en ejecución y su memoria se pierden. Un sandbox que no se puede pausar en ese momento, o uno que se ha caído, se elimina con sus archivos. Guarda los archivos que necesites en un [Persistent Volume](/sandboxes/volumes).
 
 ## Enterprise
 
@@ -152,6 +152,6 @@ Las cuentas Enterprise pagan pay as you go y reciben cada mes una factura del me
 
 ## Apps inactivas y datos almacenados
 
-Una app puede usar memoria y CPU aunque no reciba solicitudes. [Pausa](/cli/pause) la app para detener el uso de cómputo, o deja que [duerma](/cli/sleep) cuando esté inactiva y despierte con la siguiente solicitud. Pagas por Persistent Volumes y Managed Object Storage mientras guardes datos en ellos, incluso con la app en pausa.
+Una app puede usar memoria y CPU aunque no reciba solicitudes. [Pausa](/cli/pause) la app para detener el uso de cómputo, o deja que [duerma](/cli/sleep) cuando esté inactiva y despierte con la siguiente solicitud. Pagas por Persistent Volumes y Managed Object Storage mientras guardes datos en ellos, incluso con la app en pausa. Un sandbox en pausa cuesta $0.14 por GB-mes de espacio usado en disco hasta que lo reanudes o lo elimines, y cada snapshot cuesta lo mismo hasta que lo elimines.
 
 Consulta [almacenamiento y recuperación](/platform/storage-and-recovery) antes de borrar datos. Lee [métricas](/observability/metrics) para comparar los límites configurados con el uso medido.
