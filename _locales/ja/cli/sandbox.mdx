@@ -32,7 +32,7 @@ sandbox を作成し、その ID を表示します。
 | フラグ | 説明 |
 |------|-------------|
 | `-t, --template <name>` | テンプレート（既定値 `base`）。有効なテンプレート: `base`、`interpreter`、`codex`、`desktop`、`desktop-camoufox`（US East のみ）、`opencode`、`pi`、`prime`、`claude`。サーバーがリージョンの一覧と照合します |
-| `-s, --size <size>` | `mini`、`small`、`medium`（既定値。トライアル中は `small`）、`large` のいずれか。`mini` は `base`、`claude`、`codex`、`interpreter` テンプレートでのみ、ボリュームなしで使えます |
+| `-s, --size <size>` | `nano`、`mini`、`small`、`medium`（既定値。トライアル中は `small`）、`large` のいずれか。`nano` は `base`、`claude`、`codex` テンプレートでのみ、`mini` はそれらと `interpreter` テンプレートでのみ使えます。どちらもボリュームは使えません |
 | `--timeout <ms>` | 有効期間（ミリ秒）。既定値は `300000`（5 分）で、`0` を指定すると期限がなくなります。トライアル中は最大 `3600000` (1 時間) で、`0` は 1 時間になります |
 | `--region <code>` | sandbox を作成するリージョン |
 | `--snapshot <id>` | 保存済みのスナップショットから起動します。`--size` とは併用できません |
@@ -44,13 +44,15 @@ Lizard は sandbox の稼働中、アイドル時間も含めてサイズごと�
 
 | サイズ | vCPU | メモリ | ディスク | 料金 |
 |------|------|--------|------|-------|
+| `nano` | 0.5（1 vCPU を半コア分に制限） | 1 GiB | 5 GB | $0.00405/h |
+| `mini` | 1 | 2 GiB | 10 GB | $0.0081/h |
 | `small` | 2 | 4 GiB | 20 GB | $0.0162/h |
 | `medium` | 4 | 8 GiB | 40 GB | $0.0324/h |
 | `large` | 8 | 16 GiB | 80 GB | $0.0648/h |
 
 `--with-token` がインストールしたキーは、sandbox 内のあらゆるものから読み取れ、sandbox が削除されるまで sandbox のプロジェクトに対して使えます。
 
-トライアルまたはプランが始まるまで、`create` は Checkout へのリンク付きで HTTP 402 を返します。`lizard billing start` を実行してください。上限は実行中の sandbox の vCPU で数えます。最初の有料の請求書の後の Pro は 40、Pro 5x は 220、Pro 20x は 1,200 です。Pro 5x と Pro 20x は sandbox の起動数に制限がありません。一時停止中の sandbox は数えません。トライアル中の sandbox は US リージョンで動き、`small` か `mini` で、同時に Small 1 個と Mini 2 個までです。2 台目の `small` または 3 台目の `mini` を同時に動かそうとすると、作成、フォーク、再開のどれでも `TRIAL_SIZE_RUNNING` 付きの HTTP 403 が返ります。1 台を一時停止するか削除するか、`small` の代わりに `mini` を起動してください。`medium` を指定すると `TRIAL_SANDBOX_SIZE` 付きの HTTP 403、`large` を指定すると `SANDBOX_SIZE_NOT_ALLOWED` 付きの HTTP 403、ほかのリージョンを指定すると `TRIAL_SANDBOX_REGION` 付きの HTTP 403 が返ります。vCPU の上限を超えると、`create` は `SANDBOX_LIMIT_REACHED` 付きの HTTP 429 を返します。[制限](/platform/limits#sandbox-account-limits)を参照してください。トライアルの sandbox は起動から遅くとも 1 時間後に削除されます。`--timeout` なし (または `0`) では 1 時間になり、`3600000` を超える `--timeout` は HTTP 403 (`TRIAL_SANDBOX_LIFETIME`) を返します。
+トライアルまたはプランが始まるまで、`create` は Checkout へのリンク付きで HTTP 402 を返します。`lizard billing start` を実行してください。上限は実行中の sandbox の vCPU で数えます。最初の有料の請求書の後の Pro は 40、Pro 5x は 220、Pro 20x は 1,200 です。Pro 5x と Pro 20x は sandbox の起動数に制限がありません。一時停止中の sandbox は数えません。トライアル中の sandbox は US リージョンで動き、`small`、`mini`、`nano` のいずれかで、同時に Small 1 個、Mini 2 個、Nano 2 個までです。2 台目の `small`、または 3 台目の `mini` か `nano` を同時に動かそうとすると、作成、フォーク、再開のどれでも `TRIAL_SIZE_RUNNING` 付きの HTTP 403 が返ります。1 台を一時停止するか削除するか、`small` の代わりに `mini` を起動してください。`medium` を指定すると `TRIAL_SANDBOX_SIZE` 付きの HTTP 403、`large` を指定すると `SANDBOX_SIZE_NOT_ALLOWED` 付きの HTTP 403、ほかのリージョンを指定すると `TRIAL_SANDBOX_REGION` 付きの HTTP 403 が返ります。vCPU の上限を超えると、`create` は `SANDBOX_LIMIT_REACHED` 付きの HTTP 429 を返します。[制限](/platform/limits#sandbox-account-limits)を参照してください。トライアルの sandbox は起動から遅くとも 1 時間後に削除されます。`--timeout` なし (または `0`) では 1 時間になり、`3600000` を超える `--timeout` は HTTP 403 (`TRIAL_SANDBOX_LIFETIME`) を返します。
 
 ### `lizard sandbox list`
 

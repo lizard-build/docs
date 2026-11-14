@@ -46,11 +46,11 @@ Lizard (lizard.build) の Sandboxes は、AI エージェントがコードや�
 | コードを実行するのは何ですか? | 独自のカーネルを持つ Firecracker microVM です。[ランタイムとテンプレート](#runtime-and-templates) を参照してください |
 | どうやって作成しますか? | [Lizard SDK](/sandboxes/sdk-reference)、[`lizard sandbox`](/cli/sandbox)、[ダッシュボード](/sandboxes/dashboard)、または [HTTP API](/sandboxes/sdk-reference#http-api) |
 | どのテンプレートがありますか? | `base`、`interpreter`、`codex`、`claude`、`opencode`、`pi`、`prime`、`desktop`、`desktop-camoufox`（US East のみ） |
-| どのサイズがありますか? | Mini (1 vCPU / 2 GB、ディスク 5 GB)、Small (2 vCPU / 4 GB、ディスク 20 GB)、Medium (4 vCPU / 8 GB、ディスク 40 GB、既定)、Large (8 vCPU / 16 GB、ディスク 80 GB)。Mini は `base`, `claude`, `codex`、`interpreter` テンプレートからのみ起動します。トライアルでは US リージョンで、同時に Small 1 個と Mini 2 個まで使えます。[サイズと料金](/platform/limits#sandbox-sizes) を参照してください |
+| どのサイズがありますか? | Nano (0.5 vCPU / 1 GB、ディスク 5 GB)、Mini (1 vCPU / 2 GB、ディスク 10 GB)、Small (2 vCPU / 4 GB、ディスク 20 GB)、Medium (4 vCPU / 8 GB、ディスク 40 GB、既定)、Large (8 vCPU / 16 GB、ディスク 80 GB)。Nano は `base`、`claude`、`codex` テンプレートからのみ、Mini はそれらと `interpreter` テンプレートからのみ起動します。トライアルでは US リージョンで、同時に Small 1 個、Mini 2 個、Nano 2 個まで使えます。[サイズと料金](/platform/limits#sandbox-sizes) を参照してください |
 | どのくらい存続しますか? | SDK と CLI からは既定で 5 分。直接の API とダッシュボードからは既定で期限なし |
 | 一時停止後に何が残りますか? | 一時停止は sandbox のファイルを保持し、計算料金を止めます。一時停止中のディスクには、sandbox を再開するか削除するまで、使用容量 1 GB あたり月額 $0.14 がかかります。実行中のプロセスとメモリは失われ、再開時はファイルを保ったまま sandbox が新しく起動します。 |
 | 停止（kill または期限切れ）後に何が残りますか? | `/workspace` の [Persistent Volumes](/sandboxes/volumes) 上のファイルと、自分で作成した[スナップショット](/sandboxes/quickstart#pause-and-resume)です。スナップショットはディスク全体を保持します |
-| 同時にいくつ実行できますか? | 上限は vCPU で数えます。Pro で 40（たとえば Medium なら 10 個）、Pro 5x で 220、Pro 20x で 1,200、トライアル中は同時に Small 1 個と Mini 2 個まで。[アカウントの上限](/platform/limits#sandbox-account-limits) を参照してください。Pro、Pro 5x、Pro 20x は sandbox の起動数に制限がありません。 |
+| 同時にいくつ実行できますか? | 上限は vCPU で数えます。Pro で 40（たとえば Medium なら 10 個）、Pro 5x で 220、Pro 20x で 1,200、トライアル中は同時に Small 1 個、Mini 2 個、Nano 2 個まで。[アカウントの上限](/platform/limits#sandbox-account-limits) を参照してください。Pro、Pro 5x、Pro 20x は sandbox の起動数に制限がありません。 |
 
 <span id="runtime-and-templates" />
 
@@ -77,7 +77,7 @@ snapshot -> new sandbox (restore)
 
 ## リソースと有効期間
 
-作成時にサイズを選びます: Mini (1 vCPU / 2 GB、ディスク 5 GB)、Small (2 vCPU / 4 GB、ディスク 20 GB)、Medium (4 vCPU / 8 GB、ディスク 40 GB、既定)、Large (8 vCPU / 16 GB、ディスク 80 GB)。Mini は `base`, `claude`, `codex`、`interpreter` テンプレートからのみ、ボリュームなしで起動します。トライアル中の sandbox は Mini か Small で（同時に Small 1 個と Mini 2 個まで）、US リージョンで動きます。[サイズと料金](/platform/limits#sandbox-sizes)を参照してください。必要に応じてリージョンを指定してください。カタログへの掲載は空き容量を保証しません。トライアル中の sandbox は、起動から遅くとも 1 時間後に削除されます。
+作成時にサイズを選びます: Nano (0.5 vCPU / 1 GB、ディスク 5 GB)、Mini (1 vCPU / 2 GB、ディスク 10 GB)、Small (2 vCPU / 4 GB、ディスク 20 GB)、Medium (4 vCPU / 8 GB、ディスク 40 GB、既定)、Large (8 vCPU / 16 GB、ディスク 80 GB)。Nano は 1 vCPU を半コア分に制限しているため、CPU 負荷の高い処理には Mini の約 2 倍の時間がかかります。Nano は `base`、`claude`、`codex` テンプレートからのみ、Mini はそれらと `interpreter` テンプレートからのみ起動します。どちらもボリュームは使えません。トライアル中の sandbox は Nano、Mini、Small のいずれかで（同時に Small 1 個、Mini 2 個、Nano 2 個まで）、US リージョンで動きます。[サイズと料金](/platform/limits#sandbox-sizes)を参照してください。必要に応じてリージョンを指定してください。カタログへの掲載は空き容量を保証しません。トライアル中の sandbox は、起動から遅くとも 1 時間後に削除されます。
 
 SDK と CLI の既定の有効期間は 5 分です。API の直接呼び出しとダッシュボードでは、既定で期限を設けません。有効期間を明示してください。作成時の `timeoutMs: 0` は期限を無効にし、正の値は期限を設定します。`setTimeout` は 1000～2147483647 ミリ秒を受け付け、0 は指定できません。コマンド実行で期限は延長されません。アイドル時間のタイマーではありません。トライアル中は、有効期間の指定なしまたは `0` で 1 時間になり、1 時間を超える有効期間は HTTP 403 (`TRIAL_SANDBOX_LIFETIME`) を返します。[有効期間](/platform/limits#sandbox-lifetime)を参照してください。
 
