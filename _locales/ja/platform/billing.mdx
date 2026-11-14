@@ -64,7 +64,7 @@ Lizard は超過分を月末にまとめてではなく、たまるたびに請�
 
 トライアルは 1 つのアカウントにつき 1 回、1 枚のカードにつき 1 回です。アカウントで以前にトライアルを使ったことがある場合、Pro はすぐに始まり、その日に $19 が請求されます。カードで以前にトライアルを使ったことがある場合、トライアルは始まらず、何も請求されません。請求ページから月額 $19 の Pro を開始してください。
 
-トライアルでは Pro のすべての機能を使えますが、最初の請求書の支払いまでは[上限](#limits)が低くなります。それまでの間、Sandboxes はダッシュボード、Lizard CLI、Lizard SDK、Lizard MCP のどれから作成しても、US リージョンでしか動かず、同時に実行できるのは Small 1 個、Mini 2 個、Nano 2 個までです。サイズを指定しない作成は Small になります。2 個目の Small、または 3 個目の Mini か Nano を同時に実行しようとすると、作成、fork、再開のどれでも HTTP 403 が返り、`code` は `TRIAL_SIZE_RUNNING` になります。1 個を一時停止するか削除してください。Small の場合は代わりに Mini を起動することもできます。Medium の sandbox では HTTP 403 が返り、`code` は `TRIAL_SANDBOX_SIZE` になります。Large では `SANDBOX_SIZE_NOT_ALLOWED` になります。US 以外のリージョンを指定すると HTTP 403 が返り、`code` は `TRIAL_SANDBOX_REGION` になります。**Start Pro now** で他のサイズとリージョンが使えるようになり、Pro の上限が適用されます。トライアルの sandbox は起動から遅くとも 1 時間後に削除されます。有効期間を指定しない作成やフォークは 1 時間になり、それより長い指定は HTTP 403 (`code` は `TRIAL_SANDBOX_LIFETIME`) を返します。2026-11-10 より前に作成された sandbox には引き続き期限がありません。より長い有効期間も **Start Pro now** で使えるようになります。
+トライアルでは Pro のすべての機能を使えますが、最初の請求書の支払いまでは[上限](#limits)が低くなります。それまでの間、Sandboxes はダッシュボード、Lizard CLI、Lizard SDK、Lizard MCP のどれから作成しても、US リージョンでしか動かず、同時に実行できるのは Small 1 個、Mini 2 個、Nano 2 個までです。サイズを指定しない作成は Small になります。2 個目の Small、または 3 個目の Mini か Nano を同時に実行しようとすると、作成、fork、再開のどれでも HTTP 403 が返り、`code` は `TRIAL_SIZE_RUNNING` になります。1 個を一時停止するか削除してください。Small の場合は代わりに Mini を起動することもできます。Medium の sandbox では HTTP 403 が返り、`code` は `TRIAL_SANDBOX_SIZE` になります。Large または Big では `SANDBOX_SIZE_NOT_ALLOWED` になります。US 以外のリージョンを指定すると HTTP 403 が返り、`code` は `TRIAL_SANDBOX_REGION` になります。**Start Pro now** で他のサイズとリージョンが使えるようになり、Pro の上限が適用されます。トライアルの sandbox は起動から遅くとも 1 時間後に削除されます。有効期間を指定しない作成やフォークは 1 時間になり、それより長い指定は HTTP 403 (`code` は `TRIAL_SANDBOX_LIFETIME`) を返します。2026-11-10 より前に作成された sandbox には引き続き期限がありません。より長い有効期間も **Start Pro now** で使えるようになります。
 
 トライアル中に Pro 5x や Pro 20x に移るには、まず **Start Pro now** を選び、そのあと[プランを変更](#changing-plans)します。
 
@@ -95,12 +95,12 @@ Lizard は超過分を月末にまとめてではなく、たまるたびに請�
 | | トライアル（最初の請求書の支払いまで） | Pro | Pro 5x | Pro 20x |
 | --- | ---: | ---: | ---: | ---: |
 | 同時に実行できる Sandboxes | 同時に Small 1 個 + Mini 2 個 + Nano 2 個 | 40 vCPU | 220 vCPU | 1,200 vCPU |
-| Sandboxes のサイズ | Nano、Mini、Small | Large まで（8 vCPU） | Large まで（8 vCPU） | Large まで（8 vCPU） |
+| Sandboxes のサイズ | Nano、Mini、Small | Big まで（16 vCPU） | Big まで（16 vCPU） | Big まで（16 vCPU） |
 | Sandbox の有効期間 | 最長 1 時間 | 無制限 | 無制限 | 無制限 |
 | Sandboxes の 1 分あたりの起動数 | 6 | 無制限 | 無制限 | 無制限 |
 | アプリあたりのレプリカ数 | 1 | 5 | 5 | 5 |
 
-Sandboxes の上限は、sandbox の数ではなく、実行中の sandbox の vCPU で数えます。Nano と Mini はそれぞれ 1 vCPU、Small は 2、Medium は 4、Large は 8 を使うため、40 vCPU では Nano または Mini 40 個、Small 20 個、Medium 10 個、Large 5 個のいずれかを同時に実行できます。トライアルではサイズごとに数え、同時に Small 1 個、Mini 2 個、Nano 2 個まで実行できます。Pro の上限は最初の請求書の支払いから適用されます。**Start Pro now** による支払いも含みます。Pro 5x と Pro 20x は初日から有料なので、上限もすぐに適用されます。1 時間あたりと 1 日あたりの起動レートや、その他の上限は[制限](/platform/limits#sandbox-account-limits)を参照してください。
+Sandboxes の上限は、sandbox の数ではなく、実行中の sandbox の vCPU で数えます。Nano と Mini はそれぞれ 1 vCPU、Small は 2、Medium は 4、Large は 8、Big は 16 を使うため、40 vCPU では Nano または Mini 40 個、Small 20 個、Medium 10 個、Large 5 個、Big 2 個のいずれかを同時に実行できます。トライアルではサイズごとに数え、同時に Small 1 個、Mini 2 個、Nano 2 個まで実行できます。Pro の上限は最初の請求書の支払いから適用されます。**Start Pro now** による支払いも含みます。Pro 5x と Pro 20x は初日から有料なので、上限もすぐに適用されます。1 時間あたりと 1 日あたりの起動レートや、その他の上限は[制限](/platform/limits#sandbox-account-limits)を参照してください。
 
 <span id="changing-plans" />
 

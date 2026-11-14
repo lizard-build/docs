@@ -32,7 +32,7 @@ Crea un sandbox y muestra su ID.
 | Bandera | Descripción |
 |------|-------------|
 | `-t, --template <name>` | Plantilla (por defecto `base`). Plantillas habilitadas: `base`, `interpreter`, `codex`, `desktop`, `desktop-camoufox` (solo en US East), `opencode`, `pi`, `prime`, `claude`. El servidor comprueba la lista de la región |
-| `-s, --size <size>` | `nano`, `mini`, `small`, `medium` (por defecto; `small` durante la prueba) o `large`. `nano` solo funciona con las plantillas `base`, `claude` y `codex`, y `mini` solo con esas e `interpreter`; ninguno de los dos admite volumen |
+| `-s, --size <size>` | `nano`, `mini`, `small`, `medium` (por defecto; `small` durante la prueba), `large` o `big` (solo en planes de pago). `nano` solo funciona con las plantillas `base`, `claude` y `codex`, `mini` solo con esas e `interpreter`, y `big` solo con esas cuatro y `desktop`; ninguno de estos tres admite volumen |
 | `--timeout <ms>` | Duración en milisegundos (por defecto `300000`, cinco minutos); `0` desactiva la caducidad. Durante la prueba, como máximo `3600000` (1 hora), y `0` da 1 hora |
 | `--region <code>` | Región donde crear el sandbox |
 | `--snapshot <id>` | Partir de un snapshot guardado; no se puede combinar con `--size` |
@@ -49,10 +49,11 @@ Lizard factura cada tamaño por segundo con una tarifa fija mientras el sandbox 
 | `small` | 2 | 4 GiB | 20 GB | $0.0162/h |
 | `medium` | 4 | 8 GiB | 40 GB | $0.0324/h |
 | `large` | 8 | 16 GiB | 80 GB | $0.0648/h |
+| `big` | 16 | 32 GiB | 120 GB | $0.1296/h |
 
 Cualquier proceso dentro del sandbox puede leer la clave que instala `--with-token` y usarla en el proyecto del sandbox hasta que se elimine el sandbox.
 
-Hasta que empiece tu prueba o tu plan, `create` devuelve HTTP 402 con un enlace de Checkout; ejecuta `lizard billing start`. Los límites cuentan las vCPU de los sandboxes en marcha: 40 en Pro después de la primera factura pagada, 220 en Pro 5x y 1,200 en Pro 20x. Pro 5x y Pro 20x no tienen límite de inicios de sandbox. Los sandboxes en pausa no cuentan. Durante la prueba, un sandbox se ejecuta en una región de EE. UU. y es `small`, `mini` o `nano`, con 1 Small, 2 Mini y 2 Nano a la vez. Un segundo `small`, o un tercer `mini` o `nano`, en ejecución a la vez, tanto si lo creas como si haces fork de él o lo reanudas, devuelve HTTP 403 con `TRIAL_SIZE_RUNNING`; pausa o elimina uno, o inicia un `mini` en lugar de un `small`. `medium` devuelve HTTP 403 con `TRIAL_SANDBOX_SIZE`, `large` devuelve HTTP 403 con `SANDBOX_SIZE_NOT_ALLOWED`, y otra región devuelve HTTP 403 con `TRIAL_SANDBOX_REGION`. Por encima del límite de vCPU, `create` devuelve HTTP 429 con `SANDBOX_LIMIT_REACHED`. Consulta [Límites](/platform/limits#sandbox-account-limits). Un sandbox de prueba se elimina como máximo 1 hora después de iniciarse: sin `--timeout` (o con `0`) recibe 1 hora, y un `--timeout` mayor que `3600000` devuelve HTTP 403 con `TRIAL_SANDBOX_LIFETIME`.
+Hasta que empiece tu prueba o tu plan, `create` devuelve HTTP 402 con un enlace de Checkout; ejecuta `lizard billing start`. Los límites cuentan las vCPU de los sandboxes en marcha: 40 en Pro después de la primera factura pagada, 220 en Pro 5x y 1,200 en Pro 20x. Pro 5x y Pro 20x no tienen límite de inicios de sandbox. Los sandboxes en pausa no cuentan. Durante la prueba, un sandbox se ejecuta en una región de EE. UU. y es `small`, `mini` o `nano`, con 1 Small, 2 Mini y 2 Nano a la vez. Un segundo `small`, o un tercer `mini` o `nano`, en ejecución a la vez, tanto si lo creas como si haces fork de él o lo reanudas, devuelve HTTP 403 con `TRIAL_SIZE_RUNNING`; pausa o elimina uno, o inicia un `mini` en lugar de un `small`. `medium` devuelve HTTP 403 con `TRIAL_SANDBOX_SIZE`, `large` o `big` devuelve HTTP 403 con `SANDBOX_SIZE_NOT_ALLOWED`, y otra región devuelve HTTP 403 con `TRIAL_SANDBOX_REGION`. Por encima del límite de vCPU, `create` devuelve HTTP 429 con `SANDBOX_LIMIT_REACHED`. Consulta [Límites](/platform/limits#sandbox-account-limits). Un sandbox de prueba se elimina como máximo 1 hora después de iniciarse: sin `--timeout` (o con `0`) recibe 1 hora, y un `--timeout` mayor que `3600000` devuelve HTTP 403 con `TRIAL_SANDBOX_LIFETIME`.
 
 ### `lizard sandbox list`
 

@@ -7,7 +7,7 @@ description: "Replikatlimits für Apps, Sandbox-Größen und Stundenpreise, wie 
 
 # Limits
 
-Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung mit bis zu 5 Replikaten pro Service, während der Testphase mit 1. Sandbox-Limits zählen vCPU, nicht Sandboxes: Pro führt bis zu 40 vCPU an Sandboxes gleichzeitig aus, Pro 5x 220 und Pro 20x 1,200. Pro, Pro 5x und Pro 20x haben kein Limit für Sandbox-Starts. Die Testphase erlaubt 1 Small-, 2 Mini- und 2 Nano-Sandboxes zur selben Zeit, nur in US-Regionen. Die Sandbox-Größen reichen von Nano (0.5 vCPU / 1 GB) bis Large (8 vCPU / 16 GB), und ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum von 30 Tagen inklusive. Der Inhaber eines Workspace kann außerdem [Workspace-Limits](#workspace-limits) für einen einzelnen Workspace festlegen. Limits hängen von der Ressource, dem Tarif und dem Konto ab: Eine Einstellung pro Replikat entspricht nicht der insgesamt für einen Service oder ein Konto verfügbaren Kapazität. Prüfen Sie Ihren aktuellen Tarif und das Ergebnis der Erstellungs- oder Skalierungsanfrage, bevor Sie eine Workload dimensionieren. In der Testphase wird jede Sandbox spätestens 1 Stunde nach ihrem Start gelöscht.
+Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung mit bis zu 5 Replikaten pro Service, während der Testphase mit 1. Sandbox-Limits zählen vCPU, nicht Sandboxes: Pro führt bis zu 40 vCPU an Sandboxes gleichzeitig aus, Pro 5x 220 und Pro 20x 1,200. Pro, Pro 5x und Pro 20x haben kein Limit für Sandbox-Starts. Die Testphase erlaubt 1 Small-, 2 Mini- und 2 Nano-Sandboxes zur selben Zeit, nur in US-Regionen. Die Sandbox-Größen reichen von Nano (0.5 vCPU / 1 GB) bis Big (16 vCPU / 32 GB), und ausgehender Sandbox-Traffic ist bis 2 TB pro Konto in einem gleitenden Zeitraum von 30 Tagen inklusive. Der Inhaber eines Workspace kann außerdem [Workspace-Limits](#workspace-limits) für einen einzelnen Workspace festlegen. Limits hängen von der Ressource, dem Tarif und dem Konto ab: Eine Einstellung pro Replikat entspricht nicht der insgesamt für einen Service oder ein Konto verfügbaren Kapazität. Prüfen Sie Ihren aktuellen Tarif und das Ergebnis der Erstellungs- oder Skalierungsanfrage, bevor Sie eine Workload dimensionieren. In der Testphase wird jede Sandbox spätestens 1 Stunde nach ihrem Start gelöscht.
 
 <span id="applications" />
 
@@ -40,8 +40,9 @@ Auf Lizard (lizard.build) läuft eine App nach der ersten bezahlten Pro-Rechnung
 | Small | 2 vCPU / 4 GB | 20 GB | $0.0162 pro Stunde |
 | Medium (Standard außerhalb der Testphase) | 4 vCPU / 8 GB | 40 GB | $0.0324 pro Stunde |
 | Large | 8 vCPU / 16 GB | 80 GB | $0.0648 pro Stunde |
+| Big | 16 vCPU / 32 GB | 120 GB | $0.1296 pro Stunde |
 
-CPU, Arbeitsspeicher und Festplatte sind im Preis enthalten, solange die Sandbox läuft. Eine pausierte Sandbox und jeder Snapshot kosten $0.14 pro GB und Monat für belegten Festplattenspeicher; siehe [Speicher und Abrechnung](/sandboxes#storage-and-billing). Persistent Volumes werden separat abgerechnet. Nano ist eine vCPU, die auf einen halben Kern begrenzt ist; eine CPU-lastige Aufgabe dauert daher etwa doppelt so lange wie auf Mini. Nano startet nur aus den Vorlagen `base`, `claude` und `codex`, Mini nur aus `base`, `claude`, `codex` und `interpreter`, beide ohne Persistent Volume. Andernfalls gibt Create HTTP 400 mit `code` gleich `SANDBOX_SIZE_NOT_ALLOWED` zurück; bei einer Vorlage, die Nano nicht unterstützt, listet die Antwort die unterstützten Vorlagen in `templates`. In der Testphase ist Small die Standardgröße, ein Konto führt 1 Small-, 2 Mini- und 2 Nano-Sandboxes zur selben Zeit aus, Medium und Large werden nach der ersten bezahlten Rechnung freigeschaltet, und Sandboxes laufen nur in US-Regionen; siehe [Abrechnung](/platform/billing#trial). In der Testphase wird jede Sandbox spätestens 1 Stunde nach ihrem Start gelöscht.
+CPU, Arbeitsspeicher und Festplatte sind im Preis enthalten, solange die Sandbox läuft. Eine pausierte Sandbox und jeder Snapshot kosten $0.14 pro GB und Monat für belegten Festplattenspeicher; siehe [Speicher und Abrechnung](/sandboxes#storage-and-billing). Persistent Volumes werden separat abgerechnet. Nano ist eine vCPU, die auf einen halben Kern begrenzt ist; eine CPU-lastige Aufgabe dauert daher etwa doppelt so lange wie auf Mini. Nano startet nur aus den Vorlagen `base`, `claude` und `codex`, Mini nur aus `base`, `claude`, `codex` und `interpreter`, Big nur aus diesen vier und `desktop`. Nano, Mini und Big laufen ohne Persistent Volume. Andernfalls gibt Create HTTP 400 mit `code` gleich `SANDBOX_SIZE_NOT_ALLOWED` zurück; bei einer Vorlage, die Nano nicht unterstützt, listet die Antwort die unterstützten Vorlagen in `templates`. Big läuft nur in den bezahlten Plänen. In der Testphase ist Small die Standardgröße, ein Konto führt 1 Small-, 2 Mini- und 2 Nano-Sandboxes zur selben Zeit aus, Medium, Large und Big werden nach der ersten bezahlten Rechnung freigeschaltet, und Sandboxes laufen nur in US-Regionen; siehe [Abrechnung](/platform/billing#trial). In der Testphase wird jede Sandbox spätestens 1 Stunde nach ihrem Start gelöscht.
 
 <span id="sandbox-account-limits" />
 
@@ -54,21 +55,21 @@ Diese Limits begrenzen, wie viel Sandbox-vCPU ein Konto gleichzeitig ausführt, 
 | Plan | vCPU gleichzeitig | Maximale Größe | Starts pro Minute | Pro Stunde | Pro Tag |
 |---|---|---|---|---|---|
 | Testphase von Pro | 1 Small + 2 Mini + 2 Nano zur selben Zeit | Small | 6 | 30 | 100 |
-| Pro | 40 | Large | Unbegrenzt | Unbegrenzt | Unbegrenzt |
-| Pro 5x | 220 | Large | Unbegrenzt | Unbegrenzt | Unbegrenzt |
-| Pro 20x | 1,200 | Large | Unbegrenzt | Unbegrenzt | Unbegrenzt |
-| Enterprise | Pro Workspace, laut Ihrem Vertrag | Large | 120 pro Benutzer | Kein Limit | Kein Limit |
+| Pro | 40 | Big | Unbegrenzt | Unbegrenzt | Unbegrenzt |
+| Pro 5x | 220 | Big | Unbegrenzt | Unbegrenzt | Unbegrenzt |
+| Pro 20x | 1,200 | Big | Unbegrenzt | Unbegrenzt | Unbegrenzt |
+| Enterprise | Pro Workspace, laut Ihrem Vertrag | Big | 120 pro Benutzer | Kein Limit | Kein Limit |
 
 Während der Testphase können Sie insgesamt 50 Small-, 100 Mini- und 100 Nano-Sandboxes über alle Ihre Workspaces hinweg starten. Erstellungen und Forks zählen mit, auch gelöschte Sandboxes; das Fortsetzen zählt nicht. Sobald das Kontingent einer Größe aufgebraucht ist, geben neue Starts dieser Größe `TRIAL_STARTS_USED` zurück, bis Sie Pro starten.
 
-Eine Sandbox nutzt die vCPU ihrer Größe: Nano 1, Mini 1, Small 2, Medium 4, Large 8. Nano zählt als 1 vCPU, auch wenn diese vCPU auf einen halben Kern begrenzt ist. In den bezahlten Plänen passt eine neue Sandbox, wenn die bereits laufenden vCPU plus ihre eigenen vCPU Ihr Limit nicht überschreiten. Sie können Größen beliebig mischen. Diese Tabelle zeigt, wie viele Sandboxes einer Größe gleichzeitig passen:
+Eine Sandbox nutzt die vCPU ihrer Größe: Nano 1, Mini 1, Small 2, Medium 4, Large 8, Big 16. Nano zählt als 1 vCPU, auch wenn diese vCPU auf einen halben Kern begrenzt ist. In den bezahlten Plänen passt eine neue Sandbox, wenn die bereits laufenden vCPU plus ihre eigenen vCPU Ihr Limit nicht überschreiten. Sie können Größen beliebig mischen. Diese Tabelle zeigt, wie viele Sandboxes einer Größe gleichzeitig passen:
 
-| Plan | Nano | Mini | Small | Medium | Large |
-|---|---|---|---|---|---|
-| Testphase von Pro | 2 | 2 | 1 | Nicht verfügbar | Nicht verfügbar |
-| Pro | 40 | 40 | 20 | 10 | 5 |
-| Pro 5x | 220 | 220 | 110 | 55 | 27 |
-| Pro 20x | 1,200 | 1,200 | 600 | 300 | 150 |
+| Plan | Nano | Mini | Small | Medium | Large | Big |
+|---|---|---|---|---|---|---|
+| Testphase von Pro | 2 | 2 | 1 | Nicht verfügbar | Nicht verfügbar | Nicht verfügbar |
+| Pro | 40 | 40 | 20 | 10 | 5 | 2 |
+| Pro 5x | 220 | 220 | 110 | 55 | 27 | 13 |
+| Pro 20x | 1,200 | 1,200 | 600 | 300 | 150 | 75 |
 
 Bei Pro nutzen 3 Large- und 6 Small-Sandboxes 36 von 40 vCPU, daher passt noch eine Medium-Sandbox, aber keine weitere Large-Sandbox.
 
@@ -76,7 +77,7 @@ Bei Pro nutzen 3 Large- und 6 Small-Sandboxes 36 von 40 vCPU, daher passt noch e
 - In der Testphase und in den bezahlten Plänen bedeutet aktiv laufend oder fortsetzend. Eine pausierte Sandbox nutzt keine vCPU; um eine fortzusetzen, braucht es Platz für ihre vCPU.
 - Ein Start ist eine neue Sandbox. Ein Fortsetzen ist kein Start. Eine Erstellung, die auf Seiten von Lizard fehlschlägt, zählt nicht.
 - Bei Überschreitung geben Create und Resume HTTP 429 zurück, mit `code` gleich `SANDBOX_LIMIT_REACHED` (vCPU gleichzeitig) oder `SANDBOX_RATE_LIMITED` (Starts). Eine Ablehnung wegen der Startrate enthält einen `Retry-After`-Header.
-- In der Testphase gibt eine zweite gleichzeitig laufende Small- oder eine dritte Mini- oder Nano-Sandbox, ob Sie sie erstellen, forken oder fortsetzen, HTTP 403 mit `code` gleich `TRIAL_SIZE_RUNNING` zurück; die Antwort enthält `size`, `sizeLimit`, `allowedSizes` und `sizeLimits`. Pausieren oder löschen Sie eine, oder starten Sie statt einer Small eine Mini. Eine Medium-Sandbox gibt HTTP 403 mit `TRIAL_SANDBOX_SIZE` zurück (`allowedSizes` ist `["small", "mini", "nano"]`), eine Large-Sandbox HTTP 403 mit `SANDBOX_SIZE_NOT_ALLOWED` und eine Region außerhalb der USA HTTP 403 mit `TRIAL_SANDBOX_REGION`.
+- In der Testphase gibt eine zweite gleichzeitig laufende Small- oder eine dritte Mini- oder Nano-Sandbox, ob Sie sie erstellen, forken oder fortsetzen, HTTP 403 mit `code` gleich `TRIAL_SIZE_RUNNING` zurück; die Antwort enthält `size`, `sizeLimit`, `allowedSizes` und `sizeLimits`. Pausieren oder löschen Sie eine, oder starten Sie statt einer Small eine Mini. Eine Medium-Sandbox gibt HTTP 403 mit `TRIAL_SANDBOX_SIZE` zurück (`allowedSizes` ist `["small", "mini", "nano"]`), eine Large- oder Big-Sandbox HTTP 403 mit `SANDBOX_SIZE_NOT_ALLOWED` und eine Region außerhalb der USA HTTP 403 mit `TRIAL_SANDBOX_REGION`.
 - In der Testphase gibt ein Create oder Fork mit einer Lebensdauer über 1 Stunde HTTP 403 mit `code` gleich `TRIAL_SANDBOX_LIFETIME` und `maxTimeoutMs: 3600000` zurück; siehe [Laufzeit](#sandbox-lifetime).
 - `GET /api/sandboxes/limits` gibt Ihre Limits und das, was gerade läuft, zurück, mit `running` (Sandboxes) und `runningVcpu`. In der Testphase enthält die Antwort außerdem `sizeLimits` (`{"small": 1, "mini": 2, "nano": 2}`) und `runningBySize`.
 - Enterprise hat kein festes Limit für gleichzeitig laufende Sandboxes. Der Vertrag jedes Kunden legt das Limit pro Workspace fest. Laufende, pausierte und abgestürzte Sandboxes zählen alle mit. Darüber geben Create und Fork HTTP 429 mit `code` gleich `SANDBOX_LIMIT_REACHED` zurück. Ein Benutzer kann pro Region bis zu 120 Sandboxes pro Minute erstellen.
@@ -100,8 +101,8 @@ Eine Ablehnung mit `SANDBOX_SIZE_NOT_ALLOWED` nennt Ihre Limitstufe und, in vCPU
 
 ```json
 {
-  "error": "Large Sandboxes start after your first Pro payment. Start Pro now in Billing to use them.",
-  "message": "Large Sandboxes start after your first Pro payment. Start Pro now in Billing to use them.",
+  "error": "Large and Big Sandboxes start after your first Pro payment. Start Pro now in Billing to use them.",
+  "message": "Large and Big Sandboxes start after your first Pro payment. Start Pro now in Billing to use them.",
   "code": "SANDBOX_SIZE_NOT_ALLOWED",
   "tier": "trial",
   "maxSandboxCpus": 4
