@@ -29,11 +29,15 @@ Create a sandbox and print its ID.
 |------|-------------|
 | `-t, --template <name>` | Template (default `base`). Enabled templates: `base`, `interpreter`, `codex`, `desktop`, `desktop-camoufox` (US East only), `opencode`, `pi`, `prime`, `claude`. The server checks the region's list |
 | `-s, --size <size>` | `nano`, `mini`, `small`, `medium` (default; `small` during the trial), `large`, or `big` (paid plans only). `nano` works only with the `base`, `claude` and `codex` templates, `mini` only with those and `interpreter`, and `big` only with those four and `desktop`; these three take no volume |
-| `--timeout <ms>` | Lifetime in milliseconds (default `300000`, five minutes); `0` disables expiration. During the trial, at most `3600000` (1 hour), and `0` gets 1 hour |
+| `--timeout <ms>` | Lifetime in milliseconds, or a duration such as `20m` or `2h` (default `300000`, five minutes); `0` disables expiration. During the trial, at most `3600000` (1 hour), and `0` gets 1 hour |
 | `--region <code>` | Region to create the sandbox in |
 | `--snapshot <id>` | Start from a saved snapshot; can't be combined with `--size` |
 | `--volume <name-or-id>` | Attach a [Persistent Volume](/cli/volume) |
 | `--with-token [key]` | Sign in `lizard` inside the sandbox with a new key limited to the sandbox's project and deleted with the sandbox. The `liz_` key you pass, or without a value the `liz_` key you run with, only authorizes the request; a browser login has none. The `base` template has no `lizard` |
+| `-e, --environment <name>` | Start with the variables of one of the project's named [environments](/sandboxes/environments) instead of its default ones |
+| `--repo <owner/name>` | Start with this GitHub repository cloned into `/workspace/<name>`, with write access to it only. `--repo-workflows` also lets it change `.github/workflows` |
+| `--every <interval>`, `--daily-at <HH:MM>` (`--weekdays`), `--cron <expr>`, `--tz <zone>` | Give the sandbox a [schedule](/sandboxes/schedules): when it runs |
+| `--command <cmd>`, `--prompt <text>`, `--prompt-file <path>` | What the schedule runs. `--agent`, `-m, --model`, `--effort` choose the agent for a prompt; `--run-timeout` stops a run (default 10m); `--schedule-name` labels it |
 | `-p, --project <id>` | Project (defaults to the linked one, else your default project) |
 
 Lizard bills each size per second at a flat rate while it runs, including idle time. The price includes local disk and [2 TB of egress per account over a rolling 30 days](/platform/limits#sandbox-egress). A successful pause stops compute charges; the paused sandbox's disk bills at $0.14 per GB-month of used space until you resume or delete it, and so does each snapshot until you delete it. Persistent Volumes bill at the [volume rate](/cli/volume), whether attached or detached.
@@ -151,6 +155,35 @@ Each copy is a sandbox start: it counts toward the [running and start limits](/p
 | `lizard sandbox files put <id> <local> <remote>` | Upload a local file |
 | `lizard sandbox files get <id> <remote> <local>` | Download a file |
 | `lizard sandbox files rm <id> <path>` | Delete a file or directory |
+
+### Schedules
+
+A schedule wakes the sandbox on a timer, runs a command or an agent prompt, and puts it back to sleep. It is set when the sandbox is created (the flags above); see [Schedules](/sandboxes/schedules).
+
+| Command | Description |
+|---------|-------------|
+| `lizard sandbox schedule <id> ...` | Set a schedule on a sandbox created in the last 15 minutes; an older one answers `SCHEDULE_ONLY_AT_CREATE` |
+| `lizard sandbox schedules [<id>]` | List schedules, with next and last run |
+| `lizard sandbox schedule-show <sch_id>` | Show one schedule |
+| `lizard sandbox schedule-runs [<sch_id>]` | A schedule's runs, or without an ID the project's latest runs across its schedules; `-o` prints the latest output |
+| `lizard sandbox schedule-run <sch_id> [--wait]` | Run it now |
+| `lizard sandbox schedule-set <sch_id> ...` | Change timing or what it runs; `--on` / `--off` |
+| `lizard sandbox unschedule <sch_id>` | Delete it |
+
+### Environments
+
+What every new sandbox of the project starts with: variables, agent instruction files and GitHub access. See [Environments](/sandboxes/environments).
+
+| Command | Description |
+|---------|-------------|
+| `lizard sandbox environments` | List the project's environments, and whether agent instructions and GitHub access are set |
+| `lizard sandbox environment-show [name] [--values]` | Show an environment's variables (names only without `--values`) |
+| `lizard sandbox environment-create <name> [--copy-from <name>]` | Create a named environment |
+| `lizard sandbox environment-set [-e <name>] KEY=VALUE... [--from-file <path>]` | Set variables (the default environment without `-e`) |
+| `lizard sandbox environment-unset [-e <name>] KEY...` | Remove variables |
+| `lizard sandbox environment-rename <name> <new-name>` | Rename a named environment |
+| `lizard sandbox environment-rm <name>` | Delete a named environment |
+| `lizard sandbox environment-instructions` | Show or set the agents' `CLAUDE.md` / `AGENTS.md` (`--claude-md`, `--agents-md`, `--clear-claude-md`, `--clear-agents-md`, `--print`) |
 
 ### Coding agents
 

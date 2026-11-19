@@ -1,0 +1,78 @@
+---
+description: "Wake a sandbox on a timer, run a command or a coding-agent prompt in it, and put it back to sleep. Set when the sandbox is created; you pay only while it is awake."
+---
+
+# Schedules
+
+A schedule wakes a paused sandbox on a timer, runs a shell command or a coding-agent prompt in it, and puts it back to sleep. You pay only while the sandbox is awake. Files in `/workspace` carry over between runs.
+
+Schedules are not on every account yet: without access, the API answers 403 `SCHEDULES_NOT_ENABLED`.
+
+## Set a schedule when you create the sandbox
+
+A schedule is set when a sandbox is created. In the dashboard, open **Schedule** in the Create sandbox form. With the CLI, add the schedule to `create`:
+
+```bash
+# every 10 minutes, a command
+lizard sandbox create --timeout 0 --every 10m --command "python3 /workspace/job.py"
+
+# every weekday at 09:00 Berlin time
+lizard sandbox create --timeout 0 --daily-at 09:00 --weekdays --tz Europe/Berlin --command "./report.sh"
+
+# a coding agent, every 5 minutes (needs an agent template)
+lizard sandbox create -t claude --timeout 0 --every 5m \
+  --prompt "Continue the research in /workspace/research; append findings to notes.md"
+```
+
+Create the sandbox with `--timeout 0` so it does not expire.
+
+A sandbox takes a new schedule only in its first 15 minutes. After that the API answers 409 `SCHEDULE_ONLY_AT_CREATE`; create a new sandbox with the schedule you want. Schedules a sandbox already has can still be changed, run, switched off and deleted.
+
+With the SDK or the API, create the sandbox and schedule it right after:
+
+```ts
+const sandbox = await Sandbox.create('claude', { projectId, timeoutMs: 0 });
+await sandbox.schedule({ every: '5m', prompt: 'Continue the research in /workspace/research' });
+```
+
+## When it runs
+
+| Option | CLI | API field |
+|---|---|---|
+| A fixed interval, 1 minute to 30 days | `--every 5m` | `every: "5m"` |
+| Once a day | `--daily-at 09:00` (add `--weekdays` for Monday to Friday) | `cron: "0 9 * * *"` or `"0 9 * * 1-5"` |
+| A cron expression, five fields | `--cron "0 */6 * * *"` | `cron` |
+
+`--tz` (API: `timezone`) is the time zone for a daily time or a cron expression; UTC by default.
+
+## What it runs
+
+- **A command** (`--command`): runs in `/workspace` as root, on any template. Exit code 0 is success. Processes it leaves in the background end when the sandbox sleeps.
+- **An agent prompt** (`--prompt`, `--prompt-file`): each run is a new conversation with the coding agent, on the agents connected in the project. Keep state in files: tell the agent to read and update a notes file. The sandbox must come from an agent template (`claude`, `codex`, `opencode`, `pi` or `prime`); on another template the API answers 400 `AGENT_NOT_IN_SANDBOX`. `--agent`, `-m` and `--effort` choose the agent, model and reasoning effort.
+
+## How a run goes
+
+1. A paused sandbox is woken. A sandbox that is already running is used as it is and left running afterwards.
+2. The command or prompt runs. A run is stopped after 10 minutes unless you set another limit (`--run-timeout` on create, at most 6 hours).
+3. A sandbox the run woke goes back to sleep. Sleep keeps files only: processes end and the next run boots fresh.
+
+A run still going when the next one is due makes that one skip. Five failed runs in a row switch the schedule off; the schedule shows why.
+
+## See and manage schedules
+
+The dashboard's **Schedules** tab lists the project's latest runs: when each started, which sandbox, what ran, how it ended and how long the sandbox worked.
+
+```bash
+lizard sandbox schedules [<sandbox-id>]      # schedules, with next and last run
+lizard sandbox schedule-show <sch_id>        # one schedule, with its full prompt or command
+lizard sandbox schedule-runs                 # the project's latest runs, across its schedules
+lizard sandbox schedule-runs <sch_id> -o     # one schedule's runs; -o prints the latest output
+lizard sandbox schedule-run <sch_id> --wait  # run now and print the result
+lizard sandbox schedule-set <sch_id> --off   # or --on, --every 15m, ...
+lizard sandbox unschedule <sch_id>
+```
+
+## Limits
+
+- At most 50 schedules per account (429 `SCHEDULE_LIMIT`). The last 200 runs of each schedule are kept.
+- A prompt schedule runs on its creator's agent credentials: it needs an API key with no scopes (403 `ACCOUNT_SCOPE_REQUIRED`), and only its creator may change it or run it now (403 `SCHEDULE_CREATOR_ONLY`). Anyone in the project may switch it off, rename or delete it. Command schedules work with scoped keys.

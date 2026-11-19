@@ -1,0 +1,84 @@
+---
+description: "What every new sandbox in a project starts with: variables, agent instruction files and GitHub access. Keep several named sets of variables and pick one per sandbox."
+---
+
+# Environments
+
+A project's environment is what every sandbox created in it starts with. Set it once in the dashboard under **Sandboxes → Environment**, or with the CLI.
+
+Environments are not on every account yet.
+
+## What an environment holds
+
+| Part | What new sandboxes get |
+|---|---|
+| **Variables** | Environment variables in every process of the sandbox. Stored encrypted. |
+| **Agent instructions** | A user-level `CLAUDE.md` (Claude Code) and `AGENTS.md` (Codex, OpenCode, pi, Prime), up to 32 KB each. |
+| **GitHub access** | The repositories you choose (the first 10) cloned into `/workspace/<name>`, with `git` and `gh` signed in for them, read-only or with write access. |
+
+A change applies to sandboxes created after it. A running sandbox keeps what it started with.
+
+## Variables
+
+```bash
+lizard sandbox environment-set API_URL=https://api.example.com TOKEN=...
+lizard sandbox environment-set --from-file .env
+lizard sandbox environment-unset OLD_KEY
+lizard sandbox environment-show            # names only
+lizard sandbox environment-show --values   # with values
+```
+
+Up to 200 variables per environment. Names use letters, digits and `_`; a value is at most 32 KB. Variables passed when a sandbox is created (`envs` in the SDK) win over the environment's.
+
+## Named environments
+
+A project can hold several environments: other complete sets of variables, for example `staging` beside the default one. A sandbox created with a named environment gets that environment's variables **instead of** the default ones, never both. Agent instructions and GitHub access are the project's, whatever the environment.
+
+```bash
+lizard sandbox environments                                   # list
+lizard sandbox environment-create staging --copy-from default
+lizard sandbox environment-set -e staging API_URL=https://staging.example.com
+lizard sandbox environment-rename staging preview
+lizard sandbox environment-rm preview
+```
+
+Pick one when you create a sandbox. In the dashboard, open **Environment** in the Create sandbox form.
+
+```bash
+lizard sandbox create -e staging
+```
+
+```ts
+const sandbox = await Sandbox.create('base', { projectId, environment: 'staging' });
+```
+
+```python
+sandbox = Sandbox.create("base", project_id=project_id, environment="staging")
+```
+
+An unknown name is refused with 400 `SANDBOX_ENVIRONMENT_NOT_FOUND` and the names the project has; no sandbox is created. A project holds up to 20 named environments. Names use letters, digits, spaces and `. _ -`, up to 40 characters. Deleting an environment does not change sandboxes already created with it.
+
+## Agent instructions
+
+```bash
+lizard sandbox environment-instructions                       # which files are set
+lizard sandbox environment-instructions --claude-md ./CLAUDE.md --agents-md ./AGENTS.md
+lizard sandbox environment-instructions --print claude-md
+lizard sandbox environment-instructions --clear-agents-md
+```
+
+`CLAUDE.md` is written to `~/.claude/CLAUDE.md`. `AGENTS.md` is written where Codex, OpenCode, pi and Prime read their user-level instructions.
+
+## GitHub access
+
+Set GitHub access in the dashboard: choose the GitHub account, the repositories, and read or write. New sandboxes in the project get the chosen repositories cloned and a short-lived token limited to them; `git` and `gh` work without signing in. Switching access off removes the token from running sandboxes.
+
+`lizard sandbox environments` shows whether GitHub access is set and for how many repositories.
+
+To give one sandbox a single repository of your own instead, create it with `--repo`:
+
+```bash
+lizard sandbox create --repo owner/name
+```
+
+The sandbox gets write access to that one repository, cloned into `/workspace/<name>`. This needs your own GitHub sign-in connected and an API key with no scopes.

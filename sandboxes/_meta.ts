@@ -6,5 +6,7 @@ export default {
   'preview-urls': 'Preview URLs',
   guides: 'Guides',
   volumes: 'Persistent Volumes',
+  environments: 'Environments',
+  schedules: 'Schedules',
   dashboard: 'Dashboard',
 };
