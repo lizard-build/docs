@@ -1,0 +1,96 @@
+---
+description: "プロジェクトの新しい sandbox が最初から持つもの: 変数、エージェントの指示ファイル、GitHub アクセス。名前付きの変数セットを複数用意して、sandbox ごとに 1 つ選べます。"
+---
+
+<span id="environments" />
+
+# 環境
+
+プロジェクトの環境とは、そのプロジェクトで作成されるすべての sandbox が最初から持つものです。ダッシュボードの **Sandboxes → Environment**、または CLI で一度設定します。
+
+環境は、まだすべてのアカウントで使えるわけではありません。
+
+<span id="what-an-environment-holds" />
+
+## 環境に含まれるもの
+
+| 項目 | 新しい sandbox が受け取るもの |
+|---|---|
+| **変数** | sandbox のすべてのプロセスに渡される環境変数。暗号化して保存されます。 |
+| **エージェントの指示** | ユーザーレベルの `CLAUDE.md`（Claude Code）と `AGENTS.md`（Codex、OpenCode、pi、Prime）。それぞれ 32 KB まで。 |
+| **GitHub アクセス** | 選択したリポジトリ（最初の 10 個）を `/workspace/<name>` にクローンし、それらに対して `git` と `gh` をサインイン済みにします。読み取り専用または書き込みアクセス付きです。 |
+
+変更は、その後に作成される sandbox に適用されます。実行中の sandbox は、起動時の内容をそのまま保ちます。
+
+<span id="variables" />
+
+## 変数
+
+```bash
+lizard sandbox environment-set API_URL=https://api.example.com TOKEN=...
+lizard sandbox environment-set --from-file .env
+lizard sandbox environment-unset OLD_KEY
+lizard sandbox environment-show            # names only
+lizard sandbox environment-show --values   # with values
+```
+
+変数は環境ごとに 200 個までです。名前には英字、数字、`_` を使い、値は最大 32 KB です。sandbox の作成時に渡した変数（SDK の `envs`）は、環境の変数より優先されます。
+
+<span id="named-environments" />
+
+## 名前付き環境
+
+プロジェクトは複数の環境を持てます。たとえば既定の環境とは別に `staging` を用意するなど、それぞれが別の完全な変数セットです。名前付き環境を指定して作成した sandbox は、既定の変数の**代わりに**その環境の変数を受け取ります。両方を受け取ることはありません。エージェントの指示と GitHub アクセスは、環境にかかわらずプロジェクトのものです。
+
+```bash
+lizard sandbox environments                                   # list
+lizard sandbox environment-create staging --copy-from default
+lizard sandbox environment-set -e staging API_URL=https://staging.example.com
+lizard sandbox environment-rename staging preview
+lizard sandbox environment-rm preview
+```
+
+sandbox の作成時に 1 つ選びます。ダッシュボードでは、sandbox の作成フォームで **Environment** を開きます。
+
+```bash
+lizard sandbox create -e staging
+```
+
+```ts
+const sandbox = await Sandbox.create('base', { projectId, environment: 'staging' });
+```
+
+```python
+sandbox = Sandbox.create("base", project_id=project_id, environment="staging")
+```
+
+存在しない名前を指定すると、400 `SANDBOX_ENVIRONMENT_NOT_FOUND` とプロジェクトにある名前の一覧が返り、sandbox は作成されません。プロジェクトは名前付き環境を 20 個まで持てます。名前には英字、数字、スペース、`. _ -` を使い、40 文字以内にします。環境を削除しても、その環境で作成済みの sandbox は変わりません。
+
+<span id="agent-instructions" />
+
+## エージェントの指示
+
+```bash
+lizard sandbox environment-instructions                       # which files are set
+lizard sandbox environment-instructions --claude-md ./CLAUDE.md --agents-md ./AGENTS.md
+lizard sandbox environment-instructions --print claude-md
+lizard sandbox environment-instructions --clear-agents-md
+```
+
+`CLAUDE.md` は `~/.claude/CLAUDE.md` に書き込まれます。`AGENTS.md` は、Codex、OpenCode、pi、Prime がユーザーレベルの指示を読み込む場所に書き込まれます。
+
+<span id="github-access" />
+
+## GitHub アクセス
+
+GitHub アクセスはダッシュボードで設定します。GitHub アカウント、リポジトリ、読み取りか書き込みかを選びます。プロジェクトの新しい sandbox には、選択したリポジトリがクローンされ、それらに限定された短時間だけ有効なトークンが渡されます。`git` と `gh` はサインインなしで使えます。アクセスをオフにすると、実行中の sandbox からトークンが削除されます。
+
+`lizard sandbox environments` は、GitHub アクセスが設定されているかどうかと、対象のリポジトリ数を表示します。
+
+代わりに、1 つの sandbox に自分のリポジトリを 1 つだけ渡すには、`--repo` を付けて作成します。
+
+```bash
+lizard sandbox create --repo owner/name
+```
+
+sandbox はそのリポジトリ 1 つへの書き込みアクセスを受け取り、リポジトリは `/workspace/<name>` にクローンされます。これには、自分の GitHub サインインが接続されていることと、スコープのない API キーが必要です。

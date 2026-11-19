@@ -6,5 +6,7 @@ export default {
   'preview-urls': "URL предпросмотра",
   guides: "Руководства",
   volumes: "Persistent Volumes",
+  environments: "Окружения",
+  schedules: "Расписания",
   dashboard: "Панель управления",
 };

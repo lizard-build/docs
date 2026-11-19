@@ -1,0 +1,92 @@
+---
+description: "タイマーで sandbox を起こし、その中でコマンドまたはコーディングエージェントのプロンプトを実行して、再びスリープさせます。sandbox の作成時に設定し、料金がかかるのは起きている間だけです。"
+---
+
+<span id="schedules" />
+
+# スケジュール
+
+スケジュールは、一時停止中の sandbox をタイマーで起こし、その中でシェルコマンドまたはコーディングエージェントのプロンプトを実行して、再びスリープさせます。料金がかかるのは sandbox が起きている間だけです。`/workspace` のファイルは実行をまたいで引き継がれます。
+
+スケジュールは、まだすべてのアカウントで使えるわけではありません。利用できないアカウントでは、API は 403 `SCHEDULES_NOT_ENABLED` を返します。
+
+<span id="set-a-schedule-when-you-create-the-sandbox" />
+
+## sandbox の作成時にスケジュールを設定する
+
+スケジュールは sandbox の作成時に設定します。ダッシュボードでは、sandbox の作成フォームで **Schedule** を開きます。CLI では、`create` にスケジュールを追加します。
+
+```bash
+# every 10 minutes, a command
+lizard sandbox create --timeout 0 --every 10m --command "python3 /workspace/job.py"
+
+# every weekday at 09:00 Berlin time
+lizard sandbox create --timeout 0 --daily-at 09:00 --weekdays --tz Europe/Berlin --command "./report.sh"
+
+# a coding agent, every 5 minutes (needs an agent template)
+lizard sandbox create -t claude --timeout 0 --every 5m \
+  --prompt "Continue the research in /workspace/research; append findings to notes.md"
+```
+
+sandbox の期限が切れないように、`--timeout 0` を付けて作成してください。
+
+sandbox が新しいスケジュールを受け付けるのは、作成から最初の 15 分間だけです。それ以降は API が 409 `SCHEDULE_ONLY_AT_CREATE` を返すため、必要なスケジュールを付けて新しい sandbox を作成してください。sandbox にすでにあるスケジュールは、引き続き変更、実行、オフへの切り替え、削除ができます。
+
+SDK または API では、sandbox を作成した直後にスケジュールを設定します。
+
+```ts
+const sandbox = await Sandbox.create('claude', { projectId, timeoutMs: 0 });
+await sandbox.schedule({ every: '5m', prompt: 'Continue the research in /workspace/research' });
+```
+
+<span id="when-it-runs" />
+
+## 実行のタイミング
+
+| オプション | CLI | API フィールド |
+|---|---|---|
+| 固定の間隔。1 分から 30 日まで | `--every 5m` | `every: "5m"` |
+| 1 日 1 回 | `--daily-at 09:00`（月曜から金曜だけにするには `--weekdays` を追加） | `cron: "0 9 * * *"` または `"0 9 * * 1-5"` |
+| 5 フィールドの cron 式 | `--cron "0 */6 * * *"` | `cron` |
+
+`--tz`（API: `timezone`）は、毎日の時刻または cron 式のタイムゾーンです。既定値は UTC です。
+
+<span id="what-it-runs" />
+
+## 実行する内容
+
+- **コマンド**（`--command`）: どのテンプレートでも、`/workspace` で root として実行します。終了コード 0 が成功です。バックグラウンドに残したプロセスは、sandbox がスリープすると終了します。
+- **エージェントのプロンプト**（`--prompt`、`--prompt-file`）: 実行のたびに、プロジェクトに接続されたエージェントを使って、コーディングエージェントとの新しい会話を始めます。状態はファイルに保存してください。エージェントに、メモ用のファイルを読んで更新するよう指示します。sandbox はエージェント用のテンプレート（`claude`、`codex`、`opencode`、`pi`、`prime`）から作成したものである必要があります。ほかのテンプレートでは、API は 400 `AGENT_NOT_IN_SANDBOX` を返します。`--agent`、`-m`、`--effort` で、エージェント、モデル、推論の強さを選びます。
+
+<span id="how-a-run-goes" />
+
+## 実行の流れ
+
+1. 一時停止中の sandbox を起こします。すでに実行中の sandbox はそのまま使い、実行後も動かしたままにします。
+2. コマンドまたはプロンプトを実行します。別の制限（作成時の `--run-timeout`、最大 6 時間）を設定しないかぎり、実行は 10 分後に停止されます。
+3. 実行のために起こした sandbox は、再びスリープします。スリープで保持されるのはファイルだけです。プロセスは終了し、次の実行は新しく起動します。
+
+次の実行の時刻になっても前の実行が続いている場合、その回はスキップされます。実行が 5 回連続で失敗すると、スケジュールはオフになります。理由はスケジュールに表示されます。
+
+<span id="see-and-manage-schedules" />
+
+## スケジュールを確認・管理する
+
+ダッシュボードの **Schedules** タブには、プロジェクトの最新の実行が一覧表示されます。それぞれの開始時刻、対象の sandbox、実行した内容、終了の結果、sandbox が動作していた時間がわかります。
+
+```bash
+lizard sandbox schedules [<sandbox-id>]      # schedules, with next and last run
+lizard sandbox schedule-show <sch_id>        # one schedule, with its full prompt or command
+lizard sandbox schedule-runs                 # the project's latest runs, across its schedules
+lizard sandbox schedule-runs <sch_id> -o     # one schedule's runs; -o prints the latest output
+lizard sandbox schedule-run <sch_id> --wait  # run now and print the result
+lizard sandbox schedule-set <sch_id> --off   # or --on, --every 15m, ...
+lizard sandbox unschedule <sch_id>
+```
+
+<span id="limits" />
+
+## 制限
+
+- スケジュールはアカウントごとに最大 50 個です（429 `SCHEDULE_LIMIT`）。各スケジュールの直近 200 回の実行が保持されます。
+- プロンプトのスケジュールは、作成者のエージェント認証情報で実行されます。スコープのない API キーが必要で（403 `ACCOUNT_SCOPE_REQUIRED`）、変更や即時実行ができるのは作成者だけです（403 `SCHEDULE_CREATOR_ONLY`）。オフへの切り替え、名前の変更、削除は、プロジェクトのメンバーなら誰でもできます。コマンドのスケジュールは、スコープを限定したキーでも使えます。

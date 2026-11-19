@@ -1,0 +1,96 @@
+---
+description: "प्रोजेक्ट का हर नया सैंडबॉक्स किन चीज़ों के साथ शुरू होता है: वेरिएबल्स, एजेंट निर्देश फ़ाइलें और GitHub एक्सेस। वेरिएबल्स के कई नाम वाले सेट रखें और हर सैंडबॉक्स के लिए एक चुनें।"
+---
+
+<span id="environments" />
+
+# एनवायरनमेंट
+
+प्रोजेक्ट का एनवायरनमेंट वह है जिसके साथ उसमें बना हर सैंडबॉक्स शुरू होता है। इसे एक बार डैशबोर्ड में **Sandboxes → Environment** के नीचे सेट करें, या CLI से।
+
+एनवायरनमेंट अभी हर अकाउंट पर उपलब्ध नहीं हैं।
+
+<span id="what-an-environment-holds" />
+
+## एनवायरनमेंट में क्या होता है
+
+| हिस्सा | नए सैंडबॉक्स को क्या मिलता है |
+|---|---|
+| **वेरिएबल्स** | सैंडबॉक्स के हर प्रोसेस में एनवायरनमेंट वेरिएबल्स। एन्क्रिप्टेड रूप में स्टोर होते हैं। |
+| **एजेंट निर्देश** | यूज़र-लेवल `CLAUDE.md` (Claude Code) और `AGENTS.md` (Codex, OpenCode, pi, Prime), हर एक 32 KB तक। |
+| **GitHub एक्सेस** | आपकी चुनी हुई रिपॉज़िटरी (पहली 10) `/workspace/<name>` में क्लोन होती हैं, और `git` व `gh` उनके लिए साइन इन रहते हैं, सिर्फ़ पढ़ने के लिए या लिखने के एक्सेस के साथ। |
+
+बदलाव उसके बाद बने सैंडबॉक्स पर लागू होता है। चल रहा सैंडबॉक्स वही रखता है जिसके साथ वह शुरू हुआ था।
+
+<span id="variables" />
+
+## वेरिएबल्स
+
+```bash
+lizard sandbox environment-set API_URL=https://api.example.com TOKEN=...
+lizard sandbox environment-set --from-file .env
+lizard sandbox environment-unset OLD_KEY
+lizard sandbox environment-show            # names only
+lizard sandbox environment-show --values   # with values
+```
+
+हर एनवायरनमेंट में 200 वेरिएबल्स तक। नामों में अक्षर, अंक और `_` इस्तेमाल होते हैं; वैल्यू ज़्यादा से ज़्यादा 32 KB की हो सकती है। सैंडबॉक्स बनाते समय दिए गए वेरिएबल्स (SDK में `envs`) एनवायरनमेंट के वेरिएबल्स पर हावी रहते हैं।
+
+<span id="named-environments" />
+
+## नाम वाले एनवायरनमेंट
+
+एक प्रोजेक्ट में कई एनवायरनमेंट हो सकते हैं: वेरिएबल्स के दूसरे पूरे सेट, जैसे डिफ़ॉल्ट के साथ `staging`। नाम वाले एनवायरनमेंट के साथ बने सैंडबॉक्स को डिफ़ॉल्ट वेरिएबल्स **की जगह** उस एनवायरनमेंट के वेरिएबल्स मिलते हैं, दोनों कभी नहीं। एजेंट निर्देश और GitHub एक्सेस प्रोजेक्ट के होते हैं, एनवायरनमेंट कोई भी हो।
+
+```bash
+lizard sandbox environments                                   # list
+lizard sandbox environment-create staging --copy-from default
+lizard sandbox environment-set -e staging API_URL=https://staging.example.com
+lizard sandbox environment-rename staging preview
+lizard sandbox environment-rm preview
+```
+
+सैंडबॉक्स बनाते समय एक चुनें। डैशबोर्ड में, Create sandbox फ़ॉर्म में **Environment** खोलें।
+
+```bash
+lizard sandbox create -e staging
+```
+
+```ts
+const sandbox = await Sandbox.create('base', { projectId, environment: 'staging' });
+```
+
+```python
+sandbox = Sandbox.create("base", project_id=project_id, environment="staging")
+```
+
+अनजान नाम 400 `SANDBOX_ENVIRONMENT_NOT_FOUND` और प्रोजेक्ट में मौजूद नामों के साथ ठुकरा दिया जाता है; कोई सैंडबॉक्स नहीं बनता। एक प्रोजेक्ट में 20 नाम वाले एनवायरनमेंट तक हो सकते हैं। नामों में अक्षर, अंक, स्पेस और `. _ -` इस्तेमाल होते हैं, 40 कैरेक्टर तक। एनवायरनमेंट डिलीट करने से उसके साथ पहले से बने सैंडबॉक्स नहीं बदलते।
+
+<span id="agent-instructions" />
+
+## एजेंट निर्देश
+
+```bash
+lizard sandbox environment-instructions                       # which files are set
+lizard sandbox environment-instructions --claude-md ./CLAUDE.md --agents-md ./AGENTS.md
+lizard sandbox environment-instructions --print claude-md
+lizard sandbox environment-instructions --clear-agents-md
+```
+
+`CLAUDE.md` को `~/.claude/CLAUDE.md` में लिखा जाता है। `AGENTS.md` वहाँ लिखी जाती है जहाँ से Codex, OpenCode, pi और Prime अपने यूज़र-लेवल निर्देश पढ़ते हैं।
+
+<span id="github-access" />
+
+## GitHub एक्सेस
+
+GitHub एक्सेस डैशबोर्ड में सेट करें: GitHub अकाउंट, रिपॉज़िटरी, और पढ़ने या लिखने का एक्सेस चुनें। प्रोजेक्ट के नए सैंडबॉक्स को चुनी हुई रिपॉज़िटरी क्लोन की हुई मिलती हैं और सिर्फ़ उन्हीं तक सीमित एक कम समय वाला टोकन मिलता है; `git` और `gh` साइन इन किए बिना काम करते हैं। एक्सेस बंद करने से चल रहे सैंडबॉक्स से टोकन हट जाता है।
+
+`lizard sandbox environments` दिखाता है कि GitHub एक्सेस सेट है या नहीं, और कितनी रिपॉज़िटरी के लिए।
+
+इसके बजाय किसी एक सैंडबॉक्स को अपनी कोई एक रिपॉज़िटरी देने के लिए, उसे `--repo` के साथ बनाएँ:
+
+```bash
+lizard sandbox create --repo owner/name
+```
+
+सैंडबॉक्स को उस एक रिपॉज़िटरी पर लिखने का एक्सेस मिलता है, जो `/workspace/<name>` में क्लोन होती है। इसके लिए आपका अपना GitHub साइन इन कनेक्ट होना चाहिए और बिना स्कोप वाली API की चाहिए।

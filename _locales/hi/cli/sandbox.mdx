@@ -33,11 +33,15 @@ lizard sandbox rm <id> [flags]
 |------|-------------|
 | `-t, --template <name>` | टेम्प्लेट (डिफ़ॉल्ट `base`)। उपलब्ध टेम्प्लेट: `base`, `interpreter`, `codex`, `desktop`, `desktop-camoufox` (सिर्फ़ US East), `opencode`, `pi`, `prime`, `claude`। सर्वर रीजन की लिस्ट से जाँच करता है |
 | `-s, --size <size>` | `nano`, `mini`, `small`, `medium` (डिफ़ॉल्ट; ट्रायल के दौरान `small`), `large` या `big` (सिर्फ़ पेड प्लान)। `nano` सिर्फ़ `base`, `claude` और `codex` टेम्पलेट के साथ चलता है, `mini` सिर्फ़ इन्हीं और `interpreter` के साथ, और `big` सिर्फ़ इन चारों और `desktop` के साथ; ये तीनों बिना वॉल्यूम के चलते हैं |
-| `--timeout <ms>` | लाइफटाइम मिलीसेकंड में (डिफ़ॉल्ट `300000`, यानी पाँच मिनट); `0` एक्सपायरी बंद कर देता है। ट्रायल के दौरान ज़्यादा से ज़्यादा `3600000` (1 घंटा), और `0` से 1 घंटा मिलता है |
+| `--timeout <ms>` | लाइफटाइम मिलीसेकंड में, या `20m` या `2h` जैसी अवधि (डिफ़ॉल्ट `300000`, यानी पाँच मिनट); `0` एक्सपायरी बंद कर देता है। ट्रायल के दौरान ज़्यादा से ज़्यादा `3600000` (1 घंटा), और `0` से 1 घंटा मिलता है |
 | `--region <code>` | वह रीजन जिसमें सैंडबॉक्स बनाना है |
 | `--snapshot <id>` | सेव किए गए स्नैपशॉट से शुरू करें; `--size` के साथ नहीं दिया जा सकता |
 | `--volume <name-or-id>` | [Persistent Volume](/cli/volume) अटैच करें |
 | `--with-token [key]` | सैंडबॉक्स के अंदर `lizard` को एक नई की से साइन इन करें, जो सिर्फ़ सैंडबॉक्स के प्रोजेक्ट तक सीमित है और सैंडबॉक्स के साथ डिलीट हो जाती है। आपकी दी हुई `liz_` की, या वैल्यू न देने पर वह `liz_` की जिससे आप कमांड चला रहे हैं, सिर्फ़ इस रिक्वेस्ट को ऑथराइज़ करती है; ब्राउज़र लॉगिन में ऐसी कोई की नहीं होती। `base` टेम्प्लेट में `lizard` नहीं है |
+| `-e, --environment <name>` | प्रोजेक्ट के डिफ़ॉल्ट वेरिएबल्स की जगह उसके किसी नाम वाले [एनवायरनमेंट](/sandboxes/environments) के वेरिएबल्स के साथ शुरू करें |
+| `--repo <owner/name>` | इस GitHub रिपॉज़िटरी को `/workspace/<name>` में क्लोन करके शुरू करें, सिर्फ़ इसी पर लिखने के एक्सेस के साथ। `--repo-workflows` इसे `.github/workflows` बदलने की अनुमति भी देता है |
+| `--every <interval>`, `--daily-at <HH:MM>` (`--weekdays`), `--cron <expr>`, `--tz <zone>` | सैंडबॉक्स को एक [शेड्यूल](/sandboxes/schedules) दें: यह कब चलता है |
+| `--command <cmd>`, `--prompt <text>`, `--prompt-file <path>` | शेड्यूल क्या चलाता है। `--agent`, `-m, --model`, `--effort` प्रॉम्प्ट के लिए एजेंट चुनते हैं; `--run-timeout` रन को रोकता है (डिफ़ॉल्ट 10m); `--schedule-name` उसे नाम देता है |
 | `-p, --project <id>` | प्रोजेक्ट (डिफ़ॉल्ट: लिंक किया गया प्रोजेक्ट, वह न हो तो आपका डिफ़ॉल्ट प्रोजेक्ट) |
 
 Lizard हर साइज़ का बिल चलने के दौरान प्रति सेकंड एक तय दर से बनाता है, आइडल समय भी शामिल करके। कीमत में लोकल डिस्क और [हर अकाउंट के लिए रोलिंग 30 दिनों में 2 TB एग्रेस](/platform/limits#sandbox-egress) शामिल है। पॉज़ सफल होते ही कंप्यूट का चार्ज रुक जाता है; जब तक आप पॉज़ किए गए सैंडबॉक्स को रिज़्यूम या डिलीट नहीं करते, उसकी डिस्क का बिल इस्तेमाल की गई जगह के लिए $0.14 प्रति GB-माह की दर से बनता है, और हर स्नैपशॉट का भी, जब तक आप उसे डिलीट नहीं करते। Persistent Volumes का बिल [वॉल्यूम की दर](/cli/volume) से बनता है, चाहे वॉल्यूम अटैच हो या नहीं।
@@ -157,6 +161,39 @@ Lizard हर साइज़ का बिल चलने के दौरा�
 | `lizard sandbox files put <id> <local> <remote>` | लोकल फ़ाइल अपलोड करती है |
 | `lizard sandbox files get <id> <remote> <local>` | फ़ाइल डाउनलोड करती है |
 | `lizard sandbox files rm <id> <path>` | फ़ाइल या डायरेक्टरी डिलीट करती है |
+
+<span id="schedules" />
+
+### शेड्यूल
+
+शेड्यूल सैंडबॉक्स को टाइमर पर जगाता है, कोई कमांड या एजेंट प्रॉम्प्ट चलाता है, और उसे वापस सुला देता है। यह सैंडबॉक्स बनाते समय सेट होता है (ऊपर दिए गए फ्लैग); [शेड्यूल](/sandboxes/schedules) देखें।
+
+| कमांड | विवरण |
+|---------|-------------|
+| `lizard sandbox schedule <id> ...` | पिछले 15 मिनट में बने सैंडबॉक्स पर शेड्यूल सेट करें; उससे पुराना सैंडबॉक्स `SCHEDULE_ONLY_AT_CREATE` लौटाता है |
+| `lizard sandbox schedules [<id>]` | शेड्यूल लिस्ट करें, अगले और पिछले रन के साथ |
+| `lizard sandbox schedule-show <sch_id>` | एक शेड्यूल दिखाएँ |
+| `lizard sandbox schedule-runs [<sch_id>]` | एक शेड्यूल के रन, या ID के बिना प्रोजेक्ट के सभी शेड्यूल के सबसे नए रन; `-o` सबसे नया आउटपुट प्रिंट करता है |
+| `lizard sandbox schedule-run <sch_id> [--wait]` | इसे अभी चलाएँ |
+| `lizard sandbox schedule-set <sch_id> ...` | समय या जो यह चलाता है, उसे बदलें; `--on` / `--off` |
+| `lizard sandbox unschedule <sch_id>` | इसे डिलीट करें |
+
+<span id="environments" />
+
+### एनवायरनमेंट
+
+प्रोजेक्ट का हर नया सैंडबॉक्स किन चीज़ों के साथ शुरू होता है: वेरिएबल्स, एजेंट निर्देश फ़ाइलें और GitHub एक्सेस। [एनवायरनमेंट](/sandboxes/environments) देखें।
+
+| कमांड | विवरण |
+|---------|-------------|
+| `lizard sandbox environments` | प्रोजेक्ट के एनवायरनमेंट लिस्ट करें, और यह भी कि एजेंट निर्देश और GitHub एक्सेस सेट हैं या नहीं |
+| `lizard sandbox environment-show [name] [--values]` | एनवायरनमेंट के वेरिएबल्स दिखाएँ (`--values` के बिना सिर्फ़ नाम) |
+| `lizard sandbox environment-create <name> [--copy-from <name>]` | नाम वाला एनवायरनमेंट बनाएँ |
+| `lizard sandbox environment-set [-e <name>] KEY=VALUE... [--from-file <path>]` | वेरिएबल्स सेट करें (`-e` के बिना डिफ़ॉल्ट एनवायरनमेंट) |
+| `lizard sandbox environment-unset [-e <name>] KEY...` | वेरिएबल्स हटाएँ |
+| `lizard sandbox environment-rename <name> <new-name>` | नाम वाले एनवायरनमेंट का नाम बदलें |
+| `lizard sandbox environment-rm <name>` | नाम वाला एनवायरनमेंट डिलीट करें |
+| `lizard sandbox environment-instructions` | एजेंट की `CLAUDE.md` / `AGENTS.md` दिखाएँ या सेट करें (`--claude-md`, `--agents-md`, `--clear-claude-md`, `--clear-agents-md`, `--print`) |
 
 <span id="coding-agents" />
 

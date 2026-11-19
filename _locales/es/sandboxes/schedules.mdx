@@ -1,0 +1,92 @@
+---
+description: "Despierta un sandbox con un temporizador, ejecuta en él un comando o un prompt de agente de programación y vuelve a dormirlo. Se define al crear el sandbox; solo pagas mientras está despierto."
+---
+
+<span id="schedules" />
+
+# Programaciones
+
+Una programación despierta un sandbox en pausa con un temporizador, ejecuta en él un comando de shell o un prompt de agente de programación y vuelve a dormirlo. Solo pagas mientras el sandbox está despierto. Los archivos de `/workspace` se conservan entre ejecuciones.
+
+Las programaciones aún no están disponibles en todas las cuentas: sin acceso, la API responde 403 `SCHEDULES_NOT_ENABLED`.
+
+<span id="set-a-schedule-when-you-create-the-sandbox" />
+
+## Definir una programación al crear el sandbox
+
+Una programación se define al crear el sandbox. En el panel, abre **Schedule** en el formulario Create sandbox. Con la CLI, añade la programación a `create`:
+
+```bash
+# every 10 minutes, a command
+lizard sandbox create --timeout 0 --every 10m --command "python3 /workspace/job.py"
+
+# every weekday at 09:00 Berlin time
+lizard sandbox create --timeout 0 --daily-at 09:00 --weekdays --tz Europe/Berlin --command "./report.sh"
+
+# a coding agent, every 5 minutes (needs an agent template)
+lizard sandbox create -t claude --timeout 0 --every 5m \
+  --prompt "Continue the research in /workspace/research; append findings to notes.md"
+```
+
+Crea el sandbox con `--timeout 0` para que no caduque.
+
+Un sandbox solo admite una programación nueva en sus primeros 15 minutos. Después, la API responde 409 `SCHEDULE_ONLY_AT_CREATE`; crea un sandbox nuevo con la programación que quieras. Las programaciones que un sandbox ya tiene se pueden seguir cambiando, ejecutando, desactivando y eliminando.
+
+Con el SDK o la API, crea el sandbox y prográmalo justo después:
+
+```ts
+const sandbox = await Sandbox.create('claude', { projectId, timeoutMs: 0 });
+await sandbox.schedule({ every: '5m', prompt: 'Continue the research in /workspace/research' });
+```
+
+<span id="when-it-runs" />
+
+## Cuándo se ejecuta
+
+| Opción | CLI | Campo de la API |
+|---|---|---|
+| Un intervalo fijo, de 1 minuto a 30 días | `--every 5m` | `every: "5m"` |
+| Una vez al día | `--daily-at 09:00` (añade `--weekdays` para ejecutarla de lunes a viernes) | `cron: "0 9 * * *"` o `"0 9 * * 1-5"` |
+| Una expresión cron, de cinco campos | `--cron "0 */6 * * *"` | `cron` |
+
+`--tz` (API: `timezone`) es la zona horaria de una hora diaria o de una expresión cron; por defecto, UTC.
+
+<span id="what-it-runs" />
+
+## Qué ejecuta
+
+- **Un comando** (`--command`): se ejecuta en `/workspace` como root, en cualquier plantilla. El código de salida 0 indica éxito. Los procesos que deje en segundo plano terminan cuando el sandbox se duerme.
+- **Un prompt de agente** (`--prompt`, `--prompt-file`): cada ejecución es una conversación nueva con el agente de programación, con los agentes conectados en el proyecto. Guarda el estado en archivos: indica al agente que lea y actualice un archivo de notas. El sandbox debe venir de una plantilla de agente (`claude`, `codex`, `opencode`, `pi` o `prime`); con otra plantilla, la API responde 400 `AGENT_NOT_IN_SANDBOX`. `--agent`, `-m` y `--effort` eligen el agente, el modelo y el esfuerzo de razonamiento.
+
+<span id="how-a-run-goes" />
+
+## Cómo transcurre una ejecución
+
+1. Un sandbox en pausa se despierta. Un sandbox que ya está en ejecución se usa tal cual y se deja en ejecución después.
+2. Se ejecuta el comando o el prompt. Una ejecución se detiene a los 10 minutos, salvo que fijes otro límite (`--run-timeout` al crear, como máximo 6 horas).
+3. Un sandbox que la ejecución despertó vuelve a dormirse. Al dormirse solo se conservan los archivos: los procesos terminan y la siguiente ejecución arranca desde cero.
+
+Si una ejecución sigue en curso cuando toca la siguiente, esa siguiente se omite. Cinco ejecuciones fallidas seguidas desactivan la programación; la programación muestra el motivo.
+
+<span id="see-and-manage-schedules" />
+
+## Ver y gestionar programaciones
+
+La pestaña **Schedules** del panel lista las últimas ejecuciones del proyecto: cuándo empezó cada una, en qué sandbox, qué se ejecutó, cómo terminó y cuánto tiempo trabajó el sandbox.
+
+```bash
+lizard sandbox schedules [<sandbox-id>]      # schedules, with next and last run
+lizard sandbox schedule-show <sch_id>        # one schedule, with its full prompt or command
+lizard sandbox schedule-runs                 # the project's latest runs, across its schedules
+lizard sandbox schedule-runs <sch_id> -o     # one schedule's runs; -o prints the latest output
+lizard sandbox schedule-run <sch_id> --wait  # run now and print the result
+lizard sandbox schedule-set <sch_id> --off   # or --on, --every 15m, ...
+lizard sandbox unschedule <sch_id>
+```
+
+<span id="limits" />
+
+## Límites
+
+- Como máximo 50 programaciones por cuenta (429 `SCHEDULE_LIMIT`). Se conservan las últimas 200 ejecuciones de cada programación.
+- Una programación de prompt se ejecuta con las credenciales de agente de quien la creó: necesita una clave de API sin ámbito (403 `ACCOUNT_SCOPE_REQUIRED`), y solo quien la creó puede cambiarla o ejecutarla ahora (403 `SCHEDULE_CREATOR_ONLY`). Cualquier miembro del proyecto puede desactivarla, cambiarle el nombre o eliminarla. Las programaciones de comando funcionan con claves con ámbito.

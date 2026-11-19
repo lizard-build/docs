@@ -1,0 +1,92 @@
+---
+description: "सैंडबॉक्स को टाइमर पर जगाएँ, उसमें कोई कमांड या कोडिंग एजेंट का प्रॉम्प्ट चलाएँ, और उसे वापस सुला दें। शेड्यूल सैंडबॉक्स बनाते समय सेट होता है; आप सिर्फ़ उतने समय का भुगतान करते हैं जितने समय सैंडबॉक्स जागा रहता है।"
+---
+
+<span id="schedules" />
+
+# शेड्यूल
+
+शेड्यूल पॉज़ किए गए सैंडबॉक्स को टाइमर पर जगाता है, उसमें कोई शेल कमांड या कोडिंग एजेंट का प्रॉम्प्ट चलाता है, और उसे वापस सुला देता है। आप सिर्फ़ उतने समय का भुगतान करते हैं जितने समय सैंडबॉक्स जागा रहता है। `/workspace` की फ़ाइलें एक रन से अगले रन तक बनी रहती हैं।
+
+शेड्यूल अभी हर अकाउंट पर उपलब्ध नहीं हैं: एक्सेस न होने पर API 403 `SCHEDULES_NOT_ENABLED` लौटाता है।
+
+<span id="set-a-schedule-when-you-create-the-sandbox" />
+
+## सैंडबॉक्स बनाते समय शेड्यूल सेट करें
+
+शेड्यूल सैंडबॉक्स बनाते समय सेट होता है। डैशबोर्ड में, Create sandbox फ़ॉर्म में **Schedule** खोलें। CLI में, शेड्यूल को `create` में जोड़ें:
+
+```bash
+# every 10 minutes, a command
+lizard sandbox create --timeout 0 --every 10m --command "python3 /workspace/job.py"
+
+# every weekday at 09:00 Berlin time
+lizard sandbox create --timeout 0 --daily-at 09:00 --weekdays --tz Europe/Berlin --command "./report.sh"
+
+# a coding agent, every 5 minutes (needs an agent template)
+lizard sandbox create -t claude --timeout 0 --every 5m \
+  --prompt "Continue the research in /workspace/research; append findings to notes.md"
+```
+
+सैंडबॉक्स `--timeout 0` के साथ बनाएँ, ताकि वह एक्सपायर न हो।
+
+सैंडबॉक्स नया शेड्यूल सिर्फ़ अपने पहले 15 मिनट में लेता है। उसके बाद API 409 `SCHEDULE_ONLY_AT_CREATE` लौटाता है; जो शेड्यूल आप चाहते हैं, उसके साथ नया सैंडबॉक्स बनाएँ। सैंडबॉक्स के पास जो शेड्यूल पहले से हैं, उन्हें अब भी बदला, चलाया, बंद और डिलीट किया जा सकता है।
+
+SDK या API से, सैंडबॉक्स बनाएँ और उसके तुरंत बाद उसका शेड्यूल सेट करें:
+
+```ts
+const sandbox = await Sandbox.create('claude', { projectId, timeoutMs: 0 });
+await sandbox.schedule({ every: '5m', prompt: 'Continue the research in /workspace/research' });
+```
+
+<span id="when-it-runs" />
+
+## यह कब चलता है
+
+| विकल्प | CLI | API फ़ील्ड |
+|---|---|---|
+| तय अंतराल, 1 मिनट से 30 दिन तक | `--every 5m` | `every: "5m"` |
+| दिन में एक बार | `--daily-at 09:00` (सोमवार से शुक्रवार के लिए `--weekdays` जोड़ें) | `cron: "0 9 * * *"` या `"0 9 * * 1-5"` |
+| cron एक्सप्रेशन, पाँच फ़ील्ड | `--cron "0 */6 * * *"` | `cron` |
+
+`--tz` (API: `timezone`) रोज़ के समय या cron एक्सप्रेशन का टाइम ज़ोन है; डिफ़ॉल्ट UTC है।
+
+<span id="what-it-runs" />
+
+## यह क्या चलाता है
+
+- **कमांड** (`--command`): `/workspace` में root के रूप में चलती है, किसी भी टेम्प्लेट पर। एग्ज़िट कोड 0 का मतलब सफलता है। जो प्रोसेस यह बैकग्राउंड में छोड़ती है, वे सैंडबॉक्स के सोने पर बंद हो जाते हैं।
+- **एजेंट प्रॉम्प्ट** (`--prompt`, `--prompt-file`): हर रन कोडिंग एजेंट के साथ एक नई बातचीत है, प्रोजेक्ट में कनेक्ट किए गए एजेंट पर। स्टेट फ़ाइलों में रखें: एजेंट से कहें कि वह एक नोट्स फ़ाइल पढ़े और अपडेट करे। सैंडबॉक्स किसी एजेंट टेम्प्लेट (`claude`, `codex`, `opencode`, `pi` या `prime`) से बना होना चाहिए; किसी दूसरे टेम्प्लेट पर API 400 `AGENT_NOT_IN_SANDBOX` लौटाता है। `--agent`, `-m` और `--effort` एजेंट, मॉडल और रीज़निंग effort चुनते हैं।
+
+<span id="how-a-run-goes" />
+
+## रन कैसे चलता है
+
+1. पॉज़ किया गया सैंडबॉक्स जगाया जाता है। जो सैंडबॉक्स पहले से चल रहा है, वह जैसा है वैसा ही इस्तेमाल होता है और बाद में चलता हुआ छोड़ दिया जाता है।
+2. कमांड या प्रॉम्प्ट चलता है। रन 10 मिनट बाद रोक दिया जाता है, जब तक आप कोई दूसरी सीमा सेट न करें (create पर `--run-timeout`, ज़्यादा से ज़्यादा 6 घंटे)।
+3. जिस सैंडबॉक्स को रन ने जगाया था, वह वापस सो जाता है। सोने पर सिर्फ़ फ़ाइलें बचती हैं: प्रोसेस बंद हो जाते हैं और अगला रन नए सिरे से बूट होता है।
+
+अगर अगले रन का समय आने पर पिछला रन अब भी चल रहा है, तो वह अगला रन छोड़ दिया जाता है। लगातार पाँच फ़ेल रन शेड्यूल को बंद कर देते हैं; शेड्यूल में कारण दिखता है।
+
+<span id="see-and-manage-schedules" />
+
+## शेड्यूल देखें और मैनेज करें
+
+डैशबोर्ड का **Schedules** टैब प्रोजेक्ट के सबसे नए रन लिस्ट करता है: हर रन कब शुरू हुआ, किस सैंडबॉक्स में, क्या चला, कैसे खत्म हुआ और सैंडबॉक्स ने कितनी देर काम किया।
+
+```bash
+lizard sandbox schedules [<sandbox-id>]      # schedules, with next and last run
+lizard sandbox schedule-show <sch_id>        # one schedule, with its full prompt or command
+lizard sandbox schedule-runs                 # the project's latest runs, across its schedules
+lizard sandbox schedule-runs <sch_id> -o     # one schedule's runs; -o prints the latest output
+lizard sandbox schedule-run <sch_id> --wait  # run now and print the result
+lizard sandbox schedule-set <sch_id> --off   # or --on, --every 15m, ...
+lizard sandbox unschedule <sch_id>
+```
+
+<span id="limits" />
+
+## लिमिट्स
+
+- हर अकाउंट पर ज़्यादा से ज़्यादा 50 शेड्यूल (429 `SCHEDULE_LIMIT`)। हर शेड्यूल के आख़िरी 200 रन रखे जाते हैं।
+- प्रॉम्प्ट शेड्यूल अपने बनाने वाले के एजेंट क्रेडेंशियल्स पर चलता है: इसके लिए बिना स्कोप वाली API की चाहिए (403 `ACCOUNT_SCOPE_REQUIRED`), और सिर्फ़ उसे बनाने वाला ही उसे बदल सकता है या अभी चला सकता है (403 `SCHEDULE_CREATOR_ONLY`)। प्रोजेक्ट का कोई भी सदस्य उसे बंद कर सकता है, उसका नाम बदल सकता है या उसे डिलीट कर सकता है। कमांड शेड्यूल स्कोप्ड की के साथ काम करते हैं।

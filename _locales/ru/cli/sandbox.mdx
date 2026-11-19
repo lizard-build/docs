@@ -33,11 +33,15 @@ lizard sandbox rm <id> [flags]
 |------|-------------|
 | `-t, --template <name>` | Шаблон (по умолчанию `base`). Доступные шаблоны: `base`, `interpreter`, `codex`, `desktop`, `desktop-camoufox` (только US East), `opencode`, `pi`, `prime`, `claude`. Сервер проверяет список региона |
 | `-s, --size <size>` | `nano`, `mini`, `small`, `medium` (по умолчанию; в пробном периоде `small`), `large` или `big` (только на платных тарифах). `nano` работает только с шаблонами `base`, `claude` и `codex`, `mini` — только с ними и `interpreter`, а `big` — только с этими четырьмя и `desktop`; эти три размера работают без тома |
-| `--timeout <ms>` | Время жизни в миллисекундах (по умолчанию `300000`, пять минут); `0` отключает истечение срока. На пробном периоде не больше `3600000` (1 час), а `0` даёт 1 час |
+| `--timeout <ms>` | Время жизни в миллисекундах или длительность, например `20m` или `2h` (по умолчанию `300000`, пять минут); `0` отключает истечение срока. На пробном периоде не больше `3600000` (1 час), а `0` даёт 1 час |
 | `--region <code>` | Регион, в котором создаётся sandbox |
 | `--snapshot <id>` | Запустить из сохранённого снапшота; нельзя сочетать с `--size` |
 | `--volume <name-or-id>` | Подключить [Persistent Volume](/cli/volume) |
 | `--with-token [key]` | Выполнить вход в `lizard` внутри sandbox с новым ключом, который ограничен проектом sandbox и удаляется вместе с sandbox. Ключ `liz_`, который вы передаёте, а без значения — ключ `liz_`, с которым вы запускаете команду, только авторизует запрос; при входе через браузер такого ключа нет. В шаблоне `base` нет `lizard` |
+| `-e, --environment <name>` | Запустить с переменными одного из именованных [окружений](/sandboxes/environments) проекта вместо переменных по умолчанию |
+| `--repo <owner/name>` | Запустить с этим репозиторием GitHub, клонированным в `/workspace/<name>`, с правом записи только в него. `--repo-workflows` также позволяет менять `.github/workflows` |
+| `--every <interval>`, `--daily-at <HH:MM>` (`--weekdays`), `--cron <expr>`, `--tz <zone>` | Задать sandbox [расписание](/sandboxes/schedules): когда оно запускается |
+| `--command <cmd>`, `--prompt <text>`, `--prompt-file <path>` | Что запускает расписание. `--agent`, `-m, --model`, `--effort` выбирают агента для промпта; `--run-timeout` останавливает запуск (по умолчанию 10m); `--schedule-name` задаёт название |
 | `-p, --project <id>` | Проект (по умолчанию связанный, иначе ваш проект по умолчанию) |
 
 Lizard тарифицирует каждый размер посекундно по фиксированной ставке, пока sandbox работает, включая простой. В цену входят локальный диск и [2 ТБ исходящего трафика на аккаунт за последние 30 дней](/platform/limits#sandbox-egress). Успешная пауза останавливает оплату вычислений; диск sandbox на паузе стоит $0.14 за ГБ-месяц используемого пространства, пока вы не возобновите или не удалите sandbox, и столько же стоит каждый снимок, пока вы его не удалите. Persistent Volumes оплачиваются по [тарифу тома](/cli/volume), в том числе после отключения тома от sandbox.
@@ -157,6 +161,39 @@ Lizard тарифицирует каждый размер посекундно �
 | `lizard sandbox files put <id> <local> <remote>` | Загружает локальный файл |
 | `lizard sandbox files get <id> <remote> <local>` | Скачивает файл |
 | `lizard sandbox files rm <id> <path>` | Удаляет файл или директорию |
+
+<span id="schedules" />
+
+### Расписания
+
+Расписание будит sandbox по таймеру, запускает команду или промпт для агента и возвращает его в сон. Оно задаётся при создании sandbox (флаги выше); см. [Расписания](/sandboxes/schedules).
+
+| Команда | Что делает |
+|---------|--------------|
+| `lizard sandbox schedule <id> ...` | Задаёт расписание для sandbox, созданного за последние 15 минут; для более старого возвращается `SCHEDULE_ONLY_AT_CREATE` |
+| `lizard sandbox schedules [<id>]` | Выводит список расписаний со следующим и последним запуском |
+| `lizard sandbox schedule-show <sch_id>` | Показывает одно расписание |
+| `lizard sandbox schedule-runs [<sch_id>]` | Запуски расписания, а без ID — последние запуски проекта по всем его расписаниям; `-o` выводит последний вывод |
+| `lizard sandbox schedule-run <sch_id> [--wait]` | Запускает его сейчас |
+| `lizard sandbox schedule-set <sch_id> ...` | Меняет время или то, что оно запускает; `--on` / `--off` |
+| `lizard sandbox unschedule <sch_id>` | Удаляет его |
+
+<span id="environments" />
+
+### Окружения
+
+То, с чем запускается каждый новый sandbox проекта: переменные, файлы инструкций для агентов и доступ к GitHub. См. [Окружения](/sandboxes/environments).
+
+| Команда | Что делает |
+|---------|--------------|
+| `lizard sandbox environments` | Выводит список окружений проекта и показывает, заданы ли инструкции для агентов и доступ к GitHub |
+| `lizard sandbox environment-show [name] [--values]` | Показывает переменные окружения (без `--values` — только имена) |
+| `lizard sandbox environment-create <name> [--copy-from <name>]` | Создаёт именованное окружение |
+| `lizard sandbox environment-set [-e <name>] KEY=VALUE... [--from-file <path>]` | Задаёт переменные (без `-e` — в окружении по умолчанию) |
+| `lizard sandbox environment-unset [-e <name>] KEY...` | Удаляет переменные |
+| `lizard sandbox environment-rename <name> <new-name>` | Переименовывает именованное окружение |
+| `lizard sandbox environment-rm <name>` | Удаляет именованное окружение |
+| `lizard sandbox environment-instructions` | Показывает или задаёт `CLAUDE.md` / `AGENTS.md` агентов (`--claude-md`, `--agents-md`, `--clear-claude-md`, `--clear-agents-md`, `--print`) |
 
 <span id="coding-agents" />
 

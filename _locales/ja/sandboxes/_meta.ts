@@ -6,5 +6,7 @@ export default {
   'preview-urls': "プレビュー URL",
   guides: "ガイド",
   volumes: "Persistent Volumes",
+  environments: "環境",
+  schedules: "スケジュール",
   dashboard: "ダッシュボード",
 };

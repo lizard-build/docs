@@ -33,11 +33,15 @@ sandbox を作成し、その ID を表示します。
 |------|-------------|
 | `-t, --template <name>` | テンプレート（既定値 `base`）。有効なテンプレート: `base`、`interpreter`、`codex`、`desktop`、`desktop-camoufox`（US East のみ）、`opencode`、`pi`、`prime`、`claude`。サーバーがリージョンの一覧と照合します |
 | `-s, --size <size>` | `nano`、`mini`、`small`、`medium`（既定値。トライアル中は `small`）、`large`、`big`（有料プランのみ）のいずれか。`nano` は `base`、`claude`、`codex` テンプレートでのみ、`mini` はそれらと `interpreter` テンプレートでのみ、`big` はこれら 4 つと `desktop` テンプレートでのみ使えます。この 3 つはボリュームを使えません |
-| `--timeout <ms>` | 有効期間（ミリ秒）。既定値は `300000`（5 分）で、`0` を指定すると期限がなくなります。トライアル中は最大 `3600000` (1 時間) で、`0` は 1 時間になります |
+| `--timeout <ms>` | 有効期間（ミリ秒）、または `20m` や `2h` のような時間指定。既定値は `300000`（5 分）で、`0` を指定すると期限がなくなります。トライアル中は最大 `3600000` (1 時間) で、`0` は 1 時間になります |
 | `--region <code>` | sandbox を作成するリージョン |
 | `--snapshot <id>` | 保存済みのスナップショットから起動します。`--size` とは併用できません |
 | `--volume <name-or-id>` | [Persistent Volume](/cli/volume) を接続します |
 | `--with-token [key]` | sandbox 内の `lizard` を、sandbox のプロジェクトに限定され sandbox と一緒に削除される新しいキーでサインインさせます。渡した `liz_` キー、または値を省略した場合は実行中の `liz_` キーは、このリクエストを許可するためだけに使います。ブラウザでログインした場合、そのキーはありません。`base` テンプレートには `lizard` がありません |
+| `-e, --environment <name>` | プロジェクトの既定の変数の代わりに、名前付き[環境](/sandboxes/environments)の 1 つの変数で起動します |
+| `--repo <owner/name>` | この GitHub リポジトリを `/workspace/<name>` にクローンした状態で起動します。書き込みアクセスはそのリポジトリだけです。`--repo-workflows` を付けると `.github/workflows` も変更できます |
+| `--every <interval>`、`--daily-at <HH:MM>`（`--weekdays`）、`--cron <expr>`、`--tz <zone>` | sandbox に[スケジュール](/sandboxes/schedules)を設定します: 実行のタイミング |
+| `--command <cmd>`、`--prompt <text>`、`--prompt-file <path>` | スケジュールが実行する内容。`--agent`、`-m, --model`、`--effort` はプロンプト用のエージェントを選びます。`--run-timeout` は実行を停止します（既定値 10m）。`--schedule-name` は名前を付けます |
 | `-p, --project <id>` | プロジェクト（既定はリンク済みのプロジェクト、それもなければ既定のプロジェクト） |
 
 Lizard は sandbox の稼働中、アイドル時間も含めてサイズごとの定額で秒単位の課金をします。料金にはローカルディスクと、[アカウントごとに直近 30 日間で 2 TB までの送信トラフィック](/platform/limits#sandbox-egress)が含まれます。一時停止が完了すると計算料金は止まります。一時停止中の sandbox のディスクには、再開するか削除するまで、使用容量 1 GB あたり月額 $0.14 がかかります。各スナップショットにも、削除するまで同じ料金がかかります。Persistent Volumes には、接続の有無にかかわらず[ボリューム料金](/cli/volume)がかかります。
@@ -157,6 +161,39 @@ sandbox 内のポートに HTTPS URL を割り当てます。ポートは非公�
 | `lizard sandbox files put <id> <local> <remote>` | ローカルファイルをアップロードします |
 | `lizard sandbox files get <id> <remote> <local>` | ファイルをダウンロードします |
 | `lizard sandbox files rm <id> <path>` | ファイルまたはディレクトリを削除します |
+
+<span id="schedules" />
+
+### スケジュール
+
+スケジュールは、タイマーで sandbox を起こし、コマンドまたはエージェントのプロンプトを実行して、再びスリープさせます。sandbox の作成時に設定します（上記のフラグ）。[スケジュール](/sandboxes/schedules)を参照してください。
+
+| コマンド | 説明 |
+|---------|-------------|
+| `lizard sandbox schedule <id> ...` | 直近 15 分以内に作成した sandbox にスケジュールを設定します。それより古い sandbox では `SCHEDULE_ONLY_AT_CREATE` が返ります |
+| `lizard sandbox schedules [<id>]` | スケジュールを、次回と前回の実行とともに一覧表示します |
+| `lizard sandbox schedule-show <sch_id>` | 1 つのスケジュールを表示します |
+| `lizard sandbox schedule-runs [<sch_id>]` | スケジュールの実行。ID を省略すると、プロジェクトのすべてのスケジュールにまたがる最新の実行。`-o` は最新の出力を表示します |
+| `lizard sandbox schedule-run <sch_id> [--wait]` | 今すぐ実行します |
+| `lizard sandbox schedule-set <sch_id> ...` | タイミングまたは実行する内容を変更します。`--on` / `--off` |
+| `lizard sandbox unschedule <sch_id>` | 削除します |
+
+<span id="environments" />
+
+### 環境
+
+プロジェクトの新しい sandbox が最初から持つもの: 変数、エージェントの指示ファイル、GitHub アクセス。[環境](/sandboxes/environments)を参照してください。
+
+| コマンド | 説明 |
+|---------|-------------|
+| `lizard sandbox environments` | プロジェクトの環境と、エージェントの指示および GitHub アクセスが設定されているかどうかを一覧表示します |
+| `lizard sandbox environment-show [name] [--values]` | 環境の変数を表示します（`--values` がなければ名前のみ） |
+| `lizard sandbox environment-create <name> [--copy-from <name>]` | 名前付き環境を作成します |
+| `lizard sandbox environment-set [-e <name>] KEY=VALUE... [--from-file <path>]` | 変数を設定します（`-e` がなければ既定の環境） |
+| `lizard sandbox environment-unset [-e <name>] KEY...` | 変数を削除します |
+| `lizard sandbox environment-rename <name> <new-name>` | 名前付き環境の名前を変更します |
+| `lizard sandbox environment-rm <name>` | 名前付き環境を削除します |
+| `lizard sandbox environment-instructions` | エージェントの `CLAUDE.md` / `AGENTS.md` を表示または設定します（`--claude-md`、`--agents-md`、`--clear-claude-md`、`--clear-agents-md`、`--print`） |
 
 <span id="coding-agents" />
 

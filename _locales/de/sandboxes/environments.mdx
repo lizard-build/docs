@@ -1,0 +1,96 @@
+---
+description: "Womit jede neue Sandbox eines Projekts startet: Variablen, Anweisungsdateien für Agents und GitHub-Zugriff. Halte mehrere benannte Variablensätze bereit und wähle einen pro Sandbox."
+---
+
+<span id="environments" />
+
+# Umgebungen
+
+Die Umgebung eines Projekts ist das, womit jede darin erstellte Sandbox startet. Lege sie einmal im Dashboard unter **Sandboxes → Environment** fest oder mit der CLI.
+
+Umgebungen sind noch nicht für jedes Konto verfügbar.
+
+<span id="what-an-environment-holds" />
+
+## Was eine Umgebung enthält
+
+| Teil | Was neue Sandboxes erhalten |
+|---|---|
+| **Variablen** | Umgebungsvariablen in jedem Prozess der Sandbox. Verschlüsselt gespeichert. |
+| **Agent-Anweisungen** | Eine `CLAUDE.md` (Claude Code) und eine `AGENTS.md` (Codex, OpenCode, pi, Prime) auf Benutzerebene, jeweils bis zu 32 KB. |
+| **GitHub-Zugriff** | Die von dir gewählten Repositorys (die ersten 10), nach `/workspace/<name>` geklont, mit dafür angemeldetem `git` und `gh`, nur lesend oder mit Schreibzugriff. |
+
+Eine Änderung gilt für Sandboxes, die danach erstellt werden. Eine laufende Sandbox behält, womit sie gestartet ist.
+
+<span id="variables" />
+
+## Variablen
+
+```bash
+lizard sandbox environment-set API_URL=https://api.example.com TOKEN=...
+lizard sandbox environment-set --from-file .env
+lizard sandbox environment-unset OLD_KEY
+lizard sandbox environment-show            # names only
+lizard sandbox environment-show --values   # with values
+```
+
+Bis zu 200 Variablen pro Umgebung. Namen bestehen aus Buchstaben, Ziffern und `_`; ein Wert ist höchstens 32 KB groß. Variablen, die beim Erstellen einer Sandbox übergeben werden (`envs` im SDK), haben Vorrang vor denen der Umgebung.
+
+<span id="named-environments" />
+
+## Benannte Umgebungen
+
+Ein Projekt kann mehrere Umgebungen enthalten: weitere vollständige Variablensätze, zum Beispiel `staging` neben der Standardumgebung. Eine Sandbox, die mit einer benannten Umgebung erstellt wird, erhält die Variablen dieser Umgebung **anstelle** der Standardvariablen, nie beide. Agent-Anweisungen und GitHub-Zugriff gehören zum Projekt, unabhängig von der Umgebung.
+
+```bash
+lizard sandbox environments                                   # list
+lizard sandbox environment-create staging --copy-from default
+lizard sandbox environment-set -e staging API_URL=https://staging.example.com
+lizard sandbox environment-rename staging preview
+lizard sandbox environment-rm preview
+```
+
+Wähle eine aus, wenn du eine Sandbox erstellst. Öffne im Dashboard **Environment** im Formular Create sandbox.
+
+```bash
+lizard sandbox create -e staging
+```
+
+```ts
+const sandbox = await Sandbox.create('base', { projectId, environment: 'staging' });
+```
+
+```python
+sandbox = Sandbox.create("base", project_id=project_id, environment="staging")
+```
+
+Ein unbekannter Name wird mit 400 `SANDBOX_ENVIRONMENT_NOT_FOUND` und den Namen, die das Projekt hat, abgelehnt; es wird keine Sandbox erstellt. Ein Projekt enthält bis zu 20 benannte Umgebungen. Namen bestehen aus Buchstaben, Ziffern, Leerzeichen und `. _ -`, bis zu 40 Zeichen. Das Löschen einer Umgebung ändert bereits damit erstellte Sandboxes nicht.
+
+<span id="agent-instructions" />
+
+## Agent-Anweisungen
+
+```bash
+lizard sandbox environment-instructions                       # which files are set
+lizard sandbox environment-instructions --claude-md ./CLAUDE.md --agents-md ./AGENTS.md
+lizard sandbox environment-instructions --print claude-md
+lizard sandbox environment-instructions --clear-agents-md
+```
+
+`CLAUDE.md` wird nach `~/.claude/CLAUDE.md` geschrieben. `AGENTS.md` wird dorthin geschrieben, wo Codex, OpenCode, pi und Prime ihre Anweisungen auf Benutzerebene lesen.
+
+<span id="github-access" />
+
+## GitHub-Zugriff
+
+Lege den GitHub-Zugriff im Dashboard fest: Wähle das GitHub-Konto, die Repositorys und Lese- oder Schreibzugriff. Neue Sandboxes im Projekt erhalten die gewählten Repositorys geklont und ein kurzlebiges, auf sie beschränktes Token; `git` und `gh` funktionieren ohne Anmeldung. Das Ausschalten des Zugriffs entfernt das Token aus laufenden Sandboxes.
+
+`lizard sandbox environments` zeigt, ob GitHub-Zugriff festgelegt ist und für wie viele Repositorys.
+
+Um stattdessen einer einzelnen Sandbox ein einziges eigenes Repository zu geben, erstelle sie mit `--repo`:
+
+```bash
+lizard sandbox create --repo owner/name
+```
+
+Die Sandbox erhält Schreibzugriff auf dieses eine Repository, geklont nach `/workspace/<name>`. Dafür muss deine eigene GitHub-Anmeldung verbunden sein, und du brauchst einen API-Key ohne Geltungsbereiche.

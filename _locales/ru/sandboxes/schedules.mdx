@@ -1,0 +1,92 @@
+---
+description: "Будите Sandbox по таймеру, запускайте в ней команду или промпт для coding-агента и возвращайте её в сон. Расписание задаётся при создании Sandbox; вы платите, только пока она не спит."
+---
+
+<span id="schedules" />
+
+# Расписания
+
+Расписание будит Sandbox на паузе по таймеру, запускает в ней команду оболочки или промпт для coding-агента и возвращает её в сон. Вы платите, только пока Sandbox не спит. Файлы в `/workspace` сохраняются между запусками.
+
+Расписания доступны пока не на всех аккаунтах: без доступа API отвечает 403 `SCHEDULES_NOT_ENABLED`.
+
+<span id="set-a-schedule-when-you-create-the-sandbox" />
+
+## Задайте расписание при создании Sandbox
+
+Расписание задаётся при создании Sandbox. В панели управления откройте **Schedule** в форме Create sandbox. В CLI добавьте расписание к `create`:
+
+```bash
+# every 10 minutes, a command
+lizard sandbox create --timeout 0 --every 10m --command "python3 /workspace/job.py"
+
+# every weekday at 09:00 Berlin time
+lizard sandbox create --timeout 0 --daily-at 09:00 --weekdays --tz Europe/Berlin --command "./report.sh"
+
+# a coding agent, every 5 minutes (needs an agent template)
+lizard sandbox create -t claude --timeout 0 --every 5m \
+  --prompt "Continue the research in /workspace/research; append findings to notes.md"
+```
+
+Создавайте Sandbox с `--timeout 0`, чтобы её срок не истекал.
+
+Sandbox принимает новое расписание только в первые 15 минут. После этого API отвечает 409 `SCHEDULE_ONLY_AT_CREATE`; создайте новую Sandbox с нужным расписанием. Расписания, которые у Sandbox уже есть, по-прежнему можно менять, запускать, выключать и удалять.
+
+Через SDK или API создайте Sandbox и сразу после этого задайте ей расписание:
+
+```ts
+const sandbox = await Sandbox.create('claude', { projectId, timeoutMs: 0 });
+await sandbox.schedule({ every: '5m', prompt: 'Continue the research in /workspace/research' });
+```
+
+<span id="when-it-runs" />
+
+## Когда оно запускается
+
+| Вариант | CLI | Поле API |
+|---|---|---|
+| Фиксированный интервал, от 1 минуты до 30 дней | `--every 5m` | `every: "5m"` |
+| Раз в день | `--daily-at 09:00` (добавьте `--weekdays` для дней с понедельника по пятницу) | `cron: "0 9 * * *"` или `"0 9 * * 1-5"` |
+| Выражение cron из пяти полей | `--cron "0 */6 * * *"` | `cron` |
+
+`--tz` (API: `timezone`) задаёт часовой пояс для времени дня или выражения cron; по умолчанию UTC.
+
+<span id="what-it-runs" />
+
+## Что оно запускает
+
+- **Команда** (`--command`): выполняется в `/workspace` от имени root, на любом шаблоне. Код выхода 0 означает успех. Процессы, которые она оставляет в фоне, завершаются, когда Sandbox засыпает.
+- **Промпт для агента** (`--prompt`, `--prompt-file`): каждый запуск — это новая беседа с coding-агентом, на агентах, подключённых в проекте. Храните состояние в файлах: скажите агенту читать и обновлять файл с заметками. Sandbox должна быть создана из шаблона агента (`claude`, `codex`, `opencode`, `pi` или `prime`); на другом шаблоне API отвечает 400 `AGENT_NOT_IN_SANDBOX`. `--agent`, `-m` и `--effort` выбирают агента, модель и усилие рассуждения.
+
+<span id="how-a-run-goes" />
+
+## Как проходит запуск
+
+1. Sandbox на паузе пробуждается. Sandbox, которая уже работает, используется как есть и после запуска остаётся работать.
+2. Выполняется команда или промпт. Запуск останавливается через 10 минут, если вы не задали другой предел (`--run-timeout` при создании, не больше 6 часов).
+3. Sandbox, которую разбудил запуск, снова засыпает. Сон сохраняет только файлы: процессы завершаются, и следующий запуск загружает Sandbox заново.
+
+Если запуск ещё идёт, когда наступает время следующего, следующий пропускается. Пять неудачных запусков подряд выключают расписание; расписание показывает причину.
+
+<span id="see-and-manage-schedules" />
+
+## Просмотр расписаний и управление ими
+
+Вкладка **Schedules** в панели управления показывает последние запуски проекта: когда начался каждый, в какой Sandbox, что запускалось, чем закончилось и сколько времени работала Sandbox.
+
+```bash
+lizard sandbox schedules [<sandbox-id>]      # schedules, with next and last run
+lizard sandbox schedule-show <sch_id>        # one schedule, with its full prompt or command
+lizard sandbox schedule-runs                 # the project's latest runs, across its schedules
+lizard sandbox schedule-runs <sch_id> -o     # one schedule's runs; -o prints the latest output
+lizard sandbox schedule-run <sch_id> --wait  # run now and print the result
+lizard sandbox schedule-set <sch_id> --off   # or --on, --every 15m, ...
+lizard sandbox unschedule <sch_id>
+```
+
+<span id="limits" />
+
+## Лимиты
+
+- Не больше 50 расписаний на аккаунт (429 `SCHEDULE_LIMIT`). Хранятся последние 200 запусков каждого расписания.
+- Расписание с промптом работает с учётными данными агентов своего создателя: ему нужен API-ключ без ограничений области (403 `ACCOUNT_SCOPE_REQUIRED`), и только создатель может изменить его или запустить сейчас (403 `SCHEDULE_CREATOR_ONLY`). Выключить, переименовать или удалить его может любой участник проекта. Расписания с командой работают с ограниченными ключами.

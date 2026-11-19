@@ -1,0 +1,92 @@
+---
+description: "Wecke eine Sandbox nach Zeitplan, führe darin einen Befehl oder einen Coding-Agent-Prompt aus und lege sie wieder schlafen. Der Zeitplan wird beim Erstellen der Sandbox gesetzt; du zahlst nur, solange sie wach ist."
+---
+
+<span id="schedules" />
+
+# Zeitpläne
+
+Ein Zeitplan weckt eine pausierte Sandbox nach einem Timer, führt darin einen Shell-Befehl oder einen Coding-Agent-Prompt aus und legt sie wieder schlafen. Du zahlst nur, solange die Sandbox wach ist. Dateien in `/workspace` bleiben zwischen den Läufen erhalten.
+
+Zeitpläne sind noch nicht für jedes Konto verfügbar: Ohne Zugang antwortet die API mit 403 `SCHEDULES_NOT_ENABLED`.
+
+<span id="set-a-schedule-when-you-create-the-sandbox" />
+
+## Einen Zeitplan beim Erstellen der Sandbox setzen
+
+Ein Zeitplan wird gesetzt, wenn eine Sandbox erstellt wird. Öffne im Dashboard **Schedule** im Formular Create sandbox. Mit der CLI gibst du den Zeitplan bei `create` an:
+
+```bash
+# every 10 minutes, a command
+lizard sandbox create --timeout 0 --every 10m --command "python3 /workspace/job.py"
+
+# every weekday at 09:00 Berlin time
+lizard sandbox create --timeout 0 --daily-at 09:00 --weekdays --tz Europe/Berlin --command "./report.sh"
+
+# a coding agent, every 5 minutes (needs an agent template)
+lizard sandbox create -t claude --timeout 0 --every 5m \
+  --prompt "Continue the research in /workspace/research; append findings to notes.md"
+```
+
+Erstelle die Sandbox mit `--timeout 0`, damit sie nicht abläuft.
+
+Eine Sandbox nimmt einen neuen Zeitplan nur in ihren ersten 15 Minuten an. Danach antwortet die API mit 409 `SCHEDULE_ONLY_AT_CREATE`; erstelle eine neue Sandbox mit dem gewünschten Zeitplan. Zeitpläne, die eine Sandbox bereits hat, lassen sich weiterhin ändern, ausführen, ausschalten und löschen.
+
+Mit dem SDK oder der API erstellst du die Sandbox und setzt den Zeitplan direkt danach:
+
+```ts
+const sandbox = await Sandbox.create('claude', { projectId, timeoutMs: 0 });
+await sandbox.schedule({ every: '5m', prompt: 'Continue the research in /workspace/research' });
+```
+
+<span id="when-it-runs" />
+
+## Wann er läuft
+
+| Option | CLI | API-Feld |
+|---|---|---|
+| Ein festes Intervall, 1 Minute bis 30 Tage | `--every 5m` | `every: "5m"` |
+| Einmal am Tag | `--daily-at 09:00` (mit `--weekdays` für Montag bis Freitag) | `cron: "0 9 * * *"` oder `"0 9 * * 1-5"` |
+| Ein Cron-Ausdruck mit fünf Feldern | `--cron "0 */6 * * *"` | `cron` |
+
+`--tz` (API: `timezone`) ist die Zeitzone für eine tägliche Uhrzeit oder einen Cron-Ausdruck; Standard ist UTC.
+
+<span id="what-it-runs" />
+
+## Was er ausführt
+
+- **Ein Befehl** (`--command`): läuft in `/workspace` als root, mit jedem Template. Exit-Code 0 bedeutet Erfolg. Prozesse, die er im Hintergrund zurücklässt, enden, wenn die Sandbox schläft.
+- **Ein Agent-Prompt** (`--prompt`, `--prompt-file`): Jeder Lauf ist eine neue Konversation mit dem Coding-Agent, mit den im Projekt verbundenen Agents. Halte den Zustand in Dateien fest: Weise den Agent an, eine Notizdatei zu lesen und zu aktualisieren. Die Sandbox muss aus einem Agent-Template stammen (`claude`, `codex`, `opencode`, `pi` oder `prime`); bei einem anderen Template antwortet die API mit 400 `AGENT_NOT_IN_SANDBOX`. `--agent`, `-m` und `--effort` wählen Agent, Modell und Reasoning-Aufwand.
+
+<span id="how-a-run-goes" />
+
+## Wie ein Lauf abläuft
+
+1. Eine pausierte Sandbox wird geweckt. Eine Sandbox, die bereits läuft, wird so genutzt, wie sie ist, und läuft danach weiter.
+2. Der Befehl oder Prompt läuft. Ein Lauf wird nach 10 Minuten gestoppt, sofern du kein anderes Limit setzt (`--run-timeout` bei create, höchstens 6 Stunden).
+3. Eine Sandbox, die der Lauf geweckt hat, schläft wieder ein. Der Schlaf behält nur Dateien: Prozesse enden, und der nächste Lauf startet frisch.
+
+Läuft ein Lauf noch, wenn der nächste fällig ist, wird dieser übersprungen. Fünf fehlgeschlagene Läufe in Folge schalten den Zeitplan aus; der Zeitplan zeigt den Grund an.
+
+<span id="see-and-manage-schedules" />
+
+## Zeitpläne ansehen und verwalten
+
+Der Tab **Schedules** im Dashboard listet die neuesten Läufe des Projekts auf: wann jeder begann, in welcher Sandbox, was lief, wie er endete und wie lange die Sandbox gearbeitet hat.
+
+```bash
+lizard sandbox schedules [<sandbox-id>]      # schedules, with next and last run
+lizard sandbox schedule-show <sch_id>        # one schedule, with its full prompt or command
+lizard sandbox schedule-runs                 # the project's latest runs, across its schedules
+lizard sandbox schedule-runs <sch_id> -o     # one schedule's runs; -o prints the latest output
+lizard sandbox schedule-run <sch_id> --wait  # run now and print the result
+lizard sandbox schedule-set <sch_id> --off   # or --on, --every 15m, ...
+lizard sandbox unschedule <sch_id>
+```
+
+<span id="limits" />
+
+## Limits
+
+- Höchstens 50 Zeitpläne pro Konto (429 `SCHEDULE_LIMIT`). Von jedem Zeitplan werden die letzten 200 Läufe aufbewahrt.
+- Ein Prompt-Zeitplan läuft mit den Agent-Zugangsdaten seines Erstellers: Er benötigt einen API-Key ohne Geltungsbereiche (403 `ACCOUNT_SCOPE_REQUIRED`), und nur sein Ersteller darf ihn ändern oder jetzt ausführen (403 `SCHEDULE_CREATOR_ONLY`). Jeder im Projekt darf ihn ausschalten, umbenennen oder löschen. Befehls-Zeitpläne funktionieren mit eingeschränkten Keys.

@@ -1,0 +1,96 @@
+---
+description: "С чем запускается каждая новая Sandbox в проекте: переменные, файлы инструкций для агентов и доступ к GitHub. Храните несколько именованных наборов переменных и выбирайте один для каждой Sandbox."
+---
+
+<span id="environments" />
+
+# Окружения
+
+Окружение проекта — это то, с чем запускается каждая созданная в нём Sandbox. Задайте его один раз в панели управления в разделе **Sandboxes → Environment** или через CLI.
+
+Окружения доступны пока не на всех аккаунтах.
+
+<span id="what-an-environment-holds" />
+
+## Что входит в окружение
+
+| Часть | Что получают новые Sandboxes |
+|---|---|
+| **Переменные** | Переменные окружения в каждом процессе Sandbox. Хранятся в зашифрованном виде. |
+| **Инструкции для агентов** | `CLAUDE.md` (Claude Code) и `AGENTS.md` (Codex, OpenCode, pi, Prime) уровня пользователя, до 32 KB каждый. |
+| **Доступ к GitHub** | Выбранные вами репозитории (первые 10), клонированные в `/workspace/<name>`, с выполненным для них входом в `git` и `gh`, только для чтения или с правом записи. |
+
+Изменение применяется к Sandboxes, созданным после него. Работающая Sandbox сохраняет то, с чем она была запущена.
+
+<span id="variables" />
+
+## Переменные
+
+```bash
+lizard sandbox environment-set API_URL=https://api.example.com TOKEN=...
+lizard sandbox environment-set --from-file .env
+lizard sandbox environment-unset OLD_KEY
+lizard sandbox environment-show            # names only
+lizard sandbox environment-show --values   # with values
+```
+
+До 200 переменных на окружение. В именах используются латинские буквы, цифры и `_`; значение — не больше 32 KB. Переменные, переданные при создании Sandbox (`envs` в SDK), имеют приоритет над переменными окружения проекта.
+
+<span id="named-environments" />
+
+## Именованные окружения
+
+В проекте может быть несколько окружений: другие полные наборы переменных, например `staging` рядом с окружением по умолчанию. Sandbox, созданная с именованным окружением, получает переменные этого окружения **вместо** переменных по умолчанию, а не оба набора. Инструкции для агентов и доступ к GitHub принадлежат проекту, каким бы ни было окружение.
+
+```bash
+lizard sandbox environments                                   # list
+lizard sandbox environment-create staging --copy-from default
+lizard sandbox environment-set -e staging API_URL=https://staging.example.com
+lizard sandbox environment-rename staging preview
+lizard sandbox environment-rm preview
+```
+
+Выберите окружение при создании Sandbox. В панели управления откройте **Environment** в форме Create sandbox.
+
+```bash
+lizard sandbox create -e staging
+```
+
+```ts
+const sandbox = await Sandbox.create('base', { projectId, environment: 'staging' });
+```
+
+```python
+sandbox = Sandbox.create("base", project_id=project_id, environment="staging")
+```
+
+Неизвестное имя отклоняется с 400 `SANDBOX_ENVIRONMENT_NOT_FOUND` и списком имён, которые есть в проекте; Sandbox не создаётся. В проекте может быть до 20 именованных окружений. В именах используются буквы, цифры, пробелы и `. _ -`, до 40 символов. Удаление окружения не меняет Sandboxes, уже созданные с ним.
+
+<span id="agent-instructions" />
+
+## Инструкции для агентов
+
+```bash
+lizard sandbox environment-instructions                       # which files are set
+lizard sandbox environment-instructions --claude-md ./CLAUDE.md --agents-md ./AGENTS.md
+lizard sandbox environment-instructions --print claude-md
+lizard sandbox environment-instructions --clear-agents-md
+```
+
+`CLAUDE.md` записывается в `~/.claude/CLAUDE.md`. `AGENTS.md` записывается туда, где Codex, OpenCode, pi и Prime читают свои инструкции уровня пользователя.
+
+<span id="github-access" />
+
+## Доступ к GitHub
+
+Доступ к GitHub настраивается в панели управления: выберите аккаунт GitHub, репозитории и чтение или запись. Новые Sandboxes в проекте получают клонированные выбранные репозитории и короткоживущий токен, ограниченный ими; `git` и `gh` работают без входа. Отключение доступа удаляет токен из работающих Sandboxes.
+
+`lizard sandbox environments` показывает, настроен ли доступ к GitHub и для скольких репозиториев.
+
+Чтобы вместо этого дать одной Sandbox один ваш собственный репозиторий, создайте её с `--repo`:
+
+```bash
+lizard sandbox create --repo owner/name
+```
+
+Sandbox получает право записи в этот один репозиторий, клонированный в `/workspace/<name>`. Для этого нужен подключённый ваш собственный вход в GitHub и API-ключ без ограничений области.
